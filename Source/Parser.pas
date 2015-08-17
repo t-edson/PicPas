@@ -28,6 +28,7 @@ type
     tkBlkDelim : TSynHighlighterAttributes;
     tkType     : TSynHighlighterAttributes;
     tkOthers   : TSynHighlighterAttributes;
+    procedure CompileInstruction;
     function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
       absBit: integer=-1): integer;
     function CreateVar(varName, varType: string; absAdd: integer=-1): integer;
@@ -305,22 +306,30 @@ begin
   end else begin     //es entero
     Op.catTyp := t_uinteger;   //es entero sin signo
     //verificación de longitud de entero
-    if length(toknum)>=19 then begin  //solo aquí puede haber problemas
-      if toknum[1] = '-' then begin  //es negativo
-        if length(toknum)>20 then begin
-          GenError('Número muy grande. No se puede procesar. ');
-          exit
-        end else if (length(toknum) = 20) and  (toknum > '-9223372036854775808') then begin
-          GenError('Número muy grande. No se puede procesar. ');
-          exit
-        end;
-      end else begin  //es positivo
-        if length(toknum)>19 then begin
-          GenError('Número muy grande. No se puede procesar. ');
-          exit
-        end else if (length(toknum) = 19) and  (toknum > '9223372036854775807') then begin
-          GenError('Número muy grande. No se puede procesar. ');
-          exit
+    if toknum[1] = '$' then begin
+      //formato hexadecimal
+      if length(toknum)>=6 then begin  //solo aquí puede haber problemas
+        GenError('Número muy grande. No se puede procesar. ');
+      end;
+    end else begin
+      //formato decimal
+      if length(toknum)>=19 then begin  //solo aquí puede haber problemas
+        if toknum[1] = '-' then begin  //es negativo
+          if length(toknum)>20 then begin
+            GenError('Número muy grande. No se puede procesar. ');
+            exit
+          end else if (length(toknum) = 20) and  (toknum > '-9223372036854775808') then begin
+            GenError('Número muy grande. No se puede procesar. ');
+            exit
+          end;
+        end else begin  //es positivo
+          if length(toknum)>19 then begin
+            GenError('Número muy grande. No se puede procesar. ');
+            exit
+          end else if (length(toknum) = 19) and  (toknum > '9223372036854775807') then begin
+            GenError('Número muy grande. No se puede procesar. ');
+            exit
+          end;
         end;
       end;
     end;
@@ -548,16 +557,84 @@ begin
   if not CaptureDelExpres then exit;
   cIn.SkipWhites;
 end;
+procedure TCompiler.CompileInstruction;
+{Compila una única instrucción o un bloque BEGIN ... END}
+var
+  l1: Word;
+  p: Integer;
+begin
+  cIn.SkipWhites;
+  if cIn.tokL='begin' then begin
+    //es bloque
+    cIn.Next;  //toma "begin"
+    CompileCurBlock;   //llamada recursiva
+    if cIn.tokL<>'end' then begin
+      GenError('Se esperaba "end".');
+      exit;
+    end;
+    cIn.Next;  //toma "end"
+  end else begin
+    //es una instrucción
+    if cIn.tokType = tkStruct then begin
+      if cIn.tokl = 'while' then begin
+         cIn.Next;         //pasa "while"
+         GetExpression(0);
+         if HayError then exit;
+         if res.typ<>tipBool then begin
+           GenError('Se esperaba expresión booleana.');
+           exit;
+         end;
+         cIn.SkipWhites;
+         if cIn.tokL<>'do' then begin
+           GenError('Se esperaba "do".');
+           exit;
+         end;
+         cIn.Next;   //toma "do"
+         //aquí debe estar el cuerpo del "while"
+         case res.catOp of
+         coConst: begin  //la condición es fija
+           if res.valBool then begin
+             //lazo infinito
+             l1 := _PC;
+             CompileInstruction;  //debería completarse las instrucciones de tipo "break"
+             if HayError then exit;
+             _GOTO(l1);
+           end else begin
+             //lazo nulo
+             //aquí se debería lanzar una advertencia
+             p := pic.iFlash;
+             CompileInstruction;  //compila solo para mantener la sintaxis
+             if HayError then exit;
+             pic.iFlash := p;     //elimina lo compilado
+           end;
+         end;
+         coVariab:begin
+
+         end;
+         coExpres:begin
+
+         end;
+         end;
+
+      end else begin
+        GenError('Estructura desconocida.');
+        exit;
+      end;
+    end else begin
+      //debe ser es una expresión
+      GetExpression(0);
+    end;
+
+  end;
+end;
 procedure TCompiler.CompileCurBlock;
 {Compila el bloque de código actual hasta encontrar un delimitador de bloque, o fin
-de archivo. Este procesamiento es muy básico y solo se remite w procesar expresiones,
-separdas por el delimitador de expresión. En una implementación formal, deberíw
-sobreescribirse este método, con una implementación más completa.}
+de archivo. }
 begin
   cIn.SkipWhites;
   while not cIn.Eof and (cIn.tokType<>tkBlkDelim) do begin
     //se espera una expresión o estructura
-    GetExpression(0);
+    CompileInstruction;
     if perr.HayError then exit;   //aborta
     //se espera delimitador
     if cIn.Eof then break;  //sale por fin de archivo
@@ -566,8 +643,6 @@ begin
     if cIn.tokType=tkExpDelim then begin //encontró delimitador de expresión
       cIn.Next;   //lo toma
       cIn.SkipWhites;  //quita espacios
-    end else if cIn.tokType = tkBlkDelim then begin  //hay delimitador de bloque
-      exit;  //no lo toma
     end else begin  //hay otra cosa
       exit;  //debe ser un error
     end;
@@ -644,6 +719,7 @@ begin
       exit;       //sale
     end;
     cIn.Next;   //coge "end"
+    _SLEEP();   //agrega instrucción final
   end else begin
     GenError('Se esperaba "begin", "var", "type" o "const".');
     exit;
@@ -774,15 +850,16 @@ begin
   xLex.ClearMethodTables;           //limpìw tabla de métodos
   xLex.ClearSpecials;               //para empezar w definir tokens
   //crea tokens por contenido
-  xLex.DefTokIdentif('[$A-Za-z_]', '[A-Za-z0-9_]*');
+  xLex.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
   xLex.DefTokContent('[0-9]', '[0-9.]*', tkNumber);
+  xLex.DefTokContent('[$]','[0-9A-Fa-f]*', tkNumber);
   //define palabras claves
   xLex.AddIdentSpecList('THEN var type', tkKeyword);
   xLex.AddIdentSpecList('program public private method const', tkKeyword);
   xLex.AddIdentSpecList('class create destroy sub do begin', tkKeyword);
-  xLex.AddIdentSpecList('END ELSE ELSIF', tkBlkDelim);
+  xLex.AddIdentSpecList('END UNTIL', tkBlkDelim);
   xLex.AddIdentSpecList('true false', tkBoolean);
-  xLex.AddIdentSpecList('IF FOR', tkStruct);
+  xLex.AddIdentSpecList('while', tkStruct);
   xLex.AddIdentSpecList('and or xor not', tkOperator);
   //tipos predefinidos
   xLex.AddIdentSpecList('byte word boolean', tkType);

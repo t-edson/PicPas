@@ -12,8 +12,11 @@ var a: byte;
  b,c: word;
  r,s: boolean;
 begin
-a:=0;
-//b:=b+1000;
+while true do begin
+a:=1;
+end;
+b:=$123;
+b:=b+$100;
 r := false;
 s := true;
 //delay_ms(100);
