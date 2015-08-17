@@ -9,31 +9,28 @@
 
 program aaa;
 var
-  INDF  : BYTE absolute 00;
+  INDF  : BYTE @00;
   STATUS: BYTE absolute 03;
   FSR   : BYTE absolute 04;
   PORTA : BYTE absolute 05;
-  TRISA : BYTE absolute 133;
+  TRISA : BYTE absolute $85;
   PORTB : BYTE absolute 06;
   TRISB : BYTE absolute 134;
-  a,b: word;
+  a,b: byte;
 begin
 STATUS := 32;
 PORTB := 0;   //pone como salida
 STATUS := 0;
+PORTB := 0;   //apaga salidas
 //parpadeo
 delay_ms(1000);
-PORTB := 255;
-delay_ms(1000);
-PORTB := 0;
-delay_ms(1000);
-PORTB := 255;
-delay_ms(1000);
-PORTB := 0;
-delay_ms(1000);
-PORTB := 255;
-delay_ms(1000);
-PORTB := 0;
-
+a := 0;
+while a<>10 do begin
+  delay_ms(300);
+  PORTB := 255;
+  delay_ms(300);
+  PORTB := 0;
+  a := a + 1;
+end;
 end;
 

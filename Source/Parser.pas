@@ -31,11 +31,13 @@ type
     procedure CompileInstruction;
     function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
       absBit: integer=-1): integer;
-    function CreateVar(varName, varType: string; absAdd: integer=-1): integer;
+    function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
+      =-1): integer;
     procedure ProcComments;
     procedure CompileCurBlock;
     procedure CompilarArc(iniMem: word);
     procedure CompileVarDeclar;
+  protected
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
     procedure TipDefecString(var Op: TOperand; tokcad: string); override;
     procedure TipDefecBoolean(var Op: TOperand; tokcad: string); override;
@@ -207,11 +209,11 @@ procedure _SLEEP(); inline;
 begin
   cxp.pic.codAsm(SLEEP);
 end;
-procedure _SUBLW(const inst: TPIC16Inst; const k: word); inline;
+procedure _SUBLW(const k: word); inline;
 begin
   cxp.pic.codAsm(SUBLW, k);
 end;
-procedure _XORLW(const inst: TPIC16Inst; const k: word); inline;
+procedure _XORLW(const k: word); inline;
 begin
   cxp.pic.codAsm(XORLW, k);
 end;
@@ -264,7 +266,8 @@ end;
 {$I GenCod.pas}
 //Métodos OVERRIDE
 procedure TCompiler.TipDefecNumber(var Op: TOperand; toknum: string);
-{Procesa constantes numéricas. Se sobre escribe parapersonlizarla a nuestro lenguaje}
+{Procesa constantes numéricas, ubicándolas en el tipo de dato apropiado (byte, word, ... )
+ Si no logra ubicar el tipo de número, o no puede leer su valro, generará  un error.}
 var
   n: int64;   //para almacenar a los enteros
   f: extended;  //para almacenar a reales
@@ -343,6 +346,7 @@ begin
       Op.size := 2;
       Op.typ := tipWord;
     end else  begin //no encontró
+      GenError('No hay tipo definido para albergar a esta constante numérica');
       Op.typ := nil;
     end;
   end;
@@ -390,7 +394,7 @@ begin
   pic.addCommAsm(';'+lin);  //agrega línea al código ensmblador
 end;
 function TCompiler.CreateVar(const varName: string; typ: ttype;
-         absAdd: integer = -1; absBit: integer = -1 ): integer;
+         absAdd: integer = -1; absBit: integer = -1): integer;
 {Rutina personalizada para crear variable. No usa la de la unidad, porque no maneja
  direcciones físicas. Devuelve índice a la variable creada. Si se especifican
  "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
@@ -455,16 +459,19 @@ begin
   //Ya encontró tipo, llama a evento
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
-function TCompiler.CreateVar(varName, varType: string; absAdd: integer = -1): integer;
+function TCompiler.CreateVar(varName, varType: string;
+         absAdd: integer = -1; absBit: integer = -1): integer;
 {Agrega una variable w la tabla de variables.
  Los tipos siempre aparecen en minúscula.}
 var t: ttype;
   hay: Boolean;
+  varTypeL: String;
 begin
   //Verifica el tipo
   hay := false;
+  varTypeL := LowerCase(varType);;
   for t in typs do begin
-    if t.name=varType then begin
+    if t.name = varTypeL then begin
        hay:=true; break;
     end;
   end;
@@ -472,7 +479,7 @@ begin
     GenError('Tipo "' + varType + '" no definido.');
     exit;
   end;
-  Result := CreateVar(varName, t, absAdd);
+  Result := CreateVar(varName, t, absAdd ,absBit);
   //puede salir con error
 end;
 procedure TCompiler.CompileVarDeclar;
@@ -480,12 +487,128 @@ procedure TCompiler.CompileVarDeclar;
  Pascal. Lo normal seríw que se sobreescriba este método para adecuarlo al lenguaje
  que se desee implementar. }
 var
+  absAdrr: word;
+  absBit: byte;
+  Number: TOperand;  //para ser es usado por las subrutinas
+
+  procedure CheckAbsoluteBit;
+  {Extrae la parte del bit de una dirección absoluta. Actualiza "absBit"}
+  begin
+    if cIn.tok<>'.' then begin
+      GenError('Se esperaba "."');
+      exit;
+    end;
+    cIn.Next;    //Pasa al siguiente
+    //toma posición de bit
+    TipDefecNumber(Number, cIn.tok); //encuentra tipo de número, tamaño y valor
+    if pErr.HayError then exit;  //verifica
+    if Number.CanBeByte then
+       absBit := Number.valInt
+    else begin
+      GenError('Dirección de memoria inválida.');
+      exit;
+    end;
+    if absBit > 7 then begin
+      GenError('Dirección de memoria inválida.');
+      exit;
+    end;
+    cIn.Next;    //Pasa al siguiente
+  end;
+  procedure CheckAbsolute(var IsAbs: boolean; const IsBoolean: boolean);
+  {Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
+  pone "IsAbs" en TRUE y actualiza los valores "absAdrr" y "absBit". }
+  var
+    ivar: integer;
+    n: integer;
+    tmp: String;
+  begin
+    IsAbs := false;   //bandera
+    if (cIn.tokL <> 'absolute') and (cIn.tok <> '@') then
+      exit;  //no es variable absoluta
+    //// Hay especificación de dirección absoluta ////
+    IsAbs := true;    //marca bandera
+    cIn.Next;
+    cIn.SkipWhites;
+    if cIn.tokType = tkNumber then begin
+      TipDefecNumber(Number, cIn.tok); //encuentra tipo de número, tamaño y valor
+      if pErr.HayError then exit;  //verifica
+      if Number.catTyp = t_float then begin
+        //Caso especial porque el puede ser el formato <dirección>.<bit> que es
+        //totalmenet válido, y el lexer lo captura como un solo token.
+        if IsBoolean then begin
+          //Puede ser válido el número "decimal", hay que extraer los campos,
+          //pero primero hay que asegurarnos que no tenga notación exponencial.
+          if (pos('e', cIn.tok)<>0) or (pos('E', cIn.tok)<>0) then begin
+            GenError('Dirección de memoria inválida.');
+            exit;
+          end;
+          //ya sabemos que tiene que ser decimal, con punto
+          absAdrr := trunc(Number.valFloat);   //la dirección es la parte entera
+          n := pos('.', cIn.tok);   //no debe fallar
+          tmp := copy(cIn.tok, n+1, 1000);   //copia parte decimal
+          if length(tmp)<>1 then begin  //valida longitud
+            GenError('Dirección de memoria inválida.');
+            exit;
+          end;
+          absBit:=StrToInt(tmp);   //no debe fallar
+          //valida
+          if not pic.ValidRAMaddr(absAdrr) then begin
+            GenError('No existe esta dirección de memoria en este dispositivo.');
+            exit;
+          end;
+          if absBit > 7 then begin
+            GenError('Dirección de memoria inválida.');
+            exit;
+          end;
+          cIn.Next;    //Pasa al siguiente
+        end else begin  //no puede ser correcto
+          GenError('Dirección de memoria inválida.');
+          exit;
+        end;
+      end else begin
+        //Se asume número entero
+        if Number.CanBeWord then
+           absAdrr := Number.valWord
+        else begin
+          GenError('Dirección de memoria inválida.');
+          exit;
+        end;
+        if not pic.ValidRAMaddr(absAdrr) then begin
+          GenError('No existe esta dirección de memoria en este dispositivo.');
+          exit;
+        end;
+        cIn.Next;    //Pasa al siguiente
+        if IsBoolean then begin
+          CheckAbsoluteBit;  //es un boolean, debe especificarse el bit
+          if pErr.HayError then exit;  //verifica
+        end;
+      end;
+    end else if cIn.tokType = tkIdentif then begin
+      //puede ser variable
+      if FindVar(cIn.tok, ivar) then begin
+        absAdrr:=vars[ivar].offs + vars[ivar].bank * $80;  //debe ser absoluta
+      end else begin
+        GenError('Se esperaba identificador de variable.');
+        exit;
+      end;
+      cIn.Next;    //Pasa al siguiente
+      if IsBoolean then begin
+        CheckAbsoluteBit;  //es un boolean, debe especificarse el bit
+        if pErr.HayError then exit;  //verifica
+      end;
+    end else begin   //error
+      GenError('Se esperaba dirección numérica.');
+      exit;
+    end;
+  end;
+
+var
   varType: String;
   varName: String;
   varNames: array of string;  //nombre de variables
   n: Integer;
   tmp: String;
-  address: TOperand;
+  isAbsolute: Boolean;
 begin
   setlength(varNames,0);  //inicia arreglo
   //procesa variables res,b,c : int;
@@ -518,36 +641,16 @@ begin
     end;
     varType := cIn.tok;   //lee tipo
     cIn.Next;
-    //verifica si tiene dirección absoluta
     cIn.SkipWhites;
-    address.valInt:=-1;
-    if (cIn.tokL = 'absolute') or (cIn.tok = '@') then begin
-      //hay especificación de dirección absoluta
-      cIn.Next;
-      cIn.SkipWhites;
-      if cIn.tokType = tkNumber then begin
-        TipDefecNumber(address, cIn.tok); //encuentra tipo de número, tamaño y valor
-        if pErr.HayError then exit;  //verifica
-        if address.typ = nil then begin
-            GenError('No hay tipo definido para albergar a esta constante numérica');
-            exit;
-          end;
-        if (address.valInt < 0) or (address.valInt > $200) then begin
-           //********* mejor sería, si hace, if pic.ValidRAM() *********
-
-        end;
-        cIn.Next;    //Pasa al siguiente
-      end else begin
-        GenError('Se esperaba dirección numérica.');
-        exit;
-      end;
-    end;
+    //verifica si tiene dirección absoluta
+    CheckAbsolute(isAbsolute, LowerCase(varType) = 'boolean');
+    if Perr.HayError then exit;
     //reserva espacio para las variables
     for tmp in varNames do begin
-      if address.valInt<>-1 then  //crea en posición absoluta
-        CreateVar(tmp, lowerCase(varType), address.valInt)
+      if isAbsolute then  //crea en posición absoluta
+        CreateVar(tmp, varType, absAdrr, absBit)
       else
-        CreateVar(tmp, lowerCase(varType));
+        CreateVar(tmp, varType);
       if Perr.HayError then exit;
     end;
   end else begin
@@ -562,6 +665,7 @@ procedure TCompiler.CompileInstruction;
 var
   l1: Word;
   p: Integer;
+  dg: Integer;
 begin
   cIn.SkipWhites;
   if cIn.tokL='begin' then begin
@@ -578,6 +682,7 @@ begin
     if cIn.tokType = tkStruct then begin
       if cIn.tokl = 'while' then begin
          cIn.Next;         //pasa "while"
+         l1 := _PC;        //guarda dirección de inicio
          GetExpression(0);
          if HayError then exit;
          if res.typ<>tipBool then begin
@@ -595,7 +700,6 @@ begin
          coConst: begin  //la condición es fija
            if res.valBool then begin
              //lazo infinito
-             l1 := _PC;
              CompileInstruction;  //debería completarse las instrucciones de tipo "break"
              if HayError then exit;
              _GOTO(l1);
@@ -606,13 +710,34 @@ begin
              CompileInstruction;  //compila solo para mantener la sintaxis
              if HayError then exit;
              pic.iFlash := p;     //elimina lo compilado
+             { TODO : Debe limpiar la memoria flash que ocupó, para dejar la cas limpia. }
            end;
          end;
          coVariab:begin
-
+           if InvertedExpBoolean then  //lógica invertida
+             _BTFSC(res.offs, res.bit)  //verifica condición
+           else
+             _BTFSS(res.offs, res.bit);  //verifica condición
+           dg:=pic.iFlash;  //guarda posición de instrucción de salto
+           _GOTO(0);  //pone salto indefinido
+           CompileInstruction;  //compila solo para mantener la sintaxis
+           if HayError then exit;
+           _GOTO(l1);
+           //ya se tiene el destino del salto
+           pic.codGotoAt(dg, _PC);   //termina de codificar el salto
          end;
          coExpres:begin
-
+           if InvertedExpBoolean then  //lógica invertida
+             _BTFSC(_STATUS, _Z)  //verifica condición
+           else
+             _BTFSS(_STATUS, _Z);  //verifica condición
+           dg:=pic.iFlash;  //guarda posición de instrucción de salto
+           _GOTO(0);  //pone salto indefinido
+           CompileInstruction;  //compila solo para mantener la sintaxis
+           if HayError then exit;
+           _GOTO(l1);
+           //ya se tiene el destino del salto
+           pic.codGotoAt(dg, _PC);   //termina de codificar el salto
          end;
          end;
 

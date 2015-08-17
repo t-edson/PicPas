@@ -8,15 +8,15 @@
 {$DEFINE USE_SERIALPORT_OUTPUT} // Generate code for Serial Output only
 
 program aaa;
-var a: byte;
- b,c: word;
+var
+ a,b: byte;
+ c: word @123;
  r,s: boolean;
 begin
-while true do begin
-a:=1;
+while a=b do begin
+  c:=$123;
+  c:=c+$100;
 end;
-b:=$123;
-b:=b+$100;
 r := false;
 s := true;
 //delay_ms(100);

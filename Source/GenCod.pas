@@ -86,6 +86,7 @@ var
   sp: integer;    //puntero a la estructura de pila. Apunta a la posición libre
   spSize: integer;  //tamaño actual de pila
   H, L: word;   //dirección de variables bytes auxiliar,par almacenar núemros de 16 bits
+  InvertedExpBoolean : boolean;
 
   //banderas
 //  ALused: Boolean;  //indica que el registro Al está siendo usado
@@ -377,6 +378,69 @@ begin
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
     byte_oper_byte(SUBLW, SUBWF);
+end;
+procedure byte_igual_byte;
+begin
+  InvertedExpBoolean := false;  //indica que trabaja en modo normal
+  if catOperation  = coConst_Const then begin  //compara constantes. Caso especial
+    res.valBool := (p1.valInt = p2.valInt);  //optimiza respuesta
+    res.typ := tipBool;
+    res.catOp:=coConst;
+    //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
+    exit;  //sale aquí, porque es un caso particular
+  end else begin  //caso general
+    case catOperation of
+    coConst_Variab: begin
+      if not RequireW then exit;   //pide acumualdor
+      _MOVLW(p1.valInt);
+      _SUBWF(p2.offs, toW);  //si iguales _Z=1
+    end;
+    coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+//      if not RequireW then exit;   //pide acumualdor
+      _SUBLW(p1.valInt);  //si iguales _Z=1
+    end;
+    coVariab_Const: begin
+      if not RequireW then exit;   //pide acumualdor
+      _MOVLW(p2.valInt);
+      _SUBWF(p1.offs, toW);  //si iguales _Z=1
+    end;
+    coVariab_Variab:begin
+      if not RequireW then exit;   //pide acumualdor
+      _MOVF(p1.offs, toW);
+      _SUBWF(p2.offs, toW);  //si iguales _Z=1
+    end;
+    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+      //if not RequireW then exit;
+      _SUBWF(p1.offs, toW);  //si iguales _Z=1
+    end;
+    coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+      //if not RequireW then exit;
+      _SUBLW(p2.valInt);  //si iguales _Z=1
+    end;
+    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+      //if not RequireW then exit;
+      _SUBWF(p2.offs, toW);  //si iguales _Z=1
+    end;
+{    coExpres_Expres:begin
+      //if not RequireW then exit;
+      //la expresión p1 debe estar salvada y p2 en el acumulador
+      CodAsm(InstWF, memtab[sp-1].addr, toW);  //Suma directamente a pila. Deja en W
+      Dec(sp); //Actualiza pila. No llama a PopW(), porque ya no es necesario.
+    end;}
+    else
+       GenError('No implementado.');
+    end;
+    //caso de salida más general
+    res.typ := tipBool;   //el resultado será siempre entero
+    res.catOp:=coExpres; //por defecto generará una expresión
+    //el resultado queda en _Z
+    //w.used:=true;        //se está usando el acumulador
+  end;
+end;
+procedure byte_difer_byte;
+begin
+  byte_igual_byte;  //usa el mismo código
+  InvertedExpBoolean := true;  //solo indica que la lógica se ha invertido
 end;
 ////////////operaciones con Word
 procedure word_procLoad(const Op: TOperand);
@@ -789,6 +853,10 @@ begin
   opr.CreateOperation(tipByte,@byte_suma_byte);
   opr:=tipByte.CreateOperator('-',7,'resta');  //suma
   opr.CreateOperation(tipByte,@byte_resta_byte);
+  opr:=tipByte.CreateOperator('=',4,'igual');
+  opr.CreateOperation(tipByte,@byte_igual_byte);
+  opr:=tipByte.CreateOperator('<>',4,'difer');
+  opr.CreateOperation(tipByte,@byte_difer_byte);
 
   //////// Operaciones con Word ////////////
   {Los operadores deben crearse con su precedencia correcta}

@@ -115,8 +115,12 @@ public
   valFloat: extended; //Valor en caso de que sea un flotante
   valBool  : Boolean;  //valor  en caso de que sea un booleano
   valStr  : string;    //valor  en caso de que sea una cadena
+  function valWord: word; inline; //devuelve el valor en Word
   function HByte: byte; inline;  //devuelve byte alto de valor entero
   function LByte: byte; inline;  //devuelve byte bajo de valor entero
+  //campos para validar el rango de los valores
+  function CanBeWord: boolean;   //indica si cae en el rango de un WORD
+  function CanBeByte: boolean;   //indica si cae en el rango de un BYTE
 end;
 TProcLoadOperand = procedure(const Op: TOperand);
 
@@ -816,10 +820,6 @@ begin
     Result.txt:= cIn.tok;     //toma el texto
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if pErr.HayError then exit;  //verifica
-    if Result.typ = nil then begin
-        GenError('No hay tipo definido para albergar a esta constante numérica');
-        exit;
-      end;
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tokType = tkIdentif then begin  //puede ser variable, constante, función
     if FindVar(cIn.tok, ivar) then begin
@@ -1198,6 +1198,10 @@ begin
   Result := vars[ivar].bit;
 end;
 
+function TOperand.valWord: word; inline;
+begin
+  Result := word(valInt);
+end;
 function TOperand.HByte: byte; inline;
 begin
   Result := HI(word(valInt));
@@ -1206,6 +1210,17 @@ function TOperand.LByte: byte; inline;
 begin
   Result := LO(word(valInt));
 end;
+function TOperand.CanBeWord: boolean;
+{Indica si el valor constante que contiene, puede ser convertido a un WORD sin pérdida}
+begin
+  Result := (valInt>=0) and (valInt<=$ffff);
+end;
+function TOperand.CanBeByte: boolean;
+{Indica si el valor constante que contiene, puede ser convertido a un BYTE sin pérdida}
+begin
+  Result := (valInt>=0) and (valInt<=$ff);
+end;
+
 procedure TOperand.Load; inline;
 begin
   //llama al evento de carga
