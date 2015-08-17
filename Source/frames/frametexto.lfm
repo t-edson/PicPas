@@ -1,0 +1,19 @@
+object fraTexto: TfraTexto
+  Left = 0
+  Height = 240
+  Top = 0
+  Width = 320
+  ClientHeight = 240
+  ClientWidth = 320
+  TabOrder = 0
+  DesignLeft = 175
+  DesignTop = 303
+  object Edit1: TEdit
+    Left = 40
+    Height = 23
+    Top = 32
+    Width = 80
+    TabOrder = 0
+    Text = 'Edit1'
+  end
+end
