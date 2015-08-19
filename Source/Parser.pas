@@ -389,9 +389,9 @@ begin
   end;
 end;
 procedure TCompiler.cInNewLine(lin: string);
-//Se pasa a una nueva línea en el contexto de entrada
+//Se pasa a una nueva _Línea en el contexto de entrada
 begin
-  pic.addCommAsm(';'+lin);  //agrega línea al código ensmblador
+  pic.addCommAsm(';'+lin);  //agrega _Línea al código ensmblador
 end;
 function TCompiler.CreateVar(const varName: string; typ: ttype;
          absAdd: integer = -1; absBit: integer = -1): integer;
@@ -714,7 +714,7 @@ begin
            end;
          end;
          coVariab:begin
-           if InvertedExpBoolean then  //lógica invertida
+           if InvertedExpBoolean then  //_Lógica invertida
              _BTFSC(res.offs, res.bit)  //verifica condición
            else
              _BTFSS(res.offs, res.bit);  //verifica condición
@@ -727,7 +727,7 @@ begin
            pic.codGotoAt(dg, _PC);   //termina de codificar el salto
          end;
          coExpres:begin
-           if InvertedExpBoolean then  //lógica invertida
+           if InvertedExpBoolean then  //_Lógica invertida
              _BTFSC(_STATUS, _Z)  //verifica condición
            else
              _BTFSS(_STATUS, _Z);  //verifica condición
@@ -880,7 +880,7 @@ begin
     repeat
       inc(iniCOD, $20);    //incrementa dirección de inicio
       cIn.PosAct := posCxt; //Posiciona al inicio
-      finBloSub := iniCOD;  //límite de espacio, para posibles rutinas usadas
+      finBloSub := iniCOD;  //_Límite de espacio, para posibles rutinas usadas
       CompilarArc(iniCOD); //puede dar error
       if pErr.HayError then break;
     until not traslape;

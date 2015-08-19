@@ -17,6 +17,7 @@ var
   PORTB : BYTE absolute 06;
   TRISB : BYTE absolute 134;
   a,b: byte;
+  pin: boolean absolute PORTB.4;
 begin
 STATUS := 32;
 PORTB := 0;   //pone como salida
@@ -27,9 +28,11 @@ delay_ms(1000);
 a := 0;
 while a<>10 do begin
   delay_ms(300);
-  PORTB := 255;
+//  PORTB := 255;
+  pin := true;
   delay_ms(300);
-  PORTB := 0;
+//  PORTB := 0;
+  PIN := false;
   a := a + 1;
 end;
 end;

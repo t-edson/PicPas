@@ -19,7 +19,7 @@ interface
 uses
   Classes, SysUtils, fgl, Forms, LCLType, Dialogs, lclProc,
   SynEditHighlighter, SynFacilHighlighter, SynFacilBasic,
-  XpresBas;
+  XpresBas, MisUtils;
 
 type
 
@@ -506,7 +506,7 @@ begin
   //verifica nombre
   for i:=0 to typs.Count-1 do begin
     if typs[i].name = nom0 then begin
-      GenError('Identificador de tipo duplicado.');
+      GenError('Unknown type identifier.');
       exit;
     end;
   end;
@@ -1251,6 +1251,21 @@ begin
   //hay un operador
   Result := typ.FindOperator(cIn.tok);
   cIn.Next;   //toma el token
+end;
+
+procedure SetLanguage(lang: string);
+begin
+  case lang of
+  'en': begin
+    //Update messages
+    dicClear;  //it's yet in English
+  end;
+  'es': begin
+    //Update messages
+    dicSet('Unknown type identifier.', 'Identificador de tipo duplicado.');
+//    dicSet('Hello %s','Hola %s');  //alternative way
+  end;
+  end;
 end;
 
 end.

@@ -13,15 +13,9 @@ type
 //  TSatReg = (srFree, srUsed)
   //define un registro virtual para implementar un intérprete
   Tregister = record
-    used    : boolean;  //indica si está usado
-    typ     : Ttype;    //tipo de dato
-    catOp   : TCatOperan;  //categoría de operando
-    //valores de la variable.
-{    valFloat: extended; //Valor en caso de que sea un flotante
-    valInt  : Int64;     //valor en caso de que sea un entero
-    valUInt : Int64;     //valor en caso de que sea un entero sin signo
-    valBool  : Boolean;  //valor  en caso de que sea un booleano
-    valStr  : string;    //valor  en caso de que sea una cadena}
+    used   : boolean;  //indica si está usado
+    offs   : byte;     //desplazamiento en memoria
+    bank    : byte;     //banco
   end;
 
 var
@@ -72,30 +66,26 @@ const
   _RP0 = 5;
   _RP1 = 6;
 //  _IRP = 7;
-type
-  TItemPila = record
-    addr: word;   //direción de memoria de la celda
-  end;
 var
   w: Tregister;
   {Estrutura de pila. Se crea una tabla de las direcciones a usar (no necesariamente
   consecutivas, porque puede haber variables ABSOLUTE) como pila. El tamaño de la pila a
   usar   no es fijo, sino que se crea de acuerdo al tamaño requerido para la evaluación de
   expresiones. Puede incluso ser de tamaño cero.}
-  memtab: array[0..MAX_MEMTAB-1] of TItemPila;
+  memtab: array[0..MAX_MEMTAB-1] of Tregister;
   sp: integer;    //puntero a la estructura de pila. Apunta a la posición libre
   spSize: integer;  //tamaño actual de pila
-  H, L: word;   //dirección de variables bytes auxiliar,par almacenar núemros de 16 bits
+  _H, _L: Tregister;   //rehistrso de trabajo adicionales, para cálculos
   InvertedExpBoolean : boolean;
 
   //banderas
 //  ALused: Boolean;  //indica que el registro Al está siendo usado
 //Rutinas de gestión de memoria
-function GetByte(var addr: word; varNom: string = ''): boolean;
+function GetByte(var reg: Tregister; varNom: string = ''): boolean;
 {Pide una dirección de memoria para alojar un byte en la RAM, para una tarea temporal.
- Devuelve en "addr" la dirección del byte pedido. Si falla devuelve FALSE.
+ Devuelve en "reg" la dirección del byte pedido. Si falla devuelve FALSE.
  Una vez finalizada la tarea, se debe liberar los bytes pedidos (para usar eficiéntemente
- la RAM), a menos que se quiera mantener esa posición de memori, rerservada exclusivamente.
+ la RAM), a menos que se quiera mantener esa posición de memoria, rerservada exclusivamente.
  De acuerdo a los bytes solicitados, se va reservando espacio en la RAM, usando
  variables. Las direcciones usadas, se guardan en la tabla memtab[], aunque no siempre
  corresponden a direcciones consecutivas}
@@ -114,16 +104,18 @@ begin
      else
        ivar := CreateVar(varNom, tipByte);
      if HayError then exit(false);
-     memtab[sp].addr := vars[ivar].offs;   //toma dirección libre
+     memtab[sp].offs := vars[ivar].offs;   //toma dirección libre
+     memtab[sp].bank  := vars[ivar].bank;
      inc(spSize);  //sube cota
    end;
-   addr := memtab[sp].addr;  //devuelve la dirección
+   reg := memtab[sp];  //actualiza dirección
+   reg.used:=false;    //porque es una dirección  nueva
    Inc(sp);
    exit(true);   //salió con éxito
 end;
-function FreeByte(var addr: word): boolean;
-{Libera el último byte, que se pidió a la RAM. Devuelve la dirección del último byte
- pedido. Si hubo error, devuelve FALSE.
+function FreeByte(var reg: Tregister): boolean;
+{Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
+ byte pedido. Si hubo error, devuelve FALSE.
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
 begin
    if sp<=0 then begin
@@ -131,25 +123,26 @@ begin
      exit(false);
    end;
    Dec(sp);
-   addr := memtab[sp].addr;  //devuelve la dirección
+   reg.offs := memtab[sp].offs;  //devuelve la dirección
+   reg.bank := memtab[sp].bank;
    exit(true)
 end;
-procedure PushW;
+{procedure PushW;
 //Guarda valor del acumulador en memoria temporal. Así lo deja libre.
 var
-  addr: Word;
+  r: Tregister;
 begin
-  if not GetByte(addr) then exit;  //pide un byte en RAM
-  _MOVWF(addr);  //mover acumulador a pila
+  if not GetByte(r) then exit;  //pide un byte en RAM
+  _MOVWF(r.offs);  //mover acumulador a pila
 end;
 procedure PopW;
 //Extrae de la memoria temporal, el valor del acumulador.
 var
-  addr: word;
+  r: Tregister;
 begin
-  if not FreeByte(addr) then exit;
-  _MOVF(addr, toW);  //retorna a W
-end;
+  if not FreeByte(r) then exit;
+  _MOVF(r.offs, toW);  //retorna a W
+end;}
 //Rutinas adicionales
 function ValidateByteRange(n: integer): boolean;
 //Verifica que un valor entero, se pueda convertir a byte. Si no, devuelve FALSE.
@@ -184,8 +177,8 @@ begin
   //Code('.CODE');   //inicia la sección de código
   sp := 0;  //inicia pila
   spSize:=0;  //inicia sin tamaño
-  H := MAXWORD;  //indica que no ha sido inicializado
-  L := MAXWORD;  //indica que no ha sido inicializado
+  _H.offs := MAXBYTE;  //indica que no ha sido inicializado
+  _L.offs := MAXBYTE;  //indica que no ha sido inicializado
 end;
 procedure Cod_EndProgram;
 //Codifica la parte inicial del programa
@@ -217,27 +210,42 @@ begin
 //    Code('  ;fin expres');
   end;
 end;
-function RequireW: boolean;
-{Indica que se va a utilizar el acumulador. De encontrarse ocupado,
-se pondrá en la pila. Si no hay espacio, genera error y  sale con FALSE}
+procedure RequireHL;
+{Indica que va a requerir usar los registros de trabajo _H y _L}
 begin
-  Result := true;
+  if _L.offs=MAXBYTE then  //no existe aún
+     if not GetByte(_L, '_L') then exit;   //pide direcciones de RAM, para parámetro
+  if _H.offs=MAXBYTE then  //no existe aún
+     if not GetByte(_H, '_H') then exit;
+end;
+procedure ReserveW;
+{Indica que se va a utilizar el acumulador. De encontrarse ocupado,
+se pondrá en la pila. Si no hay espacio, genera error}
+var
+  r: Tregister;
+begin
   if w.used then begin
     //Está ocupado. Usa espacio temporal para almacenar
-    PushW;
-    if HayError then exit(false);
+    if not GetByte(r) then exit;  //pide un byte en RAM
+    _MOVWF(r.offs);  //mueve acumulador a "pila"
   end;
   w.used := true;   //Lo marca como indicando que se va a ocupar
 end;
-procedure RequireHL;
-{Indica que va a requerir de los registros H y L}
+procedure ReserveH;
+{Indica que se va a utilizar el par de registros (_H,W). De encontrarse ocupado,
+se pondrá en la pila. Si no hay espacio, genera error.
+NOTA: Usa el registro W, así que este debe estar libre.}
+var
+  r: Tregister;
 begin
-  if L=MAXWORD then  //no existe aún
-     if not GetByte(L,'_L') then exit;   //pide direcciones de RAM, para parámetro
-  if H=MAXWORD then  //no existe aún
-     if not GetByte(H,'_H') then exit;
+  if _H.used then begin
+    //Está ocupado. Usa espacio temporal para almacenar
+    if not GetByte(r) then exit;  //pide un byte en RAM
+    _MOVF(_H.offs, toW);
+    _MOVWF(r.offs);  //mueve a pila
+  end;
+  _H.used := true;   //Lo marca como indicando que se va a ocupar
 end;
-
 ////////////operaciones con Byte
 procedure bool_asig_bool;
 begin
@@ -258,9 +266,15 @@ begin
     _BSF(p1.offs, p1.bit);
   end;
   coExpres: begin  //ya está en STATUS.Z
-    _BCF(p1.offs, p1.bit);
-    _BTFSC(_STATUS, _Z);
-    _BSF(p1.offs, p1.bit);
+    if InvertedExpBoolean then begin  //está invertido
+      _BCF(p1.offs, p1.bit);
+      _BTFSS(_STATUS, _Z);
+      _BSF(p1.offs, p1.bit);
+    end else begin  //caso normal
+      _BCF(p1.offs, p1.bit);
+      _BTFSC(_STATUS, _Z);
+      _BSF(p1.offs, p1.bit);
+    end;
   end;
   else
     GenError('No soportado'); exit;
@@ -310,44 +324,45 @@ begin
 end;
 procedure byte_oper_byte(const InstLW, InstWF:TPIC16Inst);
 {Rutina general en operaciones con bytes}
+var
+  r: Tregister;
 begin
   case catOperation of
   coConst_Variab: begin
-    if not RequireW then exit;   //pide acumualdor
+    ReserveW; if HayError then exit;   //pide acumualdor
     _MOVLW(p1.valInt);
     CodAsm(InstWF, p2.offs, toW);  //deja en W
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    //if not RequireW then exit;
+    //ReserveW; if HayError then exit;
     CodAsm(InstLW, p1.valInt);  //deja en W
   end;
   coVariab_Const: begin
-    if not RequireW then exit;
+    ReserveW; if HayError then exit;
     _MOVLW(p2.valInt);
     CodAsm(InstWF, p1.offs, toW);  //deja en W
   end;
   coVariab_Variab:begin
-    if not RequireW then exit;
+    ReserveW; if HayError then exit;
     _MOVF(p2.offs, toW);
     CodAsm(InstWF, p1.offs, toW);  //deja en W
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    //if not RequireW then exit;
+    //ReserveW; if HayError then exit;
     CodAsm(InstWF, p1.offs, toW);  //deja en W
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    //if not RequireW then exit;
+    //ReserveW; if HayError then exit;
     CodAsm(InstLW, p2.valInt);  //deja en W
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    //if not RequireW then exit;
+    //ReserveW; if HayError then exit;
     CodAsm(InstWF, p2.offs, toW);  //deja en W
   end;
   coExpres_Expres:begin
-    //if not RequireW then exit;
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    CodAsm(InstWF, memtab[sp-1].addr, toW);  //Suma directamente a pila. Deja en W
-    Dec(sp); //Actualiza pila. No llama a PopW(), porque ya no es necesario.
+    FreeByte(r);   //libera pila porque se usará el dato ahí contenido
+    CodAsm(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
   end;
   end;
   //caso de salida más general
@@ -380,6 +395,8 @@ begin
     byte_oper_byte(SUBLW, SUBWF);
 end;
 procedure byte_igual_byte;
+var
+  r: Tregister;
 begin
   InvertedExpBoolean := false;  //indica que trabaja en modo normal
   if catOperation  = coConst_Const then begin  //compara constantes. Caso especial
@@ -391,42 +408,41 @@ begin
   end else begin  //caso general
     case catOperation of
     coConst_Variab: begin
-      if not RequireW then exit;   //pide acumualdor
+      ReserveW; if HayError then exit;   //pide acumualdor
       _MOVLW(p1.valInt);
       _SUBWF(p2.offs, toW);  //si iguales _Z=1
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-//      if not RequireW then exit;   //pide acumualdor
+//      ReserveW; if HayError then exit;   //pide acumualdor
       _SUBLW(p1.valInt);  //si iguales _Z=1
     end;
     coVariab_Const: begin
-      if not RequireW then exit;   //pide acumualdor
+      ReserveW; if HayError then exit;   //pide acumualdor
       _MOVLW(p2.valInt);
       _SUBWF(p1.offs, toW);  //si iguales _Z=1
     end;
     coVariab_Variab:begin
-      if not RequireW then exit;   //pide acumualdor
+      ReserveW; if HayError then exit;   //pide acumualdor
       _MOVF(p1.offs, toW);
       _SUBWF(p2.offs, toW);  //si iguales _Z=1
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-      //if not RequireW then exit;
+      //ReserveW; if HayError then exit;
       _SUBWF(p1.offs, toW);  //si iguales _Z=1
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-      //if not RequireW then exit;
+      //ReserveW; if HayError then exit;
       _SUBLW(p2.valInt);  //si iguales _Z=1
     end;
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-      //if not RequireW then exit;
+      //ReserveW; if HayError then exit;
       _SUBWF(p2.offs, toW);  //si iguales _Z=1
     end;
-{    coExpres_Expres:begin
-      //if not RequireW then exit;
+    coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      CodAsm(InstWF, memtab[sp-1].addr, toW);  //Suma directamente a pila. Deja en W
-      Dec(sp); //Actualiza pila. No llama a PopW(), porque ya no es necesario.
-    end;}
+      FreeByte(r);   //libera pila porque se usará el dato ahí contenido
+      _SUBWF(r.offs, toW);  //compara directamente a lo que había en pila.
+    end;
     else
        GenError('No implementado.');
     end;
@@ -434,13 +450,12 @@ begin
     res.typ := tipBool;   //el resultado será siempre entero
     res.catOp:=coExpres; //por defecto generará una expresión
     //el resultado queda en _Z
-    //w.used:=true;        //se está usando el acumulador
   end;
 end;
 procedure byte_difer_byte;
 begin
   byte_igual_byte;  //usa el mismo código
-  InvertedExpBoolean := true;  //solo indica que la lógica se ha invertido
+  InvertedExpBoolean := true;  //solo indica que la _Lógica se ha invertido
 end;
 ////////////operaciones con Word
 procedure word_procLoad(const Op: TOperand);
@@ -465,9 +480,9 @@ begin
     _MOVF(p2.Hoffs, toW);
     _MOVWF(p1.Hoffs);
   end;
-  coExpres: begin   //se asume que se tiene en (H,w)
+  coExpres: begin   //se asume que se tiene en (_H,w)
     _MOVWF(p1.Loffs);
-    _MOVF(H, toW);
+    _MOVF(_H.offs, toW);
     _MOVWF(p1.Hoffs);
   end;
   else
@@ -507,6 +522,9 @@ begin
   w.used:=false;  //No es importante lo que queda
 end;
 procedure word_suma_word;
+var
+  spH: Tregister;
+  spL: Tregister;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1.valInt+p2.valInt;  //optimiza respuesta
@@ -519,96 +537,105 @@ begin
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
   end else  begin //caso general
+    RequireHL;   //requerir registros auxiliares _H y _L
+    if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      if not RequireW then exit;
-      RequireHL; if HayError then exit;   //requerir registros auxiliares H y L
+      ReserveW; if HayError then exit;
+      ReserveH; if HayError then exit;
 {      _movlw(p1.LByte);      //Carga menos peso del dato 1
       _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2
-      _movwf(L);             //Almacena el resultado
+      _movwf(_L);             //Almacena el resultado
       _movlw(p1.HByte);      //Carga más peso del dato 1
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _addlw(1);             //Si, suma 1 al acumulador
       _addwf(p2.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H);             //Guarda el resultado
-      _movf(L,toW);          //deja byte bajo en W}
-      //versión más corta que solo usa H, por validar
+      _movwf(_H);             //Guarda el resultado
+      _movf(_L,toW);          //deja byte bajo en W}
+      //versión más corta que solo usa _H, por validar
       _movlw(p1.HByte);      //Carga más peso del dato 1
       _addwf(p2.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H);             //Guarda el resultado
+      _movwf(_H.offs);             //Guarda el resultado
       _movlw(p1.LByte);      //Carga menos peso del dato 1
       _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-    coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
-      //if not RequireW then exit;
-      _movwf(L);             //guarda byte bajo
+    coConst_Expres: begin  //la expresión p2 se evaluó y esta en (_H,W)
+      //ReserveW; if HayError then exit;
+      _movwf(_L.offs);             //guarda byte bajo
       _movlw(p1.HByte);      //Carga más peso del dato 1
-      _addwf(H,toF);         //Suma y guarda
+      _addwf(_H.offs,toF);         //Suma y guarda
       _movlw(p1.LByte);      //Carga menos peso del dato 1
-      _addwf(L,toW);         //Suma menos peso del dato 2, deja en W
+      _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
     coVariab_Const: begin
-      if not RequireW then exit;
-      RequireHL; if HayError then exit;   //requerir registros auxiliares H y L
+      ReserveW; if HayError then exit;
+      ReserveH; if HayError then exit;
       _movlw(p2.HByte);      //Carga más peso del dato 1
       _addwf(p1.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H);             //Guarda el resultado
+      _movwf(_H.offs);             //Guarda el resultado
       _movlw(p2.LByte);      //Carga menos peso del dato 1
       _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
     coVariab_Variab:begin
-      if not RequireW then exit;
-      RequireHL; if HayError then exit;   //requerir registros auxiliares H y L
+      ReserveW; if HayError then exit;
+      ReserveH; if HayError then exit;
       _movlw(p1.Hoffs);      //Carga más peso del dato 1
       _addwf(p2.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H);             //Guarda el resultado
+      _movwf(_H.offs);             //Guarda el resultado
       _movlw(p1.Loffs);      //Carga menos peso del dato 1
       _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
-      //if not RequireW then exit;
-      _movwf(L);             //guarda byte bajo
+    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (spH,W)
+      //No es necesario reservar (spH,W) porque existen y se están usando
+      _movwf(_L.offs);             //guarda byte bajo
       _movlw(p1.Hoffs);      //Carga más peso del dato 1
-      _addwf(H,toF);         //Suma y guarda
+      _addwf(_H.offs,toF);         //Suma y guarda
       _movlw(p1.Loffs);      //Carga menos peso del dato 1
-      _addwf(L,toW);         //Suma menos peso del dato 2, deja en W
+      _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-    coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-      //if not RequireW then exit;
-      _movwf(L);             //guarda byte bajo
+    coExpres_Const: begin   //la expresión p1 se evaluó y esta en (spH,W)
+      //No es necesario reservar (spH,W) porque existen y se están usando
+      _movwf(_L.offs);             //guarda byte bajo
       _movlw(p2.HByte);      //Carga más peso del dato 1
-      _addwf(H,toF);         //Suma y guarda
+      _addwf(_H.offs,toF);         //Suma y guarda
       _movlw(p2.LByte);      //Carga menos peso del dato 1
-      _addwf(L,toW);         //Suma menos peso del dato 2, deja en W
+      _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-      //if not RequireW then exit;
-      _movwf(L);             //guarda byte bajo
+    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (spH,W)
+      //No es necesario reservar (spH,W) porque existen y se están usando
+      _movwf(_L.offs);             //guarda byte bajo
       _movlw(p2.Hoffs);      //Carga más peso del dato 1
-      _addwf(H,toF);         //Suma y guarda
+      _addwf(_H.offs,toF);         //Suma y guarda
       _movlw(p2.Loffs);      //Carga menos peso del dato 1
-      _addwf(L,toW);         //Suma menos peso del dato 2, deja en W
+      _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-{    coExpres_Expres:begin
-      //if not RequireW then exit;
-      //la expresión p1 debe estar salvada y p2 en el acumulador
-      CodAsm(InstWF, memtab[sp-1].addr, toW);  //Suma directamente a pila. Deja en W
-      Dec(sp); //Actualiza pila. No llama a PopW(), porque ya no es necesario.
-    end;}
+    coExpres_Expres:begin
+      //No es necesario reservar (spH,W) porque existen y se están usando
+      //Además p1 está salvado en pila y p2 en (_H,W)
+      FreeByte(spH);   //libera pila, obtiene dirección
+      FreeByte(spL);   //libera pila, obtiene dirección
+      _movwf(_L.offs);             //guarda byte bajo
+      _movf(spH.offs, toW);      //Carga más peso del dato 1
+      _addwf(_H.offs,toF);         //Suma y guarda
+      _movf(spL.offs, toW);      //Carga menos peso del dato 1
+      _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
+      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+      _incf(_H.offs, toF);
+    end;
     else
        GenError('No implementado.');
     end;
@@ -619,6 +646,9 @@ begin
   end;
 end;
 procedure word_suma_byte;
+var
+  spH: Tregister;
+  spL: Tregister;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1.valInt+p2.valInt;  //optimiza respuesta
@@ -631,72 +661,76 @@ begin
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
   end else  begin //caso general
+    RequireHL;   //requerir registros auxiliares _H y _L
+    if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      if not RequireW then exit;
-      RequireHL; if HayError then exit;   //requerir registros auxiliares H y L
-      //versión más corta que solo usa H, por validar
+      ReserveW; if HayError then exit;
+      ReserveH; if HayError then exit;
+      //versión más corta que solo usa _H, por validar
       _movlw(p1.HByte);      //Carga más peso del dato 1
-      _movwf(H);
+      _movwf(_H.offs);
       _movlw(p1.LByte);      //Carga menos peso del dato 1
       _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
-      //if not RequireW then exit;
-      _movwf(L);             //guarda byte bajo
+      //ReserveW; if HayError then exit;
+      _movwf(_L.offs);             //guarda byte bajo
       _movlw(p1.HByte);      //Carga más peso del dato 1
-      _movwf(H);
+      _movwf(_H.offs);
       _movlw(p1.LByte);      //Carga menos peso del dato 1
-      _addwf(L,toW);         //Suma menos peso del dato 2, deja en W
+      _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
     coVariab_Const: begin
-      if not RequireW then exit;
-      RequireHL; if HayError then exit;   //requerir registros auxiliares H y L
-      _movlw(p2.HByte);      //Carga más peso del dato 1
-      _movwf(H);             //Guarda el resultado
-      _movlw(p2.LByte);      //Carga menos peso del dato 1
+      ReserveW; if HayError then exit;
+      ReserveH; if HayError then exit;
+      _MOVF(p1.Hoffs, toW);      //Carga más peso del dato 1
+      _movwf(_H.offs);             //Guarda el resultado
+      _movlw(p2.LByte);
       _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
     coVariab_Variab:begin
-      if not RequireW then exit;
-      RequireHL; if HayError then exit;   //requerir registros auxiliares H y L
+      ReserveW; if HayError then exit;
+      ReserveH; if HayError then exit;
       _movlw(p1.Hoffs);      //Carga más peso del dato 1
-      _movwf(H);
+      _movwf(_H.offs);
       _movlw(p1.Loffs);      //Carga menos peso del dato 1
       _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
-      //if not RequireW then exit;
+    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
+      //ReserveW; if HayError then exit;
       _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-    coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-      //if not RequireW then exit;
+    coExpres_Const: begin   //la expresión p1 se evaluó y esta en (_H,W)
+      //No es necesario reservar (H,W) porque existen y se están usando
       _addwf(p2.LByte,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-      //if not RequireW then exit;
+    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (_H,W)
+      //No es necesario reservar (H,W) porque existen y se están usando
       _addwf(p2.Loffs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H, toF);
+      _incf(_H.offs, toF);
     end;
-{    coExpres_Expres:begin
-      //if not RequireW then exit;
+    coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      CodAsm(InstWF, memtab[sp-1].addr, toW);  //Suma directamente a pila. Deja en W
-      Dec(sp); //Actualiza pila. No llama a PopW(), porque ya no es necesario.
-    end;}
+      FreeByte(spH);   //libera pila, obtiene dirección
+      FreeByte(spL);   //libera pila, obtiene dirección
+      _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+      _incf(_H.offs, toF);
+    end;
     else
        GenError('No implementado.');
     end;
@@ -743,18 +777,18 @@ var
 begin
    StartCodeSub(ifun);  //inicia codificación
    PutComLine(';rutina delay.');
-   //Esta rutina recibe los milisegundos en los registros (H,L) o en (H,w) o en (w)
-   //Em cualquier caso, siempre usa los registros H y L, además del acumulador "w".
-   RequireHL;   //solicita que existan los registros H y L
+   //Esta rutina recibe los milisegundos en los registros (_H,_L) o en (_H,w) o en (w)
+   //Em cualquier caso, siempre usa los registros _H y _L, además del acumulador "w".
+   RequireHL;   //solicita que existan los registros _H y _L
    if HayError then exit;
-   _CLRF(H); PutComm(' ;pto. de entrada con parámetro en (0,w)');
-   _MOVWF(L); PutComm(';pto. de entrada con parámetro en (H,w)');
-   _INCF(H,toF);  PutComm(';pto. de entrada con parámetro en (H,L)');
-   _INCF(L,toF);  //corrección
- delay:= _PC;   //punto de entrada con parámetro en (H,L)
-   _DECFSZ(L, toF);
+   _CLRF(_H.offs); PutComm(' ;pto. de entrada con parámetro en (0,w)');
+   _MOVWF(_L.offs); PutComm(';pto. de entrada con parámetro en (H,w)');
+   _INCF(_H.offs,toF);  PutComm(';pto. de entrada con parámetro en (H,L)');
+   _INCF(_L.offs,toF);  //corrección
+ delay:= _PC;   //punto de entrada con parámetro en (_H,_L)
+   _DECFSZ(_L.offs, toF);
    _GOTO(_PC+2);
-   _DECFSZ(H, toF);
+   _DECFSZ(_H.offs, toF);
    _GOTO(_PC+2);
    _RETURN();
    codif_1mseg;   //codifica retardo 1 mseg
@@ -800,17 +834,17 @@ begin
    case res.catOp of  //el parámetro debe estar en "res"
    coConst : begin
      _MOVLW(res.HByte);
-     _MOVWF(H);
+     _MOVWF(_H.offs);
      _MOVLW(res.LByte);
      _call(funcs[ifun].adrr+1);
    end;
    coVariab: begin
      _MOVF(res.offs, toW);
-     _MOVWF(H);
+     _MOVWF(_H.offs);
      _MOVF(res.offs+1, toW);
      _call(funcs[ifun].adrr+1);
    end;
-   coExpres: begin  //se asume que ya está en (H,w)
+   coExpres: begin  //se asume que ya está en (_H,w)
      _call(funcs[ifun].adrr+1);  //ya está en W
    end;
    else
@@ -840,7 +874,7 @@ begin
   tipWord  :=CreateType('word',t_uinteger,2);   //de 2 bytes
   tipWord.OnLoad:=@word_procLoad;
 
-  //////// Operaciones con Byte ////////////
+  //////// Operaciones con Boolean ////////////
   {Los operadores deben crearse con su precedencia correcta}
   opr:=tipBool.CreateOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(tipBool,@bool_asig_bool);
