@@ -405,7 +405,7 @@ var
 begin
   //verifica nombre
   if FindPredefName(varName) <> idtNone then begin
-    GenError('Identificador duplicado: "' + varName + '".');
+    GenError('Duplicated identifier: "%s"', [varName]);
     exit;
   end;
   //registra variable en la tabla
@@ -672,6 +672,7 @@ begin
     //es bloque
     cIn.Next;  //toma "begin"
     CompileCurBlock;   //llamada recursiva
+    if HayError then exit;
     if cIn.tokL<>'end' then begin
       GenError('Se esperaba "end".');
       exit;
@@ -1025,6 +1026,19 @@ destructor TCompiler.Destroy;
 begin
   pic.Destroy;
   inherited Destroy;
+end;
+
+procedure SetLanguage(lang: string);
+begin
+  case lang of
+  'en': begin
+    dicClear;  //it's yet in English
+  end;
+  'es': begin
+    //Update messages
+    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
+  end;
+  end;
 end;
 
 initialization

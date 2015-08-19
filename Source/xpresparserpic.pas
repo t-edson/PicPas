@@ -232,7 +232,7 @@ protected  //Eventos del compilador
   procedure ClearAllFuncs;
   procedure ClearAllVars;
   procedure ClearFuncs;
-  function CategName(cat: TCatType): string;
+//  function CategName(cat: TCatType): string;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;
   procedure TipDefecString(var Op: TOperand; tokcad: string); virtual; abstract;
   procedure TipDefecBoolean(var Op: TOperand; tokcad: string); virtual; abstract;
@@ -241,7 +241,7 @@ protected  //Eventos del compilador
   function EOBlock: boolean;
   procedure SkipWhites; virtual;  //rutina para saltar blancos
   procedure GetExpression(const prec: Integer; isParam: boolean=false);
-  procedure GetBoolExpression;
+//  procedure GetBoolExpression;
   procedure CreateVariable(const varName: string; typ: ttype);
   procedure CreateVariable(varName, varType: string);
   function FindVar(const varName: string; out idx: integer): boolean;
@@ -266,6 +266,7 @@ public
   DetEjec: boolean;   //para detener la ejecución (en intérpretes)
   function HayError: boolean;
   procedure GenError(msg: string);
+  procedure GenError(msg: String; const Args: array of const);
   function ArcError: string;
   function nLinError: integer;
   function nColError: integer;
@@ -401,13 +402,20 @@ begin
 end;
 procedure TCompilerBase.GenError(msg: string);
 {Función de acceso rápido para Perr.GenError(). Pasa como posición a la posición
-del contexto actual.
-Se declara como función para poder usarla directamente en el exit() de una función}
+del contexto actual. Realiza la traducción del mensaje también.}
 begin
   if (cIn = nil) or (cIn.curCon = nil) then
-    Perr.GenError(msg,'',1)
+    Perr.GenError(dic(msg),'',1)
   else
-    Perr.GenError(msg, cIn.curCon);
+    Perr.GenError(dic(msg), cIn.curCon);
+end;
+procedure TCompilerBase.GenError(msg : String; const Args : Array of const);
+{Versión con parámetros de GenError.}
+begin
+  if (cIn = nil) or (cIn.curCon = nil) then
+    Perr.GenError(dic(msg, Args),'',1)
+  else
+    Perr.GenError(dic(msg, Args), cIn.curCon);
 end;
 function TCompilerBase.ArcError: string;
 begin
@@ -562,12 +570,12 @@ var
 begin
   //verifica si existe como variable
   if FindVar(funName, i) then begin
-    GenError('Identificador duplicado: "' + funName + '".');
+    GenError('Duplicated identifier: "%s"', [funName]);
     exit;
   end;
   //verifica si existe como constante
   if FindCons(funName, i)then begin
-    GenError('Identificador duplicado: "' + funName + '".');
+    GenError('Duplicated identifier: "%s"', [funName]);
     exit;
   end;
   //puede existir como función, no importa (sobrecarga)
@@ -595,7 +603,7 @@ begin
     end;
   end;
   if not hay then begin
-    GenError('Tipo "' + varType + '" no definido.');
+    GenError('Undefined type "%s"', [varType]);
     exit;
   end;
   CreateFunction(funName, t, nil);
@@ -712,12 +720,12 @@ begin
         tmp += funcs[n].pars[j].name+', ';
       end;
       if length(tmp)>0 then tmp := copy(tmp,1,length(tmp)-2); //quita coma final
-      GenError('Función '+ufun+'( '+tmp+' ) duplicada.');
+      GenError('Duplicated function: %s', [ufun+'( '+tmp+' )']);
       exit(true);
     end;
   end;
 end;
-function TCompilerBase.CategName(cat: TCatType): string;
+{function TCompilerBase.CategName(cat: TCatType): string;
 begin
    case cat of
    t_integer: Result := 'Numérico';
@@ -728,7 +736,7 @@ begin
    t_enum: Result := 'Enumerado';
    else Result := 'Desconocido';
    end;
-end;
+end;}
 function TCompilerBase.EOExpres: boolean; inline;
 //Indica si se ha llegado al final de una expresión.
 begin
@@ -763,7 +771,7 @@ begin
     cIn.Next;   //pasa al siguiente
     exit(true);
   end else begin   //es un error
-    GenError('Se esperaba ";"');
+    GenError('";" expected.');
     exit(false);  //sale con error
   end;
 
@@ -778,7 +786,8 @@ begin
   end else begin
     //Debe haber parámetros
     if cIn.tok<>'(' then begin
-      GenError('Se esperaba "("'); exit;
+      GenError('"(" expected.');
+      exit;
     end;
     cin.Next;
     repeat
@@ -798,7 +807,7 @@ begin
     until false;
     //busca paréntesis final
     if cIn.tok<>')' then begin
-      GenError('Se esperaba ")"'); exit;
+      GenError('")" expected.'); exit;
     end;
     cin.Next;
   end;
@@ -839,7 +848,7 @@ begin
       case FindFuncWithParams0(tmp, i, ifun) of  //busca desde ifun
       //TFF_NONE:      //No debería pasar esto
       TFF_PARTIAL:   //encontró la función, pero no coincidió con los parámetros
-         GenError('Error en tipo de parámetros de '+ tmp +'()');
+         GenError('Type parameters error on %s', [tmp +'()']);
       TFF_FULL:     //encontró completamente
         begin   //encontró
           Result.ifun:=i;      //guarda referencia a la función
@@ -852,7 +861,7 @@ begin
         end;
       end;
     end else begin
-      GenError('Identificador desconocido: "' + cIn.tok + '"');
+      GenError('Unknown identifier: %s', [cIn.tok]);
       exit;
     end;
   end else if cIn.tokType = tkSysFunct then begin  //es función de sistema
@@ -864,9 +873,9 @@ begin
     //buscamos una declaración que coincida.
     case FindFuncWithParams0(tmp, i) of
     TFF_NONE:      //no encontró ni la función
-       GenError('Función no implementada: "' + tmp + '"');
+       GenError('Function not implemented: %s', [tmp]);
     TFF_PARTIAL:   //encontró la función, pero no coincidió con los parámetros
-       GenError('Error en tipo de parámetros de '+ tmp +'()');
+      GenError('Type parameters error on %s', [tmp +'()']);
     TFF_FULL:     //encontró completamente
       begin   //encontró
         Result.ifun:=i;      //guarda referencia a la función
@@ -881,12 +890,8 @@ begin
   end else if cIn.tokType = tkBoolean then begin  //true o false
     Result.catOp:=coConst;       //constante es Mono Operando
     Result.txt:= cIn.tok;     //toma el texto
-    TipDefecBoolean(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
+    TipDefecBoolean(Result, cIn.tok); //encuentra tipo y valor
     if pErr.HayError then exit;  //verifica
-    if Result.typ = nil then begin
-       GenError('No hay tipo definido para albergar a esta constante booleana');
-       exit;
-     end;
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tok = '(' then begin  //"("
     cIn.Next;
@@ -896,12 +901,11 @@ begin
     If cIn.tok = ')' Then begin
        cIn.Next;  //lo toma
     end Else begin
-       GenError('Error en expresión. Se esperaba ")"');
+       GenError('Error in expression. ")" expected.');
        Exit;       //error
     end;
-  end else if (cIn.tokType = tkString) then begin  //constante cadena
+{  end else if (cIn.tokType = tkString) then begin  //constante cadena
     Result.catOp:=coConst;     //constante es Mono Operando
-//    Result.txt:= cIn.tok;     //toma el texto
     TipDefecString(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if pErr.HayError then exit;  //verifica
     if Result.typ = nil then begin
@@ -909,12 +913,12 @@ begin
        exit;
      end;
     cIn.Next;    //Pasa al siguiente
-{  end else if (cIn.tokType = tkOperator then begin
+  end else if (cIn.tokType = tkOperator then begin
    //los únicos símbolos válidos son +,-, que son parte de un número
     }
   end else begin
     //No se reconoce el operador
-    GenError('Se esperaba operando');
+    GenError('Operand expected.');
   end;
 end;
 procedure TCompilerBase.CreateVariable(const varName: string; typ: ttype);
@@ -924,7 +928,7 @@ var
 begin
   //verifica nombre
   if FindPredefName(varName) <> idtNone then begin
-    GenError('Identificador duplicado: "' + varName + '".');
+    GenError('Duplicated identifier: "%s"', [varName]);
     exit;
   end;
   //registra variable en la tabla
@@ -950,7 +954,7 @@ begin
     end;
   end;
   if not hay then begin
-    GenError('Tipo "' + varType + '" no definido.');
+    GenError('Undefined type "%s"', [varType]);
     exit;
   end;
   CreateVariable(varName, t);
@@ -973,8 +977,8 @@ begin
    if o = nil then begin
 //      GenError('No se ha definido la operación: (' +
 //                    Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')');
-      GenError('Operación no válida: (' +
-                    Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')');
+      GenError('Illegal Operation: %s',
+               ['(' + Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')']);
       Exit;
     end;
    {Llama al evento asociado con p1 y p2 como operandos. Debe devolver el resultado
@@ -996,7 +1000,7 @@ var
   opr: TOperator;
   pos: TPosCont;
 begin
-  debugln(space(ExprLevel)+' CogOperando('+IntToStr(pre)+')');
+  debugln(space(ExprLevel)+' GetOperandP('+IntToStr(pre)+')');
   Op1 :=  GetOperand;  //toma el operador
   if pErr.HayError then exit;
   //verifica si termina la expresion
@@ -1009,7 +1013,7 @@ begin
     //no está definido el operador siguente para el Op1, (no se puede comparar las
     //precedencias) asumimos que aquí termina el operando.
     cIn.PosAct := pos;   //antes de coger el operador
-    GenError('No está definido el operador: '+ opr.txt + ' para tipo: '+Op1.typ.name);
+    GenError('Undefined operator: %s for type: %s', [opr.txt, Op1.typ.name]);
     exit;
 //    Result:=Op1;
   end else begin  //si está definido el operador (opr) para Op1, vemos precedencias
@@ -1052,7 +1056,7 @@ begin
   //------- sigue un operador ---------
   //verifica si el operador aplica al operando
   if opr1 = nullOper then begin
-    GenError('No está definido el operador: '+ opr1.txt + ' para tipo: '+Op1.typ.name);
+    GenError('Undefined operator: %s for type: %s', [opr1.txt, Op1.typ.name]);
     exit;
   end;
   //inicia secuencia de lectura: <Operador> <Operando>
@@ -1125,7 +1129,7 @@ begin
   Dec(ExprLevel);
   if ExprLevel = 0 then debugln('');
 end;
-procedure TCompilerBase.GetBoolExpression;
+{procedure TCompilerBase.GetBoolExpression;
 //Simplifica la evaluación de expresiones booleanas, validando el tipo
 begin
   GetExpression(0);  //evalua expresión
@@ -1135,7 +1139,7 @@ begin
   end;
 end;
 
-{function GetNullExpression(): TOperand;
+function GetNullExpression(): TOperand;
 //Simplifica la evaluación de expresiones sin dar error cuando encuentra algún delimitador
 begin
   if
@@ -1257,13 +1261,24 @@ procedure SetLanguage(lang: string);
 begin
   case lang of
   'en': begin
-    //Update messages
     dicClear;  //it's yet in English
   end;
   'es': begin
     //Update messages
     dicSet('Unknown type identifier.', 'Identificador de tipo duplicado.');
-//    dicSet('Hello %s','Hola %s');  //alternative way
+    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
+    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
+    dicSet('Duplicated function: %s','Función duplicada: %s');
+    dicSet('";" expected.', 'Se esperaba ";"');
+    dicSet('"(" expected.', 'Se esperaba "("');
+    dicSet('")" expected.', 'Se esperaba ")"');
+    dicSet('Type parameters error on %s', 'Error en tipo de parámetros de %s');
+    dicSet('Unknown identifier: %s', 'Identificador desconocido: %s');
+    dicSet('Function not implemented: %s', 'Función no implementada: "%s"');
+    dicSet('Error in expression. ")" expected.', 'Error en expresión. Se esperaba ")"');
+    dicSet('Operand expected.', 'Se esperaba operando.');
+    dicSet('Illegal Operation: %s', 'Operación no válida: %s');
+    dicSet('Undefined operator: %s for type: %s','No está definido el operador: %s para tipo: %s');
   end;
   end;
 end;
