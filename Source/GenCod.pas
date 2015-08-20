@@ -165,12 +165,6 @@ begin
   end;
 end;
 ////////////rutinas obligatorias
-procedure Cod_StartData;
-//Codifica la parte inicial de declaración de variables estáticas
-begin
-  //Code('.DATA');
-  //Code('  _tmpStr0 DB 255 DUP(''#''),0');  //variable para cadena temporal
-end;
 procedure Cod_StartProgram;
 //Codifica la parte inicial del programa
 begin
@@ -277,24 +271,11 @@ begin
     end;
   end;
   else
-    GenError('No soportado'); exit;
+    GenError('Not implemented.'); exit;
   end;
   w.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Byte
-procedure byte_procLoad(const Op: TOperand);
-begin
-  //carga el operando
-{  case Op.catOp of
-  coConst : _MOVLW(Op.valInt);
-  coVariab: _MOVF(Op.offs, toW);
-  coExpres: ;  //ya está en registro
-  end;
-  res.typ := tipByte;  //indica que devuelve un entero
-  res.catOp := coExpres;  {Un operando cargado, se considerará siempre como una
-                          expresión, auqnue si fuera una constante, ...   }
-  w.used:=true;  //marca registro como usado}
-end;
 procedure byte_asig_byte;
 begin
   if p1.catOp <> coVariab then begin  //validación
@@ -458,10 +439,6 @@ begin
   InvertedExpBoolean := true;  //solo indica que la _Lógica se ha invertido
 end;
 ////////////operaciones con Word
-procedure word_procLoad(const Op: TOperand);
-begin
-
-end;
 procedure word_asig_word;
 begin
   if p1.catOp <> coVariab then begin  //validación
@@ -869,10 +846,8 @@ begin
   tipBool  :=CreateType('boolean',t_boolean,-1);   //de 1 bit
   //tipo numérico de un solo byte
   tipByte  :=CreateType('byte',t_uinteger,1);   //de 2 bytes
-  tipByte.OnLoad:=@byte_procLoad;
   //tipo numérico de dos byte
   tipWord  :=CreateType('word',t_uinteger,2);   //de 2 bytes
-  tipWord.OnLoad:=@word_procLoad;
 
   //////// Operaciones con Boolean ////////////
   {Los operadores deben crearse con su precedencia correcta}

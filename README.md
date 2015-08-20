@@ -1,6 +1,6 @@
 PicPas 0.2b
 ===========
-Compilador en Pascal para microcontroaldores PIC 
+Compilador en Pascal para microcontroladores PIC 
 
 NOTA: Este compilador está aún en fase Alfa y tiene funcionalidades limitadas. 
 
@@ -11,9 +11,40 @@ Por el momento solo soporta los tipos byte, word y boolean.
 
 No se requiere librerias ni programas adicionales para la compilación. PicPas genera el archivo *.hex directamente.
 
-Inclcuye una sencilla IDE para facilitar el desarrollo de programas.
+Incluye una sencilla IDE para facilitar el desarrollo de programas.
 
 Las opciones de optimización de código no están muy desarrolladas pero el código obtenido es bastante compacto, como el que podría generar cualquier compilador similar.
+
+Como ejemplo el siguiente código, es para  parpadear un led en el puerto B:
+
+```
+program aaa;
+var
+  INDF  : BYTE @00;
+  STATUS: BYTE absolute 03;
+  FSR   : BYTE absolute 04;
+  PORTA : BYTE absolute 05;
+  TRISA : BYTE absolute $85;
+  PORTB : BYTE absolute 06;
+  TRISB : BYTE absolute 134;
+  a,b: byte;
+  pin: boolean absolute PORTB.4;
+begin
+  STATUS := 32;
+  PORTB := 0;   //pone como salida
+  STATUS := 0;
+  PORTB := 0;   //apaga salidas
+  //parpadeo
+  delay_ms(1000);
+  while true do begin
+    delay_ms(300);
+    pin := true;
+    delay_ms(300);
+    PIN := false;
+  end;
+end;
+
+```
 
 ##Código Fuente
 
@@ -27,4 +58,4 @@ Para compilar se debe disponer de las librerías indicadas en las propiedades de
 * PicUtils 
 * Xpres 
 
-Todas ellas estándeberían estar disponibles. Verificar las versiones requeridas.
+Todas ellas deberían estar disponibles. Verificar las versiones requeridas.

@@ -1,10 +1,10 @@
 {XpresParserPIC
 
-Verisón de XpresParser, orientada a trabajar con microcontroladores PIC.
+Versión de XpresParser, orientada a trabajar con microcontroladores PIC.
 La idea es tener aquí todas las rutinas que en lo sposible sean independientes del
 lenguaje y del modelo de PIC.
 
-Las variables pública más importantes de este módulo son:
+Las variables públicas más importantes de este módulo son:
 
  vars[]  -> almacena a las variables declaradas
  typs[]  -> almacena a los tipos declarados
@@ -21,8 +21,7 @@ uses
   SynEditHighlighter, SynFacilHighlighter, SynFacilBasic,
   XpresBas, MisUtils;
 
-type
-
+type  //tipos enumerados
 //Categoría de Operando
 TCatOperan = (
   coConst =%00,  //Constante. Inlcuyendo expresiones de constantes evaluadas.
@@ -56,11 +55,30 @@ TCatType=(
 //tipo de identificador
 TIdentifType = (idtNone, idtVar, idtFunc, idtCons);
 
+type
 TType = class;
 TOperator = class;
 
 TVarOffs = word;
 TVarBank = byte;
+
+{Espacio para almacenar a los posibles valores de una constante.
+Debe tener campos para los tipos básicos de variable haya en "TCatType" y para valores
+estructurados}
+TConsValue = record
+  ValInt  : Int64;    //Para alojar a los valores t_integer y t_uinteger
+  ValFloat: extended; //Para alojar a los valores t_float
+  ValBool : boolean;  //Para alojar a los valores t_boolean
+  ValStr  : string;   //Para alojar a los valores t_string
+end;
+
+TCons = record
+  nom : string;   //nombre de la variable
+  typ : Ttype;    //tipo de la variable
+  amb : string;   //ámbito o alcance de la constante
+  //valores de la constante
+  val : TConsValue;
+end;
 //registro para almacenar información de las variables
 TVar = record
   nom : string;   //nombre de la variable
@@ -70,12 +88,6 @@ TVar = record
   offs: TVarOffs;
   bank: TVarBank;   //banco o segmento. Usado solo en algunas arquitecturas
   bit : byte;       //posición del bit. Usado para variables booleanas.
-  //valores de la variable.
-{  valInt  : Int64;    //valor en caso de que sea un entero
-  valUInt : Int64;    //valor en caso de que sea un entero sin signo
-  valFloat: extended; //Valor en caso de que sea un flotante
-  valBool  : Boolean;  //valor  en caso de que sea un booleano
-  valStr  : string;    //valor  en caso de que sea una cadena}
 end;
 
 { TOperand }
@@ -95,7 +107,6 @@ public
   catTyp: TCatType;  //Categoría de Tipo de dato.
   size  : integer;   //Tamaño del operando en bytes.
   {---------------------------------------------------------}
-  procedure Load; inline;  //carga el operador en registro o pila
   procedure Push; inline;  //pone el operador en la pila
   procedure Pop; inline;   //saca el operador en la pila
   function FindOperator(const oper: string): TOperator; //devuelve el objeto operador
@@ -107,20 +118,26 @@ public
   function Hoffs: TVarOffs; inline; //dirección del byte alto
   function bank: TVarBank; inline;  //banco o segmento
   function bit : byte; inline;  //banco o segmento
+private
+  Val  : TConsValue;
+  procedure SetvalBool(AValue: boolean);
+  procedure SetvalFloat(AValue: extended);
+  procedure SetvalInt(AValue: Int64);
 public
-  //Campos para almacenar los valores, en caso de que el operando sea una constante
-  //Debe tener tantas variables como tipos básicos de variable haya en "TCatType"
-  valInt  : Int64;    //valor en caso de que sea un entero
-//  valUInt : Int64 absolute $0040;    //valor en caso de que sea un entero sin signo
-  valFloat: extended; //Valor en caso de que sea un flotante
-  valBool  : Boolean;  //valor  en caso de que sea un booleano
-  valStr  : string;    //valor  en caso de que sea una cadena
-  function valWord: word; inline; //devuelve el valor en Word
+  //Campos de acceso a los valores constantes
+  property valInt  : Int64 read val.ValInt write SetvalInt;
+  property valFloat: extended read val.ValFloat write SetvalFloat;
+  property valBool : boolean read val.ValBool write SetvalBool;
+  //funciones de ayuda para adaptar los tipos numéricos
+  function aWord: word; inline;  //devuelve el valor en Word
   function HByte: byte; inline;  //devuelve byte alto de valor entero
   function LByte: byte; inline;  //devuelve byte bajo de valor entero
   //campos para validar el rango de los valores
   function CanBeWord: boolean;   //indica si cae en el rango de un WORD
   function CanBeByte: boolean;   //indica si cae en el rango de un BYTE
+  //métodos para mover valores desde/hacia una constante externa
+  procedure CopyConsValTo(var c: TCons);
+  procedure GetConsValFrom(const c: Tcons);
 end;
 TProcLoadOperand = procedure(const Op: TOperand);
 
@@ -168,9 +185,6 @@ TType = class
                                 declaración de una variable (de este tipo) en el ámbito global.}
   OnLocalDef: TProcDefineVar;  {Evento. Es llamado cada vez que se encuentra la
                                 declaración de una variable (de este tipo) en un ámbito local.}
-  OnLoad  : TProcLoadOperand; {Evento. Es llamado cuando se pide cargar un operando
-                               (de este tipo) en registro o pila. Por lo general, se
-                               hace como parte de la evaluación de una expresión. }
   OnPush  : TProcLoadOperand; {Evento. Es llamado cuando se pide cargar un operando
                                (de este tipo) en la pila. }
   OnPop   : TProcLoadOperand; {Evento. Es llamado cuando se pide cargar un operando
@@ -242,8 +256,8 @@ protected  //Eventos del compilador
   procedure SkipWhites; virtual;  //rutina para saltar blancos
   procedure GetExpression(const prec: Integer; isParam: boolean=false);
 //  procedure GetBoolExpression;
-  procedure CreateVariable(const varName: string; typ: ttype);
-  procedure CreateVariable(varName, varType: string);
+//  procedure CreateVariable(const varName: string; typ: ttype);
+//  procedure CreateVariable(varName, varType: string);
   function FindVar(const varName: string; out idx: integer): boolean;
   function FindCons(const conName: string; out idx: integer): boolean;
   function FindFunc(const funName: string; out idx: integer): boolean;
@@ -282,7 +296,7 @@ var
 
   vars  : array of TVar;  //lista de variables
   funcs : array of Tfunc; //lista de funciones
-  cons  : array of TVar;  //lista de constantes
+  cons  : array of TCons;  //lista de constantes
   typs  : TTypes;       //lista de tipos (EL nombre "types" ya está reservado)
   nIntVar : integer;    //número de variables internas
   nIntFun : integer;    //número de funciones internas
@@ -819,6 +833,7 @@ de intérpretes y opcional para compiladores)}
 var
   i: Integer;
   ivar: Integer;
+  icons: Integer;
   ifun: Integer;
   tmp: String;
 begin
@@ -837,6 +852,15 @@ begin
       Result.catOp:=coVariab;    //variable
       Result.catTyp:= vars[ivar].typ.cat;  //categoría
       Result.typ:=vars[ivar].typ;
+      Result.txt:= cIn.tok;     //toma el texto
+      cIn.Next;    //Pasa al siguiente
+    end else if FindCons(cIn.tok, icons) then begin  //es constante
+      //es una variable
+//      Result.ivar:=ivar;   //guarda referencia a la variable
+      Result.catOp:=coConst;    //constante
+      Result.catTyp:= cons[icons].typ.cat;  //categoría
+      Result.typ:=cons[icons].typ;
+      Result.GetConsValFrom(cons[icons]);  //lee valor
       Result.txt:= cIn.tok;     //toma el texto
       cIn.Next;    //Pasa al siguiente
     end else if FindFunc(cIn.tok, ifun) then begin  //no es variable, debe ser función
@@ -920,45 +944,6 @@ begin
     //No se reconoce el operador
     GenError('Operand expected.');
   end;
-end;
-procedure TCompilerBase.CreateVariable(const varName: string; typ: ttype);
-var
-  r : TVar;
-  n: Integer;
-begin
-  //verifica nombre
-  if FindPredefName(varName) <> idtNone then begin
-    GenError('Duplicated identifier: "%s"', [varName]);
-    exit;
-  end;
-  //registra variable en la tabla
-  r.nom:=varName;
-  r.typ := typ;   //fija  referencia a tipo
-  n := high(vars)+1;
-  setlength(vars, n+1);
-  vars[n] := r;
-  //Ya encontró tipo, llama a evento
-  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
-end;
-procedure TCompilerBase.CreateVariable(varName, varType: string);
-{Agrega una variable a la tabla de variables.
- Los tipos siempre aparecen en minúscula.}
-var t: ttype;
-  hay: Boolean;
-begin
-  //Verifica el tipo
-  hay := false;
-  for t in typs do begin
-    if t.name=varType then begin
-       hay:=true; break;
-    end;
-  end;
-  if not hay then begin
-    GenError('Undefined type "%s"', [varType]);
-    exit;
-  end;
-  CreateVariable(varName, t);
-  //puede salir con error
 end;
 procedure TCompilerBase.Evaluar(var Op1: TOperand; opr: TOperator; var Op2: TOperand);
 {Ejecuta una operación con dos operandos y un operador. "opr" es el operador de Op1.
@@ -1049,7 +1034,6 @@ begin
   opr1 := Op1.GetOperator;
   if opr1 = nil then begin  //no sigue operador
     //Expresión de un solo operando. Lo carga por si se necesita
-    Op1.Load;   //carga el operador para cumplir. Este evento no debería ser necesario.
     Result:=Op1;
     exit;  //termina ejecucion
   end;
@@ -1202,7 +1186,7 @@ begin
   Result := vars[ivar].bit;
 end;
 
-function TOperand.valWord: word; inline;
+function TOperand.aWord: word; inline;
 begin
   Result := word(valInt);
 end;
@@ -1225,11 +1209,53 @@ begin
   Result := (valInt>=0) and (valInt<=$ff);
 end;
 
-procedure TOperand.Load; inline;
+procedure TOperand.CopyConsValTo(var c: TCons);
 begin
-  //llama al evento de carga
-  if typ.OnLoad <> nil then typ.OnLoad(self);
+  //hace una copia selectiva por velocidad, de acuerdo a la categoría
+  case catTyp of
+  t_boolean : c.val.ValBool:=val.ValBool;
+  t_integer,
+  t_uinteger: c.val.ValInt  := val.ValInt;
+  t_float   : c.val.ValFloat:= val.ValFloat;
+  t_string  : c.val.ValStr  := val.ValStr;
+  else
+    {En teoría, cualquier valor constante que pueda contener TOperand, debería poder
+    transferirse a una cosntante, porque usan el mismo contenedor, así que si pasa esto
+    solo puede ser que faltó implementar.}
+  end;
 end;
+
+procedure TOperand.GetConsValFrom(const c: Tcons);
+{Copia valores constante desde una constante. Primero TOperand, debería tener inicializado
+ correctamente su campo "catTyp". }
+begin
+  case catTyp of
+  t_boolean : val.ValBool := c.val.ValBool;
+  t_integer,
+  t_uinteger: val.ValInt := c.val.ValInt;
+  t_float   : val.ValFloat := c.val.ValFloat;
+  t_string  : val.ValStr := c.val.ValStr;
+  else
+    //faltó implementar.
+  end;
+end;
+
+procedure TOperand.SetvalBool(AValue: boolean);
+begin
+  val.ValBool:=AValue;
+end;
+procedure TOperand.SetvalFloat(AValue: extended);
+begin
+//  if FvalFloat=AValue then Exit;
+  val.ValFloat:=AValue;
+end;
+
+procedure TOperand.SetvalInt(AValue: Int64);
+begin
+//  if FvalInt=AValue then Exit;
+  val.ValInt:=AValue;
+end;
+
 procedure TOperand.Push;
 begin
   //llama al evento de pila

@@ -1,11 +1,11 @@
-{
+{Unidad con rutinas del analizador sintáctico.
 }
 unit Parser;
 {$mode objfpc}{$H+}
 interface
 uses
   Classes, SysUtils, LCLType, Dialogs, lclProc, Graphics, SynEditHighlighter,
-  SynFacilBasic, MisUtils, XpresBas, XpresParserPIC, Pic16Utils, Globales;
+  SynFacilBasic, MisUtils, XpresBas, XpresParserPIC, Pic16Utils, Globales, types;
 
 type
 
@@ -28,11 +28,14 @@ type
     tkBlkDelim : TSynHighlighterAttributes;
     tkType     : TSynHighlighterAttributes;
     tkOthers   : TSynHighlighterAttributes;
+    procedure CompileConstDeclar;
     procedure CompileInstruction;
+    function CreateCons(const consName: string; typ: ttype): integer;
     function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
       absBit: integer=-1): integer;
     function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
       =-1): integer;
+    procedure getListOfIdent(var itemList: TStringDynArray);
     procedure ProcComments;
     procedure CompileCurBlock;
     procedure CompilarArc(iniMem: word);
@@ -253,6 +256,10 @@ procedure GenError(msg: string);
 begin
   cxp.GenError(msg);
 end;
+procedure GenError(msg: string; const Args: array of const);
+begin
+  cxp.GenError(msg,Args);
+end;
 function HayError: boolean;
 begin
   Result := cxp.HayError;
@@ -281,7 +288,7 @@ begin
       f := StrToFloat(toknum);  //carga con la mayor precisión posible
     except
       Op.typ := nil;
-      GenError('Número decimal no válido.');
+      GenError('Unvalid float number.');
       exit;
     end;
     //busca el tipo numérico más pequeño que pueda albergar a este número
@@ -312,25 +319,25 @@ begin
     if toknum[1] = '$' then begin
       //formato hexadecimal
       if length(toknum)>=6 then begin  //solo aquí puede haber problemas
-        GenError('Número muy grande. No se puede procesar. ');
+        GenError('Very large number. Cannot process.');
       end;
     end else begin
       //formato decimal
       if length(toknum)>=19 then begin  //solo aquí puede haber problemas
         if toknum[1] = '-' then begin  //es negativo
           if length(toknum)>20 then begin
-            GenError('Número muy grande. No se puede procesar. ');
+            GenError('Very large number. Cannot process.');
             exit
           end else if (length(toknum) = 20) and  (toknum > '-9223372036854775808') then begin
-            GenError('Número muy grande. No se puede procesar. ');
+            GenError('Very large number. Cannot process.');
             exit
           end;
         end else begin  //es positivo
           if length(toknum)>19 then begin
-            GenError('Número muy grande. No se puede procesar. ');
+            GenError('Very large number. Cannot process.');
             exit
           end else if (length(toknum) = 19) and  (toknum > '9223372036854775807') then begin
-            GenError('Número muy grande. No se puede procesar. ');
+            GenError('Very large number. Cannot process.');
             exit
           end;
         end;
@@ -346,7 +353,7 @@ begin
       Op.size := 2;
       Op.typ := tipWord;
     end else  begin //no encontró
-      GenError('No hay tipo definido para albergar a esta constante numérica');
+      GenError('No type defined to accommodate this number.');
       Op.typ := nil;
     end;
   end;
@@ -393,10 +400,56 @@ procedure TCompiler.cInNewLine(lin: string);
 begin
   pic.addCommAsm(';'+lin);  //agrega _Línea al código ensmblador
 end;
+procedure TCompiler.getListOfIdent(var itemList: TStringDynArray);
+{Lee una lista de identificadores separados por comas, hasta encontra un caracter distinto
+de coma. Si el primer elemento no es un identificador o si después de la coma no sigue un
+identificador, genera error.}
+var
+  item: String;
+  n: Integer;
+begin
+  repeat
+    cIn.SkipWhites;
+    //ahora debe haber un identificador
+    if cIn.tokType <> tkIdentif then begin
+      GenError('Identifier expected.');
+      exit;
+    end;
+    //hay un identificador
+    item := cIn.tok;
+    cIn.Next;  //lo toma
+    cIn.SkipWhites;
+    //sgrega nombre de ítem
+    n := high(itemList)+1;
+    setlength(itemList, n+1);  //hace espacio
+    itemList[n] := item;  //agrega nombre
+    if cIn.tok <> ',' then break; //sale
+    cIn.Next;  //toma la coma
+  until false;
+end;
+function TCompiler.CreateCons(const consName: string; typ: ttype): integer;
+{Rutina para crear una constante. Devuelve índice a la variable creada.}
+var
+  r   : TCons;
+  n, i: Integer;
+  offs, bnk, bit : byte;
+begin
+  //verifica nombre
+  if FindPredefName(consName) <> idtNone then begin
+    GenError('Duplicated identifier: "%s"', [consName]);
+    exit;
+  end;
+  //registra variable en la tabla
+  r.nom:=consName;
+  r.typ := typ;   //fija  referencia a tipo
+  n := high(cons)+1;
+  setlength(cons, n+1);
+  cons[n] := r;
+  Result := n;
+end;
 function TCompiler.CreateVar(const varName: string; typ: ttype;
          absAdd: integer = -1; absBit: integer = -1): integer;
-{Rutina personalizada para crear variable. No usa la de la unidad, porque no maneja
- direcciones físicas. Devuelve índice a la variable creada. Si se especifican
+{Rutina para crear variable. Devuelve índice a la variable creada. Si se especifican
  "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
 var
   r   : Tvar;
@@ -417,17 +470,17 @@ begin
     if typ.size<0 then begin
       //Se asume que se están pidiendo bits
       if typ.size<>-1 then begin   //por ahora se soporta 1 bit
-        GenError('Tamaño de dato no soportado.');
+        GenError('Size of data not supported.');
         exit;
       end;
       if not pic.GetFreeBit(offs, bnk, bit) then begin
-        GenError('Memoria RAM agotada.');
+        GenError('RAM memory is full.');
         exit;
       end;
     end else begin
       //Se asume que se están pidiendo bytes
       if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
-        GenError('Memoria RAM agotada.');
+        GenError('RAM memory is full.');
         exit;
       end;
     end;
@@ -476,7 +529,7 @@ begin
     end;
   end;
   if not hay then begin
-    GenError('Tipo "' + varType + '" no definido.');
+    GenError('Undefined type "%s"', [varType]);
     exit;
   end;
   Result := CreateVar(varName, t, absAdd ,absBit);
@@ -495,7 +548,7 @@ var
   {Extrae la parte del bit de una dirección absoluta. Actualiza "absBit"}
   begin
     if cIn.tok<>'.' then begin
-      GenError('Se esperaba "."');
+      GenError('"." expected.');
       exit;
     end;
     cIn.Next;    //Pasa al siguiente
@@ -505,11 +558,11 @@ var
     if Number.CanBeByte then
        absBit := Number.valInt
     else begin
-      GenError('Dirección de memoria inválida.');
+      GenError('Invalid memory address.');
       exit;
     end;
     if absBit > 7 then begin
-      GenError('Dirección de memoria inválida.');
+      GenError('Invalid memory address.');
       exit;
     end;
     cIn.Next;    //Pasa al siguiente
@@ -539,7 +592,7 @@ var
           //Puede ser válido el número "decimal", hay que extraer los campos,
           //pero primero hay que asegurarnos que no tenga notación exponencial.
           if (pos('e', cIn.tok)<>0) or (pos('E', cIn.tok)<>0) then begin
-            GenError('Dirección de memoria inválida.');
+            GenError('Invalid memory address.');
             exit;
           end;
           //ya sabemos que tiene que ser decimal, con punto
@@ -547,34 +600,34 @@ var
           n := pos('.', cIn.tok);   //no debe fallar
           tmp := copy(cIn.tok, n+1, 1000);   //copia parte decimal
           if length(tmp)<>1 then begin  //valida longitud
-            GenError('Dirección de memoria inválida.');
+            GenError('Invalid memory address.');
             exit;
           end;
           absBit:=StrToInt(tmp);   //no debe fallar
           //valida
           if not pic.ValidRAMaddr(absAdrr) then begin
-            GenError('No existe esta dirección de memoria en este dispositivo.');
+            GenError('Invalid memory address for this device.');
             exit;
           end;
           if absBit > 7 then begin
-            GenError('Dirección de memoria inválida.');
+            GenError('Invalid memory address.');
             exit;
           end;
           cIn.Next;    //Pasa al siguiente
         end else begin  //no puede ser correcto
-          GenError('Dirección de memoria inválida.');
+          GenError('Invalid memory address.');
           exit;
         end;
       end else begin
         //Se asume número entero
         if Number.CanBeWord then
-           absAdrr := Number.valWord
+           absAdrr := Number.aWord
         else begin
-          GenError('Dirección de memoria inválida.');
+          GenError('Invalid memory address.');
           exit;
         end;
         if not pic.ValidRAMaddr(absAdrr) then begin
-          GenError('No existe esta dirección de memoria en este dispositivo.');
+          GenError('Invalid memory address for this device.');
           exit;
         end;
         cIn.Next;    //Pasa al siguiente
@@ -588,7 +641,7 @@ var
       if FindVar(cIn.tok, ivar) then begin
         absAdrr:=vars[ivar].offs + vars[ivar].bank * $80;  //debe ser absoluta
       end else begin
-        GenError('Se esperaba identificador de variable.');
+        GenError('Identifier of variable expected.');
         exit;
       end;
       cIn.Next;    //Pasa al siguiente
@@ -597,46 +650,31 @@ var
         if pErr.HayError then exit;  //verifica
       end;
     end else begin   //error
-      GenError('Se esperaba dirección numérica.');
+      GenError('Numeric address expected.');
       exit;
     end;
   end;
 
 var
   varType: String;
-  varName: String;
   varNames: array of string;  //nombre de variables
-  n: Integer;
   tmp: String;
   isAbsolute: Boolean;
 begin
   setlength(varNames,0);  //inicia arreglo
-  //procesa variables res,b,c : int;
-  repeat
-    cIn.SkipWhites;
-    //ahora debe haber un identificador de variable
-    if cIn.tokType <> tkIdentif then begin
-      GenError('Se esperaba identificador de variable.');
-      exit;
-    end;
-    //hay un identificador
-    varName := cIn.tok;
-    cIn.Next;  //lo toma
-    cIn.SkipWhites;
-    //sgrega nombre de variable
-    n := high(varNames)+1;
-    setlength(varNames,n+1);  //hace espacio
-    varNames[n] := varName;  //agrega nombre
-    if cIn.tok <> ',' then break; //sale
-    cIn.Next;  //toma la coma
-  until false;
-  //usualmente deberíw seguir ":"
+  //procesa variables a,b,c : int;
+  getListOfIdent(varNames);
+  if HayError then begin  //precisa el error
+    GenError('Identifier of variable expected.');
+    exit;
+  end;
+  //usualmente debería seguir ":"
   if cIn.tok = ':' then begin
     //debe venir el tipo de la variable
     cIn.Next;  //lo toma
     cIn.SkipWhites;
     if (cIn.tokType <> tkType) then begin
-      GenError('Se esperaba identificador de tipo.');
+      GenError('Identifier of type expected.');
       exit;
     end;
     varType := cIn.tok;   //lee tipo
@@ -654,7 +692,44 @@ begin
       if Perr.HayError then exit;
     end;
   end else begin
-    GenError('Se esperaba ":" o ",".');
+    GenError('":" or "," expected.');
+    exit;
+  end;
+  if not CaptureDelExpres then exit;
+  cIn.SkipWhites;
+end;
+procedure TCompiler.CompileConstDeclar;
+var
+//  consType: String;
+  consNames: array of string;  //nombre de variables
+  n: Integer;
+  tmp: String;
+begin
+  setlength(consNames,0);  //inicia arreglo
+  //procesa lista de constantes a,b,c ;
+  getListOfIdent(consNames);
+  if HayError then begin  //precisa el error
+    GenError('Identifier of constant expected.');
+    exit;
+  end;
+  //puede seguir "=" o identificador de tipo
+  if cIn.tok = '=' then begin
+    cIn.Next;  //pasa al siguiente
+    //Debe seguir una expresión constante, que no genere código
+    GetExpression(0);
+    if HayError then exit;
+    if res.catOp <> coConst then begin
+      GenError('Constant expression expected.');
+    end;
+    //Hasta aquí todo bien, crea la(s) constante(s).
+    for tmp in consNames do begin
+      //crea constante
+      n := CreateCons(tmp, res.typ);
+      res.CopyConsValTo(cons[n]); //asigna valor
+    end;
+//  end else if cIn.tok = ':' then begin
+  end else begin
+    GenError('"=", ":" or "," expected.');
     exit;
   end;
   if not CaptureDelExpres then exit;
@@ -674,7 +749,7 @@ begin
     CompileCurBlock;   //llamada recursiva
     if HayError then exit;
     if cIn.tokL<>'end' then begin
-      GenError('Se esperaba "end".');
+      GenError('"end" expected.');
       exit;
     end;
     cIn.Next;  //toma "end"
@@ -687,12 +762,12 @@ begin
          GetExpression(0);
          if HayError then exit;
          if res.typ<>tipBool then begin
-           GenError('Se esperaba expresión booleana.');
+           GenError('Boolean expression expected.');
            exit;
          end;
          cIn.SkipWhites;
          if cIn.tokL<>'do' then begin
-           GenError('Se esperaba "do".');
+           GenError('"do" expected.');
            exit;
          end;
          cIn.Next;   //toma "do"
@@ -743,7 +818,7 @@ begin
          end;
 
       end else begin
-        GenError('Estructura desconocida.');
+        GenError('Unknown structure.');
         exit;
       end;
     end else begin
@@ -782,6 +857,8 @@ var
 begin
   ClearVars;       //limpia las variables
   ClearFuncs;      //limpia las funciones
+  ClearAllConst;   //limpia las comstantes
+  //ClearTypes;      //limpia los tipos
   //limpia el estado de las funciones del sistena
   for i:=0 to nIntFun-1 do begin
     funcs[i].adrr:=-1;  //para indicar que no están codificadas
@@ -804,31 +881,38 @@ begin
     cIn.Next;  //pasa al nombre
     ProcComments;
     if cIn.Eof then begin
-      GenError('Se esperaba nombre de programa.');
+      GenError('Name of program expected.');
       exit;
     end;
     cIn.Next;  //Toma el nombre y pasa al siguiente
     if not CaptureDelExpres then exit;
   end;
   if cIn.Eof then begin
-    GenError('Se esperaba "begin", "var", "type" o "const".');
+    GenError('Expected "begin", "var", "type" or "const".');
     exit;
   end;
   ProcComments;
-  //empiezan las declaraciones
-  Cod_StartData;  //debe definirse en el "Interprete.pas"
-  if cIn.tokL = 'var' then begin
-    cIn.Next;    //lo toma
-    while (cIn.tokL <>'begin') and (cIn.tokL <>'const') and
-          (cIn.tokL <>'type') and (cIn.tokL <>'var') do begin
-      CompileVarDeclar;
-      if pErr.HayError then exit;;
+  //Empiezan las declaraciones
+  while (cIn.tokL ='const') or (cIn.tokL ='type') or (cIn.tokL ='var') do begin
+    if cIn.tokL = 'var' then begin
+      cIn.Next;    //lo toma
+      while (cIn.tokL <>'begin') and (cIn.tokL <>'const') and
+            (cIn.tokL <>'type') and (cIn.tokL <>'var') do begin
+        CompileVarDeclar;
+        if pErr.HayError then exit;;
+      end;
+    end else if cIn.tokL = 'const' then begin
+      cIn.Next;    //lo toma
+      while (cIn.tokL <>'begin') and (cIn.tokL <>'const') and
+            (cIn.tokL <>'type') and (cIn.tokL <>'var') do begin
+        CompileConstDeclar;
+        if pErr.HayError then exit;;
+      end;
+    end else begin
+      GenError('Not implemented: "%s"', [cIn.tok]);
+      exit;
     end;
   end;
-  //Crea variables temporales, para operaciones aritméticas.
-//  i_w2 := CreateVar('_w2', tipByte);
-//  i_w3 := CreateVar('_w3', tipByte);
-//  i_w4 := CreateVar('_w4', tipByte);
   //procesa cuerpo
   if cIn.tokL = 'begin' then begin
     Cod_StartProgram;
@@ -837,17 +921,17 @@ begin
     CompileCurBlock;   //compila el cuerpo
     if Perr.HayError then exit;
     if cIn.Eof then begin
-      GenError('Inesperado fin de archivo. Se esperaba "end".');
+      GenError('Unexpected end of file. "end" expected.');
       exit;       //sale
     end;
     if cIn.tokL <> 'end' then begin  //verifica si termina el programa
-      GenError('Se esperaba "end".');
+      GenError('"end" expected.');
       exit;       //sale
     end;
     cIn.Next;   //coge "end"
     _SLEEP();   //agrega instrucción final
   end else begin
-    GenError('Se esperaba "begin", "var", "type" o "const".');
+    GenError('Expected: "begin", "var", "type" or "const".');
     exit;
   end;
   Cod_EndProgram;
@@ -861,7 +945,7 @@ begin
   //se pone en un "try" para capturar errores y para tener un punto salida de salida
   //único
   if ejecProg then begin
-    GenError('Ya se está compilando un programa actualmente.');
+    GenError('There is a compilation in progress.');
     exit;  //sale directamente
   end;
   try
@@ -1036,7 +1120,36 @@ begin
   end;
   'es': begin
     //Update messages
+    dicSet('Not implemented.', 'No implementado');
+    dicSet('Not implemented: "%s"', 'No implementado: "%s"');
+    dicSet('Identifier expected.', 'Identificador esperado.');
     dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
+    dicSet('Unvalid float number.', 'Número decimal no válido.');
+    dicSet('Very large number. Cannot process.', 'Número muy grande. No se puede procesar. ');
+    dicSet('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.');
+    dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
+    dicSet('RAM memory is full.', 'Memoria RAM agotada.');
+    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
+    dicSet('"." expected.', 'Se esperaba "."');
+    dicSet('Invalid memory address.', 'Dirección de memoria inválida.');
+    dicSet('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.');
+    dicSet('Identifier of variable expected.', 'Se esperaba identificador de variable.');
+    dicSet('Identifier of constant expected.', 'Se esperaba identificador de constante');
+    dicSet('Numeric address expected.', 'Se esperaba dirección numérica.');
+    dicSet('Identifier of type expected.', 'Se esperaba identificador de tipo.');
+    dicSet('":" or "," expected.', 'Se esperaba ":" o ",".');
+    dicSet('"=", ":" or "," expected.', 'Se esperaba "=", ":" o ",".');
+    dicSet('"end" expected.', 'Se esperaba "end".');
+    dicSet('Boolean expression expected.', 'Se esperaba expresión booleana.');
+    dicSet('"do" expected.', 'Se esperaba "do".');
+    dicSet('Unknown structure.', 'Estructura desconocida.');
+    dicSet('Name of program expected.', 'Se esperaba nombre de programa.');
+    dicSet('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
+    dicSet('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".');
+    dicSet('"end" expected.', 'Se esperaba "end".');
+    dicSet('Expected: "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
+    dicSet('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.');
+    dicSet('Constant expression expected.', 'Se esperaba una expresión constante');
   end;
   end;
 end;
