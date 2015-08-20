@@ -5,12 +5,11 @@ unit Parser;
 interface
 uses
   Classes, SysUtils, LCLType, Dialogs, lclProc, Graphics, SynEditHighlighter,
-  SynFacilBasic, MisUtils, XpresBas, XpresParserPIC, Pic16Utils, Globales, types;
-
+  SynFacilBasic, SynFacilHighlighter, MisUtils, XpresBas, XpresParserPIC,
+  Pic16Utils, Globales, types;
 type
 
  { TCompiler }
-
   TCompiler = class(TCompilerBase)
   private
     //campos para controlar la codificación de rutinas iniciales
@@ -20,6 +19,7 @@ type
     iFlashTmp  : integer;   //almacenamiento temporal para pic.iFlash
     Traslape   : boolean;   //bandera de traslape
     ////////////////////////////////////////
+    lexDir : TSynFacilSyn;  //lexer para analizar directivas
     pic : TPIC16;   //objeto PIC de la serie 16
     //Atributos adicionales
     tkStruct   : TSynHighlighterAttributes;
@@ -35,6 +35,7 @@ type
       absBit: integer=-1): integer;
     function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
       =-1): integer;
+    procedure DefLexDir;
     procedure getListOfIdent(var itemList: TStringDynArray);
     procedure ProcComments;
     procedure CompileCurBlock;
@@ -384,11 +385,73 @@ begin
 end;
 procedure TCompiler.ProcComments;
 //Procesa comentarios y directivas
+function tokType: TSynHighlighterAttributes;
+begin
+  Result := TSynHighlighterAttributes(lexdir.GetTokenKind);
+end;
+procedure skipWhites;
+begin
+  if tokType = lexDir.tkSpace then
+    lexDir.Next;  //quita espacios
+end;
+var
+  f: Integer;
 begin
   cIn.SkipWhites;
   while cIn.tokType = tkDirective do begin
-    //se ha detectado una directiva
-    //MsgBox(Cin.tok);
+    //Se ha detectado una directiva
+    //Usa SynFacilSyn como lexer para analizar texto
+    lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
+    if tokType = lexDir.tkSpace then  lexDir.Next;  //quita espacios
+    if tokType <> lexDir.tkIdentif then begin
+      GenError('Error in directive.');
+      exit;
+    end;
+    //sigue identificador
+    case UpperCase(lexDir.GetToken) of
+    'PROCESSOR': begin
+      lexDir.Next;  //pasa al siguiente
+      skipWhites;
+
+    end;
+    'FREQUENCY': begin
+      lexDir.Next;  //pasa al siguiente
+      skipWhites;
+      if tokType <> lexDir.tkNumber then begin
+        GenError('Error in directive.');
+        exit;
+      end;
+      f := StrToInt(lexDir.GetToken);  //lee frecuencia
+      lexDir.Next;  //pasa al siguiente
+      skipWhites;
+      case UpperCase(lexDir.GetToken) of
+      'KHZ': f := f * 1000;
+      'MHZ': f := f * 1000000;
+      else
+        GenError('Error in directive.');
+        exit;
+      end;
+      pic.frequen:=f; //asigna freecuencia
+    end;
+    'POINTERS': begin
+      lexDir.Next;  //pasa al siguiente
+      skipWhites;
+
+    end;
+    'CONFIG': begin
+      lexDir.Next;  //pasa al siguiente
+      skipWhites;
+
+    end;
+    'DEFINE': begin
+      lexDir.Next;  //pasa al siguiente
+      skipWhites;
+
+    end;
+    else
+      GenError('Unknown directive: %s', [lexDir.GetToken]);
+      exit;
+    end;
 
     //pasa w siguiente
     cIn.Next;
@@ -877,6 +940,7 @@ begin
   debugln('*** Compilando en '+ IntToHex(iniMem,3));
   Perr.Clear;
   ProcComments;
+  if Perr.HayError then exit;
   if cIn.tokL = 'program' then begin
     cIn.Next;  //pasa al nombre
     ProcComments;
@@ -892,6 +956,7 @@ begin
     exit;
   end;
   ProcComments;
+  if Perr.HayError then exit;
   //Empiezan las declaraciones
   while (cIn.tokL ='const') or (cIn.tokL ='type') or (cIn.tokL ='var') do begin
     if cIn.tokL = 'var' then begin
@@ -1029,10 +1094,22 @@ begin
         FloatToStrF(100*used/tot, ffGeneral, 1, 3) + '%)' );
 end;
 
+procedure TCompiler.DefLexDir;
+{Define la sinatxis del lexer que se usará para analizar las directivas. La que
+ debe estar enter lso símbolo {$ ... }
+}
+begin
+  //solo se requiere identificadores y números
+  lexDir.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
+  lexDir.DefTokContent('[0-9]', '[0-9.]*', lexDir.tkNumber);
+  lexDir.Rebuild;
+end;
 constructor TCompiler.Create;
 begin
   inherited Create;
   pic := TPIC16.Create;
+  lexDir := TSynFacilSyn.Create(nil);  //crea lexer para analzair directivas
+  DefLexDir;
   cIn.OnNewLine:=@cInNewLine;
   ///////////define la sintaxis del compilador
   //crea y guarda referencia w los atributos
@@ -1108,6 +1185,7 @@ begin
 end;
 destructor TCompiler.Destroy;
 begin
+  lexDir.Destroy;
   pic.Destroy;
   inherited Destroy;
 end;
@@ -1150,6 +1228,9 @@ begin
     dicSet('Expected: "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
     dicSet('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.');
     dicSet('Constant expression expected.', 'Se esperaba una expresión constante');
+    dicSet('Clock frequency not supported.', 'Frecuencia de reloj no soportada.');
+    dicSet('Error in directive.', 'Error en directiva');
+    dicSet('Unknown directive: %s', 'Directiva desconocida: %s');
   end;
   end;
 end;

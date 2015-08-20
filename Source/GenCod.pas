@@ -614,7 +614,7 @@ begin
       _incf(_H.offs, toF);
     end;
     else
-       GenError('No implementado.');
+      genError('Not implemented: "%s"', [CatOperationToStr]);
     end;
     //caso de salida más general
     res.typ := tipWord;   //el resultado será siempre entero
@@ -684,6 +684,8 @@ begin
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
       //ReserveW; if HayError then exit;
+      _movlw(p1.Hoffs);      //Carga más peso del dato 1
+      _movwf(_H.offs);
       _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
@@ -704,12 +706,14 @@ begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
       FreeByte(spH);   //libera pila, obtiene dirección
       FreeByte(spL);   //libera pila, obtiene dirección
-      _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _movf(spH.offs, toW);      //Carga más peso del dato 1
+      _movwf(_H.offs);
+      _addwf(spL.offs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     else
-       GenError('No implementado.');
+      genError('Not implemented: "%s"', [CatOperationToStr] );
     end;
     //caso de salida más general
     res.typ := tipWord;   //el resultado será siempre entero
@@ -744,7 +748,7 @@ begin
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-5); PutComm(';fin rutina 1 mseg a 10MHz.');
   end else begin
-    GenError('Frecuencia de reloj no soportada.');
+    GenError('Clock frequency not supported.');
   end;
 end;
 procedure codif_delay_ms(const ifun: integer);

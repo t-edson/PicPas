@@ -18,29 +18,29 @@ Las opciones de optimización de código no están muy desarrolladas pero el có
 Como ejemplo el siguiente código, es para  parpadear un led en el puerto B:
 
 ```
-program aaa;
+{Sample program for to blink a Led on PORTC.4}
+{$FREQUENCY 4 MHZ }
+program BlinkLed;
+const
+  HIGH = true;
+  LOW = false;
 var
-  INDF  : BYTE @00;
   STATUS: BYTE absolute 03;
-  FSR   : BYTE absolute 04;
-  PORTA : BYTE absolute 05;
-  TRISA : BYTE absolute $85;
-  PORTB : BYTE absolute 06;
-  TRISB : BYTE absolute 134;
-  a,b: byte;
+  PORTB : BYTE absolute $06;
+  TRISB : BYTE absolute $86;
+  RP0 : boolean @STATUS.5;
   pin: boolean absolute PORTB.4;
 begin
-  STATUS := 32;
-  PORTB := 0;   //pone como salida
-  STATUS := 0;
-  PORTB := 0;   //apaga salidas
-  //parpadeo
-  delay_ms(1000);
+  RP0 := HIGH;
+  TRISB := 0;   //all outputs
+  RP0 := LOW;
+  PORTB := 0;   //init
+  delay_ms(1000);  //wait
   while true do begin
     delay_ms(300);
-    pin := true;
+    pin := HIGH;
     delay_ms(300);
-    PIN := false;
+    pin := LOW;
   end;
 end;
 

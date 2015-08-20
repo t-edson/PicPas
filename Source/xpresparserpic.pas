@@ -316,14 +316,29 @@ var
   tkBoolean : TSynHighlighterAttributes;
   tkSysFunct: TSynHighlighterAttributes;
 
+  function CatOperationToStr(Op: string=','): string;
+
 implementation
 uses Graphics;
 var  //variables privadas del compilador
   nullOper : TOperator; //Operador nulo. Usado como valor cero.
 
-//////////////// implementación de métodos  //////////////////
+function CatOperationToStr(Op: string=','): string;
+{Devuelve una cadena descriptiva de la variable global "catOperation"}
+begin
+  case catOperation of
+  coConst_Const  : exit('Constant'+ Op +'Constant');
+  coConst_Variab : exit('Constant'+ Op +'Variable');
+  coConst_Expres : exit('Constant'+ Op +'Expression');
+  coVariab_Const : exit('Variable'+ Op +'Constant');
+  coVariab_Variab: exit('Variable'+ Op +'Variable');
+  coVariab_Expres: exit('Variable'+ Op +'Constant');
+  coExpres_Const : exit('Expression'+ Op +'Constant');
+  coExpres_Variab: exit('Expression'+ Op +'Variable');
+  coExpres_Expres: exit('Expression'+ Op +'Expression');
+  end;
+end;
 { TOperator }
-
 function TOperator.CreateOperation(OperadType: Ttype; proc: TProcExecOperat): TxOperation;
 var
   r: TxOperation;
