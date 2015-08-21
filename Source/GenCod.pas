@@ -75,8 +75,10 @@ var
   memtab: array[0..MAX_MEMTAB-1] of Tregister;
   sp: integer;    //puntero a la estructura de pila. Apunta a la posición libre
   spSize: integer;  //tamaño actual de pila
-  _H, _L: Tregister;   //rehistrso de trabajo adicionales, para cálculos
-  InvertedExpBoolean : boolean;
+  _H, _L: Tregister;   //registros de trabajo adicionales, para cálculos
+  //variables de estado de las expresiones booleanas
+  BooleanInverted : boolean;  //indica que la lógica del bit de salida está invertida
+  BooleanBit : byte;          //indica el bit que se devuelve el resultado booleano (Z o C)
 
   //banderas
 //  ALused: Boolean;  //indica que el registro Al está siendo usado
@@ -260,7 +262,7 @@ begin
     _BSF(p1.offs, p1.bit);
   end;
   coExpres: begin  //ya está en STATUS.Z
-    if InvertedExpBoolean then begin  //está invertido
+    if BooleanInverted then begin  //está invertido
       _BCF(p1.offs, p1.bit);
       _BTFSS(_STATUS, _Z);
       _BSF(p1.offs, p1.bit);
@@ -375,11 +377,48 @@ begin
   end else  //caso general
     byte_oper_byte(SUBLW, SUBWF);
 end;
+procedure byte_and_byte;
+begin
+  if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
+    res.valInt:=p1.valInt and p2.valInt;  //optimiza respuesta
+    if not ValidateByteRange(res.valInt) then exit;   //necesario
+    res.typ := tipByte;
+    res.catOp:=coConst;
+    //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
+    exit;  //sale aquí, porque es un caso particular
+  end else  //caso general
+    byte_oper_byte(ANDLW, ANDWF);
+end;
+procedure byte_or_byte;
+begin
+  if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
+    res.valInt:=p1.valInt or p2.valInt;  //optimiza respuesta
+    if not ValidateByteRange(res.valInt) then exit;   //necesario
+    res.typ := tipByte;
+    res.catOp:=coConst;
+    //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
+    exit;  //sale aquí, porque es un caso particular
+  end else  //caso general
+    byte_oper_byte(IORLW, IORWF);
+end;
+procedure byte_xor_byte;
+begin
+  if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
+    res.valInt:=p1.valInt xor p2.valInt;  //optimiza respuesta
+    if not ValidateByteRange(res.valInt) then exit;   //necesario
+    res.typ := tipByte;
+    res.catOp:=coConst;
+    //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
+    exit;  //sale aquí, porque es un caso particular
+  end else  //caso general
+    byte_oper_byte(XORLW, XORWF);
+end;
 procedure byte_igual_byte;
 var
   r: Tregister;
 begin
-  InvertedExpBoolean := false;  //indica que trabaja en modo normal
+  BooleanInverted := false;  //indica que trabaja en modo normal
+  BooleanBit:=_Z;    //devolverá en Z
   if catOperation  = coConst_Const then begin  //compara constantes. Caso especial
     res.valBool := (p1.valInt = p2.valInt);  //optimiza respuesta
     res.typ := tipBool;
@@ -436,7 +475,7 @@ end;
 procedure byte_difer_byte;
 begin
   byte_igual_byte;  //usa el mismo código
-  InvertedExpBoolean := true;  //solo indica que la _Lógica se ha invertido
+  BooleanInverted := true;  //solo indica que la Lógica se ha invertido
 end;
 ////////////operaciones con Word
 procedure word_asig_word;
@@ -726,7 +765,17 @@ procedure codif_1mseg;
 //Codifica rutina de reatrdo de 1mseg.
 begin
   PutComLine('|;inicio rutina 1 mseg.');
-  if _CLOCK = 4000000 then begin
+  if _CLOCK = 1000000 then begin
+    _MOVLW(62);  //contador de iteraciones
+    _ADDLW(255);  //lazo de 4 ciclos
+    _BTFSS(_STATUS,_Z);
+    _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 1MHz.');
+  end else if _CLOCK = 2000000 then begin
+    _MOVLW(125);  //contador de iteraciones
+    _ADDLW(255);  //lazo de 4 ciclos
+    _BTFSS(_STATUS,_Z);
+    _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 2MHz.');
+  end else if _CLOCK = 4000000 then begin
     //rtuina básica para 4MHz
     _MOVLW(250);  //contador de iteraciones
     _ADDLW(255);  //lazo de 4 ciclos
@@ -747,6 +796,15 @@ begin
     _GOTO(_PC+1);
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-5); PutComm(';fin rutina 1 mseg a 10MHz.');
+  end else if _CLOCK = 12000000 then begin
+    _MOVLW(250);
+    _ADDLW(255);   //lazo de 12 ciclos
+    _GOTO(_PC+1);  //introduce 8 ciclos más de retardo
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _BTFSS(_STATUS,_Z);
+    _GOTO(_PC-5); PutComm(';fin rutina 1 mseg a 12MHz.');
   end else begin
     GenError('Clock frequency not supported.');
   end;
@@ -858,17 +916,31 @@ begin
   opr:=tipBool.CreateOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(tipBool,@bool_asig_bool);
 
+  {Precedencia de operadores en Pascal
+6)    ~, not, signo "-"   (mayor precedencia)
+5)    *, /, div, mod, and, shl, shr, &
+4)    |, !, +, -, or, xor
+3)    =, <>, <, <=, >, >=, in
+2)    :=                  (menor precedencia)
+}
   //////// Operaciones con Byte ////////////
   {Los operadores deben crearse con su precedencia correcta}
   opr:=tipByte.CreateOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(tipByte,@byte_asig_byte);
-  opr:=tipByte.CreateOperator('+',7,'suma');  //suma
+  opr:=tipByte.CreateOperator('+',4,'suma');  //suma
   opr.CreateOperation(tipByte,@byte_suma_byte);
-  opr:=tipByte.CreateOperator('-',7,'resta');  //suma
+  opr:=tipByte.CreateOperator('-',4,'resta');  //suma
   opr.CreateOperation(tipByte,@byte_resta_byte);
-  opr:=tipByte.CreateOperator('=',4,'igual');
+  opr:=tipByte.CreateOperator('AND',5,'and');  //suma
+  opr.CreateOperation(tipByte,@byte_and_byte);
+  opr:=tipByte.CreateOperator('OR',4,'or');  //suma
+  opr.CreateOperation(tipByte,@byte_or_byte);
+  opr:=tipByte.CreateOperator('XOR',4,'xor');  //suma
+  opr.CreateOperation(tipByte,@byte_xor_byte);
+
+  opr:=tipByte.CreateOperator('=',3,'igual');
   opr.CreateOperation(tipByte,@byte_igual_byte);
-  opr:=tipByte.CreateOperator('<>',4,'difer');
+  opr:=tipByte.CreateOperator('<>',3,'difer');
   opr.CreateOperation(tipByte,@byte_difer_byte);
 
   //////// Operaciones con Word ////////////
@@ -876,7 +948,7 @@ begin
   opr:=tipWord.CreateOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(tipWord,@word_asig_word);
   opr.CreateOperation(tipByte,@word_asig_byte);
-  opr:=tipWord.CreateOperator('+',7,'suma');  //suma
+  opr:=tipWord.CreateOperator('+',4,'suma');  //suma
   opr.CreateOperation(tipWord,@word_suma_word);
   opr.CreateOperation(tipByte,@word_suma_byte);
 

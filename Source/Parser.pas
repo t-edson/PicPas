@@ -319,7 +319,13 @@ begin
     //verificación de longitud de entero
     if toknum[1] = '$' then begin
       //formato hexadecimal
-      if length(toknum)>=6 then begin  //solo aquí puede haber problemas
+      { TODO : Una verificación más precisa debería considerar hasta 64 bits y quitar los posibles ceros delante o intentar convertir y capturar el error. }
+      if length(toknum)>9 then begin  //protege antes de intentar convertirlo
+        GenError('Very large number. Cannot process.');
+      end;
+    end else if toknum[1] = '%' then begin
+      //formato binario
+      if length(toknum)>33 then begin  //protege antes de intentar convertirlo
         GenError('Very large number. Cannot process.');
       end;
     end else begin
@@ -853,7 +859,7 @@ begin
            end;
          end;
          coVariab:begin
-           if InvertedExpBoolean then  //_Lógica invertida
+           if BooleanInverted then  //_Lógica invertida
              _BTFSC(res.offs, res.bit)  //verifica condición
            else
              _BTFSS(res.offs, res.bit);  //verifica condición
@@ -866,7 +872,7 @@ begin
            pic.codGotoAt(dg, _PC);   //termina de codificar el salto
          end;
          coExpres:begin
-           if InvertedExpBoolean then  //_Lógica invertida
+           if BooleanInverted then  //_Lógica invertida
              _BTFSC(_STATUS, _Z)  //verifica condición
            else
              _BTFSS(_STATUS, _Z);  //verifica condición
@@ -1140,6 +1146,7 @@ begin
   xLex.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
   xLex.DefTokContent('[0-9]', '[0-9.]*', tkNumber);
   xLex.DefTokContent('[$]','[0-9A-Fa-f]*', tkNumber);
+  xLex.DefTokContent('[%]','[01]*', tkNumber);
   //define palabras claves
   xLex.AddIdentSpecList('THEN var type', tkKeyword);
   xLex.AddIdentSpecList('program public private method const', tkKeyword);
@@ -1147,7 +1154,7 @@ begin
   xLex.AddIdentSpecList('END UNTIL', tkBlkDelim);
   xLex.AddIdentSpecList('true false', tkBoolean);
   xLex.AddIdentSpecList('while', tkStruct);
-  xLex.AddIdentSpecList('and or xor not', tkOperator);
+  xLex.AddIdentSpecList('and or xor not div mod in', tkOperator);
   //tipos predefinidos
   xLex.AddIdentSpecList('byte word boolean', tkType);
   //símbolos especiales
@@ -1156,7 +1163,7 @@ begin
   xLex.AddSymbSpec('*',  tkOperator);
   xLex.AddSymbSpec('/',  tkOperator);
   xLex.AddSymbSpec('\',  tkOperator);
-  xLex.AddSymbSpec('%',  tkOperator);
+//  xLex.AddSymbSpec('%',  tkOperator);
   xLex.AddSymbSpec('**', tkOperator);
   xLex.AddSymbSpec('=',  tkOperator);
   xLex.AddSymbSpec('>',  tkOperator);

@@ -16,36 +16,43 @@
 
   <Identifiers CharsStart= "A..Za..z_" Content = "A..Za..z0..9_"> 
     <token attribute="Keyword"> 
-    absolute  and  array  asm as 
+    absolute array asm as 
     begin 
     case  const  constructor class 
-    destructor  div  do  downto dispose  
+    destructor do  downto dispose  
     else  end exit except  exports 
     for function file finalization finally
     goto
-    if  implementation  in  inherited  inline  interface initialization  is 
+    if  implementation  inherited  inline  interface initialization  is 
     library label
-    mod
-    not nil new
-    or object  of  on  operator out 
+    nil new
+    object  of  on  operator out 
     procedure property 
 	protected public private published packed program 
     repeat record  reintroduce raise 
     string self  set  shl  shr  
-    then to try true type threadvar 
+    then to try type threadvar 
     unit  until  uses 
     var 
     while  with 
-    xor
+    </token>
+    <!--operadores--> 
+    <token attribute="Keyword"> 
+	and or xor not div mod in
+    </token>
+    <!--enumerado boolean--> 
+    <token attribute="Keyword"> 
+	true false
     </token>
     <!--tipos de datos--> 
     <token attribute="Keyword"> 
 	byte word boolean
     </token>
   </Identifiers>
-  <Token CharsStart="$" Content = '0..9ABCDEFabcdef' Attribute='NUMBER'> </Token>
   <Token CharsStart="#" Content = '0..9' Attribute='STRING'> </Token>
   <Token CharsStart="0..9" Content = '0..9.' Attribute='NUMBER'> </Token>
+  <Token CharsStart="$" Content = '0..9ABCDEFabcdef' Attribute='NUMBER'> </Token>
+  <Token CharsStart="%" Content = '0..1' Attribute='NUMBER'> </Token>
   <String Start="'" End="'"></String>
   <Comment Start="//" ></Comment>
   <Comment Start="(*" End="*)" Multiline="true"></Comment>
