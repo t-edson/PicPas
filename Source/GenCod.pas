@@ -32,12 +32,17 @@ var
 
   Los resultados de una expresión se dejarán en:
 
-  1. En Bit Z, de STATUS -> Si el resultado es de tipo boolean.
-  2. El acumulador W     -> Si el resultado es de tipo byte.
-  3. Los registros (H,w) -> Si el resultado es tipo word.
+  1. En Bit Z o C, de STATUS -> Si el resultado es de tipo boolean.
+  2. El acumulador W        -> Si el resultado es de tipo byte.
+  3. Los registros (H,w)    -> Si el resultado es tipo word.
 
-  a menos que ya esté ocupado, en cuyo caso se pone primero en la pila.
+  a menos que ya esté ocupado, en cuyo caso se guarda primero en un registro auxiliar.
   a menos que ya estén ocupados, en cuyo caso se pone primero en la pila.
+
+  Despues de ejecutar alguna operación booleana que devuelva una expresión, se
+  actaulizan las banderas: BooleanBit y BooleanInverted, que implican que:
+  * Si BooleanInverted es TRUE, significa que la lógica de C o Z está invertida.
+  * La bandera BooleanBit, indica si el resultado se deja en C o Z.
 
   Por normas de Xpres, se debe considerar que:
   * Todas las operaciones recibe sus dos parámetros en las variables p1 y p2.
@@ -80,8 +85,6 @@ var
   BooleanInverted : boolean;  //indica que la lógica del bit de salida está invertida
   BooleanBit : byte;          //indica el bit que se devuelve el resultado booleano (Z o C)
 
-  //banderas
-//  ALused: Boolean;  //indica que el registro Al está siendo usado
 //Rutinas de gestión de memoria
 function GetByte(var reg: Tregister; varNom: string = ''): boolean;
 {Pide una dirección de memoria para alojar un byte en la RAM, para una tarea temporal.
@@ -242,7 +245,7 @@ begin
   end;
   _H.used := true;   //Lo marca como indicando que se va a ocupar
 end;
-////////////operaciones con Byte
+////////////operaciones con Boolean
 procedure bool_asig_bool;
 begin
   if p1.catOp <> coVariab then begin  //validación
@@ -264,11 +267,11 @@ begin
   coExpres: begin  //ya está en STATUS.Z
     if BooleanInverted then begin  //está invertido
       _BCF(p1.offs, p1.bit);
-      _BTFSS(_STATUS, _Z);
+      _BTFSS(_STATUS, BooleanBit);
       _BSF(p1.offs, p1.bit);
     end else begin  //caso normal
       _BCF(p1.offs, p1.bit);
-      _BTFSC(_STATUS, _Z);
+      _BTFSC(_STATUS, BooleanBit);
       _BSF(p1.offs, p1.bit);
     end;
   end;

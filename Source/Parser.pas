@@ -29,6 +29,10 @@ type
     tkType     : TSynHighlighterAttributes;
     tkOthers   : TSynHighlighterAttributes;
     procedure CompileConstDeclar;
+    procedure CompileIF;
+    procedure CompileREPEAT;
+    procedure CompileWHILE;
+    procedure CompileInstructionDummy;
     procedure CompileInstruction;
     function CreateCons(const consName: string; typ: ttype): integer;
     function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
@@ -221,6 +225,14 @@ procedure _XORLW(const k: word); inline;
 begin
   cxp.pic.codAsm(XORLW, k);
 end;
+procedure _GOTO_PEND(var  igot: integer);
+{Escribe una instrucción GOTO, pero sin precisar el destino aún. Devuelve la dirección
+ donde se escribe el GOTO, para poder completarla posteriormente.
+}
+begin
+  igot := cxp.pic.iFlash;  //guarda posición de instrucción de salto
+  cxp.pic.codAsm(GOTO_, 0);  //pone salto indefinido
+end;
 function _PC: word; inline;
 {Devuelve la dirección actual en Flash}
 begin
@@ -391,11 +403,11 @@ begin
 end;
 procedure TCompiler.ProcComments;
 //Procesa comentarios y directivas
-function tokType: TSynHighlighterAttributes;
+  function tokType: TSynHighlighterAttributes;
 begin
   Result := TSynHighlighterAttributes(lexdir.GetTokenKind);
 end;
-procedure skipWhites;
+  procedure skipWhites;
 begin
   if tokType = lexDir.tkSpace then
     lexDir.Next;  //quita espacios
@@ -804,12 +816,204 @@ begin
   if not CaptureDelExpres then exit;
   cIn.SkipWhites;
 end;
-procedure TCompiler.CompileInstruction;
-{Compila una única instrucción o un bloque BEGIN ... END}
+procedure TCompiler.CompileWHILE;
+{Compila uan extructura WHILE}
 var
   l1: Word;
-  p: Integer;
   dg: Integer;
+begin
+  l1 := _PC;        //guarda dirección de inicio
+  GetExpression(0);
+  if HayError then exit;
+  if res.typ<>tipBool then begin
+    GenError('Boolean expression expected.');
+    exit;
+  end;
+  cIn.SkipWhites;
+  if cIn.tokL<>'do' then begin
+    GenError('"do" expected.');
+    exit;
+  end;
+  cIn.Next;   //toma "do"
+  //aquí debe estar el cuerpo del "while"
+  case res.catOp of
+  coConst: begin  //la condición es fija
+    if res.valBool then begin
+      //lazo infinito
+      CompileInstruction;  //debería completarse las instrucciones de tipo "break"
+      if HayError then exit;
+      _GOTO(l1);
+    end else begin
+      //lazo nulo
+      //aquí se debería lanzar una advertencia
+      CompileInstructionDummy;
+      if HayError then exit;
+    end;
+  end;
+  coVariab:begin
+    _BTFSS(res.offs, res.bit);  //verifica condición
+    _GOTO_PEND(dg);  //salto pendiente
+    CompileInstruction;
+    if HayError then exit;
+    _GOTO(l1);
+    //ya se tiene el destino del salto
+    pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+  end;
+  coExpres:begin
+    if BooleanInverted then  //_Lógica invertida
+      _BTFSC(_STATUS, BooleanBit)  //verifica condición
+    else
+      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    _GOTO_PEND(dg);  //salto pendiente
+    CompileInstruction;
+    if HayError then exit;
+    _GOTO(l1);
+    //ya se tiene el destino del salto
+    pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+  end;
+  end;
+end;
+procedure TCompiler.CompileREPEAT;
+{Compila uan extructura WHILE}
+var
+  l1: Word;
+  dg: Integer;
+begin
+  l1 := _PC;        //guarda dirección de inicio
+//  CompileInstruction;  //debería completarse las instrucciones de tipo "break"
+  CompileCurBlock;
+  if HayError then exit;
+  cIn.SkipWhites;
+  if cIn.tokL<>'until' then begin
+    GenError('"until" expected.');
+    exit;
+  end;
+  cIn.Next;   //toma "until"
+  GetExpression(0);
+  if HayError then exit;
+  if res.typ<>tipBool then begin
+    GenError('Boolean expression expected.');
+    exit;
+  end;
+  case res.catOp of
+  coConst: begin  //la condición es fija
+    if res.valBool then begin
+      //lazo nulo
+    end else begin
+      //lazo infinito
+      _GOTO(l1);
+    end;
+  end;
+  coVariab:begin
+    _BTFSS(res.offs, res.bit);  //verifica condición
+    _GOTO(l1);
+    //sale cuando la condición es verdadera
+  end;
+  coExpres:begin
+    if BooleanInverted then  //_Lógica invertida
+      _BTFSC(_STATUS, BooleanBit)  //verifica condición
+    else
+      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    _GOTO(l1);
+    //sale cuando la condición es verdadera
+  end;
+  end;
+end;
+procedure TCompiler.CompileIF;
+{Compila uan extructura IF}
+var
+  dg: Integer;
+  dg2: Integer;
+begin
+  GetExpression(0);
+  if HayError then exit;
+  if res.typ<>tipBool then begin
+    GenError('Boolean expression expected.');
+    exit;
+  end;
+  cIn.SkipWhites;
+  if cIn.tokL<>'then' then begin
+    GenError('"then" expected.');
+    exit;
+  end;
+  cIn.Next;   //toma "then"
+  //aquí debe estar el cuerpo del "if"
+  case res.catOp of
+  coConst: begin  //la condición es fija
+    if res.valBool then begin
+      //es verdadero, siempre se ejecuta
+      CompileInstruction;
+      if HayError then exit;
+      if cIn.tokL = 'else' then begin
+        //hay bloque ELSE, pero no se ejecutará nunca
+        cIn.Next;   //toma "else"
+        CompileInstructionDummy;  //solo para mantener la sintaxis
+        if HayError then exit;
+      end;
+    end else begin
+      //aquí se debería lanzar una advertencia
+      CompileInstructionDummy;  //solo para mantener la sintaxis
+      if HayError then exit;
+      if cIn.tokL = 'else' then begin
+        //hay bloque ELSE, que sí se ejecutará
+        cIn.Next;   //toma "else"
+        CompileInstruction;
+        if HayError then exit;
+      end;
+    end;
+  end;
+  coVariab:begin
+    _BTFSS(res.offs, res.bit);  //verifica condición
+    _GOTO_PEND(dg);  //salto pendiente
+    CompileInstruction;
+    if HayError then exit;
+    if cIn.tokL <> 'else' then begin  //no hay blqoue ELSE
+      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+    end else begin
+      //hay bloque ELSE
+      cIn.Next;   //toma "else"
+      _GOTO_PEND(dg2);  //salto pendiente
+      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+      CompileInstruction;
+      if HayError then exit;
+      pic.codGotoAt(dg2, _PC);   //termina de codificar el salto
+    end;
+  end;
+  coExpres:begin
+    if BooleanInverted then  //_Lógica invertida
+      _BTFSC(_STATUS, BooleanBit)  //verifica condición
+    else
+      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    _GOTO_PEND(dg);  //salto pendiente
+    CompileInstruction;
+    if HayError then exit;
+    if cIn.tokL <> 'else' then begin  //no hay blqoue ELSE
+      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+    end else begin
+      //hay bloque ELSE
+      cIn.Next;   //toma "else"
+      _GOTO_PEND(dg2);  //salto pendiente
+      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+      CompileInstruction;
+      if HayError then exit;
+      pic.codGotoAt(dg2, _PC);   //termina de codificar el salto
+    end;
+  end;
+  end;
+end;
+procedure TCompiler.CompileInstructionDummy;
+{Compila una instrucción pero sin generar código. }
+var
+  p: Integer;
+begin
+  p := pic.iFlash;
+  CompileInstruction;  //compila solo para mantener la sintaxis
+  pic.iFlash := p;     //elimina lo compilado
+  //puede salir con error
+  { TODO : Debe limpiar la memoria flash que ocupó, para dejar la cas limpia. }
+end;
+procedure TCompiler.CompileInstruction;
+{Compila una única instrucción o un bloque BEGIN ... END}
 begin
   cIn.SkipWhites;
   if cIn.tokL='begin' then begin
@@ -822,70 +1026,19 @@ begin
       exit;
     end;
     cIn.Next;  //toma "end"
+    cIn.SkipWhites;
   end else begin
     //es una instrucción
     if cIn.tokType = tkStruct then begin
-      if cIn.tokl = 'while' then begin
-         cIn.Next;         //pasa "while"
-         l1 := _PC;        //guarda dirección de inicio
-         GetExpression(0);
-         if HayError then exit;
-         if res.typ<>tipBool then begin
-           GenError('Boolean expression expected.');
-           exit;
-         end;
-         cIn.SkipWhites;
-         if cIn.tokL<>'do' then begin
-           GenError('"do" expected.');
-           exit;
-         end;
-         cIn.Next;   //toma "do"
-         //aquí debe estar el cuerpo del "while"
-         case res.catOp of
-         coConst: begin  //la condición es fija
-           if res.valBool then begin
-             //lazo infinito
-             CompileInstruction;  //debería completarse las instrucciones de tipo "break"
-             if HayError then exit;
-             _GOTO(l1);
-           end else begin
-             //lazo nulo
-             //aquí se debería lanzar una advertencia
-             p := pic.iFlash;
-             CompileInstruction;  //compila solo para mantener la sintaxis
-             if HayError then exit;
-             pic.iFlash := p;     //elimina lo compilado
-             { TODO : Debe limpiar la memoria flash que ocupó, para dejar la cas limpia. }
-           end;
-         end;
-         coVariab:begin
-           if BooleanInverted then  //_Lógica invertida
-             _BTFSC(res.offs, res.bit)  //verifica condición
-           else
-             _BTFSS(res.offs, res.bit);  //verifica condición
-           dg:=pic.iFlash;  //guarda posición de instrucción de salto
-           _GOTO(0);  //pone salto indefinido
-           CompileInstruction;  //compila solo para mantener la sintaxis
-           if HayError then exit;
-           _GOTO(l1);
-           //ya se tiene el destino del salto
-           pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-         end;
-         coExpres:begin
-           if BooleanInverted then  //_Lógica invertida
-             _BTFSC(_STATUS, _Z)  //verifica condición
-           else
-             _BTFSS(_STATUS, _Z);  //verifica condición
-           dg:=pic.iFlash;  //guarda posición de instrucción de salto
-           _GOTO(0);  //pone salto indefinido
-           CompileInstruction;  //compila solo para mantener la sintaxis
-           if HayError then exit;
-           _GOTO(l1);
-           //ya se tiene el destino del salto
-           pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-         end;
-         end;
-
+      if cIn.tokl = 'if' then begin
+        cIn.Next;         //pasa "if"
+        CompileIF;
+      end else if cIn.tokl = 'while' then begin
+        cIn.Next;         //pasa "while"
+        CompileWHILE;
+      end else if cIn.tokl = 'repeat' then begin
+        cIn.Next;         //pasa "until"
+        CompileREPEAT;
       end else begin
         GenError('Unknown structure.');
         exit;
@@ -1153,7 +1306,7 @@ begin
   xLex.AddIdentSpecList('class create destroy sub do begin', tkKeyword);
   xLex.AddIdentSpecList('END UNTIL', tkBlkDelim);
   xLex.AddIdentSpecList('true false', tkBoolean);
-  xLex.AddIdentSpecList('while', tkStruct);
+  xLex.AddIdentSpecList('if while repeat for', tkStruct);
   xLex.AddIdentSpecList('and or xor not div mod in', tkOperator);
   //tipos predefinidos
   xLex.AddIdentSpecList('byte word boolean', tkType);
@@ -1227,6 +1380,8 @@ begin
     dicSet('"end" expected.', 'Se esperaba "end".');
     dicSet('Boolean expression expected.', 'Se esperaba expresión booleana.');
     dicSet('"do" expected.', 'Se esperaba "do".');
+    dicSet('"then" expected.', 'Se esperaba "then"');
+    dicSet('"until" expected.', 'Se esperaba "until"');
     dicSet('Unknown structure.', 'Estructura desconocida.');
     dicSet('Name of program expected.', 'Se esperaba nombre de programa.');
     dicSet('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
