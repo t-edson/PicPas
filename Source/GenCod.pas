@@ -467,7 +467,7 @@ begin
       _SUBWF(r.offs, toW);  //compara directamente a lo que había en pila.
     end;
     else
-       GenError('No implementado.');
+      GenError('Not implemented.'); exit;
     end;
     //caso de salida más general
     res.typ := tipBool;   //el resultado será siempre entero
@@ -890,10 +890,78 @@ begin
      _call(funcs[ifun].adrr+1);  //ya está en W
    end;
    else
-     GenError('No soportado'); exit;
+     GenError('Not implemented.'); exit;
    end;
 end;
-
+procedure fun_Inc_byte(ifun: integer);
+begin
+  case res.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    GenError('Cannot increase a constant.'); exit;
+  end;
+  coVariab: begin
+    _INCF(res.offs, toF);
+  end;
+  coExpres: begin  //se asume que ya está en (_H,w)
+    GenError('Cannot increase an expression.'); exit;
+  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+end;
+procedure fun_Inc_word(ifun: integer);
+begin
+  case res.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    GenError('Cannot increase a constant.'); exit;
+  end;
+  coVariab: begin
+    _INCF(res.Loffs, toF);
+    _BTFSC(_STATUS, _Z);
+    _INCF(res.Hoffs, toF);
+  end;
+  coExpres: begin  //se asume que ya está en (_H,w)
+    GenError('Cannot increase an expression.'); exit;
+  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+end;
+procedure fun_Dec_byte(ifun: integer);
+begin
+  case res.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    GenError('Cannot decrease a constant.'); exit;
+  end;
+  coVariab: begin
+    _DECF(res.offs, toF);
+  end;
+  coExpres: begin  //se asume que ya está en (_H,w)
+    GenError('Cannot decrease an expression.'); exit;
+  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+end;
+procedure fun_Dec_word(ifun: integer);
+begin
+  case res.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    GenError('Cannot decrease a constant.'); exit;
+  end;
+  coVariab: begin
+    _MOVF(res.offs, toW);
+    _BTFSC(_STATUS, _Z);
+    _DECF(res.Hoffs, toF);
+    _DECF(res.Loffs, toF);
+  end;
+  coExpres: begin  //se asume que ya está en (_H,w)
+    GenError('Cannot decrease an expression.'); exit;
+  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+end;
 procedure TCompiler.StartSyntax;
 //Se ejecuta solo una vez al inicio
 var
@@ -962,6 +1030,14 @@ begin
   CreateParam(f,'',tipByte);
   f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms_w);
   CreateParam(f,'',tipWord);
-  funcs[f].adrr:=-1;   //para indicar que no existe en memoria aún.
+  f := CreateSysFunction('Inc', tipByte, @fun_Inc_byte);
+  CreateParam(f,'',tipByte);
+  f := CreateSysFunction('Inc', tipByte, @fun_Inc_word);
+  CreateParam(f,'',tipWord);
+  f := CreateSysFunction('Dec', tipByte, @fun_Dec_byte);
+  CreateParam(f,'',tipByte);
+  f := CreateSysFunction('Dec', tipByte, @fun_Dec_word);
+  CreateParam(f,'',tipWord);
+//  funcs[f].adrr:=-1;   //para indicar que no existe en memoria aún.
 end;
 

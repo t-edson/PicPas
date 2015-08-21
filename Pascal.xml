@@ -3,6 +3,7 @@
   <!-- Atributos a usar-->
   <Attribute Name="Keyword" Style="b"> </Attribute>
   <Attribute Name="Directive" ForeCol="#FE2EF7"> </Attribute>
+  <Attribute Name="Asm" ForeCol="#60D060"> </Attribute>
 
   <Completion>
     <Include Attribute="Keyword"></Include>
@@ -12,6 +13,8 @@
   "while expresion do begin&#xD;  &#xD;end;"
   delay_ms
   delay_ms(100);
+  inc
+  inc();
   </Completion>
 
   <Identifiers CharsStart= "A..Za..z_" Content = "A..Za..z0..9_"> 
@@ -58,6 +61,7 @@
   <Comment Start="(*" End="*)" Multiline="true"></Comment>
   <Token Start="{" End="}" Multiline="true" Folding="true" Attribute="Comment"></Token>
   <Token Start="{$" End="}" Multiline="false" Folding="false" Attribute="Directive"></Token>
+  <Token Start="asm" End="END" Multiline="true" Folding="true" Attribute="Asm"></Token>
 
   <Section Name="unit" Start="unit"></Section>
   <Section Name="interface" Start="interface"  BackCol="#E0FFF0">

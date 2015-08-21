@@ -22,11 +22,12 @@ type
     lexDir : TSynFacilSyn;  //lexer para analizar directivas
     pic : TPIC16;   //objeto PIC de la serie 16
     //Atributos adicionales
+    tkType     : TSynHighlighterAttributes;
     tkStruct   : TSynHighlighterAttributes;
     tkDirective: TSynHighlighterAttributes;
+    tkAsm      : TSynHighlighterAttributes;
     tkExpDelim : TSynHighlighterAttributes;
     tkBlkDelim : TSynHighlighterAttributes;
-    tkType     : TSynHighlighterAttributes;
     tkOthers   : TSynHighlighterAttributes;
     procedure CompileConstDeclar;
     procedure CompileIF;
@@ -416,61 +417,64 @@ var
   f: Integer;
 begin
   cIn.SkipWhites;
-  while cIn.tokType = tkDirective do begin
-    //Se ha detectado una directiva
-    //Usa SynFacilSyn como lexer para analizar texto
-    lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
-    if tokType = lexDir.tkSpace then  lexDir.Next;  //quita espacios
-    if tokType <> lexDir.tkIdentif then begin
-      GenError('Error in directive.');
-      exit;
-    end;
-    //sigue identificador
-    case UpperCase(lexDir.GetToken) of
-    'PROCESSOR': begin
-      lexDir.Next;  //pasa al siguiente
-      skipWhites;
-
-    end;
-    'FREQUENCY': begin
-      lexDir.Next;  //pasa al siguiente
-      skipWhites;
-      if tokType <> lexDir.tkNumber then begin
+  while (cIn.tokType = tkDirective) or (cIn.tokType = tkAsm) do begin
+    if cIn.tokType = tkAsm then begin
+      msgbox(cIn.tok);
+    end else begin
+      //Se ha detectado una directiva
+      //Usa SynFacilSyn como lexer para analizar texto
+      lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
+      if tokType = lexDir.tkSpace then  lexDir.Next;  //quita espacios
+      if tokType <> lexDir.tkIdentif then begin
         GenError('Error in directive.');
         exit;
       end;
-      f := StrToInt(lexDir.GetToken);  //lee frecuencia
-      lexDir.Next;  //pasa al siguiente
-      skipWhites;
+      //sigue identificador
       case UpperCase(lexDir.GetToken) of
-      'KHZ': f := f * 1000;
-      'MHZ': f := f * 1000000;
+      'PROCESSOR': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+
+      end;
+      'FREQUENCY': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+        if tokType <> lexDir.tkNumber then begin
+          GenError('Error in directive.');
+          exit;
+        end;
+        f := StrToInt(lexDir.GetToken);  //lee frecuencia
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+        case UpperCase(lexDir.GetToken) of
+        'KHZ': f := f * 1000;
+        'MHZ': f := f * 1000000;
+        else
+          GenError('Error in directive.');
+          exit;
+        end;
+        pic.frequen:=f; //asigna freecuencia
+      end;
+      'POINTERS': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+
+      end;
+      'CONFIG': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+
+      end;
+      'DEFINE': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+
+      end;
       else
-        GenError('Error in directive.');
+        GenError('Unknown directive: %s', [lexDir.GetToken]);
         exit;
       end;
-      pic.frequen:=f; //asigna freecuencia
     end;
-    'POINTERS': begin
-      lexDir.Next;  //pasa al siguiente
-      skipWhites;
-
-    end;
-    'CONFIG': begin
-      lexDir.Next;  //pasa al siguiente
-      skipWhites;
-
-    end;
-    'DEFINE': begin
-      lexDir.Next;  //pasa al siguiente
-      skipWhites;
-
-    end;
-    else
-      GenError('Unknown directive: %s', [lexDir.GetToken]);
-      exit;
-    end;
-
     //pasa w siguiente
     cIn.Next;
     cIn.SkipWhites;  //limpia blancos
@@ -777,7 +781,7 @@ begin
     exit;
   end;
   if not CaptureDelExpres then exit;
-  cIn.SkipWhites;
+  ProcComments;
 end;
 procedure TCompiler.CompileConstDeclar;
 var
@@ -814,7 +818,7 @@ begin
     exit;
   end;
   if not CaptureDelExpres then exit;
-  cIn.SkipWhites;
+  ProcComments;
 end;
 procedure TCompiler.CompileWHILE;
 {Compila uan extructura WHILE}
@@ -1015,7 +1019,7 @@ end;
 procedure TCompiler.CompileInstruction;
 {Compila una única instrucción o un bloque BEGIN ... END}
 begin
-  cIn.SkipWhites;
+  ProcComments;
   if cIn.tokL='begin' then begin
     //es bloque
     cIn.Next;  //toma "begin"
@@ -1026,7 +1030,7 @@ begin
       exit;
     end;
     cIn.Next;  //toma "end"
-    cIn.SkipWhites;
+    ProcComments;
   end else begin
     //es una instrucción
     if cIn.tokType = tkStruct then begin
@@ -1054,7 +1058,7 @@ procedure TCompiler.CompileCurBlock;
 {Compila el bloque de código actual hasta encontrar un delimitador de bloque, o fin
 de archivo. }
 begin
-  cIn.SkipWhites;
+  ProcComments;
   while not cIn.Eof and (cIn.tokType<>tkBlkDelim) do begin
     //se espera una expresión o estructura
     CompileInstruction;
@@ -1062,10 +1066,10 @@ begin
     //se espera delimitador
     if cIn.Eof then break;  //sale por fin de archivo
     //busca delimitador
-    cIn.SkipWhites;
+    ProcComments;
     if cIn.tokType=tkExpDelim then begin //encontró delimitador de expresión
       cIn.Next;   //lo toma
-      cIn.SkipWhites;  //quita espacios
+      ProcComments;  //quita espacios
     end else begin  //hay otra cosa
       exit;  //debe ser un error
     end;
@@ -1267,7 +1271,7 @@ constructor TCompiler.Create;
 begin
   inherited Create;
   pic := TPIC16.Create;
-  lexDir := TSynFacilSyn.Create(nil);  //crea lexer para analzair directivas
+  lexDir := TSynFacilSyn.Create(nil);  //crea lexer para analzar directivas
   DefLexDir;
   cIn.OnNewLine:=@cInNewLine;
   ///////////define la sintaxis del compilador
@@ -1285,6 +1289,8 @@ begin
   tkBlkDelim := xLex.NewTokType('BlkDelim'); //delimitador de bloque
   tkType     := xLex.NewTokType('Types');    //personalizado
   tkStruct   := xLex.NewTokType('Struct');   //personalizado
+  tkDirective:= xLex.NewTokType('Directive'); //personalizado
+  tkAsm      := xLex.NewTokType('Asm');      //personalizado
   tkOthers   := xLex.NewTokType('Others');   //personalizado
   //Configura atributos
   tkKeyword.Style := [fsBold];     //en negrita
@@ -1337,6 +1343,7 @@ begin
   xLex.DefTokDelim('//','', xLex.tkComment);
   xLex.DefTokDelim('{','}', xLex.tkComment, tdMulLin);
   xLex.DefTokDelim('{$','}', tkDirective);
+  xLex.DefTokDelim('Asm','END', tkAsm, tdMulLin);
   //define bloques de sintaxis
 //  xLex.AddBlock('{','}');
   xLex.Rebuild;   //es necesario para terminar la definición
@@ -1393,6 +1400,10 @@ begin
     dicSet('Clock frequency not supported.', 'Frecuencia de reloj no soportada.');
     dicSet('Error in directive.', 'Error en directiva');
     dicSet('Unknown directive: %s', 'Directiva desconocida: %s');
+    dicSet('Cannot increase a constant.', 'No se puede incrementar una constante.');
+    dicSet('Cannot increase an expression.','No se puede incrementar una expresión.');
+    dicSet('Cannot decrease a constant.', 'No se puede disminuir una constante.');
+    dicSet('Cannot decrease an expression.','No se puede disminuir una expresión.');
   end;
   end;
 end;
