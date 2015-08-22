@@ -5,8 +5,8 @@ unit Parser;
 interface
 uses
   Classes, SysUtils, LCLType, Dialogs, lclProc, Graphics, SynEditHighlighter,
-  SynFacilBasic, SynFacilHighlighter, MisUtils, XpresBas, XpresParserPIC,
-  Pic16Utils, Globales, types;
+  SynFacilBasic, SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
+  XpresParserPIC, Pic16Utils, Globales, ProcAsm, types;
 type
 
  { TCompiler }
@@ -419,7 +419,8 @@ begin
   cIn.SkipWhites;
   while (cIn.tokType = tkDirective) or (cIn.tokType = tkAsm) do begin
     if cIn.tokType = tkAsm then begin
-      msgbox(cIn.tok);
+      //procesa la línea ASM
+      ProcASMlime(cIn.tok);
     end else begin
       //Se ha detectado una directiva
       //Usa SynFacilSyn como lexer para analizar texto
