@@ -1,5 +1,5 @@
-PicPas 0.2b
-===========
+PicPas 0.2
+==========
 Compilador en Pascal para microcontroladores PIC 
 
 NOTA: Este compilador está aún en fase Alfa y tiene funcionalidades limitadas. 

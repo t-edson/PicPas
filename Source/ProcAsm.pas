@@ -53,7 +53,7 @@ begin
   end;
 end;
 function CaptureRegister(var f: byte): boolean;
-{Captura la dirección de un registro y devuelve en "f". Si no encuentra devuelve error}
+{Captura la referencia a un registro y devuelve en "f". Si no encuentra devuelve error}
 begin
   skipWhites;
   if tokType = lexAsm.tkNumber then begin
@@ -63,8 +63,24 @@ begin
     Result := true;
     exit;
   end else begin
-    cpx.GenError('Expecte address or variable name.');
+    cpx.GenError('Expected address or variable name.');
     //asmErrLin := asmRow;
+    Result := false;
+    exit;
+  end;
+end;
+function CaptureAddress(var a: word): boolean;
+{Captura una dirección a una instrucción y devuelve en "a". Si no encuentra devuelve error}
+begin
+  skipWhites;
+  if tokType = lexAsm.tkNumber then begin
+    //es una dirección numérica
+    a := StrToInt(lexAsm.GetToken);
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else begin
+    cpx.GenError('Expected address.');
     Result := false;
     exit;
   end;
@@ -89,6 +105,29 @@ begin
     exit(false);
   end;
 end;
+function CaptureNbit(var b: byte): boolean;
+{Captura el número de bit de una instrucción y devuelve en "b". Si no encuentra devuelve error}
+var
+  dest: String;
+begin
+  skipWhites;
+  if tokType = lexAsm.tkNumber then begin
+    //es una dirección numérica
+    b := StrToInt(lexAsm.GetToken);
+    if (b>7) then begin
+      cpx.GenError('Expected number of bit: 0..7.');
+      Result := false;
+      exit;
+    end;
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else begin
+    cpx.GenError('Expected number of bit: 0..7.');
+    Result := false;
+    exit;
+  end;
+end;
 
 procedure StartASM; //Inicia el procesamiento de código ASM
 begin
@@ -107,6 +146,8 @@ var
   tok: String;
   f : byte;
   d: TPIC16destin;
+  b: byte;
+  a: word;
 begin
   tok := lexAsm.GetToken;
   //debería ser una instrucción
@@ -123,29 +164,22 @@ begin
     if not CaptureComma then exit;
     if not CaptureDestinat(d) then exit;
     pic.codAsm(idInst, f, d);
-    //no debe quedar más que espacios o comentarios
-    skipWhites;
-    if tokType <> lexAsm.tkEol then begin
-      cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
-      exit;
-    end;
   end;
   'f':begin
     if not CaptureRegister(f) then exit;
     pic.codAsm(idInst, f, toW);  //"toW" no used.
   end;
-{  'fb':begin
+  'fb':begin
     if not CaptureRegister(f) then exit;
     if not CaptureComma then exit;
-    skipWhites;
-    if not ExtractNumber(dest,b) then exit;
-    if dest <> '' then begin
-      Application.MessageBox('Syntax Error','');
-      exit;
-    end;
-    pic.codAsm(idInst, f, b);  //"b" no used.
+    if not CaptureNbit(b) then exit;
+    pic.codAsm(idInst, f, b);
   end;
-  'k': begin
+  'a': begin
+    if not CaptureAddress(a) then exit;
+     pic.codAsm(idInst, a);  //"toW" no used.
+  end;
+{  'k': begin
      if not ExtractNumber(dest,k) then exit;
      if dest <> '' then begin
        Application.MessageBox('Syntax Error','');
@@ -161,6 +195,13 @@ begin
     pic.codAsm(idInst);  //"toW" no used.
   end;}
   end;
+  //no debe quedar más que espacios o comentarios
+  skipWhites;
+  if tokType <> lexAsm.tkEol then begin
+    cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
+    exit;
+  end;
+
 end;
 procedure ProcASM(const AsmLin: string);
 {Procesa una línea en ensamblador}
@@ -292,10 +333,12 @@ begin
   'es': begin
     //Update messages
     dicSet('Expected ",".', 'Se esperaba ","');
-    dicSet('Expecte address or variable name.','Se esperaba dirección o variable.');
+    dicSet('Expected address or variable name.','Se esperaba dirección o variable.');
     dicSet('Invalid ASM Opcode: %s', 'Instrucción inválida: %s');
     dicSet('Expected "w" or "f".','Se esperaba "w" or "f".');
     dicSet('Syntax error: "%s"', 'Error de sintaxis: "%s"');
+    dicSet('Expected number of bit: 0..7.', 'Se esperaba número de bit: 0..7');
+    dicSet('Expected address.', 'Se esperaba dirección');
   end;
   end;
 end;

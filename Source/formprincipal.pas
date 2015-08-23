@@ -1,5 +1,7 @@
-{Programa ejemplo de uso de la librería para implementar editores "utilEditSyn".
-                                        Por Tito Hinostroza   11/07/2014 }
+{                                   PicPas.
+Compilador en Pascal para micorocntroladores PIC de la serie 16.
+
+                                        Por Tito Hinostroza   22/08/2015 }
 unit FormPrincipal;
 
 {$mode objfpc}{$H+}
