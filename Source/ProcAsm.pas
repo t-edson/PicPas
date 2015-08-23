@@ -4,26 +4,92 @@ unit ProcAsm;
 interface
 uses
   Classes, SysUtils, strutils, MisUtils, SynFacilHighlighter,
-  SynEditHighlighter;
+  SynEditHighlighter, Pic16Utils, XpresParserPIC;
 var
-  asmRow: integer;   //número de fila explorada
+  asmRow: integer;     //número de fila explorada
+  asmErr: string;      //texto del error
+  asmErrLin: integer;  //línea de error de ASM
 
+type
+  TerrRoutine = procedure(msg: string) of object;
+  TerrRoutine2 = procedure(msg: string; const Args: array of const);
+
+procedure InitAsm(pic0: TPIC16; cpx0: TCompilerBase);
 procedure ProcASMlime(const AsmLin: string);  //Procesa una línea de código ASM
 
 implementation
 var
   InAsm : boolean;
-  lexAsm : TSynFacilSyn;  //lexer para analizar ASM
+  lexAsm: TSynFacilSyn;  //lexer para analizar ASM
+  pic   : TPIC16;        //referencia al PIC
+  cpx   : TCompilerBase;
 
-function tokType: TSynHighlighterAttributes;
+function tokType: TSynHighlighterAttributes; inline;
 begin
   Result := TSynHighlighterAttributes(lexAsm.GetTokenKind);
 end;
 procedure skipWhites;
+//salta blancos o comentarios
 begin
-if tokType = lexAsm.tkSpace then
-  lexAsm.Next;  //quita espacios
+  if tokType = lexAsm.tkSpace then
+    lexAsm.Next;  //quita espacios
+  //puede que siga comentario
+  if tokType = lexAsm.tkComment then
+    lexAsm.Next;
+  //después de un comentario no se espera nada.
 end;
+function CaptureComma: boolean;
+{Captura una coma. Si no encuentra devuelve error}
+begin
+  skipWhites;
+  if lexAsm.GetToken = ',' then begin
+    lexAsm.Next;   //toma la coma
+    Result := true;
+    exit;
+  end else begin
+    Result := false;
+    cpx.GenError('Expected ",".');
+    exit;
+  end;
+end;
+function CaptureRegister(var f: byte): boolean;
+{Captura la dirección de un registro y devuelve en "f". Si no encuentra devuelve error}
+begin
+  skipWhites;
+  if tokType = lexAsm.tkNumber then begin
+    //es una dirección numérica
+    f := StrToInt(lexAsm.GetToken);
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else begin
+    cpx.GenError('Expecte address or variable name.');
+    //asmErrLin := asmRow;
+    Result := false;
+    exit;
+  end;
+end;
+function CaptureDestinat(var d: TPIC16destin): boolean;
+{Captura el destino de una instrucción y devuelve en "d". Si no encuentra devuelve error}
+var
+  dest: String;
+begin
+  skipWhites;
+  dest := lexAsm.GetToken;
+  if (LowerCase(dest)='f') or (dest='1') then begin
+    d := toF;
+    lexAsm.Next;
+    exit(true);
+  end else if (LowerCase(dest)='w') or (dest='0') then begin
+    d := toW;
+    lexAsm.Next;
+    exit(true);
+  end else begin
+    cpx.GenError('Expected "w" or "f".');
+    exit(false);
+  end;
+end;
+
 procedure StartASM; //Inicia el procesamiento de código ASM
 begin
   InAsm := true;  //para indicar que estamos en medio de código ASM
@@ -33,20 +99,122 @@ procedure EndASM;  //Termina el procesamiento de código ASM
 begin
   InAsm := false;
 end;
+procedure ProcInstrASM;
+//Procesa una instrucción ASM
+var
+  stx: string;
+  idInst: TPIC16Inst;
+  tok: String;
+  f : byte;
+  d: TPIC16destin;
+begin
+  tok := lexAsm.GetToken;
+  //debería ser una instrucción
+  idInst := pic.FindOpcode(tok, stx);
+  if idInst = _Inval then begin
+    cpx.GenError('Invalid ASM Opcode: %s', [tok]);
+    exit;
+  end;
+  //es un código válido
+  lexAsm.Next;
+  case stx of
+  'fd': begin   //se espera 2 parámetros
+    if not CaptureRegister(f) then exit;
+    if not CaptureComma then exit;
+    if not CaptureDestinat(d) then exit;
+    pic.codAsm(idInst, f, d);
+    //no debe quedar más que espacios o comentarios
+    skipWhites;
+    if tokType <> lexAsm.tkEol then begin
+      cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
+      exit;
+    end;
+  end;
+  'f':begin
+    if not CaptureRegister(f) then exit;
+    pic.codAsm(idInst, f, toW);  //"toW" no used.
+  end;
+{  'fb':begin
+    if not CaptureRegister(f) then exit;
+    if not CaptureComma then exit;
+    skipWhites;
+    if not ExtractNumber(dest,b) then exit;
+    if dest <> '' then begin
+      Application.MessageBox('Syntax Error','');
+      exit;
+    end;
+    pic.codAsm(idInst, f, b);  //"b" no used.
+  end;
+  'k': begin
+     if not ExtractNumber(dest,k) then exit;
+     if dest <> '' then begin
+       Application.MessageBox('Syntax Error','');
+       exit;
+     end;
+     pic.codAsm(idInst, k);  //"toW" no used.
+  end;
+  '': begin
+    if dest <> '' then begin
+      Application.MessageBox('Syntax Error','');
+      exit;
+    end;
+    pic.codAsm(idInst);  //"toW" no used.
+  end;}
+  end;
+end;
 procedure ProcASM(const AsmLin: string);
 {Procesa una línea en ensamblador}
+var
+  lbl: String;
 begin
-  inc(asmRow);   //cuenta líneas
+  inc(asmRow);   //cuenta destíneas
   if Trim(AsmLin) = '' then exit;
-  //procesa la línea
+  //procesa la destínea
   lexAsm.SetLine(asmLin, asmRow);  //inicia cadena
   if tokType = lexAsm.tkKeyword then begin
-    //puede ser una instrucción
-
+    ProcInstrASM;
+    if cpx.HayError then exit;
+  end else if tokType = lexAsm.tkIdentif then begin
+    //puede ser una etiqueta
+    lbl := lexAsm.GetToken;   //guarda posible etiqueta
+    lexAsm.Next;
+    if lexAsm.GetToken = ':' then begin
+      //definitivamente es una etiqueta
+      lexAsm.Next;
+      skipwhites;
+      if tokType <> lexAsm.tkEol then begin
+        //Hay algo más. Solo puede ser una instrucción
+        ProcInstrASM;
+        if cpx.HayError then exit;
+      end;
+    end else begin
+      //puede ser una etiqueta
+      skipwhites;
+      if tokType <> lexAsm.tkEol then begin
+        //Hay algo más. Solo puede ser una instrucción
+        ProcInstrASM;
+        if cpx.HayError then exit;
+      end;
+    end;
+  end else if tokType = lexAsm.tkComment then begin
+    skipWhites;
+    if tokType <> lexAsm.tkEol then begin
+      cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
+      exit;
+    end;
+  end else if tokType = lexAsm.tkSpace then begin
+    skipWhites;
+    if tokType <> lexAsm.tkEol then begin
+      //Hay algo más. Solo puede ser una instrucción
+      ProcInstrASM;
+      if cpx.HayError then exit;
+    end;
+  end else begin
+    cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
+    exit;
   end;
   skipWhites;  //quita espacios
-
-  msgbox(AsmLin);
+//  msgbox(AsmLin);
 end;
 function IsStartASM(var lin: string): boolean;
 {Indica si una línea contiene al delimitador inicial "ASM". Si es así, la recorta.}
@@ -82,6 +250,13 @@ begin
   lin := copy(Lin, 1, length(Lin)-3);  //quita "end"
   exit(true);
 end;
+
+procedure InitAsm(pic0: TPIC16; cpx0: TCompilerBase);
+{Inicia el procesamiento del código en ensamblador}
+begin
+  pic := pic0;     //para poder codificarf instrucciones
+  cpx := cpx0;     //para acceder a rutinas de error y variables, constantes, ...
+end;
 procedure ProcASMlime(const AsmLin: string); //Procesa una línea de código ASM
 var
   lin: String;
@@ -105,6 +280,23 @@ begin
   end else begin
     //línea común de asm
     ProcASM(lin);
+  end;
+end;
+
+procedure SetLanguage(lang: string);
+begin
+  case lang of
+  'en': begin
+    dicClear;  //it's yet in English
+  end;
+  'es': begin
+    //Update messages
+    dicSet('Expected ",".', 'Se esperaba ","');
+    dicSet('Expecte address or variable name.','Se esperaba dirección o variable.');
+    dicSet('Invalid ASM Opcode: %s', 'Instrucción inválida: %s');
+    dicSet('Expected "w" or "f".','Se esperaba "w" or "f".');
+    dicSet('Syntax error: "%s"', 'Error de sintaxis: "%s"');
+  end;
   end;
 end;
 

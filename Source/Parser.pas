@@ -421,6 +421,7 @@ begin
     if cIn.tokType = tkAsm then begin
       //procesa la línea ASM
       ProcASMlime(cIn.tok);
+      if HayError then exit;
     end else begin
       //Se ha detectado una directiva
       //Usa SynFacilSyn como lexer para analizar texto
@@ -783,6 +784,7 @@ begin
   end;
   if not CaptureDelExpres then exit;
   ProcComments;
+  //puede salir con error
 end;
 procedure TCompiler.CompileConstDeclar;
 var
@@ -820,6 +822,7 @@ begin
   end;
   if not CaptureDelExpres then exit;
   ProcComments;
+  //puede salir con error
 end;
 procedure TCompiler.CompileWHILE;
 {Compila uan extructura WHILE}
@@ -1021,6 +1024,7 @@ procedure TCompiler.CompileInstruction;
 {Compila una única instrucción o un bloque BEGIN ... END}
 begin
   ProcComments;
+  if HayError then exit;   //puede dar error por código assembler o directivas
   if cIn.tokL='begin' then begin
     //es bloque
     cIn.Next;  //toma "begin"
@@ -1032,6 +1036,7 @@ begin
     end;
     cIn.Next;  //toma "end"
     ProcComments;
+    //puede salir con error
   end else begin
     //es una instrucción
     if cIn.tokType = tkStruct then begin
@@ -1052,7 +1057,6 @@ begin
       //debe ser es una expresión
       GetExpression(0);
     end;
-
   end;
 end;
 procedure TCompiler.CompileCurBlock;
@@ -1060,17 +1064,20 @@ procedure TCompiler.CompileCurBlock;
 de archivo. }
 begin
   ProcComments;
+  if HayError then exit;   //puede dar error por código assembler o directivas
   while not cIn.Eof and (cIn.tokType<>tkBlkDelim) do begin
     //se espera una expresión o estructura
     CompileInstruction;
-    if perr.HayError then exit;   //aborta
+    if HayError then exit;   //aborta
     //se espera delimitador
     if cIn.Eof then break;  //sale por fin de archivo
     //busca delimitador
     ProcComments;
+    if HayError then exit;   //puede dar error por código assembler o directivas
     if cIn.tokType=tkExpDelim then begin //encontró delimitador de expresión
       cIn.Next;   //lo toma
       ProcComments;  //quita espacios
+      if HayError then exit;   //puede dar error por código assembler o directivas
     end else begin  //hay otra cosa
       exit;  //debe ser un error
     end;
@@ -1108,6 +1115,7 @@ begin
   if cIn.tokL = 'program' then begin
     cIn.Next;  //pasa al nombre
     ProcComments;
+    if HayError then exit;   //puede dar error por código assembler o directivas
     if cIn.Eof then begin
       GenError('Name of program expected.');
       exit;
@@ -1344,12 +1352,13 @@ begin
   xLex.DefTokDelim('//','', xLex.tkComment);
   xLex.DefTokDelim('{','}', xLex.tkComment, tdMulLin);
   xLex.DefTokDelim('{$','}', tkDirective);
-  xLex.DefTokDelim('Asm','END', tkAsm, tdMulLin);
+  xLex.DefTokDelim('Asm','End', tkAsm, tdMulLin);
   //define bloques de sintaxis
 //  xLex.AddBlock('{','}');
   xLex.Rebuild;   //es necesario para terminar la definición
 
   StartSyntax;   //Debe hacerse solo una vez al inicio
+  InitAsm(pic, self);   //inicia el procesamiento de ASM
 end;
 destructor TCompiler.Destroy;
 begin
