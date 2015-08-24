@@ -67,7 +67,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="6">
+    <Units Count="7">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -100,6 +100,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ProcAsm"/>
       </Unit5>
+      <Unit6>
+        <Filename Value="..\..\_Librerias\PicUtils 0.4b\pic16devices.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="PIC16devices"/>
+      </Unit6>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

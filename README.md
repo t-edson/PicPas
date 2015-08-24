@@ -1,4 +1,4 @@
-PicPas 0.2
+PicPas 0.3
 ==========
 Compilador en Pascal para microcontroladores PIC 
 

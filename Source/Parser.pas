@@ -6,7 +6,7 @@ interface
 uses
   Classes, SysUtils, LCLType, Dialogs, lclProc, Graphics, SynEditHighlighter,
   SynFacilBasic, SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
-  XpresParserPIC, Pic16Utils, Globales, ProcAsm, types;
+  XpresParserPIC, Pic16Utils, PIC16devices, Globales, ProcAsm, types;
 type
 
  { TCompiler }
@@ -73,30 +73,30 @@ implementation
 //  i_w4 : integer;  //índice a la variable temporal byte
 //Funciones de acceso rápido a métodos del compilador. Se usan para ayudar al geenrador de código.
 //rutinas generales para la codificación
-procedure CodAsm(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
+procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(inst, f, d);
+  cxp.pic.codAsmFD(inst, f, d);
 end;
-procedure CodAsm(const inst: TPIC16Inst; const f, b: byte); inline;
+procedure CodAsmK(const inst: TPIC16Inst; const k: byte); inline;
 begin
-  cxp.pic.codAsm(inst, f, b);
+  cxp.pic.codAsmK(inst, k);
 end;
-procedure CodAsm(const inst: TPIC16Inst; const k: word); inline;
+{procedure CodAsm(const inst: TPIC16Inst; const f, b: byte); inline;
 begin
-  cxp.pic.codAsm(inst, k);
-end;
+  cxp.pic.codAsmFB(inst, f, b);
+end;}
 //rutinas que facilitan la codifición de instrucciones
 procedure _ADDWF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(ADDWF, f,d);
+  cxp.pic.codAsmFD(ADDWF, f,d);
 end;
 procedure _ANDWF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(ANDWF, f,d);
+  cxp.pic.codAsmFD(ANDWF, f,d);
 end;
 procedure _CLRF(const f: byte); inline;
 begin
-  cxp.pic.codAsm(CLRF, f, toW);
+  cxp.pic.codAsmF(CLRF, f);
 end;
 procedure _CLRW(); inline;
 begin
@@ -104,35 +104,35 @@ begin
 end;
 procedure _COMF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(COMF, f,d);
+  cxp.pic.codAsmFD(COMF, f,d);
 end;
 procedure _DECF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(DECF, f,d);
+  cxp.pic.codAsmFD(DECF, f,d);
 end;
 procedure _DECFSZ(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(DECFSZ, f,d);
+  cxp.pic.codAsmFD(DECFSZ, f,d);
 end;
 procedure _INCF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(INCF, f,d);
+  cxp.pic.codAsmFD(INCF, f,d);
 end;
 procedure _INCFSZ(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(INCFSZ, f,d);
+  cxp.pic.codAsmFD(INCFSZ, f,d);
 end;
 procedure _IORWF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(IORWF, f,d);
+  cxp.pic.codAsmFD(IORWF, f,d);
 end;
 procedure _MOVF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(MOVF, f,d);
+  cxp.pic.codAsmFD(MOVF, f,d);
 end;
 procedure _MOVWF(const f: byte); inline;
 begin
-  cxp.pic.codAsm(MOVWF, f,toW);
+  cxp.pic.codAsmF(MOVWF, f);
 end;
 procedure _NOP(); inline;
 begin
@@ -140,67 +140,67 @@ begin
 end;
 procedure _RLF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(RLF, f,d);
+  cxp.pic.codAsmFD(RLF, f,d);
 end;
 procedure _RRF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(RRF, f,d);
+  cxp.pic.codAsmFD(RRF, f,d);
 end;
 procedure _SUBWF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(SUBWF, f,d);
+  cxp.pic.codAsmFD(SUBWF, f,d);
 end;
 procedure _SWAPF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(SWAPF, f,d);
+  cxp.pic.codAsmFD(SWAPF, f,d);
 end;
 procedure _XORWF(const f: byte; d: TPIC16destin); inline;
 begin
-  cxp.pic.codAsm(XORWF, f,d);
+  cxp.pic.codAsmFD(XORWF, f,d);
 end;
 procedure _BCF(const f, b: byte); inline;
 begin
-  cxp.pic.codAsm(BCF, f, b);
+  cxp.pic.codAsmFB(BCF, f, b);
 end;
 procedure _BSF(const f, b: byte); inline;
 begin
-  cxp.pic.codAsm(BSF, f, b);
+  cxp.pic.codAsmFB(BSF, f, b);
 end;
 procedure _BTFSC(const f, b: byte); inline;
 begin
-  cxp.pic.codAsm(BTFSC, f, b);
+  cxp.pic.codAsmFB(BTFSC, f, b);
 end;
 procedure _BTFSS(const f, b: byte); inline;
 begin
-  cxp.pic.codAsm(BTFSS, f, b);
+  cxp.pic.codAsmFB(BTFSS, f, b);
 end;
 procedure _ADDLW(const k: word); inline;
 begin
-  cxp.pic.codAsm(ADDLW, k);
+  cxp.pic.codAsmK(ADDLW, k);
 end;
 procedure _ANDLW(const k: word); inline;
 begin
-  cxp.pic.codAsm(ANDLW, k);
+  cxp.pic.codAsmK(ANDLW, k);
 end;
-procedure _CALL(const k: word); inline;
+procedure _CALL(const a: word); inline;
 begin
-  cxp.pic.codAsm(CALL, k);
+  cxp.pic.codAsmA(CALL, a);
 end;
 procedure _CLRWDT(); inline;
 begin
   cxp.pic.codAsm(CLRWDT);
 end;
-procedure _GOTO(const k: word); inline;
+procedure _GOTO(const a: word); inline;
 begin
-  cxp.pic.codAsm(GOTO_, k);
+  cxp.pic.codAsmA(GOTO_, a);
 end;
 procedure _IORLW(const k: word); inline;
 begin
-  cxp.pic.codAsm(IORLW, k);
+  cxp.pic.codAsmK(IORLW, k);
 end;
 procedure _MOVLW(const k: word); inline;
 begin
-  cxp.pic.codAsm(MOVLW, k);
+  cxp.pic.codAsmK(MOVLW, k);
 end;
 procedure _RETFIE(); inline;
 begin
@@ -208,7 +208,7 @@ begin
 end;
 procedure _RETLW(const k: word); inline;
 begin
-  cxp.pic.codAsm(RETLW, k);
+  cxp.pic.codAsmK(RETLW, k);
 end;
 procedure _RETURN(); inline;
 begin
@@ -220,11 +220,11 @@ begin
 end;
 procedure _SUBLW(const k: word); inline;
 begin
-  cxp.pic.codAsm(SUBLW, k);
+  cxp.pic.codAsmK(SUBLW, k);
 end;
 procedure _XORLW(const k: word); inline;
 begin
-  cxp.pic.codAsm(XORLW, k);
+  cxp.pic.codAsmK(XORLW, k);
 end;
 procedure _GOTO_PEND(var  igot: integer);
 {Escribe una instrucción GOTO, pero sin precisar el destino aún. Devuelve la dirección
@@ -232,7 +232,7 @@ procedure _GOTO_PEND(var  igot: integer);
 }
 begin
   igot := cxp.pic.iFlash;  //guarda posición de instrucción de salto
-  cxp.pic.codAsm(GOTO_, 0);  //pone salto indefinido
+  cxp.pic.codAsmK(GOTO_, 0);  //pone salto indefinido
 end;
 function _PC: word; inline;
 {Devuelve la dirección actual en Flash}
@@ -436,7 +436,10 @@ begin
       'PROCESSOR': begin
         lexDir.Next;  //pasa al siguiente
         skipWhites;
-
+        if not GetHardwareInfo(pic, lexDir.GetToken) then begin
+          GenError('Unknown device: %s', [lexDir.GetToken]);
+          exit;
+        end;
       end;
       'FREQUENCY': begin
         lexDir.Next;  //pasa al siguiente
@@ -1414,6 +1417,7 @@ begin
     dicSet('Cannot increase an expression.','No se puede incrementar una expresión.');
     dicSet('Cannot decrease a constant.', 'No se puede disminuir una constante.');
     dicSet('Cannot decrease an expression.','No se puede disminuir una expresión.');
+    dicSet('Unknown device: %s', 'Dispositivo desconocido: %s');
   end;
   end;
 end;

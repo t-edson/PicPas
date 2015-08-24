@@ -317,38 +317,38 @@ begin
   coConst_Variab: begin
     ReserveW; if HayError then exit;   //pide acumualdor
     _MOVLW(p1.valInt);
-    CodAsm(InstWF, p2.offs, toW);  //deja en W
+    CodAsmFD(InstWF, p2.offs, toW);  //deja en W
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     //ReserveW; if HayError then exit;
-    CodAsm(InstLW, p1.valInt);  //deja en W
+    CodAsmK(InstLW, p1.valInt);  //deja en W
   end;
   coVariab_Const: begin
     ReserveW; if HayError then exit;
     _MOVLW(p2.valInt);
-    CodAsm(InstWF, p1.offs, toW);  //deja en W
+    CodAsmFD(InstWF, p1.offs, toW);  //deja en W
   end;
   coVariab_Variab:begin
     ReserveW; if HayError then exit;
     _MOVF(p2.offs, toW);
-    CodAsm(InstWF, p1.offs, toW);  //deja en W
+    CodAsmFD(InstWF, p1.offs, toW);  //deja en W
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     //ReserveW; if HayError then exit;
-    CodAsm(InstWF, p1.offs, toW);  //deja en W
+    CodAsmFD(InstWF, p1.offs, toW);  //deja en W
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     //ReserveW; if HayError then exit;
-    CodAsm(InstLW, p2.valInt);  //deja en W
+    CodAsmK(InstLW, p2.valInt);  //deja en W
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     //ReserveW; if HayError then exit;
-    CodAsm(InstWF, p2.offs, toW);  //deja en W
+    CodAsmFD(InstWF, p2.offs, toW);  //deja en W
   end;
   coExpres_Expres:begin
     //la expresión p1 debe estar salvada y p2 en el acumulador
     FreeByte(r);   //libera pila porque se usará el dato ahí contenido
-    CodAsm(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
   end;
   end;
   //caso de salida más general

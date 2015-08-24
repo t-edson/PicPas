@@ -1,4 +1,9 @@
-{Unidad para procesar código ensamblador del PIC}
+{Unidad para procesar código ensamblador del PIC
+La implementación es aún básica. Soporta código ensamblador, pero falta implementar
+validaciones y flexibilidad para aceptar etiquetas, direcciones de variables o
+constantes.
+                                 Por Tito Hinostroza.   23/08/2015
+}
 unit ProcAsm;
 {$mode objfpc}{$H+}
 interface
@@ -85,6 +90,27 @@ begin
     exit;
   end;
 end;
+function CaptureByte(var k: byte): boolean;
+{Captura un byte y devuelve en "k". Si no encuentra devuelve error}
+var
+  n: Integer;
+begin
+  skipWhites;
+  if tokType = lexAsm.tkNumber then begin
+    //es una dirección numérica
+    n := StrToInt(lexAsm.GetToken);
+    if (n>255) then begin
+      cpx.GenError('Expected byte.');
+      exit(false);
+    end;
+    k:=n;
+    lexAsm.Next;
+    exit(true);
+  end else begin
+    cpx.GenError('Expected byte.');
+    exit(false);
+  end;
+end;
 function CaptureDestinat(var d: TPIC16destin): boolean;
 {Captura el destino de una instrucción y devuelve en "d". Si no encuentra devuelve error}
 var
@@ -148,6 +174,7 @@ var
   d: TPIC16destin;
   b: byte;
   a: word;
+  k: byte;
 begin
   tok := lexAsm.GetToken;
   //debería ser una instrucción
@@ -163,37 +190,29 @@ begin
     if not CaptureRegister(f) then exit;
     if not CaptureComma then exit;
     if not CaptureDestinat(d) then exit;
-    pic.codAsm(idInst, f, d);
+    pic.codAsmFD(idInst, f, d);
   end;
   'f':begin
     if not CaptureRegister(f) then exit;
-    pic.codAsm(idInst, f, toW);  //"toW" no used.
+    pic.codAsmF(idInst, f);
   end;
   'fb':begin
     if not CaptureRegister(f) then exit;
     if not CaptureComma then exit;
     if not CaptureNbit(b) then exit;
-    pic.codAsm(idInst, f, b);
+    pic.codAsmFB(idInst, f, b);
   end;
   'a': begin
     if not CaptureAddress(a) then exit;
-     pic.codAsm(idInst, a);  //"toW" no used.
+    pic.codAsmA(idInst, a);
   end;
-{  'k': begin
-     if not ExtractNumber(dest,k) then exit;
-     if dest <> '' then begin
-       Application.MessageBox('Syntax Error','');
-       exit;
-     end;
-     pic.codAsm(idInst, k);  //"toW" no used.
+  'k': begin
+     if not CaptureByte(k) then exit;
+     pic.codAsmK(idInst, k);
   end;
   '': begin
-    if dest <> '' then begin
-      Application.MessageBox('Syntax Error','');
-      exit;
-    end;
-    pic.codAsm(idInst);  //"toW" no used.
-  end;}
+    pic.codAsm(idInst);
+  end;
   end;
   //no debe quedar más que espacios o comentarios
   skipWhites;
@@ -339,6 +358,7 @@ begin
     dicSet('Syntax error: "%s"', 'Error de sintaxis: "%s"');
     dicSet('Expected number of bit: 0..7.', 'Se esperaba número de bit: 0..7');
     dicSet('Expected address.', 'Se esperaba dirección');
+    dicSet('Expected byte.', 'Se esperaba byte');
   end;
   end;
 end;
