@@ -41,6 +41,7 @@ type
     acVerPanArc: TAction;
     edAsm: TSynEdit;
     ImageList1: TImageList;
+    ImageList2: TImageList;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
@@ -102,10 +103,10 @@ type
     procedure editChangeFileInform;
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
-    procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
     procedure FormShow(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
     edit: TSynFacilEditor;
     hlAssem : TSynFacilSyn;   //resaltador para ensamblador
@@ -142,6 +143,7 @@ begin
 
   edit.NewFile;        //para actualizar estado
   edit.LoadSyntaxFromFile('Pascal.xml');
+  edit.hl.IconList := ImageList2;
   //carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;

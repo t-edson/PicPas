@@ -4,21 +4,33 @@
   <Attribute Name="Keyword" Style="b"> </Attribute>
   <Attribute Name="Directive" ForeCol="#FE2EF7"> </Attribute>
   <Attribute Name="Asm" ForeCol="#60D060"> </Attribute>
+  <Attribute Name="Types"> </Attribute>
 
   <Completion>
-    <Include Attribute="Keyword"></Include>
-	<List>
-  "begin&#xD;  &#xD;end;"
+	<List Name="Plantillas" IconIndex='0'>
+  "begin ... end; |begin\n  \_\nend;"
   "if expresion then begin&#xD;  &#xD;end;"
   "if expresion then begin&#xD;  &#xD;end else begin&#xD;end;"
   "while expresion do begin&#xD;  &#xD;end;"
+  "program ... begin ... end. |program nombre;\nbegin\n  \_\nend."
   delay_ms
   delay_ms(100);
   inc
   "inc();"
     </List>
+	<OpenOn AfterPattern="':',space" FilterBy="none" Action="Insert">
+	  <Include attribute="Types"/>
+	</OpenOn>	
+	<OpenOn AfterPattern="identifier">
+      <Include List="Plantillas"></Include>
+      <Include Attribute="Keyword" ></Include>
+	</OpenOn>	
+	<OpenOn AfterPattern="Directive">
+      "{$PROCESSOR PIC16F84}"
+      "{$CLOCK 10Mhz}"
+      
+	</OpenOn>	
   </Completion>
-
   <Identifiers CharsStart= "A..Za..z_" Content = "A..Za..z0..9_"> 
     <token attribute="Keyword"> 
     absolute array asm as 
@@ -50,7 +62,7 @@
 	true false
     </token>
     <!--tipos de datos--> 
-    <token attribute="Keyword"> 
+    <token attribute="Types"> 
 	byte word boolean
     </token>
   </Identifiers>
