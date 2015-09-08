@@ -232,7 +232,7 @@ procedure _GOTO_PEND(var  igot: integer);
 }
 begin
   igot := cxp.pic.iFlash;  //guarda posición de instrucción de salto
-  cxp.pic.codAsmK(GOTO_, 0);  //pone salto indefinido
+  cxp.pic.codAsmA(GOTO_, 0);  //pone salto indefinido
 end;
 function _PC: word; inline;
 {Devuelve la dirección actual en Flash}
@@ -448,7 +448,10 @@ begin
           GenError('Error in directive.');
           exit;
         end;
-        f := StrToInt(lexDir.GetToken);  //lee frecuencia
+        if not TryStrToInt(lexDir.GetToken, f) then begin
+          GenError('Error in frecuencia.');
+          exit;
+        end;
         lexDir.Next;  //pasa al siguiente
         skipWhites;
         case UpperCase(lexDir.GetToken) of

@@ -41,7 +41,7 @@ type
     acVerPanArc: TAction;
     edAsm: TSynEdit;
     ImageList1: TImageList;
-    ImageList2: TImageList;
+    ImgCompletion: TImageList;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
@@ -130,6 +130,13 @@ begin
   SetLanguage('en');
   edit.SetLanguage('en');
   edit := TSynFacilEditor.Create(edPas, 'SinNombre', 'pas');
+  edPas.Options := edPas.Options - [eoSmartTabs];
+  edPas.Options := edPas.Options - [eoTrimTrailingSpaces];
+  edPas.Options := edPas.Options + [eoKeepCaretX];
+  edPas.Options2:= edPas.Options2 + [eoCaretSkipTab];
+  edPas.TabWidth:= 2;
+
+
   edit.OnChangeEditorState:=@ChangeEditorState;
   edit.OnChangeFileInform:=@editChangeFileInform;
   //define paneles
@@ -142,12 +149,12 @@ begin
   edit.PanFileName  := StatusBar1.Panels[5];  //panel para el nombre del archivo
 
   edit.NewFile;        //para actualizar estado
-  edit.LoadSyntaxFromFile('Pascal.xml');
-  edit.hl.IconList := ImageList2;
+  edit.LoadSyntaxFromFile('PicPas_PIC16.xml');
+  edit.hl.IconList := ImgCompletion;
   //carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
-  hlAssem.LoadFromFile('asmPic.xml');
+  hlAssem.LoadFromFile('PicPas_AsmPic.xml');
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin

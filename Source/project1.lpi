@@ -73,12 +73,11 @@
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="formprincipal.pas"/>
+        <Filename Value="FormPrincipal.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmPrincipal"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="FormPrincipal"/>
       </Unit1>
       <Unit2>
         <Filename Value="FormConfig.pas"/>
@@ -101,9 +100,8 @@
         <UnitName Value="ProcAsm"/>
       </Unit5>
       <Unit6>
-        <Filename Value="..\..\_Librerias\PicUtils 0.4b\pic16devices.pas"/>
+        <Filename Value="..\..\_Librerias\PicUtils 0.4b\Pic16Devices.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="PIC16devices"/>
       </Unit6>
     </Units>
   </ProjectOptions>
