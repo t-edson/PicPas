@@ -7,7 +7,8 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, FormPrincipal, FormConfig, Parser, globales, ProcAsm;
+  Forms, ConfigFrame, FormPrincipal, FormConfig, Parser, globales, ProcAsm,
+  FormPICExplorer, FrameCfgIDE;
 
 {$R *.res}
 
@@ -16,6 +17,8 @@ begin
   Application.Initialize;
   Application.CreateForm(TfrmPrincipal, frmPrincipal);
   Application.CreateForm(TConfig, Config);
+  Application.CreateForm(TfrmPICExplorer, frmPICExplorer);
+//  Application.CreateForm(TfraCfgGeneral, fraCfgGeneral);
   Application.Run;
 end.
 

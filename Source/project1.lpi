@@ -67,7 +67,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="7">
+    <Units Count="9">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -100,9 +100,29 @@
         <UnitName Value="ProcAsm"/>
       </Unit5>
       <Unit6>
-        <Filename Value="..\..\_Librerias\PicUtils 0.4b\Pic16Devices.pas"/>
+        <Filename Value="formpicexplorer.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmPICExplorer"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="FormPICExplorer"/>
       </Unit6>
+      <Unit7>
+        <Filename Value="..\..\_Librerias\ConfigFrame 0.6b\configframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="CfgFrame"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="ConfigFrame"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="frames\framecfgide.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fraCfgIDE"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="FrameCfgIDE"/>
+      </Unit8>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

@@ -9,7 +9,7 @@ uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
   Buttons, StdCtrls, iniFiles,
    //deben incluirse todos los frames de propiedades a usar
-  FrameTexto, FrameCfgEdit,
+  FrameCfgEdit, FrameCfgIDE,
   ConfigFrame;  //necesario para manejar los Frames de configuración
 
 type
@@ -35,7 +35,7 @@ type
     arIni   : String;      //Archivo de configuración
     //************  Modificar Aquí ***************//
     //frames de configuración
-    fcGeneral: TfraTexto;
+    fcIDE: TfraCfgIDE;
     fcEditor: TfcEdit;
     procedure escribirArchivoIni;
     procedure leerArchivoIni;
@@ -58,8 +58,8 @@ procedure TConfig.FormCreate(Sender: TObject);
 begin
   //************  Modificar Aquí ***************//
   //Crea dinámicamente los frames de configuración
-  fcGeneral:= TfraTexto.Create(Self);
-  fcGeneral.parent := self;
+  fcIDE:= TfraCfgIDE.Create(Self);
+  fcIDE.parent := self;
   fcEditor := TfcEdit.Create(Self);
   fcEditor.Parent := self;
 
@@ -89,7 +89,7 @@ procedure TConfig.Iniciar(f: TForm; ed0: TSynEdit);
 begin
   //************  Modificar Aquí ***************//
   //inicia los Frames creados
-  fcGeneral.Iniciar('General');
+  fcIDE.Iniciar('cfgIDE', f);
   fcEditor.Iniciar('Editor', ed0);
 
   LeerArchivoIni;  //lee parámetros del archivo de configuración.
@@ -109,7 +109,7 @@ procedure TConfig.lstCategClick(Sender: TObject);
 begin
   Hide_AllConfigFrames(self);   //oculta todos
   //************  Modificar Aquí ***************//
-  if lstCateg.ItemIndex = 0 then fcGeneral.ShowPos(120,0) ;
+  if lstCateg.ItemIndex = 0 then fcIDE.ShowPos(120,0) ;
   if lstCateg.ItemIndex = 1 then fcEditor.ShowPos(120,0);
 //  if lstCateg.ItemIndex = 2 then Numeros.ShowPos(120,0);
 end;

@@ -1263,6 +1263,7 @@ var
   used: Word;
 begin
   tot := pic.TotalMemRAM;
+  if tot=0 then exit;  //protección
   used := pic.UsedMemRAM;
   l.Add('  RAM Used   = ' + IntToStr(used) +'/'+ IntToStr(tot) + 'B (' +
         FloatToStrF(100*used/tot, ffGeneral, 1, 3) + '%)' );

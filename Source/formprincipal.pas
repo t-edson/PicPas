@@ -10,8 +10,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
-  Menus, ComCtrls, ActnList, StdActns, ExtCtrls, SynFacilUtils,
-  SynFacilHighlighter, FormConfig, Parser;
+  Menus, ComCtrls, ActnList, StdActns, ExtCtrls, StdCtrls, SynFacilUtils,
+  SynFacilHighlighter, FormConfig, Parser, FormPICExplorer, FrameCfgIDE;
 
 type
 
@@ -35,13 +35,18 @@ type
     acEdUndo: TAction;
     AcHerConfig: TAction;
     AcHerCompil: TAction;
+    acHerPICExpl: TAction;
+    acHerComEjec: TAction;
+    acVerBarHer: TAction;
+    acVerPanMsj: TAction;
     ActionList: TActionList;
     acVerBarEst: TAction;
-    acVerNumLin: TAction;
     acVerPanArc: TAction;
     edAsm: TSynEdit;
-    ImageList1: TImageList;
+    ImageList32: TImageList;
+    ImageList16: TImageList;
     ImgCompletion: TImageList;
+    ListBox1: TListBox;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
@@ -53,6 +58,11 @@ type
     MenuItem16: TMenuItem;
     MenuItem17: TMenuItem;
     MenuItem18: TMenuItem;
+    MenuItem19: TMenuItem;
+    MenuItem20: TMenuItem;
+    MenuItem21: TMenuItem;
+    MenuItem22: TMenuItem;
+    mnVer: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem23: TMenuItem;
     MenuItem3: TMenuItem;
@@ -68,8 +78,10 @@ type
     mnHerram: TMenuItem;
     mnRecientes: TMenuItem;
     OpenDialog1: TOpenDialog;
+    panMessages: TPanel;
     SaveDialog1: TSaveDialog;
     Splitter1: TSplitter;
+    Splitter2: TSplitter;
     StatusBar1: TStatusBar;
     edPas: TSynEdit;
     ToolBar1: TToolBar;
@@ -99,6 +111,10 @@ type
     procedure acEdiUndoExecute(Sender: TObject);
     procedure AcHerCompilExecute(Sender: TObject);
     procedure AcHerConfigExecute(Sender: TObject);
+    procedure acHerPICExplExecute(Sender: TObject);
+    procedure acVerBarEstExecute(Sender: TObject);
+    procedure acVerBarHerExecute(Sender: TObject);
+    procedure acVerPanMsjExecute(Sender: TObject);
     procedure ChangeEditorState;
     procedure editChangeFileInform;
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -110,6 +126,7 @@ type
   private
     edit: TSynFacilEditor;
     hlAssem : TSynFacilSyn;   //resaltador para ensamblador
+    procedure ChangeAppearance;
     procedure MarcarError(nLin, nCol: integer);
     procedure VerificarError;
   public
@@ -159,6 +176,8 @@ end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin
   Config.Iniciar(self, edPas);   //necesario para poder trabajar
+  Config.fcIDE.OnUpdateChanges := @ChangeAppearance;
+  ChangeAppearance;   //primera actualización
   edit.InitMenuRecents(mnRecientes, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
 end;
 procedure TfrmPrincipal.FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -195,6 +214,32 @@ begin
 //  acEdiCopiar.Enabled := edit.canCopy;
 //  acEdiPegar.Enabled:= edit.CanPaste;
 end;
+procedure TfrmPrincipal.ChangeAppearance;
+begin
+  StatusBar1.Visible := Config.fcIDE.ViewStatusbar;
+  acVerBarEst.Checked := Config.fcIDE.ViewStatusbar;
+  ToolBar1.Visible := Config.fcIDE.ViewToolbar;
+  acVerBarHer.Checked:= Config.fcIDE.ViewToolbar;
+
+  panMessages.Visible:= Config.fcIDE.ViewPanMsg;
+  Splitter2.Visible := Config.fcIDE.ViewPanMsg;
+  acVerPanMsj.Checked:= Config.fcIDE.ViewPanMsg;
+
+  case Config.fcIDE.StateToolbar of
+  stb_SmallIcon: begin
+    ToolBar1.ButtonHeight:=22;
+    ToolBar1.ButtonWidth:=22;
+    ToolBar1.Height:=26;
+    ToolBar1.Images:=ImageList16;
+  end;
+  stb_BigIcon: begin
+    ToolBar1.ButtonHeight:=38;
+    ToolBar1.ButtonWidth:=38;
+    ToolBar1.Height:=40;
+    ToolBar1.Images:=ImageList32;
+  end;
+  end;
+end;
 
 procedure TfrmPrincipal.editChangeFileInform;
 begin
@@ -207,24 +252,20 @@ procedure TfrmPrincipal.acArcNuevoExecute(Sender: TObject);
 begin
   edit.NewFile;
 end;
-
 procedure TfrmPrincipal.acArcAbrirExecute(Sender: TObject);
 begin
   OpenDialog1.Filter:='Pascal files|*.pas|All files|*.*';
   edit.OpenDialog(OpenDialog1);
   Config.escribirArchivoIni;  //para que guarde el nombre del último archivo abierto
 end;
-
 procedure TfrmPrincipal.acArcGuardarExecute(Sender: TObject);
 begin
   edit.SaveFile;
 end;
-
 procedure TfrmPrincipal.acArcGuaComExecute(Sender: TObject);
 begin
   edit.SaveAsDialog(SaveDialog1);
 end;
-
 procedure TfrmPrincipal.acArcSalirExecute(Sender: TObject);
 begin
   frmPrincipal.Close;
@@ -242,32 +283,50 @@ procedure TfrmPrincipal.acEdiSelecAllExecute(Sender: TObject);
 begin
   edPas.SelectAll;
 end;
+//////////// Acciones de Ver ///////////////
+procedure TfrmPrincipal.acVerBarEstExecute(Sender: TObject);
+begin
+  Config.fcIDE.ViewStatusbar:=not Config.fcIDE.ViewStatusbar;
+end;
+procedure TfrmPrincipal.acVerBarHerExecute(Sender: TObject);
+begin
+  Config.fcIDE.ViewToolbar:= not Config.fcIDE.ViewToolbar;
+end;
+procedure TfrmPrincipal.acVerPanMsjExecute(Sender: TObject);
+begin
+  Config.fcIDE.ViewPanMsg:= not Config.fcIDE.ViewPanMsg;
+end;
+
 //////////// Acciones de Herramientas ///////////////
 procedure TfrmPrincipal.AcHerCompilExecute(Sender: TObject);
 {Compila el contenido del archivo actual}
 begin
   self.SetFocus;
   cxp.Compilar(edit.NomArc, edPas.Lines);
+  if cxp.HayError then begin
+    VerificarError;
+    exit;
+  end;
+  //muestra estadísticas
   edAsm.BeginUpdate(false);
   edAsm.ClearAll;
   edAsm.Text:= ';===RAM usage===' + LineEnding +
                cxp.RAMusage;
   edAsm.Lines.Add(';===Blocks of Code===');
   cxp.DumpCode(edAsm.Lines);
-  edAsm.Lines.Add(';===Statistics===');
-  cxp.DumpStatistics(edAsm.Lines);
+//  edAsm.Lines.Add(';===Statistics===');
+  cxp.DumpStatistics(ListBox1.Items);
   edAsm.EndUpdate;
-  if cxp.HayError then begin
-    VerificarError;
-//    MsgErr(c.PErr.TxtError);
-    exit;
-  end;
-
 end;
 procedure TfrmPrincipal.AcHerConfigExecute(Sender: TObject);
 begin
   Config.Mostrar;
 end;
+procedure TfrmPrincipal.acHerPICExplExecute(Sender: TObject);
+begin
+  frmPICExplorer.Show;
+end;
+
 //ADicionales
 procedure TfrmPrincipal.VerificarError;
 //Verifica si se ha producido algún error en el preprocesamiento y si lo hay
@@ -318,6 +377,7 @@ begin
       mnArchivo.Caption:='&Archivo';
       mnEdicion.Caption:='&Edición';
       mnBuscar.Caption:='&Buscar';
+      mnVer.Caption:='&Ver';
       mnHerram.Caption:='&Herramientas';
 
       acArcNuevo.Caption := '&Nuevo';
@@ -358,6 +418,7 @@ begin
       mnArchivo.Caption:='&File';
       mnEdicion.Caption:='&Edit';
       mnBuscar.Caption:='&Search';
+      mnVer.Caption:='&View';
       mnHerram.Caption:='&Tools';
 
       acArcNuevo.Caption := '&New';
