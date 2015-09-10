@@ -20,6 +20,7 @@ type
 
 var
   /////// Tipos de datos del lenguaje ////////////
+  typNull: TType;   //Tipo nulo (sin tipo)
   tipBool: TType;   //Booleanos
   tipByte: TType;   //número sin signo
   tipWord: TType;   //número sin signo
@@ -975,12 +976,13 @@ begin
 
   ///////////Crea tipos y operaciones
   ClearTypes;
+  typNull := CreateType('boolean',t_boolean,-1);
   //tipo booleano
-  tipBool  :=CreateType('boolean',t_boolean,-1);   //de 1 bit
+  tipBool :=CreateType('boolean',t_boolean,-1);   //de 1 bit
   //tipo numérico de un solo byte
-  tipByte  :=CreateType('byte',t_uinteger,1);   //de 2 bytes
+  tipByte :=CreateType('byte',t_uinteger,1);   //de 2 bytes
   //tipo numérico de dos byte
-  tipWord  :=CreateType('word',t_uinteger,2);   //de 2 bytes
+  tipWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
 
   //////// Operaciones con Boolean ////////////
   {Los operadores deben crearse con su precedencia correcta}

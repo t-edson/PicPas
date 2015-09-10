@@ -9,9 +9,10 @@ unit FormPrincipal;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
-  Menus, ComCtrls, ActnList, StdActns, ExtCtrls, StdCtrls, SynFacilUtils,
-  SynFacilHighlighter, FormConfig, Parser, FormPICExplorer, FrameCfgIDE;
+  Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
+  Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
+  StdCtrls, LCLIntf, SynFacilUtils, SynFacilHighlighter, MisUtils, FormConfig,
+  Parser, FormPICExplorer, FrameCfgIDE;
 
 type
 
@@ -43,8 +44,9 @@ type
     acVerBarEst: TAction;
     acVerPanArc: TAction;
     edAsm: TSynEdit;
-    ImageList32: TImageList;
-    ImageList16: TImageList;
+    ImgMessages: TImageList;
+    ImgActions32: TImageList;
+    ImgActions16: TImageList;
     ImgCompletion: TImageList;
     ListBox1: TListBox;
     MainMenu1: TMainMenu;
@@ -62,6 +64,7 @@ type
     MenuItem20: TMenuItem;
     MenuItem21: TMenuItem;
     MenuItem22: TMenuItem;
+    MenuItem24: TMenuItem;
     mnVer: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem23: TMenuItem;
@@ -117,12 +120,16 @@ type
     procedure acVerPanMsjExecute(Sender: TObject);
     procedure ChangeEditorState;
     procedure editChangeFileInform;
+    procedure edSpecialLineMarkup(Sender: TObject; Line: integer;
+      var Special: boolean; Markup: TSynSelectedColor);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure ListBox1DrawItem(Control: TWinControl; Index: Integer;
+      ARect: TRect; State: TOwnerDrawState);
   private
     edit: TSynFacilEditor;
     hlAssem : TSynFacilSyn;   //resaltador para ensamblador
@@ -146,13 +153,17 @@ procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   SetLanguage('en');
   edit.SetLanguage('en');
+  //configura panel de mensajes
+  ListBox1.Style:=lbOwnerDrawVariable;
+  ListBox1.OnDrawItem:=@ListBox1DrawItem;
+  //configuración del editor
   edit := TSynFacilEditor.Create(edPas, 'SinNombre', 'pas');
   edPas.Options := edPas.Options - [eoSmartTabs];
   edPas.Options := edPas.Options - [eoTrimTrailingSpaces];
   edPas.Options := edPas.Options + [eoKeepCaretX];
   edPas.Options2:= edPas.Options2 + [eoCaretSkipTab];
   edPas.TabWidth:= 2;
-
+  edPas.OnSpecialLineMarkup:=@edSpecialLineMarkup;
 
   edit.OnChangeEditorState:=@ChangeEditorState;
   edit.OnChangeFileInform:=@editChangeFileInform;
@@ -175,7 +186,7 @@ begin
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin
-  Config.Iniciar(self, edPas);   //necesario para poder trabajar
+  Config.Iniciar(self, edPas, edAsm);   //necesario para poder trabajar
   Config.fcIDE.OnUpdateChanges := @ChangeAppearance;
   ChangeAppearance;   //primera actualización
   edit.InitMenuRecents(mnRecientes, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
@@ -196,6 +207,24 @@ begin
   edit.Free;
 end;
 
+procedure TfrmPrincipal.ListBox1DrawItem(Control: TWinControl; Index: Integer;
+  ARect: TRect; State: TOwnerDrawState);
+var
+  txt: String;
+begin
+  ListBox1.Canvas.FillRect(ARect);  //fondo
+  //dibuja ícono
+  txt := ListBox1.Items[index];
+  if txt='' then exit;
+  if txt[1] = '[' then begin
+    //ícono de error
+    ImgMessages.Draw(ListBox1.Canvas,ARect.Left + 2, ARect.Top + 1, 2);
+  end else begin
+    ImgMessages.Draw(ListBox1.Canvas,ARect.Left + 2, ARect.Top + 1, 0);
+  end;
+  //escribe el texto
+  ListBox1.Canvas.TextOut (ARect.left + ImgMessages.Width + 8 , ARect.Top + 1, txt);
+end;
 procedure TfrmPrincipal.FormDropFiles(Sender: TObject; const FileNames: array of String);
 begin
   //Carga archivo arrastrados
@@ -203,7 +232,6 @@ begin
   edit.LoadFile(FileNames[0]);
   edit.LoadSyntaxFromPath;  //para que busque el archivo apropiado
 end;
-
 procedure TfrmPrincipal.ChangeEditorState;
 begin
   acArcGuardar.Enabled:=edit.Modified;
@@ -230,21 +258,28 @@ begin
     ToolBar1.ButtonHeight:=22;
     ToolBar1.ButtonWidth:=22;
     ToolBar1.Height:=26;
-    ToolBar1.Images:=ImageList16;
+    ToolBar1.Images:=ImgActions16;
   end;
   stb_BigIcon: begin
     ToolBar1.ButtonHeight:=38;
     ToolBar1.ButtonWidth:=38;
     ToolBar1.Height:=40;
-    ToolBar1.Images:=ImageList32;
+    ToolBar1.Images:=ImgActions32;
   end;
   end;
 end;
-
 procedure TfrmPrincipal.editChangeFileInform;
 begin
   //actualiza nombre de archivo
   Caption := 'Editor - ' + edit.NomArc;
+end;
+procedure TfrmPrincipal.edSpecialLineMarkup(Sender: TObject; Line: integer;
+  var Special: boolean; Markup: TSynSelectedColor);
+begin
+  if Line = edit.linErr then begin
+      Special := True ;  //marca como línea especial
+      Markup.Background := TColor($3030A0); //color de fondo
+  end;
 end;
 
 /////////////////// Acciones de Archivo /////////////////////
@@ -300,13 +335,20 @@ end;
 //////////// Acciones de Herramientas ///////////////
 procedure TfrmPrincipal.AcHerCompilExecute(Sender: TObject);
 {Compila el contenido del archivo actual}
+var
+  timeCnt: longint;
 begin
   self.SetFocus;
+  ListBox1.Items.Clear;
+  timeCnt:=GetTickCount;
+  ListBox1.Items.Add('Starting Compilation ...');
   cxp.Compilar(edit.NomArc, edPas.Lines);
   if cxp.HayError then begin
+    ListBox1.Items.Add(cxp.PErr.TxtErrorRC);
     VerificarError;
     exit;
   end;
+  ListBox1.Items.Add('Compiled in: ' + IntToStr(GetTickCount-timeCnt) + ' msec');
   //muestra estadísticas
   edAsm.BeginUpdate(false);
   edAsm.ClearAll;
@@ -357,7 +399,8 @@ begin
             end;
         end;
     End else begin   //no hay archivo de error
-      {If MostrarError Then }cxp.ShowError;
+      {If MostrarError Then }
+      cxp.ShowError;
     end;
 End;
 procedure TfrmPrincipal.MarcarError(nLin, nCol: integer);

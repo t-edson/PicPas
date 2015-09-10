@@ -37,11 +37,12 @@ type
     //frames de configuración
     fcIDE: TfraCfgIDE;
     fcEditor: TfcEdit;
+    fcEdiAsm: TfcEdit;
     procedure escribirArchivoIni;
     procedure leerArchivoIni;
     procedure LeerDeVentana;
     procedure MostEnVentana;
-    procedure Iniciar(f: TForm; ed0: TSynEdit);
+    procedure Iniciar(f: TForm; ed0, edAsm: TSynEdit);
     procedure Mostrar;
   end;
 
@@ -62,6 +63,9 @@ begin
   fcIDE.parent := self;
   fcEditor := TfcEdit.Create(Self);
   fcEditor.Parent := self;
+  fcEditor.Name:='fcEditor';
+  fcEdiAsm := TfcEdit.Create(Self);
+  fcEdiAsm.Parent := self;
 
   arIni := GetIniName;
 end;
@@ -83,7 +87,7 @@ begin
   escribirArchivoIni;   //guarda propiedades en disco
 end;
 
-procedure TConfig.Iniciar(f: TForm; ed0: TSynEdit);
+procedure TConfig.Iniciar(f: TForm; ed0, edAsm: TSynEdit);
 //Inicia el formulario de configuración. Debe llamarse antes de usar el formulario y
 //después de haber cargado todos los frames.
 begin
@@ -91,6 +95,7 @@ begin
   //inicia los Frames creados
   fcIDE.Iniciar('cfgIDE', f);
   fcEditor.Iniciar('Editor', ed0);
+  fcEdiAsm.Iniciar('EdiAsm', edAsm);
 
   LeerArchivoIni;  //lee parámetros del archivo de configuración.
 end;
@@ -111,6 +116,7 @@ begin
   //************  Modificar Aquí ***************//
   if lstCateg.ItemIndex = 0 then fcIDE.ShowPos(120,0) ;
   if lstCateg.ItemIndex = 1 then fcEditor.ShowPos(120,0);
+  if lstCateg.ItemIndex = 2 then fcEdiAsm.ShowPos(120,0);
 //  if lstCateg.ItemIndex = 2 then Numeros.ShowPos(120,0);
 end;
 

@@ -55,7 +55,7 @@ object Config: TConfig
     Items.Strings = (
       'Entorno'
       'Editor'
-      'Números'
+      'Editor Asm'
     )
     ItemHeight = 20
     OnClick = lstCategClick

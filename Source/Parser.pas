@@ -29,8 +29,10 @@ type
     tkExpDelim : TSynHighlighterAttributes;
     tkBlkDelim : TSynHighlighterAttributes;
     tkOthers   : TSynHighlighterAttributes;
+    procedure CaptureDecParams(f: integer);
     procedure CompileConstDeclar;
     procedure CompileIF;
+    procedure CompileProcDeclar;
     procedure CompileREPEAT;
     procedure CompileWHILE;
     procedure CompileInstructionDummy;
@@ -607,15 +609,14 @@ begin
 end;
 function TCompiler.CreateVar(varName, varType: string;
          absAdd: integer = -1; absBit: integer = -1): integer;
-{Agrega una variable w la tabla de variables.
- Los tipos siempre aparecen en minúscula.}
+{Agrega una variable w la tabla de variables.}
 var t: ttype;
   hay: Boolean;
   varTypeL: String;
 begin
   //Verifica el tipo
   hay := false;
-  varTypeL := LowerCase(varType);;
+  varTypeL := LowerCase(varType);
   for t in typs do begin
     if t.name = varTypeL then begin
        hay:=true; break;
@@ -830,6 +831,111 @@ begin
   ProcComments;
   //puede salir con error
 end;
+
+procedure TCompiler.CaptureDecParams(f: integer);
+//Lee la declaración de parámetros de una función.
+var
+  parType: String;
+  parName: String;
+begin
+  SkipWhites;
+  ClearParamsFunc(0);   //inicia parámetros
+  if EOBlock or EOExpres then begin
+    //no tiene parámetros
+  end else begin
+    //Debe haber parámetros
+    if cIn.tok<>'(' then begin
+      GenError('"(" expected.');
+      exit;
+    end;
+    cin.Next;
+    repeat
+      if cIn.tokType <> tkIdentif then begin
+        GenError('Identifier expected.');
+        exit;
+      end;
+      parName := cIn.tok;   //lee tipo de parámetro
+      cIn.Next;
+      cIn.SkipWhites;
+      if cIn.tok<>':' then begin
+        GenError('":" expected.');
+        exit;
+      end;
+      cIn.Next;
+      cIn.SkipWhites;
+
+      if (cIn.tokType <> tkType) then begin
+        GenError('Identifier of type expected.');
+        exit;
+      end;
+      parType := cIn.tok;   //lee tipo de parámetro
+      cIn.Next;
+      //ya tiene el nombre y el tipo
+      CreateParam(f, parName, parType);
+      if HayError then exit;
+      if cIn.tok = ';' then begin
+        cIn.Next;   //toma separador
+        SkipWhites;
+      end else begin
+        //no sigue separador de parámetros,
+        //debe terminar la lista de parámetros
+        //¿Verificar EOBlock or EOExpres ?
+        break;
+      end;
+    until false;
+    //busca paréntesis final
+    if cIn.tok<>')' then begin
+      GenError('")" expected.'); exit;
+    end;
+    cin.Next;
+  end;
+end;
+
+procedure TCompiler.CompileProcDeclar;
+{Compila la declaración de procedimientos. Tanto procedimeintos como funciones
+ se manejan internamenet como funciones}
+var
+  procName: String;
+  f: Integer;
+begin
+  cIn.SkipWhites;
+  //ahora debe haber un identificador
+  if cIn.tokType <> tkIdentif then begin
+    GenError('Identifier expected.');
+    exit;
+  end;
+  //hay un identificador
+  procName := cIn.tok;
+  cIn.Next;  //lo toma
+  {Ya tiene los datos mínimos para crear la función. La crea con "proc" en NIL,
+  para indicar que es una función definida por el usuario.}
+  f := CreateFunction(procName, typNull, nil);
+  if HayError then exit;
+  CaptureDecParams(f);
+  cIn.SkipWhites;
+  if cIn.tok=';' then begin //encontró delimitador de expresión
+    cIn.Next;   //lo toma
+    ProcComments;  //quita espacios
+    if HayError then exit;   //puede dar error por código assembler o directivas
+  end else begin  //hay otra cosa
+    GenError('";" expected.');  //por ahora
+    exit;  //debe ser un error
+  end;
+  //por ahora no se soporta variables locales
+  if cIn.tokL <> 'begin' then begin
+    GenError('"begin" expected.');
+    exit;
+  end;
+  CompileInstruction;
+  if cIn.tokType=tkExpDelim then begin //encontró delimitador de expresión
+    cIn.Next;   //lo toma
+    ProcComments;  //quita espacios
+    if HayError then exit;   //puede dar error por código assembler o directivas
+  end else begin  //hay otra cosa
+    GenError('";" expected.');  //por ahora
+    exit;  //debe ser un error
+  end;
+end;
 procedure TCompiler.CompileWHILE;
 {Compila uan extructura WHILE}
 var
@@ -1024,7 +1130,7 @@ begin
   CompileInstruction;  //compila solo para mantener la sintaxis
   pic.iFlash := p;     //elimina lo compilado
   //puede salir con error
-  { TODO : Debe limpiar la memoria flash que ocupó, para dejar la cas limpia. }
+  { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
 end;
 procedure TCompiler.CompileInstruction;
 {Compila una única instrucción o un bloque BEGIN ... END}
@@ -1085,6 +1191,7 @@ begin
       ProcComments;  //quita espacios
       if HayError then exit;   //puede dar error por código assembler o directivas
     end else begin  //hay otra cosa
+      GenError('";" expected.');  //por ahora
       exit;  //debe ser un error
     end;
   end;
@@ -1092,6 +1199,12 @@ end;
 procedure TCompiler.CompilarArc(iniMem: word);
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
 la posiición iniMem}
+  function StartOfSection: boolean;
+  begin
+    Result := (cIn.tokL ='var') or (cIn.tokL ='const') or
+              (cIn.tokL ='type') or (cIn.tokL ='procedure');
+  end;
+
 var
   i: Integer;
 begin
@@ -1136,21 +1249,23 @@ begin
   ProcComments;
   if Perr.HayError then exit;
   //Empiezan las declaraciones
-  while (cIn.tokL ='const') or (cIn.tokL ='type') or (cIn.tokL ='var') do begin
+  while StartOfSection do begin
     if cIn.tokL = 'var' then begin
       cIn.Next;    //lo toma
-      while (cIn.tokL <>'begin') and (cIn.tokL <>'const') and
-            (cIn.tokL <>'type') and (cIn.tokL <>'var') do begin
+      while not StartOfSection and (cIn.tokL <>'begin') do begin
         CompileVarDeclar;
         if pErr.HayError then exit;;
       end;
     end else if cIn.tokL = 'const' then begin
       cIn.Next;    //lo toma
-      while (cIn.tokL <>'begin') and (cIn.tokL <>'const') and
-            (cIn.tokL <>'type') and (cIn.tokL <>'var') do begin
+      while not StartOfSection and (cIn.tokL <>'begin') do begin
         CompileConstDeclar;
         if pErr.HayError then exit;;
       end;
+    end else if cIn.tokL = 'procedure' then begin
+      cIn.Next;    //lo toma
+      CompileProcDeclar;
+      if pErr.HayError then exit;;
     end else begin
       GenError('Not implemented: "%s"', [cIn.tok]);
       exit;
@@ -1172,9 +1287,21 @@ begin
       exit;       //sale
     end;
     cIn.Next;   //coge "end"
+    //debería seguir el punto
+    if cIn.tok <> '.' then begin
+      GenError('"." expected.');
+      exit;       //sale
+    end;
+    cIn.Next;
+    //no debe haber más instrucciones
+    cIn.SkipWhites;
+    if not cIn.Eof then begin
+      GenError('Syntax error. Nothing should be after "END."');
+      exit;       //sale
+    end;
     _SLEEP();   //agrega instrucción final
   end else begin
-    GenError('Expected: "begin", "var", "type" or "const".');
+    GenError('Expected "begin", "var", "type" or "const".');
     exit;
   end;
   Cod_EndProgram;
@@ -1265,11 +1392,11 @@ begin
   tot := pic.TotalMemRAM;
   if tot=0 then exit;  //protección
   used := pic.UsedMemRAM;
-  l.Add('  RAM Used   = ' + IntToStr(used) +'/'+ IntToStr(tot) + 'B (' +
+  l.Add('RAM Used   = ' + IntToStr(used) +'/'+ IntToStr(tot) + 'B (' +
         FloatToStrF(100*used/tot, ffGeneral, 1, 3) + '%)' );
   tot := pic.TotalMemFlash;
   used := pic.UsedMemFlash;
-  l.Add('  Flash Used = ' + IntToStr(used) +'/'+ IntToStr(tot) + ' (' +
+  l.Add('Flash Used = ' + IntToStr(used) +'/'+ IntToStr(tot) + ' (' +
         FloatToStrF(100*used/tot, ffGeneral, 1, 3) + '%)' );
 end;
 
@@ -1401,7 +1528,12 @@ begin
     dicSet('Identifier of type expected.', 'Se esperaba identificador de tipo.');
     dicSet('":" or "," expected.', 'Se esperaba ":" o ",".');
     dicSet('"=", ":" or "," expected.', 'Se esperaba "=", ":" o ",".');
+    dicSet('"begin" expected.', 'Se esperaba "begin".');
     dicSet('"end" expected.', 'Se esperaba "end".');
+    dicSet('"." expected.', 'Se esperaba "."');
+    dicSet('"(" expected.', 'Se esperaba "("');
+    dicSet('":" expected.', 'Se esperaba ":"');
+    dicSet('";" expected.', 'Se esperaba ";"');
     dicSet('Boolean expression expected.', 'Se esperaba expresión booleana.');
     dicSet('"do" expected.', 'Se esperaba "do".');
     dicSet('"then" expected.', 'Se esperaba "then"');
@@ -1410,8 +1542,6 @@ begin
     dicSet('Name of program expected.', 'Se esperaba nombre de programa.');
     dicSet('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
     dicSet('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".');
-    dicSet('"end" expected.', 'Se esperaba "end".');
-    dicSet('Expected: "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
     dicSet('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.');
     dicSet('Constant expression expected.', 'Se esperaba una expresión constante');
     dicSet('Clock frequency not supported.', 'Frecuencia de reloj no soportada.');
@@ -1422,6 +1552,7 @@ begin
     dicSet('Cannot decrease a constant.', 'No se puede disminuir una constante.');
     dicSet('Cannot decrease an expression.','No se puede disminuir una expresión.');
     dicSet('Unknown device: %s', 'Dispositivo desconocido: %s');
+    dicSet('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."');
   end;
   end;
 end;

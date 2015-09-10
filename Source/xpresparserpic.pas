@@ -239,7 +239,8 @@ protected  //Eventos del compilador
     ): integer;
   function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction
     ): integer;
-  procedure CreateParam(ifun: integer; name: string; typ: ttype);
+  procedure CreateParam(ifun: integer; parName: string; typ: ttype);
+  procedure CreateParam(ifun: integer; parName: string; typStr: string);
   function CaptureDelExpres: boolean;
   procedure ClearVars;
   procedure ClearAllConst;
@@ -461,7 +462,7 @@ end;
 procedure TCompilerBase.ShowError;
 begin
   Application.MessageBox(PChar(Perr.TxtErrorRC),
-                         PChar(Perr.NombPrograma), MB_ICONEXCLAMATION);
+                         PChar(Perr.NombPrograma), MB_ICONERROR);
 //  Perr.Show;
 end;
 
@@ -651,7 +652,7 @@ procedure TCompilerBase.ClearParamsFunc(ifun: integer);  inline;
 begin
   setlength(funcs[ifun].pars,0);
 end;
-procedure TCompilerBase.CreateParam(ifun: integer; name: string; typ: ttype);
+procedure TCompilerBase.CreateParam(ifun: integer; parName: string; typ: ttype);
 //Crea un parámetro para una función
 var
   n: Integer;
@@ -660,6 +661,30 @@ begin
   n := high(funcs[ifun].pars)+1;
   setlength(funcs[ifun].pars, n+1);
   funcs[ifun].pars[n] := typ;  //agrega referencia
+end;
+procedure TCompilerBase.CreateParam(ifun: integer; parName: string; typStr: string);
+//Crea un parámetro para una función
+var
+  n: Integer;
+  hay: Boolean;
+  typStrL: String;
+  t : TType;
+begin
+  //busca tipo
+  typStrL := LowerCase(typStr);
+  for t in typs do begin
+    if t.name = typStrL then begin
+       hay:=true; break;
+    end;
+  end;
+  if not hay then begin
+    GenError('Undefined type "%s"', [typStr]);
+    exit;
+  end;
+  //agrega
+  n := high(funcs[ifun].pars)+1;
+  setlength(funcs[ifun].pars, n+1);
+  funcs[ifun].pars[n] := t;  //agrega referencia
 end;
 function TCompilerBase.SameParamsFunctions(iFun1, iFun2: integer): boolean;
 //Compara los parámetros de dos funciones. Si tienen el mismo número de
