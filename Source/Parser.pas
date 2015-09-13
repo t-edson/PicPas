@@ -255,7 +255,7 @@ begin
   cxp.pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
 end;
 procedure StartCodeSub(ifun: integer);
-{debe ser llamado para iniciar la codificaión de una subrutina}
+{debe ser llamado para iniciar la codificación de una subrutina}
 begin
   cxp.iFlashTmp :=  cxp.pic.iFlash;     //guarda puntero
   cxp.pic.iFlash := cxp.curBloSub;  //empieza a codificar aquí
@@ -266,6 +266,12 @@ procedure EndCodeSub;
 begin
   cxp.curBloSub := cxp.pic.iFlash;  //indica siguiente posición libre
   cxp.pic.iFlash := cxp.iFlashTmp;     //retorna puntero
+end;
+procedure callFunct(ifun: integer);
+{Rutina que debe llamara a uan función definida por el usuario}
+begin
+  //por ahora no hay problema de paginación
+  _CALL(funcs[ifun].adrr);
 end;
 
 procedure GenError(msg: string);
@@ -896,7 +902,7 @@ procedure TCompiler.CompileProcDeclar;
  se manejan internamenet como funciones}
 var
   procName: String;
-  f: Integer;
+  ifun: Integer;
 begin
   cIn.SkipWhites;
   //ahora debe haber un identificador
@@ -909,9 +915,9 @@ begin
   cIn.Next;  //lo toma
   {Ya tiene los datos mínimos para crear la función. La crea con "proc" en NIL,
   para indicar que es una función definida por el usuario.}
-  f := CreateFunction(procName, typNull, nil);
+  ifun := CreateFunction(procName, typNull, @callFunct);
   if HayError then exit;
-  CaptureDecParams(f);
+  CaptureDecParams(ifun);
   cIn.SkipWhites;
   if cIn.tok=';' then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
@@ -926,7 +932,10 @@ begin
     GenError('"begin" expected.');
     exit;
   end;
+  StartCodeSub(ifun);  //inicia codificación de subrutina
   CompileInstruction;
+  _RETURN();  //instrucción de salida
+  EndCodeSub;  //termina codificación
   if cIn.tokType=tkExpDelim then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
     ProcComments;  //quita espacios
@@ -1198,7 +1207,7 @@ begin
 end;
 procedure TCompiler.CompilarArc(iniMem: word);
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
-la posiición iniMem}
+la posición iniMem}
   function StartOfSection: boolean;
   begin
     Result := (cIn.tokL ='var') or (cIn.tokL ='const') or

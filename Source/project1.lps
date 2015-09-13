@@ -37,13 +37,12 @@
         <Filename Value="Parser.pas"/>
         <IsPartOfProject Value="True"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="853"/>
-        <CursorPos X="39" Y="874"/>
-        <FoldState Value=" TL001A p0*D013 T450]65iN02 T8i7241 TMiR0609141O]gvA811T1M]BtF21081211]49]g3iY03Q piZjR03L pkXlK0E2 pj7Q230]d2]Ugm80{}[M4MkZ0b02[B4FmV0{0]%]CNkV244]92lT091]pej805 T6nZ059 p0w202313 T0ngVU7]YagW2B15]AXjHJL51C35],8mOQPF321111816F]WYpQR38[f4i4BJ[Q45439147 THr66n4 TF?146e"/>
+        <TopLine Value="908"/>
+        <CursorPos Y="937"/>
+        <FoldState Value=" T4503 T5iN02 T8i7241 TMiR060A141O p0vG811M161M]DtI21081211]49]i3iY03Q piZjR03G15 pjHlQ0E2]97Q23[H4VlT0L1 pkYV2M1]H0kQ0b11[a4FmY0{031115]X2rP051 TLig03A p0@N0102]I6nf05[I4w5027 T0o5VU7 piagW2C]xBibW[{T58Qh3H]PZkgJ47]HDiMQPG]91iga39]RdiYP391G]BblYR39[\4i9BJ4151C[y5Yi3F THrC6n1 p6t92Z2]PetV2p TFsc2H1e"/>
         <UsageCount Value="200"/>
-        <Bookmarks Count="2">
-          <Item0 X="5" Y="1534" ID="3"/>
-          <Item1 X="14" Y="927" ID="1"/>
+        <Bookmarks Count="1">
+          <Item0 X="5" Y="1543" ID="3"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit3>
@@ -62,7 +61,7 @@
         <UnitName Value="ProcAsm"/>
         <EditorIndex Value="-1"/>
         <FoldState Value=" T3V034111213 pignO051S"/>
-        <UsageCount Value="140"/>
+        <UsageCount Value="142"/>
       </Unit5>
       <Unit6>
         <Filename Value="formpicexplorer.pas"/>
@@ -74,7 +73,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="37"/>
         <CursorPos X="7" Y="58"/>
-        <UsageCount Value="62"/>
+        <UsageCount Value="64"/>
       </Unit6>
       <Unit7>
         <Filename Value="..\..\_Librerias\ConfigFrame 0.6b\configframe.pas"/>
@@ -86,7 +85,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="340"/>
         <CursorPos Y="354"/>
-        <UsageCount Value="50"/>
+        <UsageCount Value="52"/>
       </Unit7>
       <Unit8>
         <Filename Value="frames\framecfgide.pas"/>
@@ -98,7 +97,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="27"/>
         <CursorPos X="46" Y="42"/>
-        <UsageCount Value="49"/>
+        <UsageCount Value="51"/>
       </Unit8>
       <Unit9>
         <Filename Value="..\..\_Librerias\PicUtils 0.4b\Pic16Devices.pas"/>
@@ -125,8 +124,8 @@
       <Unit12>
         <Filename Value="GenCod.pas"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="885"/>
-        <CursorPos X="28" Y="870"/>
+        <TopLine Value="814"/>
+        <CursorPos Y="840"/>
         <UsageCount Value="100"/>
         <Loaded Value="True"/>
       </Unit12>
@@ -206,12 +205,13 @@
         <Filename Value="xpresparserpic.pas"/>
         <UnitName Value="XpresParserPIC"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="225"/>
-        <CursorPos Y="243"/>
-        <FoldState Value=" TL00FE TMp50204124 TCiOD53 T7j8Bk]88j90O2 T3of0E8231112A131 T6og01A]G]U0pKP461A62211525 TF-T4EH"/>
-        <UsageCount Value="82"/>
-        <Bookmarks Count="1">
+        <TopLine Value="94"/>
+        <CursorPos X="45" Y="146"/>
+        <FoldState Value=" TL00FE TMp50204124 TCiOD52 T7j8Bk3 T8j90O]G3of0E8231112A131 T6og01A]G]U0pKP461A62211525 p0tGk803[U5F-T4Ei"/>
+        <UsageCount Value="83"/>
+        <Bookmarks Count="2">
           <Item0 X="37" Y="666" ID="2"/>
+          <Item1 X="22" Y="923" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit19>
@@ -386,122 +386,124 @@
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="906" TopLine="889"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="1065" TopLine="1048"/>
       </Position1>
       <Position2>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="909" Column="30" TopLine="893"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="1066" TopLine="1048"/>
       </Position2>
       <Position3>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="910" TopLine="893"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="1067" TopLine="1048"/>
       </Position3>
       <Position4>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="911" TopLine="893"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="1068" TopLine="1048"/>
       </Position4>
       <Position5>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="802" TopLine="771"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="1070" TopLine="1054"/>
       </Position5>
       <Position6>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="803" TopLine="771"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="879" TopLine="847"/>
       </Position6>
       <Position7>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1113" Column="26" TopLine="908"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="880" TopLine="847"/>
       </Position7>
       <Position8>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="923" Column="5" TopLine="912"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="881" TopLine="847"/>
       </Position8>
       <Position9>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1534" Column="57" TopLine="1527"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="882" TopLine="847"/>
       </Position9>
       <Position10>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1238" Column="59" TopLine="1214"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="888" TopLine="847"/>
       </Position10>
       <Position11>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1537" Column="58" TopLine="1513"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="889" TopLine="847"/>
       </Position11>
       <Position12>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1296" Column="60" TopLine="1282"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="897" TopLine="869"/>
       </Position12>
       <Position13>
-        <Filename Value="Parser.pas"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="906" TopLine="892"/>
       </Position13>
       <Position14>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1296" Column="60" TopLine="1269"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="907" TopLine="892"/>
       </Position14>
       <Position15>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1537" Column="58" TopLine="1513"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="908" TopLine="892"/>
       </Position15>
       <Position16>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1296" Column="23" TopLine="1282"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="909" TopLine="892"/>
       </Position16>
       <Position17>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="928" Column="28" TopLine="912"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="910" TopLine="892"/>
       </Position17>
       <Position18>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1191" Column="30" TopLine="1152"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="912" TopLine="895"/>
       </Position18>
       <Position19>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="928" Column="3" TopLine="914"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="918" TopLine="901"/>
       </Position19>
       <Position20>
-        <Filename Value="Parser.pas"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="919" TopLine="901"/>
       </Position20>
       <Position21>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="928" Column="28" TopLine="904"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="920" TopLine="901"/>
       </Position21>
       <Position22>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1181" Column="30" TopLine="1152"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="922" TopLine="901"/>
       </Position22>
       <Position23>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="874" Column="7" TopLine="860"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="923" Column="22" TopLine="901"/>
       </Position23>
       <Position24>
         <Filename Value="Parser.pas"/>
-        <Caret Line="785" Column="9" TopLine="752"/>
+        <Caret Line="912" Column="18" TopLine="545"/>
       </Position24>
       <Position25>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="672" Column="3" TopLine="647"/>
+        <Filename Value="Parser.pas"/>
+        <Caret Line="910" TopLine="545"/>
       </Position25>
       <Position26>
         <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="673" Column="3" TopLine="649"/>
+        <Caret Line="925" Column="15" TopLine="907"/>
       </Position26>
       <Position27>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="674" Column="7" TopLine="659"/>
+        <Filename Value="Parser.pas"/>
+        <Caret Line="913" Column="54" TopLine="383"/>
       </Position27>
       <Position28>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="687" Column="26" TopLine="656"/>
+        <Filename Value="Parser.pas"/>
+        <Caret Line="900" Column="12" TopLine="835"/>
       </Position28>
       <Position29>
         <Filename Value="Parser.pas"/>
-        <Caret Line="877" Column="10" TopLine="861"/>
+        <Caret Line="270" Column="31" TopLine="253"/>
       </Position29>
       <Position30>
         <Filename Value="Parser.pas"/>
-        <Caret Line="874" Column="17" TopLine="853"/>
+        <Caret Line="273" Column="45" TopLine="223"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
