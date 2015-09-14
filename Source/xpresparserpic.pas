@@ -1025,7 +1025,9 @@ var
   opr: TOperator;
   pos: TPosCont;
 begin
+  {$IFDEF LogExpres}
   debugln(space(ExprLevel)+' GetOperandP('+IntToStr(pre)+')');
+  {$ENDIF}
   Op1 :=  GetOperand;  //toma el operador
   if pErr.HayError then exit;
   //verifica si termina la expresion
@@ -1068,7 +1070,9 @@ begin
   pErr.Clear;
   //----------------coger primer operando------------------
   Op1 := GetOperand; if pErr.HayError then exit;
+  {$IFDEF LogExpres}
   debugln(space(ExprLevel)+' Op1='+Op1.txt);
+  {$ENDIF}
   //verifica si termina la expresion
   SkipWhites;
   opr1 := Op1.GetOperator;
@@ -1118,7 +1122,9 @@ begin
     end;}
     //--------------------coger segundo operando--------------------
     Op2 := GetOperandP(Opr1.jer);   //toma operando con precedencia
+    {$IFDEF LogExpres}
     debugln(space(ExprLevel)+' Op2='+Op2.txt);
+    {$ENDIF}
     if pErr.HayError then exit;
     //prepara siguiente operación
     Evaluar(Op1, opr1, Op2);    //evalua resultado en "res"
@@ -1144,14 +1150,20 @@ de la expresion que la contiene, así que se puede liberar los registros o pila.
 { TODO : Para optimizar debería existir solo GetExpression() y no GetExpressionCore() }
 begin
   Inc(ExprLevel);  //cuenta el anidamiento
+  {$IFDEF LogExpres}
   debugln(space(ExprLevel)+'>Inic.expr');
+  {$ENDIF}
   if OnExprStart<>nil then OnExprStart(ExprLevel);  //llama a evento
   res := GetExpressionCore(prec);
   if PErr.HayError then exit;
   if OnExprEnd<>nil then OnExprEnd(ExprLevel, isParam);    //llama al evento de salida
+  {$IFDEF LogExpres}
   debugln(space(ExprLevel)+'>Fin.expr');
+  {$ENDIF}
   Dec(ExprLevel);
+  {$IFDEF LogExpres}
   if ExprLevel = 0 then debugln('');
+  {$ENDIF}
 end;
 {procedure TCompilerBase.GetBoolExpression;
 //Simplifica la evaluación de expresiones booleanas, validando el tipo

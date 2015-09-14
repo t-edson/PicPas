@@ -265,6 +265,10 @@ procedure EndCodeSub;
 {debe ser llamado al terminar la codificaión de una subrutina}
 begin
   cxp.curBloSub := cxp.pic.iFlash;  //indica siguiente posición libre
+  if cxp.curBloSub > cxp.finBloSub then begin
+    //hubo traslape
+    cxp.Traslape:=true;
+  end;
   cxp.pic.iFlash := cxp.iFlashTmp;     //retorna puntero
 end;
 procedure callFunct(ifun: integer);
@@ -837,7 +841,6 @@ begin
   ProcComments;
   //puede salir con error
 end;
-
 procedure TCompiler.CaptureDecParams(f: integer);
 //Lee la declaración de parámetros de una función.
 var
@@ -896,7 +899,6 @@ begin
     cin.Next;
   end;
 end;
-
 procedure TCompiler.CompileProcDeclar;
 {Compila la declaración de procedimientos. Tanto procedimeintos como funciones
  se manejan internamenet como funciones}
@@ -1236,7 +1238,6 @@ begin
   curBloSub := iniBloSub; //inicialmente está libre
 
   ExprLevel := 0;  //inicia
-  debugln('*** Compilando en '+ IntToHex(iniMem,3));
   Perr.Clear;
   ProcComments;
   if Perr.HayError then exit;
@@ -1274,12 +1275,14 @@ begin
     end else if cIn.tokL = 'procedure' then begin
       cIn.Next;    //lo toma
       CompileProcDeclar;
-      if pErr.HayError then exit;;
     end else begin
       GenError('Not implemented: "%s"', [cIn.tok]);
       exit;
     end;
   end;
+  {Verifica el traslape al final para darle tiempo a compilar todos los procedimientos
+  y así tener una idea de hasta cuánta memoria se requerirá}
+  if traslape or pErr.HayError then exit;
   //procesa cuerpo
   if cIn.tokL = 'begin' then begin
     Cod_StartProgram;
@@ -1320,6 +1323,7 @@ procedure TCompiler.Compilar(NombArc: string; LinArc: Tstrings);
 var
   iniCOD: Integer;
   posCxt: TPosCont;
+  nPass : integer;
 begin
   //se pone en un "try" para capturar errores y para tener un punto salida de salida
   //único
@@ -1339,20 +1343,24 @@ begin
     {EL método de codificación consiste en dejar espacios fijos al inicio para ir
     llenándolos con las rutinas que sean usadas, e ir expandiendo este espacio en bloques
     mientras se vayan llenando.}
-    Traslape := false;   //inicia bandera
     iniCOD := 0;         //dirección de inicio del código principal
+    nPass := 1;          //cuenta el número de pasadas
     repeat
-      inc(iniCOD, $20);    //incrementa dirección de inicio
+      inc(iniCOD, $8);    //incrementa dirección de inicio
       cIn.PosAct := posCxt; //Posiciona al inicio
       finBloSub := iniCOD;  //_Límite de espacio, para posibles rutinas usadas
+      debugln('*** Compilación ' + IntToStr(nPass) + ' en '+ IntToHex(iniCOD,3));
+      Traslape := false;   //inicia bandera
       CompilarArc(iniCOD); //puede dar error
       if pErr.HayError then break;
+      inc(nPass);
     until not traslape;
     if PErr.HayError then exit;
     //Se pudo compilar sin traslape y sin error. Se procede a juntar el código de subrutinas
     //con del programa principal, en una última compilación.
     iniCOD := curBloSub; //empieza a codificar exactamente en donde terminarán las subrutinas
     cIn.PosAct := posCxt; //Posiciona al inicio
+    debugln('*** Compilación ' + IntToStr(nPass) + ' en '+ IntToHex(iniCOD,3));
     CompilarArc(iniCOD);
     if PErr.HayError then exit;  //No debería generar ya error
 
