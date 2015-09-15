@@ -9,7 +9,7 @@ uses  Classes, SysUtils, Forms, SynEdit, SynEditKeyCmds, MisUtils,
       types, LazLogger, Menus ;
 
 const
-  NOM_PROG = 'Tito''s Terminal 0.2b';   //nombre de programa
+  NOM_PROG = 'PicPas 0.3b';   //nombre de programa
 
 var
    //Variables globales

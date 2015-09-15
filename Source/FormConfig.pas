@@ -23,6 +23,7 @@ type
     lstCateg: TListBox;
     procedure BitAceptarClick(Sender: TObject);
     procedure BitAplicarClick(Sender: TObject);
+    procedure SetLanguage(lang: string);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -150,6 +151,28 @@ procedure TConfig.escribirArchivoIni;
 //Escribe el archivo de configuración
 begin
   msjError := SavePropToFile_AllFrames(self, arINI);
+end;
+
+procedure TConfig.SetLanguage(lang: string);
+begin
+  fcEditor.SetLanguage(lang);
+  fcEdiAsm.SetLanguage(lang);
+  case lowerCase(lang) of
+  'es': begin
+      Caption := 'Configuración';
+      lstCateg.Clear;
+      lstCateg.AddItem('Entorno',nil);
+      lstCateg.AddItem('Editor',nil);
+      lstCateg.AddItem('Editor ASM',nil);
+    end;
+  'en': begin
+      Caption := 'Settings';
+      lstCateg.Clear;
+      lstCateg.AddItem('Enviroment',nil);
+      lstCateg.AddItem('Editor',nil);
+      lstCateg.AddItem('ASM Editor',nil);
+    end;
+  end;
 end;
 
 end.

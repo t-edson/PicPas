@@ -1,36 +1,37 @@
-PicPas 0.3
+PicPas 0.3a
 ==========
-Compilador en Pascal para microcontroladores PIC 
+Pascal compiler for PIC microcontrollers.
 
-NOTA: Este compilador está aún en fase Alfa y tiene funcionalidades limitadas. 
+NOTE: This compiler is still in alpha phase and has limited functionality.
 
+PicPas is a simple compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
 
-PicPas es un compilador sencillo, escrito en Lazarus,  que genera código ejecutable, para los microcontroladores PIC de rango medio (la serie 16F).
+Currently, it only supports types byte, boolean and word (limited support).
 
-Por el momento solo soporta los tipos byte, word y boolean. 
+No additional libraries or software required to compile. PicPas generates the * .hex file directly.
 
-No se requiere librerias ni programas adicionales para la compilación. PicPas genera el archivo *.hex directamente.
+It includes a simple IDE to facilitate the development of programs.
 
-Incluye una sencilla IDE para facilitar el desarrollo de programas.
+The code optimization options are not well developed but the code obtained is fairly compact, as that could generate any commercial compiler.
 
-Las opciones de optimización de código no están muy desarrolladas pero el código obtenido es bastante compacto, como el que podría generar cualquier compilador similar.
-
-Como ejemplo el siguiente código, es para  parpadear un led en el puerto B:
+As an example the following code, is to blink an LED on port B:
 
 ```
-{Sample program for to blink a Led on PORTC.4}
+{Sample program to blink a Led on PORTB.4}
 {$FREQUENCY 4 MHZ }
+{$PROCESSOR PIC16F84}
 program BlinkLed;
 const
   HIGH = true;
   LOW = false;
 var
-  STATUS: BYTE absolute 03;
+  STATUS: BYTE absolute $03;
   PORTB : BYTE absolute $06;
   TRISB : BYTE absolute $86;
   RP0 : boolean @STATUS.5;
+  RP1 : boolean @STATUS.6;
   pin: boolean absolute PORTB.4;
-begin
+begin                          
   RP0 := HIGH;
   TRISB := 0;   //all outputs
   RP0 := LOW;
@@ -42,20 +43,6 @@ begin
     delay_ms(300);
     pin := LOW;
   end;
-end;
-
+end.
 ```
 
-##Código Fuente
-
-El código fuente se encuentra en la carpeta /Source.
-
-Para compilar se debe disponer de las librerías indicadas en las propiedades del proyecto. Estas son:
-
-* SynFacilUtils
-* MisUtils
-* ConfigFrame 
-* PicUtils 
-* Xpres 
-
-Todas ellas deberían estar disponibles. Verificar las versiones requeridas.

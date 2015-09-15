@@ -46,7 +46,7 @@ type
     procedure getListOfIdent(var itemList: TStringDynArray);
     procedure ProcComments;
     procedure CompileCurBlock;
-    procedure CompilarArc(iniMem: word);
+    procedure CompileFile(iniMem: word);
     procedure CompileVarDeclar;
   protected
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
@@ -55,7 +55,7 @@ type
     procedure cInNewLine(lin: string);
   public
     procedure StartSyntax;
-    procedure Compilar(NombArc: string; LinArc: Tstrings);
+    procedure Compile(NombArc: string; LinArc: Tstrings);
     function RAMusage: string;  //uso de memoria RAM
     procedure DumpCode(l: TSTrings);  //uso de la memoria Flash
     procedure DumpStatistics(l: TSTrings);
@@ -1207,7 +1207,7 @@ begin
     end;
   end;
 end;
-procedure TCompiler.CompilarArc(iniMem: word);
+procedure TCompiler.CompileFile(iniMem: word);
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
 la posición iniMem}
   function StartOfSection: boolean;
@@ -1280,7 +1280,7 @@ begin
       exit;
     end;
   end;
-  {Verifica el traslape al final para darle tiempo a compilar todos los procedimientos
+  {Verifica el traslape al final para darle tiempo a Compile todos los procedimientos
   y así tener una idea de hasta cuánta memoria se requerirá}
   if traslape or pErr.HayError then exit;
   //procesa cuerpo
@@ -1318,7 +1318,7 @@ begin
   end;
   Cod_EndProgram;
 end;
-procedure TCompiler.Compilar(NombArc: string; LinArc: Tstrings);
+procedure TCompiler.Compile(NombArc: string; LinArc: Tstrings);
 //Compila el contenido de un archivo w ensamblador
 var
   iniCOD: Integer;
@@ -1346,22 +1346,22 @@ begin
     iniCOD := 0;         //dirección de inicio del código principal
     nPass := 1;          //cuenta el número de pasadas
     repeat
-      inc(iniCOD, $8);    //incrementa dirección de inicio
+      inc(iniCOD, $20);    //incrementa dirección de inicio
       cIn.PosAct := posCxt; //Posiciona al inicio
       finBloSub := iniCOD;  //_Límite de espacio, para posibles rutinas usadas
       debugln('*** Compilación ' + IntToStr(nPass) + ' en '+ IntToHex(iniCOD,3));
       Traslape := false;   //inicia bandera
-      CompilarArc(iniCOD); //puede dar error
+      CompileFile(iniCOD); //puede dar error
       if pErr.HayError then break;
       inc(nPass);
     until not traslape;
     if PErr.HayError then exit;
-    //Se pudo compilar sin traslape y sin error. Se procede a juntar el código de subrutinas
+    //Se pudo Compile sin traslape y sin error. Se procede a juntar el código de subrutinas
     //con del programa principal, en una última compilación.
     iniCOD := curBloSub; //empieza a codificar exactamente en donde terminarán las subrutinas
     cIn.PosAct := posCxt; //Posiciona al inicio
     debugln('*** Compilación ' + IntToStr(nPass) + ' en '+ IntToHex(iniCOD,3));
-    CompilarArc(iniCOD);
+    CompileFile(iniCOD);
     if PErr.HayError then exit;  //No debería generar ya error
 
     cIn.QuitaContexEnt;   //es necesario por dejar limpio

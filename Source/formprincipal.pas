@@ -12,7 +12,7 @@ uses
   Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
   Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
   StdCtrls, LCLIntf, SynFacilUtils, SynFacilHighlighter, MisUtils, FormConfig,
-  Parser, FormPICExplorer, FrameCfgIDE;
+  Parser, FormPICExplorer, Globales, FrameCfgIDE;
 
 type
 
@@ -65,7 +65,7 @@ type
     MenuItem21: TMenuItem;
     MenuItem22: TMenuItem;
     MenuItem24: TMenuItem;
-    mnVer: TMenuItem;
+    mnView: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem23: TMenuItem;
     MenuItem3: TMenuItem;
@@ -75,10 +75,10 @@ type
     MenuItem7: TMenuItem;
     MenuItem8: TMenuItem;
     MenuItem9: TMenuItem;
-    mnArchivo: TMenuItem;
-    mnBuscar: TMenuItem;
-    mnEdicion: TMenuItem;
-    mnHerram: TMenuItem;
+    mnFile: TMenuItem;
+    mnFind: TMenuItem;
+    mnEdit: TMenuItem;
+    mnTools: TMenuItem;
     mnRecientes: TMenuItem;
     OpenDialog1: TOpenDialog;
     panMessages: TPanel;
@@ -151,8 +151,6 @@ implementation
 
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
-  SetLanguage('en');
-  edit.SetLanguage('en');
   //configura panel de mensajes
   ListBox1.Style:=lbOwnerDrawVariable;
   ListBox1.OnDrawItem:=@ListBox1DrawItem;
@@ -186,10 +184,13 @@ begin
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin
+  SetLanguage('en');
+  edit.SetLanguage('en');
   Config.Iniciar(self, edPas, edAsm);   //necesario para poder trabajar
   Config.fcIDE.OnUpdateChanges := @ChangeAppearance;
   ChangeAppearance;   //primera actualización
   edit.InitMenuRecents(mnRecientes, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
+  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
 end;
 procedure TfrmPrincipal.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 begin
@@ -271,7 +272,7 @@ end;
 procedure TfrmPrincipal.editChangeFileInform;
 begin
   //actualiza nombre de archivo
-  Caption := 'Editor - ' + edit.NomArc;
+  Caption := NOM_PROG + ' - ' + edit.NomArc;
 end;
 procedure TfrmPrincipal.edSpecialLineMarkup(Sender: TObject; Line: integer;
   var Special: boolean; Markup: TSynSelectedColor);
@@ -342,7 +343,7 @@ begin
   ListBox1.Items.Clear;
   timeCnt:=GetTickCount;
   ListBox1.Items.Add('Starting Compilation ...');
-  cxp.Compilar(edit.NomArc, edPas.Lines);
+  cxp.Compile(edit.NomArc, edPas.Lines);
   if cxp.HayError then begin
     ListBox1.Items.Add(cxp.PErr.TxtErrorRC);
     VerificarError;
@@ -414,17 +415,18 @@ begin
 end;
 procedure TfrmPrincipal.SetLanguage(lang: string);
 begin
+  Config.SetLanguage(lang);
   case lowerCase(lang) of
   'es': begin
       //menú principal
-      mnArchivo.Caption:='&Archivo';
-      mnEdicion.Caption:='&Edición';
-      mnBuscar.Caption:='&Buscar';
-      mnVer.Caption:='&Ver';
-      mnHerram.Caption:='&Herramientas';
+      mnFile.Caption:='&Archivo';
+      mnEdit.Caption:='&Edición';
+      mnFind.Caption:='&Buscar';
+      mnView.Caption:='&Ver';
+      mnTools.Caption:='&Herramientas';
 
       acArcNuevo.Caption := '&Nuevo';
-      acArcNuevo.Hint := 'Nueva consulta';
+      acArcNuevo.Hint := 'Nuevo archivo';
       acArcAbrir.Caption := '&Abrir...';
       acArcAbrir.Hint := 'Abrir archivo';
       acArcGuardar.Caption := '&Guardar';
@@ -453,19 +455,31 @@ begin
       acBusBusSig.Hint := 'Buscar Siguiente';
       acBusReemp.Caption := '&Remplazar...';
       acBusReemp.Hint := 'Reemplazar texto';
+
+      acVerPanMsj.Caption:='Panel de &Mensajes';
+      acVerPanMsj.Hint:='Mostrar u Ocultar el Panel de Mensajes';
+      acVerBarEst.Caption:='Barra de &Estado';
+      acVerBarEst.Hint:='Mostrar u Ocultar la barra de estado';
+      acVerBarHer.Caption:='Barra de &Herramientas';
+      acVerBarHer.Hint:='Mostrar u Ocultar la barra de herramientas';
+
+      AcHerCompil.Caption:='&Compilar';
+      AcHerCompil.Hint:='Compila el código fuente';
+      acHerPICExpl.Caption:='E&xplorador de PIC';
+      acHerPICExpl.Hint:='Abre el explorador de dispositivos PIC';
       acHerConfig.Caption:='Configuración';
       acHerConfig.Hint := 'Ver configuración';
     end;
   'en': begin
       //menú principal
-      mnArchivo.Caption:='&File';
-      mnEdicion.Caption:='&Edit';
-      mnBuscar.Caption:='&Search';
-      mnVer.Caption:='&View';
-      mnHerram.Caption:='&Tools';
+      mnFile.Caption:='&File';
+      mnEdit.Caption:='&Edit';
+      mnFind.Caption:='&Search';
+      mnView.Caption:='&View';
+      mnTools.Caption:='&Tools';
 
       acArcNuevo.Caption := '&New';
-      acArcNuevo.Hint := 'New query';
+      acArcNuevo.Hint := 'New File';
       acArcAbrir.Caption := '&Open...';
       acArcAbrir.Hint := 'Open file';
       acArcGuardar.Caption := '&Save';
@@ -494,8 +508,20 @@ begin
       acBusBusSig.Hint := 'Search Next';
       acBusReemp.Caption := '&Replace...';
       acBusReemp.Hint := 'Replace text';
+
+      acVerPanMsj.Caption:='&Messages Panel';
+      acVerPanMsj.Hint:='Show o hide the Messages Panel';
+      acVerBarEst.Caption:='&Status Bar';
+      acVerBarEst.Hint:='Show o hide the Status Bar';
+      acVerBarHer.Caption:='&Tool Bar';
+      acVerBarHer.Hint:='Show o hide the Tool Bar';
+
+      AcHerCompil.Caption:='&Compile';
+      AcHerCompil.Hint:='Compile the source code';
+      acHerPICExpl.Caption:='PIC E&xplorer';
+      acHerPICExpl.Hint:='Open the PIC devices explorer';
       acHerConfig.Caption := '&Settings';
-      acHerConfig.Hint := 'Configuration dialog';
+      acHerConfig.Hint := 'Settings dialog';
     end;
   end;
 end;

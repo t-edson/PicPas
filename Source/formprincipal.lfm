@@ -1,12 +1,12 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 273
-  Height = 442
-  Top = 173
-  Width = 722
+  Left = 264
+  Height = 539
+  Top = 36
+  Width = 757
   AllowDropFiles = True
   Caption = 'frmPrincipal'
-  ClientHeight = 422
-  ClientWidth = 722
+  ClientHeight = 519
+  ClientWidth = 757
   Menu = MainMenu1
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
@@ -17,9 +17,9 @@ object frmPrincipal: TfrmPrincipal
   LCLVersion = '1.4.2.0'
   inline edPas: TSynEdit
     Left = 0
-    Height = 288
+    Height = 385
     Top = 26
-    Width = 363
+    Width = 400
     Align = alLeft
     Font.Height = -13
     Font.Name = 'Courier New'
@@ -517,8 +517,8 @@ object frmPrincipal: TfrmPrincipal
   object StatusBar1: TStatusBar
     Left = 0
     Height = 23
-    Top = 399
-    Width = 722
+    Top = 496
+    Width = 757
     Panels = <    
       item
         Width = 70
@@ -544,7 +544,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 26
     Top = 0
-    Width = 722
+    Width = 757
     Caption = 'ToolBar1'
     Images = ImgActions16
     ParentShowHint = False
@@ -642,16 +642,16 @@ object frmPrincipal: TfrmPrincipal
     end
   end
   object Splitter1: TSplitter
-    Left = 363
-    Height = 288
+    Left = 400
+    Height = 385
     Top = 26
     Width = 5
   end
   inline edAsm: TSynEdit
-    Left = 368
-    Height = 288
+    Left = 405
+    Height = 385
     Top = 26
-    Width = 354
+    Width = 352
     Align = alClient
     Font.Height = -13
     Font.Name = 'Courier New'
@@ -1146,17 +1146,17 @@ object frmPrincipal: TfrmPrincipal
   object panMessages: TPanel
     Left = 0
     Height = 79
-    Top = 320
-    Width = 722
+    Top = 417
+    Width = 757
     Align = alBottom
     ClientHeight = 79
-    ClientWidth = 722
+    ClientWidth = 757
     TabOrder = 5
     object ListBox1: TListBox
       Left = 1
       Height = 77
       Top = 1
-      Width = 720
+      Width = 755
       Align = alClient
       ItemHeight = 0
       TabOrder = 0
@@ -1166,8 +1166,8 @@ object frmPrincipal: TfrmPrincipal
     Cursor = crVSplit
     Left = 0
     Height = 6
-    Top = 314
-    Width = 722
+    Top = 411
+    Width = 757
     Align = alBottom
     ResizeAnchor = akBottom
   end
@@ -2304,7 +2304,7 @@ object frmPrincipal: TfrmPrincipal
     Images = ImgActions16
     left = 72
     top = 88
-    object mnArchivo: TMenuItem
+    object mnFile: TMenuItem
       Caption = '&Archivo'
       object MenuItem3: TMenuItem
         Action = acArcNuevo
@@ -2508,7 +2508,7 @@ object frmPrincipal: TfrmPrincipal
         }
       end
     end
-    object mnEdicion: TMenuItem
+    object mnEdit: TMenuItem
       Caption = '&Edicion'
       object MenuItem9: TMenuItem
         Action = acEdUndo
@@ -2751,7 +2751,7 @@ object frmPrincipal: TfrmPrincipal
         }
       end
     end
-    object mnBuscar: TMenuItem
+    object mnFind: TMenuItem
       Caption = '&Buscar'
       object MenuItem1: TMenuItem
         Action = acBusBuscar
@@ -2871,7 +2871,7 @@ object frmPrincipal: TfrmPrincipal
         }
       end
     end
-    object mnVer: TMenuItem
+    object mnView: TMenuItem
       Caption = '&Ver'
       object MenuItem20: TMenuItem
         Action = acVerPanMsj
@@ -2919,7 +2919,7 @@ object frmPrincipal: TfrmPrincipal
         }
       end
     end
-    object mnHerram: TMenuItem
+    object mnTools: TMenuItem
       Caption = 'Herramientas'
       object MenuItem18: TMenuItem
         Action = AcHerCompil
