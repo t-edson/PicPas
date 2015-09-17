@@ -37,11 +37,11 @@ type
     procedure CompileWHILE;
     procedure CompileInstructionDummy;
     procedure CompileInstruction;
-    function CreateCons(const consName: string; typ: ttype): integer;
+    function CreateCons(const consName: string; typ: ttype): TCon;
     function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
-      absBit: integer=-1): integer;
+      absBit: integer=-1): Tvar;
     function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
-      =-1): integer;
+      =-1): Tvar;
     procedure DefLexDir;
     procedure getListOfIdent(var itemList: TStringDynArray);
     procedure ProcComments;
@@ -290,7 +290,7 @@ function HayError: boolean;
 begin
   Result := cxp.HayError;
 end;
-function CreateVar(const varName: string; typ: ttype): integer;
+function CreateVar(const varName: string; typ: ttype): Tvar;
 begin
   Result := cxp.CreateVar(varName, typ);
 end;
@@ -532,11 +532,11 @@ begin
     cIn.Next;  //toma la coma
   until false;
 end;
-function TCompiler.CreateCons(const consName: string; typ: ttype): integer;
+function TCompiler.CreateCons(const consName: string; typ: ttype): TCon;
 {Rutina para crear una constante. Devuelve índice a la variable creada.}
 var
-  r   : TCons;
-  n, i: Integer;
+  r  : TCon;
+  i  : Integer;
   offs, bnk, bit : byte;
 begin
   //verifica nombre
@@ -545,20 +545,19 @@ begin
     exit;
   end;
   //registra variable en la tabla
+  r := TCon.Create;
   r.nom:=consName;
   r.typ := typ;   //fija  referencia a tipo
-  n := high(cons)+1;
-  setlength(cons, n+1);
-  cons[n] := r;
-  Result := n;
+  cons.Add(r);
+  Result := r;
 end;
 function TCompiler.CreateVar(const varName: string; typ: ttype;
-         absAdd: integer = -1; absBit: integer = -1): integer;
-{Rutina para crear variable. Devuelve índice a la variable creada. Si se especifican
+         absAdd: integer = -1; absBit: integer = -1): Tvar;
+{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
  "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
 var
   r   : Tvar;
-  n, i: Integer;
+  i   : Integer;
   offs, bnk, bit : byte;
 begin
   //verifica nombre
@@ -567,6 +566,7 @@ begin
     exit;
   end;
   //registra variable en la tabla
+  r := Tvar.Create;
   r.nom:=varName;
   r.typ := typ;   //fija  referencia a tipo
   //busca espacio para ubicarla
@@ -606,20 +606,17 @@ begin
     for i:=0 to typ.size -1 do
       pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
   end;
-
   r.offs := offs;
   r.bank := bnk;
   r.bit  := bit;
-  n := high(vars)+1;
-  setlength(vars, n+1);
-  vars[n] := r;
-  Result := n;
+  vars.Add(r);
+  Result := r;
   //Ya encontró tipo, llama a evento
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
 function TCompiler.CreateVar(varName, varType: string;
-         absAdd: integer = -1; absBit: integer = -1): integer;
-{Agrega una variable w la tabla de variables.}
+         absAdd: integer = -1; absBit: integer = -1): Tvar;
+{Agrega una variable a la tabla de variables.}
 var t: ttype;
   hay: Boolean;
   varTypeL: String;
@@ -807,7 +804,7 @@ procedure TCompiler.CompileConstDeclar;
 var
 //  consType: String;
   consNames: array of string;  //nombre de variables
-  n: Integer;
+  c: TCon;
   tmp: String;
 begin
   setlength(consNames,0);  //inicia arreglo
@@ -820,7 +817,7 @@ begin
   //puede seguir "=" o identificador de tipo
   if cIn.tok = '=' then begin
     cIn.Next;  //pasa al siguiente
-    //Debe seguir una expresión constante, que no genere código
+    //Debe seguir una expresióc constante, que no genere código
     GetExpression(0);
     if HayError then exit;
     if res.catOp <> coConst then begin
@@ -829,8 +826,8 @@ begin
     //Hasta aquí todo bien, crea la(s) constante(s).
     for tmp in consNames do begin
       //crea constante
-      n := CreateCons(tmp, res.typ);
-      res.CopyConsValTo(cons[n]); //asigna valor
+      c := CreateCons(tmp, res.typ);
+      res.CopyConsValTo(c); //asigna valor
     end;
 //  end else if cIn.tok = ':' then begin
   end else begin
@@ -1380,19 +1377,19 @@ function TCompiler.RAMusage: string;
 var
   dir: String;
   tmp: String;
-  i: Integer;
+  v: TVar;
 begin
   tmp := '';
-  for i:= 0 to high(vars) do begin
-    dir := 'bnk'+ IntToStr(vars[i].bank) + ':$' + IntToHex(vars[i].offs, 3);
-    if vars[i].typ = tipBool then begin
-      tmp += ' ' + vars[i].nom + ' Db ' +  dir + LineEnding;
-    end else if vars[i].typ = tipByte then begin
-      tmp += ' ' + vars[i].nom + ' DB ' +  dir + LineEnding;
-    end else if vars[i].typ = tipWord then begin
-      tmp += ' ' + vars[i].nom + ' DW ' +  dir + LineEnding;
+  for v in vars do begin
+    dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
+    if v.typ = tipBool then begin
+      tmp += ' ' + v.nom + ' Db ' +  dir + LineEnding;
+    end else if v.typ = tipByte then begin
+      tmp += ' ' + v.nom + ' DB ' +  dir + LineEnding;
+    end else if v.typ = tipWord then begin
+      tmp += ' ' + v.nom + ' DW ' +  dir + LineEnding;
     end else begin
-      tmp += ' "' + vars[i].nom + '"->' +  dir + LineEnding;
+      tmp += ' "' + v.nom + '"->' +  dir + LineEnding;
     end;
   end;
   Result := tmp;

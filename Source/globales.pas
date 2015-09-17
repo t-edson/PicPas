@@ -16,10 +16,9 @@ var
    MsjError    : String;    //Bandera - Mensaje de error
 
    rutApp     : string;      //ruta de la aplicación
+   rutSamples : string;      //ruta de la carpeta de scripts
    rutMacros  : string;      //ruta de la carpeta de macros
-   rutScripts : string;      //ruta de la carpeta de scripts
    rutLenguajes: string;     //ruta para guardar las sintaxis
-   rutSesiones: string;     //ruta para guardar las sesiones
 
    archivoEnt  : string;    //archivo de entrada
    MostrarError: Boolean;   //Bandera para mostrar mensajesde error.
@@ -106,18 +105,17 @@ End;
 initialization
   //inicia directorios de la aplicación
   rutApp :=  ExtractFilePath(Application.ExeName);  //incluye el '\' final
-{  rutMacros := rutApp + 'macros';
-  rutScripts := rutApp + 'scripts';
-  rutLenguajes := rutApp + 'lenguajes';
-  rutSesiones := rutApp + 'sesiones';
+  rutSamples := rutApp + 'samples';
+//  rutMacros := rutApp + 'macros';
+//  rutLenguajes := rutApp + 'lenguajes';
   archivoEnt := '';    //archivo de entrada
   //verifica existencia de carpetas de trabajo
   try
-    if not DirectoryExists(rutScripts) then begin
-      msgexc('No se encuentra carpeta /scripts. Se creará.');
-      CreateDir(rutScripts);
+    if not DirectoryExists(rutSamples) then begin
+      msgexc('No se encuentra carpeta /samples. Se creará.');
+      CreateDir(rutSamples);
     end;
-    if not DirectoryExists(rutMacros) then begin
+{    if not DirectoryExists(rutMacros) then begin
       msgexc('No se encuentra carpeta /macros. Se creará.');
       CreateDir(rutMacros);
     end;
@@ -125,24 +123,19 @@ initialization
       msgexc('No se encuentra carpeta /lenguajes. Se creará.');
       CreateDir(rutLenguajes);
     end;
-    if not DirectoryExists(rutSesiones) then begin
-      msgexc('No se encuentra carpeta /sesiones. Se creará.');
-      CreateDir(rutSesiones);
-    end;
     if not FileExists(rutApp+'plink.exe') then begin
       msgErr('No se encuentra archivo plink.exe');
-    end;
+    end;}
   except
     msgErr('Error. No se puede leer o crear directorios.');
   end;
-  }
+
 finalization
   //Por algún motivo, la unidad HeapTrc indica que hay gotera de memoria si no se liberan
   //estas cadenas:
   rutApp :=  '';
   rutMacros := '';
-  rutScripts := '';
+  rutSamples := '';
   rutLenguajes := '';
-  rutSesiones := '';
 end.
 

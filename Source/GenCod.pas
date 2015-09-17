@@ -96,7 +96,7 @@ function GetByte(var reg: Tregister; varNom: string = ''): boolean;
  variables. Las direcciones usadas, se guardan en la tabla memtab[], aunque no siempre
  corresponden a direcciones consecutivas}
 var
-  ivar: Integer;
+  aVar: Tvar;
 begin
    if sp>=MAX_MEMTAB then begin
      //Se asume que se desbordó la memoria evaluando a alguna expresión
@@ -106,12 +106,12 @@ begin
    if sp>= spSize then begin
      //No hay espacio para este nuevo valor. Crea espacio como variable
      if varNom = '' then
-       ivar := CreateVar('_stk'+IntToStr(sp), tipByte)
+       aVar := CreateVar('_stk'+IntToStr(sp), tipByte)
      else
-       ivar := CreateVar(varNom, tipByte);
+       aVar := CreateVar(varNom, tipByte);
      if HayError then exit(false);
-     memtab[sp].offs := vars[ivar].offs;   //toma dirección libre
-     memtab[sp].bank  := vars[ivar].bank;
+     memtab[sp].offs := aVar.offs;   //toma dirección libre
+     memtab[sp].bank  := aVar.bank;
      inc(spSize);  //sube cota
    end;
    reg := memtab[sp];  //actualiza dirección

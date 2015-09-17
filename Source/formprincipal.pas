@@ -64,7 +64,7 @@ type
     MenuItem20: TMenuItem;
     MenuItem21: TMenuItem;
     MenuItem22: TMenuItem;
-    MenuItem24: TMenuItem;
+    mnSamples: TMenuItem;
     mnView: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem23: TMenuItem;
@@ -73,13 +73,13 @@ type
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
-    MenuItem8: TMenuItem;
+    mnExit: TMenuItem;
     MenuItem9: TMenuItem;
     mnFile: TMenuItem;
     mnFind: TMenuItem;
     mnEdit: TMenuItem;
     mnTools: TMenuItem;
-    mnRecientes: TMenuItem;
+    mnRecents: TMenuItem;
     OpenDialog1: TOpenDialog;
     panMessages: TPanel;
     SaveDialog1: TSaveDialog;
@@ -119,6 +119,7 @@ type
     procedure acVerBarHerExecute(Sender: TObject);
     procedure acVerPanMsjExecute(Sender: TObject);
     procedure ChangeEditorState;
+    procedure DoSelectSample(Sender: TObject);
     procedure editChangeFileInform;
     procedure edSpecialLineMarkup(Sender: TObject; Line: integer;
       var Special: boolean; Markup: TSynSelectedColor);
@@ -183,15 +184,39 @@ begin
   hlAssem.LoadFromFile('PicPas_AsmPic.xml');
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
+var
+  Hay: Boolean;
+  SR: TSearchRec;
 begin
   SetLanguage('en');
   edit.SetLanguage('en');
   Config.Iniciar(self, edPas, edAsm);   //necesario para poder trabajar
   Config.fcIDE.OnUpdateChanges := @ChangeAppearance;
   ChangeAppearance;   //primera actualización
-  edit.InitMenuRecents(mnRecientes, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
+  edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
   if FileExists('sample.pas') then edit.LoadFile('sample.pas');
+  //carga lista de ejemplos
+  Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
+  while Hay do begin
+     //encontró archivo
+    AddItemToMenu(mnSamples, '&'+ChangeFileExt(SR.name,''),@DoSelectSample);
+    Hay := FindNext(SR) = 0;
+  end;
 end;
+procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
+//Se ha seleccionado un archivo de ejemplo.
+var
+  SamFil: String;
+  it: TMenuItem;
+begin
+  it := TMenuItem(Sender);
+  SamFil := rutSamples + DirectorySeparator + it.Caption + '.pas';
+  SamFil := StringReplace(SamFil,'&','',[rfReplaceAll]);
+  //Carga archivo arrastrados
+  if edit.SaveQuery then Exit;   //Verifica cambios
+  edit.LoadFile(SamFil);
+end;
+
 procedure TfrmPrincipal.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 begin
   if edit.SaveQuery then CanClose := false;   //cancela

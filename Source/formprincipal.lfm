@@ -1,7 +1,7 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 264
+  Left = 217
   Height = 539
-  Top = 36
+  Top = 61
   Width = 757
   AllowDropFiles = True
   Caption = 'frmPrincipal'
@@ -2279,23 +2279,23 @@ object frmPrincipal: TfrmPrincipal
       OnExecute = AcHerConfigExecute
     end
     object acVerPanMsj: TAction
-      Category = 'Ver'
+      Category = 'View'
       Caption = '&Panel de Mensajes'
       OnExecute = acVerPanMsjExecute
     end
     object acVerBarHer: TAction
-      Category = 'Ver'
+      Category = 'View'
       Caption = 'Barra de &Herramientas'
       OnExecute = acVerBarHerExecute
     end
     object acVerBarEst: TAction
-      Category = 'Ver'
+      Category = 'View'
       Caption = 'Barra de &Estado'
       ImageIndex = 29
       OnExecute = acVerBarEstExecute
     end
     object acVerPanArc: TAction
-      Category = 'Ver'
+      Category = 'View'
       Caption = 'Panel de &Archivos'
       ShortCut = 113
     end
@@ -2462,13 +2462,16 @@ object frmPrincipal: TfrmPrincipal
           00000000000000000000000000007CBED2FF0D2D37E0282C2C39
         }
       end
-      object mnRecientes: TMenuItem
-        Caption = 'Recientes'
+      object mnSamples: TMenuItem
+        Caption = '&Samples'
+      end
+      object mnRecents: TMenuItem
+        Caption = 'Recents'
       end
       object MenuItem7: TMenuItem
         Caption = '-'
       end
-      object MenuItem8: TMenuItem
+      object mnExit: TMenuItem
         Action = acArcSalir
         Bitmap.Data = {
           36040000424D3604000000000000360000002800000010000000100000000100
