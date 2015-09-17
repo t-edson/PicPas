@@ -143,7 +143,6 @@ TProcLoadOperand = procedure(const Op: TOperand);
 
 TProcDefineVar = procedure(const varName, varInitVal: string);
 TProcExecOperat = procedure;
-TProcExecFunction = procedure(ifun: integer);  //con índice de función
 
 //"Tipos de datos"
 
@@ -203,8 +202,12 @@ TTypes = specialize TFPGObjectList<TType>; //lista de bloques
 
 TFindFuncResult = (TFF_NONE, TFF_PARTIAL, TFF_FULL);
 
-//registro para almacenar información de las funciones
-Tfunc = record
+
+//Clase para almacenar información de las funciones
+{ Tfunc }
+Tfunc = class;
+TProcExecFunction = procedure(fun :Tfunc);  //con índice de función
+Tfunc = class
   name: string;   //nombre de la función
   typ : Ttype;    //tipo que devuelve
   pars: array of Ttype;  //parámetros de entrada
@@ -213,8 +216,14 @@ Tfunc = record
   adrr: integer;  //dirección física
   //Campos usados para implementar el intérprete sin máquina virtual
   proc: TProcExecFunction;  //referencia a la función que implementa
-  posF: TPoint;    //posición donde empieza la función en el código
+  posF: TPoint;    //posición donde empieza la función en el código fuente
+  procedure ClearParams;
+  procedure CreateParam(parName: string; typ0: ttype);
+  function SameParams(Fun2: Tfunc): boolean;
+  function ParamTypesList: string;
 end;
+
+Tfuncs = specialize TFPGObjectList<Tfunc>;
 
 { TCompiler }
 
@@ -234,13 +243,12 @@ protected  //Eventos del compilador
   ExprLevel: Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
   procedure ClearTypes;
   function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
-  procedure CreateFunction(funName, varType: string);
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction
-    ): integer;
+    ): TFunc;
+//  procedure CreateFunction(funName, varType: string);
   function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction
-    ): integer;
-  procedure CreateParam(ifun: integer; parName: string; typ: ttype);
-  procedure CreateParam(ifun: integer; parName: string; typStr: string);
+    ): Tfunc;
+  procedure CreateParam(fun: Tfunc; parName: string; typStr: string);
   function CaptureDelExpres: boolean;
   procedure ClearVars;
   procedure ClearAllConst;
@@ -265,20 +273,20 @@ protected  //Eventos del compilador
   function FindPredefName(name: string): TIdentifType;
   function GetOperand: TOperand; virtual;
   function GetOperandP(pre: integer): TOperand;
-  procedure ClearParamsFunc(ifun: integer); virtual;
   procedure CaptureParams; virtual;
   function FindFuncWithParams0(const funName: string; var idx: integer;
-    idx0: integer=1): TFindFuncResult;
+    idx0: integer=0): TFindFuncResult;
 private
   procedure Evaluar(var Op1: TOperand; opr: TOperator; var Op2: TOperand);
   function GetExpressionCore(const prec: Integer): TOperand;
-  function SameParamsFunctions(iFun1, iFun2: integer): boolean;
 public
   PErr  : TPError;     //Objeto de Error
   xLex  : TSynFacilSyn; //resaltador - lexer
   //variables públicas del compilador
   ejecProg: boolean;   //Indica que se está ejecutando un programa o compilando
   DetEjec: boolean;   //para detener la ejecución (en intérpretes)
+  funcs : Tfuncs; //lista de funciones
+  func0 : Tfunc;  //función interna para almacenar parámetros
   function HayError: boolean;
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
@@ -296,7 +304,6 @@ var
    para que puedan ser accedidas fácilmente desde el archivo "interprte.pas"}
 
   vars  : array of TVar;  //lista de variables
-  funcs : array of Tfunc; //lista de funciones
   cons  : array of TCons;  //lista de constantes
   typs  : TTypes;       //lista de tipos (EL nombre "types" ya está reservado)
   nIntVar : integer;    //número de variables internas
@@ -339,6 +346,57 @@ begin
   coExpres_Expres: exit('Expression'+ Op +'Expression');
   end;
 end;
+
+{ Tfunc }
+
+procedure Tfunc.ClearParams;
+//Elimina los parámetros de una función
+begin
+  setlength(pars,0);
+end;
+procedure Tfunc.CreateParam(parName: string; typ0: ttype);
+//Crea un parámetro para la función
+var
+  n: Integer;
+begin
+  //agrega
+  n := high(pars)+1;
+  setlength(pars, n+1);
+  pars[n] := typ0;  //agrega referencia
+end;
+function Tfunc.SameParams(Fun2: Tfunc): boolean;
+{Compara los parámetros de la función con las de otra. Si tienen el mismo número
+de parámetros y el mismo tipo, devuelve TRUE.}
+var
+  i: Integer;
+begin
+  Result:=true;  //se asume que son iguales
+  if High(pars) <> High(Fun2.pars) then
+    exit(false);   //distinto número de parámetros
+  //hay igual número de parámetros, verifica
+  for i := 0 to High(pars) do begin
+    if pars[i] <> Fun2.pars[i] then begin
+      exit(false);
+    end;
+  end;
+  //si llegó hasta aquí, hay coincidencia, sale con TRUE
+end;
+function Tfunc.ParamTypesList: string;
+{Devuelve una lista con los nombres de los tipos de los parámetros, de la forma:
+(byte, word) }
+var
+  tmp: String;
+  j: Integer;
+begin
+  tmp := '';
+  for j := 0 to High(pars) do begin
+    tmp += pars[j].name+', ';
+  end;
+  //quita coma final
+  if length(tmp)>0 then tmp := copy(tmp,1,length(tmp)-2);
+  Result := '('+tmp+')';
+end;
+
 { TOperator }
 function TOperator.CreateOperation(OperadType: Ttype; proc: TProcExecOperat): TxOperation;
 var
@@ -491,7 +549,7 @@ var
 begin
   Result := false;
   tmp := upCase(funName);
-  for i:=0 to high(funcs) do begin
+  for i:=0 to funcs.Count-1 do begin
     if Upcase(funcs[i].name)=tmp then begin
       idx := i;
       exit(true);
@@ -577,13 +635,13 @@ end;
 procedure TCompilerBase.ClearFuncs;
 //Limpia todas las funciones creadas por el usuario.
 begin
-  setlength(funcs,nIntFun);  //deja las del sistema
+  funcs.Count:=nIntFun;  //deja las del sistema
 end;
 procedure TCompilerBase.ClearAllFuncs;
 //Elimina todas las funciones, incluyendo las predefinidas.
 begin
   nIntFun := 0;
-  setlength(funcs,0);
+  funcs.Clear;
 end;
 procedure TCompilerBase.ClearAllConst;
 //Elimina todas las funciones, incluyendo las predefinidas.
@@ -592,11 +650,11 @@ begin
   setlength(cons,0);
 end;
 
-function TCompilerBase.CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): integer;
+function TCompilerBase.CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TFunc;
 //Crea una nueva función y devuelve un índice a la función.
 var
-  r : Tfunc;
-  i, n: Integer;
+  fun : Tfunc;
+  i: Integer;
 begin
   //verifica si existe como variable
   if FindVar(funName, i) then begin
@@ -610,17 +668,15 @@ begin
   end;
   //puede existir como función, no importa (sobrecarga)
   //registra la función en la tabla
-  r.name:= funName;
-  r.typ := typ;
-  r.proc:= proc;
-  setlength(r.pars,0);  //inicia arreglo
-  //agrega
-  n := high(funcs)+1;
-  setlength(funcs, n+1);
-  funcs[n] := r;
-  Result := n;
+  fun := Tfunc.Create;
+  fun.name:= funName;
+  fun.typ := typ;
+  fun.proc:= proc;
+  setlength(fun.pars,0);  //inicia arreglo
+  funcs.Add(fun);  //agrega
+  Result := fun;
 end;
-procedure TCompilerBase.CreateFunction(funName, varType: string);
+{procedure TCompilerBase.CreateFunction(funName, varType: string);
 //Define una nueva función en memoria.
 var t: ttype;
   hay: Boolean;
@@ -639,30 +695,15 @@ begin
   CreateFunction(funName, t, nil);
   //Ya encontró tipo, llama a evento
 //  if t.OnGlobalDef<>nil then t.OnGlobalDef(funName, '');
-end;
-function TCompilerBase.CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): integer;
+end;}
+function TCompilerBase.CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): Tfunc;
 //Crea una función del sistema o interna. Estas funciones estan siempre disponibles.
 //Las funciones internas deben crearse todas al inicio.
 begin
   Result := CreateFunction(funName, typ, proc);
   Inc(nIntFun);  //leva la cuenta
 end;
-procedure TCompilerBase.ClearParamsFunc(ifun: integer);  inline;
-//Elimina los parámetros de una función
-begin
-  setlength(funcs[ifun].pars,0);
-end;
-procedure TCompilerBase.CreateParam(ifun: integer; parName: string; typ: ttype);
-//Crea un parámetro para una función
-var
-  n: Integer;
-begin
-  //agrega
-  n := high(funcs[ifun].pars)+1;
-  setlength(funcs[ifun].pars, n+1);
-  funcs[ifun].pars[n] := typ;  //agrega referencia
-end;
-procedure TCompilerBase.CreateParam(ifun: integer; parName: string; typStr: string);
+procedure TCompilerBase.CreateParam(fun: Tfunc; parName: string; typStr: string);
 //Crea un parámetro para una función
 var
   n: Integer;
@@ -682,36 +723,17 @@ begin
     exit;
   end;
   //agrega
-  n := high(funcs[ifun].pars)+1;
-  setlength(funcs[ifun].pars, n+1);
-  funcs[ifun].pars[n] := t;  //agrega referencia
-end;
-function TCompilerBase.SameParamsFunctions(iFun1, iFun2: integer): boolean;
-//Compara los parámetros de dos funciones. Si tienen el mismo número de
-//parámetros y el mismo tipo, devuelve TRUE.
-var
-  i: Integer;
-begin
-  Result:=true;  //se asume que son iguales
-  if High(funcs[iFun1].pars) <> High(funcs[iFun2].pars) then
-    exit(false);   //distinto número de parámetros
-  //hay igual número de parámetros, verifica
-  for i := 0 to High(funcs[iFun1].pars) do begin
-    if funcs[iFun1].pars[i] <> funcs[iFun2].pars[i] then begin
-      exit(false);
-    end;
-  end;
-  //si llegó hasta aquí, hay coincidencia, sale con TRUE
+  fun.CreateParam(parName, t);
 end;
 function TCompilerBase.FindFuncWithParams0(const funName: string; var idx: integer;
-  idx0 : integer = 1): TFindFuncResult;
-{Busca una función que coincida con el nombre "funName" y con los parámetros de funcs[0]
+  idx0 : integer = 0): TFindFuncResult;
+{Busca una función que coincida con el nombre "funName" y con los parámetros de func0
 El resultado puede ser:
  TFF_NONE   -> No se encuentra.
  TFF_PARTIAL-> Se encuentra solo el nombre.
  TFF_FULL   -> Se encuentra y coninciden sus parámetros, actualiza "idx".
-"idx0", es el índice inicial desde donde debe buscar. Permite acelerar las búsquedas, cuando
-ya se ha explorado antes.
+"idx0", es el índice inicial desde donde debe buscar. Permite acelerar las búsquedas,
+cuando ya se ha explorado antes.
 }
 var
   tmp: String;
@@ -722,11 +744,11 @@ begin
   Result := TFF_NONE;   //por defecto
   hayFunc := false;
   tmp := UpCase(funName);
-  for i:=idx0 to high(funcs) do begin  //no debe empezar en 0, porque allí está func[0]
+  for i:=idx0 to funcs.Count-1 do begin
     if Upcase(funcs[i].name)= tmp then begin
       //coincidencia, compara
       hayFunc := true;  //para indicar que encontró el nombre
-      if SameParamsFunctions(i,0) then begin
+      if func0.SameParams(funcs[i]) then begin
         idx := i;    //devuelve ubicación
         Result := TFF_FULL; //encontró
         exit;
@@ -751,33 +773,29 @@ begin
   end;
 end;
 function TCompilerBase.FindDuplicFunction: boolean;
-//Verifica si la última función agregada, está duplicada con alguna de las
-//funciones existentes. Permite la sobrecarga. Si encuentra la misma
-//función definida 2 o más veces, genera error y devuelve TRUE.
-//DEbe llamarse siempre, después de definir una función nueva.
+{Verifica si la última función agregada, está duplicada con alguna de las
+funciones existentes. Permite la sobrecarga. Si encuentra la misma
+función definida 2 o más veces, genera error y devuelve TRUE.
+Debe llamarse siempre, después de definir una función nueva.}
 var
   ufun : String;
-  i,j,n: Integer;
-  tmp: String;
+  i,n: Integer;
+  lastF: Tfunc;
 begin
-  Result := false;
-  n := high(funcs);  //última función
-  ufun := funcs[n].name;
+  n := funcs.Count-1;  //último índice
+  lastF := funcs.Last;   //última función
+  ufun := UpCase(lastF.name);
   //busca sobrecargadas en las funciones anteriores
   for i:=0 to n-1 do begin
-    if funcs[i].name = ufun then begin
+    if UpCase(funcs[i].name) = ufun then begin
       //hay una sobrecargada, verifica tipos de parámetros
-      if not SameParamsFunctions(i,n) then break;
+      if not lastF.SameParams(funcs[i]) then break;
       //Tiene igual cantidad de parámetros y del mismo tipo. Genera Error
-      tmp := '';
-      for j := 0 to High(funcs[i].pars) do begin
-        tmp += funcs[n].pars[j].name+', ';
-      end;
-      if length(tmp)>0 then tmp := copy(tmp,1,length(tmp)-2); //quita coma final
-      GenError('Duplicated function: %s', [ufun+'( '+tmp+' )']);
+      GenError('Duplicated function: %s', [lastF.name+lastF.ParamTypesList]);
       exit(true);
     end;
   end;
+  Result := false;
 end;
 {function TCompilerBase.CategName(cat: TCatType): string;
 begin
@@ -834,7 +852,7 @@ procedure TCompilerBase.CaptureParams;
 //Lee los parámetros de una función en la función interna funcs[0]
 begin
   SkipWhites;
-  ClearParamsFunc(0);   //inicia parámetros
+  func0.ClearParams;
   if EOBlock or EOExpres then begin
     //no tiene parámetros
   end else begin
@@ -848,7 +866,7 @@ begin
       GetExpression(0, true);  //captura parámetro
       if perr.HayError then exit;   //aborta
       //guarda tipo de parámetro
-      CreateParam(0,'', res.typ);
+      func0.CreateParam('',res.typ);
       if cIn.tok = ',' then begin
         cIn.Next;   //toma separador
         SkipWhites;
@@ -920,7 +938,7 @@ begin
           Result.txt:= cIn.tok;    //toma el texto
     //      Result.catTyp:= funcs[i].typ.cat;  //no debería ser necesario
           Result.typ:=funcs[i].typ;
-          funcs[i].proc(i);  //llama al código de la función
+          funcs[i].proc(funcs[i]);  //llama al código de la función
           exit;
         end;
       end;
@@ -947,7 +965,7 @@ begin
         Result.txt:= cIn.tok;    //toma el texto
   //      Result.catTyp:= funcs[i].typ.cat;  //no debería ser necesario
         Result.typ:=funcs[i].typ;
-        funcs[i].proc(i);  //llama al código de la función
+        funcs[i].proc(funcs[i]);  //llama al código de la función
         exit;
       end;
     end;
@@ -1186,6 +1204,7 @@ end;}
 constructor TCompilerBase.Create;
 begin
   PErr.IniError;   //inicia motor de errores
+  funcs := Tfuncs.Create(true);
   //Inicia lista de tipos
   typs := TTypes.Create(true);
   //Inicia variables, funciones y constantes
@@ -1196,7 +1215,7 @@ begin
   nullOper := TOperator.Create;
   //inicia la sintaxis
   xLex := TSynFacilSyn.Create(nil);   //crea lexer
-  CreateSysFunction('', nil, nil);  //crea la función 0, para uso interno
+  func0 := CreateSysFunction('', nil, nil);  //crea la función 0, para uso interno
 
   if HayError then PErr.Show;
   cIn := TContexts.Create(xLex); //Crea lista de Contextos
@@ -1208,6 +1227,7 @@ begin
   xLex.Free;
   nullOper.Free;
   typs.Free;
+  funcs.Free;
   inherited Destroy;
 end;
 

@@ -813,12 +813,12 @@ begin
     GenError('Clock frequency not supported.');
   end;
 end;
-procedure codif_delay_ms(const ifun: integer);
+procedure codif_delay_ms(const fun: Tfunc);
 //Codifica rutina de retardo en milisegundos
 var
   delay: Word;
 begin
-   StartCodeSub(ifun);  //inicia codificación
+   StartCodeSub(fun);  //inicia codificación
    PutComLine(';rutina delay.');
    //Esta rutina recibe los milisegundos en los registros (_H,_L) o en (_H,w) o en (w)
    //Em cualquier caso, siempre usa los registros _H y _L, además del acumulador "w".
@@ -839,39 +839,39 @@ begin
    _GOTO(delay);
    EndCodeSub;  //termina codificación
 end;
-procedure fun_putchar(ifun: integer);
+procedure fun_putchar(fun: Tfunc);
 begin
   //Esta es una fucnión INLINE
   //Esta función no devuelve un valor, por eso no nos preocupamos del tipo.
 end;
-procedure fun_delay_ms(ifun: integer);
+procedure fun_delay_ms(fun: Tfunc);
 begin
-   if funcs[ifun].adrr=-1 then begin
+   if fun.adrr=-1 then begin
      //No ha sido codificada, la codifica.
-     codif_delay_ms(ifun);
+     codif_delay_ms(fun);
    end;
    //Aquí sabemos que La rutina de retardo ya está codificada.
    case res.catOp of  //el parámetro debe estar en "res"
    coConst : begin
      _MOVLW(res.valInt);
-     _call(funcs[ifun].adrr);
+     _call(fun.adrr);
    end;
    coVariab: begin
      _MOVF(res.offs, toW);
-     _call(funcs[ifun].adrr);
+     _call(fun.adrr);
    end;
    coExpres: begin  //ya está en w
-     _call(funcs[ifun].adrr);  //ya está en W
+     _call(fun.adrr);  //ya está en W
    end;
    else
      GenError('No soportado'); exit;
    end;
 end;
-procedure fun_delay_ms_w(ifun: integer);
+procedure fun_delay_ms_w(fun: Tfunc);
 begin
-   if funcs[ifun].adrr=-1 then begin
+   if fun.adrr=-1 then begin
      //No ha sido codificada, la codifica.
-     codif_delay_ms(ifun);
+     codif_delay_ms(fun);
    end;
    //Aquí sabemos que La rutina de retardo ya está codificada.
    case res.catOp of  //el parámetro debe estar en "res"
@@ -879,22 +879,22 @@ begin
      _MOVLW(res.HByte);
      _MOVWF(_H.offs);
      _MOVLW(res.LByte);
-     _call(funcs[ifun].adrr+1);
+     _call(fun.adrr+1);
    end;
    coVariab: begin
      _MOVF(res.offs, toW);
      _MOVWF(_H.offs);
      _MOVF(res.offs+1, toW);
-     _call(funcs[ifun].adrr+1);
+     _call(fun.adrr+1);
    end;
    coExpres: begin  //se asume que ya está en (_H,w)
-     _call(funcs[ifun].adrr+1);  //ya está en W
+     _call(fun.adrr+1);  //ya está en W
    end;
    else
      GenError('Not implemented.'); exit;
    end;
 end;
-procedure fun_Inc_byte(ifun: integer);
+procedure fun_Inc_byte(fun: Tfunc);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -910,7 +910,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Inc_word(ifun: integer);
+procedure fun_Inc_word(fun: Tfunc);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -928,7 +928,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Dec_byte(ifun: integer);
+procedure fun_Dec_byte(fun: Tfunc);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -944,7 +944,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Dec_word(ifun: integer);
+procedure fun_Dec_word(fun: Tfunc);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -967,7 +967,7 @@ procedure TCompiler.StartSyntax;
 //Se ejecuta solo una vez al inicio
 var
   opr: TOperator;
-  f: integer;  //índice para funciones
+  f: Tfunc;  //índice para funciones
 begin
 
   //Define métodos w usar
@@ -1027,19 +1027,18 @@ begin
 
 //////// Funciones básicas ////////////
   f := CreateSysFunction('putchar', tipByte, @fun_putchar);
-  CreateParam(f,'',tipByte);
+  f.CreateParam('',tipByte);
   f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms);
-  CreateParam(f,'',tipByte);
+  f.CreateParam('',tipByte);
   f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms_w);
-  CreateParam(f,'',tipWord);
+  f.CreateParam('',tipWord);
   f := CreateSysFunction('Inc', tipByte, @fun_Inc_byte);
-  CreateParam(f,'',tipByte);
+  f.CreateParam('',tipByte);
   f := CreateSysFunction('Inc', tipByte, @fun_Inc_word);
-  CreateParam(f,'',tipWord);
+  f.CreateParam('',tipWord);
   f := CreateSysFunction('Dec', tipByte, @fun_Dec_byte);
-  CreateParam(f,'',tipByte);
+  f.CreateParam('',tipByte);
   f := CreateSysFunction('Dec', tipByte, @fun_Dec_word);
-  CreateParam(f,'',tipWord);
-//  funcs[f].adrr:=-1;   //para indicar que no existe en memoria aún.
+  f.CreateParam('',tipWord);
 end;
 

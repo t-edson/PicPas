@@ -29,7 +29,7 @@ type
     tkExpDelim : TSynHighlighterAttributes;
     tkBlkDelim : TSynHighlighterAttributes;
     tkOthers   : TSynHighlighterAttributes;
-    procedure CaptureDecParams(f: integer);
+    procedure CaptureDecParams(fun: Tfunc);
     procedure CompileConstDeclar;
     procedure CompileIF;
     procedure CompileProcDeclar;
@@ -254,12 +254,12 @@ procedure PutComm(cmt: string); inline; //agrega comentario lateral al código
 begin
   cxp.pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
 end;
-procedure StartCodeSub(ifun: integer);
+procedure StartCodeSub(fun: Tfunc);
 {debe ser llamado para iniciar la codificación de una subrutina}
 begin
   cxp.iFlashTmp :=  cxp.pic.iFlash;     //guarda puntero
   cxp.pic.iFlash := cxp.curBloSub;  //empieza a codificar aquí
-  funcs[ifun].adrr := cxp.curBloSub;  //fija inicio de rutina
+  fun.adrr := cxp.curBloSub;  //fija inicio de rutina
 end;
 procedure EndCodeSub;
 {debe ser llamado al terminar la codificaión de una subrutina}
@@ -271,11 +271,11 @@ begin
   end;
   cxp.pic.iFlash := cxp.iFlashTmp;     //retorna puntero
 end;
-procedure callFunct(ifun: integer);
+procedure callFunct(fun: Tfunc);
 {Rutina que debe llamara a uan función definida por el usuario}
 begin
   //por ahora no hay problema de paginación
-  _CALL(funcs[ifun].adrr);
+  _CALL(fun.adrr);
 end;
 
 procedure GenError(msg: string);
@@ -841,14 +841,13 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler.CaptureDecParams(f: integer);
+procedure TCompiler.CaptureDecParams(fun: Tfunc);
 //Lee la declaración de parámetros de una función.
 var
   parType: String;
   parName: String;
 begin
   SkipWhites;
-  ClearParamsFunc(0);   //inicia parámetros
   if EOBlock or EOExpres then begin
     //no tiene parámetros
   end else begin
@@ -880,7 +879,7 @@ begin
       parType := cIn.tok;   //lee tipo de parámetro
       cIn.Next;
       //ya tiene el nombre y el tipo
-      CreateParam(f, parName, parType);
+      CreateParam(fun, parName, parType);
       if HayError then exit;
       if cIn.tok = ';' then begin
         cIn.Next;   //toma separador
@@ -904,7 +903,7 @@ procedure TCompiler.CompileProcDeclar;
  se manejan internamenet como funciones}
 var
   procName: String;
-  ifun: Integer;
+  fun: Tfunc;
 begin
   cIn.SkipWhites;
   //ahora debe haber un identificador
@@ -917,9 +916,11 @@ begin
   cIn.Next;  //lo toma
   {Ya tiene los datos mínimos para crear la función. La crea con "proc" en NIL,
   para indicar que es una función definida por el usuario.}
-  ifun := CreateFunction(procName, typNull, @callFunct);
+  fun := CreateFunction(procName, typNull, @callFunct);
   if HayError then exit;
-  CaptureDecParams(ifun);
+  CaptureDecParams(fun);
+  FindDuplicFunction;   //recién aquí puede verificar, porque ya se leyeron los parámetros
+  if HayError then exit;
   cIn.SkipWhites;
   if cIn.tok=';' then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
@@ -934,7 +935,7 @@ begin
     GenError('"begin" expected.');
     exit;
   end;
-  StartCodeSub(ifun);  //inicia codificación de subrutina
+  StartCodeSub(fun);  //inicia codificación de subrutina
   CompileInstruction;
   _RETURN();  //instrucción de salida
   EndCodeSub;  //termina codificación
