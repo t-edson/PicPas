@@ -287,6 +287,9 @@ public
   DetEjec: boolean;   //para detener la ejecución (en intérpretes)
   funcs : Tfuncs; //lista de funciones
   func0 : Tfunc;  //función interna para almacenar parámetros
+  nIntFun : integer;    //número de funciones internas
+  cons  : array of TCons;  //lista de constantes
+  nIntCon : integer;    //número de constantes internas
   function HayError: boolean;
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
@@ -304,11 +307,8 @@ var
    para que puedan ser accedidas fácilmente desde el archivo "interprte.pas"}
 
   vars  : array of TVar;  //lista de variables
-  cons  : array of TCons;  //lista de constantes
   typs  : TTypes;       //lista de tipos (EL nombre "types" ya está reservado)
   nIntVar : integer;    //número de variables internas
-  nIntFun : integer;    //número de funciones internas
-  nIntCon : integer;    //número de constantes internas
 
   cIn    : TContexts;   //entrada de datos
   p1, p2 : TOperand;    //Pasa los operandos de la operación actual
