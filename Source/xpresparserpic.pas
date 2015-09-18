@@ -1,7 +1,7 @@
 {XpresParserPIC
 
 Versión de XpresParser, orientada a trabajar con microcontroladores PIC.
-La idea es tener aquí todas las rutinas que en lo sposible sean independientes del
+La idea es tener aquí todas las rutinas que en lo posible sean independientes del
 lenguaje y del modelo de PIC.
 
 Las variables públicas más importantes de este módulo son:
@@ -17,9 +17,9 @@ técnica.
 unit XpresParserPIC;
 interface
 uses
-  Classes, SysUtils, fgl, Forms, LCLType, Dialogs, lclProc,
-  SynEditHighlighter, SynFacilHighlighter, SynFacilBasic,
-  XpresBas, MisUtils;
+  Classes, SysUtils, Forms, LCLType, Dialogs, lclProc, SynEditHighlighter,
+  SynFacilHighlighter, SynFacilBasic, XpresBas, XpresTypes, XpresElements,
+  MisUtils;
 
 type  //tipos enumerados
 //Categoría de Operando
@@ -42,78 +42,9 @@ TCatOperation =(
   coExpres_Expres=%1010
 );
 
-//categorías básicas de tipo de datos
-TCatType=(
-  t_integer,  //números enteros
-  t_uinteger, //enteros sin signo
-  t_float,    //de coma flotante
-  t_string,   //cadena de caracteres
-  t_boolean,  //booleano
-  t_enum      //enumerado
-);
-
-//tipo de identificador
-TIdentifType = (idtNone, idtVar, idtFunc, idtCons);
+TFindFuncResult = (TFF_NONE, TFF_PARTIAL, TFF_FULL);
 
 type
-TType = class;
-TOperator = class;
-
-TVarOffs = word;
-TVarBank = byte;
-
-{Espacio para almacenar a los posibles valores de una constante.
-Debe tener campos para los tipos básicos de variable haya en "TCatType" y para valores
-estructurados}
-TConsValue = record
-  ValInt  : Int64;    //Para alojar a los valores t_integer y t_uinteger
-  ValFloat: extended; //Para alojar a los valores t_float
-  ValBool : boolean;  //Para alojar a los valores t_boolean
-  ValStr  : string;   //Para alojar a los valores t_string
-end;
-
-//Clase para modelar a las constantes
-TCon = class
-  nom : string;   //nombre de la variable
-  typ : Ttype;    //tipo de la variable
-  amb : string;   //ámbito o alcance de la constante
-  //valores de la constante
-  val : TConsValue;
-end;
-TCons = specialize TFPGObjectList<TCon>; //lista de variables
-
-//Clase para modelar a las variables
-TVar = class
-  nom : string;   //nombre de la variable
-  typ : Ttype;    //tipo de la variable
-  amb : string;   //ámbito o alcance de la variable
-  //direción física. Usado para implementar un compilador
-  offs: TVarOffs;
-  bank: TVarBank;  //banco o segmento. Usado solo en algunas arquitecturas
-  bit : byte;      //posición del bit. Usado para variables booleanas.
-end;
-TVars = specialize TFPGObjectList<TVar>; //lista de variables
-
-//Clase para almacenar información de las funciones
-{ Tfunc }
-Tfunc = class;
-TProcExecFunction = procedure(fun :Tfunc);  //con índice de función
-Tfunc = class
-  name: string;   //nombre de la función
-  typ : Ttype;    //tipo que devuelve
-  pars: array of Ttype;  //parámetros de entrada
-  amb : string;   //ámbito o alcance de la función
-  //direción física. Usado para implementar un compilador
-  adrr: integer;  //dirección física
-  //Campos usados para implementar el intérprete sin máquina virtual
-  proc: TProcExecFunction;  //referencia a la función que implementa
-  posF: TPoint;    //posición donde empieza la función en el código fuente
-  procedure ClearParams;
-  procedure CreateParam(parName: string; typ0: ttype);
-  function SameParams(Fun2: Tfunc): boolean;
-  function ParamTypesList: string;
-end;
-Tfuncs = specialize TFPGObjectList<Tfunc>;
 
 { TOperand }
 //Operando
@@ -123,7 +54,7 @@ public
   typ  : TType;     //Referencia al tipo de dato
   txt  : string;    //Texto del operando o expresión, tal como aparece en la fuente
 //  fun  : Tfunc;     //referencia a función en caso de que sea una función
-  rVar : Tvar;      //referencia a la variable, en caso de que sea variable
+  rVar : TxpVar;    //referencia a la variable, en caso de que sea variable
   {---------------------------------------------------------
   Estos campos describen al operando, independientemente de que se le encuentree
   un tipo, válido. Si se le encuentra un tipo válido, se tendrá la referencia al tipo
@@ -161,71 +92,9 @@ public
   function CanBeWord: boolean;   //indica si cae en el rango de un WORD
   function CanBeByte: boolean;   //indica si cae en el rango de un BYTE
   //métodos para mover valores desde/hacia una constante externa
-  procedure CopyConsValTo(var c: TCon);
-  procedure GetConsValFrom(const c: TCon);
+  procedure CopyConsValTo(var c: TxpCon);
+  procedure GetConsValFrom(const c: TxpCon);
 end;
-TProcLoadOperand = procedure(const Op: TOperand);
-
-TProcDefineVar = procedure(const varName, varInitVal: string);
-TProcExecOperat = procedure;
-
-//"Tipos de datos"
-
-//Tipo operación
-TxOperation = class
-  OperatType : TType;   //tipo de Operando sobre el cual se aplica la operación.
-  proc       : TProcExecOperat;  //Procesamiento de la operación
-end;
-
-TOperations = specialize TFPGObjectList<TxOperation>; //lista de operaciones
-
-//Operador
-{ TOperator }
-
-TOperator = class
-  txt: string;    //cadena del operador '+', '-', '++', ...
-  jer: byte;      //precedencia
-  nom: string;    //nombre de la operación (suma, resta)
-  idx: integer;   //ubicación dentro de un arreglo
-  Operations: TOperations;  //operaciones soportadas. Debería haber tantos como
-                            //Num. Operadores * Num.Tipos compatibles.
-  function CreateOperation(OperadType: Ttype; proc: TProcExecOperat): TxOperation;  //Crea operación
-  function FindOperation(typ0: Ttype): TxOperation;  //Busca una operación para este operador
-  constructor Create;
-  destructor Destroy; override;
-end;
-
-TOperators = specialize TFPGObjectList<TOperator>; //lista de operadores
-
-{ TType }
-//"Tipos de datos"
-TType = class
-  name : string;      //nombre del tipo ("int8", "int16", ...)
-  cat  : TCatType;    //categoría del tipo (numérico, cadena, etc)
-  size : smallint;    //tamaño en bytes del tipo
-  idx  : smallint;    //ubicación dentro de la matriz de tipos
-  amb  : TFaSynBlock; //ámbito de validez del tipo
-  OnGlobalDef: TProcDefineVar; {Evento. Es llamado cada vez que se encuentra la
-                                declaración de una variable (de este tipo) en el ámbito global.}
-  OnLocalDef: TProcDefineVar;  {Evento. Es llamado cada vez que se encuentra la
-                                declaración de una variable (de este tipo) en un ámbito local.}
-  OnPush  : TProcLoadOperand; {Evento. Es llamado cuando se pide cargar un operando
-                               (de este tipo) en la pila. }
-  OnPop   : TProcLoadOperand; {Evento. Es llamado cuando se pide cargar un operando
-                               (de este tipo) en la pila. }
-  codLoad: string;   //código de carga de operando. Se usa si "onLoad" es NIL.
-  Operators: TOperators;      //operadores soportados
-//  procedure DefineLoadOperand(codLoad0: string);  //Define carga de un operando
-  function CreateOperator(txt0: string; jer0: byte; name0: string): TOperator; //Crea operador
-  function FindOperator(const Opr: string): TOperator;  //indica si el operador está definido
-  constructor Create;
-  destructor Destroy; override;
-end;
-
-//Lista de tipos
-TTypes = specialize TFPGObjectList<TType>; //lista de bloques
-
-TFindFuncResult = (TFF_NONE, TFF_PARTIAL, TFF_FULL);
 
 { TCompilerBase }
 {Clase base para crear al objeto compilador}
@@ -238,15 +107,16 @@ protected  //Eventos del compilador
                                                      evaluación de una expresión.}
   OnExprEnd  : procedure(const exprLevel: integer; isParam: boolean);  {Se genera
                                              el terminar de evaluar una expresión}
-  ExprLevel: Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
+  ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
+  TreeNames  : TXpTreeNames; //arbol de nombres
   procedure ClearTypes;
   function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction
-    ): TFunc;
+    ): TxpFun;
 //  procedure CreateFunction(funName, varType: string);
   function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction
-    ): Tfunc;
-  procedure CreateParam(fun: Tfunc; parName: string; typStr: string);
+    ): TxpFun;
+  procedure CreateParam(fun: TxpFun; parName: string; typStr: string);
   function CaptureDelExpres: boolean;
   procedure ClearVars;
   procedure ClearAllConst;
@@ -268,7 +138,7 @@ protected  //Eventos del compilador
   function FindVar(const varName: string; out idx: integer): boolean;
   function FindCons(const conName: string; out idx: integer): boolean;
   function FindFunc(const funName: string; out idx: integer): boolean;
-  function FindPredefName(name: string): TIdentifType;
+  function FindPredefName(name: string): TxpElemType;
   function GetOperand: TOperand; virtual;
   function GetOperandP(pre: integer): TOperand;
   procedure CaptureParams; virtual;
@@ -286,12 +156,12 @@ public
 
   //tablas de elementos del lenguaje
   typs  : TTypes;       //lista de tipos (El nombre "types" ya está reservado)
-  funcs : Tfuncs;     //lista de funciones
-  func0 : Tfunc;      //función interna para almacenar parámetros
+  funcs : TxpFuns;     //lista de funciones
+  func0 : TxpFun;      //función interna para almacenar parámetros
   nIntFun : integer;   //número de funciones internas
-  cons  : TCons;     //lista de constantes
+  cons  : TxpCons;     //lista de constantes
   nIntCon : integer;   //número de constantes internas
-  vars  : TVars;      //lista de variables
+  vars  : TxpVars;      //lista de variables
   nIntVar : integer;   //número de variables internas
   function HayError: boolean;
   procedure GenError(msg: string);
@@ -327,8 +197,6 @@ var
 
 implementation
 uses Graphics;
-var  //variables privadas del compilador
-  nullOper : TOperator; //Operador nulo. Usado como valor cero.
 
 function CatOperationToStr(Op: string=','): string;
 {Devuelve una cadena descriptiva de la variable global "catOperation"}
@@ -346,141 +214,6 @@ begin
   end;
 end;
 
-{ Tfunc }
-procedure Tfunc.ClearParams;
-//Elimina los parámetros de una función
-begin
-  setlength(pars,0);
-end;
-procedure Tfunc.CreateParam(parName: string; typ0: ttype);
-//Crea un parámetro para la función
-var
-  n: Integer;
-begin
-  //agrega
-  n := high(pars)+1;
-  setlength(pars, n+1);
-  pars[n] := typ0;  //agrega referencia
-end;
-function Tfunc.SameParams(Fun2: Tfunc): boolean;
-{Compara los parámetros de la función con las de otra. Si tienen el mismo número
-de parámetros y el mismo tipo, devuelve TRUE.}
-var
-  i: Integer;
-begin
-  Result:=true;  //se asume que son iguales
-  if High(pars) <> High(Fun2.pars) then
-    exit(false);   //distinto número de parámetros
-  //hay igual número de parámetros, verifica
-  for i := 0 to High(pars) do begin
-    if pars[i] <> Fun2.pars[i] then begin
-      exit(false);
-    end;
-  end;
-  //si llegó hasta aquí, hay coincidencia, sale con TRUE
-end;
-function Tfunc.ParamTypesList: string;
-{Devuelve una lista con los nombres de los tipos de los parámetros, de la forma:
-(byte, word) }
-var
-  tmp: String;
-  j: Integer;
-begin
-  tmp := '';
-  for j := 0 to High(pars) do begin
-    tmp += pars[j].name+', ';
-  end;
-  //quita coma final
-  if length(tmp)>0 then tmp := copy(tmp,1,length(tmp)-2);
-  Result := '('+tmp+')';
-end;
-
-{ TOperator }
-function TOperator.CreateOperation(OperadType: Ttype; proc: TProcExecOperat): TxOperation;
-var
-  r: TxOperation;
-begin
-  //agrega
-  r := TxOperation.Create;
-  r.OperatType:=OperadType;
-//  r.CodForConst:=codCons;
-//  r.CodForVar:=codVar;
-//  r.CodForExpr:=codExp;
-  r.proc:=proc;
-  //agrega
-  operations.Add(r);
-  Result := r;
-end;
-function TOperator.FindOperation(typ0: Ttype): TxOperation;
-{Busca, si encuentra definida, alguna operación, de este operador con el tipo indicado.
-Si no lo encuentra devuelve NIL}
-var
-  r: TxOperation;
-begin
-  Result := nil;
-  for r in Operations do begin
-    if r.OperatType = typ0 then begin
-      exit(r);
-    end;
-  end;
-end;
-constructor TOperator.Create;
-begin
-  Operations := TOperations.Create(true);
-end;
-destructor TOperator.Destroy;
-begin
-  Operations.Free;
-  inherited Destroy;
-end;
-
-{ TType }
-function TType.CreateOperator(txt0: string; jer0: byte; name0: string): TOperator;
-{Permite crear un nuevo ooperador soportado por este tipo de datos. Si hubo error,
-devuelve NIL. En caso normal devuelve una referencia al operador creado}
-var
-  r: TOperator;  //operador
-begin
-  //verifica nombre
-  if FindOperator(txt0)<>nullOper then begin
-    Result := nil;  //indica que hubo error
-    exit;
-  end;
-  //inicia
-  r := TOperator.Create;
-  r.txt:=txt0;
-  r.jer:=jer0;
-  r.nom:=name0;
-  r.idx:=Operators.Count;
-  //agrega
-  Operators.Add(r);
-  Result := r;
-end;
-function TType.FindOperator(const Opr: string): TOperator;
-//Recibe la cadena de un operador y devuelve una referencia a un objeto Toperator, del
-//tipo. Si no está definido el operador para este tipo, devuelve nullOper.
-var
-  i: Integer;
-begin
-  Result := nullOper;   //valor por defecto
-  for i:=0 to Operators.Count-1 do begin
-    if Operators[i].txt = upCase(Opr) then begin
-      exit(Operators[i]); //está definido
-    end;
-  end;
-  //no encontró
-  Result.txt := Opr;    //para que sepa el operador leído
-end;
-constructor TType.Create;
-begin
-  Operators := TOperators.Create(true);  //crea contenedor de Contextos, con control de objetos.
-end;
-destructor TType.Destroy;
-begin
-  Operators.Free;
-  inherited Destroy;
-end;
-
 {TCompilerBase}
 function TCompilerBase.HayError: boolean;
 begin
@@ -495,7 +228,7 @@ begin
   else
     Perr.GenError(dic(msg), cIn.curCon);
 end;
-procedure TCompilerBase.GenError(msg : String; const Args : Array of const);
+procedure TCompilerBase.GenError(msg: String; const Args: array of const);
 {Versión con parámetros de GenError.}
 begin
   if (cIn = nil) or (cIn.curCon = nil) then
@@ -532,7 +265,7 @@ begin
   Result := false;
   tmp := upCase(varName);
   for i:=0 to vars.Count-1 do begin
-    if Upcase(vars[i].nom)=tmp then begin
+    if Upcase(vars[i].name)=tmp then begin
       idx := i;
       exit(true);
     end;
@@ -564,31 +297,31 @@ begin
   Result := false;
   tmp := upCase(conName);
   for i:=0 to cons.Count-1 do begin
-    if Upcase(cons[i].nom)=tmp then begin
+    if Upcase(cons[i].name)=tmp then begin
       idx := i;
       exit(true);
     end;
   end;
 end;
-function TCompilerBase.FindPredefName(name: string): TIdentifType;
+function TCompilerBase.FindPredefName(name: string): TxpElemType;
 //Busca un identificador e indica si ya existe el nombre, sea como variable,
 //función o constante.
 var i: integer;
 begin
   //busca como variable
   if FindVar(name,i) then begin
-     exit(idtVar);
+     exit(et_Var);
   end;
   //busca como función
   if FindFunc(name,i) then begin
-     exit(idtFunc);
+     exit(et_Func);
   end;
   //busca como constante
   if FindCons(name,i) then begin
-     exit(idtCons);
+     exit(et_Cons);
   end;
   //no lo encuentra
-  exit(idtNone);
+  exit(et_None);
 end;
 
 //Manejo de tipos
@@ -648,10 +381,11 @@ begin
   cons.Clear;
 end;
 
-function TCompilerBase.CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TFunc;
+function TCompilerBase.CreateFunction(funName: string; typ: ttype;
+  proc: TProcExecFunction): TxpFun;
 //Crea una nueva función y devuelve un índice a la función.
 var
-  fun : Tfunc;
+  fun : TxpFun;
   i: Integer;
 begin
   //verifica si existe como variable
@@ -666,7 +400,7 @@ begin
   end;
   //puede existir como función, no importa (sobrecarga)
   //registra la función en la tabla
-  fun := Tfunc.Create;
+  fun := TxpFun.Create;
   fun.name:= funName;
   fun.typ := typ;
   fun.proc:= proc;
@@ -694,14 +428,16 @@ begin
   //Ya encontró tipo, llama a evento
 //  if t.OnGlobalDef<>nil then t.OnGlobalDef(funName, '');
 end;}
-function TCompilerBase.CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): Tfunc;
+function TCompilerBase.CreateSysFunction(funName: string; typ: ttype;
+  proc: TProcExecFunction): TxpFun;
 //Crea una función del sistema o interna. Estas funciones estan siempre disponibles.
 //Las funciones internas deben crearse todas al inicio.
 begin
   Result := CreateFunction(funName, typ, proc);
   Inc(nIntFun);  //leva la cuenta
 end;
-procedure TCompilerBase.CreateParam(fun: Tfunc; parName: string; typStr: string);
+procedure TCompilerBase.CreateParam(fun: TxpFun; parName: string; typStr: string
+  );
 //Crea un parámetro para una función
 var
   hay: Boolean;
@@ -777,7 +513,7 @@ Debe llamarse siempre, después de definir una función nueva.}
 var
   ufun : String;
   i,n: Integer;
-  lastF: Tfunc;
+  lastF: TxpFun;
 begin
   n := funcs.Count-1;  //último índice
   lastF := funcs.Last;   //última función
@@ -1197,17 +933,16 @@ end;}
 constructor TCompilerBase.Create;
 begin
   PErr.IniError;   //inicia motor de errores
-  funcs := Tfuncs.Create(true);
-  vars := Tvars.Create(true);
-  cons := Tcons.Create(true);
+  funcs := TxpFuns.Create(true);
+  vars := TxpVars.Create(true);
+  cons := TxpCons.Create(true);
+  TreeNames := TXpTreeNames.Create;
   //Inicia lista de tipos
   typs := TTypes.Create(true);
   //Inicia variables, funciones y constantes
   ClearAllVars;
   ClearAllFuncs;
   ClearAllConst;
-  //crea el operador NULL
-  nullOper := TOperator.Create;
   //inicia la sintaxis
   xLex := TSynFacilSyn.Create(nil);   //crea lexer
   func0 := CreateSysFunction('', nil, nil);  //crea la función 0, para uso interno
@@ -1220,8 +955,8 @@ destructor TCompilerBase.Destroy;
 begin
   cIn.Destroy; //Limpia lista de Contextos
   xLex.Free;
-  nullOper.Free;
   typs.Free;
+  TreeNames.Destroy;
   cons.Free;
   vars.Free;
   funcs.Free;
@@ -1231,7 +966,7 @@ end;
 { TOperand }
 function TOperand.VarName: string; inline;
 begin
-  Result := rVar.nom;
+  Result := rVar.name;
 end;
 function TOperand.offs: TVarOffs;
 begin
@@ -1278,7 +1013,7 @@ begin
   Result := (valInt>=0) and (valInt<=$ff);
 end;
 
-procedure TOperand.CopyConsValTo(var c: TCon);
+procedure TOperand.CopyConsValTo(var c: TxpCon);
 begin
   //hace una copia selectiva por velocidad, de acuerdo a la categoría
   case catTyp of
@@ -1294,7 +1029,7 @@ begin
   end;
 end;
 
-procedure TOperand.GetConsValFrom(const c: TCon);
+procedure TOperand.GetConsValFrom(const c: TxpCon);
 {Copia valores constante desde una constante. Primero TOperand, debería tener inicializado
  correctamente su campo "catTyp". }
 begin
@@ -1328,12 +1063,12 @@ end;
 procedure TOperand.Push;
 begin
   //llama al evento de pila
-  if typ.OnPush <> nil then typ.OnPush(self);
+  if typ.OnPush <> nil then typ.OnPush();
 end;
 procedure TOperand.Pop;
 begin
   //llama al evento de pila
-  if typ.OnPop <> nil then typ.OnPop(self);
+  if typ.OnPop <> nil then typ.OnPop();
 end;
 
 function TOperand.FindOperator(const oper: string): TOperator;

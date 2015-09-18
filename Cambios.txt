@@ -1,0 +1,12 @@
+Versión 0.3.3
+* Se divide a la unidad xpresparserpic.pas en tres unidades:
+
+xprestypes.pas
+xpreselements.pas
+xpresparserpic.pas
+
+De esta forma se tiene un diseño más modular para poder implementar más funcionalidades en las clases sin tener que 
+manejar un archivo muy grande.
+
+
+* Se crea la estructura de un arbol de nombres para manejar la duplicidad de nombres.

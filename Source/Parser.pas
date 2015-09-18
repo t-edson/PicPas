@@ -5,8 +5,9 @@ unit Parser;
 interface
 uses
   Classes, SysUtils, LCLType, Dialogs, lclProc, Graphics, SynEditHighlighter,
-  SynFacilBasic, SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
-  XpresParserPIC, Pic16Utils, PIC16devices, Globales, ProcAsm, types;
+  SynFacilBasic, SynFacilHighlighter, SynFacilUtils, MisUtils,
+  XpresBas, XpresTypes, XpresElements, XpresParserPIC,
+  Pic16Utils, PIC16devices, Globales, ProcAsm, types;
 type
 
  { TCompiler }
@@ -29,7 +30,7 @@ type
     tkExpDelim : TSynHighlighterAttributes;
     tkBlkDelim : TSynHighlighterAttributes;
     tkOthers   : TSynHighlighterAttributes;
-    procedure CaptureDecParams(fun: Tfunc);
+    procedure CaptureDecParams(fun: TxpFun);
     procedure CompileConstDeclar;
     procedure CompileIF;
     procedure CompileProcDeclar;
@@ -37,11 +38,11 @@ type
     procedure CompileWHILE;
     procedure CompileInstructionDummy;
     procedure CompileInstruction;
-    function CreateCons(const consName: string; typ: ttype): TCon;
+    function CreateCons(const consName: string; typ: ttype): TxpCon;
     function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
-      absBit: integer=-1): Tvar;
+      absBit: integer=-1): TxpVar;
     function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
-      =-1): Tvar;
+      =-1): TxpVar;
     procedure DefLexDir;
     procedure getListOfIdent(var itemList: TStringDynArray);
     procedure ProcComments;
@@ -254,7 +255,7 @@ procedure PutComm(cmt: string); inline; //agrega comentario lateral al código
 begin
   cxp.pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
 end;
-procedure StartCodeSub(fun: Tfunc);
+procedure StartCodeSub(fun: TxpFun);
 {debe ser llamado para iniciar la codificación de una subrutina}
 begin
   cxp.iFlashTmp :=  cxp.pic.iFlash;     //guarda puntero
@@ -271,7 +272,7 @@ begin
   end;
   cxp.pic.iFlash := cxp.iFlashTmp;     //retorna puntero
 end;
-procedure callFunct(fun: Tfunc);
+procedure callFunct(fun: TxpFun);
 {Rutina que debe llamara a uan función definida por el usuario}
 begin
   //por ahora no hay problema de paginación
@@ -290,7 +291,7 @@ function HayError: boolean;
 begin
   Result := cxp.HayError;
 end;
-function CreateVar(const varName: string; typ: ttype): Tvar;
+function CreateVar(const varName: string; typ: ttype): TxpVar;
 begin
   Result := cxp.CreateVar(varName, typ);
 end;
@@ -532,43 +533,32 @@ begin
     cIn.Next;  //toma la coma
   until false;
 end;
-function TCompiler.CreateCons(const consName: string; typ: ttype): TCon;
+function TCompiler.CreateCons(const consName: string; typ: ttype): TxpCon;
 {Rutina para crear una constante. Devuelve índice a la variable creada.}
 var
-  r  : TCon;
-  i  : Integer;
-  offs, bnk, bit : byte;
+  r  : TxpCon;
 begin
   //verifica nombre
-  if FindPredefName(consName) <> idtNone then begin
+  if FindPredefName(consName) <> et_None then begin
     GenError('Duplicated identifier: "%s"', [consName]);
     exit;
   end;
   //registra variable en la tabla
-  r := TCon.Create;
-  r.nom:=consName;
+  r := TxpCon.Create;
+  r.name:=consName;
   r.typ := typ;   //fija  referencia a tipo
   cons.Add(r);
   Result := r;
 end;
 function TCompiler.CreateVar(const varName: string; typ: ttype;
-         absAdd: integer = -1; absBit: integer = -1): Tvar;
+         absAdd: integer = -1; absBit: integer = -1): TxpVar;
 {Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
  "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
 var
-  r   : Tvar;
+  r   : TxpVar;
   i   : Integer;
   offs, bnk, bit : byte;
 begin
-  //verifica nombre
-  if FindPredefName(varName) <> idtNone then begin
-    GenError('Duplicated identifier: "%s"', [varName]);
-    exit;
-  end;
-  //registra variable en la tabla
-  r := Tvar.Create;
-  r.nom:=varName;
-  r.typ := typ;   //fija  referencia a tipo
   //busca espacio para ubicarla
   if absAdd=-1 then begin
     //caso normal
@@ -606,16 +596,24 @@ begin
     for i:=0 to typ.size -1 do
       pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
   end;
+  //registra variable en la tabla
+  r := TxpVar.Create;
+  r.name:=varName;
+  r.typ := typ;   //fija  referencia a tipo
   r.offs := offs;
   r.bank := bnk;
   r.bit  := bit;
+  if not TreeNames.AddNode(r) then begin
+    GenError('Duplicated identifier: "%s"', [varName]);
+    exit;
+  end;
   vars.Add(r);
   Result := r;
   //Ya encontró tipo, llama a evento
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
 function TCompiler.CreateVar(varName, varType: string;
-         absAdd: integer = -1; absBit: integer = -1): Tvar;
+         absAdd: integer = -1; absBit: integer = -1): TxpVar;
 {Agrega una variable a la tabla de variables.}
 var t: ttype;
   hay: Boolean;
@@ -804,7 +802,7 @@ procedure TCompiler.CompileConstDeclar;
 var
 //  consType: String;
   consNames: array of string;  //nombre de variables
-  c: TCon;
+  c: TxpCon;
   tmp: String;
 begin
   setlength(consNames,0);  //inicia arreglo
@@ -838,7 +836,7 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler.CaptureDecParams(fun: Tfunc);
+procedure TCompiler.CaptureDecParams(fun: TxpFun);
 //Lee la declaración de parámetros de una función.
 var
   parType: String;
@@ -900,7 +898,7 @@ procedure TCompiler.CompileProcDeclar;
  se manejan internamenet como funciones}
 var
   procName: String;
-  fun: Tfunc;
+  fun: TxpFun;
 begin
   cIn.SkipWhites;
   //ahora debe haber un identificador
@@ -1220,6 +1218,7 @@ begin
   ClearVars;       //limpia las variables
   ClearFuncs;      //limpia las funciones
   ClearAllConst;   //limpia las comstantes
+  TreeNames.Clear;  { TODO : ¿No debería preservar los nombres de los objetos predefinidos? }
   //ClearTypes;      //limpia los tipos
   //limpia el estado de las funciones del sistena
   for i:=0 to nIntFun-1 do begin
@@ -1377,19 +1376,19 @@ function TCompiler.RAMusage: string;
 var
   dir: String;
   tmp: String;
-  v: TVar;
+  v: TxpVar;
 begin
   tmp := '';
   for v in vars do begin
     dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
     if v.typ = tipBool then begin
-      tmp += ' ' + v.nom + ' Db ' +  dir + LineEnding;
+      tmp += ' ' + v.name + ' Db ' +  dir + LineEnding;
     end else if v.typ = tipByte then begin
-      tmp += ' ' + v.nom + ' DB ' +  dir + LineEnding;
+      tmp += ' ' + v.name + ' DB ' +  dir + LineEnding;
     end else if v.typ = tipWord then begin
-      tmp += ' ' + v.nom + ' DW ' +  dir + LineEnding;
+      tmp += ' ' + v.name + ' DW ' +  dir + LineEnding;
     end else begin
-      tmp += ' "' + v.nom + '"->' +  dir + LineEnding;
+      tmp += ' "' + v.name + '"->' +  dir + LineEnding;
     end;
   end;
   Result := tmp;

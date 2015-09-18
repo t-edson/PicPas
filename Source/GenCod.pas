@@ -96,7 +96,7 @@ function GetByte(var reg: Tregister; varNom: string = ''): boolean;
  variables. Las direcciones usadas, se guardan en la tabla memtab[], aunque no siempre
  corresponden a direcciones consecutivas}
 var
-  aVar: Tvar;
+  aVar: TxpVar;
 begin
    if sp>=MAX_MEMTAB then begin
      //Se asume que se desbordó la memoria evaluando a alguna expresión
@@ -813,7 +813,7 @@ begin
     GenError('Clock frequency not supported.');
   end;
 end;
-procedure codif_delay_ms(const fun: Tfunc);
+procedure codif_delay_ms(const fun: TxpFun);
 //Codifica rutina de retardo en milisegundos
 var
   delay: Word;
@@ -839,12 +839,12 @@ begin
    _GOTO(delay);
    EndCodeSub;  //termina codificación
 end;
-procedure fun_putchar(fun: Tfunc);
+procedure fun_putchar(fun: TxpFun);
 begin
   //Esta es una fucnión INLINE
   //Esta función no devuelve un valor, por eso no nos preocupamos del tipo.
 end;
-procedure fun_delay_ms(fun: Tfunc);
+procedure fun_delay_ms(fun: TxpFun);
 begin
    if fun.adrr=-1 then begin
      //No ha sido codificada, la codifica.
@@ -867,7 +867,7 @@ begin
      GenError('No soportado'); exit;
    end;
 end;
-procedure fun_delay_ms_w(fun: Tfunc);
+procedure fun_delay_ms_w(fun: TxpFun);
 begin
    if fun.adrr=-1 then begin
      //No ha sido codificada, la codifica.
@@ -894,7 +894,7 @@ begin
      GenError('Not implemented.'); exit;
    end;
 end;
-procedure fun_Inc_byte(fun: Tfunc);
+procedure fun_Inc_byte(fun: TxpFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -910,7 +910,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Inc_word(fun: Tfunc);
+procedure fun_Inc_word(fun: TxpFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -928,7 +928,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Dec_byte(fun: Tfunc);
+procedure fun_Dec_byte(fun: TxpFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -944,7 +944,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Dec_word(fun: Tfunc);
+procedure fun_Dec_word(fun: TxpFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -967,7 +967,7 @@ procedure TCompiler.StartSyntax;
 //Se ejecuta solo una vez al inicio
 var
   opr: TOperator;
-  f: Tfunc;  //índice para funciones
+  f: TxpFun;  //índice para funciones
 begin
 
   //Define métodos w usar
