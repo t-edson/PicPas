@@ -6,10 +6,7 @@ lenguaje y del modelo de PIC.
 
 Las variables públicas más importantes de este módulo son:
 
- vars[]  -> almacena a las variables declaradas
  typs[]  -> almacena a los tipos declarados
- funcs[] -> almacena a las funciones declaradas
- cons[]  -> almacena a las constantes declaradas
 
 Para mayor información sobre el uso del framework Xpres, consultar la documentación
 técnica.
@@ -41,8 +38,6 @@ TCatOperation =(
   coExpres_Variab=%1001,
   coExpres_Expres=%1010
 );
-
-TFindFuncResult = (TFF_NONE, TFF_PARTIAL, TFF_FULL);
 
 type
 
@@ -108,26 +103,17 @@ protected  //Eventos del compilador
   OnExprEnd  : procedure(const exprLevel: integer; isParam: boolean);  {Se genera
                                              el terminar de evaluar una expresión}
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
-  TreeNames  : TXpTreeNames; //arbol de nombres
+  TreeElems  : TXpTreeElements; //arbol de nombres
   procedure ClearTypes;
   function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction
     ): TxpFun;
 //  procedure CreateFunction(funName, varType: string);
-  function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction
-    ): TxpFun;
   procedure CreateParam(fun: TxpFun; parName: string; typStr: string);
   function CaptureDelExpres: boolean;
-  procedure ClearVars;
-  procedure ClearAllConst;
-  procedure ClearAllFuncs;
-  procedure ClearAllVars;
-  procedure ClearFuncs;
-//  function CategName(cat: TCatType): string;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;
   procedure TipDefecString(var Op: TOperand; tokcad: string); virtual; abstract;
   procedure TipDefecBoolean(var Op: TOperand; tokcad: string); virtual; abstract;
-  function FindDuplicFunction: boolean;
   function EOExpres: boolean;
   function EOBlock: boolean;
   procedure SkipWhites; virtual;  //rutina para saltar blancos
@@ -135,15 +121,9 @@ protected  //Eventos del compilador
 //  procedure GetBoolExpression;
 //  procedure CreateVariable(const varName: string; typ: ttype);
 //  procedure CreateVariable(varName, varType: string);
-  function FindVar(const varName: string; out idx: integer): boolean;
-  function FindCons(const conName: string; out idx: integer): boolean;
-  function FindFunc(const funName: string; out idx: integer): boolean;
-  function FindPredefName(name: string): TxpElemType;
   function GetOperand: TOperand; virtual;
   function GetOperandP(pre: integer): TOperand;
   procedure CaptureParams; virtual;
-  function FindFuncWithParams0(const funName: string; var idx: integer;
-    idx0: integer=0): TFindFuncResult;
 private
   procedure Evaluar(var Op1: TOperand; opr: TOperator; var Op2: TOperand);
   function GetExpressionCore(const prec: Integer): TOperand;
@@ -156,13 +136,7 @@ public
 
   //tablas de elementos del lenguaje
   typs  : TTypes;       //lista de tipos (El nombre "types" ya está reservado)
-  funcs : TxpFuns;     //lista de funciones
   func0 : TxpFun;      //función interna para almacenar parámetros
-  nIntFun : integer;   //número de funciones internas
-  cons  : TxpCons;     //lista de constantes
-  nIntCon : integer;   //número de constantes internas
-  vars  : TxpVars;      //lista de variables
-  nIntVar : integer;   //número de variables internas
   function HayError: boolean;
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
@@ -191,7 +165,6 @@ var
   tkString  : TSynHighlighterAttributes;
   tkOperator: TSynHighlighterAttributes;
   tkBoolean : TSynHighlighterAttributes;
-  tkSysFunct: TSynHighlighterAttributes;
 
   function CatOperationToStr(Op: string=','): string;
 
@@ -255,75 +228,6 @@ begin
 //  Perr.Show;
 end;
 
-function TCompilerBase.FindVar(const varName:string; out idx: integer): boolean;
-//Busca el nombre dado para ver si se trata de una variable definida
-//Si encuentra devuelve TRUE y actualiza el índice.
-var
-  tmp: String;
-  i: Integer;
-begin
-  Result := false;
-  tmp := upCase(varName);
-  for i:=0 to vars.Count-1 do begin
-    if Upcase(vars[i].name)=tmp then begin
-      idx := i;
-      exit(true);
-    end;
-  end;
-end;
-function TCompilerBase.FindFunc(const funName:string; out idx: integer): boolean;
-//Busca el nombre dado para ver si se trata de una función definida
-//Si encuentra devuelve TRUE y actualiza el índice.
-var
-  tmp: String;
-  i: Integer;
-begin
-  Result := false;
-  tmp := upCase(funName);
-  for i:=0 to funcs.Count-1 do begin
-    if Upcase(funcs[i].name)=tmp then begin
-      idx := i;
-      exit(true);
-    end;
-  end;
-end;
-function TCompilerBase.FindCons(const conName:string; out idx: integer): boolean;
-//Busca el nombre dado para ver si se trata de una constante definida
-//Si encuentra devuelve TRUE y actualiza el índice.
-var
-  tmp: String;
-  i: Integer;
-begin
-  Result := false;
-  tmp := upCase(conName);
-  for i:=0 to cons.Count-1 do begin
-    if Upcase(cons[i].name)=tmp then begin
-      idx := i;
-      exit(true);
-    end;
-  end;
-end;
-function TCompilerBase.FindPredefName(name: string): TxpElemType;
-//Busca un identificador e indica si ya existe el nombre, sea como variable,
-//función o constante.
-var i: integer;
-begin
-  //busca como variable
-  if FindVar(name,i) then begin
-     exit(et_Var);
-  end;
-  //busca como función
-  if FindFunc(name,i) then begin
-     exit(et_Func);
-  end;
-  //busca como constante
-  if FindCons(name,i) then begin
-     exit(et_Cons);
-  end;
-  //no lo encuentra
-  exit(et_None);
-end;
-
 //Manejo de tipos
 function TCompilerBase.CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
 //Crea una nueva definición de tipo en el compilador. Devuelve referencia al tipo recien creado
@@ -352,60 +256,20 @@ procedure TCompilerBase.ClearTypes;  //Limpia los tipos
 begin
   typs.Clear;
 end;
-procedure TCompilerBase.ClearVars;
-//Limpia todas las variables creadas por el usuario.
-begin
-  vars.Count:= nIntVar;      //deja las del sistema
-end;
-procedure TCompilerBase.ClearAllVars;
-//Elimina todas las variables, incluyendo las predefinidas.
-begin
-  nIntVar := 0;
-  vars.Clear;
-end;
-procedure TCompilerBase.ClearFuncs;
-//Limpia todas las funciones creadas por el usuario.
-begin
-  funcs.Count:=nIntFun;  //deja las del sistema
-end;
-procedure TCompilerBase.ClearAllFuncs;
-//Elimina todas las funciones, incluyendo las predefinidas.
-begin
-  nIntFun := 0;
-  funcs.Clear;
-end;
-procedure TCompilerBase.ClearAllConst;
-//Elimina todas las funciones, incluyendo las predefinidas.
-begin
-  nIntCon := 0;
-  cons.Clear;
-end;
 
 function TCompilerBase.CreateFunction(funName: string; typ: ttype;
   proc: TProcExecFunction): TxpFun;
 //Crea una nueva función y devuelve un índice a la función.
 var
   fun : TxpFun;
-  i: Integer;
 begin
-  //verifica si existe como variable
-  if FindVar(funName, i) then begin
-    GenError('Duplicated identifier: "%s"', [funName]);
-    exit;
-  end;
-  //verifica si existe como constante
-  if FindCons(funName, i)then begin
-    GenError('Duplicated identifier: "%s"', [funName]);
-    exit;
-  end;
-  //puede existir como función, no importa (sobrecarga)
   //registra la función en la tabla
   fun := TxpFun.Create;
   fun.name:= funName;
   fun.typ := typ;
   fun.proc:= proc;
   setlength(fun.pars,0);  //inicia arreglo
-  funcs.Add(fun);  //agrega
+  TreeElems.AddElement(fun);  //no se puede verificar duplicidad aún
   Result := fun;
 end;
 {procedure TCompilerBase.CreateFunction(funName, varType: string);
@@ -428,14 +292,6 @@ begin
   //Ya encontró tipo, llama a evento
 //  if t.OnGlobalDef<>nil then t.OnGlobalDef(funName, '');
 end;}
-function TCompilerBase.CreateSysFunction(funName: string; typ: ttype;
-  proc: TProcExecFunction): TxpFun;
-//Crea una función del sistema o interna. Estas funciones estan siempre disponibles.
-//Las funciones internas deben crearse todas al inicio.
-begin
-  Result := CreateFunction(funName, typ, proc);
-  Inc(nIntFun);  //leva la cuenta
-end;
 procedure TCompilerBase.CreateParam(fun: TxpFun; parName: string; typStr: string
   );
 //Crea un parámetro para una función
@@ -458,90 +314,6 @@ begin
   //agrega
   fun.CreateParam(parName, t);
 end;
-function TCompilerBase.FindFuncWithParams0(const funName: string; var idx: integer;
-  idx0 : integer = 0): TFindFuncResult;
-{Busca una función que coincida con el nombre "funName" y con los parámetros de func0
-El resultado puede ser:
- TFF_NONE   -> No se encuentra.
- TFF_PARTIAL-> Se encuentra solo el nombre.
- TFF_FULL   -> Se encuentra y coninciden sus parámetros, actualiza "idx".
-"idx0", es el índice inicial desde donde debe buscar. Permite acelerar las búsquedas,
-cuando ya se ha explorado antes.
-}
-var
-  tmp: String;
-  params : string;   //parámetros de la función
-  i: Integer;
-  hayFunc: Boolean;
-begin
-  Result := TFF_NONE;   //por defecto
-  hayFunc := false;
-  tmp := UpCase(funName);
-  for i:=idx0 to funcs.Count-1 do begin
-    if Upcase(funcs[i].name)= tmp then begin
-      //coincidencia, compara
-      hayFunc := true;  //para indicar que encontró el nombre
-      if func0.SameParams(funcs[i]) then begin
-        idx := i;    //devuelve ubicación
-        Result := TFF_FULL; //encontró
-        exit;
-      end;
-    end;
-  end;
-  //si llego hasta aquí es porque no encontró coincidencia
-  if hayFunc then begin
-    //Encontró al menos el nombre de la función, pero no coincide en los parámetros
-    Result := TFF_PARTIAL;
-    {Construye la lista de parámetros de las funciones con el mismo nombre. Solo
-    hacemos esta tarea pesada aquí, porque  sabemos que se detendrá la compilación}
-    params := '';   //aquí almacenará la lista
-{    for i:=idx0 to high(funcs) do begin  //no debe empezar 1n 0, porque allí está func[0]
-      if Upcase(funcs[i].name)= tmp then begin
-        for j:=0 to high(funcs[i].pars) do begin
-          params += funcs[i].pars[j].name + ',';
-        end;
-        params += LineEnding;
-      end;
-    end;}
-  end;
-end;
-function TCompilerBase.FindDuplicFunction: boolean;
-{Verifica si la última función agregada, está duplicada con alguna de las
-funciones existentes. Permite la sobrecarga. Si encuentra la misma
-función definida 2 o más veces, genera error y devuelve TRUE.
-Debe llamarse siempre, después de definir una función nueva.}
-var
-  ufun : String;
-  i,n: Integer;
-  lastF: TxpFun;
-begin
-  n := funcs.Count-1;  //último índice
-  lastF := funcs.Last;   //última función
-  ufun := UpCase(lastF.name);
-  //busca sobrecargadas en las funciones anteriores
-  for i:=0 to n-1 do begin
-    if UpCase(funcs[i].name) = ufun then begin
-      //hay una sobrecargada, verifica tipos de parámetros
-      if not lastF.SameParams(funcs[i]) then break;
-      //Tiene igual cantidad de parámetros y del mismo tipo. Genera Error
-      GenError('Duplicated function: %s', [lastF.name+lastF.ParamTypesList]);
-      exit(true);
-    end;
-  end;
-  Result := false;
-end;
-{function TCompilerBase.CategName(cat: TCatType): string;
-begin
-   case cat of
-   t_integer: Result := 'Numérico';
-   t_uinteger: Result := 'Numérico sin signo';
-   t_float: Result := 'Flotante';
-   t_string: Result := 'Cadena';
-   t_boolean: Result := 'Booleano';
-   t_enum: Result := 'Enumerado';
-   else Result := 'Desconocido';
-   end;
-end;}
 function TCompilerBase.EOExpres: boolean; inline;
 //Indica si se ha llegado al final de una expresión.
 begin
@@ -622,11 +394,11 @@ function TCompilerBase.GetOperand: TOperand;
 Debe devolver el tipo del operando y también el valor (obligatorio para el caso
 de intérpretes y opcional para compiladores)}
 var
-  i: Integer;
-  ivar: Integer;
-  icons: Integer;
-  ifun: Integer;
+  con: TxpCon;
+  xvar: TxpVar;
+  xfun: TxpFun;
   tmp: String;
+  ele: TxpElement;
 begin
   PErr.Clear;
   SkipWhites;
@@ -637,30 +409,40 @@ begin
     if pErr.HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tokType = tkIdentif then begin  //puede ser variable, constante, función
-    if FindVar(cIn.tok, ivar) then begin
+    ele := TreeElems.Find(cIn.tok);  //identifica elemento
+    if ele = nil then begin
+      //No identifica a este elemento
+      GenError('Unknown identifier: %s', [cIn.tok]);
+      exit;
+    end;
+    if ele.elemType = et_Var then begin
       //es una variable
-      Result.rVar:=vars[ivar];   //guarda referencia a la variable
+      xvar := TxpVar(ele);
+      Result.rVar:=xvar;   //guarda referencia a la variable
       Result.catOp:=coVariab;    //variable
-      Result.catTyp:= vars[ivar].typ.cat;  //categoría
-      Result.typ:=vars[ivar].typ;
+      Result.catTyp:= xvar.typ.cat;  //categoría
+      Result.typ:=xvar.typ;
       Result.txt:= cIn.tok;     //toma el texto
       cIn.Next;    //Pasa al siguiente
-    end else if FindCons(cIn.tok, icons) then begin  //es constante
-      //es una variable
-//      Result.rVar:=ivar;   //guarda referencia a la variable
+    end else if ele.elemType = et_Cons then begin  //es constante
+      //es una constante
+      con := TxpCon(ele);
       Result.catOp:=coConst;    //constante
-      Result.catTyp:= cons[icons].typ.cat;  //categoría
-      Result.typ:=cons[icons].typ;
-      Result.GetConsValFrom(cons[icons]);  //lee valor
+      Result.catTyp:= con.typ.cat;  //categoría
+      Result.typ:=con.typ;
+      Result.GetConsValFrom(con);  //lee valor
       Result.txt:= cIn.tok;     //toma el texto
       cIn.Next;    //Pasa al siguiente
-    end else if FindFunc(cIn.tok, ifun) then begin  //no es variable, debe ser función
+    end else if ele.elemType = et_Func then begin  //es función
+      {Se sabe que es función, pero no se tiene la función exacta porque puede haber
+       versiones, sobrecargadas de la misma función.}
       tmp := cIn.tok;  //guarda nombre de función
       cIn.Next;    //Toma identificador
       CaptureParams;  //primero lee parámetros
       if HayError then exit;
-      //busca como función
-      case FindFuncWithParams0(tmp, i, ifun) of  //busca desde ifun
+      //Aquí se identifica la función exacta, que coincida con sus parámetros
+      { TODO : No es la forma más eficiente, explorar nuevamente todo el NAMESPACE. Tal vez se debería usar funciones de tipo FindFirst y FindNExt }
+      case TreeElems.FindFuncWithParams0(tmp, func0, xfun) of
       //TFF_NONE:      //No debería pasar esto
       TFF_PARTIAL:   //encontró la función, pero no coincidió con los parámetros
          GenError('Type parameters error on %s', [tmp +'()']);
@@ -668,35 +450,14 @@ begin
         begin   //encontró
           Result.catOp :=coExpres; //expresión
           Result.txt:= cIn.tok;    //toma el texto
-          Result.typ:=funcs[i].typ;
-          funcs[i].proc(funcs[i]);  //llama al código de la función
+          Result.typ:=xfun.typ;
+          xfun.proc(xfun);  //llama al código de la función
           exit;
         end;
       end;
     end else begin
-      GenError('Unknown identifier: %s', [cIn.tok]);
+      GenError('Not implemented.');
       exit;
-    end;
-  end else if cIn.tokType = tkSysFunct then begin  //es función de sistema
-    //Estas funciones debem crearse al iniciar el compilador y están siempre disponibles.
-    tmp := cIn.tok;  //guarda nombre de función
-    cIn.Next;    //Toma identificador
-    CaptureParams;  //primero lee parámetros en func[0]
-    if HayError then exit;
-    //buscamos una declaración que coincida.
-    case FindFuncWithParams0(tmp, i) of
-    TFF_NONE:      //no encontró ni la función
-       GenError('Function not implemented: %s', [tmp]);
-    TFF_PARTIAL:   //encontró la función, pero no coincidió con los parámetros
-      GenError('Type parameters error on %s', [tmp +'()']);
-    TFF_FULL:     //encontró completamente
-      begin   //encontró
-        Result.catOp :=coExpres; //expresión
-        Result.txt:= cIn.tok;    //toma el texto
-        Result.typ:=funcs[i].typ;
-        funcs[i].proc(funcs[i]);  //llama al código de la función
-        exit;
-      end;
     end;
   end else if cIn.tokType = tkBoolean then begin  //true o false
     Result.catOp:=coConst;       //constante es Mono Operando
@@ -933,19 +694,13 @@ end;}
 constructor TCompilerBase.Create;
 begin
   PErr.IniError;   //inicia motor de errores
-  funcs := TxpFuns.Create(true);
-  vars := TxpVars.Create(true);
-  cons := TxpCons.Create(true);
-  TreeNames := TXpTreeNames.Create;
   //Inicia lista de tipos
   typs := TTypes.Create(true);
-  //Inicia variables, funciones y constantes
-  ClearAllVars;
-  ClearAllFuncs;
-  ClearAllConst;
+  //Crea arbol de elementos
+  TreeElems := TXpTreeElements.Create;
   //inicia la sintaxis
   xLex := TSynFacilSyn.Create(nil);   //crea lexer
-  func0 := CreateSysFunction('', nil, nil);  //crea la función 0, para uso interno
+  func0 := TxpFun.Create;  //crea la función 0, para uso interno
 
   if HayError then PErr.Show;
   cIn := TContexts.Create(xLex); //Crea lista de Contextos
@@ -956,10 +711,7 @@ begin
   cIn.Destroy; //Limpia lista de Contextos
   xLex.Free;
   typs.Free;
-  TreeNames.Destroy;
-  cons.Free;
-  vars.Free;
-  funcs.Free;
+  TreeElems.Destroy;
   inherited Destroy;
 end;
 
@@ -1095,10 +847,10 @@ begin
   end;
   'es': begin
     //Update messages
+    dicSet('Not implemented.', 'No implementado');
     dicSet('Unknown type identifier.', 'Identificador de tipo duplicado.');
     dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
     dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
-    dicSet('Duplicated function: %s','Función duplicada: %s');
     dicSet('";" expected.', 'Se esperaba ";"');
     dicSet('"(" expected.', 'Se esperaba "("');
     dicSet('")" expected.', 'Se esperaba ")"');

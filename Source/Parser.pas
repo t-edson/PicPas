@@ -56,6 +56,7 @@ type
     procedure cInNewLine(lin: string);
   public
     procedure StartSyntax;
+    procedure CreateSystemElements;
     procedure Compile(NombArc: string; LinArc: Tstrings);
     function RAMusage: string;  //uso de memoria RAM
     procedure DumpCode(l: TSTrings);  //uso de la memoria Flash
@@ -538,16 +539,14 @@ function TCompiler.CreateCons(const consName: string; typ: ttype): TxpCon;
 var
   r  : TxpCon;
 begin
-  //verifica nombre
-  if FindPredefName(consName) <> et_None then begin
-    GenError('Duplicated identifier: "%s"', [consName]);
-    exit;
-  end;
   //registra variable en la tabla
   r := TxpCon.Create;
   r.name:=consName;
   r.typ := typ;   //fija  referencia a tipo
-  cons.Add(r);
+  if not TreeElems.AddElement(r) then begin
+    GenError('Duplicated identifier: "%s"', [consName]);
+    exit;
+  end;
   Result := r;
 end;
 function TCompiler.CreateVar(const varName: string; typ: ttype;
@@ -603,11 +602,10 @@ begin
   r.offs := offs;
   r.bank := bnk;
   r.bit  := bit;
-  if not TreeNames.AddNode(r) then begin
+  if not TreeElems.AddElement(r) then begin
     GenError('Duplicated identifier: "%s"', [varName]);
     exit;
   end;
-  vars.Add(r);
   Result := r;
   //Ya encontró tipo, llama a evento
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
@@ -670,7 +668,7 @@ var
   {Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
   pone "IsAbs" en TRUE y actualiza los valores "absAdrr" y "absBit". }
   var
-    ivar: integer;
+    xvar: TxpVar;
     n: integer;
     tmp: String;
   begin
@@ -737,8 +735,9 @@ var
       end;
     end else if cIn.tokType = tkIdentif then begin
       //puede ser variable
-      if FindVar(cIn.tok, ivar) then begin
-        absAdrr:=vars[ivar].offs + vars[ivar].bank * $80;  //debe ser absoluta
+      xvar := TreeElems.FindVar(cIn.tok);
+      if xvar<>nil then begin
+        absAdrr:=xvar.offs + xvar.bank * $80;  //debe ser absoluta
       end else begin
         GenError('Identifier of variable expected.');
         exit;
@@ -912,10 +911,13 @@ begin
   {Ya tiene los datos mínimos para crear la función. La crea con "proc" en NIL,
   para indicar que es una función definida por el usuario.}
   fun := CreateFunction(procName, typNull, @callFunct);
-  if HayError then exit;
   CaptureDecParams(fun);
-  FindDuplicFunction;   //recién aquí puede verificar, porque ya se leyeron los parámetros
   if HayError then exit;
+  //recién aquí puede verificar, porque ya se leyeron los parámetros
+  if not TreeElems.ValidateCurElement then begin
+    GenError('Duplicated function: %s',[fun.name]);
+    exit;
+  end;
   cIn.SkipWhites;
   if cIn.tok=';' then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
@@ -1215,15 +1217,9 @@ la posición iniMem}
 var
   i: Integer;
 begin
-  ClearVars;       //limpia las variables
-  ClearFuncs;      //limpia las funciones
-  ClearAllConst;   //limpia las comstantes
-  TreeNames.Clear;  { TODO : ¿No debería preservar los nombres de los objetos predefinidos? }
+  TreeElems.Clear;
+  CreateSystemElements;  //Crea los elementos del sistema
   //ClearTypes;      //limpia los tipos
-  //limpia el estado de las funciones del sistena
-  for i:=0 to nIntFun-1 do begin
-    funcs[i].adrr:=-1;  //para indicar que no están codificadas
-  end;
   //Inicia PIC
   pic.ClearMemRAM;
   pic.ClearMemFlash;
@@ -1379,7 +1375,7 @@ var
   v: TxpVar;
 begin
   tmp := '';
-  for v in vars do begin
+  for v in TreeElems.AllVars do begin
     dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
     if v.typ = tipBool then begin
       tmp += ' ' + v.name + ' Db ' +  dir + LineEnding;
@@ -1441,7 +1437,6 @@ begin
   //personalizados
   tkOperator := xLex.NewTokType('Operador'); //personalizado
   tkBoolean  := xLex.NewTokType('Boolean');  //personalizado
-  tkSysFunct := xLex.NewTokType('SysFunct'); //funciones del sistema
   tkExpDelim := xLex.NewTokType('ExpDelim');//delimitador de expresión ";"
   tkBlkDelim := xLex.NewTokType('BlkDelim'); //delimitador de bloque
   tkType     := xLex.NewTokType('Types');    //personalizado
@@ -1567,6 +1562,7 @@ begin
     dicSet('Cannot decrease an expression.','No se puede disminuir una expresión.');
     dicSet('Unknown device: %s', 'Dispositivo desconocido: %s');
     dicSet('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."');
+    dicSet('Duplicated function: %s','Función duplicada: %s');
   end;
   end;
 end;

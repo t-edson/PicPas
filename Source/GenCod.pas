@@ -967,7 +967,6 @@ procedure TCompiler.StartSyntax;
 //Se ejecuta solo una vez al inicio
 var
   opr: TOperator;
-  f: TxpFun;  //índice para funciones
 begin
 
   //Define métodos w usar
@@ -1025,20 +1024,28 @@ begin
   opr.CreateOperation(tipWord,@word_suma_word);
   opr.CreateOperation(tipByte,@word_suma_byte);
 
-//////// Funciones básicas ////////////
-  f := CreateSysFunction('putchar', tipByte, @fun_putchar);
-  f.CreateParam('',tipByte);
-  f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms);
-  f.CreateParam('',tipByte);
-  f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms_w);
-  f.CreateParam('',tipWord);
-  f := CreateSysFunction('Inc', tipByte, @fun_Inc_byte);
-  f.CreateParam('',tipByte);
-  f := CreateSysFunction('Inc', tipByte, @fun_Inc_word);
-  f.CreateParam('',tipWord);
-  f := CreateSysFunction('Dec', tipByte, @fun_Dec_byte);
-  f.CreateParam('',tipByte);
-  f := CreateSysFunction('Dec', tipByte, @fun_Dec_word);
-  f.CreateParam('',tipWord);
 end;
 
+procedure TCompiler.CreateSystemElements;
+{Inicia los elementos del sistema}
+var
+  f: TxpFun;  //índice para funciones
+begin
+  //////// Funciones básicas ////////////
+  f := CreateFunction('putchar', tipByte, @fun_putchar);
+  f.CreateParam('',tipByte);
+  f := CreateFunction('delay_ms', tipByte, @fun_delay_ms);
+  f.CreateParam('',tipByte);
+  f.adrr:=-1;   //para indicar que no está codificada
+  f := CreateFunction('delay_ms', tipByte, @fun_delay_ms_w);
+  f.CreateParam('',tipWord);
+  f.adrr:=-1;   //para indicar que no está codificada
+  f := CreateFunction('Inc', tipByte, @fun_Inc_byte);
+  f.CreateParam('',tipByte);
+  f := CreateFunction('Inc', tipByte, @fun_Inc_word);
+  f.CreateParam('',tipWord);
+  f := CreateFunction('Dec', tipByte, @fun_Dec_byte);
+  f.CreateParam('',tipByte);
+  f := CreateFunction('Dec', tipByte, @fun_Dec_word);
+  f.CreateParam('',tipWord);
+end;
