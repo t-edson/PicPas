@@ -74,7 +74,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="37"/>
         <CursorPos X="7" Y="58"/>
-        <UsageCount Value="158"/>
+        <UsageCount Value="159"/>
       </Unit6>
       <Unit7>
         <Filename Value="..\..\_Librerias\ConfigFrame 0.6b\configframe.pas"/>
@@ -86,7 +86,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="340"/>
         <CursorPos Y="354"/>
-        <UsageCount Value="146"/>
+        <UsageCount Value="147"/>
       </Unit7>
       <Unit8>
         <Filename Value="frames\framecfgide.pas"/>
@@ -98,7 +98,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="27"/>
         <CursorPos X="46" Y="42"/>
-        <UsageCount Value="145"/>
+        <UsageCount Value="146"/>
       </Unit8>
       <Unit9>
         <Filename Value="xprestypes.pas"/>
@@ -107,15 +107,15 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="75"/>
         <CursorPos X="10" Y="106"/>
-        <UsageCount Value="70"/>
+        <UsageCount Value="71"/>
       </Unit9>
       <Unit10>
         <Filename Value="xpreselements.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="XpresElements"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="254"/>
-        <CursorPos X="37" Y="304"/>
+        <TopLine Value="315"/>
+        <CursorPos X="35" Y="329"/>
         <FoldState Value=" TL0061222132 T4A01 T7i9C23 T8ic21]G3k706A piYjG0E0146]T6kF020151]t0mGU421892T"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
@@ -124,7 +124,7 @@
           <TopLine Value="226"/>
           <CursorPos X="22" Y="239"/>
         </ExtraEditor1>
-        <UsageCount Value="69"/>
+        <UsageCount Value="70"/>
         <Bookmarks Count="1">
           <Item0 X="39" Y="442" ID="2"/>
         </Bookmarks>
@@ -399,143 +399,127 @@
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="169" Column="29" TopLine="145"/>
+        <Filename Value="Parser.pas"/>
+        <Caret Line="918" Column="39" TopLine="905"/>
       </Position1>
       <Position2>
-        <Filename Value="xpreselements.pas"/>
-        <Caret Line="332" TopLine="275"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="280" Column="39" TopLine="224"/>
       </Position2>
       <Position3>
-        <Filename Value="xpreselements.pas"/>
-        <Caret Line="139" Column="3" TopLine="117"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="861" TopLine="747"/>
       </Position3>
       <Position4>
         <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="178" Column="4" TopLine="163"/>
+        <Caret Line="874" Column="13" TopLine="827"/>
       </Position4>
       <Position5>
         <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="280" Column="39" TopLine="224"/>
+        <Caret Line="876" Column="37" TopLine="832"/>
       </Position5>
       <Position6>
         <Filename Value="Parser.pas"/>
-        <Caret Line="914" TopLine="905"/>
+        <Caret Line="1565" TopLine="1541"/>
       </Position6>
       <Position7>
         <Filename Value="Parser.pas"/>
-        <Caret Line="918" Column="39" TopLine="905"/>
       </Position7>
       <Position8>
         <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="280" Column="39" TopLine="224"/>
+        <Caret Line="113" TopLine="96"/>
       </Position8>
       <Position9>
         <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="861" TopLine="747"/>
+        <Caret Line="312" Column="7" TopLine="263"/>
       </Position9>
       <Position10>
         <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="874" Column="13" TopLine="827"/>
+        <Caret Line="306" TopLine="262"/>
       </Position10>
       <Position11>
         <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="876" Column="37" TopLine="832"/>
+        <Caret Line="298" TopLine="264"/>
       </Position11>
       <Position12>
-        <Filename Value="Parser.pas"/>
-        <Caret Line="1565" TopLine="1541"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="302" Column="35" TopLine="269"/>
       </Position12>
       <Position13>
-        <Filename Value="Parser.pas"/>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="114" Column="13" TopLine="96"/>
       </Position13>
       <Position14>
         <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="113" TopLine="96"/>
+        <Caret Line="365" Column="22" TopLine="305"/>
       </Position14>
       <Position15>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="312" Column="7" TopLine="263"/>
-      </Position15>
-      <Position16>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="306" TopLine="262"/>
-      </Position16>
-      <Position17>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="298" TopLine="264"/>
-      </Position17>
-      <Position18>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="302" Column="35" TopLine="269"/>
-      </Position18>
-      <Position19>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="114" Column="13" TopLine="96"/>
-      </Position19>
-      <Position20>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="365" Column="22" TopLine="305"/>
-      </Position20>
-      <Position21>
         <Filename Value="GenCod.pas"/>
         <Caret Line="1038" Column="25" TopLine="1021"/>
-      </Position21>
-      <Position22>
+      </Position15>
+      <Position16>
         <Filename Value="GenCod.pas"/>
         <Caret Line="1040" Column="25" TopLine="1021"/>
-      </Position22>
-      <Position23>
+      </Position16>
+      <Position17>
         <Filename Value="GenCod.pas"/>
         <Caret Line="1043" Column="25" TopLine="1021"/>
-      </Position23>
-      <Position24>
+      </Position17>
+      <Position18>
         <Filename Value="GenCod.pas"/>
         <Caret Line="1046" Column="25" TopLine="1021"/>
-      </Position24>
-      <Position25>
+      </Position18>
+      <Position19>
         <Filename Value="GenCod.pas"/>
         <Caret Line="1048" Column="25" TopLine="1023"/>
-      </Position25>
-      <Position26>
+      </Position19>
+      <Position20>
         <Filename Value="GenCod.pas"/>
         <Caret Line="1050" Column="25" TopLine="1024"/>
+      </Position20>
+      <Position21>
+        <Filename Value="xpreselements.pas"/>
+        <Caret Line="308" Column="14" TopLine="257"/>
+      </Position21>
+      <Position22>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="365" TopLine="305"/>
+      </Position22>
+      <Position23>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="340" Column="35" TopLine="300"/>
+      </Position23>
+      <Position24>
+        <Filename Value="xpreselements.pas"/>
+        <Caret Line="118" Column="34" TopLine="106"/>
+      </Position24>
+      <Position25>
+        <Filename Value="xpresparserpic.pas"/>
+        <Caret Line="341" Column="62" TopLine="300"/>
+      </Position25>
+      <Position26>
+        <Filename Value="xpreselements.pas"/>
+        <Caret Line="328" TopLine="313"/>
       </Position26>
       <Position27>
         <Filename Value="xpreselements.pas"/>
-        <Caret Line="308" Column="14" TopLine="257"/>
+        <Caret Line="330" TopLine="313"/>
       </Position27>
       <Position28>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="365" TopLine="305"/>
+        <Filename Value="xpreselements.pas"/>
+        <Caret Line="339" TopLine="313"/>
       </Position28>
       <Position29>
-        <Filename Value="xpresparserpic.pas"/>
-        <Caret Line="340" Column="35" TopLine="300"/>
+        <Filename Value="xpreselements.pas"/>
+        <Caret Line="342" TopLine="315"/>
       </Position29>
       <Position30>
         <Filename Value="xpreselements.pas"/>
-        <Caret Line="118" Column="34" TopLine="106"/>
+        <Caret Line="328" TopLine="315"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
   <Debugging>
-    <BreakPoints Count="2">
-      <Item1>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="xpreselements.pas"/>
-        <Line Value="339"/>
-      </Item1>
-      <Item2>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="xpreselements.pas"/>
-        <Line Value="328"/>
-      </Item2>
-    </BreakPoints>
     <Watches Count="1">
       <Item1>
         <Expression Value="nUsed"/>
