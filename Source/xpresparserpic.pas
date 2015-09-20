@@ -104,12 +104,6 @@ protected  //Eventos del compilador
                                              el terminar de evaluar una expresión}
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
   TreeElems  : TXpTreeElements; //arbol de nombres
-  procedure ClearTypes;
-  function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
-  function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction
-    ): TxpFun;
-//  procedure CreateFunction(funName, varType: string);
-  procedure CreateParam(fun: TxpFun; parName: string; typStr: string);
   function CaptureDelExpres: boolean;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;
   procedure TipDefecString(var Op: TOperand; tokcad: string); virtual; abstract;
@@ -117,16 +111,27 @@ protected  //Eventos del compilador
   function EOExpres: boolean;
   function EOBlock: boolean;
   procedure SkipWhites; virtual;  //rutina para saltar blancos
+  //Manejo de tipos
+  procedure ClearTypes;
+  function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
+  //Manejo de funciones
+  function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpFun;
+  //  procedure CreateFunction(funName, varType: string);
+  function ValidateFunction: boolean;
+  procedure CloseFunction;
+  function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpFun;
+  procedure CreateParam(fun: TxpFun; parName: string; typStr: string);
+  procedure CaptureParams; virtual;
+  //Mmanejo de expresiones
+  function GetOperand: TOperand; virtual;
+  function GetOperandP(pre: integer): TOperand;
   procedure GetExpression(const prec: Integer; isParam: boolean=false);
 //  procedure GetBoolExpression;
 //  procedure CreateVariable(const varName: string; typ: ttype);
 //  procedure CreateVariable(varName, varType: string);
-  function GetOperand: TOperand; virtual;
-  function GetOperandP(pre: integer): TOperand;
-  procedure CaptureParams; virtual;
 private
-  procedure Evaluar(var Op1: TOperand; opr: TOperator; var Op2: TOperand);
   function GetExpressionCore(const prec: Integer): TOperand;
+  procedure Evaluar(var Op1: TOperand; opr: TOperator; var Op2: TOperand);
 public
   PErr  : TPError;     //Objeto de Error
   xLex  : TSynFacilSyn; //resaltador - lexer
@@ -227,93 +232,6 @@ begin
                          PChar(Perr.NombPrograma), MB_ICONERROR);
 //  Perr.Show;
 end;
-
-//Manejo de tipos
-function TCompilerBase.CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
-//Crea una nueva definición de tipo en el compilador. Devuelve referencia al tipo recien creado
-var r: TType;
-  i: Integer;
-begin
-  //verifica nombre
-  for i:=0 to typs.Count-1 do begin
-    if typs[i].name = nom0 then begin
-      GenError('Unknown type identifier.');
-      exit;
-    end;
-  end;
-  //configura nuevo tipo
-  r := TType.Create;
-  r.name:=nom0;
-  r.cat:=cat0;
-  r.size:=siz0;
-  r.idx:=typs.Count;  //toma ubicación
-//  r.amb:=;  //debe leer el bloque actual
-  //agrega
-  typs.Add(r);
-  Result:=r;   //devuelve índice al tipo
-end;
-procedure TCompilerBase.ClearTypes;  //Limpia los tipos
-begin
-  typs.Clear;
-end;
-
-function TCompilerBase.CreateFunction(funName: string; typ: ttype;
-  proc: TProcExecFunction): TxpFun;
-//Crea una nueva función y devuelve un índice a la función.
-var
-  fun : TxpFun;
-begin
-  //registra la función en la tabla
-  fun := TxpFun.Create;
-  fun.name:= funName;
-  fun.typ := typ;
-  fun.proc:= proc;
-  setlength(fun.pars,0);  //inicia arreglo
-  TreeElems.AddElement(fun);  //no se puede verificar duplicidad aún
-  Result := fun;
-end;
-{procedure TCompilerBase.CreateFunction(funName, varType: string);
-//Define una nueva función en memoria.
-var t: ttype;
-  hay: Boolean;
-begin
-  //Verifica el tipo
-  hay := false;
-  for t in typs do begin
-    if t.name=varType then begin
-       hay:=true; break;
-    end;
-  end;
-  if not hay then begin
-    GenError('Undefined type "%s"', [varType]);
-    exit;
-  end;
-  CreateFunction(funName, t, nil);
-  //Ya encontró tipo, llama a evento
-//  if t.OnGlobalDef<>nil then t.OnGlobalDef(funName, '');
-end;}
-procedure TCompilerBase.CreateParam(fun: TxpFun; parName: string; typStr: string
-  );
-//Crea un parámetro para una función
-var
-  hay: Boolean;
-  typStrL: String;
-  t : TType;
-begin
-  //busca tipo
-  typStrL := LowerCase(typStr);
-  for t in typs do begin
-    if t.name = typStrL then begin
-       hay:=true; break;
-    end;
-  end;
-  if not hay then begin
-    GenError('Undefined type "%s"', [typStr]);
-    exit;
-  end;
-  //agrega
-  fun.CreateParam(parName, t);
-end;
 function TCompilerBase.EOExpres: boolean; inline;
 //Indica si se ha llegado al final de una expresión.
 begin
@@ -338,8 +256,6 @@ adaptarlo al modo de trabajo del lenguaje.}
 begin
   cIn.SkipWhites;
 end;
-
-{ Rutinas del compilador }
 function TCompilerBase.CaptureDelExpres: boolean;
 //Verifica si sigue un delimitador de expresión. Si encuentra devuelve false.
 begin
@@ -352,6 +268,124 @@ begin
     exit(false);  //sale con error
   end;
 
+end;
+//Manejo de tipos
+procedure TCompilerBase.ClearTypes;  //Limpia los tipos
+begin
+  typs.Clear;
+end;
+function TCompilerBase.CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
+//Crea una nueva definición de tipo en el compilador. Devuelve referencia al tipo recien creado
+var r: TType;
+  i: Integer;
+begin
+  //verifica nombre
+  for i:=0 to typs.Count-1 do begin
+    if typs[i].name = nom0 then begin
+      GenError('Unknown type identifier.');
+      exit;
+    end;
+  end;
+  //configura nuevo tipo
+  r := TType.Create;
+  r.name:=nom0;
+  r.cat:=cat0;
+  r.size:=siz0;
+  r.idx:=typs.Count;  //toma ubicación
+//  r.amb:=;  //debe leer el bloque actual
+  //agrega
+  typs.Add(r);
+  Result:=r;   //devuelve índice al tipo
+end;
+//Manejo de funciones
+function TCompilerBase.CreateFunction(funName: string; typ: ttype;
+  proc: TProcExecFunction): TxpFun;
+{Crea una nueva función y devuelve un índice a la función.}
+var
+  fun : TxpFun;
+begin
+  fun := TxpFun.Create;
+  fun.name:= funName;
+  fun.typ := typ;
+  fun.proc:= proc;
+  setlength(fun.pars,0);  //inicia arreglo
+  TreeElems.OpenElement(fun);  //Se abre un nuevo espacio de nombres, pero no se valida duplicidad aún
+  Result := fun;
+end;
+{procedure TCompilerBase.CreateFunction(funName, varType: string);
+//Define una nueva función en memoria.
+var t: ttype;
+  hay: Boolean;
+begin
+  //Verifica el tipo
+  hay := false;
+  for t in typs do begin
+    if t.name=varType then begin
+       hay:=true; break;
+    end;
+  end;
+  if not hay then begin
+    GenError('Undefined type "%s"', [varType]);
+    exit;
+  end;
+  CreateFunction(funName, t, nil);
+  //Ya encontró tipo, llama a evento
+//  if t.OnGlobalDef<>nil then t.OnGlobalDef(funName, '');
+end;}
+function TCompilerBase.ValidateFunction: boolean;
+{Valida la última función introducida, verificando que no haya otra función con el
+ mismo nombre y mismos parámetros. De ser así devuelve FALSE.
+ Se debe llamar después de haber leido los parámetros de la función. }
+begin
+  if not TreeElems.ValidateCurElement then begin
+    GenError('Duplicated function: %s',[TreeElems.CurNodeName]);
+    exit(false);
+  end;
+  exit(true);  //validación sin error
+end;
+procedure TCompilerBase.CloseFunction;
+{Cierra el espacio de trabajo de la función actual. Se debe llamar después de procesar
+todo el cuerpo de la función}
+begin
+  TreeElems.CloseElement;
+end;
+function TCompilerBase.CreateSysFunction(funName: string; typ: ttype;
+  proc: TProcExecFunction): TxpFun;
+{Crea una función del sistema. A diferencia de las funciones definidas por el usuario,
+una función del sistema se crea, sin crear espacios de nombre. La idea es poder
+crearlas rápidamente.}
+var
+  fun : TxpFun;
+begin
+  fun := TxpFun.Create;
+  fun.name:= funName;
+  fun.typ := typ;
+  fun.proc:= proc;
+  setlength(fun.pars,0);  //inicia arreglo
+  TreeElems.AddElement(fun, false);  //no verifica duplicidad
+  Result := fun;
+end;
+procedure TCompilerBase.CreateParam(fun: TxpFun; parName: string; typStr: string
+  );
+//Crea un parámetro para una función
+var
+  hay: Boolean;
+  typStrL: String;
+  t : TType;
+begin
+  //busca tipo
+  typStrL := LowerCase(typStr);
+  for t in typs do begin
+    if t.name = typStrL then begin
+       hay:=true; break;
+    end;
+  end;
+  if not hay then begin
+    GenError('Undefined type "%s"', [typStr]);
+    exit;
+  end;
+  //agrega
+  fun.CreateParam(parName, t);
 end;
 procedure TCompilerBase.CaptureParams;
 //Lee los parámetros de una función en la función interna funcs[0]
@@ -389,6 +423,7 @@ begin
     cin.Next;
   end;
 end;
+//Manejo de expresiones
 function TCompilerBase.GetOperand: TOperand;
 {Parte de la funcion analizadora de expresiones que genera codigo para leer un operando.
 Debe devolver el tipo del operando y también el valor (obligatorio para el caso
@@ -442,7 +477,7 @@ begin
       if HayError then exit;
       //Aquí se identifica la función exacta, que coincida con sus parámetros
       { TODO : No es la forma más eficiente, explorar nuevamente todo el NAMESPACE. Tal vez se debería usar funciones de tipo FindFirst y FindNExt }
-      case TreeElems.FindFuncWithParams0(tmp, func0, xfun) of
+      case TreeElems.FindFuncWithParams(tmp, func0, xfun) of
       //TFF_NONE:      //No debería pasar esto
       TFF_PARTIAL:   //encontró la función, pero no coincidió con los parámetros
          GenError('Type parameters error on %s', [tmp +'()']);
@@ -493,37 +528,6 @@ begin
     GenError('Operand expected.');
   end;
 end;
-procedure TCompilerBase.Evaluar(var Op1: TOperand; opr: TOperator; var Op2: TOperand);
-{Ejecuta una operación con dos operandos y un operador. "opr" es el operador de Op1.
-El resultado debe devolverse en "res". En el caso de intérpretes, importa el
-resultado de la Operación.
-En el caso de compiladores, lo más importante es el tipo del resultado, pero puede
-usarse también "res" para cálculo de expresiones constantes.
-}
-var
-  o: TxOperation;
-begin
-   debugln(space(ExprLevel)+' Eval('+Op1.txt + ',' + Op2.txt+')');
-   PErr.IniError;
-   //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
-   o := opr.FindOperation(Op2.typ);
-   if o = nil then begin
-//      GenError('No se ha definido la operación: (' +
-//                    Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')');
-      GenError('Illegal Operation: %s',
-               ['(' + Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')']);
-      Exit;
-    end;
-   {Llama al evento asociado con p1 y p2 como operandos. Debe devolver el resultado
-   en "res"}
-   p1 := Op1; p2 := Op2;  { TODO : Debe optimizarse }
-   catOperation := TCatOperation((Ord(Op1.catOp) << 2) or ord(Op2.catOp)); //junta categorías de operandos
-   o.proc;      //Ejecuta la operación
-   //El resultado debe estar en "res"
-   //Completa campos de "res", si es necesario
-//   res.txt := Op1.txt + opr.txt + Op2.txt;   //texto de la expresión
-//   res.uop := opr;   //última operación ejecutada
-End;
 function TCompilerBase.GetOperandP(pre: integer): TOperand;
 //Toma un operando realizando hasta encontrar un operador de precedencia igual o menor
 //a la indicada
@@ -690,7 +694,38 @@ begin
   GetExpression(0);  //evalua expresión
   if PErr.HayError then exit;
 end;}
-
+procedure TCompilerBase.Evaluar(var Op1: TOperand; opr: TOperator; var Op2: TOperand);
+{Ejecuta una operación con dos operandos y un operador. "opr" es el operador de Op1.
+El resultado debe devolverse en "res". En el caso de intérpretes, importa el
+resultado de la Operación.
+En el caso de compiladores, lo más importante es el tipo del resultado, pero puede
+usarse también "res" para cálculo de expresiones constantes.
+}
+var
+  o: TxOperation;
+begin
+   debugln(space(ExprLevel)+' Eval('+Op1.txt + ',' + Op2.txt+')');
+   PErr.IniError;
+   //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
+   o := opr.FindOperation(Op2.typ);
+   if o = nil then begin
+//      GenError('No se ha definido la operación: (' +
+//                    Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')');
+      GenError('Illegal Operation: %s',
+               ['(' + Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')']);
+      Exit;
+    end;
+   {Llama al evento asociado con p1 y p2 como operandos. Debe devolver el resultado
+   en "res"}
+   p1 := Op1; p2 := Op2;  { TODO : Debe optimizarse }
+   catOperation := TCatOperation((Ord(Op1.catOp) << 2) or ord(Op2.catOp)); //junta categorías de operandos
+   o.proc;      //Ejecuta la operación
+   //El resultado debe estar en "res"
+   //Completa campos de "res", si es necesario
+//   res.txt := Op1.txt + opr.txt + Op2.txt;   //texto de la expresión
+//   res.uop := opr;   //última operación ejecutada
+End;
+//constructor y destructor
 constructor TCompilerBase.Create;
 begin
   PErr.IniError;   //inicia motor de errores
@@ -862,6 +897,7 @@ begin
     dicSet('Operand expected.', 'Se esperaba operando.');
     dicSet('Illegal Operation: %s', 'Operación no válida: %s');
     dicSet('Undefined operator: %s for type: %s','No está definido el operador: %s para tipo: %s');
+    dicSet('Duplicated function: %s','Función duplicada: %s');
   end;
   end;
 end;

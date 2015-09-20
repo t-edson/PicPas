@@ -914,10 +914,7 @@ begin
   CaptureDecParams(fun);
   if HayError then exit;
   //recién aquí puede verificar, porque ya se leyeron los parámetros
-  if not TreeElems.ValidateCurElement then begin
-    GenError('Duplicated function: %s',[fun.name]);
-    exit;
-  end;
+  if not ValidateFunction then exit;
   cIn.SkipWhites;
   if cIn.tok=';' then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
@@ -936,6 +933,7 @@ begin
   CompileInstruction;
   _RETURN();  //instrucción de salida
   EndCodeSub;  //termina codificación
+  CloseFunction;  //cierra espacio de nombres de la función
   if cIn.tokType=tkExpDelim then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
     ProcComments;  //quita espacios
@@ -1562,7 +1560,6 @@ begin
     dicSet('Cannot decrease an expression.','No se puede disminuir una expresión.');
     dicSet('Unknown device: %s', 'Dispositivo desconocido: %s');
     dicSet('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."');
-    dicSet('Duplicated function: %s','Función duplicada: %s');
   end;
   end;
 end;

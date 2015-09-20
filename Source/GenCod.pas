@@ -1031,21 +1031,24 @@ procedure TCompiler.CreateSystemElements;
 var
   f: TxpFun;  //índice para funciones
 begin
-  //////// Funciones básicas ////////////
-  f := CreateFunction('putchar', tipByte, @fun_putchar);
+  //////// Funciones del sistema ////////////
+  {Notar que las funciones del sistema no crean espacios de nombres y no se hace
+  validación para verificar la duplicidad (para hacer el proceso m´sa rápido).
+  Es responsabilidad del progranador, no introducir funciones con conflictos.}
+  f := CreateSysFunction('putchar', tipByte, @fun_putchar);
   f.CreateParam('',tipByte);
-  f := CreateFunction('delay_ms', tipByte, @fun_delay_ms);
+  f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms);
   f.CreateParam('',tipByte);
   f.adrr:=-1;   //para indicar que no está codificada
-  f := CreateFunction('delay_ms', tipByte, @fun_delay_ms_w);
+  f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms_w);
   f.CreateParam('',tipWord);
   f.adrr:=-1;   //para indicar que no está codificada
-  f := CreateFunction('Inc', tipByte, @fun_Inc_byte);
+  f := CreateSysFunction('Inc', tipByte, @fun_Inc_byte);
   f.CreateParam('',tipByte);
-  f := CreateFunction('Inc', tipByte, @fun_Inc_word);
+  f := CreateSysFunction('Inc', tipByte, @fun_Inc_word);
   f.CreateParam('',tipWord);
-  f := CreateFunction('Dec', tipByte, @fun_Dec_byte);
+  f := CreateSysFunction('Dec', tipByte, @fun_Dec_byte);
   f.CreateParam('',tipByte);
-  f := CreateFunction('Dec', tipByte, @fun_Dec_word);
+  f := CreateSysFunction('Dec', tipByte, @fun_Dec_word);
   f.CreateParam('',tipWord);
 end;
