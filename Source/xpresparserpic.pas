@@ -409,7 +409,7 @@ begin
     if pErr.HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tokType = tkIdentif then begin  //puede ser variable, constante, función
-    ele := TreeElems.Find(cIn.tok);  //identifica elemento
+    ele := TreeElems.FindFirst(cIn.tok);  //identifica elemento
     if ele = nil then begin
       //No identifica a este elemento
       GenError('Unknown identifier: %s', [cIn.tok]);
@@ -709,9 +709,10 @@ end;
 destructor TCompilerBase.Destroy;
 begin
   cIn.Destroy; //Limpia lista de Contextos
+  func0.Destroy;
   xLex.Free;
-  typs.Free;
   TreeElems.Destroy;
+  typs.Free;
   inherited Destroy;
 end;
 
