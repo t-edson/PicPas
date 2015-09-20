@@ -103,7 +103,6 @@ protected  //Eventos del compilador
   OnExprEnd  : procedure(const exprLevel: integer; isParam: boolean);  {Se genera
                                              el terminar de evaluar una expresión}
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
-  TreeElems  : TXpTreeElements; //arbol de nombres
   function CaptureDelExpres: boolean;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;
   procedure TipDefecString(var Op: TOperand; tokcad: string); virtual; abstract;
@@ -142,6 +141,7 @@ public
   //tablas de elementos del lenguaje
   typs  : TTypes;       //lista de tipos (El nombre "types" ya está reservado)
   func0 : TxpFun;      //función interna para almacenar parámetros
+  TreeElems  : TXpTreeElements; //arbol de nombres
   function HayError: boolean;
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
@@ -357,7 +357,7 @@ crearlas rápidamente.}
 var
   fun : TxpFun;
 begin
-  fun := TxpFun.Create;
+  fun := TxpFun.Create;  //Se crea como una función normal
   fun.name:= funName;
   fun.typ := typ;
   fun.proc:= proc;

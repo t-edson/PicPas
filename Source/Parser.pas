@@ -49,6 +49,7 @@ type
     procedure CompileCurBlock;
     procedure CompileFile(iniMem: word);
     procedure CompileVarDeclar;
+    function StartOfSection: boolean;
   protected
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
     procedure TipDefecString(var Op: TOperand; tokcad: string); override;
@@ -924,7 +925,28 @@ begin
     GenError('";" expected.');  //por ahora
     exit;  //debe ser un error
   end;
-  //por ahora no se soporta variables locales
+  //Empiezan las declaraciones
+  while StartOfSection do begin
+    if cIn.tokL = 'var' then begin
+      cIn.Next;    //lo toma
+      while not StartOfSection and (cIn.tokL <>'begin') do begin
+        CompileVarDeclar;
+        if pErr.HayError then exit;;
+      end;
+    end else if cIn.tokL = 'const' then begin
+      cIn.Next;    //lo toma
+      while not StartOfSection and (cIn.tokL <>'begin') do begin
+        CompileConstDeclar;
+        if pErr.HayError then exit;;
+      end;
+    end else if cIn.tokL = 'procedure' then begin
+      cIn.Next;    //lo toma
+      CompileProcDeclar;
+    end else begin
+      GenError('Not implemented: "%s"', [cIn.tok]);
+      exit;
+    end;
+  end;
   if cIn.tokL <> 'begin' then begin
     GenError('"begin" expected.');
     exit;
@@ -1203,15 +1225,14 @@ begin
     end;
   end;
 end;
+function TCompiler.StartOfSection: boolean;
+begin
+  Result := (cIn.tokL ='var') or (cIn.tokL ='const') or
+            (cIn.tokL ='type') or (cIn.tokL ='procedure');
+end;
 procedure TCompiler.CompileFile(iniMem: word);
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
 la posición iniMem}
-  function StartOfSection: boolean;
-  begin
-    Result := (cIn.tokL ='var') or (cIn.tokL ='const') or
-              (cIn.tokL ='type') or (cIn.tokL ='procedure');
-  end;
-
 var
   i: Integer;
 begin

@@ -30,14 +30,13 @@ type
   public
   private
     amb  : string;   //ámbito o alcance de la constante
-    elements: TxpElements;  //referencia a nombres anidados, cuando sea función
   public
     name : string;   //nombre de la variable
     typ  : Ttype;    //tipo de la variable
     Parent: TxpElement;  //referecnia al padre
     elemType: TxpElemType;  //no debería ser necesario
     Used: integer;  //veces que se usa este nombre
-    {DuplicateIn(), debe indicar si el elemento está duplicado en la lista de elementos}
+    elements: TxpElements;  //referencia a nombres anidados, cuando sea función
     function AddElement(elem: TxpElement): TxpElement;
     function DuplicateIn(list: TObject): boolean; virtual;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
@@ -105,7 +104,6 @@ type
   buscar los nombres de los elementos, en una estructura en arbol}
   TXpTreeElements = class
   private
-    main    : TxpMain;  //nodo raiz
     curNode : TxpElement;  //referencia al nodo actual
     vars    : TxpVars2;
     //variables de estado para la búsqueda con FindFirst() - FindNext()
@@ -113,6 +111,7 @@ type
     curFindNode: TxpElement;
     curFindIdx: integer;
   public
+    main    : TxpMain;  //nodo raiz
     procedure Clear;
     function AllVars: TxpVars2;
     function CurNodeName: string;
@@ -123,6 +122,7 @@ type
     procedure CloseElement;
     //Métodos para identificación de nombres
     function FindFirst(const name: string): TxpElement;
+    function FindNext: TxpElement;
     function FindFuncWithParams(const funName: string; const func0: TxpFun;
       var fmatch: TxpFun): TFindFuncResult;
     function FindVar(varName: string): TxpVar;
@@ -142,6 +142,7 @@ begin
   Result := elem;       //no tiene mucho sentido
 end;
 function TxpElement.DuplicateIn(list: TObject): boolean;
+{Debe indicar si el elemento está duplicado en la lista de elementos proporcionada.}
 var
   uName: String;
   ele: TxpElement;
@@ -283,9 +284,11 @@ end;
 procedure TXpTreeElements.Clear;
 begin
   main.elements.Clear;  //esto debe hacer un borrado recursivo
+  curNode := main;      //retorna al nodo principal
 end;
 function TXpTreeElements.AllVars: TxpVars2;
-{Devuelve una lista de todas las variables usadas}
+{Devuelve una lista de todas las variables usadas, incluyendo las de las funciones y
+ procedimientos.}
 var
   ele : TxpElement;
 begin
@@ -374,6 +377,11 @@ begin
 
     exit(nil);
   end;
+end;
+function TXpTreeElements.FindNext: TxpElement;
+{Continúa la búsqueda iniciada con FindFirst().}
+begin
+
 end;
 function TXpTreeElements.FindFuncWithParams(const funName: string; const func0: TxpFun;
   var fmatch: TxpFun): TFindFuncResult;

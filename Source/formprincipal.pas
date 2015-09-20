@@ -12,7 +12,7 @@ uses
   Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
   Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
   StdCtrls, LCLIntf, SynFacilUtils, SynFacilHighlighter, MisUtils, FormConfig,
-  Parser, FormPICExplorer, Globales, FrameCfgIDE;
+  Parser, FormPICExplorer, Globales, FormCodeExplorer, FrameCfgIDE;
 
 type
 
@@ -34,15 +34,16 @@ type
     acEdRedo: TAction;
     acEdSelecAll: TAction;
     acEdUndo: TAction;
-    AcHerConfig: TAction;
-    AcHerCompil: TAction;
-    acHerPICExpl: TAction;
-    acHerComEjec: TAction;
-    acVerBarHer: TAction;
-    acVerPanMsj: TAction;
+    acToolConfig: TAction;
+    acToolCompil: TAction;
+    acToolPICExpl: TAction;
+    acToolComEjec: TAction;
+    acToolCodExp: TAction;
+    acViewToolbar: TAction;
+    acViewMsgPan: TAction;
     ActionList: TActionList;
-    acVerBarEst: TAction;
-    acVerPanArc: TAction;
+    acViewStatbar: TAction;
+    acViewFilePan: TAction;
     edAsm: TSynEdit;
     ImgMessages: TImageList;
     ImgActions32: TImageList;
@@ -64,6 +65,7 @@ type
     MenuItem20: TMenuItem;
     MenuItem21: TMenuItem;
     MenuItem22: TMenuItem;
+    MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
     MenuItem2: TMenuItem;
@@ -112,12 +114,13 @@ type
     procedure acEdiRedoExecute(Sender: TObject);
     procedure acEdiSelecAllExecute(Sender: TObject);
     procedure acEdiUndoExecute(Sender: TObject);
-    procedure AcHerCompilExecute(Sender: TObject);
-    procedure AcHerConfigExecute(Sender: TObject);
-    procedure acHerPICExplExecute(Sender: TObject);
-    procedure acVerBarEstExecute(Sender: TObject);
-    procedure acVerBarHerExecute(Sender: TObject);
-    procedure acVerPanMsjExecute(Sender: TObject);
+    procedure acToolCodExpExecute(Sender: TObject);
+    procedure acToolCompilExecute(Sender: TObject);
+    procedure acToolConfigExecute(Sender: TObject);
+    procedure acToolPICExplExecute(Sender: TObject);
+    procedure acViewStatbarExecute(Sender: TObject);
+    procedure acViewToolbarExecute(Sender: TObject);
+    procedure acViewMsgPanExecute(Sender: TObject);
     procedure ChangeEditorState;
     procedure DoSelectSample(Sender: TObject);
     procedure editChangeFileInform;
@@ -194,6 +197,8 @@ begin
   Config.fcIDE.OnUpdateChanges := @ChangeAppearance;
   ChangeAppearance;   //primera actualización
   edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
+  frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
+  //carga archivo de ejemplo
   if FileExists('sample.pas') then edit.LoadFile('sample.pas');
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
@@ -271,13 +276,13 @@ end;
 procedure TfrmPrincipal.ChangeAppearance;
 begin
   StatusBar1.Visible := Config.fcIDE.ViewStatusbar;
-  acVerBarEst.Checked := Config.fcIDE.ViewStatusbar;
+  acViewStatbar.Checked := Config.fcIDE.ViewStatusbar;
   ToolBar1.Visible := Config.fcIDE.ViewToolbar;
-  acVerBarHer.Checked:= Config.fcIDE.ViewToolbar;
+  acViewToolbar.Checked:= Config.fcIDE.ViewToolbar;
 
   panMessages.Visible:= Config.fcIDE.ViewPanMsg;
   Splitter2.Visible := Config.fcIDE.ViewPanMsg;
-  acVerPanMsj.Checked:= Config.fcIDE.ViewPanMsg;
+  acViewMsgPan.Checked:= Config.fcIDE.ViewPanMsg;
 
   case Config.fcIDE.StateToolbar of
   stb_SmallIcon: begin
@@ -345,21 +350,21 @@ begin
   edPas.SelectAll;
 end;
 //////////// Acciones de Ver ///////////////
-procedure TfrmPrincipal.acVerBarEstExecute(Sender: TObject);
+procedure TfrmPrincipal.acViewStatbarExecute(Sender: TObject);
 begin
   Config.fcIDE.ViewStatusbar:=not Config.fcIDE.ViewStatusbar;
 end;
-procedure TfrmPrincipal.acVerBarHerExecute(Sender: TObject);
+procedure TfrmPrincipal.acViewToolbarExecute(Sender: TObject);
 begin
   Config.fcIDE.ViewToolbar:= not Config.fcIDE.ViewToolbar;
 end;
-procedure TfrmPrincipal.acVerPanMsjExecute(Sender: TObject);
+procedure TfrmPrincipal.acViewMsgPanExecute(Sender: TObject);
 begin
   Config.fcIDE.ViewPanMsg:= not Config.fcIDE.ViewPanMsg;
 end;
 
 //////////// Acciones de Herramientas ///////////////
-procedure TfrmPrincipal.AcHerCompilExecute(Sender: TObject);
+procedure TfrmPrincipal.acToolCompilExecute(Sender: TObject);
 {Compila el contenido del archivo actual}
 var
   timeCnt: longint;
@@ -386,13 +391,18 @@ begin
   cxp.DumpStatistics(ListBox1.Items);
   edAsm.EndUpdate;
 end;
-procedure TfrmPrincipal.AcHerConfigExecute(Sender: TObject);
-begin
-  Config.Mostrar;
-end;
-procedure TfrmPrincipal.acHerPICExplExecute(Sender: TObject);
+procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin
   frmPICExplorer.Show;
+end;
+procedure TfrmPrincipal.acToolCodExpExecute(Sender: TObject);
+begin
+  frmCodeExplorer.Refresh;
+  frmCodeExplorer.Show;
+end;
+procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
+begin
+  Config.Mostrar;
 end;
 
 //ADicionales
@@ -441,6 +451,7 @@ end;
 procedure TfrmPrincipal.SetLanguage(lang: string);
 begin
   Config.SetLanguage(lang);
+  frmCodeExplorer.SetLanguage('en');
   case lowerCase(lang) of
   'es': begin
       //menú principal
@@ -481,19 +492,21 @@ begin
       acBusReemp.Caption := '&Remplazar...';
       acBusReemp.Hint := 'Reemplazar texto';
 
-      acVerPanMsj.Caption:='Panel de &Mensajes';
-      acVerPanMsj.Hint:='Mostrar u Ocultar el Panel de Mensajes';
-      acVerBarEst.Caption:='Barra de &Estado';
-      acVerBarEst.Hint:='Mostrar u Ocultar la barra de estado';
-      acVerBarHer.Caption:='Barra de &Herramientas';
-      acVerBarHer.Hint:='Mostrar u Ocultar la barra de herramientas';
+      acViewMsgPan.Caption:='Panel de &Mensajes';
+      acViewMsgPan.Hint:='Mostrar u Ocultar el Panel de Mensajes';
+      acViewStatbar.Caption:='Barra de &Estado';
+      acViewStatbar.Hint:='Mostrar u Ocultar la barra de estado';
+      acViewToolbar.Caption:='Barra de &Herramientas';
+      acViewToolbar.Hint:='Mostrar u Ocultar la barra de herramientas';
 
-      AcHerCompil.Caption:='&Compilar';
-      AcHerCompil.Hint:='Compila el código fuente';
-      acHerPICExpl.Caption:='E&xplorador de PIC';
-      acHerPICExpl.Hint:='Abre el explorador de dispositivos PIC';
-      acHerConfig.Caption:='Configuración';
-      acHerConfig.Hint := 'Ver configuración';
+      acToolCompil.Caption:='&Compilar';
+      acToolCompil.Hint:='Compila el código fuente';
+      acToolPICExpl.Caption:='E&xplorador de PIC';
+      acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
+      acToolCodExp.Caption:='Explorador de Co&digo';
+      acToolCodExp.Hint:='Abre el explorador de Código';
+      acToolConfig.Caption:='Configuración';
+      acToolConfig.Hint := 'Ver configuración';
     end;
   'en': begin
       //menú principal
@@ -534,19 +547,21 @@ begin
       acBusReemp.Caption := '&Replace...';
       acBusReemp.Hint := 'Replace text';
 
-      acVerPanMsj.Caption:='&Messages Panel';
-      acVerPanMsj.Hint:='Show o hide the Messages Panel';
-      acVerBarEst.Caption:='&Status Bar';
-      acVerBarEst.Hint:='Show o hide the Status Bar';
-      acVerBarHer.Caption:='&Tool Bar';
-      acVerBarHer.Hint:='Show o hide the Tool Bar';
+      acViewMsgPan.Caption:='&Messages Panel';
+      acViewMsgPan.Hint:='Show o hide the Messages Panel';
+      acViewStatbar.Caption:='&Status Bar';
+      acViewStatbar.Hint:='Show o hide the Status Bar';
+      acViewToolbar.Caption:='&Tool Bar';
+      acViewToolbar.Hint:='Show o hide the Tool Bar';
 
-      AcHerCompil.Caption:='&Compile';
-      AcHerCompil.Hint:='Compile the source code';
-      acHerPICExpl.Caption:='PIC E&xplorer';
-      acHerPICExpl.Hint:='Open the PIC devices explorer';
-      acHerConfig.Caption := '&Settings';
-      acHerConfig.Hint := 'Settings dialog';
+      acToolCompil.Caption:='&Compile';
+      acToolCompil.Hint:='Compile the source code';
+      acToolPICExpl.Caption:='PIC E&xplorer';
+      acToolPICExpl.Hint:='Open the PIC devices explorer';
+      acToolCodExp.Caption:='Co&de Explorer';
+      acToolCodExp.Hint:='Open the Code Explorer';
+      acToolConfig.Caption := '&Settings';
+      acToolConfig.Hint := 'Settings dialog';
     end;
   end;
 end;

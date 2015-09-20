@@ -67,7 +67,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="11">
+    <Units Count="12">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -129,10 +129,16 @@
         <UnitName Value="XpresTypes"/>
       </Unit9>
       <Unit10>
-        <Filename Value="xpreselements.pas"/>
+        <Filename Value="XpresElements.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="XpresElements"/>
       </Unit10>
+      <Unit11>
+        <Filename Value="formcodeexplorer.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmCodeExplorer"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="FormCodeExplorer"/>
+      </Unit11>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
