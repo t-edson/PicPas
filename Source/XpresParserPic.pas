@@ -52,11 +52,13 @@ private
   procedure SetvalBool(AValue: boolean);
   procedure SetvalFloat(AValue: extended);
   procedure SetvalInt(AValue: Int64);
+//  procedure SetvalStr(AValue: string);
 public
   //Campos de acceso a los valores constantes
   property valInt  : Int64 read val.ValInt write SetvalInt;
   property valFloat: extended read val.ValFloat write SetvalFloat;
   property valBool : boolean read val.ValBool write SetvalBool;
+//  property valStr  : string read val.ValStr write SetvalStr;
   //funciones de ayuda para adaptar los tipos numéricos
   function aWord: word; inline;  //devuelve el valor en Word
   function HByte: byte; inline;  //devuelve byte alto de valor entero
@@ -116,10 +118,9 @@ public
   ejecProg: boolean;   //Indica que se está ejecutando un programa o compilando
   DetEjec: boolean;   //para detener la ejecución (en intérpretes)
 
-  //tablas de elementos del lenguaje
   typs  : TTypes;       //lista de tipos (El nombre "types" ya está reservado)
   func0 : TxpFun;      //función interna para almacenar parámetros
-  TreeElems  : TXpTreeElements; //arbol de nombres
+  TreeElems: TXpTreeElements; //tablas de elementos del lenguaje
   function HayError: boolean;
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
@@ -407,7 +408,7 @@ function TCompilerBase.GetOperand: TOperand;
 Debe devolver el tipo del operando y también el valor (obligatorio para el caso
 de intérpretes y opcional para compiladores)}
 var
-  con: TxpCon;
+  xcon: TxpCon;
   xvar: TxpVar;
   xfun: TxpFun;
   tmp: String;
@@ -439,11 +440,11 @@ begin
       cIn.Next;    //Pasa al siguiente
     end else if ele.elemType = et_Cons then begin  //es constante
       //es una constante
-      con := TxpCon(ele);
+      xcon := TxpCon(ele);
       Result.catOp:=coConst;    //constante
-      Result.catTyp:= con.typ.cat;  //categoría
-      Result.typ:=con.typ;
-      Result.GetConsValFrom(con);  //lee valor
+      Result.catTyp:= xcon.typ.cat;  //categoría
+      Result.typ:=xcon.typ;
+      Result.GetConsValFrom(xcon);  //lee valor
       Result.txt:= cIn.tok;     //toma el texto
       cIn.Next;    //Pasa al siguiente
     end else if ele.elemType = et_Func then begin  //es función
@@ -453,11 +454,11 @@ begin
       cIn.Next;    //Toma identificador
       CaptureParams;  //primero lee parámetros
       if HayError then exit;
-      //Aquí se identifica la función exacta, que coincida con sus parámetros
+      //Aquí se identifica la función exacta, que coincida xcon sus parámetros
       { TODO : No es la forma más eficiente, explorar nuevamente todo el NAMESPACE. Tal vez se debería usar funciones de tipo FindFirst y FindNExt }
       case TreeElems.FindFuncWithParams(tmp, func0, xfun) of
       //TFF_NONE:      //No debería pasar esto
-      TFF_PARTIAL:   //encontró la función, pero no coincidió con los parámetros
+      TFF_PARTIAL:   //encontró la función, pero no coincidió xcon los parámetros
          GenError('Type parameters error on %s', [tmp +'()']);
       TFF_FULL:     //encontró completamente
         begin   //encontró

@@ -1,11 +1,11 @@
 {
-XpresTypes 0.7b
-=============
-Definiciones para el manejo de expresiones.
+XpresTypes
+==========
+Definiciones básicas para el manejo de expresiones.
 Por Tito Hinostroza.
 Aquí están definidas los objetos claves para el manejo de expresiones:
 Los tipos, los operadores y las operaciones
- }
+}
 unit XpresTypes;
 {$mode objfpc}{$H+}
 interface
