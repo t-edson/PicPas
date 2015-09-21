@@ -282,6 +282,10 @@ begin
   w.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Byte
+procedure byte_OnPush(const catOp: TCatOperan);
+begin
+
+end;
 procedure byte_asig_byte;
 begin
   if p1.catOp <> coVariab then begin  //validación
@@ -963,6 +967,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
+
 procedure TCompiler.StartSyntax;
 //Se ejecuta solo una vez al inicio
 var
@@ -980,6 +985,7 @@ begin
   tipBool :=CreateType('boolean',t_boolean,-1);   //de 1 bit
   //tipo numérico de un solo byte
   tipByte :=CreateType('byte',t_uinteger,1);   //de 2 bytes
+  tipByte.OnPush:=@byte_OnPush;
   //tipo numérico de dos byte
   tipWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
 
@@ -1025,7 +1031,6 @@ begin
   opr.CreateOperation(tipByte,@word_suma_byte);
 
 end;
-
 procedure TCompiler.CreateSystemElements;
 {Inicia los elementos del sistema}
 var

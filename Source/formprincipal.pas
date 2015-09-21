@@ -65,6 +65,7 @@ type
     MenuItem20: TMenuItem;
     MenuItem21: TMenuItem;
     MenuItem22: TMenuItem;
+    MenuItem24: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -501,6 +502,8 @@ begin
 
       acToolCompil.Caption:='&Compilar';
       acToolCompil.Hint:='Compila el código fuente';
+      acToolComEjec.Caption:='Compilar y Ej&ecutar';
+      acToolComEjec.Hint:='Compilar y Ejecutar';
       acToolPICExpl.Caption:='E&xplorador de PIC';
       acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
       acToolCodExp.Caption:='Explorador de Co&digo';
@@ -556,6 +559,8 @@ begin
 
       acToolCompil.Caption:='&Compile';
       acToolCompil.Hint:='Compile the source code';
+      acToolComEjec.Caption:='Compile and E&xecute';
+      acToolComEjec.Hint:='Compile and Execute';
       acToolPICExpl.Caption:='PIC E&xplorer';
       acToolPICExpl.Hint:='Open the PIC devices explorer';
       acToolCodExp.Caption:='Co&de Explorer';

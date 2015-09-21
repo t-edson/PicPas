@@ -18,29 +18,7 @@ uses
   SynFacilHighlighter, SynFacilBasic, XpresBas, XpresTypes, XpresElements,
   MisUtils;
 
-type  //tipos enumerados
-//Categoría de Operando
-TCatOperan = (
-  coConst =%00,  //Constante. Inlcuyendo expresiones de constantes evaluadas.
-  coVariab=%01,  //Variable. Variable única.
-  coExpres=%10   //Expresión. Algo que requiere cálculo (incluyendo a una función).
-);
-{Categoría de operación. Se construye para poder representar dos valores de TCatOperan
- en una solo valor byte (juntando sus bits), para facilitar el uso de un CASE ... OF}
-TCatOperation =(
-  coConst_Const=  %0000,
-  coConst_Variab= %0001,
-  coConst_Expres= %0010,
-  coVariab_Const= %0100,
-  coVariab_Variab=%0101,
-  coVariab_Expres=%0110,
-  coExpres_Const= %1000,
-  coExpres_Variab=%1001,
-  coExpres_Expres=%1010
-);
-
 type
-
 { TOperand }
 //Operando
 TOperand = object
@@ -150,26 +128,26 @@ public
   function nColError: integer;
   procedure ShowError;
 public
-  constructor Create; virtual;
-  destructor Destroy; override;
-end;
-
-var
-  {Variables globales. Realmente deberían ser campos de TCompilerBase. Se ponen aquí,
-   para que puedan ser accedidas fácilmente desde el archivo "interprte.pas"}
-
-  cIn    : TContexts;   //entrada de datos
-  p1, p2 : TOperand;    //Pasa los operandos de la operación actual
-  res    : TOperand;    //resultado de la evaluación de la última expresión.
-  catOperation: TCatOperation;  //combinación de categorías de los operandos
   //referencias obligatorias
   tkEol     : TSynHighlighterAttributes;
   tkIdentif : TSynHighlighterAttributes;
   tkKeyword : TSynHighlighterAttributes;
   tkNumber  : TSynHighlighterAttributes;
   tkString  : TSynHighlighterAttributes;
-  tkOperator: TSynHighlighterAttributes;
   tkBoolean : TSynHighlighterAttributes;
+  constructor Create; virtual;
+  destructor Destroy; override;
+end;
+
+var
+  {Variables globales. Realmente deberían ser campos de TCompilerBase. Se ponen aquí,
+   para que puedan ser accedidas fácilmente desde el archivo "GenCod.pas"}
+
+  cIn    : TContexts;   //entrada de datos
+  p1, p2 : TOperand;    //Pasa los operandos de la operación actual
+  res    : TOperand;    //resultado de la evaluación de la última expresión.
+  catOperation: TCatOperation;  //combinación de categorías de los operandos
+  tkOperator: TSynHighlighterAttributes;
 
   function CatOperationToStr(Op: string=','): string;
 
@@ -851,12 +829,12 @@ end;
 procedure TOperand.Push;
 begin
   //llama al evento de pila
-  if typ.OnPush <> nil then typ.OnPush();
+  if typ.OnPush <> nil then typ.OnPush(catOp);
 end;
 procedure TOperand.Pop;
 begin
   //llama al evento de pila
-  if typ.OnPop <> nil then typ.OnPop();
+  if typ.OnPop <> nil then typ.OnPop(catOp);
 end;
 
 function TOperand.FindOperator(const oper: string): TOperator;

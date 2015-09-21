@@ -12,43 +12,63 @@ interface
 uses
   Classes, SysUtils, fgl, SynFacilBasic;
 
-type
+type  //tipos enumerados
 
-//categorías básicas de tipo de datos
-TCatType=(
-  t_integer,  //números enteros
-  t_uinteger, //enteros sin signo
-  t_float,    //de coma flotante
-  t_string,   //cadena de caracteres
-  t_boolean,  //booleano
-  t_enum      //enumerado
-);
+  //categorías básicas de tipo de datos
+  TCatType=(
+    t_integer,  //números enteros
+    t_uinteger, //enteros sin signo
+    t_float,    //de coma flotante
+    t_string,   //cadena de caracteres
+    t_boolean,  //booleano
+    t_enum      //enumerado
+  );
 
-{Espacio para almacenar a los posibles valores de una constante.
-Debe tener campos para los tipos básicos de variable haya en "TCatType" y para valores
-estructurados}
-TConsValue = record
-  ValInt  : Int64;    //Para alojar a los valores t_integer y t_uinteger
-  ValFloat: extended; //Para alojar a los valores t_float
-  ValBool : boolean;  //Para alojar a los valores t_boolean
-  ValStr  : string;   //Para alojar a los valores t_string
-end;
+  {Espacio para almacenar a los posibles valores de una constante.
+  Debe tener campos para los tipos básicos de variable haya en "TCatType" y para valores
+  estructurados}
+  TConsValue = record
+    ValInt  : Int64;    //Para alojar a los valores t_integer y t_uinteger
+    ValFloat: extended; //Para alojar a los valores t_float
+    ValBool : boolean;  //Para alojar a los valores t_boolean
+    ValStr  : string;   //Para alojar a los valores t_string
+  end;
 
-TType = class;
+  //Categoría de Operando
+  TCatOperan = (
+    coConst =%00,  //Constante. Inlcuyendo expresiones de constantes evaluadas.
+    coVariab=%01,  //Variable. Variable única.
+    coExpres=%10   //Expresión. Algo que requiere cálculo (incluyendo a una función).
+  );
+  {Categoría de operación. Se construye para poder representar dos valores de TCatOperan
+   en una solo valor byte (juntando sus bits), para facilitar el uso de un CASE ... OF}
+  TCatOperation =(
+    coConst_Const=  %0000,
+    coConst_Variab= %0001,
+    coConst_Expres= %0010,
+    coVariab_Const= %0100,
+    coVariab_Variab=%0101,
+    coVariab_Expres=%0110,
+    coExpres_Const= %1000,
+    coExpres_Variab=%1001,
+    coExpres_Expres=%1010
+  );
 
-//"Tipos de datos"
-TProcExecOperat = procedure;
-TProcDefineVar = procedure(const varName, varInitVal: string);
-//TProcLoadOperand = procedure(const Op: TOperand);
-TProcLoadOperand = procedure;
+  TType = class;
 
-//Tipo operación
-TxOperation = class
-  OperatType : TType;   //tipo de Operando sobre el cual se aplica la operación.
-  proc       : TProcExecOperat;  //Procesamiento de la operación
-end;
+  //"Tipos de datos"
+  TProcExecOperat = procedure;
+  TProcDefineVar = procedure(const varName, varInitVal: string);
+  //TProcLoadOperand = procedure(const Op: TOperand);
+  TProcLoadOperand = procedure(const catOp: TCatOperan);
 
-TOperations = specialize TFPGObjectList<TxOperation>; //lista de operaciones
+  //Tipo operación
+  TxOperation = class
+    OperatType : TType;   //tipo de Operando sobre el cual se aplica la operación.
+    proc       : TProcExecOperat;  //Procesamiento de la operación
+  end;
+
+  TOperations = specialize TFPGObjectList<TxOperation>; //lista de operaciones
 
 //Operador
 { TOperator }

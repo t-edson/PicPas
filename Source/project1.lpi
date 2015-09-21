@@ -124,9 +124,8 @@
         <UnitName Value="FrameCfgIDE"/>
       </Unit8>
       <Unit9>
-        <Filename Value="xprestypes.pas"/>
+        <Filename Value="XpresTypes.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="XpresTypes"/>
       </Unit9>
       <Unit10>
         <Filename Value="XpresElements.pas"/>
