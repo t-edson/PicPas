@@ -953,6 +953,7 @@ begin
   end;
   StartCodeSub(fun);  //inicia codificación de subrutina
   CompileInstruction;
+  if HayError then exit;
   _RETURN();  //instrucción de salida
   EndCodeSub;  //termina codificación
   CloseFunction;  //cierra espacio de nombres de la función
@@ -1026,7 +1027,6 @@ procedure TCompiler.CompileREPEAT;
 {Compila uan extructura WHILE}
 var
   l1: Word;
-  dg: Integer;
 begin
   l1 := _PC;        //guarda dirección de inicio
 //  CompileInstruction;  //debería completarse las instrucciones de tipo "break"
@@ -1233,8 +1233,6 @@ end;
 procedure TCompiler.CompileFile(iniMem: word);
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
 la posición iniMem}
-var
-  i: Integer;
 begin
   TreeElems.Clear;
   CreateSystemElements;  //Crea los elementos del sistema

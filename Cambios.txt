@@ -6,3 +6,5 @@ cambian y actualizan varias rutinas.
 * Como producto del cambio de contenedor de elementos, se suprimen varias rutinas de la unidad XpresParserPic.
 * Se elimina el tipo de token "tkSysFunct", ya que las funciones del sistema pueden ser redefinidas y no ayuda
 identificar a los tokens que puedan ser funciones del sistema.
+* Se agrega la ventana de explorador de código.
+* Se implementa la definición de variables locales dentro de los procedimientos.

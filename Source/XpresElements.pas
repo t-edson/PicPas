@@ -289,6 +289,21 @@ end;
 function TXpTreeElements.AllVars: TxpVars2;
 {Devuelve una lista de todas las variables usadas, incluyendo las de las funciones y
  procedimientos.}
+  procedure AddVars(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      for ele in nod.elements do begin
+        if ele.elemType = et_Var then begin
+          vars.Add(TxpVar(ele));
+        end else begin
+          if ele.elements<>nil then
+            AddVars(ele);  //recursivo
+        end;
+      end;
+    end;
+  end;
 var
   ele : TxpElement;
 begin
@@ -297,11 +312,7 @@ begin
   end else begin
     vars.Clear;   //por si estaba llena
   end;
-  for ele in curNode.elements do begin
-    if ele.elemType = et_Var then begin
-      vars.Add(TxpVar(ele));
-    end;
-  end;
+  AddVars(curNode);
   Result := vars;
 end;
 function TXpTreeElements.CurNodeName: string;
@@ -353,30 +364,36 @@ begin
 end;
 //Métodos para identificación de nombres
 function TXpTreeElements.FindFirst(const name: string): TxpElement;
-{Busca un nombre siguiendo la estrcutura del espacio de nombres (primero en el espacio
+{Busca un nombre siguiendo la estructura del espacio de nombres (primero en el espacio
  actual y luego en los espacios padres).
  Si encuentra devuelve la referencia. Si no encuentra, devuelve NIL}
-var
-  idx0: integer;
-begin
-  curFindName := name;  //actualiza para FindNext()
-  curFindNode := curNode;  //Busca primero en el espacio actual
-  {Busca con FindIdxElemName() para poder saber donde se deja la exploración y poder
-   retomarla luego con FindNext().}
-  idx0 := 0;  //la primera búsqueda se hace desde el inicio
-  if curFindNode.FindIdxElemName(name, idx0) then begin
-    //Lo encontró, deja estado listo para la siguiente búsqueda
-    curFindIdx:= idx0+1;
-    Result := curFindNode.elements[idx0];
-    exit;
-  end else begin
-    //No encontró
-    if curNode.Parent = nil then
-      exit(nil);  //no hay espacios padres
-    //busca en el espacio padre
-
-    exit(nil);
+  function FindFirstIn(nod: TxpElement): TxpElement;
+  var
+    idx0: integer;
+  begin
+    curFindNode := nod;  //Busca primero en el espacio actual
+    {Busca con FindIdxElemName() para poder saber donde se deja la exploración y poder
+     retomarla luego con FindNext().}
+    idx0 := 0;  //la primera búsqueda se hace desde el inicio
+    if curFindNode.FindIdxElemName(name, idx0) then begin
+      //Lo encontró, deja estado listo para la siguiente búsqueda
+      curFindIdx:= idx0+1;
+      Result := curFindNode.elements[idx0];
+      exit;
+    end else begin
+      //No encontró
+      if nod.Parent = nil then begin
+        Result := nil;
+        exit;  //no hay espacios padres
+      end;
+      //busca en el espacio padre
+      Result := FindFirstIn(nod.Parent);  //recursividad
+      exit;
+    end;
   end;
+begin
+  curFindName := name;     //actualiza para FindNext()
+  Result := FindFirstIn(curNode);
 end;
 function TXpTreeElements.FindNext: TxpElement;
 {Continúa la búsqueda iniciada con FindFirst().}
