@@ -830,12 +830,12 @@ end;
 procedure TOperand.Push;
 begin
   //llama al evento de pila
-  if typ.OnPush <> nil then typ.OnPush(catOp);
+  if typ.OnPush <> nil then typ.OnPush(@self);
 end;
 procedure TOperand.Pop;
 begin
   //llama al evento de pila
-  if typ.OnPop <> nil then typ.OnPop(catOp);
+  if typ.OnPop <> nil then typ.OnPop(@self);
 end;
 
 function TOperand.FindOperator(const oper: string): TOperator;

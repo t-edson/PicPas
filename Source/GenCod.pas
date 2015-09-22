@@ -282,8 +282,11 @@ begin
   w.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Byte
-procedure byte_OnPush(const catOp: TCatOperan);
+procedure byte_OnPush(const Op: pointer);
+var
+  OpPtr: ^TOperand;
 begin
+  OpPtr := Op;
 
 end;
 procedure byte_asig_byte;

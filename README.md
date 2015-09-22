@@ -1,5 +1,5 @@
-PicPas 0.3.4
-===========
+PicPas 0.3.5b
+=============
 Pascal compiler for PIC microcontrollers.
 
 NOTE: This compiler is still in alpha phase and has limited functionality.

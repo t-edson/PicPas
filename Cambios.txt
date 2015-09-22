@@ -1,10 +1,7 @@
-Versión 0.3.4
-* Se fusiona la estructura de arbol de nombres con las listas de almacenamiento de variables, constantes
-y funciones. Ahora se maneja una estructura única que es contenedor y espacio de nombres. Para ello se
-cambian y actualizan varias rutinas.
-* Se eliminan las tablas vars[]. funcs[], cons[].
-* Como producto del cambio de contenedor de elementos, se suprimen varias rutinas de la unidad XpresParserPic.
-* Se elimina el tipo de token "tkSysFunct", ya que las funciones del sistema pueden ser redefinidas y no ayuda
-identificar a los tokens que puedan ser funciones del sistema.
-* Se agrega la ventana de explorador de código.
-* Se implementa la definición de variables locales dentro de los procedimientos.
+Versión 0.3.5
+* Se cambia la declaración TProcLoadOperand, usando un puntero como parámetro, para permitir el paso de
+un objeto TOperand, cuya definición se hará en otras unidades.
+* Se quita le parámetro "amb" de TTypes, de modo que se quita la dependencia de "SynFacilSyn", a la unidad
+XPresTypes y se deja a XPresTypes como una unidad sin dependencias.
+* Se sinccroniza el código de la unidad XPresTypes, con la misma unidad XPresTypes, usada en la librería 
+Xpres 0.6.9.

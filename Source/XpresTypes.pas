@@ -10,7 +10,7 @@ unit XpresTypes;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, fgl, SynFacilBasic;
+  Classes, SysUtils, fgl;
 
 type  //tipos enumerados
 
@@ -59,8 +59,8 @@ type  //tipos enumerados
   //"Tipos de datos"
   TProcExecOperat = procedure;
   TProcDefineVar = procedure(const varName, varInitVal: string);
-  //TProcLoadOperand = procedure(const Op: TOperand);
-  TProcLoadOperand = procedure(const catOp: TCatOperan);
+  TProcLoadOperand = procedure(const OpPtr: pointer);  {"OpPtr" debería ser "TOperand", pero
+                                                        aún no se define "TOperand".}
 
   //Tipo operación
   TxOperation = class
@@ -95,11 +95,13 @@ TType = class
   cat  : TCatType;    //categoría del tipo (numérico, cadena, etc)
   size : smallint;    //tamaño en bytes del tipo
   idx  : smallint;    //ubicación dentro de la matriz de tipos
-  amb  : TFaSynBlock; //ámbito de validez del tipo
   OnGlobalDef: TProcDefineVar; {Evento. Es llamado cada vez que se encuentra la
                                 declaración de una variable (de este tipo) en el ámbito global.}
   OnLocalDef: TProcDefineVar;  {Evento. Es llamado cada vez que se encuentra la
                                 declaración de una variable (de este tipo) en un ámbito local.}
+  OnLoad  : TProcLoadOperand; {Evento. Es llamado cuando se pide cargar un operando
+                               (de este tipo) en registro o pila. Por lo general, se
+                               hace como parte de la evaluación de una expresión. }
   OnPush  : TProcLoadOperand; {Evento. Es llamado cuando se pide cargar un operando
                                (de este tipo) en la pila. }
   OnPop   : TProcLoadOperand; {Evento. Es llamado cuando se pide cargar un operando
@@ -115,7 +117,7 @@ end;
 //Lista de tipos
 TTypes = specialize TFPGObjectList<TType>; //lista de bloques
 
-var  //variables privadas del compilador
+var
   nullOper : TOperator; //Operador nulo. Usado como valor cero.
 
 implementation
