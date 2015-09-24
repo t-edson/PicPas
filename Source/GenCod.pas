@@ -1,14 +1,50 @@
 {
-Implementación de un compialdor sencillo de Pascal para microcontroladores PIC de
+Implementación de un compilador sencillo de Pascal para microcontroladores PIC de
 rango medio.
 Esta implementación no permitirá recursividad, por las limitaciones de recursos de los
 dispositivos más pequeños, y por la dificultad adicional en la conmutación de bancos
 para los dispositivos más grandes.
 El compilador está orientado a uso de registros (solo hay uno) y memoria RAM, pero se
-implementa una pequeña estructura de pila para la evaluación de expresiones aritméticas
-con cierta complejidad.
+implementa una especie de estructura de pila para la evaluación de expresiones
+aritméticas con cierta complejidad y para el paso de parámetros a las funciones.
 Solo se manejan datos de tipo boolean, byte y word, y operaciones sencillas.
 }
+{La arquitectura definida aquí contempla:
+
+Un registro de trabajo W, de 8 bits (el acumulador del PIC).
+Dos registros adicionales  H y L de 8 bits cada uno (Creados a demanda).
+
+Los resultados de una expresión se dejarán en:
+
+1. En Bit Z o C, de STATUS -> Si el resultado es de tipo boolean.
+2. El acumulador W        -> Si el resultado es de tipo byte.
+3. Los registros (H,w)    -> Si el resultado es tipo word.
+
+a menos que ya esté ocupado, en cuyo caso se guarda primero en un registro auxiliar.
+a menos que ya estén ocupados, en cuyo caso se pone primero en la pila.
+
+Despues de ejecutar alguna operación booleana que devuelva una expresión, se
+actaulizan las banderas: BooleanBit y BooleanInverted, que implican que:
+* Si BooleanInverted es TRUE, significa que la lógica de C o Z está invertida.
+* La bandera BooleanBit, indica si el resultado se deja en C o Z.
+
+Por normas de Xpres, se debe considerar que:
+* Todas las operaciones recibe sus dos parámetros en las variables p1 y p2.
+* El resultado de cualquier expresión se debe dejar indicado en el objeto "res".
+* Los valores enteros y enteros sin signo se cargan en valInt
+* Los valores booleanos se cargan en valBool
+* Los valores string se cargan en valStr
+* Las variables están mapeadas en el arreglo vars[]
+* Cada variable, de cualquier tipo, ocupa una celda de vars[]
+
+Los procedimientos de operaciones, deben actualizar en el acumulador:
+
+* El tipo de resultado (para poder evaluar la expresión completa como si fuera un
+operando nuevo)
+* La categoría del operador (constante, expresión, etc), para poder optimizar la generación
+de código.
+* El estado del registro (usado o libre)
+ }
 type
 //  TSatReg = (srFree, srUsed)
   //define un registro virtual para implementar un intérprete
@@ -20,48 +56,14 @@ type
 
 var
   /////// Tipos de datos del lenguaje ////////////
-  typNull: TType;   //Tipo nulo (sin tipo)
-  tipBool: TType;   //Booleanos
-  tipByte: TType;   //número sin signo
-  tipWord: TType;   //número sin signo
+  typNull: TType;     //Tipo nulo (sin tipo)
+  tipBool: TType;     //Booleanos
+  tipByte: TType;     //número sin signo
+  tipWord: TType;     //número sin signo
 //  tipChr : Ttype;   //un caracter
   ////////// Registros virtuales ////////////
-  {La arquitectura definida aquí contempla:
+  DelayCoded: integer;  //bandera para codificación de retardo
 
-  Un registro de trabajo W, de 8 bits (el acumulador del PIC).
-  Dos registros adicionales  H y L de 8 bits cada uno (Creados a demanda).
-
-  Los resultados de una expresión se dejarán en:
-
-  1. En Bit Z o C, de STATUS -> Si el resultado es de tipo boolean.
-  2. El acumulador W        -> Si el resultado es de tipo byte.
-  3. Los registros (H,w)    -> Si el resultado es tipo word.
-
-  a menos que ya esté ocupado, en cuyo caso se guarda primero en un registro auxiliar.
-  a menos que ya estén ocupados, en cuyo caso se pone primero en la pila.
-
-  Despues de ejecutar alguna operación booleana que devuelva una expresión, se
-  actaulizan las banderas: BooleanBit y BooleanInverted, que implican que:
-  * Si BooleanInverted es TRUE, significa que la lógica de C o Z está invertida.
-  * La bandera BooleanBit, indica si el resultado se deja en C o Z.
-
-  Por normas de Xpres, se debe considerar que:
-  * Todas las operaciones recibe sus dos parámetros en las variables p1 y p2.
-  * El resultado de cualquier expresión se debe dejar indicado en el objeto "res".
-  * Los valores enteros y enteros sin signo se cargan en valInt
-  * Los valores booleanos se cargan en valBool
-  * Los valores string se cargan en valStr
-  * Las variables están mapeadas en el arreglo vars[]
-  * Cada variable, de cualquier tipo, ocupa una celda de vars[]
-
-  Los procedimientos de operaciones, deben actualizar en el acumulador:
-
-  * El tipo de resultado (para poder evaluar la expresión completa como si fuera un
-  operando nuevo)
-  * La categoría del operador (constante, expresión, etc), para poder optimizar la generación
-  de código.
-  * El estado del registro (usado o libre)
-   }
 const
   STACK_SIZE = 8;    //tamaño de pila para subrutinas
   MAX_MEMTAB = 4; //tamaño máximo de la tabla de bloques de memoria
@@ -282,12 +284,22 @@ begin
   w.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Byte
-procedure byte_OnPush(const Op: pointer);
+procedure byte_OnPush(const OpPtr: pointer);
+{Pone un byte en la pila. Se usa para pasar parámetros a función.}
 var
-  OpPtr: ^TOperand;
+  Op: ^TOperand;
 begin
-  OpPtr := Op;
-
+  Op := OpPtr;
+  case Op^.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    _MOVLW(res.valInt);
+  end;
+  coVariab: begin
+    _MOVF(res.offs, toW);
+  end;
+  coExpres: begin  //ya está en w
+  end;
+  end;
 end;
 procedure byte_asig_byte;
 begin
@@ -489,6 +501,28 @@ begin
   BooleanInverted := true;  //solo indica que la Lógica se ha invertido
 end;
 ////////////operaciones con Word
+procedure word_OnPush(const OpPtr: pointer);
+{Pone un word en la pila. Se usa para pasar parámetros a función.}
+var
+  Op: ^TOperand;
+begin
+  RequireHL;   //solicita que existan los registros _H y _L
+  Op := OpPtr;
+  case Op^.catOp of  //el parámetro debe estar en "Op^"
+  coConst : begin
+    _MOVLW(Op^.HByte);
+    _MOVWF(_H.offs);
+    _MOVLW(Op^.LByte);
+  end;
+  coVariab: begin
+    _MOVF(Op^.offs, toW);
+    _MOVWF(_H.offs);
+    _MOVF(Op^.offs+1, toW);
+  end;
+  coExpres: begin  //se asume que ya está en (_H,w)
+  end;
+  end;
+end;
 procedure word_asig_word;
 begin
   if p1.catOp <> coVariab then begin  //validación
@@ -825,26 +859,27 @@ procedure codif_delay_ms(const fun: TxpFun);
 var
   delay: Word;
 begin
-   StartCodeSub(fun);  //inicia codificación
-   PutComLine(';rutina delay.');
-   //Esta rutina recibe los milisegundos en los registros (_H,_L) o en (_H,w) o en (w)
+  StartCodeSub(fun);  //inicia codificación
+  DelayCoded := fun.adrr;  //toma dirección
+  PutComLine(';rutina delay.');
+  //Esta rutina recibe los milisegundos en los registros (_H,_L) o en (_H,w) o en (w)
    //Em cualquier caso, siempre usa los registros _H y _L, además del acumulador "w".
-   RequireHL;   //solicita que existan los registros _H y _L
-   if HayError then exit;
-   _CLRF(_H.offs); PutComm(' ;pto. de entrada con parámetro en (0,w)');
-   _MOVWF(_L.offs); PutComm(';pto. de entrada con parámetro en (H,w)');
-   _INCF(_H.offs,toF);  PutComm(';pto. de entrada con parámetro en (H,L)');
-   _INCF(_L.offs,toF);  //corrección
- delay:= _PC;   //punto de entrada con parámetro en (_H,_L)
-   _DECFSZ(_L.offs, toF);
-   _GOTO(_PC+2);
-   _DECFSZ(_H.offs, toF);
-   _GOTO(_PC+2);
-   _RETURN();
-   codif_1mseg;   //codifica retardo 1 mseg
-   if HayError then exit;
-   _GOTO(delay);
-   EndCodeSub;  //termina codificación
+//   RequireHL;   //solicita que existan los registros _H y _L (Se supone que para pasar los parámetros ya se requirió)
+  if HayError then exit;
+  _CLRF(_H.offs); PutComm(' ;pto. de entrada con parámetro en (0,w)');
+  _MOVWF(_L.offs); PutComm(';pto. de entrada con parámetro en (H,w)');
+  _INCF(_H.offs,toF);  PutComm(';pto. de entrada con parámetro en (H,L)');
+  _INCF(_L.offs,toF);  //corrección
+delay:= _PC;   //punto de entrada con parámetro en (_H,_L)
+  _DECFSZ(_L.offs, toF);
+  _GOTO(_PC+2);
+  _DECFSZ(_H.offs, toF);
+  _GOTO(_PC+2);
+  _RETURN();
+  codif_1mseg;   //codifica retardo 1 mseg
+  if HayError then exit;
+  _GOTO(delay);
+  EndCodeSub;  //termina codificación
 end;
 procedure fun_putchar(fun: TxpFun);
 begin
@@ -853,53 +888,21 @@ begin
 end;
 procedure fun_delay_ms(fun: TxpFun);
 begin
-   if fun.adrr=-1 then begin
+   if DelayCoded=-1 then begin
      //No ha sido codificada, la codifica.
      codif_delay_ms(fun);
    end;
-   //Aquí sabemos que La rutina de retardo ya está codificada.
-   case res.catOp of  //el parámetro debe estar en "res"
-   coConst : begin
-     _MOVLW(res.valInt);
-     _call(fun.adrr);
-   end;
-   coVariab: begin
-     _MOVF(res.offs, toW);
-     _call(fun.adrr);
-   end;
-   coExpres: begin  //ya está en w
-     _call(fun.adrr);  //ya está en W
-   end;
-   else
-     GenError('No soportado'); exit;
-   end;
+   //El parámetro byte, debe estar en W
+   _call(DelayCoded);
 end;
 procedure fun_delay_ms_w(fun: TxpFun);
 begin
-   if fun.adrr=-1 then begin
+   if DelayCoded=-1 then begin
      //No ha sido codificada, la codifica.
      codif_delay_ms(fun);
    end;
-   //Aquí sabemos que La rutina de retardo ya está codificada.
-   case res.catOp of  //el parámetro debe estar en "res"
-   coConst : begin
-     _MOVLW(res.HByte);
-     _MOVWF(_H.offs);
-     _MOVLW(res.LByte);
-     _call(fun.adrr+1);
-   end;
-   coVariab: begin
-     _MOVF(res.offs, toW);
-     _MOVWF(_H.offs);
-     _MOVF(res.offs+1, toW);
-     _call(fun.adrr+1);
-   end;
-   coExpres: begin  //se asume que ya está en (_H,w)
-     _call(fun.adrr+1);  //ya está en W
-   end;
-   else
-     GenError('Not implemented.'); exit;
-   end;
+   //El parámetro word, debe estar en (H, W)
+   _call(DelayCoded+1);
 end;
 procedure fun_Inc_byte(fun: TxpFun);
 begin
@@ -991,6 +994,7 @@ begin
   tipByte.OnPush:=@byte_OnPush;
   //tipo numérico de dos byte
   tipWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
+  tipWord.OnPush:=@word_OnPush;
 
   //////// Operaciones con Boolean ////////////
   {Los operadores deben crearse con su precedencia correcta}
@@ -1035,10 +1039,11 @@ begin
 
 end;
 procedure TCompiler.CreateSystemElements;
-{Inicia los elementos del sistema}
+{Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}
 var
   f: TxpFun;  //índice para funciones
 begin
+  DelayCoded := -1;  //inicia
   //////// Funciones del sistema ////////////
   {Notar que las funciones del sistema no crean espacios de nombres y no se hace
   validación para verificar la duplicidad (para hacer el proceso m´sa rápido).

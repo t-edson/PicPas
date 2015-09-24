@@ -15,7 +15,7 @@ unit XpresParserPIC;
 interface
 uses
   Classes, SysUtils, Forms, LCLType, Dialogs, lclProc, SynEditHighlighter,
-  SynFacilHighlighter, SynFacilBasic, XpresBas, XpresTypes, XpresElements,
+  SynFacilHighlighter, SynFacilBasic, XpresBas, XpresTypes, XpresElementsPIC,
   MisUtils;
 
 type
@@ -287,7 +287,7 @@ begin
   fun.name:= funName;
   fun.typ := typ;
   fun.proc:= proc;
-  setlength(fun.pars,0);  //inicia arreglo
+  fun.ClearParams;
   TreeElems.OpenElement(fun);  //Se abre un nuevo espacio de nombres, pero no se valida duplicidad aún
   Result := fun;
 end;
@@ -340,7 +340,7 @@ begin
   fun.name:= funName;
   fun.typ := typ;
   fun.proc:= proc;
-  setlength(fun.pars,0);  //inicia arreglo
+  fun.ClearParams;
   TreeElems.AddElement(fun, false);  //no verifica duplicidad
   Result := fun;
 end;

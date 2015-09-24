@@ -3,7 +3,7 @@ unit FormCodeExplorer;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ComCtrls,
-  ExtCtrls, Menus, XpresElements;
+  ExtCtrls, Menus, XpresElementsPIC;
 
 type
 

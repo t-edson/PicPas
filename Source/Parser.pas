@@ -6,7 +6,7 @@ interface
 uses
   Classes, SysUtils, LCLType, Dialogs, lclProc, Graphics, SynEditHighlighter,
   SynFacilBasic, SynFacilHighlighter, SynFacilUtils, MisUtils,
-  XpresBas, XpresTypes, XpresElements, XpresParserPIC,
+  XpresBas, XpresTypes, xpreselementsPIC, XpresParserPIC,
   Pic16Utils, PIC16devices, Globales, ProcAsm, types;
 type
 

@@ -67,7 +67,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="12">
+    <Units Count="11">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -100,7 +100,7 @@
         <UnitName Value="ProcAsm"/>
       </Unit5>
       <Unit6>
-        <Filename Value="formpicexplorer.pas"/>
+        <Filename Value="FormPicExplorer.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmPICExplorer"/>
         <HasResources Value="True"/>
@@ -124,19 +124,17 @@
         <UnitName Value="FrameCfgIDE"/>
       </Unit8>
       <Unit9>
-        <Filename Value="XpresTypes.pas"/>
+        <Filename Value="XpresElementsPic.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="XpresElementsPIC"/>
       </Unit9>
       <Unit10>
-        <Filename Value="XpresElements.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit10>
-      <Unit11>
         <Filename Value="FormCodeExplorer.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmCodeExplorer"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-      </Unit11>
+      </Unit10>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -147,7 +145,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils 0.6;..\..\_Librerias\MisUtils 0.3;..\..\_Librerias\ConfigFrame 0.6b;..\..\_Librerias\PicUtils 0.4b;..\..\_Librerias\Xpres 0.6.8b;frames"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils 0.6;..\..\_Librerias\MisUtils 0.3;..\..\_Librerias\ConfigFrame 0.6b;..\..\_Librerias\PicUtils 0.4b;..\..\_Librerias\Xpres 0.6.9;frames"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>
