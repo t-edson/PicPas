@@ -145,7 +145,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils 0.6;..\..\_Librerias\MisUtils 0.3;..\..\_Librerias\ConfigFrame 0.6b;..\..\_Librerias\PicUtils 0.4b;..\..\_Librerias\Xpres 0.6.9;frames"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils 0.6;..\..\_Librerias\MisUtils 0.3;..\..\_Librerias\ConfigFrame 0.6;..\..\_Librerias\ConfigFrame 0.6\Predefined Config Frames;..\..\_Librerias\PicUtils 0.4b;..\..\_Librerias\Xpres 0.6.9;frames"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

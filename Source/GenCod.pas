@@ -61,8 +61,8 @@ var
   tipByte: TType;     //número sin signo
   tipWord: TType;     //número sin signo
 //  tipChr : Ttype;   //un caracter
-  ////////// Registros virtuales ////////////
   DelayCoded: integer;  //bandera para codificación de retardo
+  curBank: Byte;      //Banco RAM actual
 
 const
   STACK_SIZE = 8;    //tamaño de pila para subrutinas
@@ -181,6 +181,7 @@ begin
   spSize:=0;  //inicia sin tamaño
   _H.offs := MAXBYTE;  //indica que no ha sido inicializado
   _L.offs := MAXBYTE;  //indica que no ha sido inicializado
+  curBank := 0;        //se empieza en el banco 0
 end;
 procedure Cod_EndProgram;
 //Codifica la parte inicial del programa
@@ -248,6 +249,99 @@ begin
   end;
   _H.used := true;   //Lo marca como indicando que se va a ocupar
 end;
+procedure SetBank(targetBank: byte);
+{Verifica si se está en el banco deseado, de no ser así geenra las instrucciones
+ para el cambio de banco.}
+begin
+  if targetBank = curBank then
+    exit;
+  //se está en un banco diferente
+  case curBank of
+  0: case targetBank of
+       1: begin
+         _BSF(_STATUS, _RP0);
+         curBank:=1;
+       end;
+       2: begin
+         _BSF(_STATUS, _RP1);
+         curBank:=2;
+       end;
+       3: begin
+         _BSF(_STATUS, _RP0);
+         _BSF(_STATUS, _RP1);
+         curBank:=3;
+       end;
+     end;
+  1: case targetBank of
+       0: begin
+         _BCF(_STATUS, _RP0);
+         curBank:=0;
+       end;
+       2: begin
+         _BSF(_STATUS, _RP1);
+         _BCF(_STATUS, _RP0);
+         curBank:=2;
+       end;
+       3: begin
+         _BSF(_STATUS, _RP1);
+         curBank:=3;
+       end;
+     end;
+  2: case targetBank of
+       0: begin
+         _BCF(_STATUS, _RP1);
+         curBank:=0;
+       end;
+       1: begin
+         _BCF(_STATUS, _RP1);
+         _BSF(_STATUS, _RP0);
+         curBank:=1;
+       end;
+       3: begin
+         _BSF(_STATUS, _RP0);
+         curBank:=3;
+       end;
+     end;
+  3: case targetBank of
+       0: begin
+         _BCF(_STATUS, _RP1);
+         _BCF(_STATUS, _RP0);
+         curBank:=0;
+       end;
+       1: begin
+         _BCF(_STATUS, _RP1);
+         curBank:=1;
+       end;
+       2: begin
+         _BCF(_STATUS, _RP0);
+         curBank:=2;
+       end;
+     end;
+  // Este caso es equivalentea decir "no sé en qué banco estoy"
+  -1: case targetBank of
+       0: begin
+         _BCF(_STATUS, _RP1);
+         _BCF(_STATUS, _RP0);
+         curBank:=0;
+       end;
+       1: begin
+         _BCF(_STATUS, _RP1);
+         _BSF(_STATUS, _RP0);
+         curBank:=1;
+       end;
+       2: begin
+         _BSF(_STATUS, _RP1);
+         _BCF(_STATUS, _RP0);
+         curBank:=2;
+       end;
+       3: begin
+         _BSF(_STATUS, _RP1);
+         _BSF(_STATUS, _RP0);
+         curBank:=3;
+       end;
+     end;
+  end;
+end;
 ////////////operaciones con Boolean
 procedure bool_asig_bool;
 begin
@@ -310,9 +404,11 @@ begin
   coConst : begin
     if p2.valInt=0 then begin
       //caso especial
+      SetBank(p1.bank);  //verifica banco destino
       _CLRF(p1.offs);
     end else begin
       _MOVLW(p2.valInt);
+      SetBank(p1.bank);  //verifica banco destino
       _MOVWF(p1.offs);
     end;
   end;

@@ -295,7 +295,7 @@ begin
   stb_BigIcon: begin
     ToolBar1.ButtonHeight:=38;
     ToolBar1.ButtonWidth:=38;
-    ToolBar1.Height:=40;
+    ToolBar1.Height:=42;
     ToolBar1.Images:=ImgActions32;
   end;
   end;

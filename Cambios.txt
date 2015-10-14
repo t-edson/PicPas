@@ -1,8 +1,9 @@
 Versión 0.3.5
 * Se cambia la declaración TProcLoadOperand, usando un puntero como parámetro, para permitir el paso de
 un objeto TOperand, cuya definición se hará en otras unidades.
-* Se quita le parámetro "amb" de TTypes, de modo que se quita la dependencia de "SynFacilSyn", a la unidad
+* Se quita eL parámetro "amb" de TTypes, de modo que se quita la dependencia de "SynFacilSyn", a la unidad
 XPresTypes y se deja a XPresTypes como una unidad sin dependencias.
 * Se sinccroniza el código de la unidad XPresTypes, con la misma unidad XPresTypes, usada en la librería 
 Xpres 0.6.9. Así se maneja un archivo menos.
-* Se corrige un error de duplicadia de codificación de la rutina delay_ms().
+* Se corrige un error de duplicidad de codificación de la rutina delay_ms().
+* Se agrega el manejo de bancos para las variables (aún incompleta).

@@ -16,6 +16,7 @@
   "if ... then ... else ...;|if \_ then begin\n\n\uend else begin\n\n\uend;"
 	</List>
 	<List Name="Plantillas" IconIndex='5'>
+  "absolute \_$00;"
   "begin ... end; |begin\n  \_\n\uend;"
   "while ... |while \_ do begin\n\n\uend;"
   "repeat ... |repeat \n\t\_\n\uend;"
