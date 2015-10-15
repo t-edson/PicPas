@@ -249,7 +249,7 @@ begin
   end;
   _H.used := true;   //Lo marca como indicando que se va a ocupar
 end;
-procedure SetBank(targetBank: byte);
+procedure _BANKSEL(targetBank: byte);
 {Verifica si se está en el banco deseado, de no ser así geenra las instrucciones
  para el cambio de banco.}
 begin
@@ -318,7 +318,7 @@ begin
        end;
      end;
   // Este caso es equivalentea decir "no sé en qué banco estoy"
-  -1: case targetBank of
+  255: case targetBank of
        0: begin
          _BCF(_STATUS, _RP1);
          _BCF(_STATUS, _RP0);
@@ -342,6 +342,87 @@ begin
      end;
   end;
 end;
+{procedure _ADDWF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(ADDWF, f,d);
+end;
+procedure _ANDWF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(ANDWF, f,d);
+end;
+procedure _CLRF(const f: byte); inline;
+begin
+  cxp.pic.codAsmF(CLRF, f);
+end;
+procedure _CLRW(); inline;
+begin
+  cxp.pic.codAsm(CLRW);
+end;
+procedure _COMF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(COMF, f,d);
+end;
+procedure _DECF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(DECF, f,d);
+end;
+procedure _DECFSZ(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(DECFSZ, f,d);
+end;
+procedure _INCF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(INCF, f,d);
+end;
+procedure _INCFSZ(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(INCFSZ, f,d);
+end;
+procedure _IORWF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(IORWF, f,d);
+end;
+procedure _MOVF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(MOVF, f,d);
+end;
+procedure _MOVWF(const f: byte); inline;
+begin
+  cxp.pic.codAsmF(MOVWF, f);
+end;
+procedure _NOP(); inline;
+begin
+  cxp.pic.codAsm(NOP);
+end;
+procedure _RLF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(RLF, f,d);
+end;
+procedure _RRF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(RRF, f,d);
+end;
+procedure _SUBWF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(SUBWF, f,d);
+end;
+procedure _SWAPF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(SWAPF, f,d);
+end;
+procedure _XORWF(const f: byte; d: TPIC16destin); inline;
+begin
+  cxp.pic.codAsmFD(XORWF, f,d);
+end;
+procedure _BCF(const f, b: byte); inline;
+begin
+  cxp.pic.codAsmFB(BCF, f, b);
+end;
+procedure _BSF(const f, b: byte); inline;
+begin
+  cxp.pic.codAsmFB(BSF, f, b);
+end;
+}
 ////////////operaciones con Boolean
 procedure bool_asig_bool;
 begin
@@ -389,6 +470,7 @@ begin
     _MOVLW(res.valInt);
   end;
   coVariab: begin
+    _BANKSEL(res.bank);
     _MOVF(res.offs, toW);
   end;
   coExpres: begin  //ya está en w
@@ -404,19 +486,22 @@ begin
   coConst : begin
     if p2.valInt=0 then begin
       //caso especial
-      SetBank(p1.bank);  //verifica banco destino
+      _BANKSEL(p1.bank);  //verifica banco destino
       _CLRF(p1.offs);
     end else begin
       _MOVLW(p2.valInt);
-      SetBank(p1.bank);  //verifica banco destino
+      _BANKSEL(p1.bank);  //verifica banco destino
       _MOVWF(p1.offs);
     end;
   end;
   coVariab: begin
+    _BANKSEL(p2.bank);  //verifica banco destino
     _MOVF(p2.offs, toW);
+    _BANKSEL(p1.bank);  //verifica banco destino
     _MOVWF(p1.offs);
   end;
   coExpres: begin  //ya está en w
+    _BANKSEL(p1.bank);  //verifica banco destino
     _MOVWF(p1.offs);
   end;
   else
@@ -431,8 +516,9 @@ var
 begin
   case catOperation of
   coConst_Variab: begin
-    ReserveW; if HayError then exit;   //pide acumualdor
+    ReserveW; if HayError then exit;   //pide acumulador
     _MOVLW(p1.valInt);
+    _BANKSEL(p2.bank);
     CodAsmFD(InstWF, p2.offs, toW);  //deja en W
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
@@ -442,15 +528,19 @@ begin
   coVariab_Const: begin
     ReserveW; if HayError then exit;
     _MOVLW(p2.valInt);
+    _BANKSEL(p1.bank);
     CodAsmFD(InstWF, p1.offs, toW);  //deja en W
   end;
   coVariab_Variab:begin
     ReserveW; if HayError then exit;
+    _BANKSEL(p2.bank);
     _MOVF(p2.offs, toW);
+    _BANKSEL(p1.bank);
     CodAsmFD(InstWF, p1.offs, toW);  //deja en W
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     //ReserveW; if HayError then exit;
+    _BANKSEL(p1.bank);
     CodAsmFD(InstWF, p1.offs, toW);  //deja en W
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
@@ -459,11 +549,13 @@ begin
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     //ReserveW; if HayError then exit;
+    _BANKSEL(p2.bank);
     CodAsmFD(InstWF, p2.offs, toW);  //deja en W
   end;
   coExpres_Expres:begin
     //la expresión p1 debe estar salvada y p2 en el acumulador
     FreeByte(r);   //libera pila porque se usará el dato ahí contenido
+    _BANKSEL(r.bank);
     CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
   end;
   end;
@@ -547,26 +639,31 @@ begin
   end else begin  //caso general
     case catOperation of
     coConst_Variab: begin
-      ReserveW; if HayError then exit;   //pide acumualdor
+      ReserveW; if HayError then exit;   //pide acumulador
       _MOVLW(p1.valInt);
+      _BANKSEL(p2.bank);  //verifica banco destino
       _SUBWF(p2.offs, toW);  //si iguales _Z=1
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-//      ReserveW; if HayError then exit;   //pide acumualdor
+//      ReserveW; if HayError then exit;   //pide acumulador
       _SUBLW(p1.valInt);  //si iguales _Z=1
     end;
     coVariab_Const: begin
-      ReserveW; if HayError then exit;   //pide acumualdor
+      ReserveW; if HayError then exit;   //pide acumulador
       _MOVLW(p2.valInt);
+      _BANKSEL(p1.bank);  //verifica banco destino
       _SUBWF(p1.offs, toW);  //si iguales _Z=1
     end;
     coVariab_Variab:begin
-      ReserveW; if HayError then exit;   //pide acumualdor
+      ReserveW; if HayError then exit;   //pide acumulador
+      _BANKSEL(p1.bank);  //verifica banco destino
       _MOVF(p1.offs, toW);
+      _BANKSEL(p2.bank);  //verifica banco destino
       _SUBWF(p2.offs, toW);  //si iguales _Z=1
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
       //ReserveW; if HayError then exit;
+      _BANKSEL(p1.bank);  //verifica banco destino
       _SUBWF(p1.offs, toW);  //si iguales _Z=1
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
@@ -575,11 +672,13 @@ begin
     end;
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
       //ReserveW; if HayError then exit;
+      _BANKSEL(p2.bank);  //verifica banco destino
       _SUBWF(p2.offs, toW);  //si iguales _Z=1
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
       FreeByte(r);   //libera pila porque se usará el dato ahí contenido
+      _BANKSEL(r.bank);  //verifica banco destino
       _SUBWF(r.offs, toW);  //compara directamente a lo que había en pila.
     end;
     else

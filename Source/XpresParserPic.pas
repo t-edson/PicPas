@@ -46,7 +46,7 @@ public
   function Loffs: TVarOffs; inline; //dirección del byte bajo
   function Hoffs: TVarOffs; inline; //dirección del byte alto
   function bank: TVarBank; inline;  //banco o segmento
-  function bit : byte; inline;  //banco o segmento
+  function bit : byte; inline;  //posición del bit
 private
   Val  : TConsValue;
   procedure SetvalBool(AValue: boolean);
