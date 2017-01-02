@@ -31,7 +31,7 @@ var
 
 function tokType: TSynHighlighterAttributes; inline;
 begin
-  Result := TSynHighlighterAttributes(lexAsm.GetTokenKind);
+  Result := TSynHighlighterAttributes(PtrUInt(lexAsm.GetTokenKind));
 end;
 procedure skipWhites;
 //salta blancos o comentarios

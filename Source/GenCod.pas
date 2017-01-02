@@ -29,7 +29,7 @@ actaulizan las banderas: BooleanBit y BooleanInverted, que implican que:
 * La bandera BooleanBit, indica si el resultado se deja en C o Z.
 
 Por normas de Xpres, se debe considerar que:
-* Todas las operaciones recibe sus dos parámetros en las variables p1 y p2.
+* Todas las operaciones recibe sus dos parámetros en las variables p1 y p2^.
 * El resultado de cualquier expresión se debe dejar indicado en el objeto "res".
 * Los valores enteros y enteros sin signo se cargan en valInt
 * Los valores booleanos se cargan en valBool
@@ -45,14 +45,89 @@ operando nuevo)
 de código.
 * El estado del registro (usado o libre)
  }
+unit GenCod;
+{$mode objfpc}{$H+}
+interface
+uses
+  Classes, SysUtils, SynEditHighlighter, Graphics, LCLType,
+  SynFacilBasic, XpresTypes, XPresParserPIC, XpresElementsPIC, GenCodPic, Pic16Utils;
 type
-//  TSatReg = (srFree, srUsed)
-  //define un registro virtual para implementar un intérprete
-  Tregister = record
-    used   : boolean;  //indica si está usado
-    offs   : byte;     //desplazamiento en memoria
-    bank    : byte;     //banco
-  end;
+  //  TSatReg = (srFree, srUsed)
+    //define un registro virtual para implementar un intérprete
+    Tregister = record
+      used   : boolean;  //indica si está usado
+      offs   : byte;     //desplazamiento en memoria
+      bank    : byte;     //banco
+    end;
+
+    { TGenCod }
+
+    TGenCod = class(TGenCodPic)
+    protected
+      //campos para controlar la codificación de rutinas iniciales
+      iniBloSub  : integer;   //inicio del blqoue de subrutinas
+      curBloSub  : integer;   //fin del bloque de subrutinas
+      finBloSub  : integer;   //tamaño máximo del bloque de subrutinas
+      iFlashTmp  : integer;   //almacenamiento temporal para pic.iFlash
+      Traslape   : boolean;   //bandera de traslape
+      procedure callFunct(fun: TxpFun);
+    private
+      procedure bool_asig_bool;
+      procedure byte_and_byte;
+      procedure byte_asig_byte;
+      procedure byte_difer_byte;
+      procedure byte_igual_byte;
+      procedure byte_OnPush(const OpPtr: pointer);
+      procedure byte_oper_byte(const InstLW, InstWF: TPIC16Inst);
+      procedure byte_or_byte;
+      procedure byte_resta_byte;
+      procedure byte_suma_byte;
+      procedure byte_xor_byte;
+      procedure codif_1mseg;
+      procedure codif_delay_ms(const fun: TxpFun);
+      procedure expr_end(isParam: boolean);
+      procedure expr_start;
+      function FreeByte(var reg: Tregister): boolean;
+      procedure fun_Dec_byte(fun: TxpFun);
+      procedure fun_Dec_word(fun: TxpFun);
+      procedure fun_delay_ms(fun: TxpFun);
+      procedure fun_delay_ms_w(fun: TxpFun);
+      procedure fun_Inc_byte(fun: TxpFun);
+      procedure fun_Inc_word(fun: TxpFun);
+      procedure fun_putchar(fun: TxpFun);
+      function GetByte(var reg: Tregister; varNom: string=''): boolean;
+      procedure PutComLine(cmt: string);
+      procedure PutComm(cmt: string);
+      procedure RequireHL;
+      procedure ReserveH;
+      procedure ReserveW;
+      function ValidateByteRange(n: integer): boolean;
+      function ValidateWordRange(n: integer): boolean;
+      procedure word_asig_byte;
+      procedure word_asig_word;
+      procedure word_OnPush(const OpPtr: pointer);
+      procedure word_suma_byte;
+      procedure word_suma_word;
+    protected
+      //Atributos adicionales
+      tkStruct   : TSynHighlighterAttributes;
+      tkDirective: TSynHighlighterAttributes;
+      tkAsm      : TSynHighlighterAttributes;
+      tkExpDelim : TSynHighlighterAttributes;
+      tkBlkDelim : TSynHighlighterAttributes;
+      tkOthers   : TSynHighlighterAttributes;
+      procedure StartCodeSub(fun: TxpFun);
+      procedure EndCodeSub;
+      function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
+        absBit: integer=-1): TxpVar;
+      function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
+        =-1): TxpVar;
+      procedure Cod_StartProgram;
+      procedure Cod_EndProgram;
+      procedure CreateSystemElements;
+    public
+      procedure StartSyntax;
+    end;
 
 var
   /////// Tipos de datos del lenguaje ////////////
@@ -62,18 +137,10 @@ var
   tipWord: TType;     //número sin signo
 //  tipChr : Ttype;   //un caracter
   DelayCoded: integer;  //bandera para codificación de retardo
-  curBank: Byte;      //Banco RAM actual
 
 const
   STACK_SIZE = 8;    //tamaño de pila para subrutinas
   MAX_MEMTAB = 4; //tamaño máximo de la tabla de bloques de memoria
-  //constantes útiles para ensamblador
-  _STATUS = $03;
-  _C = 0;
-  _Z = 2;
-  _RP0 = 5;
-  _RP1 = 6;
-//  _IRP = 7;
 var
   w: Tregister;
   {Estrutura de pila. Se crea una tabla de las direcciones a usar (no necesariamente
@@ -88,8 +155,41 @@ var
   BooleanInverted : boolean;  //indica que la lógica del bit de salida está invertida
   BooleanBit : byte;          //indica el bit que se devuelve el resultado booleano (Z o C)
 
+implementation
+
+procedure TGenCod.PutComLine(cmt: string); inline; //agrega comentario al código
+begin
+  pic.addCommAsm(cmt);  //agrega línea al código ensmblador
+end;
+procedure TGenCod.PutComm(cmt: string); inline; //agrega comentario lateral al código
+begin
+  pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
+end;
+procedure TGenCod.StartCodeSub(fun: TxpFun);
+{debe ser llamado para iniciar la codificación de una subrutina}
+begin
+  iFlashTmp :=  pic.iFlash;     //guarda puntero
+  pic.iFlash := curBloSub;  //empieza a codificar aquí
+  fun.adrr := curBloSub;  //fija inicio de rutina
+end;
+procedure TGenCod.EndCodeSub;
+{debe ser llamado al terminar la codificaión de una subrutina}
+begin
+  curBloSub := pic.iFlash;  //indica siguiente posición libre
+  if curBloSub > finBloSub then begin
+    //hubo traslape
+    Traslape:=true;
+  end;
+  pic.iFlash := iFlashTmp;     //retorna puntero
+end;
+procedure TGenCod.callFunct(fun: TxpFun);
+{Rutina que debe llamara a uan función definida por el usuario}
+begin
+  //por ahora no hay problema de paginación
+  _CALL(fun.adrr);
+end;
 //Rutinas de gestión de memoria
-function GetByte(var reg: Tregister; varNom: string = ''): boolean;
+function TGenCod.GetByte(var reg: Tregister; varNom: string = ''): boolean;
 {Pide una dirección de memoria para alojar un byte en la RAM, para una tarea temporal.
  Devuelve en "reg" la dirección del byte pedido. Si falla devuelve FALSE.
  Una vez finalizada la tarea, se debe liberar los bytes pedidos (para usar eficiéntemente
@@ -121,7 +221,7 @@ begin
    Inc(sp);
    exit(true);   //salió con éxito
 end;
-function FreeByte(var reg: Tregister): boolean;
+function TGenCod.FreeByte(var reg: Tregister): boolean;
 {Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
  byte pedido. Si hubo error, devuelve FALSE.
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
@@ -152,7 +252,7 @@ begin
   _MOVF(r.offs, toW);  //retorna a W
 end;}
 //Rutinas adicionales
-function ValidateByteRange(n: integer): boolean;
+function TGenCod.ValidateByteRange(n: integer): boolean;
 //Verifica que un valor entero, se pueda convertir a byte. Si no, devuelve FALSE.
 begin
   if (n>=0) and (n<256) then
@@ -162,7 +262,7 @@ begin
     exit(false);
   end;
 end;
-function ValidateWordRange(n: integer): boolean;
+function TGenCod.ValidateWordRange(n: integer): boolean;
 //Verifica que un valor entero, se pueda convertir a byte. Si no, devuelve FALSE.
 begin
   if (n>=0) and (n<65536) then
@@ -173,7 +273,7 @@ begin
   end;
 end;
 ////////////rutinas obligatorias
-procedure Cod_StartProgram;
+procedure TGenCod.Cod_StartProgram;
 //Codifica la parte inicial del programa
 begin
   //Code('.CODE');   //inicia la sección de código
@@ -183,12 +283,12 @@ begin
   _L.offs := MAXBYTE;  //indica que no ha sido inicializado
   curBank := 0;        //se empieza en el banco 0
 end;
-procedure Cod_EndProgram;
+procedure TGenCod.Cod_EndProgram;
 //Codifica la parte inicial del programa
 begin
   //Code('END');   //inicia la sección de código
 end;
-procedure expr_start(const exprLevel: integer);
+procedure TGenCod.expr_start;
 //Se ejecuta siempre al StartSyntax el procesamiento de una expresión
 begin
   if exprLevel=1 then begin //es el primer nivel
@@ -200,7 +300,7 @@ begin
 //      Code('  push al');  //lo guarda
   end;
 end;
-procedure expr_end(const exprLevel: integer; isParam: boolean);
+procedure TGenCod.expr_end(isParam: boolean);
 //Se ejecuta al final de una expresión, si es que no ha habido error.
 begin
   if isParam then begin
@@ -213,7 +313,7 @@ begin
 //    Code('  ;fin expres');
   end;
 end;
-procedure RequireHL;
+procedure TGenCod.RequireHL;
 {Indica que va a requerir usar los registros de trabajo _H y _L}
 begin
   if _L.offs=MAXBYTE then  //no existe aún
@@ -221,7 +321,7 @@ begin
   if _H.offs=MAXBYTE then  //no existe aún
      if not GetByte(_H, '_H') then exit;
 end;
-procedure ReserveW;
+procedure TGenCod.ReserveW;
 {Indica que se va a utilizar el acumulador. De encontrarse ocupado,
 se pondrá en la pila. Si no hay espacio, genera error}
 var
@@ -234,7 +334,7 @@ begin
   end;
   w.used := true;   //Lo marca como indicando que se va a ocupar
 end;
-procedure ReserveH;
+procedure TGenCod.ReserveH;
 {Indica que se va a utilizar el par de registros (_H,W). De encontrarse ocupado,
 se pondrá en la pila. Si no hay espacio, genera error.
 NOTA: Usa el registro W, así que este debe estar libre.}
@@ -249,208 +349,119 @@ begin
   end;
   _H.used := true;   //Lo marca como indicando que se va a ocupar
 end;
-procedure _BANKSEL(targetBank: byte);
-{Verifica si se está en el banco deseado, de no ser así geenra las instrucciones
- para el cambio de banco.}
+
+function TGenCod.CreateVar(const varName: string; typ: ttype;
+         absAdd: integer = -1; absBit: integer = -1): TxpVar;
+{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
+ "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
+var
+  r   : TxpVar;
+  i   : Integer;
+  offs, bnk, bit : byte;
 begin
-  if targetBank = curBank then
-    exit;
-  //se está en un banco diferente
-  case curBank of
-  0: case targetBank of
-       1: begin
-         _BSF(_STATUS, _RP0);
-         curBank:=1;
-       end;
-       2: begin
-         _BSF(_STATUS, _RP1);
-         curBank:=2;
-       end;
-       3: begin
-         _BSF(_STATUS, _RP0);
-         _BSF(_STATUS, _RP1);
-         curBank:=3;
-       end;
-     end;
-  1: case targetBank of
-       0: begin
-         _BCF(_STATUS, _RP0);
-         curBank:=0;
-       end;
-       2: begin
-         _BSF(_STATUS, _RP1);
-         _BCF(_STATUS, _RP0);
-         curBank:=2;
-       end;
-       3: begin
-         _BSF(_STATUS, _RP1);
-         curBank:=3;
-       end;
-     end;
-  2: case targetBank of
-       0: begin
-         _BCF(_STATUS, _RP1);
-         curBank:=0;
-       end;
-       1: begin
-         _BCF(_STATUS, _RP1);
-         _BSF(_STATUS, _RP0);
-         curBank:=1;
-       end;
-       3: begin
-         _BSF(_STATUS, _RP0);
-         curBank:=3;
-       end;
-     end;
-  3: case targetBank of
-       0: begin
-         _BCF(_STATUS, _RP1);
-         _BCF(_STATUS, _RP0);
-         curBank:=0;
-       end;
-       1: begin
-         _BCF(_STATUS, _RP1);
-         curBank:=1;
-       end;
-       2: begin
-         _BCF(_STATUS, _RP0);
-         curBank:=2;
-       end;
-     end;
-  // Este caso es equivalentea decir "no sé en qué banco estoy"
-  255: case targetBank of
-       0: begin
-         _BCF(_STATUS, _RP1);
-         _BCF(_STATUS, _RP0);
-         curBank:=0;
-       end;
-       1: begin
-         _BCF(_STATUS, _RP1);
-         _BSF(_STATUS, _RP0);
-         curBank:=1;
-       end;
-       2: begin
-         _BSF(_STATUS, _RP1);
-         _BCF(_STATUS, _RP0);
-         curBank:=2;
-       end;
-       3: begin
-         _BSF(_STATUS, _RP1);
-         _BSF(_STATUS, _RP0);
-         curBank:=3;
-       end;
-     end;
+  //busca espacio para ubicarla
+  if absAdd=-1 then begin
+    //caso normal
+    if typ.size<0 then begin
+      //Se asume que se están pidiendo bits
+      if typ.size<>-1 then begin   //por ahora se soporta 1 bit
+        GenError('Size of data not supported.');
+        exit;
+      end;
+      if not pic.GetFreeBit(offs, bnk, bit) then begin
+        GenError('RAM memory is full.');
+        exit;
+      end;
+    end else begin
+      //Se asume que se están pidiendo bytes
+      if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
+        GenError('RAM memory is full.');
+        exit;
+      end;
+    end;
+  end else begin
+    //se debe crear en una posición absoluta
+    pic.AbsToBankRAM(absAdd, offs, bnk);   //convierte dirección
+    if absBit<>-1 then bit := absBit;      //para los bits no hay transformación
   end;
+  //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
+  if typ.size = 1 then begin
+    //Es un simple byte
+    pic.SetNameRAM(offs,bnk, varName);
+  end else if typ.size = -1 then begin
+    //Es un boolean
+    pic.SetNameRAM(offs,bnk, '_map');   //no tiene nombre único
+  end else begin
+    //Se asume que la variable ha sido entregada con posiciones consecutivas
+    for i:=0 to typ.size -1 do
+      pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
+  end;
+  //registra variable en la tabla
+  r := TxpVar.Create;
+  r.name:=varName;
+  r.typ := typ;   //fija  referencia a tipo
+  r.offs := offs;
+  r.bank := bnk;
+  r.bit  := bit;
+  if not TreeElems.AddElement(r) then begin
+    GenError('Duplicated identifier: "%s"', [varName]);
+    exit;
+  end;
+  Result := r;
+  //Ya encontró tipo, llama a evento
+  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
-{procedure _ADDWF(const f: byte; d: TPIC16destin); inline;
+function TGenCod.CreateVar(varName, varType: string;
+         absAdd: integer = -1; absBit: integer = -1): TxpVar;
+{Agrega una variable a la tabla de variables.}
+var t: ttype;
+  hay: Boolean;
+  varTypeL: String;
 begin
-  cxp.pic.codAsmFD(ADDWF, f,d);
+  //Verifica el tipo
+  hay := false;
+  varTypeL := LowerCase(varType);
+  for t in typs do begin
+    if t.name = varTypeL then begin
+       hay:=true; break;
+    end;
+  end;
+  if not hay then begin
+    GenError('Undefined type "%s"', [varType]);
+    exit;
+  end;
+  Result := CreateVar(varName, t, absAdd ,absBit);
+  //puede salir con error
 end;
-procedure _ANDWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(ANDWF, f,d);
-end;
-procedure _CLRF(const f: byte); inline;
-begin
-  cxp.pic.codAsmF(CLRF, f);
-end;
-procedure _CLRW(); inline;
-begin
-  cxp.pic.codAsm(CLRW);
-end;
-procedure _COMF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(COMF, f,d);
-end;
-procedure _DECF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(DECF, f,d);
-end;
-procedure _DECFSZ(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(DECFSZ, f,d);
-end;
-procedure _INCF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(INCF, f,d);
-end;
-procedure _INCFSZ(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(INCFSZ, f,d);
-end;
-procedure _IORWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(IORWF, f,d);
-end;
-procedure _MOVF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(MOVF, f,d);
-end;
-procedure _MOVWF(const f: byte); inline;
-begin
-  cxp.pic.codAsmF(MOVWF, f);
-end;
-procedure _NOP(); inline;
-begin
-  cxp.pic.codAsm(NOP);
-end;
-procedure _RLF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(RLF, f,d);
-end;
-procedure _RRF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(RRF, f,d);
-end;
-procedure _SUBWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(SUBWF, f,d);
-end;
-procedure _SWAPF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(SWAPF, f,d);
-end;
-procedure _XORWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(XORWF, f,d);
-end;
-procedure _BCF(const f, b: byte); inline;
-begin
-  cxp.pic.codAsmFB(BCF, f, b);
-end;
-procedure _BSF(const f, b: byte); inline;
-begin
-  cxp.pic.codAsmFB(BSF, f, b);
-end;
-}
+
 ////////////operaciones con Boolean
-procedure bool_asig_bool;
+procedure TGenCod.bool_asig_bool;
 begin
-  if p1.catOp <> coVariab then begin  //validación
+  if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
   end;
-  case p2.catOp of
+  case p2^.catOp of
   coConst : begin
-    if p2.valBool then begin
-      _BSF(p1.offs, p1.bit);
+    if p2^.valBool then begin
+      _BSF(p1^.offs, p1^.bit);
     end else begin
-      _BCF(p1.offs, p1.bit);
+      _BCF(p1^.offs, p1^.bit);
     end;
   end;
   coVariab: begin
-    _BCF(p1.offs, p1.bit);
-    _BTFSC(p2.offs, p2.bit);
-    _BSF(p1.offs, p1.bit);
+    _BCF(p1^.offs, p1^.bit);
+    _BTFSC(p2^.offs, p2^.bit);
+    _BSF(p1^.offs, p1^.bit);
   end;
   coExpres: begin  //ya está en STATUS.Z
     if BooleanInverted then begin  //está invertido
-      _BCF(p1.offs, p1.bit);
+      _BCF(p1^.offs, p1^.bit);
       _BTFSS(_STATUS, BooleanBit);
-      _BSF(p1.offs, p1.bit);
+      _BSF(p1^.offs, p1^.bit);
     end else begin  //caso normal
-      _BCF(p1.offs, p1.bit);
+      _BCF(p1^.offs, p1^.bit);
       _BTFSC(_STATUS, BooleanBit);
-      _BSF(p1.offs, p1.bit);
+      _BSF(p1^.offs, p1^.bit);
     end;
   end;
   else
@@ -459,7 +470,7 @@ begin
   w.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Byte
-procedure byte_OnPush(const OpPtr: pointer);
+procedure TGenCod.byte_OnPush(const OpPtr: pointer);
 {Pone un byte en la pila. Se usa para pasar parámetros a función.}
 var
   Op: ^TOperand;
@@ -477,39 +488,39 @@ begin
   end;
   end;
 end;
-procedure byte_asig_byte;
+procedure TGenCod.byte_asig_byte;
 begin
-  if p1.catOp <> coVariab then begin  //validación
+  if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
   end;
-  case p2.catOp of
+  case p2^.catOp of
   coConst : begin
-    if p2.valInt=0 then begin
+    if p2^.valInt=0 then begin
       //caso especial
-      _BANKSEL(p1.bank);  //verifica banco destino
-      _CLRF(p1.offs);
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _CLRF(p1^.offs);
     end else begin
-      _MOVLW(p2.valInt);
-      _BANKSEL(p1.bank);  //verifica banco destino
-      _MOVWF(p1.offs);
+      _MOVLW(p2^.valInt);
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVWF(p1^.offs);
     end;
   end;
   coVariab: begin
-    _BANKSEL(p2.bank);  //verifica banco destino
-    _MOVF(p2.offs, toW);
-    _BANKSEL(p1.bank);  //verifica banco destino
-    _MOVWF(p1.offs);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _MOVF(p2^.offs, toW);
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVWF(p1^.offs);
   end;
   coExpres: begin  //ya está en w
-    _BANKSEL(p1.bank);  //verifica banco destino
-    _MOVWF(p1.offs);
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVWF(p1^.offs);
   end;
   else
     GenError('No soportado'); exit;
   end;
   w.used:=false;  //No es importante lo que queda
 end;
-procedure byte_oper_byte(const InstLW, InstWF:TPIC16Inst);
+procedure TGenCod.byte_oper_byte(const InstLW, InstWF:TPIC16Inst);
 {Rutina general en operaciones con bytes}
 var
   r: Tregister;
@@ -517,40 +528,40 @@ begin
   case catOperation of
   coConst_Variab: begin
     ReserveW; if HayError then exit;   //pide acumulador
-    _MOVLW(p1.valInt);
-    _BANKSEL(p2.bank);
-    CodAsmFD(InstWF, p2.offs, toW);  //deja en W
+    _MOVLW(p1^.valInt);
+    _BANKSEL(p2^.bank);
+    CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     //ReserveW; if HayError then exit;
-    CodAsmK(InstLW, p1.valInt);  //deja en W
+    CodAsmK(InstLW, p1^.valInt);  //deja en W
   end;
   coVariab_Const: begin
     ReserveW; if HayError then exit;
-    _MOVLW(p2.valInt);
-    _BANKSEL(p1.bank);
-    CodAsmFD(InstWF, p1.offs, toW);  //deja en W
+    _MOVLW(p2^.valInt);
+    _BANKSEL(p1^.bank);
+    CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
   end;
   coVariab_Variab:begin
     ReserveW; if HayError then exit;
-    _BANKSEL(p2.bank);
-    _MOVF(p2.offs, toW);
-    _BANKSEL(p1.bank);
-    CodAsmFD(InstWF, p1.offs, toW);  //deja en W
+    _BANKSEL(p2^.bank);
+    _MOVF(p2^.offs, toW);
+    _BANKSEL(p1^.bank);
+    CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     //ReserveW; if HayError then exit;
-    _BANKSEL(p1.bank);
-    CodAsmFD(InstWF, p1.offs, toW);  //deja en W
+    _BANKSEL(p1^.bank);
+    CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     //ReserveW; if HayError then exit;
-    CodAsmK(InstLW, p2.valInt);  //deja en W
+    CodAsmK(InstLW, p2^.valInt);  //deja en W
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     //ReserveW; if HayError then exit;
-    _BANKSEL(p2.bank);
-    CodAsmFD(InstWF, p2.offs, toW);  //deja en W
+    _BANKSEL(p2^.bank);
+    CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
   end;
   coExpres_Expres:begin
     //la expresión p1 debe estar salvada y p2 en el acumulador
@@ -564,10 +575,10 @@ begin
   res.catOp:=coExpres; //por defecto generará una expresión
   w.used:=true;        //se está usando el acumulador
 end;
-procedure byte_suma_byte;
+procedure TGenCod.byte_suma_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    res.valInt:=p1.valInt+p2.valInt;  //optimiza respuesta
+    res.valInt:=p1^.valInt+p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;  //necesario
     res.typ := tipByte;
     res.catOp:=coConst;
@@ -576,10 +587,10 @@ begin
   end else  //caso general
     byte_oper_byte(ADDLW, ADDWF);
 end;
-procedure byte_resta_byte;
+procedure TGenCod.byte_resta_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    res.valInt:=p1.valInt-p2.valInt;  //optimiza respuesta
+    res.valInt:=p1^.valInt-p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;   //necesario
     res.typ := tipByte;
     res.catOp:=coConst;
@@ -588,10 +599,10 @@ begin
   end else  //caso general
     byte_oper_byte(SUBLW, SUBWF);
 end;
-procedure byte_and_byte;
+procedure TGenCod.byte_and_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    res.valInt:=p1.valInt and p2.valInt;  //optimiza respuesta
+    res.valInt:=p1^.valInt and p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;   //necesario
     res.typ := tipByte;
     res.catOp:=coConst;
@@ -600,10 +611,10 @@ begin
   end else  //caso general
     byte_oper_byte(ANDLW, ANDWF);
 end;
-procedure byte_or_byte;
+procedure TGenCod.byte_or_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    res.valInt:=p1.valInt or p2.valInt;  //optimiza respuesta
+    res.valInt:=p1^.valInt or p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;   //necesario
     res.typ := tipByte;
     res.catOp:=coConst;
@@ -612,10 +623,10 @@ begin
   end else  //caso general
     byte_oper_byte(IORLW, IORWF);
 end;
-procedure byte_xor_byte;
+procedure TGenCod.byte_xor_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    res.valInt:=p1.valInt xor p2.valInt;  //optimiza respuesta
+    res.valInt:=p1^.valInt xor p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;   //necesario
     res.typ := tipByte;
     res.catOp:=coConst;
@@ -624,14 +635,14 @@ begin
   end else  //caso general
     byte_oper_byte(XORLW, XORWF);
 end;
-procedure byte_igual_byte;
+procedure TGenCod.byte_igual_byte;
 var
   r: Tregister;
 begin
   BooleanInverted := false;  //indica que trabaja en modo normal
   BooleanBit:=_Z;    //devolverá en Z
   if catOperation  = coConst_Const then begin  //compara constantes. Caso especial
-    res.valBool := (p1.valInt = p2.valInt);  //optimiza respuesta
+    res.valBool := (p1^.valInt = p2^.valInt);  //optimiza respuesta
     res.typ := tipBool;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
@@ -640,40 +651,40 @@ begin
     case catOperation of
     coConst_Variab: begin
       ReserveW; if HayError then exit;   //pide acumulador
-      _MOVLW(p1.valInt);
-      _BANKSEL(p2.bank);  //verifica banco destino
-      _SUBWF(p2.offs, toW);  //si iguales _Z=1
+      _MOVLW(p1^.valInt);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.offs, toW);  //si iguales _Z=1
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
 //      ReserveW; if HayError then exit;   //pide acumulador
-      _SUBLW(p1.valInt);  //si iguales _Z=1
+      _SUBLW(p1^.valInt);  //si iguales _Z=1
     end;
     coVariab_Const: begin
       ReserveW; if HayError then exit;   //pide acumulador
-      _MOVLW(p2.valInt);
-      _BANKSEL(p1.bank);  //verifica banco destino
-      _SUBWF(p1.offs, toW);  //si iguales _Z=1
+      _MOVLW(p2^.valInt);
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _SUBWF(p1^.offs, toW);  //si iguales _Z=1
     end;
     coVariab_Variab:begin
       ReserveW; if HayError then exit;   //pide acumulador
-      _BANKSEL(p1.bank);  //verifica banco destino
-      _MOVF(p1.offs, toW);
-      _BANKSEL(p2.bank);  //verifica banco destino
-      _SUBWF(p2.offs, toW);  //si iguales _Z=1
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toW);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.offs, toW);  //si iguales _Z=1
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
       //ReserveW; if HayError then exit;
-      _BANKSEL(p1.bank);  //verifica banco destino
-      _SUBWF(p1.offs, toW);  //si iguales _Z=1
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _SUBWF(p1^.offs, toW);  //si iguales _Z=1
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
       //ReserveW; if HayError then exit;
-      _SUBLW(p2.valInt);  //si iguales _Z=1
+      _SUBLW(p2^.valInt);  //si iguales _Z=1
     end;
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
       //ReserveW; if HayError then exit;
-      _BANKSEL(p2.bank);  //verifica banco destino
-      _SUBWF(p2.offs, toW);  //si iguales _Z=1
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.offs, toW);  //si iguales _Z=1
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
@@ -690,13 +701,13 @@ begin
     //el resultado queda en _Z
   end;
 end;
-procedure byte_difer_byte;
+procedure TGenCod.byte_difer_byte;
 begin
   byte_igual_byte;  //usa el mismo código
   BooleanInverted := true;  //solo indica que la Lógica se ha invertido
 end;
 ////////////operaciones con Word
-procedure word_OnPush(const OpPtr: pointer);
+procedure TGenCod.word_OnPush(const OpPtr: pointer);
 {Pone un word en la pila. Se usa para pasar parámetros a función.}
 var
   Op: ^TOperand;
@@ -718,72 +729,72 @@ begin
   end;
   end;
 end;
-procedure word_asig_word;
+procedure TGenCod.word_asig_word;
 begin
-  if p1.catOp <> coVariab then begin  //validación
+  if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
   end;
-  case p2.catOp of
+  case p2^.catOp of
   coConst : begin
-    _MOVLW(p2.LByte);
-    _MOVWF(p1.Loffs);
-    _MOVLW(p2.HByte);
-    _MOVWF(p1.Hoffs);
+    _MOVLW(p2^.LByte);
+    _MOVWF(p1^.Loffs);
+    _MOVLW(p2^.HByte);
+    _MOVWF(p1^.Hoffs);
   end;
   coVariab: begin
-    _MOVF(p2.Loffs, toW);
-    _MOVWF(p1.Loffs);
-    _MOVF(p2.Hoffs, toW);
-    _MOVWF(p1.Hoffs);
+    _MOVF(p2^.Loffs, toW);
+    _MOVWF(p1^.Loffs);
+    _MOVF(p2^.Hoffs, toW);
+    _MOVWF(p1^.Hoffs);
   end;
   coExpres: begin   //se asume que se tiene en (_H,w)
-    _MOVWF(p1.Loffs);
+    _MOVWF(p1^.Loffs);
     _MOVF(_H.offs, toW);
-    _MOVWF(p1.Hoffs);
+    _MOVWF(p1^.Hoffs);
   end;
   else
     GenError('No soportado'); exit;
   end;
   w.used:=false;  //No es importante lo que queda
 end;
-procedure word_asig_byte;
+procedure TGenCod.word_asig_byte;
 begin
-  if p1.catOp <> coVariab then begin  //validación
+  if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
   end;
-  case p2.catOp of
+  case p2^.catOp of
   coConst : begin
-    if p2.valInt = 0 then begin
+    if p2^.valInt = 0 then begin
       //caso especial
-      _CLRF(p1.Loffs);
-      _CLRF(p1.Hoffs);
+      _CLRF(p1^.Loffs);
+      _CLRF(p1^.Hoffs);
     end else begin;
-      _CLRF(p1.Hoffs);
-      _MOVLW(p2.valInt);
-      _MOVWF(p1.Loffs);
+      _CLRF(p1^.Hoffs);
+      _MOVLW(p2^.valInt);
+      _MOVWF(p1^.Loffs);
     end;
   end;
   coVariab: begin
-    _CLRF(p1.Hoffs);
-    _MOVF(p2.Loffs, toW);
-    _MOVWF(p1.Loffs);
+    _CLRF(p1^.Hoffs);
+    _MOVF(p2^.Loffs, toW);
+    _MOVWF(p1^.Loffs);
   end;
   coExpres: begin   //se asume que está en w
-    _CLRF(p1.Hoffs);
-    _MOVWF(p1.offs);
+    _CLRF(p1^.Hoffs);
+    _MOVWF(p1^.offs);
   end;
   else
     GenError('No soportado'); exit;
   end;
   w.used:=false;  //No es importante lo que queda
 end;
-procedure word_suma_word;
+procedure TGenCod.word_suma_word;
 var
   spH: Tregister;
   spL: Tregister;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    res.valInt:=p1.valInt+p2.valInt;  //optimiza respuesta
+    res.valInt:=p1^.valInt+p2^.valInt;  //optimiza respuesta
     if not ValidateWordRange(res.valInt) then exit;  //necesario
     if res.valInt<256 then
       res.typ := tipByte  //para que permita optimizar
@@ -799,30 +810,30 @@ begin
     coConst_Variab: begin
       ReserveW; if HayError then exit;
       ReserveH; if HayError then exit;
-{      _movlw(p1.LByte);      //Carga menos peso del dato 1
-      _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2
+{      _movlw(p1^.LByte);      //Carga menos peso del dato 1
+      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
       _movwf(_L);             //Almacena el resultado
-      _movlw(p1.HByte);      //Carga más peso del dato 1
+      _movlw(p1^.HByte);      //Carga más peso del dato 1
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _addlw(1);             //Si, suma 1 al acumulador
-      _addwf(p2.Hoffs,toW);  //Suma más peso del dato 2
+      _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
       _movwf(_H);             //Guarda el resultado
       _movf(_L,toW);          //deja byte bajo en W}
       //versión más corta que solo usa _H, por validar
-      _movlw(p1.HByte);      //Carga más peso del dato 1
-      _addwf(p2.Hoffs,toW);  //Suma más peso del dato 2
+      _movlw(p1^.HByte);      //Carga más peso del dato 1
+      _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
       _movwf(_H.offs);             //Guarda el resultado
-      _movlw(p1.LByte);      //Carga menos peso del dato 1
-      _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _movlw(p1^.LByte);      //Carga menos peso del dato 1
+      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en (_H,W)
       //ReserveW; if HayError then exit;
       _movwf(_L.offs);             //guarda byte bajo
-      _movlw(p1.HByte);      //Carga más peso del dato 1
+      _movlw(p1^.HByte);      //Carga más peso del dato 1
       _addwf(_H.offs,toF);         //Suma y guarda
-      _movlw(p1.LByte);      //Carga menos peso del dato 1
+      _movlw(p1^.LByte);      //Carga menos peso del dato 1
       _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
@@ -830,31 +841,31 @@ begin
     coVariab_Const: begin
       ReserveW; if HayError then exit;
       ReserveH; if HayError then exit;
-      _movlw(p2.HByte);      //Carga más peso del dato 1
-      _addwf(p1.Hoffs,toW);  //Suma más peso del dato 2
+      _movlw(p2^.HByte);      //Carga más peso del dato 1
+      _addwf(p1^.Hoffs,toW);  //Suma más peso del dato 2
       _movwf(_H.offs);             //Guarda el resultado
-      _movlw(p2.LByte);      //Carga menos peso del dato 1
-      _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _movlw(p2^.LByte);      //Carga menos peso del dato 1
+      _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coVariab_Variab:begin
       ReserveW; if HayError then exit;
       ReserveH; if HayError then exit;
-      _movlw(p1.Hoffs);      //Carga más peso del dato 1
-      _addwf(p2.Hoffs,toW);  //Suma más peso del dato 2
+      _movlw(p1^.Hoffs);      //Carga más peso del dato 1
+      _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
       _movwf(_H.offs);             //Guarda el resultado
-      _movlw(p1.Loffs);      //Carga menos peso del dato 1
-      _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _movlw(p1^.Loffs);      //Carga menos peso del dato 1
+      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (spH,W)
       //No es necesario reservar (spH,W) porque existen y se están usando
       _movwf(_L.offs);             //guarda byte bajo
-      _movlw(p1.Hoffs);      //Carga más peso del dato 1
+      _movlw(p1^.Hoffs);      //Carga más peso del dato 1
       _addwf(_H.offs,toF);         //Suma y guarda
-      _movlw(p1.Loffs);      //Carga menos peso del dato 1
+      _movlw(p1^.Loffs);      //Carga menos peso del dato 1
       _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
@@ -862,9 +873,9 @@ begin
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en (spH,W)
       //No es necesario reservar (spH,W) porque existen y se están usando
       _movwf(_L.offs);             //guarda byte bajo
-      _movlw(p2.HByte);      //Carga más peso del dato 1
+      _movlw(p2^.HByte);      //Carga más peso del dato 1
       _addwf(_H.offs,toF);         //Suma y guarda
-      _movlw(p2.LByte);      //Carga menos peso del dato 1
+      _movlw(p2^.LByte);      //Carga menos peso del dato 1
       _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
@@ -872,9 +883,9 @@ begin
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (spH,W)
       //No es necesario reservar (spH,W) porque existen y se están usando
       _movwf(_L.offs);             //guarda byte bajo
-      _movlw(p2.Hoffs);      //Carga más peso del dato 1
+      _movlw(p2^.Hoffs);      //Carga más peso del dato 1
       _addwf(_H.offs,toF);         //Suma y guarda
-      _movlw(p2.Loffs);      //Carga menos peso del dato 1
+      _movlw(p2^.Loffs);      //Carga menos peso del dato 1
       _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
@@ -901,13 +912,13 @@ begin
     w.used:=true;        //se está usando el acumulador
   end;
 end;
-procedure word_suma_byte;
+procedure TGenCod.word_suma_byte;
 var
   spH: Tregister;
   spL: Tregister;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    res.valInt:=p1.valInt+p2.valInt;  //optimiza respuesta
+    res.valInt:=p1^.valInt+p2^.valInt;  //optimiza respuesta
     if not ValidateWordRange(res.valInt) then exit;  //necesario
     if res.valInt<256 then
       res.typ := tipByte  //para que permita optimizar
@@ -924,19 +935,19 @@ begin
       ReserveW; if HayError then exit;
       ReserveH; if HayError then exit;
       //versión más corta que solo usa _H, por validar
-      _movlw(p1.HByte);      //Carga más peso del dato 1
+      _movlw(p1^.HByte);      //Carga más peso del dato 1
       _movwf(_H.offs);
-      _movlw(p1.LByte);      //Carga menos peso del dato 1
-      _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _movlw(p1^.LByte);      //Carga menos peso del dato 1
+      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
       //ReserveW; if HayError then exit;
       _movwf(_L.offs);             //guarda byte bajo
-      _movlw(p1.HByte);      //Carga más peso del dato 1
+      _movlw(p1^.HByte);      //Carga más peso del dato 1
       _movwf(_H.offs);
-      _movlw(p1.LByte);      //Carga menos peso del dato 1
+      _movlw(p1^.LByte);      //Carga menos peso del dato 1
       _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
@@ -944,40 +955,40 @@ begin
     coVariab_Const: begin
       ReserveW; if HayError then exit;
       ReserveH; if HayError then exit;
-      _MOVF(p1.Hoffs, toW);      //Carga más peso del dato 1
+      _MOVF(p1^.Hoffs, toW);      //Carga más peso del dato 1
       _movwf(_H.offs);             //Guarda el resultado
-      _movlw(p2.LByte);
-      _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _movlw(p2^.LByte);
+      _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coVariab_Variab:begin
       ReserveW; if HayError then exit;
       ReserveH; if HayError then exit;
-      _movlw(p1.Hoffs);      //Carga más peso del dato 1
+      _movlw(p1^.Hoffs);      //Carga más peso del dato 1
       _movwf(_H.offs);
-      _movlw(p1.Loffs);      //Carga menos peso del dato 1
-      _addwf(p2.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _movlw(p1^.Loffs);      //Carga menos peso del dato 1
+      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
       //ReserveW; if HayError then exit;
-      _movlw(p1.Hoffs);      //Carga más peso del dato 1
+      _movlw(p1^.Hoffs);      //Carga más peso del dato 1
       _movwf(_H.offs);
-      _addwf(p1.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en (_H,W)
       //No es necesario reservar (H,W) porque existen y se están usando
-      _addwf(p2.LByte,toW);         //Suma menos peso del dato 2, deja en W
+      _addwf(p2^.LByte,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (_H,W)
       //No es necesario reservar (H,W) porque existen y se están usando
-      _addwf(p2.Loffs,toW);         //Suma menos peso del dato 2, deja en W
+      _addwf(p2^.Loffs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
@@ -1001,7 +1012,7 @@ begin
   end;
 end;
 /////////////funciones del sistema
-procedure codif_1mseg;
+procedure TGenCod.codif_1mseg;
 //Codifica rutina de reatrdo de 1mseg.
 begin
   PutComLine('|;inicio rutina 1 mseg.');
@@ -1049,7 +1060,7 @@ begin
     GenError('Clock frequency not supported.');
   end;
 end;
-procedure codif_delay_ms(const fun: TxpFun);
+procedure TGenCod.codif_delay_ms(const fun: TxpFun);
 //Codifica rutina de retardo en milisegundos
 var
   delay: Word;
@@ -1076,12 +1087,12 @@ delay:= _PC;   //punto de entrada con parámetro en (_H,_L)
   _GOTO(delay);
   EndCodeSub;  //termina codificación
 end;
-procedure fun_putchar(fun: TxpFun);
+procedure TGenCod.fun_putchar(fun: TxpFun);
 begin
   //Esta es una fucnión INLINE
   //Esta función no devuelve un valor, por eso no nos preocupamos del tipo.
 end;
-procedure fun_delay_ms(fun: TxpFun);
+procedure TGenCod.fun_delay_ms(fun: TxpFun);
 begin
    if DelayCoded=-1 then begin
      //No ha sido codificada, la codifica.
@@ -1090,7 +1101,7 @@ begin
    //El parámetro byte, debe estar en W
    _call(DelayCoded);
 end;
-procedure fun_delay_ms_w(fun: TxpFun);
+procedure TGenCod.fun_delay_ms_w(fun: TxpFun);
 begin
    if DelayCoded=-1 then begin
      //No ha sido codificada, la codifica.
@@ -1099,7 +1110,7 @@ begin
    //El parámetro word, debe estar en (H, W)
    _call(DelayCoded+1);
 end;
-procedure fun_Inc_byte(fun: TxpFun);
+procedure TGenCod.fun_Inc_byte(fun: TxpFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -1115,7 +1126,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Inc_word(fun: TxpFun);
+procedure TGenCod.fun_Inc_word(fun: TxpFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -1133,7 +1144,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Dec_byte(fun: TxpFun);
+procedure TGenCod.fun_Dec_byte(fun: TxpFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -1149,7 +1160,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure fun_Dec_word(fun: TxpFun);
+procedure TGenCod.fun_Dec_word(fun: TxpFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -1169,11 +1180,74 @@ begin
   end;
 end;
 
-procedure TCompiler.StartSyntax;
+procedure TGenCod.StartSyntax;
 //Se ejecuta solo una vez al inicio
 var
-  opr: TOperator;
+  opr: TxpOperator;
 begin
+  ///////////define la sintaxis del compilador
+  //Tipos de tokens personalizados
+  tkExpDelim := xLex.NewTokType('ExpDelim');//delimitador de expresión ";"
+  tkBlkDelim := xLex.NewTokType('BlkDelim'); //delimitador de bloque
+  tkStruct   := xLex.NewTokType('Struct');   //personalizado
+  tkDirective:= xLex.NewTokType('Directive'); //personalizado
+  tkAsm      := xLex.NewTokType('Asm');      //personalizado
+  tkOthers   := xLex.NewTokType('Others');   //personalizado
+  //Configura atributos
+  tkKeyword.Style := [fsBold];     //en negrita
+  tkBlkDelim.Foreground:=clGreen;
+  tkBlkDelim.Style := [fsBold];    //en negrita
+  tkStruct.Foreground:=clGreen;
+  tkStruct.Style := [fsBold];      //en negrita
+  //inicia la configuración
+  xLex.ClearMethodTables;          //limpia tabla de métodos
+  xLex.ClearSpecials;              //para empezar a definir tokens
+  //crea tokens por contenido
+  xLex.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
+  xLex.DefTokContent('[0-9]', '[0-9.]*', tkNumber);
+  xLex.DefTokContent('[$]','[0-9A-Fa-f]*', tkNumber);
+  xLex.DefTokContent('[%]','[01]*', tkNumber);
+  //define palabras claves
+  xLex.AddIdentSpecList('THEN var type', tkKeyword);
+  xLex.AddIdentSpecList('program public private method const', tkKeyword);
+  xLex.AddIdentSpecList('class create destroy sub do begin', tkKeyword);
+  xLex.AddIdentSpecList('END UNTIL', tkBlkDelim);
+  xLex.AddIdentSpecList('true false', tkBoolean);
+  xLex.AddIdentSpecList('if while repeat for', tkStruct);
+  xLex.AddIdentSpecList('and or xor not div mod in', tkOperator);
+  //tipos predefinidos
+  xLex.AddIdentSpecList('byte word boolean', tkType);
+  //símbolos especiales
+  xLex.AddSymbSpec('+',  tkOperator);
+  xLex.AddSymbSpec('-',  tkOperator);
+  xLex.AddSymbSpec('*',  tkOperator);
+  xLex.AddSymbSpec('/',  tkOperator);
+  xLex.AddSymbSpec('\',  tkOperator);
+//  xLex.AddSymbSpec('%',  tkOperator);
+  xLex.AddSymbSpec('**', tkOperator);
+  xLex.AddSymbSpec('=',  tkOperator);
+  xLex.AddSymbSpec('>',  tkOperator);
+  xLex.AddSymbSpec('>=', tkOperator);
+  xLex.AddSymbSpec('<;', tkOperator);
+  xLex.AddSymbSpec('<=', tkOperator);
+  xLex.AddSymbSpec('<>', tkOperator);
+  xLex.AddSymbSpec('<=>',tkOperator);
+  xLex.AddSymbSpec(':=', tkOperator);
+  xLex.AddSymbSpec(';', tkExpDelim);
+  xLex.AddSymbSpec('(',  tkOthers);
+  xLex.AddSymbSpec(')',  tkOthers);
+  xLex.AddSymbSpec(':',  tkOthers);
+  xLex.AddSymbSpec(',',  tkOthers);
+  //crea tokens delimitados
+  xLex.DefTokDelim('''','''', tkString);
+  xLex.DefTokDelim('"','"', tkString);
+  xLex.DefTokDelim('//','', xLex.tkComment);
+  xLex.DefTokDelim('{','}', xLex.tkComment, tdMulLin);
+  xLex.DefTokDelim('{$','}', tkDirective);
+  xLex.DefTokDelim('Asm','End', tkAsm, tdMulLin);
+  //define bloques de sintaxis
+//  xLex.AddBlock('{','}');
+  xLex.Rebuild;   //es necesario para terminar la definición
 
   //Define métodos w usar
   OnExprStart := @expr_start;
@@ -1233,7 +1307,7 @@ begin
   opr.CreateOperation(tipByte,@word_suma_byte);
 
 end;
-procedure TCompiler.CreateSystemElements;
+procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}
 var
   f: TxpFun;  //índice para funciones
@@ -1241,7 +1315,7 @@ begin
   DelayCoded := -1;  //inicia
   //////// Funciones del sistema ////////////
   {Notar que las funciones del sistema no crean espacios de nombres y no se hace
-  validación para verificar la duplicidad (para hacer el proceso m´sa rápido).
+  validación para verificar la duplicidad (para hacer el proceso más rápido).
   Es responsabilidad del progranador, no introducir funciones con conflictos.}
   f := CreateSysFunction('putchar', tipByte, @fun_putchar);
   f.CreateParam('',tipByte);
@@ -1260,3 +1334,5 @@ begin
   f := CreateSysFunction('Dec', tipByte, @fun_Dec_word);
   f.CreateParam('',tipWord);
 end;
+end.
+

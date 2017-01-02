@@ -7,8 +7,8 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, ConfigFrame, FormPrincipal, FormConfig, Parser, globales, ProcAsm,
-  FormPICExplorer, FrameCfgIDE, xpreselementsPIC, FormCodeExplorer;
+  Forms, FormPrincipal, FormConfig, Parser, globales, ProcAsm, FormPICExplorer,
+  FrameCfgIDE, xpreselementsPIC, FormCodeExplorer, GenCod, GenCodPic;
 
 {$R *.res}
 

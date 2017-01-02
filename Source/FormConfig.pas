@@ -7,7 +7,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
-  Buttons, StdCtrls, iniFiles,
+  Buttons, StdCtrls,
    //deben incluirse todos los frames de propiedades a usar
   FrameCfgEdit, FrameCfgIDE,
   ConfigFrame;  //necesario para manejar los Frames de configuración

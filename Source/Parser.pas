@@ -4,32 +4,18 @@ unit Parser;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, LCLType, Dialogs, lclProc, Graphics, SynEditHighlighter,
-  SynFacilBasic, SynFacilHighlighter, SynFacilUtils, MisUtils,
-  XpresBas, XpresTypes, xpreselementsPIC, XpresParserPIC,
-  Pic16Utils, PIC16devices, Globales, ProcAsm, types;
+  Classes, SysUtils, lclProc, SynEditHighlighter, types,
+  SynFacilHighlighter, MisUtils,
+  XpresBas, XpresTypes, XpresElementsPIC, XpresParserPIC,
+  Pic16Utils, PIC16devices, Globales, ProcAsm, GenCod,
+  GenCodPic {Por diseño, parecería que GenCodPic, no debería ccederse desde aquí};
 type
 
  { TCompiler }
-  TCompiler = class(TCompilerBase)
+  TCompiler = class(TGenCod)
   private
-    //campos para controlar la codificación de rutinas iniciales
-    iniBloSub  : integer;   //inicio del blqoue de subrutinas
-    curBloSub  : integer;   //fin del bloque de subrutinas
-    finBloSub  : integer;   //tamaño máximo del bloque de subrutinas
-    iFlashTmp  : integer;   //almacenamiento temporal para pic.iFlash
-    Traslape   : boolean;   //bandera de traslape
     ////////////////////////////////////////
     lexDir : TSynFacilSyn;  //lexer para analizar directivas
-    pic : TPIC16;   //objeto PIC de la serie 16
-    //Atributos adicionales
-    tkType     : TSynHighlighterAttributes;
-    tkStruct   : TSynHighlighterAttributes;
-    tkDirective: TSynHighlighterAttributes;
-    tkAsm      : TSynHighlighterAttributes;
-    tkExpDelim : TSynHighlighterAttributes;
-    tkBlkDelim : TSynHighlighterAttributes;
-    tkOthers   : TSynHighlighterAttributes;
     procedure CaptureDecParams(fun: TxpFun);
     procedure CompileConstDeclar;
     procedure CompileIF;
@@ -39,11 +25,7 @@ type
     procedure CompileInstructionDummy;
     procedure CompileInstruction;
     function CreateCons(const consName: string; typ: ttype): TxpCon;
-    function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
-      absBit: integer=-1): TxpVar;
-    function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
-      =-1): TxpVar;
-    procedure DefLexDir;
+    procedure DefLexDirectiv;
     procedure getListOfIdent(var itemList: TStringDynArray);
     procedure ProcComments;
     procedure CompileCurBlock;
@@ -56,8 +38,6 @@ type
     procedure TipDefecBoolean(var Op: TOperand; tokcad: string); override;
     procedure cInNewLine(lin: string);
   public
-    procedure StartSyntax;
-    procedure CreateSystemElements;
     procedure Compile(NombArc: string; LinArc: Tstrings);
     function RAMusage: string;  //uso de memoria RAM
     procedure DumpCode(l: TSTrings);  //uso de la memoria Flash
@@ -71,215 +51,6 @@ var
   cxp : TCompiler;
 
 implementation
-//Variables que deden ser accesibles al generador de código
-//var
-//  i_w2 : integer;  //índice a la variable temporal byte
-//  i_w3 : integer;  //índice a la variable temporal byte
-//  i_w4 : integer;  //índice a la variable temporal byte
-//Funciones de acceso rápido a métodos del compilador. Se usan para ayudar al geenrador de código.
-//rutinas generales para la codificación
-procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(inst, f, d);
-end;
-procedure CodAsmK(const inst: TPIC16Inst; const k: byte); inline;
-begin
-  cxp.pic.codAsmK(inst, k);
-end;
-{procedure CodAsm(const inst: TPIC16Inst; const f, b: byte); inline;
-begin
-  cxp.pic.codAsmFB(inst, f, b);
-end;}
-//rutinas que facilitan la codifición de instrucciones
-procedure _ADDWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(ADDWF, f,d);
-end;
-procedure _ANDWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(ANDWF, f,d);
-end;
-procedure _CLRF(const f: byte); inline;
-begin
-  cxp.pic.codAsmF(CLRF, f);
-end;
-procedure _CLRW(); inline;
-begin
-  cxp.pic.codAsm(CLRW);
-end;
-procedure _COMF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(COMF, f,d);
-end;
-procedure _DECF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(DECF, f,d);
-end;
-procedure _DECFSZ(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(DECFSZ, f,d);
-end;
-procedure _INCF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(INCF, f,d);
-end;
-procedure _INCFSZ(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(INCFSZ, f,d);
-end;
-procedure _IORWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(IORWF, f,d);
-end;
-procedure _MOVF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(MOVF, f,d);
-end;
-procedure _MOVWF(const f: byte); inline;
-begin
-  cxp.pic.codAsmF(MOVWF, f);
-end;
-procedure _NOP(); inline;
-begin
-  cxp.pic.codAsm(NOP);
-end;
-procedure _RLF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(RLF, f,d);
-end;
-procedure _RRF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(RRF, f,d);
-end;
-procedure _SUBWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(SUBWF, f,d);
-end;
-procedure _SWAPF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(SWAPF, f,d);
-end;
-procedure _XORWF(const f: byte; d: TPIC16destin); inline;
-begin
-  cxp.pic.codAsmFD(XORWF, f,d);
-end;
-procedure _BCF(const f, b: byte); inline;
-begin
-  cxp.pic.codAsmFB(BCF, f, b);
-end;
-procedure _BSF(const f, b: byte); inline;
-begin
-  cxp.pic.codAsmFB(BSF, f, b);
-end;
-procedure _BTFSC(const f, b: byte); inline;
-begin
-  cxp.pic.codAsmFB(BTFSC, f, b);
-end;
-procedure _BTFSS(const f, b: byte); inline;
-begin
-  cxp.pic.codAsmFB(BTFSS, f, b);
-end;
-procedure _ADDLW(const k: word); inline;
-begin
-  cxp.pic.codAsmK(ADDLW, k);
-end;
-procedure _ANDLW(const k: word); inline;
-begin
-  cxp.pic.codAsmK(ANDLW, k);
-end;
-procedure _CALL(const a: word); inline;
-begin
-  cxp.pic.codAsmA(CALL, a);
-end;
-procedure _CLRWDT(); inline;
-begin
-  cxp.pic.codAsm(CLRWDT);
-end;
-procedure _GOTO(const a: word); inline;
-begin
-  cxp.pic.codAsmA(GOTO_, a);
-end;
-procedure _IORLW(const k: word); inline;
-begin
-  cxp.pic.codAsmK(IORLW, k);
-end;
-procedure _MOVLW(const k: word); inline;
-begin
-  cxp.pic.codAsmK(MOVLW, k);
-end;
-procedure _RETFIE(); inline;
-begin
-  cxp.pic.codAsm(RETFIE);
-end;
-procedure _RETLW(const k: word); inline;
-begin
-  cxp.pic.codAsmK(RETLW, k);
-end;
-procedure _RETURN(); inline;
-begin
-  cxp.pic.codAsm(RETURN);
-end;
-procedure _SLEEP(); inline;
-begin
-  cxp.pic.codAsm(SLEEP);
-end;
-procedure _SUBLW(const k: word); inline;
-begin
-  cxp.pic.codAsmK(SUBLW, k);
-end;
-procedure _XORLW(const k: word); inline;
-begin
-  cxp.pic.codAsmK(XORLW, k);
-end;
-procedure _GOTO_PEND(var  igot: integer);
-{Escribe una instrucción GOTO, pero sin precisar el destino aún. Devuelve la dirección
- donde se escribe el GOTO, para poder completarla posteriormente.
-}
-begin
-  igot := cxp.pic.iFlash;  //guarda posición de instrucción de salto
-  cxp.pic.codAsmA(GOTO_, 0);  //pone salto indefinido
-end;
-function _PC: word; inline;
-{Devuelve la dirección actual en Flash}
-begin
-  Result := cxp.pic.iFlash;
-end;
-function _CLOCK: integer; inline;
-{Devuelve la frecuencia de reloj del PIC}
-begin
-  Result := cxp.pic.frequen;
-end;
-procedure PutComLine(cmt: string); inline; //agrega comentario al código
-begin
-  cxp.pic.addCommAsm(cmt);  //agrega línea al código ensmblador
-end;
-procedure PutComm(cmt: string); inline; //agrega comentario lateral al código
-begin
-  cxp.pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
-end;
-procedure StartCodeSub(fun: TxpFun);
-{debe ser llamado para iniciar la codificación de una subrutina}
-begin
-  cxp.iFlashTmp :=  cxp.pic.iFlash;     //guarda puntero
-  cxp.pic.iFlash := cxp.curBloSub;  //empieza a codificar aquí
-  fun.adrr := cxp.curBloSub;  //fija inicio de rutina
-end;
-procedure EndCodeSub;
-{debe ser llamado al terminar la codificaión de una subrutina}
-begin
-  cxp.curBloSub := cxp.pic.iFlash;  //indica siguiente posición libre
-  if cxp.curBloSub > cxp.finBloSub then begin
-    //hubo traslape
-    cxp.Traslape:=true;
-  end;
-  cxp.pic.iFlash := cxp.iFlashTmp;     //retorna puntero
-end;
-procedure callFunct(fun: TxpFun);
-{Rutina que debe llamara a uan función definida por el usuario}
-begin
-  //por ahora no hay problema de paginación
-  _CALL(fun.adrr);
-end;
 
 procedure GenError(msg: string);
 begin
@@ -293,13 +64,10 @@ function HayError: boolean;
 begin
   Result := cxp.HayError;
 end;
-function CreateVar(const varName: string; typ: ttype): TxpVar;
+{function CreateVar(const varName: string; typ: ttype): TxpVar;
 begin
   Result := cxp.CreateVar(varName, typ);
-end;
-{Incluye el código del compilador. Aquí tendrá acceso a todas las variables públicas
- de XPresParser}
-{$I GenCod.pas}
+end;}
 //Métodos OVERRIDE
 procedure TCompiler.TipDefecNumber(var Op: TOperand; toknum: string);
 {Procesa constantes numéricas, ubicándolas en el tipo de dato apropiado (byte, word, ... )
@@ -421,7 +189,7 @@ procedure TCompiler.ProcComments;
 //Procesa comentarios y directivas
   function tokType: TSynHighlighterAttributes;
 begin
-  Result := TSynHighlighterAttributes(lexdir.GetTokenKind);
+  Result := TSynHighlighterAttributes(PtrUInt(lexdir.GetTokenKind));
 end;
   procedure skipWhites;
 begin
@@ -549,89 +317,6 @@ begin
     exit;
   end;
   Result := r;
-end;
-function TCompiler.CreateVar(const varName: string; typ: ttype;
-         absAdd: integer = -1; absBit: integer = -1): TxpVar;
-{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
- "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
-var
-  r   : TxpVar;
-  i   : Integer;
-  offs, bnk, bit : byte;
-begin
-  //busca espacio para ubicarla
-  if absAdd=-1 then begin
-    //caso normal
-    if typ.size<0 then begin
-      //Se asume que se están pidiendo bits
-      if typ.size<>-1 then begin   //por ahora se soporta 1 bit
-        GenError('Size of data not supported.');
-        exit;
-      end;
-      if not pic.GetFreeBit(offs, bnk, bit) then begin
-        GenError('RAM memory is full.');
-        exit;
-      end;
-    end else begin
-      //Se asume que se están pidiendo bytes
-      if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
-        GenError('RAM memory is full.');
-        exit;
-      end;
-    end;
-  end else begin
-    //se debe crear en una posición absoluta
-    pic.AbsToBankRAM(absAdd, offs, bnk);   //convierte dirección
-    if absBit<>-1 then bit := absBit;      //para los bits no hay transformación
-  end;
-  //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
-  if typ.size = 1 then begin
-    //Es un simple byte
-    pic.SetNameRAM(offs,bnk, varName);
-  end else if typ.size = -1 then begin
-    //Es un boolean
-    pic.SetNameRAM(offs,bnk, '_map');   //no tiene nombre único
-  end else begin
-    //Se asume que la variable ha sido entregada con posiciones consecutivas
-    for i:=0 to typ.size -1 do
-      pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
-  end;
-  //registra variable en la tabla
-  r := TxpVar.Create;
-  r.name:=varName;
-  r.typ := typ;   //fija  referencia a tipo
-  r.offs := offs;
-  r.bank := bnk;
-  r.bit  := bit;
-  if not TreeElems.AddElement(r) then begin
-    GenError('Duplicated identifier: "%s"', [varName]);
-    exit;
-  end;
-  Result := r;
-  //Ya encontró tipo, llama a evento
-  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
-end;
-function TCompiler.CreateVar(varName, varType: string;
-         absAdd: integer = -1; absBit: integer = -1): TxpVar;
-{Agrega una variable a la tabla de variables.}
-var t: ttype;
-  hay: Boolean;
-  varTypeL: String;
-begin
-  //Verifica el tipo
-  hay := false;
-  varTypeL := LowerCase(varType);
-  for t in typs do begin
-    if t.name = varTypeL then begin
-       hay:=true; break;
-    end;
-  end;
-  if not hay then begin
-    GenError('Undefined type "%s"', [varType]);
-    exit;
-  end;
-  Result := CreateVar(varName, t, absAdd ,absBit);
-  //puede salir con error
 end;
 procedure TCompiler.CompileVarDeclar;
 {Compila la declaración de variables. Usa una sintaxis, sencilla, similar w la de
@@ -895,7 +580,7 @@ begin
 end;
 procedure TCompiler.CompileProcDeclar;
 {Compila la declaración de procedimientos. Tanto procedimeintos como funciones
- se manejan internamenet como funciones}
+ se manejan internamente como funciones}
 var
   procName: String;
   fun: TxpFun;
@@ -1374,7 +1059,7 @@ begin
     CompileFile(iniCOD);
     if PErr.HayError then exit;  //No debería generar ya error
 
-    cIn.QuitaContexEnt;   //es necesario por dejar limpio
+    cIn.RemoveContext;//es necesario por dejar limpio
     //genera archivo hexa
     pic.GenHex(rutApp + 'salida.hex');
   finally
@@ -1427,9 +1112,9 @@ begin
         FloatToStrF(100*used/tot, ffGeneral, 1, 3) + '%)' );
 end;
 
-procedure TCompiler.DefLexDir;
-{Define la sinatxis del lexer que se usará para analizar las directivas. La que
- debe estar enter lso símbolo {$ ... }
+procedure TCompiler.DefLexDirectiv;
+{Define la sintaxis del lexer que se usará para analizar las directivas. La que
+ debe estar enter los símbolo {$ ... }
 }
 begin
   //solo se requiere identificadores y números
@@ -1442,81 +1127,8 @@ begin
   inherited Create;
   pic := TPIC16.Create;
   lexDir := TSynFacilSyn.Create(nil);  //crea lexer para analzar directivas
-  DefLexDir;
+  DefLexDirectiv;
   cIn.OnNewLine:=@cInNewLine;
-  ///////////define la sintaxis del compilador
-  //crea y guarda referencia w los atributos
-  tkEol      := xLex.tkEol;
-  tkIdentif  := xLex.tkIdentif;
-  tkKeyword  := xLex.tkKeyword;
-  tkNumber   := xLex.tkNumber;
-  tkString   := xLex.tkString;
-  //personalizados
-  tkOperator := xLex.NewTokType('Operador'); //personalizado
-  tkBoolean  := xLex.NewTokType('Boolean');  //personalizado
-  tkExpDelim := xLex.NewTokType('ExpDelim');//delimitador de expresión ";"
-  tkBlkDelim := xLex.NewTokType('BlkDelim'); //delimitador de bloque
-  tkType     := xLex.NewTokType('Types');    //personalizado
-  tkStruct   := xLex.NewTokType('Struct');   //personalizado
-  tkDirective:= xLex.NewTokType('Directive'); //personalizado
-  tkAsm      := xLex.NewTokType('Asm');      //personalizado
-  tkOthers   := xLex.NewTokType('Others');   //personalizado
-  //Configura atributos
-  tkKeyword.Style := [fsBold];     //en negrita
-  tkBlkDelim.Foreground:=clGreen;
-  tkBlkDelim.Style := [fsBold];     //en negrita
-  tkStruct.Foreground:=clGreen;
-  tkStruct.Style := [fsBold];     //en negrita
-  //inicia la configuración
-  xLex.ClearMethodTables;           //limpìw tabla de métodos
-  xLex.ClearSpecials;               //para empezar w definir tokens
-  //crea tokens por contenido
-  xLex.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
-  xLex.DefTokContent('[0-9]', '[0-9.]*', tkNumber);
-  xLex.DefTokContent('[$]','[0-9A-Fa-f]*', tkNumber);
-  xLex.DefTokContent('[%]','[01]*', tkNumber);
-  //define palabras claves
-  xLex.AddIdentSpecList('THEN var type', tkKeyword);
-  xLex.AddIdentSpecList('program public private method const', tkKeyword);
-  xLex.AddIdentSpecList('class create destroy sub do begin', tkKeyword);
-  xLex.AddIdentSpecList('END UNTIL', tkBlkDelim);
-  xLex.AddIdentSpecList('true false', tkBoolean);
-  xLex.AddIdentSpecList('if while repeat for', tkStruct);
-  xLex.AddIdentSpecList('and or xor not div mod in', tkOperator);
-  //tipos predefinidos
-  xLex.AddIdentSpecList('byte word boolean', tkType);
-  //símbolos especiales
-  xLex.AddSymbSpec('+',  tkOperator);
-  xLex.AddSymbSpec('-',  tkOperator);
-  xLex.AddSymbSpec('*',  tkOperator);
-  xLex.AddSymbSpec('/',  tkOperator);
-  xLex.AddSymbSpec('\',  tkOperator);
-//  xLex.AddSymbSpec('%',  tkOperator);
-  xLex.AddSymbSpec('**', tkOperator);
-  xLex.AddSymbSpec('=',  tkOperator);
-  xLex.AddSymbSpec('>',  tkOperator);
-  xLex.AddSymbSpec('>=', tkOperator);
-  xLex.AddSymbSpec('<;', tkOperator);
-  xLex.AddSymbSpec('<=', tkOperator);
-  xLex.AddSymbSpec('<>', tkOperator);
-  xLex.AddSymbSpec('<=>',tkOperator);
-  xLex.AddSymbSpec(':=', tkOperator);
-  xLex.AddSymbSpec(';', tkExpDelim);
-  xLex.AddSymbSpec('(',  tkOthers);
-  xLex.AddSymbSpec(')',  tkOthers);
-  xLex.AddSymbSpec(':',  tkOthers);
-  xLex.AddSymbSpec(',',  tkOthers);
-  //crea tokens delimitados
-  xLex.DefTokDelim('''','''', tkString);
-  xLex.DefTokDelim('"','"', tkString);
-  xLex.DefTokDelim('//','', xLex.tkComment);
-  xLex.DefTokDelim('{','}', xLex.tkComment, tdMulLin);
-  xLex.DefTokDelim('{$','}', tkDirective);
-  xLex.DefTokDelim('Asm','End', tkAsm, tdMulLin);
-  //define bloques de sintaxis
-//  xLex.AddBlock('{','}');
-  xLex.Rebuild;   //es necesario para terminar la definición
-
   StartSyntax;   //Debe hacerse solo una vez al inicio
   InitAsm(pic, self);   //inicia el procesamiento de ASM
 end;
