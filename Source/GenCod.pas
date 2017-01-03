@@ -70,13 +70,15 @@ type
       finBloSub  : integer;   //tamaño máximo del bloque de subrutinas
       iFlashTmp  : integer;   //almacenamiento temporal para pic.iFlash
       Traslape   : boolean;   //bandera de traslape
-      procedure callFunct(fun: TxpFun);
+      procedure callFunct(fun: TxpEleFun);
     private
       procedure bool_asig_bool;
+      procedure bool_load;
       procedure byte_and_byte;
       procedure byte_asig_byte;
       procedure byte_difer_byte;
       procedure byte_igual_byte;
+      procedure byte_load;
       procedure byte_OnPush(const OpPtr: pointer);
       procedure byte_oper_byte(const InstLW, InstWF: TPIC16Inst);
       procedure byte_or_byte;
@@ -84,17 +86,17 @@ type
       procedure byte_suma_byte;
       procedure byte_xor_byte;
       procedure codif_1mseg;
-      procedure codif_delay_ms(const fun: TxpFun);
+      procedure codif_delay_ms(const fun: TxpEleFun);
       procedure expr_end(isParam: boolean);
       procedure expr_start;
       function FreeByte(var reg: Tregister): boolean;
-      procedure fun_Dec_byte(fun: TxpFun);
-      procedure fun_Dec_word(fun: TxpFun);
-      procedure fun_delay_ms(fun: TxpFun);
-      procedure fun_delay_ms_w(fun: TxpFun);
-      procedure fun_Inc_byte(fun: TxpFun);
-      procedure fun_Inc_word(fun: TxpFun);
-      procedure fun_putchar(fun: TxpFun);
+      procedure fun_Dec_byte(fun: TxpEleFun);
+      procedure fun_Dec_word(fun: TxpEleFun);
+      procedure fun_delay_ms(fun: TxpEleFun);
+      procedure fun_delay_ms_w(fun: TxpEleFun);
+      procedure fun_Inc_byte(fun: TxpEleFun);
+      procedure fun_Inc_word(fun: TxpEleFun);
+      procedure fun_putchar(fun: TxpEleFun);
       function GetByte(var reg: Tregister; varNom: string=''): boolean;
       procedure PutComLine(cmt: string);
       procedure PutComm(cmt: string);
@@ -105,6 +107,7 @@ type
       function ValidateWordRange(n: integer): boolean;
       procedure word_asig_byte;
       procedure word_asig_word;
+      procedure word_load;
       procedure word_OnPush(const OpPtr: pointer);
       procedure word_suma_byte;
       procedure word_suma_word;
@@ -116,12 +119,12 @@ type
       tkExpDelim : TSynHighlighterAttributes;
       tkBlkDelim : TSynHighlighterAttributes;
       tkOthers   : TSynHighlighterAttributes;
-      procedure StartCodeSub(fun: TxpFun);
+      procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
       function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
-        absBit: integer=-1): TxpVar;
+        absBit: integer=-1): TxpEleVar;
       function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
-        =-1): TxpVar;
+        =-1): TxpEleVar;
       procedure Cod_StartProgram;
       procedure Cod_EndProgram;
       procedure CreateSystemElements;
@@ -165,7 +168,7 @@ procedure TGenCod.PutComm(cmt: string); inline; //agrega comentario lateral al c
 begin
   pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
 end;
-procedure TGenCod.StartCodeSub(fun: TxpFun);
+procedure TGenCod.StartCodeSub(fun: TxpEleFun);
 {debe ser llamado para iniciar la codificación de una subrutina}
 begin
   iFlashTmp :=  pic.iFlash;     //guarda puntero
@@ -182,7 +185,7 @@ begin
   end;
   pic.iFlash := iFlashTmp;     //retorna puntero
 end;
-procedure TGenCod.callFunct(fun: TxpFun);
+procedure TGenCod.callFunct(fun: TxpEleFun);
 {Rutina que debe llamara a uan función definida por el usuario}
 begin
   //por ahora no hay problema de paginación
@@ -198,7 +201,7 @@ function TGenCod.GetByte(var reg: Tregister; varNom: string = ''): boolean;
  variables. Las direcciones usadas, se guardan en la tabla memtab[], aunque no siempre
  corresponden a direcciones consecutivas}
 var
-  aVar: TxpVar;
+  aVar: TxpEleVar;
 begin
    if sp>=MAX_MEMTAB then begin
      //Se asume que se desbordó la memoria evaluando a alguna expresión
@@ -351,11 +354,11 @@ begin
 end;
 
 function TGenCod.CreateVar(const varName: string; typ: ttype;
-         absAdd: integer = -1; absBit: integer = -1): TxpVar;
+         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
 {Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
  "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
 var
-  r   : TxpVar;
+  r   : TxpEleVar;
   i   : Integer;
   offs, bnk, bit : byte;
 begin
@@ -397,7 +400,7 @@ begin
       pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
   end;
   //registra variable en la tabla
-  r := TxpVar.Create;
+  r := TxpEleVar.Create;
   r.name:=varName;
   r.typ := typ;   //fija  referencia a tipo
   r.offs := offs;
@@ -412,7 +415,7 @@ begin
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
 function TGenCod.CreateVar(varName, varType: string;
-         absAdd: integer = -1; absBit: integer = -1): TxpVar;
+         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
 {Agrega una variable a la tabla de variables.}
 var t: ttype;
   hay: Boolean;
@@ -433,8 +436,14 @@ begin
   Result := CreateVar(varName, t, absAdd ,absBit);
   //puede salir con error
 end;
-
 ////////////operaciones con Boolean
+procedure TGenCod.bool_load;
+begin
+  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
+  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
+  ya se generó el código. }
+  res := p1^;   //No debería ser necesario copiar todos los campos
+end;
 procedure TGenCod.bool_asig_bool;
 begin
   if p1^.catOp <> coVariab then begin  //validación
@@ -487,6 +496,13 @@ begin
   coExpres: begin  //ya está en w
   end;
   end;
+end;
+procedure TGenCod.byte_load;
+begin
+  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
+  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
+  ya se generó el código. }
+  res := p1^;   //No debería ser necesario copiar todos los campos
 end;
 procedure TGenCod.byte_asig_byte;
 begin
@@ -728,6 +744,13 @@ begin
   coExpres: begin  //se asume que ya está en (_H,w)
   end;
   end;
+end;
+procedure TGenCod.word_load;
+begin
+  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
+  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
+  ya se generó el código. }
+  res := p1^;   //No debería ser necesario copiar todos los campos
 end;
 procedure TGenCod.word_asig_word;
 begin
@@ -1060,7 +1083,7 @@ begin
     GenError('Clock frequency not supported.');
   end;
 end;
-procedure TGenCod.codif_delay_ms(const fun: TxpFun);
+procedure TGenCod.codif_delay_ms(const fun: TxpEleFun);
 //Codifica rutina de retardo en milisegundos
 var
   delay: Word;
@@ -1087,12 +1110,12 @@ delay:= _PC;   //punto de entrada con parámetro en (_H,_L)
   _GOTO(delay);
   EndCodeSub;  //termina codificación
 end;
-procedure TGenCod.fun_putchar(fun: TxpFun);
+procedure TGenCod.fun_putchar(fun: TxpEleFun);
 begin
   //Esta es una fucnión INLINE
   //Esta función no devuelve un valor, por eso no nos preocupamos del tipo.
 end;
-procedure TGenCod.fun_delay_ms(fun: TxpFun);
+procedure TGenCod.fun_delay_ms(fun: TxpEleFun);
 begin
    if DelayCoded=-1 then begin
      //No ha sido codificada, la codifica.
@@ -1101,7 +1124,7 @@ begin
    //El parámetro byte, debe estar en W
    _call(DelayCoded);
 end;
-procedure TGenCod.fun_delay_ms_w(fun: TxpFun);
+procedure TGenCod.fun_delay_ms_w(fun: TxpEleFun);
 begin
    if DelayCoded=-1 then begin
      //No ha sido codificada, la codifica.
@@ -1110,7 +1133,7 @@ begin
    //El parámetro word, debe estar en (H, W)
    _call(DelayCoded+1);
 end;
-procedure TGenCod.fun_Inc_byte(fun: TxpFun);
+procedure TGenCod.fun_Inc_byte(fun: TxpEleFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -1126,7 +1149,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure TGenCod.fun_Inc_word(fun: TxpFun);
+procedure TGenCod.fun_Inc_word(fun: TxpEleFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -1144,7 +1167,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure TGenCod.fun_Dec_byte(fun: TxpFun);
+procedure TGenCod.fun_Dec_byte(fun: TxpEleFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -1160,7 +1183,7 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
-procedure TGenCod.fun_Dec_word(fun: TxpFun);
+procedure TGenCod.fun_Dec_word(fun: TxpEleFun);
 begin
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
@@ -1255,19 +1278,18 @@ begin
 
   ///////////Crea tipos y operaciones
   ClearTypes;
-  typNull := CreateType('boolean',t_boolean,-1);
+  typNull := CreateType('null',t_boolean,-1);
   //tipo booleano
   tipBool :=CreateType('boolean',t_boolean,-1);   //de 1 bit
   //tipo numérico de un solo byte
   tipByte :=CreateType('byte',t_uinteger,1);   //de 2 bytes
-  tipByte.OnPush:=@byte_OnPush;
   //tipo numérico de dos byte
   tipWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
-  tipWord.OnPush:=@word_OnPush;
 
   //////// Operaciones con Boolean ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  opr:=tipBool.CreateOperator(':=',2,'asig');  //asignación
+  tipBool.OperationLoad:=@bool_load;
+  opr:=tipBool.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(tipBool,@bool_asig_bool);
 
   {Precedencia de operadores en Pascal
@@ -1279,30 +1301,34 @@ begin
 }
   //////// Operaciones con Byte ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  opr:=tipByte.CreateOperator(':=',2,'asig');  //asignación
+  tipByte.OperationLoad:=@byte_load;
+  tipByte.OperationPush:=@byte_OnPush;
+  opr:=tipByte.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(tipByte,@byte_asig_byte);
-  opr:=tipByte.CreateOperator('+',4,'suma');  //suma
+  opr:=tipByte.CreateBinaryOperator('+',4,'suma');  //suma
   opr.CreateOperation(tipByte,@byte_suma_byte);
-  opr:=tipByte.CreateOperator('-',4,'resta');  //suma
+  opr:=tipByte.CreateBinaryOperator('-',4,'resta');  //suma
   opr.CreateOperation(tipByte,@byte_resta_byte);
-  opr:=tipByte.CreateOperator('AND',5,'and');  //suma
+  opr:=tipByte.CreateBinaryOperator('AND',5,'and');  //suma
   opr.CreateOperation(tipByte,@byte_and_byte);
-  opr:=tipByte.CreateOperator('OR',4,'or');  //suma
+  opr:=tipByte.CreateBinaryOperator('OR',4,'or');  //suma
   opr.CreateOperation(tipByte,@byte_or_byte);
-  opr:=tipByte.CreateOperator('XOR',4,'xor');  //suma
+  opr:=tipByte.CreateBinaryOperator('XOR',4,'xor');  //suma
   opr.CreateOperation(tipByte,@byte_xor_byte);
 
-  opr:=tipByte.CreateOperator('=',3,'igual');
+  opr:=tipByte.CreateBinaryOperator('=',3,'igual');
   opr.CreateOperation(tipByte,@byte_igual_byte);
-  opr:=tipByte.CreateOperator('<>',3,'difer');
+  opr:=tipByte.CreateBinaryOperator('<>',3,'difer');
   opr.CreateOperation(tipByte,@byte_difer_byte);
 
   //////// Operaciones con Word ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  opr:=tipWord.CreateOperator(':=',2,'asig');  //asignación
+  tipWord.OperationPush:=@word_OnPush;
+  tipWord.OperationLoad:=@word_load;
+  opr:=tipWord.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(tipWord,@word_asig_word);
   opr.CreateOperation(tipByte,@word_asig_byte);
-  opr:=tipWord.CreateOperator('+',4,'suma');  //suma
+  opr:=tipWord.CreateBinaryOperator('+',4,'suma');  //suma
   opr.CreateOperation(tipWord,@word_suma_word);
   opr.CreateOperation(tipByte,@word_suma_byte);
 
@@ -1310,7 +1336,7 @@ end;
 procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}
 var
-  f: TxpFun;  //índice para funciones
+  f: TxpEleFun;  //índice para funciones
 begin
   DelayCoded := -1;  //inicia
   //////// Funciones del sistema ////////////

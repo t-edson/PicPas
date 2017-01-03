@@ -16,7 +16,7 @@ type
   private
     ////////////////////////////////////////
     lexDir : TSynFacilSyn;  //lexer para analizar directivas
-    procedure CaptureDecParams(fun: TxpFun);
+    procedure CaptureDecParams(fun: TxpEleFun);
     procedure CompileConstDeclar;
     procedure CompileIF;
     procedure CompileProcDeclar;
@@ -24,7 +24,7 @@ type
     procedure CompileWHILE;
     procedure CompileInstructionDummy;
     procedure CompileInstruction;
-    function CreateCons(const consName: string; typ: ttype): TxpCon;
+    function CreateCons(const consName: string; typ: ttype): TxpEleCon;
     procedure DefLexDirectiv;
     procedure getListOfIdent(var itemList: TStringDynArray);
     procedure ProcComments;
@@ -64,7 +64,7 @@ function HayError: boolean;
 begin
   Result := cxp.HayError;
 end;
-{function CreateVar(const varName: string; typ: ttype): TxpVar;
+{function CreateVar(const varName: string; typ: ttype): TxpEleVar;
 begin
   Result := cxp.CreateVar(varName, typ);
 end;}
@@ -303,13 +303,13 @@ begin
     cIn.Next;  //toma la coma
   until false;
 end;
-function TCompiler.CreateCons(const consName: string; typ: ttype): TxpCon;
+function TCompiler.CreateCons(const consName: string; typ: ttype): TxpEleCon;
 {Rutina para crear una constante. Devuelve índice a la variable creada.}
 var
-  r  : TxpCon;
+  r  : TxpEleCon;
 begin
   //registra variable en la tabla
-  r := TxpCon.Create;
+  r := TxpEleCon.Create;
   r.name:=consName;
   r.typ := typ;   //fija  referencia a tipo
   if not TreeElems.AddElement(r) then begin
@@ -354,7 +354,7 @@ var
   {Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
   pone "IsAbs" en TRUE y actualiza los valores "absAdrr" y "absBit". }
   var
-    xvar: TxpVar;
+    xvar: TxpEleVar;
     n: integer;
     tmp: String;
   begin
@@ -487,7 +487,7 @@ procedure TCompiler.CompileConstDeclar;
 var
 //  consType: String;
   consNames: array of string;  //nombre de variables
-  c: TxpCon;
+  c: TxpEleCon;
   tmp: String;
 begin
   setlength(consNames,0);  //inicia arreglo
@@ -521,7 +521,7 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler.CaptureDecParams(fun: TxpFun);
+procedure TCompiler.CaptureDecParams(fun: TxpEleFun);
 //Lee la declaración de parámetros de una función.
 var
   parType: String;
@@ -583,7 +583,7 @@ procedure TCompiler.CompileProcDeclar;
  se manejan internamente como funciones}
 var
   procName: String;
-  fun: TxpFun;
+  fun: TxpEleFun;
 begin
   cIn.SkipWhites;
   //ahora debe haber un identificador
@@ -1074,7 +1074,7 @@ function TCompiler.RAMusage: string;
 var
   dir: String;
   tmp: String;
-  v: TxpVar;
+  v: TxpEleVar;
 begin
   tmp := '';
   for v in TreeElems.AllVars do begin
