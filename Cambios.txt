@@ -1,23 +1,27 @@
-Versión 0.4.2
-===========
-Se cambia la librerías XPresParserPIC a la forma de trabajo de Xpres versión 1.1, pero 
-falta cambiar la parte de evaluación de expresiones con un Operando.
+PicPas 0.4.3
+============
+Se cambia la librerías XPresParserPIC a la forma de trabajo de Xpres versión 1.2.
 
 
-Versión 0.4.1
-===========
+PicPas 0.4.2
+============
+Se cambia la librerías XPresParserPIC a la forma de trabajo de Xpres versión 1.1.
+
+
+PicPas 0.4.1
+============
 Se cambia la librerías XPresParserPIC a la forma de trabajo de Xpres versión 1.0.
 Se adecúa XpresElementsPIC, para que mantenga la similitud con XpresElements de Xpres 1.0.
 Se crea la unidad genCodPic, y se mueven las rutinas relacionadas a las instrucciones del
 microcontrolador.
 
-Versión 0.4
+PicPas 0.4
 ===========
 Se actualizan las librerías usadas a las versiones más recientes.
 Se cambia de nombre a los elementos del enumerado TxpElemType
 
-Versión 0.3.5
-=============
+PicPas 0.3.5
+============
 * Se cambia la declaración TProcLoadOperand, usando un puntero como parámetro, para permitir el paso de
 un objeto TOperand, cuya definición se hará en otras unidades.
 * Se quita eL parámetro "amb" de TTypes, de modo que se quita la dependencia de "SynFacilSyn", a la unidad
