@@ -18,10 +18,12 @@
         <ComponentName Value="frmPrincipal"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="184"/>
-        <CursorPos X="28" Y="201"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="514"/>
+        <CursorPos X="31" Y="539"/>
         <UsageCount Value="219"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit1>
       <Unit2>
         <Filename Value="FormConfig.pas"/>
@@ -37,6 +39,7 @@
       <Unit3>
         <Filename Value="Parser.pas"/>
         <IsPartOfProject Value="True"/>
+        <EditorIndex Value="1"/>
         <TopLine Value="1045"/>
         <CursorPos X="53" Y="1062"/>
         <UsageCount Value="200"/>
@@ -86,7 +89,7 @@
         <Filename Value="XpresElementsPic.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="XpresElementsPIC"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="455"/>
         <CursorPos Y="489"/>
         <ExtraEditorCount Value="1"/>
@@ -112,11 +115,10 @@
       <Unit10>
         <Filename Value="GenCod.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <TopLine Value="1309"/>
         <CursorPos Y="1323"/>
-        <FoldState Value=" T4i702 TMiB210K1 TCiDG4 T7iLE@ T8iM473 T3kX03628 T0l9W332G T6lU01]IHrL2Q013~"/>
-        <UsageCount Value="37"/>
+        <UsageCount Value="41"/>
         <Bookmarks Count="2">
           <Item0 X="9" Y="309" ID="3"/>
           <Item1 Y="482" ID="4"/>
@@ -128,7 +130,7 @@
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="15" Y="18"/>
-        <UsageCount Value="30"/>
+        <UsageCount Value="34"/>
       </Unit11>
       <Unit12>
         <Filename Value="..\..\_Librerias\ConfigFrame 0.6b\configframe.pas"/>
@@ -202,11 +204,10 @@
       <Unit19>
         <Filename Value="XpresParserPic.pas"/>
         <UnitName Value="XpresParserPIC"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="776"/>
-        <CursorPos X="23" Y="829"/>
-        <FoldState Value=" TL00CB7 p0u3029 T4F03 TMiG01061J1E]Rte2211152H1 T7NBl T8O0N414 T3kW0ED pj2jW0D514]B1od0d12]xign40D7 THkZ2A01](xG2A2 T0mSJ2DE4233[L42821 T6n10132]VFpc4EF"/>
+        <CursorPos X="27" Y="792"/>
+        <FoldState Value=" T4F03 TMiG01061J1 T7NBl T8O0N414 T3kW0ED pj2jW0D5[J4HkZ2A T0mSJ2DE42]:6n1013228"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -295,131 +296,130 @@
       </Unit29>
       <Unit30>
         <Filename Value="..\..\_Librerias\Xpres-1.2\XpresTypes.pas"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="75"/>
         <CursorPos X="3" Y="84"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit30>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="891" Column="35" TopLine="864"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="487" Column="7" TopLine="470"/>
       </Position1>
       <Position2>
-        <Filename Value="XpresParserPic.pas"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="32" Column="5" TopLine="13"/>
       </Position2>
       <Position3>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="41" Column="56"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="487" Column="17" TopLine="456"/>
       </Position3>
       <Position4>
-        <Filename Value="XpresParserPic.pas"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="488" Column="17" TopLine="457"/>
       </Position4>
       <Position5>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="41" Column="53"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="544" Column="17" TopLine="513"/>
       </Position5>
       <Position6>
-        <Filename Value="XpresParserPic.pas"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="545" Column="17" TopLine="514"/>
       </Position6>
       <Position7>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="102" Column="23" TopLine="85"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="544" Column="7" TopLine="514"/>
       </Position7>
       <Position8>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="18" Column="59"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="488" Column="7" TopLine="470"/>
       </Position8>
       <Position9>
-        <Filename Value="XpresElementsPic.pas"/>
-        <Caret Line="99" Column="27" TopLine="86"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="487" Column="7" TopLine="470"/>
       </Position9>
       <Position10>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="18" Column="59"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="32" Column="5" TopLine="13"/>
       </Position10>
       <Position11>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="30" Column="16"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="487" Column="17" TopLine="456"/>
       </Position11>
       <Position12>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="70" Column="43" TopLine="49"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="488" Column="17" TopLine="457"/>
       </Position12>
       <Position13>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="93" TopLine="75"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="544" Column="17" TopLine="513"/>
       </Position13>
       <Position14>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="98" Column="36" TopLine="83"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="545" Column="17" TopLine="514"/>
       </Position14>
       <Position15>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="136" Column="18" TopLine="114"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="544" Column="7" TopLine="514"/>
       </Position15>
       <Position16>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="288" Column="16" TopLine="262"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="488" Column="7" TopLine="470"/>
       </Position16>
       <Position17>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="337" Column="16" TopLine="312"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="487" Column="7" TopLine="470"/>
       </Position17>
       <Position18>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="408" Column="4" TopLine="367"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="32" Column="5" TopLine="13"/>
       </Position18>
       <Position19>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="432" Column="21" TopLine="416"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="487" Column="17" TopLine="456"/>
       </Position19>
       <Position20>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="441" Column="21" TopLine="424"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="488" Column="17" TopLine="457"/>
       </Position20>
       <Position21>
-        <Filename Value="XpresElementsPic.pas"/>
-        <Caret Line="82" Column="27" TopLine="72"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="544" Column="17" TopLine="513"/>
       </Position21>
       <Position22>
-        <Filename Value="XpresElementsPic.pas"/>
-        <Caret Line="36" TopLine="36"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="545" Column="17" TopLine="514"/>
       </Position22>
       <Position23>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="508" TopLine="292"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="544" Column="7" TopLine="514"/>
       </Position23>
       <Position24>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="112" TopLine="75"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="488" Column="7" TopLine="470"/>
       </Position24>
       <Position25>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="679" TopLine="346"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="487" Column="7" TopLine="470"/>
       </Position25>
       <Position26>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="538" Column="21" TopLine="346"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="32" Column="5" TopLine="13"/>
       </Position26>
       <Position27>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="561" Column="11" TopLine="346"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="487" Column="17" TopLine="456"/>
       </Position27>
       <Position28>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="523" Column="3" TopLine="490"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="488" Column="17" TopLine="457"/>
       </Position28>
       <Position29>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="517" Column="28" TopLine="491"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="544" Column="17" TopLine="513"/>
       </Position29>
-      <Position30>
-        <Filename Value="XpresParserPic.pas"/>
-        <Caret Line="423" Column="25" TopLine="225"/>
-      </Position30>
     </JumpHistory>
   </ProjectSession>
   <Debugging>
