@@ -1,3 +1,17 @@
+PicPas 0.4.4
+============
+Se divide el método TGenCod.StartSyntax; en dos: TGenCod.StartSyntax() y TGenCod.DefCompiler();
+Se crea el tipo "bit", y se crean algunas operaciones básicas.
+Se modifica TCompiler.TipDefecNumber(), simplificando las validaciones.
+Se modifica TCompiler.CompileVarDeclar() para incluir al tipo "bit".
+Se crea TCompilerBase.FindType() y se simplifican los códigos de búsqueda de tipos.
+Se mejora la rutina TCompiler.RAMusage(), para indicar el bit en las variables booleanas y bit.
+
+PENDIENTES
+Terminar de implementar las operaciones del tipo bit.
+Revisar la implementación de la pila de memoria.
+Cambiar el esquema de trabajo. Eliminar el registro L, como registro de trabajo. 
+
 PicPas 0.4.3
 ============
 Se cambia la librerías XPresParserPIC a la forma de trabajo de Xpres versión 1.2.
