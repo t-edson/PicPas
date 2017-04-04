@@ -4,7 +4,8 @@ XpresElements
 Definiciones para el manejo de los elementos del compilador: funciones, constantes, variables.
 Todos estos elementos se deberían almacenar en una estrucutura de arbol.
 Esta unidad es similar a la de Xpres, solamente contiene cambios menores.
-Por Tito Hinostroza.}
+Por Tito Hinostroza.
+}
 unit XpresElementsPIC;
 {$mode objfpc}{$H+}
 interface
@@ -32,11 +33,11 @@ type
   private
 //    amb  : string;      //ámbito o alcance de la constante
   public
-    name : string;      //nombre de la variable
-    typ  : TType;       //tipo del elemento, si aplica
+    name : string;       //nombre de la variable
+    typ  : TType;        //tipo del elemento, si aplica
     Parent: TxpElement;    //referencia al padre
     elemType: TxpElemType; //no debería ser necesario
-    Used: integer;      //veces que se usa este nombre
+    Used: integer;       //veces que se usa este nombre
     elements: TxpElements;  //referencia a nombres anidados, cuando sea función
     function AddElement(elem: TxpElement): TxpElement;
     function DuplicateIn(list: TObject): boolean; virtual;
@@ -78,7 +79,7 @@ type
     //direción física. Usado para implementar un compilador
     offs: TVarOffs;
     bank: TVarBank;  //banco o segmento. Usado solo en algunas arquitecturas
-    bit : byte;      //posición del bit. Usado para variables booleanas.
+    bit : byte;      //posición del bit. Usado para variables bit o booleanas.
     constructor Create; override;
   end;
   TxpEleVars = specialize TFPGObjectList<TxpEleVar>; //lista de variables

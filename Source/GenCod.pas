@@ -7,7 +7,7 @@ para los dispositivos más grandes.
 El compilador está orientado a uso de registros (solo hay uno) y memoria RAM, pero se
 implementa una especie de estructura de pila para la evaluación de expresiones
 aritméticas con cierta complejidad y para el paso de parámetros a las funciones.
-Solo se manejan datos de tipo boolean, byte y word, y operaciones sencillas.
+Solo se manejan datos de tipo bit, boolean, byte y word, y operaciones sencillas.
 }
 {La arquitectura definida aquí contempla:
 
@@ -16,15 +16,15 @@ Dos registros adicionales  H y L de 8 bits cada uno (Creados a demanda).
 
 Los resultados de una expresión se dejarán en:
 
-1. En Bit Z o C, de STATUS -> Si el resultado es de tipo boolean.
-2. El acumulador W        -> Si el resultado es de tipo byte.
-3. Los registros (H,w)    -> Si el resultado es tipo word.
+1. En Bit Z o C, de STATUS -> Si el resultado es de tipo bit o boolean.
+2. El acumulador W         -> Si el resultado es de tipo byte.
+3. Los registros (H,w)     -> Si el resultado es tipo word.
 
-a menos que ya esté ocupado, en cuyo caso se guarda primero en un registro auxiliar.
-a menos que ya estén ocupados, en cuyo caso se pone primero en la pila.
+Opcionalmente, si estos registros ya están ocupados, se guardan primero en la pila, o se
+usan otros registros auxiliares.
 
 Despues de ejecutar alguna operación booleana que devuelva una expresión, se
-actaulizan las banderas: BooleanBit y BooleanInverted, que implican que:
+actualizan las banderas: BooleanBit y BooleanInverted, que implican que:
 * Si BooleanInverted es TRUE, significa que la lógica de C o Z está invertida.
 * La bandera BooleanBit, indica si el resultado se deja en C o Z.
 
@@ -49,15 +49,15 @@ unit GenCod;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, SynEditHighlighter, Graphics, LCLType,
-  SynFacilBasic, XpresTypes, XPresParserPIC, XpresElementsPIC, GenCodPic, Pic16Utils;
+  Classes, SysUtils, SynEditHighlighter, Graphics, LCLType, SynFacilBasic,
+  XpresTypes, XPresParserPIC, XpresElementsPIC, GenCodPic, Pic16Utils, MisUtils;
 type
   //  TSatReg = (srFree, srUsed)
     //define un registro virtual para implementar un intérprete
     Tregister = record
-      used   : boolean;  //indica si está usado
-      offs   : byte;     //desplazamiento en memoria
-      bank    : byte;     //banco
+      used   : boolean;  //Indica si está usado. Se le debe actualizr después de una operación.
+      offs   : byte;     //Desplazamiento en memoria
+      bank    : byte;    //Banco
     end;
 
     { TGenCod }
@@ -72,8 +72,12 @@ type
       Traslape   : boolean;   //bandera de traslape
       procedure callFunct(fun: TxpEleFun);
     private
-      procedure bool_asig_bool;
+      procedure bit_load;
+      procedure bit_asig_bit;
+      procedure bit_asig_byte;
+      procedure bit_not;
       procedure bool_load;
+      procedure bool_asig_bool;
       procedure byte_and_byte;
       procedure byte_asig_byte;
       procedure byte_difer_byte;
@@ -121,20 +125,18 @@ type
       tkOthers   : TSynHighlighterAttributes;
       procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
-      function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
-        absBit: integer=-1): TxpEleVar;
-      function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
-        =-1): TxpEleVar;
       procedure Cod_StartProgram;
       procedure Cod_EndProgram;
       procedure CreateSystemElements;
     public
       procedure StartSyntax;
+      procedure DefCompiler;
     end;
 
 var
   /////// Tipos de datos del lenguaje ////////////
   typNull: TType;     //Tipo nulo (sin tipo)
+  tipBit: TType;
   tipBool: TType;     //Booleanos
   tipByte: TType;     //número sin signo
   tipWord: TType;     //número sin signo
@@ -148,15 +150,15 @@ var
   w: Tregister;
   {Estrutura de pila. Se crea una tabla de las direcciones a usar (no necesariamente
   consecutivas, porque puede haber variables ABSOLUTE) como pila. El tamaño de la pila a
-  usar   no es fijo, sino que se crea de acuerdo al tamaño requerido para la evaluación de
+  usar no es fijo, sino que se crea de acuerdo al tamaño requerido para la evaluación de
   expresiones. Puede incluso ser de tamaño cero.}
-  memtab: array[0..MAX_MEMTAB-1] of Tregister;
-  sp: integer;    //puntero a la estructura de pila. Apunta a la posición libre
-  spSize: integer;  //tamaño actual de pila
-  _H, _L: Tregister;   //registros de trabajo adicionales, para cálculos
-  //variables de estado de las expresiones booleanas
+  memtab : array[0..MAX_MEMTAB-1] of Tregister;
+  sp     : integer;    //puntero a la estructura de pila. Apunta a la posición libre
+  spSize : integer;    //tamaño actual de pila
+  _H, _L : Tregister;  //registros de trabajo adicionales, para cálculos
+  //Variables de estado de las expresiones booleanas
   BooleanInverted : boolean;  //indica que la lógica del bit de salida está invertida
-  BooleanBit : byte;          //indica el bit que se devuelve el resultado booleano (Z o C)
+  BooleanBit : 0..7;          //indica el bit que se devuelve el resultado booleano (Z o C)
 
 implementation
 
@@ -353,88 +355,121 @@ begin
   _H.used := true;   //Lo marca como indicando que se va a ocupar
 end;
 
-function TGenCod.CreateVar(const varName: string; typ: ttype;
-         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
-{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
- "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
-var
-  r   : TxpEleVar;
-  i   : Integer;
-  offs, bnk, bit : byte;
+////////////operaciones con Bit
+procedure TGenCod.bit_load;
 begin
-  //busca espacio para ubicarla
-  if absAdd=-1 then begin
-    //caso normal
-    if typ.size<0 then begin
-      //Se asume que se están pidiendo bits
-      if typ.size<>-1 then begin   //por ahora se soporta 1 bit
-        GenError('Size of data not supported.');
-        exit;
-      end;
-      if not pic.GetFreeBit(offs, bnk, bit) then begin
-        GenError('RAM memory is full.');
-        exit;
-      end;
-    end else begin
-      //Se asume que se están pidiendo bytes
-      if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
-        GenError('RAM memory is full.');
-        exit;
-      end;
-    end;
-  end else begin
-    //se debe crear en una posición absoluta
-    pic.AbsToBankRAM(absAdd, offs, bnk);   //convierte dirección
-    if absBit<>-1 then bit := absBit;      //para los bits no hay transformación
-  end;
-  //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
-  if typ.size = 1 then begin
-    //Es un simple byte
-    pic.SetNameRAM(offs,bnk, varName);
-  end else if typ.size = -1 then begin
-    //Es un boolean
-    pic.SetNameRAM(offs,bnk, '_map');   //no tiene nombre único
-  end else begin
-    //Se asume que la variable ha sido entregada con posiciones consecutivas
-    for i:=0 to typ.size -1 do
-      pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
-  end;
-  //registra variable en la tabla
-  r := TxpEleVar.Create;
-  r.name:=varName;
-  r.typ := typ;   //fija  referencia a tipo
-  r.offs := offs;
-  r.bank := bnk;
-  r.bit  := bit;
-  if not TreeElems.AddElement(r) then begin
-    GenError('Duplicated identifier: "%s"', [varName]);
-    exit;
-  end;
-  Result := r;
-  //Ya encontró tipo, llama a evento
-  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
+  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
+  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
+  ya se generó el código. }
+  res := p1^;   //No debería ser necesario copiar todos los campos
 end;
-function TGenCod.CreateVar(varName, varType: string;
-         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
-{Agrega una variable a la tabla de variables.}
-var t: ttype;
-  hay: Boolean;
-  varTypeL: String;
+procedure TGenCod.bit_asig_bit;
 begin
-  //Verifica el tipo
-  hay := false;
-  varTypeL := LowerCase(varType);
-  for t in typs do begin
-    if t.name = varTypeL then begin
-       hay:=true; break;
+  if p1^.catOp <> coVariab then begin  //validación
+    GenError('Solo se puede asignar a variable.'); exit;
+  end;
+  case p2^.catOp of
+  coConst : begin
+    {Actualmente no existen constantes de tipo "Bit", ya que el número menor que se
+    reconoce es de typo byte. Por eso se define bit_asig_byte(). }
+    if p2^.valBool then begin
+      _BSF(p1^.offs, p1^.bit);
+    end else begin
+      _BCF(p1^.offs, p1^.bit);
     end;
   end;
-  if not hay then begin
-    GenError('Undefined type "%s"', [varType]);
-    exit;
+  coVariab: begin
+    _BCF(p1^.offs, p1^.bit);
+    _BTFSC(p2^.offs, p2^.bit);
+    _BSF(p1^.offs, p1^.bit);
   end;
-  Result := CreateVar(varName, t, absAdd ,absBit);
-  //puede salir con error
+  coExpres: begin  //ya está en STATUS.Z
+    if BooleanInverted then begin  //está invertido
+      _BCF(p1^.offs, p1^.bit);
+      _BTFSS(_STATUS, BooleanBit);
+      _BSF(p1^.offs, p1^.bit);
+    end else begin  //caso normal
+      _BCF(p1^.offs, p1^.bit);
+      _BTFSC(_STATUS, BooleanBit);
+      _BSF(p1^.offs, p1^.bit);
+    end;
+  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+  w.used:=false;  //No es importante lo que queda
+  //El resultado no es importante
+//  res.typ := tipBit;
+//  res.catOp:=coExpres;
+end;
+procedure TGenCod.bit_asig_byte;
+begin
+  if p1^.catOp <> coVariab then begin  //validación
+    GenError('Solo se puede asignar a variable.'); exit;
+  end;
+  case p2^.catOp of
+  coConst : begin
+    {Esta es la única opción válida, pero solo para los valores 0 y 1}
+    if p2^.valInt = 0 then begin
+      _BCF(p1^.offs, p1^.bit);
+    end else if p2^.valInt = 1 then begin
+      _BSF(p1^.offs, p1^.bit);
+    end else begin
+      GenError('Invalid value for a bit variable.'); exit;
+    end;
+  end;
+  coVariab,
+  coExpres: begin  //ya está en STATUS.Z
+    GenError('Cannot asign: (bit) := (byte).'); exit;
+  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+  w.used:=false;  //No es importante lo que queda
+end;
+procedure TGenCod.bit_not;
+var
+  mascara: byte;
+begin
+  case p1^.catOp of
+  coConst : begin
+    {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
+    p1^.valBool := not p1^.valBool;
+    res.typ := tipBit;
+    res.catOp := coConst;
+  end;
+  coVariab: begin
+    case p1^.bit of
+    0: mascara := %00000001;
+    1: mascara := %00000010;
+    2: mascara := %00000100;
+    3: mascara := %00001000;
+    4: mascara := %00010000;
+    5: mascara := %00100000;
+    6: mascara := %01000000;
+    7: mascara := %10000000;
+    end;
+    _MOVLW(mascara);
+    _ANDWF(p1^.offs, toW);   //si es cero, pone Z en 1
+    //Devuelve en Z
+    res.typ := tipBit;
+    res.catOp := coExpres;
+  end;
+//  coExpres: begin  //ya está en STATUS.Z
+//    if BooleanInverted then begin  //está invertido
+//      _BCF(p1^.offs, p1^.bit);
+//      _BTFSS(_STATUS, BooleanBit);
+//      _BSF(p1^.offs, p1^.bit);
+//    end else begin  //caso normal
+//      _BCF(p1^.offs, p1^.bit);
+//      _BTFSC(_STATUS, BooleanBit);
+//      _BSF(p1^.offs, p1^.bit);
+//    end;
+//  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+  w.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Boolean
 procedure TGenCod.bool_load;
@@ -656,7 +691,7 @@ var
   r: Tregister;
 begin
   BooleanInverted := false;  //indica que trabaja en modo normal
-  BooleanBit:=_Z;    //devolverá en Z
+  BooleanBit := _Z;    //devolverá en Z
   if catOperation  = coConst_Const then begin  //compara constantes. Caso especial
     res.valBool := (p1^.valInt = p2^.valInt);  //optimiza respuesta
     res.typ := tipBool;
@@ -1205,8 +1240,6 @@ end;
 
 procedure TGenCod.StartSyntax;
 //Se ejecuta solo una vez al inicio
-var
-  opr: TxpOperator;
 begin
   ///////////define la sintaxis del compilador
   //Tipos de tokens personalizados
@@ -1239,7 +1272,7 @@ begin
   xLex.AddIdentSpecList('if while repeat for', tkStruct);
   xLex.AddIdentSpecList('and or xor not div mod in', tkOperator);
   //tipos predefinidos
-  xLex.AddIdentSpecList('byte word boolean', tkType);
+  xLex.AddIdentSpecList('bit byte word boolean', tkType);
   //símbolos especiales
   xLex.AddSymbSpec('+',  tkOperator);
   xLex.AddSymbSpec('-',  tkOperator);
@@ -1271,14 +1304,20 @@ begin
   //define bloques de sintaxis
 //  xLex.AddBlock('{','}');
   xLex.Rebuild;   //es necesario para terminar la definición
-
-  //Define métodos w usar
+end;
+procedure TGenCod.DefCompiler;
+var
+  opr: TxpOperator;
+begin
+  //Define métodos a usar
   OnExprStart := @expr_start;
   OnExprEnd := @expr_End;
 
   ///////////Crea tipos y operaciones
   ClearTypes;
   typNull := CreateType('null',t_boolean,-1);
+  //tipo bit
+  tipBit :=CreateType('bit',t_uinteger,-1);   //de 1 bit
   //tipo booleano
   tipBool :=CreateType('boolean',t_boolean,-1);   //de 1 bit
   //tipo numérico de un solo byte
@@ -1286,12 +1325,18 @@ begin
   //tipo numérico de dos byte
   tipWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
 
-  //////// Operaciones con Boolean ////////////
   {Los operadores deben crearse con su precedencia correcta}
+  //////// Operaciones con Boolean ////////////
   tipBool.OperationLoad:=@bool_load;
   opr:=tipBool.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(tipBool,@bool_asig_bool);
+  //////// Operaciones con Bit ////////////
+  tipBit.OperationLoad:=@bit_load;
+  opr:=tipBit.CreateBinaryOperator(':=',2,'asig');  //asignación
+  opr.CreateOperation(tipBit, @bit_asig_bit);
+  opr.CreateOperation(tipByte, @bit_asig_byte);
 
+  opr:=tipBit.CreateUnaryPreOperator('NOT', 6, 'not', @bit_not);
   {Precedencia de operadores en Pascal
 6)    ~, not, signo "-"   (mayor precedencia)
 5)    *, /, div, mod, and, shl, shr, &
@@ -1333,6 +1378,7 @@ begin
   opr.CreateOperation(tipByte,@word_suma_byte);
 
 end;
+
 procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}
 var
@@ -1359,6 +1405,20 @@ begin
   f.CreateParam('',tipByte);
   f := CreateSysFunction('Dec', tipByte, @fun_Dec_word);
   f.CreateParam('',tipWord);
+end;
+
+procedure SetLanguage(lang: string);
+begin
+  case lang of
+  'en': begin
+    dicClear;  //it's yet in English
+  end;
+  'es': begin
+    //Update messages
+    dicSet('Not implemented.', 'No implementado.');
+    dicSet('Invalid value for a bit variable.', 'Valor inválido para una variable bit');
+  end;
+  end;
 end;
 end.
 

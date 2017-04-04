@@ -64,92 +64,59 @@ function HayError: boolean;
 begin
   Result := cxp.HayError;
 end;
-{function CreateVar(const varName: string; typ: ttype): TxpEleVar;
-begin
-  Result := cxp.CreateVar(varName, typ);
-end;}
 //Métodos OVERRIDE
 procedure TCompiler.TipDefecNumber(var Op: TOperand; toknum: string);
 {Procesa constantes numéricas, ubicándolas en el tipo de dato apropiado (byte, word, ... )
- Si no logra ubicar el tipo de número, o no puede leer su valro, generará  un error.}
+ Si no logra ubicar el tipo de número, o no puede leer su valor, generará  un error.}
 var
   n: int64;   //para almacenar a los enteros
-  f: extended;  //para almacenar a reales
-  i: Integer;
-  menor: Integer;
-  imen: integer;
+//  f: extended;  //para almacenar a reales
 begin
   if pos('.',toknum) <> 0 then begin  //es flotante
     Op.catTyp := t_float;   //es flotante
-    try
-      f := StrToFloat(toknum);  //carga con la mayor precisión posible
-    except
-      Op.typ := nil;
-      GenError('Unvalid float number.');
-      exit;
-    end;
-    //busca el tipo numérico más pequeño que pueda albergar a este número
-    Op.size := 4;   //se asume que con 4 bytes bastará
-    {Aquí se puede decidir el tamaño de acuerdo a la cantidad de decimales indicados}
-
-    Op.valFloat := f;  //debe devolver un extended
-    menor := 1000;
-    for i:=0 to typs.Count-1 do begin
-      { TODO : Se debería tener una lista adicional TFloatTypes, para acelerar la
-      búsqueda}
-      if (typs[i].cat = t_float) and (typs[i].size>=Op.size) then begin
-        //guarda el menor
-        if typs[i].size < menor then  begin
-           imen := i;   //guarda referencia
-           menor := typs[i].size;
-        end;
-      end;
-    end;
-    if menor = 1000 then  //no hubo tipo
-      Op.typ := nil
-    else  //encontró
-      Op.typ:=typs[imen];
-
+    GenError('Unvalid float number.');  //No hay soporte aún para flotantes
+//    try
+//      f := StrToFloat(toknum);  //carga con la mayor precisión posible
+//    except
+//      Op.typ := nil;
+//      GenError('Unvalid float number.');
+//      exit;
+//    end;
+//    //busca el tipo numérico más pequeño que pueda albergar a este número
+//    Op.size := 4;   //se asume que con 4 bytes bastará
+//    {Aquí se puede decidir el tamaño de acuerdo a la cantidad de decimales indicados}
+//
+//    Op.valFloat := f;  //debe devolver un extended
+//    menor := 1000;
+//    for i:=0 to typs.Count-1 do begin
+//      { TODO : Se debería tener una lista adicional TFloatTypes, para acelerar la
+//      búsqueda}
+//      if (typs[i].cat = t_float) and (typs[i].size>=Op.size) then begin
+//        //guarda el menor
+//        if typs[i].size < menor then  begin
+//           imen := i;   //guarda referencia
+//           menor := typs[i].size;
+//        end;
+//      end;
+//    end;
+//    if menor = 1000 then  //no hubo tipo
+//      Op.typ := nil
+//    else  //encontró
+//      Op.typ:=typs[imen];
+//
   end else begin     //es entero
     Op.catTyp := t_uinteger;   //es entero sin signo
-    //verificación de longitud de entero
-    if toknum[1] = '$' then begin
-      //formato hexadecimal
-      { TODO : Una verificación más precisa debería considerar hasta 64 bits y quitar los posibles ceros delante o intentar convertir y capturar el error. }
-      if length(toknum)>9 then begin  //protege antes de intentar convertirlo
-        GenError('Very large number. Cannot process.');
-      end;
-    end else if toknum[1] = '%' then begin
-      //formato binario
-      if length(toknum)>33 then begin  //protege antes de intentar convertirlo
-        GenError('Very large number. Cannot process.');
-      end;
-    end else begin
-      //formato decimal
-      if length(toknum)>=19 then begin  //solo aquí puede haber problemas
-        if toknum[1] = '-' then begin  //es negativo
-          if length(toknum)>20 then begin
-            GenError('Very large number. Cannot process.');
-            exit
-          end else if (length(toknum) = 20) and  (toknum > '-9223372036854775808') then begin
-            GenError('Very large number. Cannot process.');
-            exit
-          end;
-        end else begin  //es positivo
-          if length(toknum)>19 then begin
-            GenError('Very large number. Cannot process.');
-            exit
-          end else if (length(toknum) = 19) and  (toknum > '9223372036854775807') then begin
-            GenError('Very large number. Cannot process.');
-            exit
-          end;
-        end;
-      end;
+    //Intenta convertir la cadena. Notar que se reconocen los formatos $FF y %0101
+    if not TryStrToInt64(toknum, n) then begin
+      //Si el lexer ha hecho bien su trabajo, esto solo debe pasar, cuando el
+      //número tiene muhcos dígitos.
+      GenError('Error in number.');
+      exit;
     end;
-    //conversión. aquí ya no debe haber posibilidad de error, excepto por tamaño
-    n := StrToInt64(toknum);
     Op.valInt := n;   //copia valor de constante entera
-    if (n>= 0) and  (n<=255) then begin
+    {Asigna un tipo, de acuerdo al rango. Notar que el tipo más pequeño, usado
+    es el byte, y no el bit.}
+    if (n>=0) and  (n<=255) then begin
       Op.size := 1;
       Op.typ := tipByte;
     end else if (n>= 0) and  (n<=65535) then begin
@@ -350,7 +317,7 @@ var
     end;
     cIn.Next;    //Pasa al siguiente
   end;
-  procedure CheckAbsolute(var IsAbs: boolean; const IsBoolean: boolean);
+  procedure CheckAbsolute(var IsAbs: boolean; const IsBit: boolean);
   {Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
   pone "IsAbs" en TRUE y actualiza los valores "absAdrr" y "absBit". }
   var
@@ -371,7 +338,7 @@ var
       if Number.catTyp = t_float then begin
         //Caso especial porque el puede ser el formato <dirección>.<bit> que es
         //totalmenet válido, y el lexer lo captura como un solo token.
-        if IsBoolean then begin
+        if IsBit then begin
           //Puede ser válido el número "decimal", hay que extraer los campos,
           //pero primero hay que asegurarnos que no tenga notación exponencial.
           if (pos('e', cIn.tok)<>0) or (pos('E', cIn.tok)<>0) then begin
@@ -414,7 +381,7 @@ var
           exit;
         end;
         cIn.Next;    //Pasa al siguiente
-        if IsBoolean then begin
+        if IsBit then begin
           CheckAbsoluteBit;  //es un boolean, debe especificarse el bit
           if pErr.HayError then exit;  //verifica
         end;
@@ -429,7 +396,7 @@ var
         exit;
       end;
       cIn.Next;    //Pasa al siguiente
-      if IsBoolean then begin
+      if IsBit then begin
         CheckAbsoluteBit;  //es un boolean, debe especificarse el bit
         if pErr.HayError then exit;  //verifica
       end;
@@ -444,6 +411,7 @@ var
   varNames: array of string;  //nombre de variables
   tmp: String;
   isAbsolute: Boolean;
+  typ: TType;
 begin
   setlength(varNames,0);  //inicia arreglo
   //procesa variables a,b,c : int;
@@ -464,15 +432,21 @@ begin
     varType := cIn.tok;   //lee tipo
     cIn.Next;
     cIn.SkipWhites;
+    //Valida el tipo
+    typ := FindType(varType);
+    if typ = nil then begin
+      GenError('Undefined type "%s"', [varType]);
+      exit;
+    end;
     //verifica si tiene dirección absoluta
-    CheckAbsolute(isAbsolute, LowerCase(varType) = 'boolean');
+    CheckAbsolute(isAbsolute, (typ = tipBool) or (typ = tipBit) );
     if Perr.HayError then exit;
     //reserva espacio para las variables
     for tmp in varNames do begin
       if isAbsolute then  //crea en posición absoluta
-        CreateVar(tmp, varType, absAdrr, absBit)
+        CreateVar(tmp, typ, absAdrr, absBit)
       else
-        CreateVar(tmp, varType);
+        CreateVar(tmp, typ);
       if Perr.HayError then exit;
     end;
   end else begin
@@ -1078,14 +1052,17 @@ var
 begin
   tmp := '';
   for v in TreeElems.AllVars do begin
-    dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
-    if v.typ = tipBool then begin
+    if (v.typ = tipBool) or (v.typ = tipBit) then begin
+      dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3) + '.' + IntToStr(v.bit);
       tmp += ' ' + v.name + ' Db ' +  dir + LineEnding;
     end else if v.typ = tipByte then begin
+      dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
       tmp += ' ' + v.name + ' DB ' +  dir + LineEnding;
     end else if v.typ = tipWord then begin
+      dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
       tmp += ' ' + v.name + ' DW ' +  dir + LineEnding;
     end else begin
+      dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
       tmp += ' "' + v.name + '"->' +  dir + LineEnding;
     end;
   end;
@@ -1130,6 +1107,7 @@ begin
   DefLexDirectiv;
   cIn.OnNewLine:=@cInNewLine;
   StartSyntax;   //Debe hacerse solo una vez al inicio
+  DefCompiler;   //Debe hacerse solo una vez al inicio
   InitAsm(pic, self);   //inicia el procesamiento de ASM
 end;
 destructor TCompiler.Destroy;
@@ -1152,10 +1130,8 @@ begin
     dicSet('Identifier expected.', 'Identificador esperado.');
     dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
     dicSet('Unvalid float number.', 'Número decimal no válido.');
-    dicSet('Very large number. Cannot process.', 'Número muy grande. No se puede procesar. ');
+    dicSet('Error in number.', 'Error en número');
     dicSet('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.');
-    dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
-    dicSet('RAM memory is full.', 'Memoria RAM agotada.');
     dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
     dicSet('"." expected.', 'Se esperaba "."');
     dicSet('Invalid memory address.', 'Dirección de memoria inválida.');

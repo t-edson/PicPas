@@ -15,8 +15,7 @@ unit XpresParserPIC;
 interface
 uses
   Classes, SysUtils, Forms, LCLType, lclProc, SynEditHighlighter,
-  SynFacilHighlighter, XpresBas, XpresTypes, XpresElementsPIC,
-  MisUtils;
+  SynFacilHighlighter, XpresBas, XpresTypes, XpresElementsPIC, MisUtils;
 
 type
 { TOperand }
@@ -89,6 +88,7 @@ protected  //Eventos del compilador
   //Manejo de tipos
   procedure ClearTypes;
   function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
+  function FindType(TypName: string): TType;
   //Manejo de funciones
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
   //  procedure CreateFunction(funName, varType: string);
@@ -108,6 +108,7 @@ protected  //Eventos del compilador
 public
   TreeElems: TXpTreeElements; //tablas de elementos del lenguaje
 private
+  typs   : TTypes;       //lista de tipos (El nombre "types" ya está reservado)
   function GetExpressionCore(const prec: Integer): TOperand;
   procedure Evaluar(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
   procedure EvaluarPre(var Op1: TOperand; opr: TxpOperator);
@@ -134,7 +135,6 @@ public
   ejecProg: boolean;   //Indica que se está ejecutando un programa o compilando
   DetEjec: boolean;   //para detener la ejecución (en intérpretes)
 
-  typs   : TTypes;       //lista de tipos (El nombre "types" ya está reservado)
   func0  : TxpEleFun;      //función interna para almacenar parámetros
   p1, p2 : ^TOperand;    //Pasa los operandos de la operación actual
   res    : TOperand;    //resultado de la evaluación de la última expresión.
@@ -216,7 +216,7 @@ end;
 function TCompilerBase.EOExpres: boolean; inline;
 //Indica si se ha llegado al final de una expresión.
 begin
-  Result := cIn.tok = ';';  //en este caso de ejemplo, usamos putno y coma
+  Result := cIn.tok = ';';  //en este caso de ejemplo, usamos punto y coma
   {En la práctica, puede ser conveniente definir un tipo de token como "tkExpDelim", para
    mejorar el tiempo de respuesta del procesamiento, de modo que la condición sería:
      Result := cIn.tokType = tkExpDelim;
@@ -256,16 +256,16 @@ begin
   typs.Clear;
 end;
 function TCompilerBase.CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
-//Crea una nueva definición de tipo en el compilador. Devuelve referencia al tipo recien creado
-var r: TType;
-  i: Integer;
+{Crea una nueva definición de tipo en el compilador. Devuelve referencia al tipo recien
+creado. El nombre del tipo, debe darse en minúscula, porque así se hará la búsqueda. con
+FindType().}
+var
+  r: TType;
 begin
   //verifica nombre
-  for i:=0 to typs.Count-1 do begin
-    if typs[i].name = nom0 then begin
-      GenError('Unknown type identifier.');
-      exit;
-    end;
+  if FindType(nom0) <> nil then begin
+    GenError('Duplicated identifier: "%s"', [nom0]);
+    exit;
   end;
   //configura nuevo tipo
   r := TType.Create;
@@ -275,6 +275,17 @@ begin
   //agrega
   typs.Add(r);
   Result:=r;   //devuelve índice al tipo
+end;
+function TCompilerBase.FindType(TypName: string): TType;
+{Busca un tipo, por su nombre. Si no encuentra, devuelve NIL.}
+var
+  t: TType;
+begin
+  TypName := LowerCase(TypName);
+  for t in typs do begin
+    if t.name = TypName then exit(t);
+  end;
+  exit(nil)
 end;
 //Manejo de funciones
 function TCompilerBase.CreateFunction(funName: string; typ: ttype;
@@ -348,23 +359,16 @@ procedure TCompilerBase.CreateParam(fun: TxpEleFun; parName: string;
   typStr: string);
 //Crea un parámetro para una función
 var
-  hay: Boolean;
-  typStrL: String;
-  t : TType;
+  typ : TType;
 begin
   //busca tipo
-  typStrL := LowerCase(typStr);
-  for t in typs do begin
-    if t.name = typStrL then begin
-       hay:=true; break;
-    end;
-  end;
-  if not hay then begin
+  typ := FindType(typStr);
+  if typ = nil then begin
     GenError('Undefined type "%s"', [typStr]);
     exit;
   end;
   //agrega
-  fun.CreateParam(parName, t);
+  fun.CreateParam(parName, typ);
 end;
 procedure TCompilerBase.CaptureParams;
 //Lee los parámetros de una función en la función interna funcs[0]
@@ -411,8 +415,11 @@ var
   xcon: TxpEleCon;
   xvar: TxpEleVar;
   xfun: TxpEleFun;
-  tmp: String;
+  tmp, oprTxt: String;
   ele: TxpElement;
+  Op: TOperand;
+  posAct: TPosCont;
+  opr: TxpOperator;
 begin
   PErr.Clear;
   SkipWhites;
@@ -500,7 +507,7 @@ begin
      end;
     cIn.Next;    //Pasa al siguiente
 }
-{  end else if cIn.tokType = tkOperator then begin
+  end else if cIn.tokType = tkOperator then begin
     {Si sigue un operador puede ser un operador Unario.
     El problema que tenemos, es que no sabemos de antemano el tipo, para saber si el
     operador aplica a ese tipo como operador Unario Pre. Así que asumiremos que es así,
@@ -520,7 +527,7 @@ begin
     end;
     //Sí corresponde. Así que apliquémoslo
     EvaluarPre(Op, opr);
-    Result := res;}
+    Result := res;
   end else begin
     //No se reconoce el operador
     GenError('Operand expected.');
@@ -937,7 +944,6 @@ begin
   'es': begin
     //Update messages
     dicSet('Not implemented.', 'No implementado');
-    dicSet('Unknown type identifier.', 'Identificador de tipo duplicado.');
     dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
     dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
     dicSet('";" expected.', 'Se esperaba ";"');

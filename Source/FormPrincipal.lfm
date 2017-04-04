@@ -14,7 +14,7 @@ object frmPrincipal: TfrmPrincipal
   OnDestroy = FormDestroy
   OnDropFiles = FormDropFiles
   OnShow = FormShow
-  LCLVersion = '1.4.2.0'
+  LCLVersion = '1.6.2.0'
   inline edPas: TSynEdit
     Left = 0
     Height = 385

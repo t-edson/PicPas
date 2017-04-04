@@ -161,12 +161,15 @@ begin
   ListBox1.OnDrawItem:=@ListBox1DrawItem;
   //configuración del editor
   edit := TSynFacilEditor.Create(edPas, 'SinNombre', 'pas');
+  edPas.Options:=[eoBracketHighlight];  //quita la línea vertical
   edPas.Options := edPas.Options - [eoSmartTabs];
   edPas.Options := edPas.Options - [eoTrimTrailingSpaces];
   edPas.Options := edPas.Options + [eoKeepCaretX];
+  edPas.Options := edPas.Options + [eoTabIndent];  //permite indentar con <Tab>
   edPas.Options2:= edPas.Options2 + [eoCaretSkipTab];
   edPas.TabWidth:= 2;
   edPas.OnSpecialLineMarkup:=@edSpecialLineMarkup;
+//  InicEditorC1(edpas);
 
   edit.OnChangeEditorState:=@ChangeEditorState;
   edit.OnChangeFileInform:=@editChangeFileInform;
@@ -200,7 +203,8 @@ begin
   edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
   frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
   //carga archivo de ejemplo
-  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
+//  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
+  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin

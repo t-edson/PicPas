@@ -1,13 +1,13 @@
-{Unidad que agrega campos necesarios a la clase TCompilerBase, para la geenración de
+{Unidad que agrega campos necesarios a la clase TCompilerBase, para la generación de
 código con el PIC16F.}
 unit GenCodPic;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, XPresParserPIC, Pic16Utils;
+  Classes, SysUtils, XPresParserPIC, XpresElementsPIC, Pic16Utils, XpresTypes,
+  MisUtils;
 type
   TGenCodPic = class(TCompilerBase)
-  private
   protected
     pic : TPIC16;    //objeto PIC de la serie 16
     curBank: Byte;   //Banco RAM actual
@@ -53,6 +53,13 @@ type
     procedure _XORWF(const f: byte; d: TPIC16destin);
     function _PC: word;
     function _CLOCK: integer;
+  protected  //Manejo de variables
+    {Estas rutinas estarían emjor ubicadas en TCompilerBase, pero como dependen del
+    objeto "pic", se colocan mejor aquí.}
+    function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
+      absBit: integer=-1): TxpEleVar;
+    function CreateVar(varName, varType: string; absAdd: integer=-1; absBit: integer
+      =-1): TxpEleVar;
   end;
 const
   //constantes útiles para ensamblador
@@ -335,6 +342,101 @@ function TGenCodPic._CLOCK: integer; inline;
 {Devuelve la frecuencia de reloj del PIC}
 begin
   Result := pic.frequen;
+end;
+//Manejo de variables
+function TGenCodPic.CreateVar(const varName: string; typ: ttype;
+         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
+{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
+ "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
+var
+  r   : TxpEleVar;
+  i   : Integer;
+  offs, bnk, bit : byte;
+begin
+  //busca espacio para ubicarla
+  if absAdd=-1 then begin
+    //caso normal
+    if typ.size<0 then begin
+      //Se asume que se están pidiendo bits
+      if typ.size<>-1 then begin   //por ahora se soporta 1 bit
+        GenError('Size of data not supported.');
+        exit;
+      end;
+      if not pic.GetFreeBit(offs, bnk, bit) then begin
+        GenError('RAM memory is full.');
+        exit;
+      end;
+    end else begin
+      //Se asume que se están pidiendo bytes
+      if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
+        GenError('RAM memory is full.');
+        exit;
+      end;
+    end;
+  end else begin
+    //se debe crear en una posición absoluta
+    pic.AbsToBankRAM(absAdd, offs, bnk);   //convierte dirección
+    if absBit<>-1 then bit := absBit;      //para los bits no hay transformación
+  end;
+  //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
+  if typ.size = 1 then begin
+    //Es un simple byte
+    pic.SetNameRAM(offs,bnk, varName);
+  end else if typ.size = -1 then begin
+    //Es un boolean o bit. No pone nombre, porque varias variables pueden compartir este byte.
+//    pic.SetNameRAM(offs,bnk, '_map');   //no tiene nombre único
+  end else begin
+    //Se asume que la variable ha sido entregada con posiciones consecutivas
+    for i:=0 to typ.size -1 do
+      pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
+  end;
+  //registra variable en la tabla
+  r := TxpEleVar.Create;
+  r.name:=varName;
+  r.typ := typ;   //fija  referencia a tipo
+  r.offs := offs;
+  r.bank := bnk;
+  r.bit  := bit;
+  if not TreeElems.AddElement(r) then begin
+    GenError('Duplicated identifier: "%s"', [varName]);
+    exit;
+  end;
+  Result := r;
+  //Ya encontró tipo, llama a evento
+  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
+end;
+function TGenCodPic.CreateVar(varName, varType: string;
+         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
+{Agrega una variable a la tabla de variables.}
+var
+  typ: ttype;
+  varTypeL: String;
+begin
+  //Verifica el tipo
+  varTypeL := LowerCase(varType);
+  typ := FindType(varTypeL);
+  if typ = nil then begin
+    GenError('Undefined type "%s"', [varType]);
+    exit;
+  end;
+  Result := CreateVar(varName, typ, absAdd ,absBit);
+  //puede salir con error
+end;
+
+procedure SetLanguage(lang: string);
+begin
+  case lang of
+  'en': begin
+    dicClear;  //it's yet in English
+  end;
+  'es': begin
+    //Update messages
+    dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
+    dicSet('RAM memory is full.', 'Memoria RAM agotada.');
+    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
+    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
+  end;
+  end;
 end;
 
 end.
