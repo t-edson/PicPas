@@ -8,7 +8,8 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, FormPrincipal, FormConfig, Parser, globales, ProcAsm, FormPICExplorer,
-  FrameCfgIDE, xpreselementsPIC, FormCodeExplorer, GenCod, GenCodPic;
+  FrameCfgIDE, xpreselementsPIC, FormCodeExplorer, GenCod, GenCodPic,
+  XpresParserPIC;
 
 {$R *.res}
 

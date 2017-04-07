@@ -71,24 +71,28 @@ type
       iFlashTmp  : integer;   //almacenamiento temporal para pic.iFlash
       Traslape   : boolean;   //bandera de traslape
       procedure callFunct(fun: TxpEleFun);
-    private
+    private //operaciones con Bit
       procedure bit_load;
-      procedure bit_asig_bit;
-      procedure bit_asig_byte;
-      procedure bit_not;
+      procedure Oper_bit_asig_bit;
+      procedure Oper_bit_asig_byte;
+      procedure Oper_bit_and_bit;
+      procedure Oper_bit_not;
+    private //operaciones con boolean
       procedure bool_load;
-      procedure bool_asig_bool;
-      procedure byte_and_byte;
-      procedure byte_asig_byte;
-      procedure byte_difer_byte;
-      procedure byte_igual_byte;
-      procedure byte_load;
+      procedure Oper_bool_asig_bool;
+    private  //operaciones con byte
       procedure byte_OnPush(const OpPtr: pointer);
+      procedure byte_load;
       procedure byte_oper_byte(const InstLW, InstWF: TPIC16Inst);
-      procedure byte_or_byte;
-      procedure byte_resta_byte;
-      procedure byte_suma_byte;
-      procedure byte_xor_byte;
+      procedure Oper_byte_asig_byte;
+      procedure Oper_byte_sub_byte;
+      procedure Oper_byte_add_byte;
+      procedure Oper_byte_and_byte;
+      procedure Oper_byte_or_byte;
+      procedure Oper_byte_xor_byte;
+      procedure Oper_byte_igual_byte;
+      procedure Oper_byte_difer_byte;
+    private
       procedure codif_1mseg;
       procedure codif_delay_ms(const fun: TxpEleFun);
       procedure expr_end(isParam: boolean);
@@ -158,7 +162,9 @@ var
   _H, _L : Tregister;  //registros de trabajo adicionales, para cálculos
   //Variables de estado de las expresiones booleanas
   BooleanInverted : boolean;  //indica que la lógica del bit de salida está invertida
-  BooleanBit : 0..7;          //indica el bit que se devuelve el resultado booleano (Z o C)
+  BooleanBit : 0..7;          {Indica el bit de STATUS, que se usa, para devolver el
+                               resultado de una expresión booleana o de bit.(Z o C). Por
+                               lo general, estará siempre en 2= Z.}
 
 implementation
 
@@ -296,6 +302,9 @@ end;
 procedure TGenCod.expr_start;
 //Se ejecuta siempre al StartSyntax el procesamiento de una expresión
 begin
+  //Inicia banderas de estado para empezar a calcular una expresión
+  BooleanInverted := false; //indica que trabaja en modo normal
+  BooleanBit := _Z;         //por defecto, se trabaja con Z
   if exprLevel=1 then begin //es el primer nivel
 //    Code('  ;expres');
     w.used:=false;   //inicia con el registro libre
@@ -339,6 +348,19 @@ begin
   end;
   w.used := true;   //Lo marca como indicando que se va a ocupar
 end;
+procedure TGenCod.ReserveZ;
+{Indica que se va a utilizar la bandera Z. De encontrarse ocupado,
+se pondrá en la pila. Si no hay espacio, genera error}
+var
+  r: Tregister;
+begin
+  if w.used then begin
+    //Está ocupado. Usa espacio temporal para almacenar
+    if not GetByte(r) then exit;  //pide un byte en RAM
+    _MOVWF(r.offs);  //mueve acumulador a "pila"
+  end;
+  w.used := true;   //Lo marca como indicando que se va a ocupar
+end;
 procedure TGenCod.ReserveH;
 {Indica que se va a utilizar el par de registros (_H,W). De encontrarse ocupado,
 se pondrá en la pila. Si no hay espacio, genera error.
@@ -363,7 +385,7 @@ begin
   ya se generó el código. }
   res := p1^;   //No debería ser necesario copiar todos los campos
 end;
-procedure TGenCod.bit_asig_bit;
+procedure TGenCod.Oper_bit_asig_bit;
 begin
   if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
@@ -371,7 +393,7 @@ begin
   case p2^.catOp of
   coConst : begin
     {Actualmente no existen constantes de tipo "Bit", ya que el número menor que se
-    reconoce es de typo byte. Por eso se define bit_asig_byte(). }
+    reconoce es de typo byte. Por eso se define Oper_bit_asig_byte(). }
     if p2^.valBool then begin
       _BSF(p1^.offs, p1^.bit);
     end else begin
@@ -402,7 +424,7 @@ begin
 //  res.typ := tipBit;
 //  res.catOp:=coExpres;
 end;
-procedure TGenCod.bit_asig_byte;
+procedure TGenCod.Oper_bit_asig_byte;
 begin
   if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
@@ -427,7 +449,66 @@ begin
   end;
   w.used:=false;  //No es importante lo que queda
 end;
-procedure TGenCod.bit_not;
+procedure TGenCod.Oper_bit_and_bit;
+begin
+    case catOperation of
+    coConst_Const: begin  //suma de dos constantes. Caso especial
+      res.valBool := p1^.valInt and p2^.valInt;  //optimiza respuesta
+      res.typ := tipBit;
+      res.catOp:=coConst;
+      //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
+      exit;  //sale aquí, porque es un caso particular
+    end
+    coConst_Variab: begin
+      ReserveW; if HayError then exit;   //pide Z
+      _MOVLW(p1^.valInt);
+      _BANKSEL(p2^.bank);
+      CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
+    end;
+    coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+      //ReserveW; if HayError then exit;
+      CodAsmK(InstLW, p1^.valInt);  //deja en W
+    end;
+    coVariab_Const: begin
+      ReserveW; if HayError then exit;
+      _MOVLW(p2^.valInt);
+      _BANKSEL(p1^.bank);
+      CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
+    end;
+    coVariab_Variab:begin
+      ReserveW; if HayError then exit;
+      _BANKSEL(p2^.bank);
+      _MOVF(p2^.offs, toW);
+      _BANKSEL(p1^.bank);
+      CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
+    end;
+    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+      //ReserveW; if HayError then exit;
+      _BANKSEL(p1^.bank);
+      CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
+    end;
+    coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+      //ReserveW; if HayError then exit;
+      CodAsmK(InstLW, p2^.valInt);  //deja en W
+    end;
+    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+      //ReserveW; if HayError then exit;
+      _BANKSEL(p2^.bank);
+      CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
+    end;
+    coExpres_Expres:begin
+      //la expresión p1 debe estar salvada y p2 en el acumulador
+      FreeByte(r);   //libera pila porque se usará el dato ahí contenido
+      _BANKSEL(r.bank);
+      CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    end;
+    end;
+    //caso de salida más general
+    res.typ := tipByte;   //el resultado será siempre entero
+    res.catOp:=coExpres; //por defecto generará una expresión
+    w.used:=true;        //se está usando el acumulador
+end;
+procedure TGenCod.Oper_bit_not;
 var
   mascara: byte;
 begin
@@ -454,18 +535,12 @@ begin
     //Devuelve en Z
     res.typ := tipBit;
     res.catOp := coExpres;
+    BooleanInverted := false; //se usa lógica normal.
   end;
-//  coExpres: begin  //ya está en STATUS.Z
-//    if BooleanInverted then begin  //está invertido
-//      _BCF(p1^.offs, p1^.bit);
-//      _BTFSS(_STATUS, BooleanBit);
-//      _BSF(p1^.offs, p1^.bit);
-//    end else begin  //caso normal
-//      _BCF(p1^.offs, p1^.bit);
-//      _BTFSC(_STATUS, BooleanBit);
-//      _BSF(p1^.offs, p1^.bit);
-//    end;
-//  end;
+  coExpres: begin  //ya está en STATUS.Z
+    //No cambiamos su valor, sino su significado.
+    BooleanInverted := not BooleanInverted;
+  end;
   else
     GenError('Not implemented.'); exit;
   end;
@@ -479,7 +554,7 @@ begin
   ya se generó el código. }
   res := p1^;   //No debería ser necesario copiar todos los campos
 end;
-procedure TGenCod.bool_asig_bool;
+procedure TGenCod.Oper_bool_asig_bool;
 begin
   if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
@@ -539,7 +614,7 @@ begin
   ya se generó el código. }
   res := p1^;   //No debería ser necesario copiar todos los campos
 end;
-procedure TGenCod.byte_asig_byte;
+procedure TGenCod.Oper_byte_asig_byte;
 begin
   if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
@@ -626,7 +701,7 @@ begin
   res.catOp:=coExpres; //por defecto generará una expresión
   w.used:=true;        //se está usando el acumulador
 end;
-procedure TGenCod.byte_suma_byte;
+procedure TGenCod.Oper_byte_add_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt+p2^.valInt;  //optimiza respuesta
@@ -638,7 +713,7 @@ begin
   end else  //caso general
     byte_oper_byte(ADDLW, ADDWF);
 end;
-procedure TGenCod.byte_resta_byte;
+procedure TGenCod.Oper_byte_sub_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt-p2^.valInt;  //optimiza respuesta
@@ -650,7 +725,7 @@ begin
   end else  //caso general
     byte_oper_byte(SUBLW, SUBWF);
 end;
-procedure TGenCod.byte_and_byte;
+procedure TGenCod.Oper_byte_and_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt and p2^.valInt;  //optimiza respuesta
@@ -662,7 +737,7 @@ begin
   end else  //caso general
     byte_oper_byte(ANDLW, ANDWF);
 end;
-procedure TGenCod.byte_or_byte;
+procedure TGenCod.Oper_byte_or_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt or p2^.valInt;  //optimiza respuesta
@@ -674,7 +749,7 @@ begin
   end else  //caso general
     byte_oper_byte(IORLW, IORWF);
 end;
-procedure TGenCod.byte_xor_byte;
+procedure TGenCod.Oper_byte_xor_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt xor p2^.valInt;  //optimiza respuesta
@@ -686,12 +761,11 @@ begin
   end else  //caso general
     byte_oper_byte(XORLW, XORWF);
 end;
-procedure TGenCod.byte_igual_byte;
+procedure TGenCod.Oper_byte_igual_byte;
 var
   r: Tregister;
 begin
   BooleanInverted := false;  //indica que trabaja en modo normal
-  BooleanBit := _Z;    //devolverá en Z
   if catOperation  = coConst_Const then begin  //compara constantes. Caso especial
     res.valBool := (p1^.valInt = p2^.valInt);  //optimiza respuesta
     res.typ := tipBool;
@@ -752,9 +826,9 @@ begin
     //el resultado queda en _Z
   end;
 end;
-procedure TGenCod.byte_difer_byte;
+procedure TGenCod.Oper_byte_difer_byte;
 begin
-  byte_igual_byte;  //usa el mismo código
+  Oper_byte_igual_byte;  //usa el mismo código
   BooleanInverted := true;  //solo indica que la Lógica se ha invertido
 end;
 ////////////operaciones con Word
@@ -1002,22 +1076,22 @@ begin
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
       //ReserveW; if HayError then exit;
-      _movwf(_L.offs);             //guarda byte bajo
-      _movlw(p1^.HByte);      //Carga más peso del dato 1
+      _movwf(_L.offs);       //guarda byte bajo
+      _movlw(p1^.HByte);     //Carga más peso del dato 1
       _movwf(_H.offs);
-      _movlw(p1^.LByte);      //Carga menos peso del dato 1
-      _addwf(_L.offs,toW);         //Suma menos peso del dato 2, deja en W
+      _movlw(p1^.LByte);     //Carga menos peso del dato 1
+      _addwf(_L.offs,toW);   //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coVariab_Const: begin
       ReserveW; if HayError then exit;
       ReserveH; if HayError then exit;
-      _MOVF(p1^.Hoffs, toW);      //Carga más peso del dato 1
-      _movwf(_H.offs);             //Guarda el resultado
+      _MOVF(p1^.Hoffs, toW);  //Carga más peso del dato 1
+      _movwf(_H.offs);        //Guarda el resultado
       _movlw(p2^.LByte);
       _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+      _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
       _incf(_H.offs, toF);
     end;
     coVariab_Variab:begin
@@ -1329,14 +1403,16 @@ begin
   //////// Operaciones con Boolean ////////////
   tipBool.OperationLoad:=@bool_load;
   opr:=tipBool.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(tipBool,@bool_asig_bool);
+  opr.CreateOperation(tipBool,@Oper_bool_asig_bool);
   //////// Operaciones con Bit ////////////
   tipBit.OperationLoad:=@bit_load;
   opr:=tipBit.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(tipBit, @bit_asig_bit);
-  opr.CreateOperation(tipByte, @bit_asig_byte);
+  opr.CreateOperation(tipBit, @Oper_bit_asig_bit);
+  opr.CreateOperation(tipByte, @Oper_bit_asig_byte);
 
-  opr:=tipBit.CreateUnaryPreOperator('NOT', 6, 'not', @bit_not);
+  opr:=tipBit.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_bit_not);
+  opr:=tipBit.CreateBinaryOperator('+',4,'and');  //suma
+  opr.CreateOperation(tipBit,@Oper_bit_and_bit);
   {Precedencia de operadores en Pascal
 6)    ~, not, signo "-"   (mayor precedencia)
 5)    *, /, div, mod, and, shl, shr, &
@@ -1349,22 +1425,22 @@ begin
   tipByte.OperationLoad:=@byte_load;
   tipByte.OperationPush:=@byte_OnPush;
   opr:=tipByte.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(tipByte,@byte_asig_byte);
+  opr.CreateOperation(tipByte,@Oper_byte_asig_byte);
   opr:=tipByte.CreateBinaryOperator('+',4,'suma');  //suma
-  opr.CreateOperation(tipByte,@byte_suma_byte);
+  opr.CreateOperation(tipByte,@Oper_byte_add_byte);
   opr:=tipByte.CreateBinaryOperator('-',4,'resta');  //suma
-  opr.CreateOperation(tipByte,@byte_resta_byte);
+  opr.CreateOperation(tipByte,@Oper_byte_sub_byte);
   opr:=tipByte.CreateBinaryOperator('AND',5,'and');  //suma
-  opr.CreateOperation(tipByte,@byte_and_byte);
+  opr.CreateOperation(tipByte,@Oper_byte_and_byte);
   opr:=tipByte.CreateBinaryOperator('OR',4,'or');  //suma
-  opr.CreateOperation(tipByte,@byte_or_byte);
+  opr.CreateOperation(tipByte,@Oper_byte_or_byte);
   opr:=tipByte.CreateBinaryOperator('XOR',4,'xor');  //suma
-  opr.CreateOperation(tipByte,@byte_xor_byte);
+  opr.CreateOperation(tipByte,@Oper_byte_xor_byte);
 
   opr:=tipByte.CreateBinaryOperator('=',3,'igual');
-  opr.CreateOperation(tipByte,@byte_igual_byte);
+  opr.CreateOperation(tipByte,@Oper_byte_igual_byte);
   opr:=tipByte.CreateBinaryOperator('<>',3,'difer');
-  opr.CreateOperation(tipByte,@byte_difer_byte);
+  opr.CreateOperation(tipByte,@Oper_byte_difer_byte);
 
   //////// Operaciones con Word ////////////
   {Los operadores deben crearse con su precedencia correcta}

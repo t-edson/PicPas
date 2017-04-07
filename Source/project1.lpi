@@ -67,7 +67,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="12">
+    <Units Count="13">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -134,6 +134,11 @@
         <Filename Value="GenCodPic.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit11>
+      <Unit12>
+        <Filename Value="XpresParserPic.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="XpresParserPIC"/>
+      </Unit12>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
