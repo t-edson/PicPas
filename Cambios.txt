@@ -1,3 +1,10 @@
+PicPas 0.4.5
+============
+Se implementan más operaciones con el tipo "bit".
+Se cambian de nombre a las rutinas de operación del generador de código, agregándoles el prefijo 
+"Oper_".
+Se mejora considerablemente la documentación técnica.
+
 PicPas 0.4.4
 ============
 Se divide el método TGenCod.StartSyntax; en dos: TGenCod.StartSyntax() y TGenCod.DefCompiler();
