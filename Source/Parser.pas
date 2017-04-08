@@ -475,7 +475,7 @@ begin
   if cIn.tok = '=' then begin
     cIn.Next;  //pasa al siguiente
     //Debe seguir una expresióc constante, que no genere código
-    GetExpression(0);
+    GetExpressionE(0);
     if HayError then exit;
     if res.catOp <> coConst then begin
       GenError('Constant expression expected.');
@@ -632,7 +632,7 @@ var
   dg: Integer;
 begin
   l1 := _PC;        //guarda dirección de inicio
-  GetExpression(0);
+  GetExpressionE(0);
   if HayError then exit;
   if res.typ<>tipBool then begin
     GenError('Boolean expression expected.');
@@ -697,7 +697,7 @@ begin
     exit;
   end;
   cIn.Next;   //toma "until"
-  GetExpression(0);
+  GetExpressionE(0);
   if HayError then exit;
   if res.typ<>tipBool then begin
     GenError('Boolean expression expected.');
@@ -733,7 +733,7 @@ var
   dg: Integer;
   dg2: Integer;
 begin
-  GetExpression(0);
+  GetExpressionE(0);
   if HayError then exit;
   if res.typ<>tipBool then begin
     GenError('Boolean expression expected.');
@@ -855,7 +855,7 @@ begin
       end;
     end else begin
       //debe ser es una expresión
-      GetExpression(0);
+      GetExpressionE(0);
     end;
   end;
 end;

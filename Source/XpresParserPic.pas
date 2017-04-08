@@ -62,8 +62,8 @@ public
   function HByte: byte; inline;  //devuelve byte alto de valor entero
   function LByte: byte; inline;  //devuelve byte bajo de valor entero
   //campos para validar el rango de los valores
-  function CanBeWord: boolean;   //indica si cae en el rango de un WORD
   function CanBeByte: boolean;   //indica si cae en el rango de un BYTE
+  function CanBeWord: boolean;   //indica si cae en el rango de un WORD
   //métodos para mover valores desde/hacia una constante externa
   procedure CopyConsValTo(var c: TxpEleCon);
   procedure GetConsValFrom(const c: TxpEleCon);
@@ -101,7 +101,7 @@ protected  //Eventos del compilador
   function GetOperand: TOperand; virtual;
   function GetOperandPrec(pre: integer): TOperand;
   function GetOperator(const Op: Toperand): Txpoperator;
-  procedure GetExpression(const prec: Integer; isParam: boolean=false);
+  procedure GetExpressionE(const prec: Integer; isParam: boolean=false);
 //  procedure GetBoolExpression;
 //  procedure CreateVariable(const varName: string; typ: ttype);
 //  procedure CreateVariable(varName, varType: string);
@@ -109,11 +109,12 @@ public
   TreeElems: TXpTreeElements; //tablas de elementos del lenguaje
 private
   typs   : TTypes;       //lista de tipos (El nombre "types" ya está reservado)
-  function GetExpressionCore(const prec: Integer): TOperand;
-  procedure Evaluar(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
-  procedure EvaluarPre(var Op1: TOperand; opr: TxpOperator);
-  procedure EvaluarPost(var Op1: TOperand; opr: TxpOperator);
-  procedure Evaluar(var Op1: TOperand);
+  function GetExpression(const prec: Integer): TOperand;
+  //LLamadas a las rutinas de operación
+  procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
+  procedure OperPre(var Op1: TOperand; opr: TxpOperator);
+  procedure OperPost(var Op1: TOperand; opr: TxpOperator);
+  procedure Oper(var Op1: TOperand);
 public  //Referencias a los tipos predefinidos de tokens.
   tkEol     : TSynHighlighterAttributes;
   tkSymbol  : TSynHighlighterAttributes;
@@ -385,7 +386,7 @@ begin
     end;
     cin.Next;
     repeat
-      GetExpression(0, true);  //captura parámetro
+      GetExpressionE(0, true);  //captura parámetro
       if perr.HayError then exit;   //aborta
       //guarda tipo de parámetro
       func0.CreateParam('',res.typ);
@@ -488,7 +489,7 @@ begin
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tok = '(' then begin  //"("
     cIn.Next;
-    GetExpression(0);
+    GetExpressionE(0);
     Result := res;
     if PErr.HayError then exit;
     If cIn.tok = ')' Then begin
@@ -526,14 +527,14 @@ begin
       exit;
     end;
     //Sí corresponde. Así que apliquémoslo
-    EvaluarPre(Op, opr);
+    OperPre(Op, opr);
     Result := res;
   end else begin
     //No se reconoce el operador
     GenError('Operand expected.');
   end;
 end;
-procedure TCompilerBase.Evaluar(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
+procedure TCompilerBase.Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
 {Ejecuta una operación con dos operandos y un operador. "opr" es el operador de Op1.
 El resultado debe devolverse en "res". En el caso de intérpretes, importa el
 resultado de la Operación.
@@ -566,7 +567,7 @@ begin
 //   res.txt := Op1.txt + opr.txt + Op2.txt;   //texto de la expresión
 //   res.uop := opr;   //última operación ejecutada
 End;
-procedure TCompilerBase.EvaluarPre(var Op1: TOperand; opr: TxpOperator);
+procedure TCompilerBase.OperPre(var Op1: TOperand; opr: TxpOperator);
 {Ejecuta una operación con un operando y un operador unario de tipo Pre. "opr" es el
 operador de Op1.
 El resultado debe devolverse en "res".}
@@ -585,7 +586,7 @@ begin
    //Completa campos de "res", si es necesario
    {$IFDEF LogExpres} res.txt := '%';{$ENDIF}   //indica que es expresión
 end;
-procedure TCompilerBase.EvaluarPost(var Op1: TOperand; opr: TxpOperator);
+procedure TCompilerBase.OperPost(var Op1: TOperand; opr: TxpOperator);
 {Ejecuta una operación con un operando y un operador unario de tipo Post. "opr" es el
 operador de Op1.
 El resultado debe devolverse en "res".}
@@ -604,7 +605,7 @@ begin
    //Completa campos de "res", si es necesario
    {$IFDEF LogExpres} res.txt := '%';{$ENDIF}   //indica que es expresión
 end;
-procedure TCompilerBase.Evaluar(var Op1: TOperand);
+procedure TCompilerBase.Oper(var Op1: TOperand);
 {Ejecuta una operación con un solo operando, que puede ser una constante, una variable
 o la llamada a una función.
 El resultado debe devolverse en "res".
@@ -653,10 +654,10 @@ begin
 //    Result:=Op1;
   end else begin  //si está definido el operador (opr) para Op1, vemos precedencias
     If opr.prec > pre Then begin  //¿Delimitado por precedencia de operador?
-      //es de mayor precedencia, se debe evaluar antes.
+      //es de mayor precedencia, se debe Oper antes.
       Op2 := GetOperandPrec(pre);  //toma el siguiente operando (puede ser recursivo)
       if pErr.HayError then exit;
-      Evaluar(Op1, opr, Op2);  //devuelve en "res"
+      Oper(Op1, opr, Op2);  //devuelve en "res"
       Result:=res;
     End else begin  //la precedencia es menor o igual, debe salir
       cIn.PosAct := pos;   //antes de coger el operador
@@ -674,7 +675,7 @@ begin
   Result := Op.typ.FindBinaryOperator(cIn.tok);
   cIn.Next;   //toma el token
 end;
-function TCompilerBase.GetExpressionCore(const prec: Integer): TOperand; //inline;
+function TCompilerBase.GetExpression(const prec: Integer): TOperand; //inline;
 {Analizador de expresiones. Esta es probablemente la función más importante del
  compilador. Procesa una expresión en el contexto de entrada llama a los eventos
  configurados para que la expresión se evalúe (intérpretes) o se compile (compiladores).
@@ -695,7 +696,7 @@ begin
   opr1 := GetOperator(Op1);
   if opr1 = nil then begin  //no sigue operador
     //Expresión de un solo operando. Lo carga por si se necesita
-    //Evaluar(Op1);
+    //Oper(Op1);
     Result:=Op1;
     exit;  //termina ejecucion
   end;
@@ -713,7 +714,7 @@ begin
       exit;
     End;
     if opr1.OperationPost<>nil then begin  //Verifica si es operación Unaria
-      EvaluarPost(Op1, opr1);
+      OperPost(Op1, opr1);
       if PErr.HayError then exit;
       Op1 := res;
       SkipWhites;
@@ -725,7 +726,7 @@ begin
     {$IFDEF LogExpres} debugln(space(ExprLevel)+' Op2='+Op2.txt); {$ENDIF}
     if pErr.HayError then exit;
     //prepara siguiente operación
-    Evaluar(Op1, opr1, Op2);    //evalua resultado en "res"
+    Oper(Op1, opr1, Op2);    //evalua resultado en "res"
     Op1 := res;
     if PErr.HayError then exit;
     SkipWhites;
@@ -734,7 +735,7 @@ begin
   end;  //hasta que ya no siga un operador
   Result := Op1;  //aquí debe haber quedado el resultado
 end;
-procedure TCompilerBase.GetExpression(const prec: Integer; isParam: boolean = false
+procedure TCompilerBase.GetExpressionE(const prec: Integer; isParam: boolean = false
     //indep: boolean = false
     );
 {Envoltura para GetExpressionCore(). Se coloca así porque GetExpressionCore()
@@ -745,14 +746,13 @@ Toma una expresión del contexto de entrada y devuelve el resultado em "res".
 "indep", indica que la expresión que se está evaluando es anidada pero es independiente
 de la expresion que la contiene, así que se puede liberar los registros o pila.
 }
-{ TODO : Para optimizar debería existir solo GetExpression() y no GetExpressionCore() }
 begin
   Inc(ExprLevel);  //cuenta el anidamiento
   {$IFDEF LogExpres}
   debugln(space(ExprLevel)+'>Inic.expr');
   {$ENDIF}
   if OnExprStart<>nil then OnExprStart;  //llama a evento
-  res := GetExpressionCore(prec);
+  res := GetExpression(prec);
   if PErr.HayError then exit;
   if OnExprEnd<>nil then OnExprEnd(isParam);    //llama al evento de salida
   {$IFDEF LogExpres}
