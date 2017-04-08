@@ -1,6 +1,6 @@
 {Sample program to blink a Led on PORTB.4}
-{$FREQUENCY 4 MHZ }
-{$PROCESSOR PIC16F877A}
+{$FREQUENCY 8 MHZ }
+{$PROCESSOR PIC16F84A}
 program BlinkLed;
 const
   HIGH = true;
@@ -14,9 +14,9 @@ begin
 //  PORTB := 0;   //init
   delay_ms(1000);  //wait
   while true do begin
-    delay_ms(500);
+    delay_ms(1000);
     pin := HIGH;
-    delay_ms(500);
+    delay_ms(1000);
     pin := LOW;
   end;
 end.

@@ -3,7 +3,18 @@ PicPas 0.4.5
 Se implementan más operaciones con el tipo "bit".
 Se cambian de nombre a las rutinas de operación del generador de código, agregándoles el prefijo 
 "Oper_".
+Se cambia de nombre a las rutinas de tipo TCompilerBase.Evaluar*, por TCompilerBase.Oper*, 
+Se cambia de nombre a TCompilerBase.GetExpression() por TCompilerBase.GetExpressionE().
+Se cambia de nombre a TCompilerBase.GetExpressionCore() por TCompilerBase.GetExpression().
+Se mueven las variables "BooleanInverted" y "BooleanBit", para que sean parte de la clase 
+TGenCod.
+Se crea el campo TGenCod.LastCatOp.
 Se mejora considerablemente la documentación técnica.
+
+PENDIENTES
+Terminar de implementar las operaciones del tipo bit.
+Revisar la implementación de la pila de memoria.
+Cambiar el esquema de trabajo. Eliminar el registro L, como registro de trabajo. 
 
 PicPas 0.4.4
 ============
@@ -14,10 +25,6 @@ Se modifica TCompiler.CompileVarDeclar() para incluir al tipo "bit".
 Se crea TCompilerBase.FindType() y se simplifican los códigos de búsqueda de tipos.
 Se mejora la rutina TCompiler.RAMusage(), para indicar el bit en las variables booleanas y bit.
 
-PENDIENTES
-Terminar de implementar las operaciones del tipo bit.
-Revisar la implementación de la pila de memoria.
-Cambiar el esquema de trabajo. Eliminar el registro L, como registro de trabajo. 
 
 PicPas 0.4.3
 ============
