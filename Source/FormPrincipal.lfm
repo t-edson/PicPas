@@ -1,12 +1,12 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 217
-  Height = 539
-  Top = 61
-  Width = 757
+  Left = 471
+  Height = 583
+  Top = 171
+  Width = 850
   AllowDropFiles = True
   Caption = 'frmPrincipal'
-  ClientHeight = 519
-  ClientWidth = 757
+  ClientHeight = 563
+  ClientWidth = 850
   Menu = MainMenu1
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
@@ -16,11 +16,10 @@ object frmPrincipal: TfrmPrincipal
   OnShow = FormShow
   LCLVersion = '1.6.2.0'
   inline edPas: TSynEdit
-    Left = 0
-    Height = 385
-    Top = 26
-    Width = 400
-    Align = alLeft
+    Left = 80
+    Height = 305
+    Top = 48
+    Width = 424
     Font.Height = -13
     Font.Name = 'Courier New'
     Font.Pitch = fpFixed
@@ -517,8 +516,8 @@ object frmPrincipal: TfrmPrincipal
   object StatusBar1: TStatusBar
     Left = 0
     Height = 23
-    Top = 496
-    Width = 757
+    Top = 540
+    Width = 850
     Panels = <    
       item
         Width = 70
@@ -544,7 +543,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 26
     Top = 0
-    Width = 757
+    Width = 850
     Caption = 'ToolBar1'
     Images = ImgActions16
     ParentShowHint = False
@@ -641,18 +640,18 @@ object frmPrincipal: TfrmPrincipal
       Action = acToolConfig
     end
   end
-  object Splitter1: TSplitter
-    Left = 400
+  object splSynTree: TSplitter
+    Left = 40
     Height = 385
-    Top = 26
+    Top = 24
     Width = 5
+    Align = alNone
   end
   inline edAsm: TSynEdit
-    Left = 405
-    Height = 385
-    Top = 26
-    Width = 352
-    Align = alClient
+    Left = 504
+    Height = 296
+    Top = 56
+    Width = 592
     Font.Height = -13
     Font.Name = 'Courier New'
     Font.Pitch = fpFixed
@@ -1146,17 +1145,17 @@ object frmPrincipal: TfrmPrincipal
   object panMessages: TPanel
     Left = 0
     Height = 79
-    Top = 417
-    Width = 757
+    Top = 461
+    Width = 850
     Align = alBottom
     ClientHeight = 79
-    ClientWidth = 757
+    ClientWidth = 850
     TabOrder = 5
     object ListBox1: TListBox
       Left = 1
       Height = 77
       Top = 1
-      Width = 755
+      Width = 848
       Align = alClient
       ItemHeight = 0
       TabOrder = 0
@@ -1166,10 +1165,17 @@ object frmPrincipal: TfrmPrincipal
     Cursor = crVSplit
     Left = 0
     Height = 6
-    Top = 411
-    Width = 757
+    Top = 455
+    Width = 850
     Align = alBottom
     ResizeAnchor = akBottom
+  end
+  object splEdPas: TSplitter
+    Left = 480
+    Height = 385
+    Top = 16
+    Width = 5
+    Align = alNone
   end
   object OpenDialog1: TOpenDialog
     left = 144

@@ -12,7 +12,8 @@ uses
   Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
   Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
   StdCtrls, LCLIntf, SynFacilUtils, SynFacilHighlighter, MisUtils, FormConfig,
-  Parser, FormPICExplorer, Globales, FormCodeExplorer, FrameCfgIDE;
+  Parser, FormPICExplorer, Globales, FormCodeExplorer, FrameSyntaxTree,
+  FrameCfgIDE;
 
 type
 
@@ -86,8 +87,9 @@ type
     OpenDialog1: TOpenDialog;
     panMessages: TPanel;
     SaveDialog1: TSaveDialog;
-    Splitter1: TSplitter;
+    splSynTree: TSplitter;
     Splitter2: TSplitter;
+    splEdPas: TSplitter;
     StatusBar1: TStatusBar;
     edPas: TSynEdit;
     ToolBar1: TToolBar;
@@ -138,6 +140,7 @@ type
   private
     edit: TSynFacilEditor;
     hlAssem : TSynFacilSyn;   //resaltador para ensamblador
+    fraSynTree: TfraSyntaxTree;  //árbol de sintaxis
     procedure ChangeAppearance;
     procedure MarcarError(nLin, nCol: integer);
     procedure VerificarError;
@@ -156,6 +159,8 @@ implementation
 
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
+  fraSynTree := TfraSyntaxTree.Create(self);
+  fraSynTree.Parent := self;
   //configura panel de mensajes
   ListBox1.Style:=lbOwnerDrawVariable;
   ListBox1.OnDrawItem:=@ListBox1DrawItem;
@@ -195,6 +200,13 @@ var
   Hay: Boolean;
   SR: TSearchRec;
 begin
+  fraSynTree.Align := alLeft;
+  splSynTree.Align := alLeft;
+  fraSynTree.Visible := true;
+  edPas.Align := alLeft;
+  splEdPas.Align := alLeft;
+  edAsm.Align := alClient;
+  //////////
   SetLanguage('en');
   edit.SetLanguage('en');
   Config.Iniciar(self, edPas, edAsm);   //necesario para poder trabajar
@@ -212,6 +224,8 @@ begin
     AddItemToMenu(mnSamples, '&'+ChangeFileExt(SR.name,''),@DoSelectSample);
     Hay := FindNext(SR) = 0;
   end;
+  //Inicia arbol de sintaxis
+  fraSynTree.Init(cxp.TreeElems);
 end;
 procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
 //Se ha seleccionado un archivo de ejemplo.

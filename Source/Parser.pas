@@ -7,7 +7,7 @@ uses
   Classes, SysUtils, lclProc, SynEditHighlighter, types,
   SynFacilHighlighter, MisUtils,
   XpresBas, XpresTypes, XpresElementsPIC, XpresParserPIC,
-  Pic16Utils, PIC16devices, Globales, ProcAsm, GenCod,
+  Pic16Utils, Pic16devices, Globales, ProcAsm, GenCod,
   GenCodPic {Por diseño, parecería que GenCodPic, no debería ccederse desde aquí};
 type
 
@@ -1067,6 +1067,11 @@ begin
     end;
   end;
   Result := tmp;
+////////////////////
+  Result := Result + '-------------------------' + LineEnding;
+  Result := Result + ReportRAMusage;
+  Result := Result + '-------------------------' + LineEnding;
+
 end;
 procedure TCompiler.DumpCode(l: TSTrings);
 begin
@@ -1102,7 +1107,6 @@ end;
 constructor TCompiler.Create;
 begin
   inherited Create;
-  pic := TPIC16.Create;
   lexDir := TSynFacilSyn.Create(nil);  //crea lexer para analzar directivas
   DefLexDirectiv;
   cIn.OnNewLine:=@cInNewLine;
@@ -1113,7 +1117,6 @@ end;
 destructor TCompiler.Destroy;
 begin
   lexDir.Destroy;
-  pic.Destroy;
   inherited Destroy;
 end;
 

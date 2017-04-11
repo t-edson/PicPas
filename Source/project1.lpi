@@ -67,7 +67,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="13">
+    <Units Count="14">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -99,12 +99,11 @@
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
-        <Filename Value="FormPicExplorer.pas"/>
+        <Filename Value="FormPICExplorer.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmPICExplorer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="FormPICExplorer"/>
       </Unit6>
       <Unit7>
         <Filename Value="frames\framecfgide.pas"/>
@@ -115,9 +114,8 @@
         <UnitName Value="FrameCfgIDE"/>
       </Unit7>
       <Unit8>
-        <Filename Value="XpresElementsPic.pas"/>
+        <Filename Value="XpresElementsPIC.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="XpresElementsPIC"/>
       </Unit8>
       <Unit9>
         <Filename Value="FormCodeExplorer.pas"/>
@@ -135,10 +133,15 @@
         <IsPartOfProject Value="True"/>
       </Unit11>
       <Unit12>
-        <Filename Value="XpresParserPic.pas"/>
+        <Filename Value="XpresParserPIC.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="XpresParserPIC"/>
       </Unit12>
+      <Unit13>
+        <Filename Value="FrameSyntaxTree.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fraSyntaxTree"/>
+        <ResourceBaseClass Value="Frame"/>
+      </Unit13>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -149,7 +152,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils 0.9;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\ConfigFrame 0.7;..\..\_Librerias\ConfigFrame 0.7\Predefined;..\..\_Librerias\PicUtils 0.5;..\..\_Librerias\Xpres-1.2;frames"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils 0.9;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\ConfigFrame 0.7;..\..\_Librerias\ConfigFrame 0.7\Predefined;..\..\_Librerias\PicUtils 0.6;..\..\_Librerias\Xpres-1.2;frames"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>
