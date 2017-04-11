@@ -1,4 +1,4 @@
-PicPas 0.4.5
+PicPas 0.4.6
 =============
 Pascal compiler for PIC microcontrollers.
 
@@ -6,9 +6,9 @@ NOTE: This compiler is still in alpha phase and has limited functionality.
 
 PicPas is a simple compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
 
-Currently, it only supports types byte, boolean and word (limited support).
+Currently, it only supports types bit, byte, boolean and word (limited support).
 
-No additional libraries or software required to compile. PicPas generates the * .hex file directly.
+No additional libraries or software required to compile. PicPas generates the *.hex file directly.
 
 It includes a simple IDE to facilitate the development of programs.
 
@@ -46,3 +46,24 @@ begin
 end.
 ```
 
+##Source Code
+
+The source code is in the folder /Source.
+
+To compile it's needed to have the followinf libraries:
+
+* SynFacilUtils
+* MisUtils
+* ConfigFrame 
+* PicUtils 
+* Xpres 
+
+All of them, must be availables. Check the versions used.
+
+To have more information about the compiler, check the Technical Documentation (Only in spanish by now).
+
+## Development
+
+PicPas is a free software (GPL license) and it's opened for the collaboration of anyone who is interested. 
+
+There is still, much work for development or documentation, so any help will be ap	preciated.

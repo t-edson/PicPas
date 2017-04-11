@@ -1,3 +1,22 @@
+PicPas 0.4.6
+============
+Se mueven las rutinas de gestión de memoria a la clase TgenCodPic.
+Se crea la unidad FrameSyntaxTree, para definir al frame para el árbol de sintaxis.
+Se implementa un árbol de sintaxis básico, y se muestra en la pantalla principal.
+Se crea el tipo TPicRegister_list y el campo  TGenCodPic.registerList, para alamcenar
+los registros de trabajo y auxiliares.
+Se cren diversas rutinas de gestión de memoria y se reemplazan las anteriores, porque
+tenína algunas fallas.
+Se cambia la rutina codif_delay_ms, para que deje de usar el registro _L.
+Se creea el método TGenCodPic.ReportRAMusage(), para generar un reporte de uso de la RAM.
+Se elimina el resgistro de trabajo _L, y se pasa a usar registros auxiliares.
+	
+PENDIENTES
+Migrar el registro _H, al nuevo tipo TPicRegister.
+Terminar de implementar las operaciones del tipo bit.
+Revisar la implementación de la pila de memoria.
+
+
 PicPas 0.4.5
 ============
 Se implementan más operaciones con el tipo "bit".
@@ -11,10 +30,6 @@ TGenCod.
 Se crea el campo TGenCod.LastCatOp.
 Se mejora considerablemente la documentación técnica.
 
-PENDIENTES
-Terminar de implementar las operaciones del tipo bit.
-Revisar la implementación de la pila de memoria.
-Cambiar el esquema de trabajo. Eliminar el registro L, como registro de trabajo. 
 
 PicPas 0.4.4
 ============
