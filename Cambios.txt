@@ -1,3 +1,33 @@
+PicPas 0.4.7
+============
+Se agregan los identificadores de funciones del sistema, como del tipo tkSysFunct, en la
+definición de la sintaxis.
+Se crea el tipo TPosExpres, para clasificar a las expresiones por su ubicación.
+Se cambia el tipo de parámetro de GetExpressionE() al nuevo tipo TPosExpres.
+Se elimina finalmente el registro _H y se pasa a usar H, de tipo TPICRegister.
+Se eliminan los tipos, estructuras, y métodos anteriores de administración de memoria.
+Se agrega la operación byte + word.
+Se corrige una llamada errónea a GetExpressionE(), por GetExpression(), en 
+TCompilerBase.GetOperand().
+Se cambian los mensajes de registro (debugln) en las expresiones para que usen Oper()
+en lugar de Eval(), ya que es así como se usa en la documentación.
+Se eliminan las llamadas a ReserveW, ReserveH y se reemplazan por llamadas a las nuevas
+rutinas de gestión de memoria.
+Se crea el campo TPicRegister.typ, y se crea el tipo TPicRegType, para clasificar a los 
+registros.
+Se crea el método TGenCodPic.CreateByteRegister().
+Se cambia de nombre a NewByteRegister() por NewAuxRegisterByte().
+Se cambia de nombre a GetUnusedByteRegister() por GetAuxRegisterByte().
+Se elimina el método GetUnusedByteRegister_NoWH().
+Se implementa el manejo de registros de pila.
+
+PENDIENTES
+Terminar de implementar las operaciones del tipo bit.
+Revisar la implementación de la pila de memoria. INcluir rutinas de validación.
+Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
+consecutivas, para variables word.
+Aún se mantiene el error del manejo de registros auxiliares, cuando se evalúa (x+1) + (x+2).
+
 PicPas 0.4.6
 ============
 Se mueven las rutinas de gestión de memoria a la clase TgenCodPic.
@@ -11,11 +41,6 @@ Se cambia la rutina codif_delay_ms, para que deje de usar el registro _L.
 Se creea el método TGenCodPic.ReportRAMusage(), para generar un reporte de uso de la RAM.
 Se elimina el resgistro de trabajo _L, y se pasa a usar registros auxiliares.
 	
-PENDIENTES
-Migrar el registro _H, al nuevo tipo TPicRegister.
-Terminar de implementar las operaciones del tipo bit.
-Revisar la implementación de la pila de memoria.
-
 
 PicPas 0.4.5
 ============
