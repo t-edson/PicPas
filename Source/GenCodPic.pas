@@ -65,7 +65,7 @@ type
   protected  //Rutinas de gestión de memoria
     //Manejo de memoria para registros
     function GetAuxRegisterByte: TPicRegister;
-    function PushByte(out reg: TPicRegister): boolean;
+    function GetStkRegisterByte: TPicRegister;
     function FreeByte(var reg: TPicRegister): boolean;
     procedure RequireW;
     procedure RequireH(preserve: boolean = true);
@@ -238,9 +238,9 @@ begin
   //No encontró ninguno libre, crea uno en memoria
   Result := NewAuxRegisterByte;  //Puede generar error
 end;
-function TGenCodPic.PushByte(out reg: TPicRegister): boolean;
+function TGenCodPic.GetStkRegisterByte: TPicRegister;
 {Pone un registro de un byte, en la pila, de modo que se pueda luego acceder con
-FreeByte(). Si hay un error, devuelve FALSE y NIL en "reg".
+FreeByte(). Si hay un error, devuelve NIL.
 Notar que esta no es una pila de memoria en el PIC, sino una emulación de pila
 en el compilador.}
 var
@@ -251,8 +251,7 @@ begin
   if stackTop>MAX_REGS_STACK then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
     GenError('Very complex expression. To simplify.');
-    reg := nil;
-    exit(false);
+    exit(nil);
   end;
   if stackTop>registerStack.Count-1 then begin
     //Apunta a una posición vacía. hay qie agregar
@@ -261,18 +260,16 @@ begin
     reg0.typ := prtStkReg;    //asigna tipo
     registerStack.Add(reg0);   //agrega a lista
     regName := 'stk'+IntToSTr(registerList.Count);
-    reg.AssignRAM(regName);   //Asigna memoria. Puede generar error.
-    if reg.MsjError<>'' then begin
-      GenError(reg.MsjError);
-      reg := nil;
-      exit(false);
+    reg0.AssignRAM(regName);   //Asigna memoria. Puede generar error.
+    if reg0.MsjError<>'' then begin
+      GenError(reg0.MsjError);
+      exit(nil);
     end;
   end;
-  reg := registerStack[stackTop];  //toma registro
-  reg.used := true;   //lo marca
+  Result := registerStack[stackTop];  //toma registro
+  Result.used := true;   //lo marca
   inc(stackTop);  //actualiza
 end;
-
 function TGenCodPic.FreeByte(var reg: TPicRegister): boolean;
 {Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
  byte pedido. Si hubo error, devuelve FALSE.
