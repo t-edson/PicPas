@@ -365,7 +365,7 @@ begin
 //    end;
 //    coExpres_Expres:begin
 //      //la expresión p1 debe estar salvada y p2 en el acumulador
-//      FreeByte(r);   //libera pila porque se usará el dato ahí contenido
+//      FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
 //      _BANKSEL(r.bank);
 //      CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
 //    end;
@@ -558,7 +558,7 @@ begin
   end;
   coExpres_Expres:begin
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    FreeByte(r);   //libera pila porque se usará el dato ahí contenido
+    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
     _BANKSEL(r.bank);
     CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
   end;
@@ -693,7 +693,7 @@ begin
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      FreeByte(r);   //libera pila porque se usará el dato ahí contenido
+      FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
       _BANKSEL(r.bank);  //verifica banco destino
       _SUBWF(r.offs, toW);  //compara directamente a lo que había en pila.
     end;
@@ -818,7 +818,7 @@ begin
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
-  end else  begin //caso general
+  end else begin //caso general
     if HayError then exit;
     case catOperation of
     coConst_Variab: begin
@@ -856,24 +856,24 @@ begin
       aux.used := false;
     end;
     coVariab_Const: begin
-      RequireResultWord;   //indica que va a usar H,W
-      _movlw(p2^.HByte);      //Carga más peso del dato 1
-      _addwf(p1^.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H.offs);             //Guarda el resultado
-      _movlw(p2^.LByte);      //Carga menos peso del dato 1
-      _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
+      RequireResultWord;      //Indica que va a usar H,W
+      _MOVLW(p2^.HByte);      //Carga más peso del dato 1
+      _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
+      _MOVWF(H.offs);         //Guarda el resultado
+      _MOVLW(p2^.LByte);      //Carga menos peso del dato 1
+      _ADDWF(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
+      _INCF(H.offs, toF);
     end;
     coVariab_Variab:begin
-      RequireResultWord;   //indica que va a usar H,W
-      _movlw(p1^.Hoffs);      //Carga más peso del dato 1
-      _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H.offs);             //Guarda el resultado
-      _movlw(p1^.Loffs);      //Carga menos peso del dato 1
-      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
+      RequireResultWord;      //Indica que va a usar H,W
+      _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
+      _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
+      _MOVWF(H.offs);         //Guarda mayor peso del resultado
+      _MOVF(p1^.Loffs, toW);  //Carga menos peso del dato 1
+      _ADDWF(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+      _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
+      _INCF(H.offs, toF);
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (spH,W)
       //No es necesario reservar (spH,W) porque existen y se están usando
@@ -914,8 +914,8 @@ begin
     coExpres_Expres:begin
       //No es necesario reservar (spH,W) porque existen y se están usando
       //Además p1 está salvado en pila y p2 en (_H,W)
-      FreeByte(spH);   //libera pila, obtiene dirección
-      FreeByte(spL);   //libera pila, obtiene dirección
+      FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
+      FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
       _movf(spH.offs, toW);      //Carga más peso del dato 1
@@ -979,11 +979,11 @@ begin
     coVariab_Const: begin
       RequireResultWord;     //Indica que va a usar H,W
       _MOVF(p1^.Hoffs, toW); //Carga más peso del dato 1
-      _movwf(H.offs);        //Guarda el resultado
-      _movlw(p2^.LByte);
-      _addwf(p1^.Loffs,toW); //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
+      _MOVWF(H.offs);        //Guarda el resultado
+      _MOVLW(p2^.LByte);
+      _ADDWF(p1^.Loffs,toW); //Suma menos peso del dato 2, deja en W
+      _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
+      _INCF(H.offs, toF);
     end;
     coVariab_Variab:begin
       RequireResultWord;   //indica que va a usar H,W
@@ -1016,8 +1016,8 @@ begin
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      FreeByte(spH);   //libera pila, obtiene dirección
-      FreeByte(spL);   //libera pila, obtiene dirección
+      FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
+      FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
       _movf(spH.offs, toW);      //Carga más peso del dato 1
       _movwf(H.offs);
       _addwf(spL.offs,toW);  //Suma menos peso del dato 2, deja en W

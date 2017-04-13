@@ -61,12 +61,11 @@ type
     function ReportRAMusage: string;
   private//Rutinas de gestión de memoria de bajo nivel
     function CreateByteRegister(RegType: TPicRegType): TPicRegister;
-    function NewAuxRegisterByte: TPicRegister;
   protected  //Rutinas de gestión de memoria
     //Manejo de memoria para registros
     function GetAuxRegisterByte: TPicRegister;
     function GetStkRegisterByte: TPicRegister;
-    function FreeByte(var reg: TPicRegister): boolean;
+    function FreeStkRegisterByte(var reg: TPicRegister): boolean;
     procedure RequireW;
     procedure RequireH(preserve: boolean = true);
     procedure RequireResultByte;
@@ -205,26 +204,12 @@ begin
   end;
   Result := reg;   //devuelve referencia
 end;
-function TGenCodPic.NewAuxRegisterByte: TPicRegister;
-{Asigna espacio en memoria y devuelve la referencia a un registro de 8 bits, en la
-memoria del PIC. Si hay error, devuelve NIL. }
+function TGenCodPic.GetAuxRegisterByte: TPicRegister;
+{Devuelve la dirección de un registro de trabajo libre. Si nop encuentra alguno, lo crea.
+ Si hay algún error, llama a GenError() y devuelve NIL}
 var
   reg: TPicRegister;
   regName: String;
-begin
-  //Agrega un nuevo objeto TPicRegister a la lista;
-  reg := CreateByteRegister(prtAuxReg);
-  if reg = nil then exit(nil);  //hubo errir
-  regName := 'aux'+IntToSTr(registerList.Count);
-  reg.AssignRAM(regName);   //Asigna memoria. Puede generar error.
-//debugln('>agregando registro: ' + regName);
-  if reg.MsjError<>'' then GenError(reg.MsjError);
-  Result := reg;   //Devuelve la referencia
-end;
-function TGenCodPic.GetAuxRegisterByte: TPicRegister;
-{Devuelve la dirección de un registro de trabajo libre. Si nop encuentra alguno, lo crea.}
-var
-  reg: TPicRegister;
 begin
   //Busca en los registros creados
   {Notar que no se incluye en la búsqueda a los registros de trabajo. Esto es por un
@@ -236,7 +221,16 @@ begin
       exit(reg);
   end;
   //No encontró ninguno libre, crea uno en memoria
-  Result := NewAuxRegisterByte;  //Puede generar error
+  reg := CreateByteRegister(prtAuxReg);
+  if reg = nil then exit(nil);  //hubo errir
+  regName := 'aux'+IntToSTr(registerList.Count);
+  reg.AssignRAM(regName);   //Asigna memoria. Puede generar error.
+//debugln('>agregando registro: ' + regName);
+  if reg.MsjError<>'' then begin
+    GenError(reg.MsjError);
+    exit(nil);
+  end;
+  Result := reg;   //Devuelve la referencia
 end;
 function TGenCodPic.GetStkRegisterByte: TPicRegister;
 {Pone un registro de un byte, en la pila, de modo que se pueda luego acceder con
@@ -259,7 +253,7 @@ begin
     reg0 := TPicRegister.Create(pic);  //Crea objeto
     reg0.typ := prtStkReg;    //asigna tipo
     registerStack.Add(reg0);   //agrega a lista
-    regName := 'stk'+IntToSTr(registerList.Count);
+    regName := 'stk'+IntToSTr(registerStack.Count);
     reg0.AssignRAM(regName);   //Asigna memoria. Puede generar error.
     if reg0.MsjError<>'' then begin
       GenError(reg0.MsjError);
@@ -270,32 +264,22 @@ begin
   Result.used := true;   //lo marca
   inc(stackTop);  //actualiza
 end;
-function TGenCodPic.FreeByte(var reg: TPicRegister): boolean;
+function TGenCodPic.FreeStkRegisterByte(var reg: TPicRegister): boolean;
 {Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
  byte pedido. Si hubo error, devuelve FALSE.
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
 var
   i: Integer;
 begin
-   if registerList.Count<1 then begin
+   if stackTop=0 then begin  //Ya está abajo
      GenError('Desborde de pila.');
      exit(false);
    end;
-   //Busca el último usado, porque puede haber reg. no usdos en la parte superior.
-   i := registerList.Count-1;  //Empieza con el último
-   while i>=0 do begin
-     if (registerList[i].typ = prtStkReg) and  registerList[i].used then begin
-       //Encontró
-       reg := registerList[i];
-       reg.used := false;   //marca como no usado
-       exit(true);
-     end;
-     dec(i);
-   end;
-   //No enocntró alguno usado
-   reg := nil;
-   GenError('Desborde de pila.');
-   exit(false);
+   dec(stackTop);   //Baja puntero
+   reg := registerStack[stackTop];  //devuelve referencia
+   reg.used := false;   //marca como no usado
+   {Notar que, aunque se devuelve la referencia, el registro está libre, para otra
+   operación con GetStkRegisterByte(). Tenerlo en cuenta. }
 end;
 procedure TGenCodPic.RequireW;
 {Indica que se va a utilizar el acumulador. De encontrarse ocupado,
@@ -306,7 +290,7 @@ begin
   if W.used then begin
     //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
     //Pide una posición de memoria. Notar que puede ser un reg. de trabajo.
-    tmpReg := GetAuxRegisterByte;
+    tmpReg := GetStkRegisterByte;
     //guarda W { TODO : Falta validar el banco }
     _MOVWF(tmpReg.offs);PutComm(';guarda W');
     tmpReg.used := true;
@@ -325,7 +309,7 @@ begin
     //Ya existe.
     if preserve and H.used then begin
       //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-      tmpReg := GetAuxRegisterByte;   //pide una posición de memoria
+      tmpReg := GetStkRegisterByte;   //pide una posición de memoria
       //guarda H { TODO : Falta validar el banco }
       _MOVF(H.offs, toW);PutComm(';guarda H');
       _MOVWF(tmpReg.offs);PutComm(';guarda H');
@@ -345,7 +329,7 @@ begin
   if W.used then begin
     //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
     //Pide una posición de memoria. Notar que puede ser un reg. de trabajo.
-    tmpReg := GetAuxRegisterByte;
+    tmpReg := GetStkRegisterByte;
     //guarda W { TODO : Falta validar el banco }
     _MOVWF(tmpReg.offs);PutComm(';guarda W');
   end;
@@ -362,7 +346,7 @@ begin
    registros W y H, se encuentren libres para poder usarlo en esta subexpresión.}
   if W.used then begin
     //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-    tmpReg := GetAuxRegisterByte;   //pide una posición de memoria
+    tmpReg := GetStkRegisterByte;   //pide una posición de memoria
     //guarda W { TODO : Falta validar el banco }
     _MOVWF(tmpReg.offs);PutComm(';guarda W');
     tmpReg.used := true;
