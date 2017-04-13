@@ -11,13 +11,21 @@ Las variables públicas más importantes de este módulo son:
 Para mayor información sobre el uso del framework Xpres, consultar la documentación
 técnica.
 }
+{$Define LogExpres}
 unit XpresParserPIC;
 interface
 uses
   Classes, SysUtils, Forms, LCLType, lclProc, SynEditHighlighter,
   SynFacilHighlighter, XpresBas, XpresTypes, XpresElementsPIC, MisUtils;
-
 type
+//Tipo de expresión, de acuerdo a la posición en que aparece
+TPosExpres = (pexINDEP,  //Expresión independiente
+              pexASIG,   //Expresión de asignación
+              pexPROC,   //Expresión de procedimiento
+              pexSTRUC,  //Expresión de estructura
+              pexPARAM,  //Expresión de parámetro de función
+              pexPARSY   //Expresión de parámetro de función de sistema
+              );
 { TOperand }
 //Operando
 TOperand = object
@@ -75,7 +83,7 @@ TCompilerBase = class
 protected  //Eventos del compilador
   OnExprStart: procedure of object;  {Se genera al iniciar la
                                              evaluación de una expresión.}
-  OnExprEnd  : procedure(isParam: boolean) of object;  {Se genera
+  OnExprEnd  : procedure(posExpres: TPosExpres) of object;  {Se genera
                                              el terminar de evaluar una expresión}
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
   function CaptureDelExpres: boolean;
@@ -96,12 +104,13 @@ protected  //Eventos del compilador
   procedure CloseFunction;
   function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
   procedure CreateParam(fun: TxpEleFun; parName: string; typStr: string);
-  procedure CaptureParams; virtual;
+  procedure CaptureParamsSys;
+  procedure CaptureParams;
   //Mmanejo de expresiones
   function GetOperand: TOperand; virtual;
   function GetOperandPrec(pre: integer): TOperand;
   function GetOperator(const Op: Toperand): Txpoperator;
-  procedure GetExpressionE(const prec: Integer; isParam: boolean=false);
+  procedure GetExpressionE(const prec: Integer; posExpres: TPosExpres = pexINDEP);
 //  procedure GetBoolExpression;
 //  procedure CreateVariable(const varName: string; typ: ttype);
 //  procedure CreateVariable(varName, varType: string);
@@ -371,6 +380,42 @@ begin
   //agrega
   fun.CreateParam(parName, typ);
 end;
+procedure TCompilerBase.CaptureParamsSys;
+//Lee los parámetros de una función en la función interna funcs[0]
+begin
+  SkipWhites;
+  func0.ClearParams;
+  if EOBlock or EOExpres then begin
+    //no tiene parámetros
+  end else begin
+    //Debe haber parámetros
+    if cIn.tok<>'(' then begin
+      GenError('"(" expected.');
+      exit;
+    end;
+    cin.Next;
+    repeat
+      GetExpressionE(0, pexPARSY);  //captura parámetro
+      if perr.HayError then exit;   //aborta
+      //guarda tipo de parámetro
+      func0.CreateParam('',res.typ);
+      if cIn.tok = ',' then begin
+        cIn.Next;   //toma separador
+        SkipWhites;
+      end else begin
+        //no sigue separador de parámetros,
+        //debe terminar la lista de parámetros
+        //¿Verificar EOBlock or EOExpres ?
+        break;
+      end;
+    until false;
+    //busca paréntesis final
+    if cIn.tok<>')' then begin
+      GenError('")" expected.'); exit;
+    end;
+    cin.Next;
+  end;
+end;
 procedure TCompilerBase.CaptureParams;
 //Lee los parámetros de una función en la función interna funcs[0]
 begin
@@ -386,7 +431,7 @@ begin
     end;
     cin.Next;
     repeat
-      GetExpressionE(0, true);  //captura parámetro
+      GetExpressionE(0, pexPARAM);  //captura parámetro
       if perr.HayError then exit;   //aborta
       //guarda tipo de parámetro
       func0.CreateParam('',res.typ);
@@ -430,6 +475,29 @@ begin
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if pErr.HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
+  end else if cIn.tokType = tkSysFunct then begin  //función del sistema
+    {Se sabe que es función, pero no se tiene la función exacta porque puede haber
+     versiones, sobrecargadas de la misma función.}
+    tmp := cIn.tok;  //guarda nombre de función
+    cIn.Next;    //Toma identificador
+    CaptureParamsSys;  //primero lee parámetros
+    if HayError then exit;
+    //Aquí se identifica la función exacta, que coincida con sus parámetros
+    { TODO : No es la forma más eficiente, explorar nuevamente todo el NAMESPACE.
+     Tal vez se debería usar funciones de tipo FindFirst y FindNExt }
+    case TreeElems.FindFuncWithParams(tmp, func0, xfun) of
+    //TFF_NONE:      //No debería pasar esto
+    TFF_PARTIAL:   //encontró la función, pero no coincidió xcon los parámetros
+       GenError('Type parameters error on %s', [tmp +'()']);
+    TFF_FULL:     //encontró completamente
+      begin   //encontró
+        Result.catOp :=coExpres; //expresión
+        Result.txt:= cIn.tok;    //toma el texto
+        Result.typ:=xfun.typ;
+        xfun.proc(xfun);  //llama al código de la función
+        exit;
+      end;
+    end;
   end else if cIn.tokType = tkIdentif then begin  //puede ser variable, constante, función
     ele := TreeElems.FindFirst(cIn.tok);  //identifica elemento
     if ele = nil then begin
@@ -462,8 +530,9 @@ begin
       cIn.Next;    //Toma identificador
       CaptureParams;  //primero lee parámetros
       if HayError then exit;
-      //Aquí se identifica la función exacta, que coincida xcon sus parámetros
-      { TODO : No es la forma más eficiente, explorar nuevamente todo el NAMESPACE. Tal vez se debería usar funciones de tipo FindFirst y FindNExt }
+      //Aquí se identifica la función exacta, que coincida con sus parámetros
+      { TODO : No es la forma más eficiente, explorar nuevamente todo el NAMESPACE.
+       Tal vez se debería usar funciones de tipo FindFirst y FindNExt }
       case TreeElems.FindFuncWithParams(tmp, func0, xfun) of
       //TFF_NONE:      //No debería pasar esto
       TFF_PARTIAL:   //encontró la función, pero no coincidió xcon los parámetros
@@ -489,7 +558,9 @@ begin
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tok = '(' then begin  //"("
     cIn.Next;
-    GetExpressionE(0);
+    Inc(ExprLevel);  //cuenta el anidamiento
+    GetExpression(0);
+    Dec(ExprLevel);
     Result := res;
     if PErr.HayError then exit;
     If cIn.tok = ')' Then begin
@@ -544,7 +615,7 @@ usarse también "res" para cálculo de expresiones constantes.
 var
   Operation: TxpOperation;
 begin
-  debugln(space(ExprLevel)+' Eval('+Op1.txt + opr.txt + Op2.txt+')');
+   {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Oper('+Op1.txt + opr.txt + Op2.txt+')');{$ENDIF}
    PErr.IniError;
    //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
    Operation := opr.FindOperation(Op2.typ);
@@ -572,7 +643,7 @@ procedure TCompilerBase.OperPre(var Op1: TOperand; opr: TxpOperator);
 operador de Op1.
 El resultado debe devolverse en "res".}
 begin
-  {$IFDEF LogExpres} debugln(space(ExprLevel)+' Eval('+ opr.txt + Op1.txt + ')'); {$ENDIF}
+  {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Eval('+ opr.txt + Op1.txt + ')'); {$ENDIF}
    PErr.IniError;
    if opr.OperationPre = nil then begin
       GenError('Operación no válida: ' +
@@ -591,7 +662,7 @@ procedure TCompilerBase.OperPost(var Op1: TOperand; opr: TxpOperator);
 operador de Op1.
 El resultado debe devolverse en "res".}
 begin
-  {$IFDEF LogExpres} debugln(space(ExprLevel)+' Eval('+Op1.txt + opr.txt +')'); {$ENDIF}
+  {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Eval('+Op1.txt + opr.txt +')'); {$ENDIF}
    PErr.IniError;
    if opr.OperationPost = nil then begin
       GenError('Operación no válida: ' +
@@ -614,7 +685,7 @@ expresión. En algunos casos puede ser inválido.
 }
 begin
   {$IFDEF LogExpres}
-  debugln(space(ExprLevel)+' Eval('+Op1.txt+')');
+  debugln(space(2*ExprLevel)+' Eval('+Op1.txt+')');
   {$ENDIF}
   PErr.IniError;
   {Llama al evento asociado con p1 como operando. }
@@ -735,9 +806,8 @@ begin
   end;  //hasta que ya no siga un operador
   Result := Op1;  //aquí debe haber quedado el resultado
 end;
-procedure TCompilerBase.GetExpressionE(const prec: Integer; isParam: boolean = false
-    //indep: boolean = false
-    );
+procedure TCompilerBase.GetExpressionE(const prec: Integer;
+  posExpres: TPosExpres);
 {Envoltura para GetExpressionCore(). Se coloca así porque GetExpressionCore()
 tiene diversos puntos de salida y Se necesita llamar siempre a expr_end() al
 terminar.
@@ -754,7 +824,7 @@ begin
   if OnExprStart<>nil then OnExprStart;  //llama a evento
   res := GetExpression(prec);
   if PErr.HayError then exit;
-  if OnExprEnd<>nil then OnExprEnd(isParam);    //llama al evento de salida
+  if OnExprEnd<>nil then OnExprEnd(posExpres);    //llama al evento de salida
   {$IFDEF LogExpres}
   debugln(space(ExprLevel)+'>Fin.expr');
   {$ENDIF}

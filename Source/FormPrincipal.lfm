@@ -2,11 +2,11 @@ object frmPrincipal: TfrmPrincipal
   Left = 471
   Height = 583
   Top = 171
-  Width = 850
+  Width = 862
   AllowDropFiles = True
   Caption = 'frmPrincipal'
   ClientHeight = 563
-  ClientWidth = 850
+  ClientWidth = 862
   Menu = MainMenu1
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
@@ -19,7 +19,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 80
     Height = 305
     Top = 48
-    Width = 424
+    Width = 368
     Font.Height = -13
     Font.Name = 'Courier New'
     Font.Pitch = fpFixed
@@ -517,7 +517,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 23
     Top = 540
-    Width = 850
+    Width = 862
     Panels = <    
       item
         Width = 70
@@ -543,7 +543,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 26
     Top = 0
-    Width = 850
+    Width = 862
     Caption = 'ToolBar1'
     Images = ImgActions16
     ParentShowHint = False
@@ -1146,16 +1146,16 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 79
     Top = 461
-    Width = 850
+    Width = 862
     Align = alBottom
     ClientHeight = 79
-    ClientWidth = 850
+    ClientWidth = 862
     TabOrder = 5
     object ListBox1: TListBox
       Left = 1
       Height = 77
       Top = 1
-      Width = 848
+      Width = 860
       Align = alClient
       ItemHeight = 0
       TabOrder = 0
@@ -1166,7 +1166,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 6
     Top = 455
-    Width = 850
+    Width = 862
     Align = alBottom
     ResizeAnchor = akBottom
   end

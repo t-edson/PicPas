@@ -5,20 +5,18 @@ unit GenCodPic;
 interface
 uses
   Classes, SysUtils, XPresParserPIC, XpresElementsPIC, Pic16Utils, XpresTypes,
-  MisUtils, LCLType, fgl;
+  MisUtils, LCLType, LCLProc, fgl;
 const
   STACK_SIZE = 8;  //tamaño de pila para subrutinas en el PIC
-  MAX_MEMTAB = 4;  //tamaño máximo de la tabla de bloques de memoria
+  MAX_REGS_AUX = 4;    //cantidad máxima de registros a usar
+  MAX_REGS_STACK = 4;   //cantidad máxima de registros a usar en la pila
 
 type
-//  TSatReg = (srFree, srUsed)
-    //Define un registro virtual para implementar un intérprete
-  Tregister = record
-      used   : boolean;  //Indica si está usado. Se le debe actualizr después de una operación.
-      offs   : byte;     //Desplazamiento en memoria
-      bank   : byte;    //Banco
-    end;
-
+  //Tipo de registro
+  TPicRegType = (prtWorkReg,   //de trabajo
+                 prtAuxReg,    //auxiliar
+                 prtStkReg     //registro de pila
+  );
   { TPicRegister }
   {Objeto que sirve para modelar a un registro del PIC (una dirección de memoria, usada
    para un fin particular)}
@@ -29,7 +27,8 @@ type
     assigned: boolean;  //indica si tiene una dirección física asignada
     used   : boolean;  //Indica si está usado. Se le debe actualizr después de una operación.
     offs   : byte;     //Desplazamiento en memoria
-    bank   : byte;     //Banco
+    bank   : byte;     //Banco del registro
+    typ    : TPicRegType;  //Tipo de registro
   public  //Inicialización
     MsjError: string;
     procedure AssignRAM(regName: string);  //Asigna a una dirección física
@@ -45,27 +44,38 @@ type
     consecutivas, porque puede haber variables ABSOLUTE) como pila. El tamaño de la pila a
     usar no es fijo, sino que se crea de acuerdo al tamaño requerido para la evaluación de
     expresiones. Puede incluso ser de tamaño cero.}
-    memtab : array[0..MAX_MEMTAB-1] of Tregister;
     linRep : string;   //línea para generar de reporte
     procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
   protected
-    pic    : TPIC16;    //objeto PIC de la serie 16
-    w      : TPicRegister;  //Se declara como Registro en RAM.
-    sp     : integer;    //puntero a la estructura de pila. Apunta a la posición libre
-    spSize : integer;    //tamaño actual de pila
-    _H     : Tregister;  //registros de trabajo adicionales, para cálculos
-    H      : TPicRegister;  //registros de trabajo. Se crean siempre
-    registerList : TPicRegister_list;
+    pic    : TPIC16;       //Objeto PIC de la serie 16.
+    w      : TPicRegister; //Se declara como Registro en RAM.
+    sp     : integer;      //Puntero a la estructura de pila. Apunta a la posición libre
+    spSize : integer;      //Tamaño actual de pila.
+    H      : TPicRegister; //Registros de trabajo. Se crean siempre.
+    registerList: TPicRegister_list;  //lista de registros de trabajo y auxiliares
+    registerStack: TPicRegister_list; //lista de registros de pila
+    stackTop: integer;   //índice al límite superior de la pila
     procedure SetResult(tipByte: TType; CatOp: TCatOperan);
-    function NewByteRegister: TPicRegister;
-    function GetUnusedByteRegister: TPicRegister;
-    function GetUnusedByteRegister_NoWH: TPicRegister;
-    procedure RequireResultByte(CatOp: TCatOperan);
-    procedure RequireResultWord(CatOp: TCatOperan);
-    //Rutinas Diversas
     procedure PutComLine(cmt: string);
     procedure PutComm(cmt: string);
     function ReportRAMusage: string;
+  private//Rutinas de gestión de memoria de bajo nivel
+    function CreateByteRegister(RegType: TPicRegType): TPicRegister;
+    function NewAuxRegisterByte: TPicRegister;
+  protected  //Rutinas de gestión de memoria
+    //Manejo de memoria para registros
+    function GetAuxRegisterByte: TPicRegister;
+    function PushByte(out reg: TPicRegister): boolean;
+    function FreeByte(var reg: TPicRegister): boolean;
+    procedure RequireW;
+    procedure RequireH(preserve: boolean = true);
+    procedure RequireResultByte;
+    procedure RequireResultWord;
+    //Manejo de variables
+    {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
+    objeto "pic", se colocan mejor aquí.}
+    function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
+      absBit: integer=-1): TxpEleVar;
   protected  //Variables de expresión.
     {Estas variables, se inician al inicio de cada expresión y su valor es válido
     hasta el final de la expresión.}
@@ -120,19 +130,8 @@ type
     procedure _XORWF(const f: byte; d: TPIC16destin);
     function _PC: word;
     function _CLOCK: integer;
-  protected  //Manejo de variables
-    {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
-    objeto "pic", se colocan mejor aquí.}
-///    procedure NewByteRegister(out reg: byte);
-    function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
-      absBit: integer=-1): TxpEleVar;
-    //Rutinas de gestión de memoria
-    function GetByte(var reg: Tregister; varNom: string=''): boolean;
-    function FreeByte(var reg: Tregister): boolean;
-    procedure ReserveW;
-    procedure RequireH;
-    procedure ReserveH;
   public  //Inicialización
+    procedure StartRegs;
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -187,48 +186,158 @@ begin
   LastCatOp := CatOp;  {Guarda la categoría, para que la siguiente instrucción sepa
                        cuál fue la categoría de la última expresión}
 end;
-function TGenCodPic.NewByteRegister: TPicRegister;
-{Asigna espacio en memoria y devuelve la referencia a un registro de 8 bits, en la
-memoria del PIC. Si hay error, devuelve NIL. Este debería ser el único punto de entrada
-para agregar un nuevo registro a registerList}
+//Rutinas de Gestión de memoria
+function TGenCodPic.CreateByteRegister(RegType: TPicRegType): TPicRegister;
+{Crea una nueva entrada para registro en registerList[], pero no le asigna memoria.
+ Si encuentra error, devuelve NIL. Este debería ser el único punto de entrada
+para agregar un nuevo registro a registerList.}
 var
   reg: TPicRegister;
 begin
   //Agrega un nuevo objeto TPicRegister a la lista;
   reg := TPicRegister.Create(pic);  //Crea objeto
+  reg.typ := RegType;    //asigna tipo
   registerList.Add(reg);   //agrega a lista
-  reg.AssignRAM('aux'+IntToSTr(registerList.Count));   //Asigna memoria. Puede generar error.
-  if reg.MsjError<>'' then GenError(reg.MsjError);;
+  if registerList.Count > MAX_REGS_AUX then begin
+    //Se asume que se desbordó la memoria evaluando a alguna expresión
+    GenError('Very complex expression. To simplify.');
+    exit(nil);
+  end;
+  Result := reg;   //devuelve referencia
+end;
+function TGenCodPic.NewAuxRegisterByte: TPicRegister;
+{Asigna espacio en memoria y devuelve la referencia a un registro de 8 bits, en la
+memoria del PIC. Si hay error, devuelve NIL. }
+var
+  reg: TPicRegister;
+  regName: String;
+begin
+  //Agrega un nuevo objeto TPicRegister a la lista;
+  reg := CreateByteRegister(prtAuxReg);
+  if reg = nil then exit(nil);  //hubo errir
+  regName := 'aux'+IntToSTr(registerList.Count);
+  reg.AssignRAM(regName);   //Asigna memoria. Puede generar error.
+//debugln('>agregando registro: ' + regName);
+  if reg.MsjError<>'' then GenError(reg.MsjError);
   Result := reg;   //Devuelve la referencia
 end;
-function TGenCodPic.GetUnusedByteRegister: TPicRegister;
-{Devuelve la dirección de un byte libre en RAM libre.}
+function TGenCodPic.GetAuxRegisterByte: TPicRegister;
+{Devuelve la dirección de un registro de trabajo libre. Si nop encuentra alguno, lo crea.}
 var
   reg: TPicRegister;
 begin
   //Busca en los registros creados
-  //Notar que se puede devolver inclusive, un registro de trabajo. Ya que no hay filtro.
+  {Notar que no se incluye en la búsqueda a los registros de trabajo. Esto es por un
+  tema de orden, si bien podría ser factible, permitir usar algún registro de trabajo no
+  usado, como registro auxiliar.}
   for reg in registerList do begin
-    if reg.assigned and not reg.used then exit(reg);
+    //Se supone que todos los registros auxiliares, estarán siempre asignados
+    if (reg.typ = prtAuxReg) and not reg.used then
+      exit(reg);
   end;
   //No encontró ninguno libre, crea uno en memoria
-  Result := NewByteRegister;  //Puede generar error
+  Result := NewAuxRegisterByte;  //Puede generar error
 end;
-function TGenCodPic.GetUnusedByteRegister_NoWH: TPicRegister;
-{Devuelve la dirección de un byte libre en RAM libre que no sea W o H.}
+function TGenCodPic.PushByte(out reg: TPicRegister): boolean;
+{Pone un registro de un byte, en la pila, de modo que se pueda luego acceder con
+FreeByte(). Si hay un error, devuelve FALSE y NIL en "reg".
+Notar que esta no es una pila de memoria en el PIC, sino una emulación de pila
+en el compilador.}
 var
-  reg: TPicRegister;
+  reg0: TPicRegister;
+  regName: String;
 begin
-  //Busca en los registros creados
-  //Notar que se puede devolver inclusive, un registro de trabajo. Ya que no hay filtro.
-  for reg in registerList do begin
-    if reg = H then continue;
-    if reg.assigned and not reg.used then exit(reg);
+  //Validación
+  if stackTop>MAX_REGS_STACK then begin
+    //Se asume que se desbordó la memoria evaluando a alguna expresión
+    GenError('Very complex expression. To simplify.');
+    reg := nil;
+    exit(false);
   end;
-  //No encontró ninguno libre, crea uno en memoria
-  Result := NewByteRegister;  //Puede generar error
+  if stackTop>registerStack.Count-1 then begin
+    //Apunta a una posición vacía. hay qie agregar
+    //Agrega un nuevo objeto TPicRegister a la lista;
+    reg0 := TPicRegister.Create(pic);  //Crea objeto
+    reg0.typ := prtStkReg;    //asigna tipo
+    registerStack.Add(reg0);   //agrega a lista
+    regName := 'stk'+IntToSTr(registerList.Count);
+    reg.AssignRAM(regName);   //Asigna memoria. Puede generar error.
+    if reg.MsjError<>'' then begin
+      GenError(reg.MsjError);
+      reg := nil;
+      exit(false);
+    end;
+  end;
+  reg := registerStack[stackTop];  //toma registro
+  reg.used := true;   //lo marca
+  inc(stackTop);  //actualiza
 end;
-procedure TGenCodPic.RequireResultByte(CatOp: TCatOperan);
+
+function TGenCodPic.FreeByte(var reg: TPicRegister): boolean;
+{Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
+ byte pedido. Si hubo error, devuelve FALSE.
+ Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
+var
+  i: Integer;
+begin
+   if registerList.Count<1 then begin
+     GenError('Desborde de pila.');
+     exit(false);
+   end;
+   //Busca el último usado, porque puede haber reg. no usdos en la parte superior.
+   i := registerList.Count-1;  //Empieza con el último
+   while i>=0 do begin
+     if (registerList[i].typ = prtStkReg) and  registerList[i].used then begin
+       //Encontró
+       reg := registerList[i];
+       reg.used := false;   //marca como no usado
+       exit(true);
+     end;
+     dec(i);
+   end;
+   //No enocntró alguno usado
+   reg := nil;
+   GenError('Desborde de pila.');
+   exit(false);
+end;
+procedure TGenCodPic.RequireW;
+{Indica que se va a utilizar el acumulador. De encontrarse ocupado,
+se pondrá en la pila. Si no hay espacio, genera error}
+var
+  tmpReg: TPicRegister;
+begin
+  if W.used then begin
+    //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
+    //Pide una posición de memoria. Notar que puede ser un reg. de trabajo.
+    tmpReg := GetAuxRegisterByte;
+    //guarda W { TODO : Falta validar el banco }
+    _MOVWF(tmpReg.offs);PutComm(';guarda W');
+    tmpReg.used := true;
+  end;
+  w.used := true;   //Lo marca como indicando que se va a ocupar
+end;
+procedure TGenCodPic.RequireH(preserve: boolean = true);
+{Indica que va a usar el registro H.}
+var
+  tmpReg: TPicRegister;
+begin
+  if not H.assigned then begin
+    //Ni siquiera tiene dirección asignada. Primero hay que ubicarlo en memoria.
+    H.AssignRAM('_H');
+  end else begin
+    //Ya existe.
+    if preserve and H.used then begin
+      //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
+      tmpReg := GetAuxRegisterByte;   //pide una posición de memoria
+      //guarda H { TODO : Falta validar el banco }
+      _MOVF(H.offs, toW);PutComm(';guarda H');
+      _MOVWF(tmpReg.offs);PutComm(';guarda H');
+      tmpReg.used := true;   //marca
+    end;
+  end;
+  H.used := true;  //lo marca como que lo va a usar
+end;
+procedure TGenCodPic.RequireResultByte;
 {Indica que se va a devolver un resultado de tipo Byte, en la generación de código.
 Debe llamarse siempre, antes de generar código para la subexpresión.}
 var
@@ -239,13 +348,14 @@ begin
   if W.used then begin
     //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
     //Pide una posición de memoria. Notar que puede ser un reg. de trabajo.
-    tmpReg := GetUnusedByteRegister;
+    tmpReg := GetAuxRegisterByte;
     //guarda W { TODO : Falta validar el banco }
     _MOVWF(tmpReg.offs);PutComm(';guarda W');
   end;
-  SetResult(tipByte, CatOp);
+  W.used := true;  //indica que lo va a usar
+//  SetResult(tipByte, CatOp);
 end;
-procedure TGenCodPic.RequireResultWord(CatOp: TCatOperan);
+procedure TGenCodPic.RequireResultWord;
 {Indica que se va a devolver un resultado de tipo Word, en la generación de código.
 Debe llamarse siempre, antes de generar código para la subexpresión.}
 var
@@ -255,24 +365,14 @@ begin
    registros W y H, se encuentren libres para poder usarlo en esta subexpresión.}
   if W.used then begin
     //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-    tmpReg := GetUnusedByteRegister_NoWH;   //pide una posición de memoria
+    tmpReg := GetAuxRegisterByte;   //pide una posición de memoria
     //guarda W { TODO : Falta validar el banco }
     _MOVWF(tmpReg.offs);PutComm(';guarda W');
+    tmpReg.used := true;
   end;
-  if not H.assigned then begin
-    //Ni siquiera tiene dirección asignada. Primero hay que ubicarlo en memoria.
-    H.AssignRAM('_H');
-  end else begin
-    //Ya existe.
-    if H.used then begin
-      //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-      tmpReg := GetUnusedByteRegister_NoWH;   //pide una posición de memoria
-      //guarda H { TODO : Falta validar el banco }
-      _MOVF(H.offs, toW);PutComm(';guarda H');
-      _MOVWF(tmpReg.offs);PutComm(';guarda H');
-    end;
-  end;
-  SetResult(tipWord, CatOp);
+  W.used := true;  //indica que lo va a usar
+  RequireH;
+//  SetResult(tipWord, CatOp);
 end;
 procedure TGenCodPic.PutComLine(cmt: string); inline; //agrega comentario al código
 begin
@@ -622,104 +722,32 @@ begin
   //Ya encontró tipo, llama a evento
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
-function TGenCodPic.GetByte(var reg: Tregister; varNom: string = ''): boolean;
-{Pide una dirección de memoria para alojar un byte en la RAM, para una tarea temporal.
- Devuelve en "reg" la dirección del byte pedido. Si falla devuelve FALSE.
- Una vez finalizada la tarea, se debe liberar los bytes pedidos (para usar eficiéntemente
- la RAM), a menos que se quiera mantener esa posición de memoria, rerservada exclusivamente.
- De acuerdo a los bytes solicitados, se va reservando espacio en la RAM, usando
- variables. Las direcciones usadas, se guardan en la tabla memtab[], aunque no siempre
- corresponden a direcciones consecutivas}
-var
-  aVar: TxpEleVar;
+procedure TGenCodPic.StartRegs;
+{Inicia los registros de trabajo en la lista.}
 begin
-   if sp>=MAX_MEMTAB then begin
-     //Se asume que se desbordó la memoria evaluando a alguna expresión
-     GenError('Expresión muy compleja. Simplificar.');
-     exit(false);
-   end;
-   if sp>= spSize then begin
-     //No hay espacio para este nuevo valor. Crea espacio como variable
-     if varNom = '' then
-       aVar := CreateVar('_stk'+IntToStr(sp), tipByte)
-     else
-       aVar := CreateVar(varNom, tipByte);
-     if HayError then exit(false);
-     memtab[sp].offs := aVar.offs;   //toma dirección libre
-     memtab[sp].bank  := aVar.bank;
-     inc(spSize);  //sube cota
-   end;
-   reg := memtab[sp];  //actualiza dirección
-   reg.used:=false;    //porque es una dirección  nueva
-   Inc(sp);
-   exit(true);   //salió con éxito
-end;
-function TGenCodPic.FreeByte(var reg: Tregister): boolean;
-{Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
- byte pedido. Si hubo error, devuelve FALSE.
- Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
-begin
-   if sp<=0 then begin
-     GenError('Desborde de pila.');
-     exit(false);
-   end;
-   Dec(sp);
-   reg.offs := memtab[sp].offs;  //devuelve la dirección
-   reg.bank := memtab[sp].bank;
-   exit(true)
-end;
-procedure TGenCodPic.ReserveW;
-{Indica que se va a utilizar el acumulador. De encontrarse ocupado,
-se pondrá en la pila. Si no hay espacio, genera error}
-var
-  r: Tregister;
-begin
-  if w.used then begin
-    //Está ocupado. Usa espacio temporal para almacenar
-    if not GetByte(r) then exit;  //pide un byte en RAM
-    _MOVWF(r.offs);  //mueve acumulador a "pila"
-  end;
-  w.used := true;   //Lo marca como indicando que se va a ocupar
-end;
-procedure TGenCodPic.RequireH;
-{Indica que va a requerir usar los registros de trabajo _H y _L}
-begin
-  if _H.offs=MAXBYTE then  //no existe aún
-     if not GetByte(_H, '_H') then exit;
-end;
-procedure TGenCodPic.ReserveH;
-{Indica que se va a utilizar el par de registros (_H,W). De encontrarse ocupado,
-se pondrá en la pila. Si no hay espacio, genera error.
-NOTA: Usa el registro W, así que este debe estar libre.}
-var
-  r: Tregister;
-begin
-  if _H.used then begin
-    //Está ocupado. Usa espacio temporal para almacenar
-    if not GetByte(r) then exit;  //pide un byte en RAM
-    _MOVF(_H.offs, toW);
-    _MOVWF(r.offs);  //mueve a pila
-  end;
-  _H.used := true;   //Lo marca como indicando que se va a ocupar
+  registerList.Clear;
+  registerStack.Clear;   //limpia la pila
+  {Crea registro de trabajo H, para que esté definido, pero aún no tiene asignado una
+  posición en memoria.}
+  H := CreateByteRegister(prtWorkReg);
+  //Puede salir con error
 end;
 constructor TGenCodPic.Create;
 begin
   inherited Create;
   pic := TPIC16.Create;
   registerList := TPicRegister_list.Create(true);
-  {Crea registro de trabajo H, para que esté definido, pero aún no tiene asignado una
-  posición en memoria.}
-  H := TPicRegister.Create(pic);
-  registerList.Add(H);
+  registerStack := TPicRegister_list.Create(true);
+  stackTop := 0;  //Apunta a la siguiente posición libre
   {Crea registro de trabajo W. El registro W, es el registro interno del PIC, y no
   necesita un mapeo en RAM. Solo se le crea aquí, para poder usar su propiedad "used"}
   W := TPicRegister.Create(pic);
-  //registerList.Add(W);  No lo mapea
   W.assigned := false;   //se le marca así, para que no se intente usar
 end;
 destructor TGenCodPic.Destroy;
 begin
   W.Destroy;
+  registerStack.Destroy;
   registerList.Destroy;
   pic.Destroy;
   inherited Destroy;
@@ -736,6 +764,7 @@ begin
     dicSet('RAM memory is full.', 'Memoria RAM agotada.');
     dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
     dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
+    dicSet('Very complex expression. To simplify.','Expresión muy compleja. Simplificar.');
   end;
   end;
 end;
