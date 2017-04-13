@@ -1,3 +1,6 @@
+PicPas 0.4.8
+============
+
 PicPas 0.4.7
 ============
 Se agregan los identificadores de funciones del sistema, como del tipo tkSysFunct, en la

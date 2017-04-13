@@ -2,6 +2,8 @@ PicPas
 ======
 Compilador en Pascal para microcontroladores PIC. 
 
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/picpas-768x573.jpg "Título de la imagen")
+
 NOTA: Este compilador está aún en fase Alfa y tiene funcionalidades limitadas. 
 
 PicPas es un compilador sencillo, escrito en Lazarus, que genera código ejecutable, para los microcontroladores PIC de rango medio (la serie 16F).
