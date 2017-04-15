@@ -80,6 +80,7 @@ type
     offs: TVarOffs;
     bank: TVarBank;  //banco o segmento. Usado solo en algunas arquitecturas
     bit : byte;      //posición del bit. Usado para variables bit o booleanas.
+    function BitMask: byte;  //Máscara de bit, de acuerdo al valor del campo "bit".
     constructor Create; override;
   end;
   TxpEleVars = specialize TFPGObjectList<TxpEleVar>; //lista de variables
@@ -207,7 +208,20 @@ constructor TxpEleCon.Create;
 begin
   elemType:=eltCons;
 end;
-
+function TxpEleVar.BitMask: byte;
+{Devuelve la máscara, de acuerdo a su valor de "bit".}
+begin
+    case bit of
+    0: Result := %00000001;
+    1: Result := %00000010;
+    2: Result := %00000100;
+    3: Result := %00001000;
+    4: Result := %00010000;
+    5: Result := %00100000;
+    6: Result := %01000000;
+    7: Result := %10000000;
+    end;
+end;
 { TxpEleVar }
 constructor TxpEleVar.Create;
 begin

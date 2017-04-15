@@ -48,9 +48,7 @@ type
     procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
   protected
     pic    : TPIC16;       //Objeto PIC de la serie 16.
-    w      : TPicRegister; //Se declara como Registro en RAM.
-    sp     : integer;      //Puntero a la estructura de pila. Apunta a la posición libre
-    spSize : integer;      //Tamaño actual de pila.
+    W      : TPicRegister; //Se declara como Registro en RAM.
     H      : TPicRegister; //Registros de trabajo. Se crean siempre.
     registerList: TPicRegister_list;  //lista de registros de trabajo y auxiliares
     registerStack: TPicRegister_list; //lista de registros de pila
@@ -68,8 +66,7 @@ type
     function FreeStkRegisterByte(var reg: TPicRegister): boolean;
     procedure RequireW;
     procedure RequireH(preserve: boolean = true);
-    procedure RequireResultByte;
-    procedure RequireResultWord;
+    procedure RequireHW;
     //Manejo de variables
     {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
     objeto "pic", se colocan mejor aquí.}
@@ -185,6 +182,21 @@ begin
   LastCatOp := CatOp;  {Guarda la categoría, para que la siguiente instrucción sepa
                        cuál fue la categoría de la última expresión}
 end;
+procedure TGenCodPic.PutComLine(cmt: string); inline; //agrega comentario al código
+begin
+  pic.addCommAsm(cmt);  //agrega línea al código ensmblador
+end;
+procedure TGenCodPic.PutComm(cmt: string); inline; //agrega comentario lateral al código
+begin
+  pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
+end;
+function TGenCodPic.ReportRAMusage: string;
+{Genera un reporte de uso de la memoria RAM}
+begin
+  linRep := '';
+  pic.ExploreUsed(@ProcByteUsed);
+  Result := linRep;
+end;
 //Rutinas de Gestión de memoria
 function TGenCodPic.CreateByteRegister(RegType: TPicRegType): TPicRegister;
 {Crea una nueva entrada para registro en registerList[], pero no le asigna memoria.
@@ -234,7 +246,7 @@ begin
 end;
 function TGenCodPic.GetStkRegisterByte: TPicRegister;
 {Pone un registro de un byte, en la pila, de modo que se pueda luego acceder con
-FreeByte(). Si hay un error, devuelve NIL.
+FreeStkRegisterByte(). Si hay un error, devuelve NIL.
 Notar que esta no es una pila de memoria en el PIC, sino una emulación de pila
 en el compilador.}
 var
@@ -288,14 +300,13 @@ var
   tmpReg: TPicRegister;
 begin
   if W.used then begin
-    //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-    //Pide una posición de memoria. Notar que puede ser un reg. de trabajo.
-    tmpReg := GetStkRegisterByte;
+    //Ya lo usó la subexpresión anterior (seguro que fue una expresión byte o word)
+    tmpReg := GetStkRegisterByte;  //pide memoria
     //guarda W { TODO : Falta validar el banco }
     _MOVWF(tmpReg.offs);PutComm(';guarda W');
     tmpReg.used := true;
   end;
-  w.used := true;   //Lo marca como indicando que se va a ocupar
+  W.used := true;   //Lo marca como indicando que se va a ocupar
 end;
 procedure TGenCodPic.RequireH(preserve: boolean = true);
 {Indica que va a usar el registro H.}
@@ -318,65 +329,78 @@ begin
   end;
   H.used := true;  //lo marca como que lo va a usar
 end;
-procedure TGenCodPic.RequireResultByte;
-{Indica que se va a devolver un resultado de tipo Byte, en la generación de código.
-Debe llamarse siempre, antes de generar código para la subexpresión.}
-var
-  tmpReg: TPicRegister;
-begin
-  {Los resultados Byte, se devuelven en W, así qie deebemos asegurarno de que el
-   registro W, se encuentre libre para poder usarlo en esta subexpresión.}
-  if W.used then begin
-    //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-    //Pide una posición de memoria. Notar que puede ser un reg. de trabajo.
-    tmpReg := GetStkRegisterByte;
-    //guarda W { TODO : Falta validar el banco }
-    _MOVWF(tmpReg.offs);PutComm(';guarda W');
-  end;
-  W.used := true;  //indica que lo va a usar
-//  SetResult(tipByte, CatOp);
-end;
-procedure TGenCodPic.RequireResultWord;
+procedure TGenCodPic.RequireHW;
 {Indica que se va a devolver un resultado de tipo Word, en la generación de código.
 Debe llamarse siempre, antes de generar código para la subexpresión.}
 var
   tmpReg: TPicRegister;
 begin
-  {Los resultados Word, se devuelven en (W,H), así qie deebemos asegurarno de que los
-   registros W y H, se encuentren libres para poder usarlo en esta subexpresión.}
-  if W.used then begin
-    //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-    tmpReg := GetStkRegisterByte;   //pide una posición de memoria
-    //guarda W { TODO : Falta validar el banco }
-    _MOVWF(tmpReg.offs);PutComm(';guarda W');
-    tmpReg.used := true;
-  end;
-  W.used := true;  //indica que lo va a usar
+  RequireW;
   RequireH;
-//  SetResult(tipWord, CatOp);
 end;
-procedure TGenCodPic.PutComLine(cmt: string); inline; //agrega comentario al código
+//Manejo de variables
+function TGenCodPic.CreateVar(const varName: string; typ: ttype;
+         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
+{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
+ "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
+var
+  r   : TxpEleVar;
+  i   : Integer;
+  offs, bnk, bit : byte;
 begin
-  pic.addCommAsm(cmt);  //agrega línea al código ensmblador
+  //busca espacio para ubicarla
+  if absAdd=-1 then begin
+    //Caso normal, sin dirección absoluta.
+    if typ.size<0 then begin
+      //Se asume que se están pidiendo bits
+      if typ.size<>-1 then begin   //por ahora se soporta 1 bit
+        GenError('Size of data not supported.');
+        exit;
+      end;
+      if not pic.GetFreeBit(offs, bnk, bit) then begin
+        GenError('RAM memory is full.');
+        exit;
+      end;
+    end else begin
+      //Se asume que se están pidiendo bytes
+      if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
+        GenError('RAM memory is full.');
+        exit;
+      end;
+    end;
+  end else begin
+    //Se debe crear en una posición absoluta
+    pic.AbsToBankRAM(absAdd, offs, bnk);   //convierte dirección
+    if absBit<>-1 then bit := absBit;      //para los bits no hay transformación
+  end;
+  //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
+  if typ.size = 1 then begin
+    //Es un simple byte
+    pic.SetNameRAM(offs,bnk, varName);
+  end else if typ.size = -1 then begin
+    //Es un boolean o bit. No pone nombre, porque varias variables pueden compartir este byte.
+//    pic.SetNameRAM(offs,bnk, '_map');   //no tiene nombre único
+  end else begin
+    //Se asume que la variable ha sido entregada con posiciones consecutivas
+    for i:=0 to typ.size -1 do
+      pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
+  end;
+  //registra variable en la tabla
+  r := TxpEleVar.Create;
+  r.name := varName;
+  r.typ  := typ;   //fija  referencia a tipo
+  r.offs := offs;
+  r.bank := bnk;
+  r.bit  := bit;
+  if not TreeElems.AddElement(r) then begin
+    GenError('Duplicated identifier: "%s"', [varName]);
+    exit;
+  end;
+  Result := r;
+  //Ya encontró tipo, llama a evento
+  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
-procedure TGenCodPic.PutComm(cmt: string); inline; //agrega comentario lateral al código
-begin
-  pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
-end;
-function TGenCodPic.ReportRAMusage: string;
-{Genera un reporte de uso de la memoria RAM}
-begin
-  linRep := '';
-  pic.ExploreUsed(@ProcByteUsed);
-  Result := linRep;
-end;
-//Variables que deden ser accesibles al generador de código
-//var
-//  i_w2 : integer;  //índice a la variable temporal byte
-//  i_w3 : integer;  //índice a la variable temporal byte
-//  i_w4 : integer;  //índice a la variable temporal byte
-//Funciones de acceso rápido a métodos del compilador. Se usan para ayudar al geenrador de código.
-//rutinas generales para la codificación
+//Rutinas generales para la codificación
 procedure TGenCodPic.CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
 begin
   pic.codAsmFD(inst, f, d);
@@ -641,68 +665,7 @@ function TGenCodPic._CLOCK: integer; inline;
 begin
   Result := pic.frequen;
 end;
-//Manejo de variables
-function TGenCodPic.CreateVar(const varName: string; typ: ttype;
-         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
-{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
- "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
-var
-  r   : TxpEleVar;
-  i   : Integer;
-  offs, bnk, bit : byte;
-begin
-  //busca espacio para ubicarla
-  if absAdd=-1 then begin
-    //Caso normal, sin dirección absoluta.
-    if typ.size<0 then begin
-      //Se asume que se están pidiendo bits
-      if typ.size<>-1 then begin   //por ahora se soporta 1 bit
-        GenError('Size of data not supported.');
-        exit;
-      end;
-      if not pic.GetFreeBit(offs, bnk, bit) then begin
-        GenError('RAM memory is full.');
-        exit;
-      end;
-    end else begin
-      //Se asume que se están pidiendo bytes
-      if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
-        GenError('RAM memory is full.');
-        exit;
-      end;
-    end;
-  end else begin
-    //Se debe crear en una posición absoluta
-    pic.AbsToBankRAM(absAdd, offs, bnk);   //convierte dirección
-    if absBit<>-1 then bit := absBit;      //para los bits no hay transformación
-  end;
-  //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
-  if typ.size = 1 then begin
-    //Es un simple byte
-    pic.SetNameRAM(offs,bnk, varName);
-  end else if typ.size = -1 then begin
-    //Es un boolean o bit. No pone nombre, porque varias variables pueden compartir este byte.
-//    pic.SetNameRAM(offs,bnk, '_map');   //no tiene nombre único
-  end else begin
-    //Se asume que la variable ha sido entregada con posiciones consecutivas
-    for i:=0 to typ.size -1 do
-      pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
-  end;
-  //registra variable en la tabla
-  r := TxpEleVar.Create;
-  r.name := varName;
-  r.typ  := typ;   //fija  referencia a tipo
-  r.offs := offs;
-  r.bank := bnk;
-  r.bit  := bit;
-  if not TreeElems.AddElement(r) then begin
-    GenError('Duplicated identifier: "%s"', [varName]);
-    exit;
-  end;
-  Result := r;
-  //Ya encontró tipo, llama a evento
-  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
-end;
+//Inicialización
 procedure TGenCodPic.StartRegs;
 {Inicia los registros de trabajo en la lista.}
 begin

@@ -192,8 +192,6 @@ procedure TGenCod.Cod_StartProgram;
 //Codifica la parte inicial del programa
 begin
   //Code('.CODE');   //inicia la sección de código
-  sp := 0;  //inicia pila
-  spSize:=0;  //inicia sin tamaño
   LastBank := 0;
   StartRegs;  //Inicia registros
 end;
@@ -210,12 +208,12 @@ begin
   LastCatOp := coConst;     //Al iniciar, asume ocnstante (no es exacto, pero sirve).
   BooleanInverted := false; //indica que trabaja en modo normal
   BooleanBit := _Z;         //por defecto, se trabaja con Z
-  w.used := false;          //su ciclo de vida es de instrucción
+  W.used := false;          //su ciclo de vida es de instrucción
   if H<>nil then
     H.used := false;        //su ciclo de vida es de instrucción
   if exprLevel=1 then begin //es el primer nivel
 //    Code('  ;expres');
-    w.used:=false;   //inicia con el registro libre
+    W.used:=false;   //inicia con el registro libre
     res.typ := tipByte;   //le pone un tipo por defecto
   end else begin  //es recursivo
 //    if ALused then  //hay un dato evaluado
@@ -230,13 +228,13 @@ begin
     //Se terminó de evaluar un parámetro
     res.Push;   //Carga en registro de trabajo
     if HayError then exit;
-    w.used:=false;  //se libera registro
+    W.used:=false;  //se libera registro
   end;
   pexPARAM: begin
     //Se terminó de evaluar un parámetro
     res.Push;   //pone parámetro en pila
     if HayError then exit;
-    w.used:=false;  //se libera registro
+    W.used:=false;  //se libera registro
   end;
   end;
   if exprLevel = 1 then begin  //el último nivel
@@ -268,9 +266,25 @@ begin
     end;
   end;
   coVariab: begin
-    _BCF(p1^.offs, p1^.bit);
-    _BTFSC(p2^.offs, p2^.bit);
-    _BSF(p1^.offs, p1^.bit);
+    if p1^.rVar = p2^.rVar then begin
+      //Es asignación de la misma variable.
+      if BooleanInverted then begin  //Es a := not a
+        _MOVLW(p1^.rVar.BitMask);  //carga máscara
+        _XORWF(p1^.offs, toF);
+      end else begin  //Es a := a
+        PutComLine('No code, by optimizing.');
+      end;
+    end else begin
+      if BooleanInverted then begin
+        _BCF(p1^.offs, p1^.bit);
+        _BTFSS(p2^.offs, p2^.bit);
+        _BSF(p1^.offs, p1^.bit);
+      end else begin
+        _BCF(p1^.offs, p1^.bit);
+        _BTFSC(p2^.offs, p2^.bit);
+        _BSF(p1^.offs, p1^.bit);
+      end;
+    end;
   end;
   coExpres: begin  //ya está en STATUS.Z
     if BooleanInverted then begin  //está invertido
@@ -286,7 +300,7 @@ begin
   else
     GenError('Not implemented.'); exit;
   end;
-  w.used:=false;  //No es importante lo que queda
+  W.used:=false;  //No es importante lo que queda
   //El resultado no es importante
 //  res.typ := tipBit;
 //  res.catOp:=coExpres;
@@ -314,7 +328,7 @@ begin
   else
     GenError('Not implemented.'); exit;
   end;
-  w.used:=false;  //No es importante lo que queda
+  W.used:=false;  //No es importante lo que queda
 end;
 procedure TGenCod.Oper_bit_and_bit;
 begin
@@ -387,22 +401,18 @@ begin
     res.catOp := coConst;
   end;
   coVariab: begin
-    case p1^.bit of
-    0: mascara := %00000001;
-    1: mascara := %00000010;
-    2: mascara := %00000100;
-    3: mascara := %00001000;
-    4: mascara := %00010000;
-    5: mascara := %00100000;
-    6: mascara := %01000000;
-    7: mascara := %10000000;
-    end;
-    _MOVLW(mascara);
-    _ANDWF(p1^.offs, toW);   //si es cero, pone Z en 1
-    //Devuelve en Z
+//    _MOVLW(p1^.rVar.BitMask);
+//    _ANDWF(p1^.offs, toW);   //si es cero, pone Z en 1
+//    //Devuelve en Z
+//    res.typ := tipBit;
+//    res.catOp := coExpres;
+//    BooleanInverted := false; //se usa lógica normal.
+    //Optimiza invirtiendo solo la lógica, pero hay que tener cuidado con la asignación
     res.typ := tipBit;
-    res.catOp := coExpres;
-    BooleanInverted := false; //se usa lógica normal.
+    res.catOp := coVariab;   //devuelve como variable
+    res.rVar  := p1^.rVar;
+    //No cambiamos su valor, sino su significado.
+    BooleanInverted := not BooleanInverted;
   end;
   coExpres: begin  //ya está en STATUS.Z
     //No cambiamos su valor, sino su significado.
@@ -411,7 +421,7 @@ begin
   else
     GenError('Not implemented.'); exit;
   end;
-  w.used:=false;  //No es importante lo que queda
+  W.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Boolean
 procedure TGenCod.bool_load;
@@ -453,7 +463,7 @@ begin
   else
     GenError('Not implemented.'); exit;
   end;
-  w.used:=false;  //No es importante lo que queda
+  W.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Byte
 procedure TGenCod.byte_OnPush(const OpPtr: pointer);
@@ -511,7 +521,7 @@ begin
   else
     GenError('No soportado'); exit;
   end;
-  w.used:=false;  //No es importante lo que queda
+  W.used:=false;  //No es importante lo que queda
 end;
 procedure TGenCod.byte_oper_byte(const InstLW, InstWF:TPIC16Inst);
 {Rutina general en operaciones con bytes}
@@ -520,7 +530,7 @@ var
 begin
   case catOperation of
   coConst_Variab: begin
-    RequireResultByte;
+    RequireW;
     _MOVLW(p1^.valInt);
     _BANKSEL(p2^.bank);
     CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
@@ -530,13 +540,13 @@ begin
     CodAsmK(InstLW, p1^.valInt);  //deja en W
   end;
   coVariab_Const: begin
-    RequireResultByte;
+    RequireW;
     _MOVLW(p2^.valInt);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
   end;
   coVariab_Variab:begin
-    RequireResultByte;
+    RequireW;
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);
@@ -566,7 +576,7 @@ begin
   //caso de salida más general
   res.typ := tipByte;   //el resultado será siempre entero
   res.catOp:=coExpres; //por defecto generará una expresión
-  w.used:=true;        //se está usando el acumulador
+  W.used:=true;        //se está usando el acumulador
 end;
 procedure TGenCod.Oper_byte_add_byte;
 begin
@@ -721,13 +731,13 @@ begin
   Op := OpPtr;
   case Op^.catOp of  //el parámetro debe estar en "Op^"
   coConst : begin
-    RequireResultWord;   //indica que va a usar H,W
+    RequireHW;   //indica que va a usar H,W
     _MOVLW(Op^.HByte);
     _MOVWF(H.offs);
     _MOVLW(Op^.LByte);
   end;
   coVariab: begin
-    RequireResultWord;   //indica que va a usar H,W
+    RequireHW;   //indica que va a usar H,W
     _MOVF(Op^.offs, toW);
     _MOVWF(H.offs);
     _MOVF(Op^.offs+1, toW);
@@ -769,7 +779,7 @@ begin
   else
     GenError('No soportado'); exit;
   end;
-  w.used:=false;  //No es importante lo que queda
+  W.used:=false;  //No es importante lo que queda
 end;
 procedure TGenCod.Oper_word_asig_byte;
 begin
@@ -800,7 +810,7 @@ begin
   else
     GenError('No soportado'); exit;
   end;
-  w.used:=false;  //No es importante lo que queda
+  W.used:=false;  //No es importante lo que queda
 end;
 procedure TGenCod.Oper_word_add_word;
 var
@@ -822,7 +832,7 @@ begin
     if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      RequireResultWord;   //indica que va a usar H,W
+      RequireHW;   //indica que va a usar H,W
 {     aux := GetUnusedByteRegister;  //Pide un registro libre
       _movlw(p1^.LByte);      //Carga menos peso del dato 1
       _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
@@ -856,7 +866,7 @@ begin
       aux.used := false;
     end;
     coVariab_Const: begin
-      RequireResultWord;      //Indica que va a usar H,W
+      RequireHW;      //Indica que va a usar H,W
       _MOVLW(p2^.HByte);      //Carga más peso del dato 1
       _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
       _MOVWF(H.offs);         //Guarda el resultado
@@ -866,7 +876,7 @@ begin
       _INCF(H.offs, toF);
     end;
     coVariab_Variab:begin
-      RequireResultWord;      //Indica que va a usar H,W
+      RequireHW;      //Indica que va a usar H,W
       _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
       _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
       _MOVWF(H.offs);         //Guarda mayor peso del resultado
@@ -875,8 +885,8 @@ begin
       _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
       _INCF(H.offs, toF);
     end;
-    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (spH,W)
-      //No es necesario reservar (spH,W) porque existen y se están usando
+    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
+      //No es necesario reservar (H,W) porque existen y se están usando
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
       _movlw(p1^.Hoffs);      //Carga más peso del dato 1
@@ -887,8 +897,8 @@ begin
       _incf(H.offs, toF);
       aux.used := false;
     end;
-    coExpres_Const: begin   //la expresión p1 se evaluó y esta en (spH,W)
-      //No es necesario reservar (spH,W) porque existen y se están usando
+    coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
+      //No es necesario reservar (H,W) porque existen y se están usando
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
       _movlw(p2^.HByte);      //Carga más peso del dato 1
@@ -899,8 +909,8 @@ begin
       _incf(H.offs, toF);
       aux.used := false;
     end;
-    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (spH,W)
-      //No es necesario reservar (spH,W) porque existen y se están usando
+    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
+      //No es necesario reservar (H,W) porque existen y se están usando
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
       _movlw(p2^.Hoffs);      //Carga más peso del dato 1
@@ -912,7 +922,7 @@ begin
       aux.used := false;
     end;
     coExpres_Expres:begin
-      //No es necesario reservar (spH,W) porque existen y se están usando
+      //No es necesario reservar (H,W) porque existen y se están usando
       //Además p1 está salvado en pila y p2 en (_H,W)
       FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
       FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
@@ -932,7 +942,7 @@ begin
     //caso de salida más general
     res.typ := tipWord;   //el resultado será siempre entero
     res.catOp:=coExpres; //por defecto generará una expresión
-    w.used:=true;        //se está usando el acumulador
+    W.used:=true;        //se está usando el acumulador
   end;
 end;
 procedure TGenCod.Oper_word_add_byte;
@@ -955,7 +965,7 @@ begin
     if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      RequireResultWord;   //indica que va a usar H,W
+      RequireHW;   //indica que va a usar H,W
       //versión más corta que solo usa _H, por validar
       _movlw(p1^.HByte);      //Carga más peso del dato 1
       _movwf(H.offs);
@@ -977,7 +987,7 @@ begin
       aux.used := false;
     end;
     coVariab_Const: begin
-      RequireResultWord;     //Indica que va a usar H,W
+      RequireHW;     //Indica que va a usar H,W
       _MOVF(p1^.Hoffs, toW); //Carga más peso del dato 1
       _MOVWF(H.offs);        //Guarda el resultado
       _MOVLW(p2^.LByte);
@@ -986,7 +996,7 @@ begin
       _INCF(H.offs, toF);
     end;
     coVariab_Variab:begin
-      RequireResultWord;   //indica que va a usar H,W
+      RequireHW;   //indica que va a usar H,W
       _movlw(p1^.Hoffs);     //Carga más peso del dato 1
       _movwf(H.offs);
       _movlw(p1^.Loffs);     //Carga menos peso del dato 1
@@ -1030,7 +1040,7 @@ begin
     //caso de salida más general
     res.typ := tipWord;   //el resultado será siempre entero
     res.catOp:=coExpres; //por defecto generará una expresión
-    w.used:=true;        //se está usando el acumulador
+    W.used:=true;        //se está usando el acumulador
   end;
 end;
 /////////////funciones del sistema
