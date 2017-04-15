@@ -1,5 +1,34 @@
 PicPas 0.4.8
 ============
+Se elimina TGenCodPic.NewAuxRegisterByte y se integra en TGenCodPic.GetAuxRegisterByte().
+Se cambia el nombre de TGenCodPic.FreeByte(), por TGenCodPic.FreeStkRegisterByte().
+Se corrigió el código generado por TGenCod.Oper_word_add_word(), en la categoría 
+coVariab_Variab.
+Se implementa la generación de código correcto para evalúar (x+1) + (x+2), con x:word.
+Se elimina TgenCodPic.RequireResultByte().
+Se simplifica y se cambia de nombre a RequireResultWord(), por RequireHW().
+Se crea el método TxpEleVar.BitMask().
+Se optimiza el código generado para: NOT <variable bit>, y para las asiganciones de tipo 
+bit. 
+Se quitan las referencias a W.used en el geenrador de código, porque no son precisas.
+Se crean los métodos: SetResultConst_bool, SetResultConst_bit, SetResultConst_byte y 
+SetResultExpres(typ: TType), en TgenCodPic, para facilitar la actualización de "res".
+Se reemplazan diversas rutinas de inicialización de "res", por las nuevas rutinas 
+creadas.
+Se cambia de nombre a las variables de tipo tipBit, tipBool, tipByte, y tipWord.
+Se mejoró la documentación.
+
+PENDIENTES
+Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola
+función TGenCodPic.CreateVar().
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Terminar de implementar las operaciones del tipo bit.
+Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
+consecutivas, para variables word.
+Implementar la llamada correcta para las funciones del sistema y de usuario.
+Implementar el manejo de bancos de memoria.
+
 
 PicPas 0.4.7
 ============
@@ -24,12 +53,6 @@ Se cambia de nombre a GetUnusedByteRegister() por GetAuxRegisterByte().
 Se elimina el método GetUnusedByteRegister_NoWH().
 Se implementa el manejo de registros de pila.
 
-PENDIENTES
-Terminar de implementar las operaciones del tipo bit.
-Revisar la implementación de la pila de memoria. INcluir rutinas de validación.
-Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
-consecutivas, para variables word.
-Aún se mantiene el error del manejo de registros auxiliares, cuando se evalúa (x+1) + (x+2).
 
 PicPas 0.4.6
 ============
