@@ -53,10 +53,14 @@ type
     registerList: TPicRegister_list;  //lista de registros de trabajo y auxiliares
     registerStack: TPicRegister_list; //lista de registros de pila
     stackTop: integer;   //índice al límite superior de la pila
-    procedure SetResult(tipByte: TType; CatOp: TCatOperan);
     procedure PutComLine(cmt: string);
     procedure PutComm(cmt: string);
     function ReportRAMusage: string;
+    procedure SetResult(typ: TType; CatOp: TCatOperan);
+    procedure SetResultConst_bool(valBool: boolean);
+    procedure SetResultConst_bit(valBit: boolean);
+    procedure SetResultConst_byte(valByte: byte);
+    procedure SetResultExpres(typ: TType);
   private//Rutinas de gestión de memoria de bajo nivel
     function CreateByteRegister(RegType: TPicRegType): TPicRegister;
   protected  //Rutinas de gestión de memoria
@@ -143,10 +147,10 @@ const
 var
   /////// Tipos de datos del lenguaje ////////////
   typNull: TType;     //Tipo nulo (sin tipo)
-  tipBit : TType;
-  tipBool: TType;     //Booleanos
-  tipByte: TType;     //número sin signo
-  tipWord: TType;     //número sin signo
+  typBit : TType;
+  typBool: TType;     //Booleanos
+  typByte: TType;     //número sin signo
+  typWord: TType;     //número sin signo
 //  tipChr : Ttype;   //un caracter
 
 implementation
@@ -175,13 +179,6 @@ begin
   linRep := linRep + regPtr^.name +
             ' DB ' + 'bnk'+ IntToStr(bnk) + ':$' + IntToHex(offs, 3) + LineEnding;
 end;
-procedure TGenCodPic.SetResult(tipByte: TType; CatOp: TCatOperan);
-begin
-  res.typ := tipByte;
-  res.catOp := CatOp;
-  LastCatOp := CatOp;  {Guarda la categoría, para que la siguiente instrucción sepa
-                       cuál fue la categoría de la última expresión}
-end;
 procedure TGenCodPic.PutComLine(cmt: string); inline; //agrega comentario al código
 begin
   pic.addCommAsm(cmt);  //agrega línea al código ensmblador
@@ -196,6 +193,33 @@ begin
   linRep := '';
   pic.ExploreUsed(@ProcByteUsed);
   Result := linRep;
+end;
+procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
+{Fija los parámetros del resultado de una subexpresion.}
+begin
+  res.typ := typ;
+  res.catOp := CatOp;
+  LastCatOp := CatOp;  {Guarda la categoría, para que la siguiente instrucción sepa
+                       cuál fue la categoría de la última expresión}
+end;
+procedure TGenCodPic.SetResultConst_bool(valBool: boolean);
+begin
+  SetResult(typBool, coConst);
+  res.valBool := valBool;
+end;
+procedure TGenCodPic.SetResultConst_bit(valBit: boolean);
+begin
+  SetResult(typBit, coConst);
+  res.valBool := valBit;
+end;
+procedure TGenCodPic.SetResultConst_byte(valByte: byte);
+begin
+  SetResult(typBit, coConst);
+  res.valInt := valByte;
+end;
+procedure TGenCodPic.SetResultExpres(typ: TType);
+begin
+  SetResult(typ, coExpres);
 end;
 //Rutinas de Gestión de memoria
 function TGenCodPic.CreateByteRegister(RegType: TPicRegType): TPicRegister;

@@ -118,10 +118,10 @@ begin
     es el byte, y no el bit.}
     if (n>=0) and  (n<=255) then begin
       Op.size := 1;
-      Op.typ := tipByte;
+      Op.typ := typByte;
     end else if (n>= 0) and  (n<=65535) then begin
       Op.size := 2;
-      Op.typ := tipWord;
+      Op.typ := typWord;
     end else  begin //no encontró
       GenError('No type defined to accommodate this number.');
       Op.typ := nil;
@@ -150,7 +150,7 @@ begin
   Op.size:=-1;   //se usará un byte
   //convierte valor constante
   Op.valBool:= (tokcad[1] in ['t','T']);
-  Op.typ:=tipBool;
+  Op.typ:=typBool;
 end;
 procedure TCompiler.ProcComments;
 //Procesa comentarios y directivas
@@ -439,7 +439,7 @@ begin
       exit;
     end;
     //verifica si tiene dirección absoluta
-    CheckAbsolute(isAbsolute, (typ = tipBool) or (typ = tipBit) );
+    CheckAbsolute(isAbsolute, (typ = typBool) or (typ = typBit) );
     if Perr.HayError then exit;
     //reserva espacio para las variables
     for tmp in varNames do begin
@@ -634,7 +634,7 @@ begin
   l1 := _PC;        //guarda dirección de inicio
   GetExpressionE(0);
   if HayError then exit;
-  if res.typ<>tipBool then begin
+  if res.typ<>typBool then begin
     GenError('Boolean expression expected.');
     exit;
   end;
@@ -699,7 +699,7 @@ begin
   cIn.Next;   //toma "until"
   GetExpressionE(0);
   if HayError then exit;
-  if res.typ<>tipBool then begin
+  if res.typ<>typBool then begin
     GenError('Boolean expression expected.');
     exit;
   end;
@@ -735,7 +735,7 @@ var
 begin
   GetExpressionE(0);
   if HayError then exit;
-  if res.typ<>tipBool then begin
+  if res.typ<>typBool then begin
     GenError('Boolean expression expected.');
     exit;
   end;
@@ -1052,13 +1052,13 @@ var
 begin
   tmp := '';
   for v in TreeElems.AllVars do begin
-    if (v.typ = tipBool) or (v.typ = tipBit) then begin
+    if (v.typ = typBool) or (v.typ = typBit) then begin
       dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3) + '.' + IntToStr(v.bit);
       tmp += ' ' + v.name + ' Db ' +  dir + LineEnding;
-    end else if v.typ = tipByte then begin
+    end else if v.typ = typByte then begin
       dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
       tmp += ' ' + v.name + ' DB ' +  dir + LineEnding;
-    end else if v.typ = tipWord then begin
+    end else if v.typ = typWord then begin
       dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
       tmp += ' ' + v.name + ' DW ' +  dir + LineEnding;
     end else begin

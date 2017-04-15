@@ -211,14 +211,7 @@ begin
   W.used := false;          //su ciclo de vida es de instrucción
   if H<>nil then
     H.used := false;        //su ciclo de vida es de instrucción
-  if exprLevel=1 then begin //es el primer nivel
-//    Code('  ;expres');
-    W.used:=false;   //inicia con el registro libre
-    res.typ := tipByte;   //le pone un tipo por defecto
-  end else begin  //es recursivo
-//    if ALused then  //hay un dato evaluado
-//      Code('  push al');  //lo guarda
-  end;
+  res.typ := typByte;   //le pone un tipo por defecto
 end;
 procedure TGenCod.expr_end(posExpres: TPosExpres);
 //Se ejecuta al final de una expresión, si es que no ha habido error.
@@ -300,10 +293,7 @@ begin
   else
     GenError('Not implemented.'); exit;
   end;
-  W.used:=false;  //No es importante lo que queda
-  //El resultado no es importante
-//  res.typ := tipBit;
-//  res.catOp:=coExpres;
+  SetResultExpres(typBit);  //Realmente, el resultado no es importante
 end;
 procedure TGenCod.Oper_bit_asig_byte;
 begin
@@ -328,7 +318,7 @@ begin
   else
     GenError('Not implemented.'); exit;
   end;
-  W.used:=false;  //No es importante lo que queda
+  SetResultExpres(typBit);  //Realmente, el resultado no es importante
 end;
 procedure TGenCod.Oper_bit_and_bit;
 begin
@@ -396,9 +386,8 @@ begin
   case p1^.catOp of
   coConst : begin
     {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
-    p1^.valBool := not p1^.valBool;
-    res.typ := tipBit;
-    res.catOp := coConst;
+    SetResultConst_bit(not p1^.valBool);
+    BooleanInverted := false;  //aunque no se usa, se define por norma
   end;
   coVariab: begin
 //    _MOVLW(p1^.rVar.BitMask);
@@ -408,20 +397,20 @@ begin
 //    res.catOp := coExpres;
 //    BooleanInverted := false; //se usa lógica normal.
     //Optimiza invirtiendo solo la lógica, pero hay que tener cuidado con la asignación
-    res.typ := tipBit;
+    res.typ := typBit;
     res.catOp := coVariab;   //devuelve como variable
     res.rVar  := p1^.rVar;
     //No cambiamos su valor, sino su significado.
     BooleanInverted := not BooleanInverted;
   end;
   coExpres: begin  //ya está en STATUS.Z
+    SetResultExpres(typBit);
     //No cambiamos su valor, sino su significado.
     BooleanInverted := not BooleanInverted;
   end;
   else
     GenError('Not implemented.'); exit;
   end;
-  W.used:=false;  //No es importante lo que queda
 end;
 ////////////operaciones con Boolean
 procedure TGenCod.bool_load;
@@ -463,7 +452,7 @@ begin
   else
     GenError('Not implemented.'); exit;
   end;
-  W.used:=false;  //No es importante lo que queda
+  SetResultExpres(typBool);  //Realmente, el resultado no es importante
 end;
 ////////////operaciones con Byte
 procedure TGenCod.byte_OnPush(const OpPtr: pointer);
@@ -521,7 +510,7 @@ begin
   else
     GenError('No soportado'); exit;
   end;
-  W.used:=false;  //No es importante lo que queda
+  SetResultExpres(typByte);  //Realmente, el resultado no es importante
 end;
 procedure TGenCod.byte_oper_byte(const InstLW, InstWF:TPIC16Inst);
 {Rutina general en operaciones con bytes}
@@ -573,17 +562,15 @@ begin
     CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
   end;
   end;
-  //caso de salida más general
-  res.typ := tipByte;   //el resultado será siempre entero
-  res.catOp:=coExpres; //por defecto generará una expresión
-  W.used:=true;        //se está usando el acumulador
+  //Fija "res"
+  SetResultExpres(typByte);
 end;
 procedure TGenCod.Oper_byte_add_byte;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt+p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;  //necesario
-    res.typ := tipByte;
+    res.typ := typByte;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
@@ -608,7 +595,7 @@ begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt-p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;   //necesario
-    res.typ := tipByte;
+    res.typ := typByte;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
@@ -620,7 +607,7 @@ begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt and p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;   //necesario
-    res.typ := tipByte;
+    res.typ := typByte;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
@@ -632,7 +619,7 @@ begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt or p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;   //necesario
-    res.typ := tipByte;
+    res.typ := typByte;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
@@ -644,7 +631,7 @@ begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     res.valInt:=p1^.valInt xor p2^.valInt;  //optimiza respuesta
     if not ValidateByteRange(res.valInt) then exit;   //necesario
-    res.typ := tipByte;
+    res.typ := typByte;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
@@ -658,7 +645,7 @@ begin
   BooleanInverted := false;  //indica que trabaja en modo normal
   if catOperation  = coConst_Const then begin  //compara constantes. Caso especial
     res.valBool := (p1^.valInt = p2^.valInt);  //optimiza respuesta
-    res.typ := tipBool;
+    res.typ := typBool;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
@@ -711,7 +698,7 @@ begin
       GenError('Not implemented.'); exit;
     end;
     //caso de salida más general
-    res.typ := tipBool;   //el resultado será siempre entero
+    res.typ := typBool;   //el resultado será siempre entero
     res.catOp:=coExpres; //por defecto generará una expresión
     //el resultado queda en _Z
   end;
@@ -779,7 +766,7 @@ begin
   else
     GenError('No soportado'); exit;
   end;
-  W.used:=false;  //No es importante lo que queda
+  SetResultExpres(typWord);  //Realmente, el resultado no es importante
 end;
 procedure TGenCod.Oper_word_asig_byte;
 begin
@@ -810,7 +797,7 @@ begin
   else
     GenError('No soportado'); exit;
   end;
-  W.used:=false;  //No es importante lo que queda
+  SetResultExpres(typWord);  //Realmente, el resultado no es importante
 end;
 procedure TGenCod.Oper_word_add_word;
 var
@@ -822,9 +809,9 @@ begin
     res.valInt:=p1^.valInt+p2^.valInt;  //optimiza respuesta
     if not ValidateWordRange(res.valInt) then exit;  //necesario
     if res.valInt<256 then
-      res.typ := tipByte  //para que permita optimizar
+      res.typ := typByte  //para que permita optimizar
     else
-      res.typ := tipWord;
+      res.typ := typWord;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
@@ -939,10 +926,7 @@ begin
     else
       genError('Not implemented: "%s"', [CatOperationToStr]);
     end;
-    //caso de salida más general
-    res.typ := tipWord;   //el resultado será siempre entero
-    res.catOp:=coExpres; //por defecto generará una expresión
-    W.used:=true;        //se está usando el acumulador
+    SetResultExpres(typWord);
   end;
 end;
 procedure TGenCod.Oper_word_add_byte;
@@ -955,9 +939,9 @@ begin
     res.valInt:=p1^.valInt+p2^.valInt;  //optimiza respuesta
     if not ValidateWordRange(res.valInt) then exit;  //necesario
     if res.valInt<256 then
-      res.typ := tipByte  //para que permita optimizar
+      res.typ := typByte  //para que permita optimizar
     else
-      res.typ := tipWord;
+      res.typ := typWord;
     res.catOp:=coConst;
     //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
     exit;  //sale aquí, porque es un caso particular
@@ -1037,10 +1021,7 @@ begin
     else
       genError('Not implemented: "%s"', [CatOperationToStr] );
     end;
-    //caso de salida más general
-    res.typ := tipWord;   //el resultado será siempre entero
-    res.catOp:=coExpres; //por defecto generará una expresión
-    W.used:=true;        //se está usando el acumulador
+    SetResultExpres(typWord);
   end;
 end;
 /////////////funciones del sistema
@@ -1298,28 +1279,28 @@ begin
   ClearTypes;
   typNull := CreateType('null',t_boolean,-1);
   //tipo bit
-  tipBit :=CreateType('bit',t_uinteger,-1);   //de 1 bit
+  typBit :=CreateType('bit',t_uinteger,-1);   //de 1 bit
   //tipo booleano
-  tipBool :=CreateType('boolean',t_boolean,-1);   //de 1 bit
+  typBool :=CreateType('boolean',t_boolean,-1);   //de 1 bit
   //tipo numérico de un solo byte
-  tipByte :=CreateType('byte',t_uinteger,1);   //de 2 bytes
+  typByte :=CreateType('byte',t_uinteger,1);   //de 2 bytes
   //tipo numérico de dos byte
-  tipWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
+  typWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
 
   {Los operadores deben crearse con su precedencia correcta}
   //////// Operaciones con Boolean ////////////
-  tipBool.OperationLoad:=@bool_load;
-  opr:=tipBool.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(tipBool,@Oper_bool_asig_bool);
+  typBool.OperationLoad:=@bool_load;
+  opr:=typBool.CreateBinaryOperator(':=',2,'asig');  //asignación
+  opr.CreateOperation(typBool,@Oper_bool_asig_bool);
   //////// Operaciones con Bit ////////////
-  tipBit.OperationLoad:=@bit_load;
-  opr:=tipBit.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(tipBit, @Oper_bit_asig_bit);
-  opr.CreateOperation(tipByte, @Oper_bit_asig_byte);
+  typBit.OperationLoad:=@bit_load;
+  opr:=typBit.CreateBinaryOperator(':=',2,'asig');  //asignación
+  opr.CreateOperation(typBit, @Oper_bit_asig_bit);
+  opr.CreateOperation(typByte, @Oper_bit_asig_byte);
 
-  opr:=tipBit.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_bit_not);
-  opr:=tipBit.CreateBinaryOperator('+',4,'and');  //suma
-  opr.CreateOperation(tipBit,@Oper_bit_and_bit);
+  opr:=typBit.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_bit_not);
+  opr:=typBit.CreateBinaryOperator('+',4,'and');  //suma
+  opr.CreateOperation(typBit,@Oper_bit_and_bit);
   {Precedencia de operadores en Pascal
 6)    ~, not, signo "-"   (mayor precedencia)
 5)    *, /, div, mod, and, shl, shr, &
@@ -1329,37 +1310,37 @@ begin
 }
   //////// Operaciones con Byte ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  tipByte.OperationLoad:=@byte_load;
-  tipByte.OperationPush:=@byte_OnPush;
-  opr:=tipByte.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(tipByte,@Oper_byte_asig_byte);
-  opr:=tipByte.CreateBinaryOperator('+',4,'suma');  //suma
-  opr.CreateOperation(tipByte,@Oper_byte_add_byte);
-  opr.CreateOperation(tipWord,@Oper_byte_add_word);
-  opr:=tipByte.CreateBinaryOperator('-',4,'resta');  //suma
-  opr.CreateOperation(tipByte,@Oper_byte_sub_byte);
-  opr:=tipByte.CreateBinaryOperator('AND',5,'and');  //suma
-  opr.CreateOperation(tipByte,@Oper_byte_and_byte);
-  opr:=tipByte.CreateBinaryOperator('OR',4,'or');  //suma
-  opr.CreateOperation(tipByte,@Oper_byte_or_byte);
-  opr:=tipByte.CreateBinaryOperator('XOR',4,'xor');  //suma
-  opr.CreateOperation(tipByte,@Oper_byte_xor_byte);
+  typByte.OperationLoad:=@byte_load;
+  typByte.OperationPush:=@byte_OnPush;
+  opr:=typByte.CreateBinaryOperator(':=',2,'asig');  //asignación
+  opr.CreateOperation(typByte,@Oper_byte_asig_byte);
+  opr:=typByte.CreateBinaryOperator('+',4,'suma');  //suma
+  opr.CreateOperation(typByte,@Oper_byte_add_byte);
+  opr.CreateOperation(typWord,@Oper_byte_add_word);
+  opr:=typByte.CreateBinaryOperator('-',4,'resta');  //suma
+  opr.CreateOperation(typByte,@Oper_byte_sub_byte);
+  opr:=typByte.CreateBinaryOperator('AND',5,'and');  //suma
+  opr.CreateOperation(typByte,@Oper_byte_and_byte);
+  opr:=typByte.CreateBinaryOperator('OR',4,'or');  //suma
+  opr.CreateOperation(typByte,@Oper_byte_or_byte);
+  opr:=typByte.CreateBinaryOperator('XOR',4,'xor');  //suma
+  opr.CreateOperation(typByte,@Oper_byte_xor_byte);
 
-  opr:=tipByte.CreateBinaryOperator('=',3,'igual');
-  opr.CreateOperation(tipByte,@Oper_byte_igual_byte);
-  opr:=tipByte.CreateBinaryOperator('<>',3,'difer');
-  opr.CreateOperation(tipByte,@Oper_byte_difer_byte);
+  opr:=typByte.CreateBinaryOperator('=',3,'igual');
+  opr.CreateOperation(typByte,@Oper_byte_igual_byte);
+  opr:=typByte.CreateBinaryOperator('<>',3,'difer');
+  opr.CreateOperation(typByte,@Oper_byte_difer_byte);
 
   //////// Operaciones con Word ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  tipWord.OperationPush:=@word_OnPush;
-  tipWord.OperationLoad:=@word_load;
-  opr:=tipWord.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(tipWord,@Oper_word_asig_word);
-  opr.CreateOperation(tipByte,@Oper_word_asig_byte);
-  opr:=tipWord.CreateBinaryOperator('+',4,'suma');  //suma
-  opr.CreateOperation(tipWord,@Oper_word_add_word);
-  opr.CreateOperation(tipByte,@Oper_word_add_byte);
+  typWord.OperationPush:=@word_OnPush;
+  typWord.OperationLoad:=@word_load;
+  opr:=typWord.CreateBinaryOperator(':=',2,'asig');  //asignación
+  opr.CreateOperation(typWord,@Oper_word_asig_word);
+  opr.CreateOperation(typByte,@Oper_word_asig_byte);
+  opr:=typWord.CreateBinaryOperator('+',4,'suma');  //suma
+  opr.CreateOperation(typWord,@Oper_word_add_word);
+  opr.CreateOperation(typByte,@Oper_word_add_byte);
 
 end;
 procedure TGenCod.CreateSystemElements;
@@ -1372,22 +1353,22 @@ begin
   {Notar que las funciones del sistema no crean espacios de nombres y no se hace
   validación para verificar la duplicidad (para hacer el proceso más rápido).
   Es responsabilidad del progranador, no introducir funciones con conflictos.}
-  f := CreateSysFunction('putchar', tipByte, @fun_putchar);
-  f.CreateParam('',tipByte);
-  f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms);
-  f.CreateParam('',tipByte);
+  f := CreateSysFunction('putchar', typByte, @fun_putchar);
+  f.CreateParam('',typByte);
+  f := CreateSysFunction('delay_ms', typByte, @fun_delay_ms);
+  f.CreateParam('',typByte);
   f.adrr:=-1;   //para indicar que no está codificada
-  f := CreateSysFunction('delay_ms', tipByte, @fun_delay_ms_w);
-  f.CreateParam('',tipWord);
+  f := CreateSysFunction('delay_ms', typByte, @fun_delay_ms_w);
+  f.CreateParam('',typWord);
   f.adrr:=-1;   //para indicar que no está codificada
-  f := CreateSysFunction('Inc', tipByte, @fun_Inc_byte);
-  f.CreateParam('',tipByte);
-  f := CreateSysFunction('Inc', tipByte, @fun_Inc_word);
-  f.CreateParam('',tipWord);
-  f := CreateSysFunction('Dec', tipByte, @fun_Dec_byte);
-  f.CreateParam('',tipByte);
-  f := CreateSysFunction('Dec', tipByte, @fun_Dec_word);
-  f.CreateParam('',tipWord);
+  f := CreateSysFunction('Inc', typByte, @fun_Inc_byte);
+  f.CreateParam('',typByte);
+  f := CreateSysFunction('Inc', typByte, @fun_Inc_word);
+  f.CreateParam('',typWord);
+  f := CreateSysFunction('Dec', typByte, @fun_Dec_byte);
+  f.CreateParam('',typByte);
+  f := CreateSysFunction('Dec', typByte, @fun_Dec_word);
+  f.CreateParam('',typWord);
 end;
 
 procedure SetLanguage(lang: string);
