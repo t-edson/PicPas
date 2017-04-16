@@ -215,8 +215,8 @@ begin
   edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
   frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
   //carga archivo de ejemplo
-  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
-//  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
+//  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
+  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin

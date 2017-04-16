@@ -743,6 +743,7 @@ Si el operador encontrado no se aplica al operando, devuelve nullOper.}
 begin
   if cIn.tokType <> tkOperator then exit(nil);
   //hay un operador
+//debugln(Op.typ.name);
   Result := Op.typ.FindBinaryOperator(cIn.tok);
   cIn.Next;   //toma el token
 end;

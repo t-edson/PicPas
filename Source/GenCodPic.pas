@@ -40,10 +40,6 @@ type
 
   TGenCodPic = class(TCompilerBase)
   private
-    {Estructura de pila. Se crea una tabla de las direcciones a usar (no necesariamente
-    consecutivas, porque puede haber variables ABSOLUTE) como pila. El tamaño de la pila a
-    usar no es fijo, sino que se crea de acuerdo al tamaño requerido para la evaluación de
-    expresiones. Puede incluso ser de tamaño cero.}
     linRep : string;   //línea para generar de reporte
     procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
   protected
@@ -56,10 +52,15 @@ type
     procedure PutComLine(cmt: string);
     procedure PutComm(cmt: string);
     function ReportRAMusage: string;
+    function ValidateByteRange(n: integer): boolean;
+    function ValidateWordRange(n: integer): boolean;
+    //Métodos para fijar el resultado
     procedure SetResult(typ: TType; CatOp: TCatOperan);
     procedure SetResultConst_bool(valBool: boolean);
     procedure SetResultConst_bit(valBit: boolean);
-    procedure SetResultConst_byte(valByte: byte);
+    procedure SetResultConst_byte(valByte: integer);
+    procedure SetResultConst_word(valWord: integer);
+    procedure SetResultVariab(typ: TType; rVar: TxpEleVar);
     procedure SetResultExpres(typ: TType);
   private//Rutinas de gestión de memoria de bajo nivel
     function CreateByteRegister(RegType: TPicRegType): TPicRegister;
@@ -68,7 +69,9 @@ type
     function GetAuxRegisterByte: TPicRegister;
     function GetStkRegisterByte: TPicRegister;
     function FreeStkRegisterByte(var reg: TPicRegister): boolean;
-    procedure RequireW;
+    function RequireResult_W: TPicRegister;
+    procedure SaveW(out reg: TPicRegister);
+    procedure RestoreW(reg: TPicRegister);
     procedure RequireH(preserve: boolean = true);
     procedure RequireHW;
     //Manejo de variables
@@ -194,6 +197,26 @@ begin
   pic.ExploreUsed(@ProcByteUsed);
   Result := linRep;
 end;
+function TGenCodPic.ValidateByteRange(n: integer): boolean;
+//Verifica que un valor entero, se pueda convertir a byte. Si no, devuelve FALSE.
+begin
+  if (n>=0) and (n<256) then
+     exit(true)
+  else begin
+    GenError('Valor numérico excede el rango de un byte.');
+    exit(false);
+  end;
+end;
+function TGenCodPic.ValidateWordRange(n: integer): boolean;
+//Verifica que un valor entero, se pueda convertir a byte. Si no, devuelve FALSE.
+begin
+  if (n>=0) and (n<65536) then
+     exit(true)
+  else begin
+    GenError('Valor numérico excede el rango de un word.');
+    exit(false);
+  end;
+end;
 procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
 {Fija los parámetros del resultado de una subexpresion.}
 begin
@@ -212,10 +235,24 @@ begin
   SetResult(typBit, coConst);
   res.valBool := valBit;
 end;
-procedure TGenCodPic.SetResultConst_byte(valByte: byte);
+procedure TGenCodPic.SetResultConst_byte(valByte: integer);
 begin
-  SetResult(typBit, coConst);
+  if not ValidateByteRange(valByte) then
+    exit;  //Error de rango
+  SetResult(typByte, coConst);
   res.valInt := valByte;
+end;
+procedure TGenCodPic.SetResultConst_word(valWord: integer);
+begin
+  if not ValidateWordRange(valWord) then
+    exit;  //Error de rango
+  SetResult(typWord, coConst);
+  res.valInt := valWord;
+end;
+procedure TGenCodPic.SetResultVariab(typ: TType; rVar: TxpEleVar);
+begin
+  SetResult(typ, coVariab);
+  res.rVar := rVar;
 end;
 procedure TGenCodPic.SetResultExpres(typ: TType);
 begin
@@ -241,7 +278,7 @@ begin
   Result := reg;   //devuelve referencia
 end;
 function TGenCodPic.GetAuxRegisterByte: TPicRegister;
-{Devuelve la dirección de un registro de trabajo libre. Si nop encuentra alguno, lo crea.
+{Devuelve la dirección de un registro de trabajo libre. Si no encuentra alguno, lo crea.
  Si hay algún error, llama a GenError() y devuelve NIL}
 var
   reg: TPicRegister;
@@ -304,8 +341,6 @@ function TGenCodPic.FreeStkRegisterByte(var reg: TPicRegister): boolean;
 {Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
  byte pedido. Si hubo error, devuelve FALSE.
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
-var
-  i: Integer;
 begin
    if stackTop=0 then begin  //Ya está abajo
      GenError('Desborde de pila.');
@@ -317,20 +352,41 @@ begin
    {Notar que, aunque se devuelve la referencia, el registro está libre, para otra
    operación con GetStkRegisterByte(). Tenerlo en cuenta. }
 end;
-procedure TGenCodPic.RequireW;
-{Indica que se va a utilizar el acumulador. De encontrarse ocupado,
-se pondrá en la pila. Si no hay espacio, genera error}
-var
-  tmpReg: TPicRegister;
+function TGenCodPic.RequireResult_W: TPicRegister;
+{Indica que se va a utilizar al acumulador W, para devolver un resultado de tipo Byte.
+De encontrarse ocupado, se pone en la pila y devuelve la referencia al registro de pila
+usado. Si no hay espacio, genera error.}
 begin
   if W.used then begin
     //Ya lo usó la subexpresión anterior (seguro que fue una expresión byte o word)
-    tmpReg := GetStkRegisterByte;  //pide memoria
+    Result := GetStkRegisterByte;  //pide memoria
     //guarda W { TODO : Falta validar el banco }
-    _MOVWF(tmpReg.offs);PutComm(';guarda W');
-    tmpReg.used := true;
+    _MOVWF(Result.offs);PutComm(';save W');
+    Result.used := true;
+  end else begin
+    Result := nil;
   end;
   W.used := true;   //Lo marca como indicando que se va a ocupar
+end;
+procedure TGenCodPic.SaveW(out reg: TPicRegister);
+{Verifica si el registro W, está siendo usado y de ser así genera la instrucción para
+guardarlo en un registro auxiliar.}
+begin
+  if W.used then begin
+    reg := GetAuxRegisterByte;
+    if reg = nil then exit;
+    _MOVWF(reg.offs);PutComm(';save W');
+  end else begin
+    reg := nil;
+  end;
+end;
+procedure TGenCodPic.RestoreW(reg: TPicRegister);
+{Devuelve a W, el valor guardado previamente con RequireW}
+begin
+  if reg<>nil then begin
+    reg.used := false;  //libera registro auxiliar
+    _MOVF(reg.offs, toW);PutComm(';restore W');
+  end;
 end;
 procedure TGenCodPic.RequireH(preserve: boolean = true);
 {Indica que va a usar el registro H.}
@@ -359,7 +415,7 @@ Debe llamarse siempre, antes de generar código para la subexpresión.}
 var
   tmpReg: TPicRegister;
 begin
-  RequireW;
+  RequireResult_W;
   RequireH;
 end;
 //Manejo de variables
