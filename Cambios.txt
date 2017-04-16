@@ -1,3 +1,28 @@
+PicPas 0.4.9
+============
+Se mueven los campos de atributos de la clase TGenCod a TGenCodPic.
+Se mueve el método TPicRegister.AssignRAM() a TGenCodPic. 
+Se simplifica la clase TPicRegister, ya que no reuqiere ahora refernecia al PIC.
+Se crea la clase TPicRegisterBit.
+Se cambia de nombre a registerList por listRegAux
+Se cambia de nombre a registerStack por listRegStk.
+Se cambai de nombre a CreateByteRegister por CreateRegisterByte.
+Se crean las listas listRegAuxBit y listRegStkBit.
+Se crean funciones de gestión de memoria pàra bits.
+Se crea el registro Z como de tipo TPicRegisterBit.
+Se corrige TGenCodPic.StartRegs, para que inicialize al puntero stacktop.
+
+PENDIENTES
+Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola
+función TGenCodPic.CreateVar().
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Terminar de implementar las operaciones del tipo bit.
+Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
+consecutivas, para variables word.
+Implementar la llamada correcta para las funciones del sistema y de usuario.
+Implementar el manejo de bancos de memoria.
+
 PicPas 0.4.8
 ============
 Se elimina TGenCodPic.NewAuxRegisterByte y se integra en TGenCodPic.GetAuxRegisterByte().
@@ -10,7 +35,7 @@ Se simplifica y se cambia de nombre a RequireResultWord(), por RequireHW().
 Se crea el método TxpEleVar.BitMask().
 Se optimiza el código generado para: NOT <variable bit>, y para las asiganciones de tipo 
 bit. 
-Se quitan las referencias a W.used en el geenrador de código, porque no son precisas.
+Se quitan las referencias a W.used en el generador de código, porque no son precisas.
 Se crean los métodos: SetResultConst_bool, SetResultConst_bit, SetResultConst_byte y 
 SetResultExpres(typ: TType), en TgenCodPic, para facilitar la actualización de "res".
 Se reemplazan diversas rutinas de inicialización de "res", por las nuevas rutinas 
@@ -22,17 +47,6 @@ Se cambia el nombre a RequireW() por RequireResult_W().
 Se corrigió un problema en la rutina TGenCod.byte_oper_byte(), referida a la resta de 
 una variable y una constante.
 Se mejoró la documentación.
-
-PENDIENTES
-Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola
-función TGenCodPic.CreateVar().
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Terminar de implementar las operaciones del tipo bit.
-Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
-consecutivas, para variables word.
-Implementar la llamada correcta para las funciones del sistema y de usuario.
-Implementar el manejo de bancos de memoria.
 
 
 PicPas 0.4.7
