@@ -1,7 +1,6 @@
 {Description of the program.}
 program nombre;
-var
-  a, b, c: bit;
+var a: bit;
 begin
   a := not a;
 end.

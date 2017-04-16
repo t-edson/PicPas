@@ -16,6 +16,11 @@ SetResultExpres(typ: TType), en TgenCodPic, para facilitar la actualización de "
 Se reemplazan diversas rutinas de inicialización de "res", por las nuevas rutinas 
 creadas.
 Se cambia de nombre a las variables de tipo tipBit, tipBool, tipByte, y tipWord.
+Se convierte TGenCodPic.RequireW(), en función. 
+Se crean los métodos TGenCodPic.SaveW() y TGenCodPic.RestoreW().
+Se cambia el nombre a RequireW() por RequireResult_W().
+Se corrigió un problema en la rutina TGenCod.byte_oper_byte(), referida a la resta de 
+una variable y una constante.
 Se mejoró la documentación.
 
 PENDIENTES
