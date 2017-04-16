@@ -129,14 +129,14 @@ type
     procedure editChangeFileInform;
     procedure edSpecialLineMarkup(Sender: TObject; Line: integer;
       var Special: boolean; Markup: TSynSelectedColor);
-    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
+    procedure FormClose(Sender: TObject; var {%H-}CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure ListBox1DrawItem(Control: TWinControl; Index: Integer;
-      ARect: TRect; State: TOwnerDrawState);
+    procedure ListBox1DrawItem({%H-}Control: TWinControl; Index: Integer;
+      ARect: TRect; {%H-}State: TOwnerDrawState);
   private
     edit: TSynFacilEditor;
     hlAssem : TSynFacilSyn;   //resaltador para ensamblador
@@ -215,8 +215,8 @@ begin
   edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
   frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
   //carga archivo de ejemplo
-//  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
-  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
+  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
+//  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin

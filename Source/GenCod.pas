@@ -106,13 +106,6 @@ type
       procedure fun_Inc_word(fun: TxpEleFun);
       procedure fun_putchar(fun: TxpEleFun);
     protected
-      //Atributos adicionales
-      tkStruct   : TSynHighlighterAttributes;
-      tkDirective: TSynHighlighterAttributes;
-      tkAsm      : TSynHighlighterAttributes;
-      tkExpDelim : TSynHighlighterAttributes;
-      tkBlkDelim : TSynHighlighterAttributes;
-      tkOthers   : TSynHighlighterAttributes;
       procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
       procedure Cod_StartProgram;
@@ -362,8 +355,6 @@ begin
 //    w.used:=true;        //se está usando el acumulador
 end;
 procedure TGenCod.Oper_bit_not;
-var
-  mascara: byte;
 begin
   case p1^.catOp of
   coConst : begin
