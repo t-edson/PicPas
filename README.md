@@ -20,33 +20,20 @@ As an example the following code, is to blink an LED on port B:
 
 ```
 {Sample program to blink a Led on PORTB.4}
-{$FREQUENCY 4 MHZ }
-{$PROCESSOR PIC16F84}
+{$FREQUENCY 8 MHZ }
+{$PROCESSOR PIC16F84A}
 program BlinkLed;
-const
-  HIGH = true;
-  LOW = false;
 var
-  STATUS: BYTE absolute $03;
   PORTB : BYTE absolute $06;
   TRISB : BYTE absolute $86;
-  RP0 : boolean @STATUS.5;
-  RP1 : boolean @STATUS.6;
-  pin: boolean absolute PORTB.4;
+  pin: bit absolute PORTB.7;
 begin                          
-  RP0 := HIGH;
   TRISB := 0;   //all outputs
-  RP0 := LOW;
-  PORTB := 0;   //init
-  delay_ms(1000);  //wait
   while true do begin
-    delay_ms(300);
-    pin := HIGH;
-    delay_ms(300);
-    pin := LOW;
+    delay_ms(1000);
+    pin := not pin;
   end;
-end.
-```
+end.```
 
 ##Source Code
 
