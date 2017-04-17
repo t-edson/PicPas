@@ -1,3 +1,12 @@
+PicPas 0.5.0
+============
+Se corrigió un problema de conmutación de bancos en las operacioens de asignación.
+Se eliminó el campo lastBank.
+Se modificó TGenCodPic._BANKSEL() para que devuelva el número de instrucciones
+generado.
+Se incluyó rutinas de conmutación de bancos, en diversos puntos del generado de 
+código.
+
 PicPas 0.4.9
 ============
 Se mueven los campos de atributos de la clase TGenCod a TGenCodPic.
