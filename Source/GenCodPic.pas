@@ -106,7 +106,7 @@ type
     {Estas variables, se inician al inicio de cada expresión y su valor es válido
     hasta el final de la expresión.}
     LastCatOp  : TCatOperan; //Categoría de operando, de la subexpresión anterior.
-    LastBank   : byte;       //Banco de RAM, de la subexpresión anterior.
+//    LastBank   : byte;       //Banco de RAM, de la subexpresión anterior.
     CurrBank   : Byte;       //Banco RAM actual
     //Variables de estado de las expresiones booleanas
     BooleanInverted : boolean;  //indica que la lógica del bit de salida está invertida
@@ -121,7 +121,7 @@ type
     procedure _ADDWF(const f: byte; d: TPIC16destin);
     procedure _ANDLW(const k: word);
     procedure _ANDWF(const f: byte; d: TPIC16destin);
-    procedure _BANKSEL(targetBank: byte);
+    function _BANKSEL(targetBank: byte): byte;
     procedure _BCF(const f, b: byte);
     procedure _BSF(const f, b: byte);
     procedure _BTFSC(const f, b: byte);
@@ -656,9 +656,10 @@ procedure TGenCodPic._ANDWF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.codAsmFD(ANDWF, f,d);
 end;
-procedure TGenCodPic._BANKSEL(targetBank: byte);
+function TGenCodPic._BANKSEL(targetBank: byte): byte;
 {Verifica si se está en el banco deseado, de no ser así geenra las instrucciones
- para el cambio de banco.}
+ para el cambio de banco.
+ Devuelve el número de instrucciones generado.}
 begin
   if targetBank = CurrBank then
     exit;
@@ -668,45 +669,54 @@ begin
        1: begin
          _BSF(_STATUS, _RP0);
          CurrBank:=1;
+         exit(1);
        end;
        2: begin
          _BSF(_STATUS, _RP1);
          CurrBank:=2;
+         exit(1);
        end;
        3: begin
          _BSF(_STATUS, _RP0);
          _BSF(_STATUS, _RP1);
          CurrBank:=3;
+         exit(2);
        end;
      end;
   1: case targetBank of
        0: begin
          _BCF(_STATUS, _RP0);
          CurrBank:=0;
+         exit(1);
        end;
        2: begin
          _BSF(_STATUS, _RP1);
          _BCF(_STATUS, _RP0);
          CurrBank:=2;
+         exit(2);
        end;
        3: begin
          _BSF(_STATUS, _RP1);
          CurrBank:=3;
+         exit(1);
        end;
      end;
   2: case targetBank of
        0: begin
          _BCF(_STATUS, _RP1);
          CurrBank:=0;
+         exit(1);
        end;
        1: begin
          _BCF(_STATUS, _RP1);
          _BSF(_STATUS, _RP0);
          CurrBank:=1;
+         exit(2);
        end;
        3: begin
          _BSF(_STATUS, _RP0);
          CurrBank:=3;
+         exit(1);
        end;
      end;
   3: case targetBank of
@@ -714,14 +724,17 @@ begin
          _BCF(_STATUS, _RP1);
          _BCF(_STATUS, _RP0);
          CurrBank:=0;
+         exit(2);
        end;
        1: begin
          _BCF(_STATUS, _RP1);
          CurrBank:=1;
+         exit(1);
        end;
        2: begin
          _BCF(_STATUS, _RP0);
          CurrBank:=2;
+         exit(1);
        end;
      end;
   // Este caso es equivalentea decir "no sé en qué banco estoy"
@@ -730,24 +743,30 @@ begin
          _BCF(_STATUS, _RP1);
          _BCF(_STATUS, _RP0);
          CurrBank:=0;
+         exit(2);
        end;
        1: begin
          _BCF(_STATUS, _RP1);
          _BSF(_STATUS, _RP0);
          CurrBank:=1;
+         exit(2);
        end;
        2: begin
          _BSF(_STATUS, _RP1);
          _BCF(_STATUS, _RP0);
          CurrBank:=2;
+         exit(2);
        end;
        3: begin
          _BSF(_STATUS, _RP1);
          _BSF(_STATUS, _RP0);
          CurrBank:=3;
+         exit(2);
        end;
      end;
   end;
+  //No generó instrucciones
+  exit(0);
 end;
 procedure TGenCodPic._CLRF(const f: byte); inline;
 begin

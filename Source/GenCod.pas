@@ -162,7 +162,7 @@ procedure TGenCod.Cod_StartProgram;
 //Codifica la parte inicial del programa
 begin
   //Code('.CODE');   //inicia la sección de código
-  LastBank := 0;
+  CurrBank := 0;
   StartRegs;  //Inicia registros
 end;
 procedure TGenCod.Cod_EndProgram;
@@ -174,7 +174,6 @@ procedure TGenCod.expr_start;
 //Se ejecuta siempre al StartSyntax el procesamiento de una expresión
 begin
   //Inicia banderas de estado para empezar a calcular una expresión
-  CurrBank := LastBank;   //Toma el banco de la expresión anterior
   LastCatOp := coConst;     //Al iniciar, asume ocnstante (no es exacto, pero sirve).
   BooleanInverted := false; //indica que trabaja en modo normal
   BooleanBit := _Z;         //por defecto, se trabaja con Z
@@ -225,8 +224,10 @@ begin
     {Actualmente no existen constantes de tipo "Bit", ya que el número menor que se
     reconoce es de typo byte. Por eso se define Oper_bit_asig_byte(). }
     if p2^.valBool then begin
+      _BANKSEL(p1^.bank);
       _BSF(p1^.offs, p1^.bit);
     end else begin
+      _BANKSEL(p1^.bank);
       _BCF(p1^.offs, p1^.bit);
     end;
   end;
@@ -237,19 +238,27 @@ begin
         SaveW(OLD_W); //Va a usar W, así que lo guarda si es necesario
         if HayError then exit;   //verifica error.
         _MOVLW(p1^.rVar.BitMask);  //carga máscara
+        _BANKSEL(p1^.bank);
         _XORWF(p1^.offs, toF);
         RestoreW(OLD_W); //Restaura W, si estaba ocupado
       end else begin  //Es a := a
         PutComLine('No code, by optimizing.');
       end;
     end else begin
+      //Es asignación de otra variable
       if BooleanInverted then begin
+        _BANKSEL(p1^.bank);
         _BCF(p1^.offs, p1^.bit);
+        _BANKSEL(p2^.bank);
         _BTFSS(p2^.offs, p2^.bit);
+        { TODO : Falta  implementar la conmutación de banco. Aquí se complica, por el salto }
         _BSF(p1^.offs, p1^.bit);
       end else begin
+        _BANKSEL(p1^.bank);
         _BCF(p1^.offs, p1^.bit);
+        _BANKSEL(p2^.bank);
         _BTFSC(p2^.offs, p2^.bit);
+        { TODO : Falta  implementar la conmutación de banco. Aquí se complica, por el salto }
         _BSF(p1^.offs, p1^.bit);
       end;
     end;
@@ -279,8 +288,10 @@ begin
   coConst : begin
     {Esta es la única opción válida, pero solo para los valores 0 y 1}
     if p2^.valInt = 0 then begin
+      _BANKSEL(p1^.bank);
       _BCF(p1^.offs, p1^.bit);
     end else if p2^.valInt = 1 then begin
+      _BANKSEL(p1^.bank);
       _BSF(p1^.offs, p1^.bit);
     end else begin
       GenError('Invalid value for a bit variable.'); exit;
@@ -671,12 +682,15 @@ begin
   coConst : begin
     RequireHW;   //indica que va a usar H,W
     _MOVLW(Op^.HByte);
+    _BANKSEL(H.bank);
     _MOVWF(H.offs);
     _MOVLW(Op^.LByte);
   end;
   coVariab: begin
     RequireHW;   //indica que va a usar H,W
+    _BANKSEL(Op^.bank);
     _MOVF(Op^.offs, toW);
+    _BANKSEL(H.bank);
     _MOVWF(H.offs);
     _MOVF(Op^.offs+1, toW);
   end;

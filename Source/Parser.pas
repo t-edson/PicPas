@@ -1096,7 +1096,7 @@ end;
 
 procedure TCompiler.DefLexDirectiv;
 {Define la sintaxis del lexer que se usará para analizar las directivas. La que
- debe estar enter los símbolo {$ ... }
+ debe estar entre los símbolo {$ ... }
 }
 begin
   //solo se requiere identificadores y números
