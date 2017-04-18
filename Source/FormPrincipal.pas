@@ -207,7 +207,8 @@ begin
   splEdPas.Align := alLeft;
   edAsm.Align := alClient;
   //////////
-  SetLanguage('en');
+//  SetLanguage('en');
+  SetLanguage('qu');
   edit.SetLanguage('en');
   Config.Iniciar(self, edPas, edAsm);   //necesario para poder trabajar
   Config.fcIDE.OnUpdateChanges := @ChangeAppearance;
@@ -215,8 +216,8 @@ begin
   edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
   frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
   //carga archivo de ejemplo
-  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
-//  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
+//  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
+  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin
@@ -585,6 +586,63 @@ begin
       acToolCodExp.Hint:='Open the Code Explorer';
       acToolConfig.Caption := '&Settings';
       acToolConfig.Hint := 'Settings dialog';
+    end;
+  'qu': begin
+      //menú principal
+      mnFile.Caption:='&Khipu';
+      mnEdit.Caption:='&Edición';
+      mnFind.Caption:='&Mask''ay';
+      mnView.Caption:='&Rikhuy';
+      mnTools.Caption:='&Llank''ana';
+
+      acArcNuevo.Caption := '&Nuevo';
+      acArcNuevo.Hint := 'Nuevo archivo';
+      acArcAbrir.Caption := '&Abrir...';
+      acArcAbrir.Hint := 'Abrir archivo';
+      acArcGuardar.Caption := '&Guardar';
+      acArcGuardar.Hint := 'Guardar archivo';
+      acArcGuaCom.Caption := 'G&uardar Como...';
+      acArcGuaCom.Hint := 'Guardar como';
+      acArcSalir.Caption := '&Salir';
+      acArcSalir.Hint := 'Cerrar el programa';
+      acEdUndo.Caption := '&Deshacer';
+      acEdUndo.Hint := 'Deshacer';
+      acEdRedo.Caption := '&Rehacer';
+      acEdRedo.Hint := 'Reahacer';
+      acEdCut.Caption := 'Cor&tar';
+      acEdCut.Hint := 'Cortar';
+      acEdCopy.Caption := '&Copiar';
+      acEdCopy.Hint := 'Copiar';
+      acEdPaste.Caption := '&Pegar';
+      acEdPaste.Hint := 'Pegar';
+      acEdSelecAll.Caption := 'Seleccionar &Todo';
+      acEdSelecAll.Hint := 'Seleccionar todo';
+      acEdModCol.Caption := 'Modo Columna';
+      acEdModCol.Hint := 'Modo columna';
+      acBusBuscar.Caption := 'Buscar...';
+      acBusBuscar.Hint := 'Buscar texto';
+      acBusBusSig.Caption := 'Buscar &Siguiente';
+      acBusBusSig.Hint := 'Buscar Siguiente';
+      acBusReemp.Caption := '&Remplazar...';
+      acBusReemp.Hint := 'Reemplazar texto';
+
+      acViewMsgPan.Caption:='Panel de &Mensajes';
+      acViewMsgPan.Hint:='Mostrar u Ocultar el Panel de Mensajes';
+      acViewStatbar.Caption:='Barra de &Estado';
+      acViewStatbar.Hint:='Mostrar u Ocultar la barra de estado';
+      acViewToolbar.Caption:='Barra de &Herramientas';
+      acViewToolbar.Hint:='Mostrar u Ocultar la barra de herramientas';
+
+      acToolCompil.Caption:='&Compilar';
+      acToolCompil.Hint:='Compila el código fuente';
+      acToolComEjec.Caption:='Compilar y Ej&ecutar';
+      acToolComEjec.Hint:='Compilar y Ejecutar';
+      acToolPICExpl.Caption:='E&xplorador de PIC';
+      acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
+      acToolCodExp.Caption:='Explorador de Co&digo';
+      acToolCodExp.Hint:='Abre el explorador de Código';
+      acToolConfig.Caption:='Configuración';
+      acToolConfig.Hint := 'Ver configuración';
     end;
   end;
 end;

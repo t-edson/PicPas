@@ -67,6 +67,7 @@ type
       procedure Oper_bit_asig_bit;
       procedure Oper_bit_asig_byte;
       procedure Oper_bit_and_bit;
+      procedure Oper_bit_and_byte;
       procedure Oper_bit_not;
     private  //Operaciones con boolean
       procedure bool_load;
@@ -80,6 +81,7 @@ type
       procedure Oper_byte_add_byte;
       procedure Oper_byte_add_word;
       procedure Oper_byte_and_byte;
+      procedure Oper_byte_and_bit;
       procedure Oper_byte_or_byte;
       procedure Oper_byte_xor_byte;
       procedure Oper_byte_igual_byte;
@@ -178,6 +180,7 @@ begin
   BooleanInverted := false; //indica que trabaja en modo normal
   BooleanBit := _Z;         //por defecto, se trabaja con Z
   W.used := false;          //su ciclo de vida es de instrucción
+  Z.used := false;          //su ciclo de vida es de instrucción
   if H<>nil then
     H.used := false;        //su ciclo de vida es de instrucción
   res.typ := typByte;   //le pone un tipo por defecto
@@ -215,6 +218,7 @@ end;
 procedure TGenCod.Oper_bit_asig_bit;
 var
   OLD_W: TPicRegister;
+  dg: integer;
 begin
   if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
@@ -247,28 +251,56 @@ begin
     end else begin
       //Es asignación de otra variable
       if BooleanInverted then begin
-        _BANKSEL(p1^.bank);
-        _BCF(p1^.offs, p1^.bit);
-        _BANKSEL(p2^.bank);
-        _BTFSS(p2^.offs, p2^.bit);
-        { TODO : Falta  implementar la conmutación de banco. Aquí se complica, por el salto }
-        _BSF(p1^.offs, p1^.bit);
+        if p1^.bank = p2^.bank then begin //Están en el mismo banco
+          //No se usa el registro W
+          _BANKSEL(p1^.bank);
+          _BCF(p1^.offs, p1^.bit);
+          _BTFSS(p2^.offs, p2^.bit);
+          _BSF(p1^.offs, p1^.bit);
+        end else begin  //Están en bancos diferentes
+          //No se usa el registro W
+          _BANKSEL(p1^.bank);
+          _BCF(p1^.offs, p1^.bit);
+          _BANKSEL(p2^.bank);
+          _BTFSC(p2^.offs, p2^.bit);
+          _GOTO_PEND(dg);  //salto pendiente
+          _BANKSEL(p1^.bank);  //cantidad de instrucciones
+          _BSF(p1^.offs, p1^.bit);
+          pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+          _BANKRESET;   //porque no se puede predecir el banco en este punto
+        end;
       end else begin
-        _BANKSEL(p1^.bank);
-        _BCF(p1^.offs, p1^.bit);
-        _BANKSEL(p2^.bank);
-        _BTFSC(p2^.offs, p2^.bit);
-        { TODO : Falta  implementar la conmutación de banco. Aquí se complica, por el salto }
-        _BSF(p1^.offs, p1^.bit);
+        if p1^.bank = p2^.bank then begin //Están en el mismo banco
+          //No se usa el registro W
+          _BANKSEL(p1^.bank);
+          _BCF(p1^.offs, p1^.bit);
+          _BTFSC(p2^.offs, p2^.bit);
+          _BSF(p1^.offs, p1^.bit);
+        end else begin  //Están en bancos diferentes
+          //No se usa el registro W
+          _BANKSEL(p1^.bank);
+          _BCF(p1^.offs, p1^.bit);
+          _BANKSEL(p2^.bank);
+          _BTFSS(p2^.offs, p2^.bit);
+          _GOTO_PEND(dg);  //salto pendiente
+          _BANKSEL(p1^.bank);  //cantidad de instrucciones
+          _BSF(p1^.offs, p1^.bit);
+          pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+          _BANKRESET;   //porque no se puede predecir el banco en este punto
+        end;
       end;
     end;
   end;
   coExpres: begin  //ya está en STATUS.Z
     if BooleanInverted then begin  //está invertido
+      //No se usa el registro W
+      _BANKSEL(p1^.bank);
       _BCF(p1^.offs, p1^.bit);
       _BTFSS(_STATUS, BooleanBit);
       _BSF(p1^.offs, p1^.bit);
     end else begin  //caso normal
+      //No se usa el registro W
+      _BANKSEL(p1^.bank);
       _BCF(p1^.offs, p1^.bit);
       _BTFSC(_STATUS, BooleanBit);
       _BSF(p1^.offs, p1^.bit);
@@ -288,9 +320,11 @@ begin
   coConst : begin
     {Esta es la única opción válida, pero solo para los valores 0 y 1}
     if p2^.valInt = 0 then begin
+      //No se usa el registro W
       _BANKSEL(p1^.bank);
       _BCF(p1^.offs, p1^.bit);
     end else if p2^.valInt = 1 then begin
+      //No se usa el registro W
       _BANKSEL(p1^.bank);
       _BSF(p1^.offs, p1^.bit);
     end else begin
@@ -307,63 +341,129 @@ begin
   SetResultExpres(typBit);  //Realmente, el resultado no es importante
 end;
 procedure TGenCod.Oper_bit_and_bit;
+var
+  reg: TPicRegister;
+  r: TPicRegisterBit;
 begin
-//    case catOperation of
-//    coConst_Const: begin  //AND de dos constantes. Caso especial
-//      res.valBool := p1^.valInt and p2^.valInt;  //optimiza respuesta
-//      res.typ := tipBit;
-//      res.catOp:=coConst;
-//      //w.used:=false;  //no se usa el acumulador. Lo deja como estaba
-//      exit;  //sale aquí, porque es un caso particular
-//    end
-//    coConst_Variab: begin
-//      ReserveW; if HayError then exit;   //pide Z
-//      _MOVLW(p1^.valInt);
-//      _BANKSEL(p2^.bank);
-//      CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
-//    end;
-//    coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-//      //ReserveW; if HayError then exit;
-//      CodAsmK(InstLW, p1^.valInt);  //deja en W
-//    end;
-//    coVariab_Const: begin
-//      ReserveW; if HayError then exit;
-//      _MOVLW(p2^.valInt);
-//      _BANKSEL(p1^.bank);
-//      CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-//    end;
-//    coVariab_Variab:begin
-//      ReserveW; if HayError then exit;
-//      _BANKSEL(p2^.bank);
-//      _MOVF(p2^.offs, toW);
-//      _BANKSEL(p1^.bank);
-//      CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-//    end;
-//    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-//      //ReserveW; if HayError then exit;
-//      _BANKSEL(p1^.bank);
-//      CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-//    end;
-//    coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-//      //ReserveW; if HayError then exit;
-//      CodAsmK(InstLW, p2^.valInt);  //deja en W
-//    end;
-//    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-//      //ReserveW; if HayError then exit;
-//      _BANKSEL(p2^.bank);
-//      CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
-//    end;
-//    coExpres_Expres:begin
-//      //la expresión p1 debe estar salvada y p2 en el acumulador
-//      FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
-//      _BANKSEL(r.bank);
-//      CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
-//    end;
-//    end;
-//    //caso de salida más general
-//    res.typ := tipByte;   //el resultado será siempre entero
-//    res.catOp:=coExpres; //por defecto generará una expresión
-//    w.used:=true;        //se está usando el acumulador
+    case catOperation of
+    coConst_Const: begin  //AND de dos constantes. Caso especial
+      {Actualmente no existen constantes de tipo "Bit", ya que el número menor es buye}
+      SetResultConst_bit(p1^.valBool and p2^.valBool);
+      exit;  //sale aquí, porque es un caso particular
+    end;
+    coConst_Variab: begin
+      if p1^.valBool then begin  //p1 = 1
+        //No usa ningún registro
+        //Optimiza devolviendo la misma variable
+        SetResultVariab(typBit, p2^.rVar);
+      end else begin   //p1 = 0
+        //No usa ningún registro
+        //Optimiza devolviendo constante = 0
+        SetResultConst_bit(false);
+      end;
+    end;
+    coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+      if p1^.valBool then begin  //p1 = 1
+        //No usa ningún registro
+        //Optimiza devolviendo la misma expresión en Z
+        SetResultExpres(typBit);
+      end else begin   //p1 = 0
+        //No usa ningún registro
+        //Optimiza devolviendo constante = 0
+        SetResultConst_bit(false);
+        Z.used := false;  //libera el bit Z, porque ya no importa la expresión
+      end;
+    end;
+    coVariab_Const: begin
+      if p2^.valBool then begin  //p2 = 1
+        //No usa ningún registro
+        //Optimiza devolviendo la misma variable
+        SetResultVariab(typBit, p1^.rVar);
+      end else begin   //p2 = 0
+        //No usa ningún registro
+        //Optimiza devolviendo constante = 0
+        SetResultConst_bit(false);
+      end;
+    end;
+    coVariab_Variab:begin
+      if p1^.rVar = p2^.rVar then begin
+        //Es la misma variable: a AND a
+        //Optimiza devolviendo la misma variable
+        SetResultVariab(typBit, p1^.rVar);
+      end else begin
+        SaveW(reg); //Va a usa W
+        RequireResult_Z;  //Vamos a devolver en Z
+        SetResultExpres(typBit);  //Fija resultado
+        //Mueve p2 a Z
+        _BANKSEL(p2^.bank);
+        _MOVLW(p2^.rVar.BitMask);
+        _ANDWF(p2^.offs, toW);  //Z está invertido
+        //Aplica un AND entre Z' y p1,
+        _BANKSEL(p1^.bank);
+        _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
+        _BCF(Z.offs, Z.bit);     //Si es 1, devuelve cero
+        RestoreW(reg);
+      end;
+    end;
+    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+      //No usa W
+      SetResultExpres(typBit);  //Fija resultado
+      //Aplica un AND entre Z y p1,
+      _BANKSEL(p1^.bank);
+      _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
+      _BCF(Z.offs, Z.bit);     //Si es 0, devuelve cero
+    end;
+    coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+      if p2^.valBool then begin  //p1 = 1
+        //No usa ningún registro
+        //Optimiza devolviendo la misma expresión en Z
+        SetResultExpres(typBit);
+      end else begin   //p1 = 0
+        //No usa ningún registro
+        //Optimiza devolviendo constante = 0
+        SetResultConst_bit(false);
+        Z.used := false;  //libera el bit Z, porque ya no importa la expresión
+      end;
+    end;
+    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+      //No usa W
+      SetResultExpres(typBit);  //Fija resultado
+      //Aplica un AND entre Z y p2,
+      _BANKSEL(p2^.bank);
+      _BTFSS(p2^.offs, p2^.bit);   //Si es 1, deja tal cual
+      _BCF(Z.offs, Z.bit);     //Si es 0, devuelve cero
+    end;
+    coExpres_Expres:begin
+      //No usa W
+      SetResultExpres(typBit);  //Fija resultado
+      //la expresión p1 debe estar salvada y p2 en el acumulador
+      FreeStkRegisterBit(r);   //libera pila porque se usará el dato ahí contenido
+      //Luego el caso es similar a variable-expresión
+      _BANKSEL(r.bank);
+      _BTFSS(r.offs, r.bit);   //Si es 1, deja tal cual
+      _BCF(Z.offs, Z.bit);     //Si es 0, devuelve cero
+    end;
+    else
+      GenError('Not implemented.'); exit;
+    end;
+end;
+procedure TGenCod.Oper_bit_and_byte;
+begin
+  if p2^.catOp <> coConst then begin
+    GenError('Incompatible types: (bit) AND (byte).'); exit;
+  end;
+  //p2 es constante
+  if p2^.valInt = 0 then begin
+    p2^.typ := typBit;   //convierte en bit
+    p2^.valBool := false;
+    Oper_bit_and_bit;  //opera como bit
+  end else if p2^.valInt = 1 then begin
+    p2^.typ := typBit;   //convierte en bit
+    p2^.valBool := true;
+    Oper_bit_and_bit;  //opera como bit
+  end else begin
+    GenError('Incompatible types: (bit) AND (byte).'); exit;
+  end;
 end;
 procedure TGenCod.Oper_bit_not;
 begin
@@ -497,50 +597,64 @@ procedure TGenCod.byte_oper_byte(const InstLW, InstWF:TPIC16Inst);
 {Rutina general en operaciones con bytes}
 var
   r: TPicRegister;
+  reg: TPicRegisterBit;
 begin
   case catOperation of
   coConst_Variab: begin
     RequireResult_W;
+    SaveZ(reg);  //va a alterar Z
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     CodAsmK(InstLW, p1^.valInt);  //deja en W
+    RestoreZ(reg);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    //ReserveW; if HayError then exit;
+    SaveZ(reg);  //va a alterar Z
     CodAsmK(InstLW, p1^.valInt);  //deja en W
+    RestoreZ(reg);
   end;
   coVariab_Const: begin
     RequireResult_W;
+    SaveZ(reg);  //va a alterar Z
     _MOVLW(p2^.valInt);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
+    RestoreZ(reg);
   end;
   coVariab_Variab:begin
     RequireResult_W;
+    SaveZ(reg);  //va a alterar Z
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
+    RestoreZ(reg);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     //ReserveW; if HayError then exit;
+    SaveZ(reg);  //va a alterar Z
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
+    RestoreZ(reg);
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    //ReserveW; if HayError then exit;
+    SaveZ(reg);  //va a alterar Z
     CodAsmK(InstLW, p2^.valInt);  //deja en W
+    RestoreZ(reg);
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    //ReserveW; if HayError then exit;
+    SaveZ(reg);  //va a alterar Z
     _BANKSEL(p2^.bank);
     CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
+    RestoreZ(reg);
   end;
   coExpres_Expres:begin
+    SaveZ(reg);  //va a alterar Z
     //la expresión p1 debe estar salvada y p2 en el acumulador
     FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
     _BANKSEL(r.bank);
     CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    RestoreZ(reg);
   end;
   end;
   //Fija "res"
@@ -555,17 +669,9 @@ begin
     byte_oper_byte(ADDLW, ADDWF);
 end;
 procedure TGenCod.Oper_byte_add_word;
-var
-  tmp : ^TOperand;
 begin
-  //Invierte los operandos
-  tmp := p1;
-  p1 := p2;
-  p2 := tmp;
-  //Actualiza catOperation
-  catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
-  //Y llama a la función opuesta
-  Oper_word_add_byte;
+  ExchangeP1_P2;   //Invierte los operandos
+  Oper_word_add_byte; //Y llama a la función opuesta
 end;
 procedure TGenCod.Oper_byte_sub_byte;
 begin
@@ -582,6 +688,11 @@ begin
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
     byte_oper_byte(ANDLW, ANDWF);
+end;
+procedure TGenCod.Oper_byte_and_bit;
+begin
+  ExchangeP1_P2;   //Invierte los operandos
+  Oper_bit_and_byte;
 end;
 procedure TGenCod.Oper_byte_or_byte;
 begin
@@ -680,14 +791,14 @@ begin
   Op := OpPtr;
   case Op^.catOp of  //el parámetro debe estar en "Op^"
   coConst : begin
-    RequireHW;   //indica que va a usar H,W
+    RequireResult_HW;   //indica que va a usar H,W
     _MOVLW(Op^.HByte);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
     _MOVLW(Op^.LByte);
   end;
   coVariab: begin
-    RequireHW;   //indica que va a usar H,W
+    RequireResult_HW;   //indica que va a usar H,W
     _BANKSEL(Op^.bank);
     _MOVF(Op^.offs, toW);
     _BANKSEL(H.bank);
@@ -706,24 +817,31 @@ begin
   res := p1^;   //No debería ser necesario copiar todos los campos
 end;
 procedure TGenCod.Oper_word_asig_word;
+var
+  reg: TPicRegister;
 begin
   if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
   end;
   case p2^.catOp of
   coConst : begin
+    SaveW(reg);   //se va a usar W
+    _BANKSEL(p1^.bank);
     _MOVLW(p2^.LByte);
     _MOVWF(p1^.Loffs);
     _MOVLW(p2^.HByte);
     _MOVWF(p1^.Hoffs);
+    RestoreW(reg);
   end;
   coVariab: begin
+    SaveW(reg);   //se va a usar W
     _MOVF(p2^.Loffs, toW);
     _MOVWF(p1^.Loffs);
     _MOVF(p2^.Hoffs, toW);
     _MOVWF(p1^.Hoffs);
+    RestoreW(reg);
   end;
-  coExpres: begin   //se asume que se tiene en (_H,w)
+  coExpres: begin   //se asume que se tiene en (H,w)
     _MOVWF(p1^.Loffs);
     _MOVF(H.offs, toW);
     _MOVWF(p1^.Hoffs);
@@ -782,7 +900,7 @@ begin
     if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      RequireHW;   //indica que va a usar H,W
+      RequireResult_HW;   //indica que va a usar H,W
 {     aux := GetUnusedByteRegister;  //Pide un registro libre
       _movlw(p1^.LByte);      //Carga menos peso del dato 1
       _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
@@ -816,7 +934,7 @@ begin
       aux.used := false;
     end;
     coVariab_Const: begin
-      RequireHW;      //Indica que va a usar H,W
+      RequireResult_HW;      //Indica que va a usar H,W
       _MOVLW(p2^.HByte);      //Carga más peso del dato 1
       _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
       _MOVWF(H.offs);         //Guarda el resultado
@@ -826,7 +944,7 @@ begin
       _INCF(H.offs, toF);
     end;
     coVariab_Variab:begin
-      RequireHW;      //Indica que va a usar H,W
+      RequireResult_HW;      //Indica que va a usar H,W
       _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
       _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
       _MOVWF(H.offs);         //Guarda mayor peso del resultado
@@ -910,7 +1028,7 @@ begin
     if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      RequireHW;   //indica que va a usar H,W
+      RequireResult_HW;   //indica que va a usar H,W
       //versión más corta que solo usa _H, por validar
       _movlw(p1^.HByte);      //Carga más peso del dato 1
       _movwf(H.offs);
@@ -932,7 +1050,7 @@ begin
       aux.used := false;
     end;
     coVariab_Const: begin
-      RequireHW;     //Indica que va a usar H,W
+      RequireResult_HW;     //Indica que va a usar H,W
       _MOVF(p1^.Hoffs, toW); //Carga más peso del dato 1
       _MOVWF(H.offs);        //Guarda el resultado
       _MOVLW(p2^.LByte);
@@ -941,7 +1059,7 @@ begin
       _INCF(H.offs, toF);
     end;
     coVariab_Variab:begin
-      RequireHW;   //indica que va a usar H,W
+      RequireResult_HW;   //indica que va a usar H,W
       _movlw(p1^.Hoffs);     //Carga más peso del dato 1
       _movwf(H.offs);
       _movlw(p1^.Loffs);     //Carga menos peso del dato 1
@@ -1260,8 +1378,9 @@ begin
   opr.CreateOperation(typByte, @Oper_bit_asig_byte);
 
   opr:=typBit.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_bit_not);
-  opr:=typBit.CreateBinaryOperator('+',4,'and');  //suma
+  opr:=typBit.CreateBinaryOperator('AND',4,'and');  //suma
   opr.CreateOperation(typBit,@Oper_bit_and_bit);
+  opr.CreateOperation(typByte,@Oper_bit_and_byte);
   {Precedencia de operadores en Pascal
 6)    ~, not, signo "-"   (mayor precedencia)
 5)    *, /, div, mod, and, shl, shr, &
@@ -1282,6 +1401,7 @@ begin
   opr.CreateOperation(typByte,@Oper_byte_sub_byte);
   opr:=typByte.CreateBinaryOperator('AND',5,'and');  //suma
   opr.CreateOperation(typByte,@Oper_byte_and_byte);
+  opr.CreateOperation(typBit ,@Oper_byte_and_bit);
   opr:=typByte.CreateBinaryOperator('OR',4,'or');  //suma
   opr.CreateOperation(typByte,@Oper_byte_or_byte);
   opr:=typByte.CreateBinaryOperator('XOR',4,'xor');  //suma

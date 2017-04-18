@@ -68,6 +68,7 @@ type
     function ReportRAMusage: string;
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
+    procedure ExchangeP1_P2;
     //Métodos para fijar el resultado
     procedure SetResult(typ: TType; CatOp: TCatOperan);
     procedure SetResultConst_bool(valBool: boolean);
@@ -96,7 +97,7 @@ type
     procedure RestoreW(reg: TPicRegister);
     procedure RestoreZ(reg: TPicRegisterBit);
     procedure RequireH(preserve: boolean = true);
-    procedure RequireHW;
+    procedure RequireResult_HW;
     //Manejo de variables
     {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
     objeto "pic", se colocan mejor aquí.}
@@ -122,6 +123,7 @@ type
     procedure _ANDLW(const k: word);
     procedure _ANDWF(const f: byte; d: TPIC16destin);
     function _BANKSEL(targetBank: byte): byte;
+    procedure _BANKRESET;
     procedure _BCF(const f, b: byte);
     procedure _BSF(const f, b: byte);
     procedure _BTFSC(const f, b: byte);
@@ -229,6 +231,19 @@ begin
     exit(false);
   end;
 end;
+procedure TGenCodPic.ExchangeP1_P2;
+{Intercambai el orden de los operandos.}
+var
+  tmp : ^TOperand;
+begin
+  //Invierte los operandos
+  tmp := p1;
+  p1 := p2;
+  p2 := tmp;
+  //Actualiza catOperation
+  catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+end;
+
 procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
 {Fija los parámetros del resultado de una subexpresion.}
 begin
@@ -474,7 +489,8 @@ begin
   if W.used then begin
     //Ya lo usó la subexpresión anterior (seguro que fue una expresión byte o word)
     Result := GetStkRegisterByte;  //pide memoria
-    //guarda W { TODO : Falta validar el banco }
+    //guarda W
+    _BANKSEL(Result.bank);
     _MOVWF(Result.offs);PutComm(';save W');
     Result.used := true;
   end else begin
@@ -490,7 +506,8 @@ begin
   if Z.used then begin
     //Ya lo usó la subexpresión anterior (seguro que fue una expresión bit o boolean)
     Result := GetStkRegisterBit;  //pide memoria
-    //guarda Z { TODO : Falta validar el banco }
+    //guarda Z
+    _BANKSEL(Result.bank);
     _BCF(Result.offs, Result.bit); PutComm(';save Z');
     _BTFSC(Z.offs, Z.bit);
     _BSF(Result.offs, Result.bit);
@@ -502,11 +519,12 @@ begin
 end;
 procedure TGenCodPic.SaveW(out reg: TPicRegister);
 {Verifica si el registro W, está siendo usado y de ser así genera la instrucción para
-guardarlo en un registro auxiliar.}
+guardarlo en un registro auxiliar. Esta función trabaja normalmente con RestoreW()}
 begin
   if W.used then begin
     reg := GetAuxRegisterByte;
     if reg = nil then exit;
+    _BANKSEL(reg.bank);
     _MOVWF(reg.offs);PutComm(';save W');
   end else begin
     reg := nil;
@@ -519,6 +537,7 @@ begin
   if Z.used then begin
     reg := GetAuxRegisterBit;
     if reg = nil then exit;
+    _BANKSEL(reg.bank);
     _BCF(reg.offs, reg.bit); PutComm(';save Z');
     _BTFSC(Z.offs, Z.bit);
     _BSF(reg.offs, reg.bit);
@@ -531,6 +550,7 @@ procedure TGenCodPic.RestoreW(reg: TPicRegister);
 begin
   if reg<>nil then begin
     reg.used := false;  //libera registro auxiliar
+    _BANKSEL(reg.bank);
     _MOVF(reg.offs, toW);PutComm(';restore W');
   end;
 end;
@@ -539,6 +559,7 @@ procedure TGenCodPic.RestoreZ(reg: TPicRegisterBit);
 begin
   if reg<>nil then begin
     reg.used := false;  //libera registro auxiliar
+    _BANKSEL(reg.bank);
     _BCF(Z.offs, Z.bit); PutComm(';restore Z');
     _BTFSC(reg.offs, reg.bit);
     _BSF(Z.offs, Z.bit);
@@ -557,16 +578,18 @@ begin
     if preserve and H.used then begin
       //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
       tmpReg := GetStkRegisterByte;   //pide una posición de memoria
-      //guarda H { TODO : Falta validar el banco }
-      _MOVF(H.offs, toW);PutComm(';guarda H');
-      _MOVWF(tmpReg.offs);PutComm(';guarda H');
+      //guarda H
+      _BANKSEL(h.bank);
+      _MOVF(H.offs, toW);PutComm(';save H');
+      _BANKSEL(tmpReg.bank);
+      _MOVWF(tmpReg.offs);
       tmpReg.used := true;   //marca
     end;
   end;
   H.used := true;  //lo marca como que lo va a usar
 end;
-procedure TGenCodPic.RequireHW;
-{Indica que se va a devolver un resultado de tipo Word, en la generación de código.
+procedure TGenCodPic.RequireResult_HW;
+{Indica que se va a utilizar los registros (H,W), para devolver un resultado de tipo Word.
 Debe llamarse siempre, antes de generar código para la subexpresión.}
 begin
   RequireResult_W;
@@ -768,6 +791,16 @@ begin
   //No generó instrucciones
   exit(0);
 end;
+procedure TGenCodPic._BANKRESET;
+{Reinicia el banco al banco 0, independientemente de donde se pueda encontrar antes.
+Siempre genera dos instrucciones. Se usa cuando no se puede predecir exactamente, en que
+banco se encontrará el compilador.}
+begin
+  _BCF(_STATUS, _RP1);
+  _BCF(_STATUS, _RP0);
+  CurrBank:=0;
+end;
+
 procedure TGenCodPic._CLRF(const f: byte); inline;
 begin
   pic.codAsmF(CLRF, f);
@@ -976,6 +1009,7 @@ begin
     //Update messages
     dicSet(';save W', ';guardar W');
     dicSet(';save Z', ';guardar Z');
+    dicSet(';save H', ';guardar H');
     dicSet(';restore W','restaurar W');
     dicSet(';restore Z','restaurar Z');
     dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
