@@ -8,18 +8,18 @@ NOTA: Este compilador está aún en fase Alfa y tiene funcionalidades limitadas.
 
 PicPas es un compilador sencillo, escrito en Lazarus, que genera código ejecutable, para los microcontroladores PIC de rango medio (la serie 16F).
 
-Por el momento solo soporta los tipos bit, byte, boolean y word (soporte limitado). 
-
 No se requiere librerias ni programas adicionales para la compilación. PicPas genera el archivo *.hex directamente.
+
+Por el momento solo soporta los tipos bit, byte, boolean y word (soporte limitado). 
 
 Incluye una pequeña IDE para facilitar el desarrollo de programas.
 
-Las opciones de optimización de código no están muy desarrolladas pero el código obtenido es bastante compacto, como el que podría generar cualquier compilador comercial.
+El compilador incluye opciones de optimización de código, de modo que genera un código bastante compacto, como el que podría generar cualquier compilador comercial.
 
 Como ejemplo el siguiente código, es para hacer parpadear un led en el puerto B:
 
 ```
-{Sample program to blink a Led on PORTB.4}
+{Sample program to blink a Led on PORTB.7}
 {$FREQUENCY 8 MHZ }
 {$PROCESSOR PIC16F84A}
 program BlinkLed;
@@ -39,7 +39,7 @@ end.```
 
 El código fuente se encuentra en la carpeta /Source.
 
-Para compilar se debe disponer de las librerías indicadas en las propiedades del proyecto. Estas son:
+Para compilar PicPas se debe disponer de las librerías indicadas en las propiedades del proyecto. Estas son:
 
 * SynFacilUtils
 * MisUtils
@@ -47,7 +47,9 @@ Para compilar se debe disponer de las librerías indicadas en las propiedades de
 * PicUtils 
 * Xpres 
 
-Todas ellas deberían estar disponibles. Verificar las versiones requeridas.
+Todas ellas deberían estar disponibles en la Web. Verificar las versiones requeridas.
+
+PicPas ha sido compilado, usando la versión 1.6.2 de Lazarus. Por el momento solo hay una versión para Windows.
 
 Para más información sobre el compilador, leer la documentación técnica.
 
