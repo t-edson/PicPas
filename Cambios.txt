@@ -1,13 +1,21 @@
-PicPas 0.5.0
+PicPas 0.5.1
 ============
-Se corrigió un problema de conmutación de bancos en las operacioens de asignación.
-Se eliminó el campo lastBank.
-Se modificó TGenCodPic._BANKSEL() para que devuelva el número de instrucciones
-generado.
-Se incluyó rutinas de conmutación de bancos, en diversos puntos del generador de 
-código y de GenCodPic.
-Se completó la rutina de asignación de bits.
-Se cambia el nombre de RequireHW() por RequireResult_HW()
+Se crea el enumerado TOperType en XpresParserPIC.
+Se crea el campo TCompilerBase.operType, y se incializa antes de llamar a las rutinas 
+de operación.
+Se crean los método TGenCodPic.SetResultExpresBit, TGenCodPic.SetResultExpresBool,
+TGenCodPic.SetResultExpresByte, y se incluyen en el generador de código.
+Se elimina el campo "BooleanInverted", y se crea TOperand.Inverted.
+Se modifican TGenCodPic.SetResultVariab_bit(), TGenCodPic.SetResultExpres_bit() y 
+TGenCodPic.SetResultConst_bit(), para que consideren el campo "Inverted".
+Se modifica al generador de código con las nuevas modificaciones.
+Se implementa la operación: bit OR bit.
+Se cambia de nombre a Oper_bit_not por Oper_not_bit.
+Se implementa la rutina bit AND bit, considerando los casos de variables y expresiones, con
+lógica invertida.
+Se simplifica Oper_bool_asig_bool(), usando la rutina Oper_bit_asig_bit().
+Se crea las operaciones NOT, AND y OR, para el tipo Boolean
+
 
 PENDIENTES
 Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola
@@ -19,9 +27,19 @@ Implementar que la gestión de memoria para variables, tome posiciones no necesar
 consecutivas, para variables word.
 Implementar la llamada correcta para las funciones del sistema y de usuario.
 Implementar el manejo de bancos de memoria.
-Revisar el uso de BooleanInverted, porque parece que, no funcionaría en expresiones
-complejas, donde se pone en pila un valor con BooleanInverted. Pareciera que BooleanInverted
-debe ser más bien una propiedad de TPICregisterBit.
+
+
+PicPas 0.5.0
+============
+Se corrigió un problema de conmutación de bancos en las operaciones de asignación.
+Se eliminó el campo lastBank.
+Se modificó TGenCodPic._BANKSEL() para que devuelva el número de instrucciones
+generado.
+Se incluyó rutinas de conmutación de bancos, en diversos puntos del generador de 
+código y de GenCodPic.
+Se completó la rutina de asignación de bits.
+Se cambia el nombre de RequireHW() por RequireResult_HW()
+
 
 PicPas 0.4.9
 ============
