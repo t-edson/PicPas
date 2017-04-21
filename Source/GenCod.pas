@@ -419,16 +419,16 @@ begin
           _BCF(Z.offs, Z.bit);     //Si es 0, devuelve cero
           RestoreW(reg);
         end else begin  //Caso normal
-          SetResultExpres_bit(false);  //Fija resultado
+          SetResultExpres_bit(true);  //Fija resultado, con lógica invertida
           SaveW(reg); //Va a usa W
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
           _ANDWF(p2^.offs, toW);  //Z está invertido
-          //Aplica un AND entre Z' y p1,
+          //Aplica un AND entre Z' y p1. Trabajamos con lógica invertida, por optimización
           _BANKSEL(p1^.bank);
-          _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
-          _BCF(Z.offs, Z.bit);     //Si es 1, devuelve cero
+          _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual (pero sigue con lógica invertida)
+          _BSF(Z.offs, Z.bit);       //Si es 0, devuelve cero (1 porque debe quedar con lógica invertida)
           RestoreW(reg);
         end;
       end;
@@ -568,22 +568,22 @@ begin
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
           _ANDWF(p2^.offs, toW);  //Z aparece normal
-          //Aplica un AND entre Z y p1,
+          //Aplica un OR entre Z y p1,
           _BANKSEL(p1^.bank);
           _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
           _BSF(Z.offs, Z.bit);     //Si es 1, devuelve uno
           RestoreW(reg);
         end else begin  //Caso normal
-          SetResultExpres_bit(false);  //Fija resultado
+          SetResultExpres_bit(true);  //Fija resultado, con lógica invertida
           SaveW(reg); //Va a usa W
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
           _ANDWF(p2^.offs, toW);  //Z está invertido
-          //Aplica un AND entre Z' y p1,
+          //Aplica un OR entre p1 y Z'. Trabajamos con lógica invertida, por optimización
           _BANKSEL(p1^.bank);
-          _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
-          _BSF(Z.offs, Z.bit);     //Si es 0, devuelve uno
+          _BTFSC(p1^.offs, p1^.bit); //Si es 0, deja tal cual (pero sigue con lógica invertida)
+          _BCF(Z.offs, Z.bit);       //Si es 1, devuelve 1 (0 porque debe quedar con lógica invertida)
           RestoreW(reg);
         end;
       end;
@@ -1057,7 +1057,7 @@ begin
     if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      SetResultExpres_word;  //Realmente, el resultado no es importante
+      SetResultExpres_word;
 {     aux := GetUnusedByteRegister;  //Pide un registro libre
       _movlw(p1^.LByte);      //Carga menos peso del dato 1
       _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
@@ -1074,15 +1074,15 @@ begin
       SaveZ(reg);  //vamos a alterar Z
       _movlw(p1^.HByte);      //Carga más peso del dato 1
       _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H.offs);             //Guarda el resultado
+      _movwf(H.offs);         //Guarda el resultado
       _movlw(p1^.LByte);      //Carga menos peso del dato 1
       _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+      _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
       _incf(H.offs, toF);
       RestoreZ(reg);
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
-      SetResultExpres_word;  //Realmente, el resultado no es importante
+      SetResultExpres_word;
       SaveZ(reg);  //vamos a alterar Z
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
@@ -1096,7 +1096,7 @@ begin
       RestoreZ(reg);
     end;
     coVariab_Const: begin
-      SetResultExpres_word;  //Realmente, el resultado no es importante
+      SetResultExpres_word;
       SaveZ(reg);  //vamos a alterar Z
       _MOVLW(p2^.HByte);      //Carga más peso del dato 1
       _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
@@ -1108,7 +1108,7 @@ begin
       RestoreZ(reg);
     end;
     coVariab_Variab:begin
-      SetResultExpres_word;  //Realmente, el resultado no es importante
+      SetResultExpres_word;
       SaveZ(reg);  //vamos a alterar Z
       _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
       _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
@@ -1120,7 +1120,7 @@ begin
       RestoreZ(reg);
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
-      SetResultExpres_word;  //Realmente, el resultado no es importante
+      SetResultExpres_word;
       SaveZ(reg);  //vamos a alterar Z
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
@@ -1134,7 +1134,7 @@ begin
       RestoreZ(reg);
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word;  //Realmente, el resultado no es importante
+      SetResultExpres_word;
       SaveZ(reg);  //vamos a alterar Z
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
@@ -1148,7 +1148,7 @@ begin
       RestoreZ(reg);
     end;
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word;  //Realmente, el resultado no es importante
+      SetResultExpres_word;
       SaveZ(reg);  //vamos a alterar Z
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
@@ -1162,7 +1162,7 @@ begin
       RestoreZ(reg);
     end;
     coExpres_Expres:begin
-      SetResultExpres_word;  //Realmente, el resultado no es importante
+      SetResultExpres_word;
       SaveZ(reg);  //vamos a alterar Z
       //p1 está salvado en pila y p2 en (_H,W)
       FreeStkRegisterByte(spH);   //libera pila, obtiene dirección

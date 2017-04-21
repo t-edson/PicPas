@@ -62,7 +62,7 @@ type
     H      : TPicRegister;     //Registros de trabajo. Se crean siempre.
     listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
     listRegStk: TPicRegister_list;  //lista de registros de pila
-    listRegAuxBit: TPicRegisterBit_list;
+    listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
     listRegStkBit: TPicRegisterBit_list;
     stackTop: integer;   //índice al límite superior de la pila
     stackTopBit: integer;   //índice al límite superior de la pila
@@ -836,72 +836,72 @@ begin
   case CurrBank of
   0: case targetBank of
        1: begin
-         _BSF(_STATUS, _RP0);
+         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=1;
          exit(1);
        end;
        2: begin
-         _BSF(_STATUS, _RP1);
+         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
          CurrBank:=2;
          exit(1);
        end;
        3: begin
-         _BSF(_STATUS, _RP0);
-         _BSF(_STATUS, _RP1);
+         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
+         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
          CurrBank:=3;
          exit(2);
        end;
      end;
   1: case targetBank of
        0: begin
-         _BCF(_STATUS, _RP0);
+         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=0;
          exit(1);
        end;
        2: begin
-         _BSF(_STATUS, _RP1);
-         _BCF(_STATUS, _RP0);
+         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=2;
          exit(2);
        end;
        3: begin
-         _BSF(_STATUS, _RP1);
+         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
          CurrBank:=3;
          exit(1);
        end;
      end;
   2: case targetBank of
        0: begin
-         _BCF(_STATUS, _RP1);
+         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
          CurrBank:=0;
          exit(1);
        end;
        1: begin
-         _BCF(_STATUS, _RP1);
-         _BSF(_STATUS, _RP0);
+         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=1;
          exit(2);
        end;
        3: begin
-         _BSF(_STATUS, _RP0);
+         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=3;
          exit(1);
        end;
      end;
   3: case targetBank of
        0: begin
-         _BCF(_STATUS, _RP1);
-         _BCF(_STATUS, _RP0);
+         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=0;
          exit(2);
        end;
        1: begin
-         _BCF(_STATUS, _RP1);
+         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
          CurrBank:=1;
          exit(1);
        end;
        2: begin
-         _BCF(_STATUS, _RP0);
+         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=2;
          exit(1);
        end;
@@ -909,26 +909,26 @@ begin
   // Este caso es equivalentea decir "no sé en qué banco estoy"
   255: case targetBank of
        0: begin
-         _BCF(_STATUS, _RP1);
-         _BCF(_STATUS, _RP0);
+         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=0;
          exit(2);
        end;
        1: begin
-         _BCF(_STATUS, _RP1);
-         _BSF(_STATUS, _RP0);
+         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=1;
          exit(2);
        end;
        2: begin
-         _BSF(_STATUS, _RP1);
-         _BCF(_STATUS, _RP0);
+         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=2;
          exit(2);
        end;
        3: begin
-         _BSF(_STATUS, _RP1);
-         _BSF(_STATUS, _RP0);
+         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
          CurrBank:=3;
          exit(2);
        end;
@@ -942,8 +942,8 @@ procedure TGenCodPic._BANKRESET;
 Siempre genera dos instrucciones. Se usa cuando no se puede predecir exactamente, en que
 banco se encontrará el compilador.}
 begin
-  _BCF(_STATUS, _RP1);
-  _BCF(_STATUS, _RP0);
+  _BCF(_STATUS, _RP1); PutComm(';Bank reset.');
+  _BCF(_STATUS, _RP0); PutComm(';Bank reset.');
   CurrBank:=0;
 end;
 
