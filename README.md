@@ -2,7 +2,7 @@ PicPas 0.5.1
 =============
 Pascal compiler for PIC microcontrollers.
 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/picpas-768x573.jpg "Título de la imagen")
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/Sin-título.png "Título de la imagen")
 
 NOTE: This compiler is still in alpha phase and has limited functionality.
 
