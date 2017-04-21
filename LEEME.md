@@ -10,6 +10,8 @@ PicPas es un compilador sencillo, escrito en Lazarus, que genera código ejecuta
 
 No se requiere librerias ni programas adicionales para la compilación. PicPas genera el archivo *.hex directamente.
 
+PicPas trabaja con una versión simplificada de Pascal, que ha sido adaptada para trabajar con dispositivos de recursos limitados. 
+
 Por el momento solo soporta los tipos bit, byte, boolean y word (soporte limitado). 
 
 Incluye una pequeña IDE para facilitar el desarrollo de programas.
