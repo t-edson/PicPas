@@ -669,7 +669,7 @@ begin
     pic.codGotoAt(dg, _PC);   //termina de codificar el salto
   end;
   coExpres:begin
-    if BooleanInverted then  //_Lógica invertida
+    if res.Inverted then  //_Lógica invertida
       _BTFSC(_STATUS, BooleanBit)  //verifica condición
     else
       _BTFSS(_STATUS, BooleanBit);  //verifica condición
@@ -718,7 +718,7 @@ begin
     //sale cuando la condición es verdadera
   end;
   coExpres:begin
-    if BooleanInverted then  //_Lógica invertida
+    if res.Inverted then  //_Lógica invertida
       _BTFSC(_STATUS, BooleanBit)  //verifica condición
     else
       _BTFSS(_STATUS, BooleanBit);  //verifica condición
@@ -788,7 +788,7 @@ begin
     end;
   end;
   coExpres:begin
-    if BooleanInverted then  //_Lógica invertida
+    if res.Inverted then  //_Lógica invertida
       _BTFSC(_STATUS, BooleanBit)  //verifica condición
     else
       _BTFSS(_STATUS, BooleanBit);  //verifica condición

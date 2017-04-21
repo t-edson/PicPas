@@ -51,6 +51,9 @@ type
   TGenCodPic = class(TCompilerBase)
   private
     linRep : string;   //línea para generar de reporte
+    function OperandsUseHW: boolean;
+    function OperandsUseZ: boolean;
+    function OperandsUseW: boolean;
     procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
   protected
     pic    : TPIC16;           //Objeto PIC de la serie 16.
@@ -69,14 +72,15 @@ type
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
     procedure ExchangeP1_P2;
-    //Métodos para fijar el resultado
-    procedure SetResult(typ: TType; CatOp: TCatOperan);
-    procedure SetResultConst_bool(valBool: boolean);
-    procedure SetResultConst_bit(valBit: boolean);
-    procedure SetResultConst_byte(valByte: integer);
-    procedure SetResultConst_word(valWord: integer);
-    procedure SetResultVariab(typ: TType; rVar: TxpEleVar);
-    procedure SetResultExpres(typ: TType);
+  protected  //Variables de expresión.
+    {Estas variables, se inician al inicio de cada expresión y su valor es válido
+    hasta el final de la expresión.}
+    LastCatOp  : TCatOperan;  //Categoría de operando, de la subexpresión anterior.
+    CurrBank   : Byte;        //Banco RAM actual
+    //Variables de estado de las expresiones booleanas
+    BooleanBit : 0..7;        {Indica el bit de STATUS, que se usa, para devolver el
+                               resultado de una expresión booleana o de bit.(Z o C). Por
+                               lo general, estará siempre en 2 = Z.}
   private  //Rutinas de gestión de memoria de bajo nivel
     procedure AssignRAM(reg: TPicRegister; regName: string);  //Asigna a una dirección física
     procedure AssignRAM(reg: TPicRegisterBit);  //Asigna a una dirección física
@@ -84,36 +88,36 @@ type
     function CreateRegisterBit(RegType: TPicRegType): TPicRegisterBit;
   protected  //Rutinas de gestión de memoria
     //Manejo de memoria para registros
+    procedure RequireH(preserve: boolean = true);
+    function RequireResult_W: TPicRegister;
+    function RequireResult_Z: TPicRegisterBit;
+    procedure RequireResult_HW;
+    procedure SaveW(out reg: TPicRegister);
+    procedure SaveZ(out reg: TPicRegisterBit);
+    procedure RestoreW(reg: TPicRegister);
+    procedure RestoreZ(reg: TPicRegisterBit);
     function GetAuxRegisterByte: TPicRegister;
     function GetAuxRegisterBit: TPicRegisterBit;
     function GetStkRegisterByte: TPicRegister;
     function GetStkRegisterBit: TPicRegisterBit;
     function FreeStkRegisterByte(var reg: TPicRegister): boolean;
     function FreeStkRegisterBit(var reg: TPicRegisterBit): boolean;
-    function RequireResult_W: TPicRegister;
-    function RequireResult_Z: TPicRegisterBit;
-    procedure SaveW(out reg: TPicRegister);
-    procedure SaveZ(out reg: TPicRegisterBit);
-    procedure RestoreW(reg: TPicRegister);
-    procedure RestoreZ(reg: TPicRegisterBit);
-    procedure RequireH(preserve: boolean = true);
-    procedure RequireResult_HW;
     //Manejo de variables
     {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
     objeto "pic", se colocan mejor aquí.}
     function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
       absBit: integer=-1): TxpEleVar;
-  protected  //Variables de expresión.
-    {Estas variables, se inician al inicio de cada expresión y su valor es válido
-    hasta el final de la expresión.}
-    LastCatOp  : TCatOperan; //Categoría de operando, de la subexpresión anterior.
-//    LastBank   : byte;       //Banco de RAM, de la subexpresión anterior.
-    CurrBank   : Byte;       //Banco RAM actual
-    //Variables de estado de las expresiones booleanas
-    BooleanInverted : boolean;  //indica que la lógica del bit de salida está invertida
-    BooleanBit : 0..7;          {Indica el bit de STATUS, que se usa, para devolver el
-                                 resultado de una expresión booleana o de bit.(Z o C). Por
-                                 lo general, estará siempre en 2 = Z.}
+  protected  //Métodos para fijar el resultado
+    procedure SetResult(typ: TType; CatOp: TCatOperan);
+    procedure SetResultConst_bool(valBool: boolean);
+    procedure SetResultConst_bit(valBit: boolean);
+    procedure SetResultConst_byte(valByte: integer);
+    procedure SetResultConst_word(valWord: integer);
+    procedure SetResultVariab_bit(rVar: TxpEleVar; Inverted: boolean);
+    procedure SetResultExpres_bit(Inverted: boolean);
+    procedure SetResultExpres_bool(Inverted: boolean);
+    procedure SetResultExpres_byte;
+    procedure SetResultExpres_word;
   protected  //Instrucciones
     procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin
       );
@@ -243,47 +247,79 @@ begin
   //Actualiza catOperation
   catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
 end;
+//Funciones auxiliares privadas
+function OperandUseZ(Oper: TOperand): boolean;
+{Indica si el operando está usando el registro Z}
+begin
+  if (Oper.catOp = coExpres) and
+     ((Oper.typ = typBit) or (Oper.typ = typBool)) then
+    exit(true)
+  else
+    exit(false);
+end;
+function OperandUseW(Oper: TOperand): boolean;
+{Indica si el operando está usando el registro W}
+begin
+  if (Oper.catOp = coExpres) and
+     ((Oper.typ = typByte) or (Oper.typ = typWord)) then
+    exit(true)
+  else
+    exit(false);
+end;
+function OperandUseH(Oper: TOperand): boolean;
+{Indica si el operando está usando el registro H}
+begin
+  if (Oper.catOp = coExpres) and
+     (Oper.typ = typWord) then
+    exit(true)
+  else
+    exit(false);
+end;
+function OperandUseHW(Oper: TOperand): boolean;
+{Indica si el operando está usando los registros H,W}
+begin
+  if (Oper.catOp = coExpres) and
+     (Oper.typ = typWord) then
+    exit(true)
+  else
+    exit(false);
+end;
+function TGenCodPic.OperandsUseZ: boolean;
+{Indica si alguno de los operandos, está usando el registro Z, para devolver su
+resultado.}
+begin
+  if (
+     (operType = operUnary) and OperandUseZ(p1^)
+     ) or (
+     (operType = operBinary) and (OperandUseZ(p1^) or OperandUseZ(p2^))
+     )
+  then exit(true)
+  else exit(false);
+end;
+function TGenCodPic.OperandsUseW: boolean;
+{Indica si alguno de los operandos, está usando el registro W, para devolver su
+resultado.}
+begin
+  if (
+     (operType = operUnary) and OperandUseW(p1^)
+     ) or (
+     (operType = operBinary) and (OperandUseW(p1^) or OperandUseW(p2^))
+     )
+  then exit(true)
+  else exit(false);
+end;
+function TGenCodPic.OperandsUseHW: boolean;
+{Indica si alguno de los operandos, está usando los registros H,W, para devolver su
+resultado.}
+begin
+  if (
+     (operType = operUnary) and OperandUseHW(p1^)
+     ) or (
+     (operType = operBinary) and (OperandUseHW(p1^) or OperandUseHW(p2^))
+     )
+  then exit(true)
+  else exit(false);
 
-procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
-{Fija los parámetros del resultado de una subexpresion.}
-begin
-  res.typ := typ;
-  res.catOp := CatOp;
-  LastCatOp := CatOp;  {Guarda la categoría, para que la siguiente instrucción sepa
-                       cuál fue la categoría de la última expresión}
-end;
-procedure TGenCodPic.SetResultConst_bool(valBool: boolean);
-begin
-  SetResult(typBool, coConst);
-  res.valBool := valBool;
-end;
-procedure TGenCodPic.SetResultConst_bit(valBit: boolean);
-begin
-  SetResult(typBit, coConst);
-  res.valBool := valBit;
-end;
-procedure TGenCodPic.SetResultConst_byte(valByte: integer);
-begin
-  if not ValidateByteRange(valByte) then
-    exit;  //Error de rango
-  SetResult(typByte, coConst);
-  res.valInt := valByte;
-end;
-procedure TGenCodPic.SetResultConst_word(valWord: integer);
-begin
-  if not ValidateWordRange(valWord) then
-    exit;  //Error de rango
-  SetResult(typWord, coConst);
-  res.valInt := valWord;
-end;
-procedure TGenCodPic.SetResultVariab(typ: TType; rVar: TxpEleVar);
-begin
-  SetResult(typ, coVariab);
-  res.rVar := rVar;
-end;
-procedure TGenCodPic.SetResultExpres(typ: TType);
-begin
-  SetResult(typ, coExpres);
 end;
 //Rutinas de gestión de memoria de bajo nivel
 procedure TGenCodPic.AssignRAM(reg: TPicRegister; regName: string);
@@ -347,6 +383,120 @@ begin
   Result := reg;   //devuelve referencia
 end;
 //Rutinas de Gestión de memoria
+procedure TGenCodPic.RequireH(preserve: boolean = true);
+{Indica que va a usar el registro H.}
+var
+  tmpReg: TPicRegister;
+begin
+  if not H.assigned then begin
+    //Ni siquiera tiene dirección asignada. Primero hay que ubicarlo en memoria.
+    AssignRAM(H, '_H');
+  end else begin
+    //Ya existe.
+    if preserve and H.used then begin
+      //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
+      tmpReg := GetStkRegisterByte;   //pide una posición de memoria
+      //guarda H
+      _BANKSEL(h.bank);
+      _MOVF(H.offs, toW);PutComm(';save H');
+      _BANKSEL(tmpReg.bank);
+      _MOVWF(tmpReg.offs);
+      tmpReg.used := true;   //marca
+    end;
+  end;
+  H.used := true;  //lo marca como que lo va a usar
+end;
+function TGenCodPic.RequireResult_W: TPicRegister;
+{Indica que se va a utilizar al acumulador W, para devolver un resultado de tipo Byte.
+De encontrarse ocupado, se pone en la pila y devuelve la referencia al registro de pila
+usado. Si no hay espacio, genera error.}
+begin
+  if W.used then begin
+    //Ya lo usó la subexpresión anterior (seguro que fue una expresión byte o word)
+    Result := GetStkRegisterByte;  //pide memoria
+    //guarda W
+    _BANKSEL(Result.bank);
+    _MOVWF(Result.offs);PutComm(';save W');
+    Result.used := true;
+  end else begin
+    Result := nil;
+  end;
+  W.used := true;   //Lo marca como indicando que se va a ocupar
+end;
+function TGenCodPic.RequireResult_Z: TPicRegisterBit;
+{Indica que se va a utilizar Z, para devolver un resultado de tipo Bit o Boolean.
+De encontrarse ocupado, se pone en la pila y devuelve la referencia al registro de pila
+usado. Si no hay espacio, genera error.}
+begin
+  if Z.used then begin
+    //Ya lo usó la subexpresión anterior (seguro que fue una expresión bit o boolean)
+    Result := GetStkRegisterBit;  //pide memoria
+    //guarda Z
+    _BANKSEL(Result.bank);
+    _BCF(Result.offs, Result.bit); PutComm(';save Z');
+    _BTFSC(Z.offs, Z.bit);
+    _BSF(Result.offs, Result.bit);
+    Result.used := true;
+  end else begin
+    Result := nil;
+  end;
+  Z.used := true;   //Lo marca como indicando que se va a ocupar
+end;
+procedure TGenCodPic.RequireResult_HW;
+{Indica que se va a utilizar los registros (H,W), para devolver un resultado de tipo Word.
+Debe llamarse siempre, antes de generar código para la subexpresión.}
+begin
+  RequireResult_W;
+  RequireH;
+end;
+procedure TGenCodPic.SaveW(out reg: TPicRegister);
+{Verifica si el registro W, está siendo usado y de ser así genera la instrucción para
+guardarlo en un registro auxiliar. Esta función trabaja normalmente con RestoreW()}
+begin
+  if W.used then begin
+    reg := GetAuxRegisterByte;
+    if reg = nil then exit;
+    _BANKSEL(reg.bank);
+    _MOVWF(reg.offs);PutComm(';save W');
+  end else begin
+    reg := nil;
+  end;
+end;
+procedure TGenCodPic.SaveZ(out reg: TPicRegisterBit);
+{Verifica si el registro Z, está siendo usado y de ser así genera la instrucción para
+guardarlo en un registro auxiliar.}
+begin
+  if Z.used then begin
+    reg := GetAuxRegisterBit;
+    if reg = nil then exit;
+    _BANKSEL(reg.bank);
+    _BCF(reg.offs, reg.bit); PutComm(';save Z');
+    _BTFSC(Z.offs, Z.bit);
+    _BSF(reg.offs, reg.bit);
+  end else begin
+    reg := nil;
+  end;
+end;
+procedure TGenCodPic.RestoreW(reg: TPicRegister);
+{Devuelve a W, el valor guardado previamente con RequireW}
+begin
+  if reg<>nil then begin
+    reg.used := false;  //libera registro auxiliar
+    _BANKSEL(reg.bank);
+    _MOVF(reg.offs, toW);PutComm(';restore W');
+  end;
+end;
+procedure TGenCodPic.RestoreZ(reg: TPicRegisterBit);
+{Devuelve a Z, el valor guardado previamente con RequireZ}
+begin
+  if reg<>nil then begin
+    reg.used := false;  //libera registro auxiliar
+    _BANKSEL(reg.bank);
+    _BCF(Z.offs, Z.bit); PutComm(';restore Z');
+    _BTFSC(reg.offs, reg.bit);
+    _BSF(Z.offs, Z.bit);
+  end;
+end;
 function TGenCodPic.GetAuxRegisterByte: TPicRegister;
 {Devuelve la dirección de un registro de trabajo libre. Si no encuentra alguno, lo crea.
  Si hay algún error, llama a GenError() y devuelve NIL}
@@ -481,120 +631,6 @@ begin
    {Notar que, aunque se devuelve la referencia, el registro está libre, para otra
    operación con GetStkRegisterByte(). Tenerlo en cuenta. }
 end;
-function TGenCodPic.RequireResult_W: TPicRegister;
-{Indica que se va a utilizar al acumulador W, para devolver un resultado de tipo Byte.
-De encontrarse ocupado, se pone en la pila y devuelve la referencia al registro de pila
-usado. Si no hay espacio, genera error.}
-begin
-  if W.used then begin
-    //Ya lo usó la subexpresión anterior (seguro que fue una expresión byte o word)
-    Result := GetStkRegisterByte;  //pide memoria
-    //guarda W
-    _BANKSEL(Result.bank);
-    _MOVWF(Result.offs);PutComm(';save W');
-    Result.used := true;
-  end else begin
-    Result := nil;
-  end;
-  W.used := true;   //Lo marca como indicando que se va a ocupar
-end;
-function TGenCodPic.RequireResult_Z: TPicRegisterBit;
-{Indica que se va a utilizar Z, para devolver un resultado de tipo Bit o Boolean.
-De encontrarse ocupado, se pone en la pila y devuelve la referencia al registro de pila
-usado. Si no hay espacio, genera error.}
-begin
-  if Z.used then begin
-    //Ya lo usó la subexpresión anterior (seguro que fue una expresión bit o boolean)
-    Result := GetStkRegisterBit;  //pide memoria
-    //guarda Z
-    _BANKSEL(Result.bank);
-    _BCF(Result.offs, Result.bit); PutComm(';save Z');
-    _BTFSC(Z.offs, Z.bit);
-    _BSF(Result.offs, Result.bit);
-    Result.used := true;
-  end else begin
-    Result := nil;
-  end;
-  Z.used := true;   //Lo marca como indicando que se va a ocupar
-end;
-procedure TGenCodPic.SaveW(out reg: TPicRegister);
-{Verifica si el registro W, está siendo usado y de ser así genera la instrucción para
-guardarlo en un registro auxiliar. Esta función trabaja normalmente con RestoreW()}
-begin
-  if W.used then begin
-    reg := GetAuxRegisterByte;
-    if reg = nil then exit;
-    _BANKSEL(reg.bank);
-    _MOVWF(reg.offs);PutComm(';save W');
-  end else begin
-    reg := nil;
-  end;
-end;
-procedure TGenCodPic.SaveZ(out reg: TPicRegisterBit);
-{Verifica si el registro Z, está siendo usado y de ser así genera la instrucción para
-guardarlo en un registro auxiliar.}
-begin
-  if Z.used then begin
-    reg := GetAuxRegisterBit;
-    if reg = nil then exit;
-    _BANKSEL(reg.bank);
-    _BCF(reg.offs, reg.bit); PutComm(';save Z');
-    _BTFSC(Z.offs, Z.bit);
-    _BSF(reg.offs, reg.bit);
-  end else begin
-    reg := nil;
-  end;
-end;
-procedure TGenCodPic.RestoreW(reg: TPicRegister);
-{Devuelve a W, el valor guardado previamente con RequireW}
-begin
-  if reg<>nil then begin
-    reg.used := false;  //libera registro auxiliar
-    _BANKSEL(reg.bank);
-    _MOVF(reg.offs, toW);PutComm(';restore W');
-  end;
-end;
-procedure TGenCodPic.RestoreZ(reg: TPicRegisterBit);
-{Devuelve a Z, el valor guardado previamente con RequireZ}
-begin
-  if reg<>nil then begin
-    reg.used := false;  //libera registro auxiliar
-    _BANKSEL(reg.bank);
-    _BCF(Z.offs, Z.bit); PutComm(';restore Z');
-    _BTFSC(reg.offs, reg.bit);
-    _BSF(Z.offs, Z.bit);
-  end;
-end;
-procedure TGenCodPic.RequireH(preserve: boolean = true);
-{Indica que va a usar el registro H.}
-var
-  tmpReg: TPicRegister;
-begin
-  if not H.assigned then begin
-    //Ni siquiera tiene dirección asignada. Primero hay que ubicarlo en memoria.
-    AssignRAM(H, '_H');
-  end else begin
-    //Ya existe.
-    if preserve and H.used then begin
-      //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-      tmpReg := GetStkRegisterByte;   //pide una posición de memoria
-      //guarda H
-      _BANKSEL(h.bank);
-      _MOVF(H.offs, toW);PutComm(';save H');
-      _BANKSEL(tmpReg.bank);
-      _MOVWF(tmpReg.offs);
-      tmpReg.used := true;   //marca
-    end;
-  end;
-  H.used := true;  //lo marca como que lo va a usar
-end;
-procedure TGenCodPic.RequireResult_HW;
-{Indica que se va a utilizar los registros (H,W), para devolver un resultado de tipo Word.
-Debe llamarse siempre, antes de generar código para la subexpresión.}
-begin
-  RequireResult_W;
-  RequireH;
-end;
 //Manejo de variables
 function TGenCodPic.CreateVar(const varName: string; typ: ttype;
          absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
@@ -656,6 +692,116 @@ begin
   Result := r;
   //Ya encontró tipo, llama a evento
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
+end;
+//Métodos para fijar el resultado
+procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
+{Fija los parámetros del resultado de una subexpresion.}
+begin
+  res.typ := typ;
+  res.catOp := CatOp;
+  LastCatOp := CatOp;  {Guarda la categoría, para que la siguiente instrucción sepa
+                       cuál fue la categoría de la última expresión}
+end;
+procedure TGenCodPic.SetResultConst_bool(valBool: boolean);
+begin
+  SetResult(typBool, coConst);
+  res.valBool := valBool;
+end;
+procedure TGenCodPic.SetResultConst_bit(valBit: boolean);
+begin
+  SetResult(typBit, coConst);
+  res.valBool := valBit;
+  {Se asume que no se necesita invertir la lógica, en una constante, ya que en este caso
+  tenemos control pleno de su valor}
+  res.Inverted := false;
+end;
+procedure TGenCodPic.SetResultConst_byte(valByte: integer);
+begin
+  if not ValidateByteRange(valByte) then
+    exit;  //Error de rango
+  SetResult(typByte, coConst);
+  res.valInt := valByte;
+end;
+procedure TGenCodPic.SetResultConst_word(valWord: integer);
+begin
+  if not ValidateWordRange(valWord) then
+    exit;  //Error de rango
+  SetResult(typWord, coConst);
+  res.valInt := valWord;
+end;
+procedure TGenCodPic.SetResultVariab_bit(rVar: TxpEleVar; Inverted: boolean);
+begin
+  SetResult(typBit, coVariab);
+  res.rVar := rVar;
+  res.Inverted := Inverted;
+end;
+procedure TGenCodPic.SetResultExpres_bit(Inverted: boolean);
+{Define el resultado como una expresión de tipo Bit, y se asegura de reservar el registro
+Z, para devolver la salida.}
+begin
+  SetResult(typBit, coExpres);
+  res.Inverted := Inverted;
+  //Verifica si el registro Z, está ocupado
+  if OperandsUseZ then begin
+    //Se está usando Z, como resultado de una expresión en p1 o p2
+    //No es necesario solicitar el registro
+  end else begin
+    //No se está usando Z, al menos en alguno de los operandos
+    //Hay que pedir el registro formalmente
+    RequireResult_Z;  //Vamos a devolver en Z
+  end;
+end;
+procedure TGenCodPic.SetResultExpres_bool(Inverted: boolean);
+{Define el resultado como una expresión de tipo Boolean, y se asegura de reservar el
+registro Z, para devolver la salida.}
+begin
+  SetResult(typBool, coExpres);
+  res.Inverted := Inverted;
+  //Verifica si el registro Z, está ocupado
+  if OperandsUseZ then begin
+    //Se está usando Z, como resultado de una expresión en p1 o p2
+    //No es necesario solicitar el registro
+  end else begin
+    //No se está usando Z, al menos en alguno de los operandos
+    //Hay que pedir el registro formalmente
+    RequireResult_Z;  //Vamos a devolver en Z
+  end;
+end;
+procedure TGenCodPic.SetResultExpres_byte;
+{Define el resultado como una expresión de tipo Byte, y se asegura de reservar el
+registro W, para devolver la salida.}
+begin
+  SetResult(typByte, coExpres);
+  //Verifica si el registro W, está ocupado
+  if OperandsUseW then begin
+    //Se está usando W, como resultado de una expresión en p1 o p2
+    //No es necesario solicitar el registro
+  end else begin
+    //No se está usando W, al menos en alguno de los operandos
+    //Hay que pedir el registro formalmente
+    RequireResult_W;  //Vamos a devolver en W
+  end;
+end;
+procedure TGenCodPic.SetResultExpres_word;
+{Define el resultado como una expresión de tipo Word, y se asegura de reservar los
+registros H,W, para devolver la salida.}
+begin
+  SetResult(typWord, coExpres);
+  //Verifica si el registro W, está ocupado
+  if OperandsUseHW then begin
+    //Se está usando H,W, como resultado de una expresión en p1 o p2
+    //No es necesario solicitar el registro
+  end else begin
+    //No se está usando (H,W), al menos en alguno de los operandos
+    //Puede que se esté usando solo W.
+    if OperandsUseW then begin
+      //Hay una expresión que usa W en alguno de los operandos
+      RequireH;  //solo solicitamos H
+    end else begin
+      //Hay que pedir el registro formalmente
+      RequireResult_HW;  //Vamos a devolver en H,W
+    end;
+  end;
 end;
 //Rutinas generales para la codificación
 procedure TGenCodPic.CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;

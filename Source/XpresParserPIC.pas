@@ -26,6 +26,9 @@ TPosExpres = (pexINDEP,  //Expresión independiente
               pexPARAM,  //Expresión de parámetro de función
               pexPARSY   //Expresión de parámetro de función de sistema
               );
+TOperType = (operUnary,  //Operación Unaria
+             operBinary  //Operación Binaria
+             );
 { TOperand }
 //Operando
 TOperand = object
@@ -35,6 +38,8 @@ public
   txt  : string;    //Texto del operando o expresión, tal como aparece en la fuente
 //  fun  : Tfunc;     //referencia a función en caso de que sea una función
   rVar : TxpEleVar;    //referencia a la variable, en caso de que sea variable
+  Inverted: boolean; {Este campo se usa para cuando el operando es de tipo Bit o Boolean.
+                      Indica que la lógica debe leerse de forma invertida.}
   {---------------------------------------------------------
   Estos campos describen al operando, independientemente de que se le encuentree
   un tipo, válido. Si se le encuentra un tipo válido, se tendrá la referencia al tipo
@@ -117,7 +122,7 @@ protected  //Eventos del compilador
 public
   TreeElems: TXpTreeElements; //tablas de elementos del lenguaje
 private
-  typs   : TTypes;       //lista de tipos (El nombre "types" ya está reservado)
+  typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
   function GetExpression(const prec: Integer): TOperand;
   //LLamadas a las rutinas de operación
   procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
@@ -142,14 +147,14 @@ public
   xLex   : TSynFacilSyn; //resaltador - lexer
   cIn    : TContexts;   //entrada de datos
   //variables públicas del compilador
-  ejecProg: boolean;   //Indica que se está ejecutando un programa o compilando
-  DetEjec: boolean;   //para detener la ejecución (en intérpretes)
+  ejecProg: boolean;    //Indica que se está ejecutando un programa o compilando
+  DetEjec: boolean;     //para detener la ejecución (en intérpretes)
 
-  func0  : TxpEleFun;      //función interna para almacenar parámetros
-  p1, p2 : ^TOperand;    //Pasa los operandos de la operación actual
+  func0  : TxpEleFun;   //función interna para almacenar parámetros
+  p1, p2 : ^TOperand;   //Pasa los operandos de la operación actual
   res    : TOperand;    //resultado de la evaluación de la última expresión.
   catOperation: TCatOperation;  //combinación de categorías de los operandos
-
+  operType : TOperType; //Tipo de oepración
   function CatOperationToStr(Op: string=','): string;
 public  //Manejo de errores
   PErr  : TPError;     //Objeto de Error
@@ -469,6 +474,7 @@ var
 begin
   PErr.Clear;
   SkipWhites;
+  Result.Inverted := false;   //inicia campo
   if cIn.tokType = tkNumber then begin  //constantes numéricas
     Result.catOp:=coConst;       //constante es Mono Operando
     Result.txt:= cIn.tok;     //toma el texto
@@ -492,8 +498,8 @@ begin
     TFF_FULL:     //encontró completamente
       begin   //encontró
         Result.catOp :=coExpres; //expresión
-        Result.txt:= cIn.tok;    //toma el texto
         Result.typ:=xfun.typ;
+        Result.txt:= cIn.tok;    //toma el texto
         xfun.proc(xfun);  //llama al código de la función
         exit;
       end;
@@ -508,18 +514,18 @@ begin
     if ele.elemType = eltVar then begin
       //es una variable
       xvar := TxpEleVar(ele);
-      Result.rVar:=xvar;   //guarda referencia a la variable
       Result.catOp:=coVariab;    //variable
-      Result.catTyp:= xvar.typ.cat;  //categoría
       Result.typ:=xvar.typ;
+      Result.catTyp:= xvar.typ.cat;  //categoría
+      Result.rVar:=xvar;   //guarda referencia a la variable
       Result.txt:= cIn.tok;     //toma el texto
       cIn.Next;    //Pasa al siguiente
     end else if ele.elemType = eltCons then begin  //es constante
       //es una constante
       xcon := TxpEleCon(ele);
       Result.catOp:=coConst;    //constante
-      Result.catTyp:= xcon.typ.cat;  //categoría
       Result.typ:=xcon.typ;
+      Result.catTyp:= xcon.typ.cat;  //categoría
       Result.GetConsValFrom(xcon);  //lee valor
       Result.txt:= cIn.tok;     //toma el texto
       cIn.Next;    //Pasa al siguiente
@@ -624,13 +630,14 @@ begin
 //                    Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')');
       GenError('Illegal Operation: %s',
                ['(' + Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')']);
-      Exit;
+      exit;
     end;
    {Llama al evento asociado con p1 y p2 como operandos. }
    p1 := @Op1; p2 := @Op2;  { Se usan punteros por velocidad. De otra forma habría que
                              copiar todo el objeto.}
    //junta categorías de operandos
    catOperation := TCatOperation((Ord(Op1.catOp) << 2) or ord(Op2.catOp));
+   operType := operBinary;
    {Ejecuta la operación.
    Los parámetros de entrada se dejan en p1 y p2. El resultado debe dejarse en "res"}
    Operation.proc;
@@ -646,12 +653,13 @@ begin
   {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Eval('+ opr.txt + Op1.txt + ')'); {$ENDIF}
    PErr.IniError;
    if opr.OperationPre = nil then begin
-      GenError('Operación no válida: ' +
-                 opr.txt + '('+Op1.typ.name+')');
-      Exit;
+      GenError('Illegal Operation: %s',
+                 [opr.txt + '('+Op1.typ.name+')']);
+      exit;
     end;
    {Llama al evento asociado con p1 como operando. }
    p1 := @Op1; {Solo hay un parámetro}
+   operType := operUnary;
    {Ejecuta la operación. El resultado debe dejarse en "res"}
    opr.OperationPre;
    //Completa campos de "res", si es necesario
@@ -665,12 +673,13 @@ begin
   {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Eval('+Op1.txt + opr.txt +')'); {$ENDIF}
    PErr.IniError;
    if opr.OperationPost = nil then begin
-      GenError('Operación no válida: ' +
-                 '('+Op1.typ.name+')' + opr.txt);
-      Exit;
+      GenError('Illegal Operation: %s',
+                 ['('+Op1.typ.name+')' + opr.txt]);
+      exit;
     end;
    {Llama al evento asociado con p1 como operando. }
    p1 := @Op1; {Solo hay un parámetro}
+   operType := operUnary;
    {Ejecuta la operación. El resultado debe dejarse en "res"}
    opr.OperationPost;
    //Completa campos de "res", si es necesario

@@ -641,17 +641,17 @@ object frmPrincipal: TfrmPrincipal
     end
   end
   object splSynTree: TSplitter
-    Left = 40
+    Left = 160
     Height = 385
-    Top = 24
+    Top = 64
     Width = 5
     Align = alNone
   end
   inline edAsm: TSynEdit
     Left = 504
     Height = 296
-    Top = 56
-    Width = 592
+    Top = 72
+    Width = 328
     Font.Height = -13
     Font.Name = 'Courier New'
     Font.Pitch = fpFixed
