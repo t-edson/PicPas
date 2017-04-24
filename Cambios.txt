@@ -6,6 +6,7 @@ Como producto del cambio, se puede ahora compilar PicPas con seguridad en plataf
 64 bits.
 Se implementa la operación Oper_bit_or_byte.
 Se implementa la operación Oper_bit_xor_bit.
+Se crea el nodo "Units" en el visor de árbol de sintaxis.
 
 PENDIENTES
 Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola
