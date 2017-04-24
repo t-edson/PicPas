@@ -164,12 +164,12 @@ type
     function _CLOCK: integer;
   public  //Inicialización
     //Atributos adicionales
-    tkStruct   : TSynHighlighterAttributes;
-    tkDirective: TSynHighlighterAttributes;
-    tkAsm      : TSynHighlighterAttributes;
-    tkExpDelim : TSynHighlighterAttributes;
-    tkBlkDelim : TSynHighlighterAttributes;
-    tkOthers   : TSynHighlighterAttributes;
+    tnStruct   : integer;
+    tnDirective: integer;
+    tnAsm      : integer;
+    tnExpDelim : integer;
+    tnBlkDelim : integer;
+    tnOthers   : integer;
     procedure StartRegs;
     constructor Create; override;
     destructor Destroy; override;

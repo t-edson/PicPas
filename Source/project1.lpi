@@ -67,7 +67,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="14">
+    <Units Count="12">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -91,57 +91,50 @@
         <IsPartOfProject Value="True"/>
       </Unit3>
       <Unit4>
-        <Filename Value="Globales.pas"/>
+        <Filename Value="ProcAsm.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="ProcAsm.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit5>
-      <Unit6>
         <Filename Value="FormPICExplorer.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmPICExplorer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-      </Unit6>
-      <Unit7>
+      </Unit5>
+      <Unit6>
         <Filename Value="frames\framecfgide.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fraCfgIDE"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="FrameCfgIDE"/>
-      </Unit7>
-      <Unit8>
-        <Filename Value="XpresElementsPIC.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit8>
-      <Unit9>
+      </Unit6>
+      <Unit7>
         <Filename Value="FormCodeExplorer.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmCodeExplorer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="GenCod.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="GenCodPic.pas"/>
+        <IsPartOfProject Value="True"/>
       </Unit9>
       <Unit10>
-        <Filename Value="GenCod.pas"/>
+        <Filename Value="XpresParserPIC.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit10>
       <Unit11>
-        <Filename Value="GenCodPic.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit11>
-      <Unit12>
-        <Filename Value="XpresParserPIC.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit12>
-      <Unit13>
         <Filename Value="FrameSyntaxTree.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fraSyntaxTree"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-      </Unit13>
+      </Unit11>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -152,7 +145,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils 0.9;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\ConfigFrame 0.7;..\..\_Librerias\ConfigFrame 0.7\Predefined;..\..\_Librerias\PicUtils 0.6;..\..\_Librerias\Xpres-1.2;frames"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.1;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\ConfigFrame 0.7;..\..\_Librerias\ConfigFrame 0.7\Predefined;..\..\_Librerias\PicUtils 0.6;..\..\_Librerias\Xpres-1.3;frames"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

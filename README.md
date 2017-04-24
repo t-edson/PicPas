@@ -1,4 +1,4 @@
-PicPas 0.5.1
+PicPas 0.5.2
 =============
 Pascal compiler for PIC microcontrollers.
 
@@ -52,7 +52,7 @@ To compile PicPas, it's needed to have the following libraries:
 
 All of them, must be availables on the Web. Check the versions used.
 
-PicPas has been compiled, using the version 1.6.2 of Lazarus. By the moment, there is only a Windows version.
+PicPas has been compiled, using the version 1.6.2 of Lazarus. Tested in Windows and Ubuntu.
 
 To have more information about the compiler, check the Technical Documentation (Only in spanish by now).
 

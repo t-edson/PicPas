@@ -368,15 +368,15 @@ initialization
   {Define la sintaxis del lexer que se usará para analizar el código en ensamblador.}
   lexAsm := TSynFacilSyn.Create(nil);  //crea lexer para analzar ensamblador
   lexAsm.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
-  lexAsm.DefTokContent('[0-9]', '[0-9.]*', lexAsm.tkNumber);
-  lexAsm.DefTokContent('[$]','[0-9A-Fa-f]*', lexAsm.tkNumber);
-  lexAsm.DefTokContent('[%]','[01]*', lexAsm.tkNumber);
-  lexAsm.AddIdentSpecList('ADDWF ANDWF CLRF CLRW COMF DECF DECFSZ INCF', lexAsm.tkKeyword);
-  lexAsm.AddIdentSpecList('INCFSZ IORWF MOVF MOVWF NOP RLF RRF SUBWF SWAPF XORWF', lexAsm.tkKeyword);
-  lexAsm.AddIdentSpecList('BCF BSF BTFSC BTFSS', lexAsm.tkKeyword);
-  lexAsm.AddIdentSpecList('ADDLW ANDLW CALL CLRWDT GOTO IORLW MOVLW RETFIE', lexAsm.tkKeyword);
-  lexAsm.AddIdentSpecList('RETLW RETURN SLEEP SUBLW XORLW', lexAsm.tkKeyword);
-  lexAsm.DefTokDelim(';','', lexAsm.tkComment);
+  lexAsm.DefTokContent('[0-9]', '[0-9.]*', lexAsm.tnNumber);
+  lexAsm.DefTokContent('[$]','[0-9A-Fa-f]*', lexAsm.tnNumber);
+  lexAsm.DefTokContent('[%]','[01]*', lexAsm.tnNumber);
+  lexAsm.AddIdentSpecList('ADDWF ANDWF CLRF CLRW COMF DECF DECFSZ INCF', lexAsm.tnKeyword);
+  lexAsm.AddIdentSpecList('INCFSZ IORWF MOVF MOVWF NOP RLF RRF SUBWF SWAPF XORWF', lexAsm.tnKeyword);
+  lexAsm.AddIdentSpecList('BCF BSF BTFSC BTFSS', lexAsm.tnKeyword);
+  lexAsm.AddIdentSpecList('ADDLW ANDLW CALL CLRWDT GOTO IORLW MOVLW RETFIE', lexAsm.tnKeyword);
+  lexAsm.AddIdentSpecList('RETLW RETURN SLEEP SUBLW XORLW', lexAsm.tnKeyword);
+  lexAsm.DefTokDelim(';','', lexAsm.tnComment);
   lexAsm.Rebuild;
 finalization
   lexAsm.Destroy;

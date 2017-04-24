@@ -1,3 +1,23 @@
+PicPas 0.5.2
+============
+Se cambia la librería SynFacilUtils a la versión 1.0. Esto implica modificar el código en 
+los puntos en donde se hace referencia a los identificadores de tokens.
+Como producto del cambio, se puede ahora compilar PicPas con seguridad en plataformas de
+64 bits.
+Se implementa la operación Oper_bit_or_byte.
+Se implementa la operación Oper_bit_xor_bit.
+
+PENDIENTES
+Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola
+función TGenCodPic.CreateVar().
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Terminar de implementar las operaciones del tipo bit.
+Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
+consecutivas, para variables word.
+Implementar la llamada correcta para las funciones del sistema y de usuario.
+
+
 PicPas 0.5.1
 ============
 Se crea el enumerado TOperType en XpresParserPIC.
@@ -18,17 +38,6 @@ Se crea las operaciones NOT, AND y OR, para el tipo Boolean
 Se agrega soporte para los dispositivos PIC12F629
  y PIC12F675
 . 
-
-PENDIENTES
-Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola
-función TGenCodPic.CreateVar().
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Terminar de implementar las operaciones del tipo bit.
-Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
-consecutivas, para variables word.
-Implementar la llamada correcta para las funciones del sistema y de usuario.
-Implementar el manejo de bancos de memoria.
 
 
 PicPas 0.5.0

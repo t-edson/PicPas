@@ -7,7 +7,7 @@ uses
   Classes, SysUtils, lclProc, SynEditHighlighter, types,
   SynFacilHighlighter, MisUtils,
   XpresBas, XpresTypes, XpresElementsPIC, XpresParserPIC,
-  Pic16Utils, Pic16devices, Globales, ProcAsm, GenCod,
+  Pic16Utils, Pic16Devices, Globales, ProcAsm, GenCod,
   GenCodPic {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
 type
 
@@ -154,21 +154,21 @@ begin
 end;
 procedure TCompiler.ProcComments;
 //Procesa comentarios y directivas
-  function tokType: TSynHighlighterAttributes;
-begin
-  Result := TSynHighlighterAttributes(PtrUInt(lexdir.GetTokenKind));
-end;
+  function tokType: integer;
+  begin
+    Result := lexdir.GetTokenKind;
+  end;
   procedure skipWhites;
-begin
-  if tokType = lexDir.tkSpace then
-    lexDir.Next;  //quita espacios
-end;
+  begin
+    if tokType = lexDir.tnSpace then
+      lexDir.Next;  //quita espacios
+  end;
 var
   f: Integer;
 begin
   cIn.SkipWhites;
-  while (cIn.tokType = tkDirective) or (cIn.tokType = tkAsm) do begin
-    if cIn.tokType = tkAsm then begin
+  while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
+    if cIn.tokType = tnAsm then begin
       //procesa la línea ASM
       ProcASMlime(cIn.tok);
       if HayError then exit;
@@ -176,8 +176,8 @@ begin
       //Se ha detectado una directiva
       //Usa SynFacilSyn como lexer para analizar texto
       lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
-      if tokType = lexDir.tkSpace then  lexDir.Next;  //quita espacios
-      if tokType <> lexDir.tkIdentif then begin
+      if tokType = lexDir.tnSpace then  lexDir.Next;  //quita espacios
+      if tokType <> lexDir.tnIdentif then begin
         GenError('Error in directive.');
         exit;
       end;
@@ -194,7 +194,7 @@ begin
       'FREQUENCY': begin
         lexDir.Next;  //pasa al siguiente
         skipWhites;
-        if tokType <> lexDir.tkNumber then begin
+        if tokType <> lexDir.tnNumber then begin
           GenError('Error in directive.');
           exit;
         end;
@@ -254,7 +254,7 @@ begin
   repeat
     cIn.SkipWhites;
     //ahora debe haber un identificador
-    if cIn.tokType <> tkIdentif then begin
+    if cIn.tokType <> tnIdentif then begin
       GenError('Identifier expected.');
       exit;
     end;
@@ -332,7 +332,7 @@ var
     IsAbs := true;    //marca bandera
     cIn.Next;
     cIn.SkipWhites;
-    if cIn.tokType = tkNumber then begin
+    if cIn.tokType = tnNumber then begin
       TipDefecNumber(Number, cIn.tok); //encuentra tipo de número, tamaño y valor
       if pErr.HayError then exit;  //verifica
       if Number.catTyp = t_float then begin
@@ -386,7 +386,7 @@ var
           if pErr.HayError then exit;  //verifica
         end;
       end;
-    end else if cIn.tokType = tkIdentif then begin
+    end else if cIn.tokType = tnIdentif then begin
       //puede ser variable
       xvar := TreeElems.FindVar(cIn.tok);
       if xvar<>nil then begin
@@ -425,7 +425,7 @@ begin
     //debe venir el tipo de la variable
     cIn.Next;  //lo toma
     cIn.SkipWhites;
-    if (cIn.tokType <> tkType) then begin
+    if (cIn.tokType <> tnType) then begin
       GenError('Identifier of type expected.');
       exit;
     end;
@@ -512,7 +512,7 @@ begin
     end;
     cin.Next;
     repeat
-      if cIn.tokType <> tkIdentif then begin
+      if cIn.tokType <> tnIdentif then begin
         GenError('Identifier expected.');
         exit;
       end;
@@ -526,7 +526,7 @@ begin
       cIn.Next;
       cIn.SkipWhites;
 
-      if (cIn.tokType <> tkType) then begin
+      if (cIn.tokType <> tnType) then begin
         GenError('Identifier of type expected.');
         exit;
       end;
@@ -561,7 +561,7 @@ var
 begin
   cIn.SkipWhites;
   //ahora debe haber un identificador
-  if cIn.tokType <> tkIdentif then begin
+  if cIn.tokType <> tnIdentif then begin
     GenError('Identifier expected.');
     exit;
   end;
@@ -616,7 +616,7 @@ begin
   _RETURN();  //instrucción de salida
   EndCodeSub;  //termina codificación
   CloseFunction;  //cierra espacio de nombres de la función
-  if cIn.tokType=tkExpDelim then begin //encontró delimitador de expresión
+  if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
     ProcComments;  //quita espacios
     if HayError then exit;   //puede dar error por código assembler o directivas
@@ -839,7 +839,7 @@ begin
     //puede salir con error
   end else begin
     //es una instrucción
-    if cIn.tokType = tkStruct then begin
+    if cIn.tokType = tnStruct then begin
       if cIn.tokl = 'if' then begin
         cIn.Next;         //pasa "if"
         CompileIF;
@@ -865,7 +865,7 @@ de archivo. }
 begin
   ProcComments;
   if HayError then exit;   //puede dar error por código assembler o directivas
-  while not cIn.Eof and (cIn.tokType<>tkBlkDelim) do begin
+  while not cIn.Eof and (cIn.tokType<>tnBlkDelim) do begin
     //se espera una expresión o estructura
     CompileInstruction;
     if HayError then exit;   //aborta
@@ -874,7 +874,7 @@ begin
     //busca delimitador
     ProcComments;
     if HayError then exit;   //puede dar error por código assembler o directivas
-    if cIn.tokType=tkExpDelim then begin //encontró delimitador de expresión
+    if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
       cIn.Next;   //lo toma
       ProcComments;  //quita espacios
       if HayError then exit;   //puede dar error por código assembler o directivas
@@ -1101,7 +1101,7 @@ procedure TCompiler.DefLexDirectiv;
 begin
   //solo se requiere identificadores y números
   lexDir.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
-  lexDir.DefTokContent('[0-9]', '[0-9.]*', lexDir.tkNumber);
+  lexDir.DefTokContent('[0-9]', '[0-9.]*', lexDir.tnNumber);
   lexDir.Rebuild;
 end;
 constructor TCompiler.Create;

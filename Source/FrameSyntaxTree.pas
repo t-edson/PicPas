@@ -47,15 +47,13 @@ begin
   nodMain.ImageIndex := 1;
   nodMain.SelectedIndex := 1;
   //Agrega grupos
-//  nodUni := TreeView1.Items.AddChild(nodMain, 'Units');
-//  nodUni.ImageIndex := 0;
-//  nodUni.SelectedIndex := 0;
-  nodCte := TreeView1.Items.AddChild(nodMain, 'Constants');
-  nodCte.ImageIndex := 0;
-  nodCte.SelectedIndex := 0;
+  nodUni := TreeView1.Items.AddChild(nodMain, 'Units');
+  nodUni.ImageIndex := 0;
+  nodUni.SelectedIndex := 0;
   nodVar := TreeView1.Items.AddChild(nodMain, 'Variables');
   nodVar.ImageIndex := 0;
   nodVar.SelectedIndex := 0;
+  nodCte:= nil;
   nodFun := nil;
   nodOtr := nil;  //por defecto
   //Agrega elementos
@@ -66,6 +64,11 @@ begin
 //      nod.SelectedIndex := 5;
 //    end;
     if elem is TxpEleCon then begin  //constante
+      if nodCte= nil then begin
+        nodCte := TreeView1.Items.AddChild(nodMain, 'Constants');
+        nodCte.ImageIndex := 0;
+        nodCte.SelectedIndex := 0;
+      end;
       nod := TreeView1.Items.AddChild(nodCte, elem.name);
       nod.ImageIndex := 4;
       nod.SelectedIndex := 4;

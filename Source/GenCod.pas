@@ -69,6 +69,8 @@ type
       procedure Oper_bit_and_bit;
       procedure Oper_bit_and_byte;
       procedure Oper_bit_or_bit;
+      procedure Oper_bit_or_byte;
+      procedure Oper_bit_xor_bit;
       procedure Oper_not_bit;
     private  //Operaciones con boolean
       procedure bool_load;
@@ -597,7 +599,7 @@ begin
         exit;
       end else if p1^.Inverted then begin  //lógica invertida
         SetResultExpres_bit(false);  //Fija resultado
-        //Aplica un OR entre p1 y Z'.
+        //Aplica un OR entre p1' y Z.
         _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
         _BSF(Z.offs, Z.bit);     //Si es 0, devuelve uno
@@ -626,14 +628,153 @@ begin
       exit;
     end;
     coExpres_Expres:begin
-      //No usa W
-      SetResultExpres_bit(false);  //Fija resultado
       //la expresión p1 debe estar salvada y p2 en el acumulador
       FreeStkRegisterBit(r);   //libera pila porque se usará el dato ahí contenido
+      p1^.catOp := coVariab;
+      catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
       //Luego el caso es similar a variable-expresión
-      _BANKSEL(r.bank);
-      _BTFSC(r.offs, r.bit);   //Si es 0, deja tal cual
-      _BSF(Z.offs, Z.bit);     //Si es 1, devuelve uno
+      Oper_bit_or_bit;
+    end;
+    else
+      GenError('Not implemented.'); exit;
+    end;
+end;
+procedure TGenCod.Oper_bit_or_byte;
+begin
+  if p2^.catOp <> coConst then begin
+    GenError('Incompatible types: (bit) OR (byte).'); exit;
+  end;
+  //p2 es constante
+  if p2^.valInt = 0 then begin
+    p2^.typ := typBit;   //convierte en bit
+    p2^.valBool := false;
+    Oper_bit_or_bit;  //opera como bit
+  end else if p2^.valInt = 1 then begin
+    p2^.typ := typBit;   //convierte en bit
+    p2^.valBool := true;
+    Oper_bit_or_bit;  //opera como bit
+  end else begin
+    GenError('Incompatible types: (bit) OR (byte).'); exit;
+  end;
+end;
+procedure TGenCod.Oper_bit_xor_bit;
+var
+  reg: TPicRegister;
+  r: TPicRegisterBit;
+begin
+    case catOperation of
+    coConst_Const: begin  //XOR de dos constantes. Caso especial
+      SetResultConst_bit(p1^.valBool xor p2^.valBool);
+      exit;  //sale aquí, porque es un caso particular
+    end;
+    coConst_Variab: begin
+      if p1^.valBool then begin  //p1 = 1
+        //Optimiza devolviendo la variable invertida
+        SetResultVariab_bit(p2^.rVar, not p2^.Inverted);
+      end else begin   //p1 = 0
+        //Optimiza devolviendo la misma variable
+        SetResultVariab_bit(p2^.rVar, p2^.Inverted);
+      end;
+    end;
+    coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+      if p1^.valBool then begin  //p1 = 1
+        //Optimiza devolviendo la expresión invertida
+        SetResultExpres_bit(not p2^.Inverted);  //mantiene la lógica
+      end else begin   //p1 = 0
+        //Optimiza devolviendo la misma expresión en Z
+        SetResultExpres_bit(p2^.Inverted);  //mantiene la lógica
+      end;
+    end;
+    coVariab_Const: begin
+      ExchangeP1_P2;  //Convierte a coConst_Variab
+      Oper_bit_xor_bit;
+      exit;
+    end;
+    coVariab_Variab:begin
+      if p1^.rVar = p2^.rVar then begin
+        //Es la misma variable: a XOR a
+        //Optimiza devolviendo cero
+        SetResultConst_bit(false);
+      end else begin
+        if p1^.Inverted and p2^.Inverted then begin
+          p1^.Inverted := false;
+          p2^.Inverted := false;
+          Oper_bit_xor_bit;  //es lo mismo
+          exit;
+        end else if p1^.Inverted then begin
+          //Este caso es lo inverso, no vale la pena implementarlo de nuevo
+          ExchangeP1_P2;
+          Oper_bit_xor_bit;  //procesa como OR
+          exit;
+        end else if p2^.Inverted then begin
+          //a XOR b' = (z XOR b)'
+          p2^.Inverted := false;
+          Oper_bit_xor_bit;
+          res.Inverted := not res.Inverted;
+          exit;
+        end else begin  //Caso normal
+          SetResultExpres_bit(false);  //Fija resultado,
+          SaveW(reg); //Va a usa W
+          //Mueve p2 a Z
+          _BANKSEL(p2^.bank);
+          _MOVLW(p2^.rVar.BitMask);
+          _ANDWF(p2^.offs, toW);  //Z está invertido
+          //Aplica un XOR entre p1 y Z'.
+          _BANKSEL(p1^.bank);
+          _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
+          _BTFSS(p1^.offs, p1^.bit);  //Si es 1, invierte, pero ya esta invertido, así que lo deja
+          _ANDWF(Z.offs, toW);  //Si es 0, deja tal cual, pero como está invertido, hay que corregir
+          RestoreW(reg);
+        end;
+      end;
+    end;
+    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+      if p1^.Inverted and p2^.Inverted then begin
+        p1^.Inverted := false;
+        p2^.Inverted := false;
+        Oper_bit_xor_bit;   //es lo mismo
+        exit;
+      end else if p1^.Inverted then begin  //lógica invertida
+        SetResultExpres_bit(false);  //Fija resultado
+        //Aplica un XOR entre p1' y Z.
+        _BANKSEL(p1^.bank);
+        _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
+        _BTFSS(p1^.offs, p1^.bit);   //Si es 1(0), deja tal cual
+        _ANDWF(Z.offs, toW);     //Si es 0(1), invierte
+      end else if p2^.Inverted then begin  //lógica invertida en Z
+        SetResultExpres_bit(false);  //Fija resultado
+        //Aplica un XOR entre p1 y Z'.
+        _BANKSEL(p1^.bank);
+        _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
+        _BTFSS(p1^.offs, p1^.bit);   //Si es 1, invierte (deja igual porque ya está invertido)
+        _ANDWF(Z.offs, toW);     //Si es 0, deja tal cual (realmente debe invertir)
+      end else begin   //lógica normal
+        SetResultExpres_bit(false);  //Fija resultado
+        //Aplica un XOR entre p1 y Z.
+        _BANKSEL(p1^.bank);
+        _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
+        _BTFSC(p1^.offs, p1^.bit);  //Si es 0, deja tal cual
+        _ANDWF(Z.offs, toW);         //Si es 1, invierte
+      end;
+    end;
+    coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+      ExchangeP1_P2;       //Convierte en coConst_Expres
+      Oper_bit_or_bit;
+      exit;
+    end;
+    coExpres_Variab:begin  //la expresión p2 se evaluó y esta en W
+      ExchangeP1_P2;       //Convierte en coVariab_Expres
+      Oper_bit_or_bit;
+      exit;
+    end;
+    coExpres_Expres:begin
+      //la expresión p1 debe estar salvada y p2 en el acumulador
+      FreeStkRegisterBit(r);   //libera pila porque se usará el dato ahí contenido
+      p1^.catOp := coVariab;
+//      p1^.rVar := r;
+      catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+      //Luego el caso es similar a coVariab_Expres
+      Oper_bit_xor_bit;
     end;
     else
       GenError('Not implemented.'); exit;
@@ -1472,66 +1613,66 @@ procedure TGenCod.StartSyntax;
 begin
   ///////////define la sintaxis del compilador
   //Tipos de tokens personalizados
-  tkExpDelim := xLex.NewTokType('ExpDelim');//delimitador de expresión ";"
-  tkBlkDelim := xLex.NewTokType('BlkDelim'); //delimitador de bloque
-  tkStruct   := xLex.NewTokType('Struct');   //personalizado
-  tkDirective:= xLex.NewTokType('Directive'); //personalizado
-  tkAsm      := xLex.NewTokType('Asm');      //personalizado
-  tkOthers   := xLex.NewTokType('Others');   //personalizado
+  tnExpDelim := xLex.NewTokType('ExpDelim');//delimitador de expresión ";"
+  tnBlkDelim := xLex.NewTokType('BlkDelim'); //delimitador de bloque
+  tnStruct   := xLex.NewTokType('Struct');   //personalizado
+  tnDirective:= xLex.NewTokType('Directive'); //personalizado
+  tnAsm      := xLex.NewTokType('Asm');      //personalizado
+  tnOthers   := xLex.NewTokType('Others');   //personalizado
   //Configura atributos
   tkKeyword.Style := [fsBold];     //en negrita
-  tkBlkDelim.Foreground:=clGreen;
-  tkBlkDelim.Style := [fsBold];    //en negrita
-  tkStruct.Foreground:=clGreen;
-  tkStruct.Style := [fsBold];      //en negrita
+  xLex.Attrib[tnBlkDelim].Foreground:=clGreen;
+  xLex.Attrib[tnBlkDelim].Style := [fsBold];    //en negrita
+  xLex.Attrib[tnStruct].Foreground:=clGreen;
+  xLex.Attrib[tnStruct].Style := [fsBold];      //en negrita
   //inicia la configuración
   xLex.ClearMethodTables;          //limpia tabla de métodos
   xLex.ClearSpecials;              //para empezar a definir tokens
   //crea tokens por contenido
   xLex.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
-  xLex.DefTokContent('[0-9]', '[0-9.]*', tkNumber);
-  xLex.DefTokContent('[$]','[0-9A-Fa-f]*', tkNumber);
-  xLex.DefTokContent('[%]','[01]*', tkNumber);
+  xLex.DefTokContent('[0-9]', '[0-9.]*', tnNumber);
+  xLex.DefTokContent('[$]','[0-9A-Fa-f]*', tnNumber);
+  xLex.DefTokContent('[%]','[01]*', tnNumber);
   //define palabras claves
-  xLex.AddIdentSpecList('THEN var type', tkKeyword);
-  xLex.AddIdentSpecList('program public private method const', tkKeyword);
-  xLex.AddIdentSpecList('class create destroy sub do begin', tkKeyword);
-  xLex.AddIdentSpecList('END UNTIL', tkBlkDelim);
-  xLex.AddIdentSpecList('true false', tkBoolean);
-  xLex.AddIdentSpecList('if while repeat for', tkStruct);
-  xLex.AddIdentSpecList('and or xor not div mod in', tkOperator);
+  xLex.AddIdentSpecList('THEN var type', tnKeyword);
+  xLex.AddIdentSpecList('program public private method const', tnKeyword);
+  xLex.AddIdentSpecList('class create destroy sub do begin', tnKeyword);
+  xLex.AddIdentSpecList('END UNTIL', tnBlkDelim);
+  xLex.AddIdentSpecList('true false', tnBoolean);
+  xLex.AddIdentSpecList('if while repeat for', tnStruct);
+  xLex.AddIdentSpecList('and or xor not div mod in', tnOperator);
   //tipos predefinidos
-  xLex.AddIdentSpecList('bit boolean byte word', tkType);
+  xLex.AddIdentSpecList('bit boolean byte word', tnType);
   //funciones del sistema
-  xLex.AddIdentSpecList('putchar delay_ms Inc Dec', tkSysFunct);
+  xLex.AddIdentSpecList('putchar delay_ms Inc Dec', tnSysFunct);
   //símbolos especiales
-  xLex.AddSymbSpec('+',  tkOperator);
-  xLex.AddSymbSpec('-',  tkOperator);
-  xLex.AddSymbSpec('*',  tkOperator);
-  xLex.AddSymbSpec('/',  tkOperator);
-  xLex.AddSymbSpec('\',  tkOperator);
-//  xLex.AddSymbSpec('%',  tkOperator);
-  xLex.AddSymbSpec('**', tkOperator);
-  xLex.AddSymbSpec('=',  tkOperator);
-  xLex.AddSymbSpec('>',  tkOperator);
-  xLex.AddSymbSpec('>=', tkOperator);
-  xLex.AddSymbSpec('<;', tkOperator);
-  xLex.AddSymbSpec('<=', tkOperator);
-  xLex.AddSymbSpec('<>', tkOperator);
-  xLex.AddSymbSpec('<=>',tkOperator);
-  xLex.AddSymbSpec(':=', tkOperator);
-  xLex.AddSymbSpec(';', tkExpDelim);
-  xLex.AddSymbSpec('(',  tkOthers);
-  xLex.AddSymbSpec(')',  tkOthers);
-  xLex.AddSymbSpec(':',  tkOthers);
-  xLex.AddSymbSpec(',',  tkOthers);
+  xLex.AddSymbSpec('+',  tnOperator);
+  xLex.AddSymbSpec('-',  tnOperator);
+  xLex.AddSymbSpec('*',  tnOperator);
+  xLex.AddSymbSpec('/',  tnOperator);
+  xLex.AddSymbSpec('\',  tnOperator);
+//  xLex.AddSymbSpec('%',  tnOperator);
+  xLex.AddSymbSpec('**', tnOperator);
+  xLex.AddSymbSpec('=',  tnOperator);
+  xLex.AddSymbSpec('>',  tnOperator);
+  xLex.AddSymbSpec('>=', tnOperator);
+  xLex.AddSymbSpec('<;', tnOperator);
+  xLex.AddSymbSpec('<=', tnOperator);
+  xLex.AddSymbSpec('<>', tnOperator);
+  xLex.AddSymbSpec('<=>',tnOperator);
+  xLex.AddSymbSpec(':=', tnOperator);
+  xLex.AddSymbSpec(';', tnExpDelim);
+  xLex.AddSymbSpec('(',  tnOthers);
+  xLex.AddSymbSpec(')',  tnOthers);
+  xLex.AddSymbSpec(':',  tnOthers);
+  xLex.AddSymbSpec(',',  tnOthers);
   //crea tokens delimitados
-  xLex.DefTokDelim('''','''', tkString);
-  xLex.DefTokDelim('"','"', tkString);
-  xLex.DefTokDelim('//','', xLex.tkComment);
-  xLex.DefTokDelim('{','}', xLex.tkComment, tdMulLin);
-  xLex.DefTokDelim('{$','}', tkDirective);
-  xLex.DefTokDelim('Asm','End', tkAsm, tdMulLin);
+  xLex.DefTokDelim('''','''', tnString);
+  xLex.DefTokDelim('"','"', tnString);
+  xLex.DefTokDelim('//','', xLex.tnComment);
+  xLex.DefTokDelim('{','}', xLex.tnComment, tdMulLin);
+  xLex.DefTokDelim('{$','}', tnDirective);
+  xLex.DefTokDelim('Asm','End', tnAsm, tdMulLin);
   //define bloques de sintaxis
 //  xLex.AddBlock('{','}');
   xLex.Rebuild;   //es necesario para terminar la definición
@@ -1556,17 +1697,14 @@ begin
   //tipo numérico de dos byte
   typWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
 
-  {Los operadores deben crearse con su precedencia correcta}
-  //////// Operaciones con Boolean ////////////
-  typBool.OperationLoad:=@bool_load;
-  opr:=typBool.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(typBool,@Oper_bool_asig_bool);
-
-  opr:=typBool.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_not_bool);
-  opr:=typBool.CreateBinaryOperator('AND',4,'and');  //suma
-  opr.CreateOperation(typBool,@Oper_bool_and_bool);
-  opr:=typBool.CreateBinaryOperator('OR',4,'or');  //suma
-  opr.CreateOperation(typBool,@Oper_bool_or_bool);
+  {Los operadores deben crearse con su precedencia correcta
+  Precedencia de operadores en Pascal:
+  6)    ~, not, signo "-"   (mayor precedencia)
+  5)    *, /, div, mod, and, shl, shr, &
+  4)    |, !, +, -, or, xor
+  3)    =, <>, <, <=, >, >=, in
+  2)    :=                  (menor precedencia)
+  }
   //////// Operaciones con Bit ////////////
   typBit.OperationLoad:=@bit_load;
   opr:=typBit.CreateBinaryOperator(':=',2,'asig');  //asignación
@@ -1574,20 +1712,32 @@ begin
   opr.CreateOperation(typByte, @Oper_bit_asig_byte);
 
   opr:=typBit.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_not_bit);
+
   opr:=typBit.CreateBinaryOperator('AND',4,'and');  //suma
   opr.CreateOperation(typBit,@Oper_bit_and_bit);
   opr.CreateOperation(typByte,@Oper_bit_and_byte);
+
   opr:=typBit.CreateBinaryOperator('OR',4,'or');  //suma
   opr.CreateOperation(typBit,@Oper_bit_or_bit);
-//  opr.CreateOperation(typByte,@Oper_bit_and_byte);
+  opr.CreateOperation(typByte,@Oper_bit_or_byte);
 
-  {Precedencia de operadores en Pascal
-6)    ~, not, signo "-"   (mayor precedencia)
-5)    *, /, div, mod, and, shl, shr, &
-4)    |, !, +, -, or, xor
-3)    =, <>, <, <=, >, >=, in
-2)    :=                  (menor precedencia)
-}
+  opr:=typBit.CreateBinaryOperator('XOR',4,'or');  //suma
+  opr.CreateOperation(typBit,@Oper_bit_xor_bit);
+//  opr.CreateOperation(typByte,@Oper_bit_xor_byte);
+
+  //////// Operaciones con Boolean ////////////
+  typBool.OperationLoad:=@bool_load;
+  opr:=typBool.CreateBinaryOperator(':=',2,'asig');  //asignación
+  opr.CreateOperation(typBool,@Oper_bool_asig_bool);
+
+  opr:=typBool.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_not_bool);
+
+  opr:=typBool.CreateBinaryOperator('AND',4,'and');  //suma
+  opr.CreateOperation(typBool,@Oper_bool_and_bool);
+
+  opr:=typBool.CreateBinaryOperator('OR',4,'or');  //suma
+  opr.CreateOperation(typBool,@Oper_bool_or_bool);
+
   //////// Operaciones con Byte ////////////
   {Los operadores deben crearse con su precedencia correcta}
   typByte.OperationLoad:=@byte_load;

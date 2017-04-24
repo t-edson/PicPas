@@ -130,6 +130,15 @@ private
   procedure OperPost(var Op1: TOperand; opr: TxpOperator);
   procedure Oper(var Op1: TOperand);
 public  //Referencias a los tipos predefinidos de tokens.
+  tnEol     : integer;
+  tnSymbol  : integer;
+  tnSpace   : integer;
+  tnIdentif : integer;
+  tnNumber  : integer;
+  tnKeyword : integer;
+  tnString  : integer;
+  tnComment : integer;
+  //Atributos
   tkEol     : TSynHighlighterAttributes;
   tkSymbol  : TSynHighlighterAttributes;
   tkSpace   : TSynHighlighterAttributes;
@@ -139,6 +148,11 @@ public  //Referencias a los tipos predefinidos de tokens.
   tkString  : TSynHighlighterAttributes;
   tkComment : TSynHighlighterAttributes;
   //otras referencias
+  tnOperator: integer;
+  tnBoolean : integer;
+  tnSysFunct: integer;
+  tnType    : integer;
+  //Atributos
   tkOperator: TSynHighlighterAttributes;
   tkBoolean : TSynHighlighterAttributes;
   tkSysFunct: TSynHighlighterAttributes;
@@ -475,13 +489,13 @@ begin
   PErr.Clear;
   SkipWhites;
   Result.Inverted := false;   //inicia campo
-  if cIn.tokType = tkNumber then begin  //constantes numéricas
+  if cIn.tokType = tnNumber then begin  //constantes numéricas
     Result.catOp:=coConst;       //constante es Mono Operando
     Result.txt:= cIn.tok;     //toma el texto
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if pErr.HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
-  end else if cIn.tokType = tkSysFunct then begin  //función del sistema
+  end else if cIn.tokType = tnSysFunct then begin  //función del sistema
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
      versiones, sobrecargadas de la misma función.}
     tmp := cIn.tok;  //guarda nombre de función
@@ -504,7 +518,7 @@ begin
         exit;
       end;
     end;
-  end else if cIn.tokType = tkIdentif then begin  //puede ser variable, constante, función
+  end else if cIn.tokType = tnIdentif then begin  //puede ser variable, constante, función
     ele := TreeElems.FindFirst(cIn.tok);  //identifica elemento
     if ele = nil then begin
       //No identifica a este elemento
@@ -556,7 +570,7 @@ begin
       GenError('Not implemented.');
       exit;
     end;
-  end else if cIn.tokType = tkBoolean then begin  //true o false
+  end else if cIn.tokType = tnBoolean then begin  //true o false
     Result.catOp:=coConst;       //constante es Mono Operando
     Result.txt:= cIn.tok;     //toma el texto
     TipDefecBoolean(Result, cIn.tok); //encuentra tipo y valor
@@ -585,7 +599,7 @@ begin
      end;
     cIn.Next;    //Pasa al siguiente
 }
-  end else if cIn.tokType = tkOperator then begin
+  end else if cIn.tokType = tnOperator then begin
     {Si sigue un operador puede ser un operador Unario.
     El problema que tenemos, es que no sabemos de antemano el tipo, para saber si el
     operador aplica a ese tipo como operador Unario Pre. Así que asumiremos que es así,
@@ -750,7 +764,7 @@ function TCompilerBase.GetOperator(const Op: Toperand): Txpoperator;
 Si no encuentra un operador en el contexto, devuelve NIL, pero no lo toma.
 Si el operador encontrado no se aplica al operando, devuelve nullOper.}
 begin
-  if cIn.tokType <> tkOperator then exit(nil);
+  if cIn.tokType <> tnOperator then exit(nil);
   //hay un operador
 //debugln(Op.typ.name);
   Result := Op.typ.FindBinaryOperator(cIn.tok);
@@ -876,6 +890,15 @@ begin
   cIn := TContexts.Create(xLex); //Crea lista de Contextos
   ejecProg := false;
   //Actualiza las referencias a los tipos de tokens existentes en SynFacilSyn
+  tnEol     := xLex.tnEol;
+  tnSymbol  := xLex.tnSymbol;
+  tnSpace   := xLex.tnSpace;
+  tnIdentif := xLex.tnIdentif;
+  tnNumber  := xLex.tnNumber;
+  tnKeyword := xLex.tnKeyword;
+  tnString  := xLex.tnString;
+  tnComment := xLex.tnComment;
+  //Atributos
   tkEol     := xLex.tkEol;
   tkSymbol  := xLex.tkSymbol;
   tkSpace   := xLex.tkSpace;
@@ -885,10 +908,10 @@ begin
   tkString  := xLex.tkString;
   tkComment := xLex.tkComment;
   //Crea nuevos tipos necesarios para el Analizador Sintáctico
-  tkOperator := xLex.NewTokType('Operator'); //necesario para analizar expresiones
-  tkBoolean  := xLex.NewTokType('Boolean');  //constantes booleanas
-  tkSysFunct := xLex.NewTokType('SysFunct'); //funciones del sistema
-  tkType     := xLex.NewTokType('Types');    //tipos de datos
+  tnOperator := xLex.NewTokType('Operator', tkOperator); //necesario para analizar expresiones
+  tnBoolean  := xLex.NewTokType('Boolean', tkBoolean);  //constantes booleanas
+  tnSysFunct := xLex.NewTokType('SysFunct', tkSysFunct); //funciones del sistema
+  tnType     := xLex.NewTokType('Types', tkType);    //tipos de datos
 end;
 destructor TCompilerBase.Destroy;
 begin

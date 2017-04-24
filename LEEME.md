@@ -52,7 +52,7 @@ Para compilar PicPas se debe disponer de las librerías indicadas en las propied
 
 Todas ellas deberían estar disponibles en la Web. Verificar las versiones requeridas.
 
-PicPas ha sido compilado, usando la versión 1.6.2 de Lazarus. Por el momento solo hay una versión para Windows.
+PicPas ha sido compilado, usando la versión 1.6.2 de Lazarus. Se ha probado en Windows y Ubuntu.
 
 Para más información sobre el compilador, leer la documentación técnica.
 
