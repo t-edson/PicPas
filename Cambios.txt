@@ -15,7 +15,9 @@ Se implementa la rutina bit AND bit, considerando los casos de variables y expre
 lógica invertida.
 Se simplifica Oper_bool_asig_bool(), usando la rutina Oper_bit_asig_bit().
 Se crea las operaciones NOT, AND y OR, para el tipo Boolean
-
+Se agrega soporte para los dispositivos PIC12F629
+ y PIC12F675
+. 
 
 PENDIENTES
 Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola

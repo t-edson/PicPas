@@ -68,6 +68,8 @@
 	  "{$DEFINE \_}"
 	</OpenOn>	
 	<OpenOn AfterPattern="Directive" FilterBy="LastIdentPart">
+   PIC12F629
+   PIC12F675
    PIC16F83
    PIC16CR83
    PIC16F84
