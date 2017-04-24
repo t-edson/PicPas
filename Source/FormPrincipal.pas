@@ -7,7 +7,6 @@ unit FormPrincipal;
 {$mode objfpc}{$H+}
 {$define }
 interface
-
 uses
   Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
   Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
@@ -16,9 +15,7 @@ uses
   FrameCfgIDE;
 
 type
-
   { TfrmPrincipal }
-
   TfrmPrincipal = class(TForm)
     acArcAbrir: TAction;
     acArcGuaCom: TAction;
@@ -152,11 +149,9 @@ var
   frmPrincipal: TfrmPrincipal;
 
 implementation
-
 {$R *.lfm}
 
 { TfrmPrincipal }
-
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   fraSynTree := TfraSyntaxTree.Create(self);
@@ -649,4 +644,5 @@ begin
 end;
 
 end.
+
 

@@ -8,7 +8,7 @@ uses
   SynFacilHighlighter, MisUtils,
   XpresBas, XpresTypes, XpresElementsPIC, XpresParserPIC,
   Pic16Utils, Pic16devices, Globales, ProcAsm, GenCod,
-  GenCodPic {Por diseño, parecería que GenCodPic, no debería ccederse desde aquí};
+  GenCodPic {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
 type
 
  { TCompiler }
