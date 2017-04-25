@@ -14,37 +14,6 @@ const
   MAX_REGS_STACK_BIT = 4;   //cantidad máxima de registros a usar en la pila
 
 type
-  //Tipo de registro
-  TPicRegType = (prtWorkReg,   //de trabajo
-                 prtAuxReg,    //auxiliar
-                 prtStkReg     //registro de pila
-  );
-  { TPicRegister }
-  {Objeto que sirve para modelar a un registro del PIC (una dirección de memoria, usada
-   para un fin particular)}
-  TPicRegister = class
-  public
-    assigned: boolean;  //indica si tiene una dirección física asignada
-    used   : boolean;   //Indica si está usado.
-    offs   : byte;      //Desplazamiento en memoria
-    bank   : byte;      //Banco del registro
-    typ    : TPicRegType; //Tipo de registro
-  end;
-  TPicRegister_list = specialize TFPGObjectList<TPicRegister>; //lista de registros
-
-  { TPicRegisterBit }
-  {Objeto que sirve para modelar a un bit del PIC (una dirección de memoria, usada
-   para un fin particular)}
-  TPicRegisterBit = class
-  public
-    assigned: boolean;  //indica si tiene una dirección física asignada
-    used   : boolean;   //Indica si está usado.
-    offs   : byte;      //Desplazamiento en memoria
-    bank   : byte;      //Banco del registro
-    bit    : byte;      //bit del registro
-    typ    : TPicRegType; //Tipo de registro
-  end;
-  TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros
 
   { TGenCodPic }
 
@@ -105,6 +74,9 @@ type
     //Manejo de variables
     {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
     objeto "pic", se colocan mejor aquí.}
+    function CreateVarBit(const varName: string; absAdd: integer = - 1;
+      absBit: integer = - 1): TxpEleVar;
+    function CreateVarByte(const varName: string; absAdd: integer): TxpEleVar;
     function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
       absBit: integer=-1): TxpEleVar;
   protected  //Métodos para fijar el resultado
@@ -182,15 +154,6 @@ const
   _RP0 = 5;
   _RP1 = 6;
 //  _IRP = 7;
-
-var
-  /////// Tipos de datos del lenguaje ////////////
-  typNull: TType;     //Tipo nulo (sin tipo)
-  typBit : TType;
-  typBool: TType;     //Booleanos
-  typByte: TType;     //número sin signo
-  typWord: TType;     //número sin signo
-//  tipChr : Ttype;   //un caracter
 
 implementation
 
@@ -632,34 +595,19 @@ begin
    operación con GetStkRegisterByte(). Tenerlo en cuenta. }
 end;
 //Manejo de variables
-function TGenCodPic.CreateVar(const varName: string; typ: ttype;
+function TGenCodPic.CreateVarBit(const varName: string;
          absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
-{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
- "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
+{Crea variable de tipo Bit}
 var
-  r   : TxpEleVar;
-  i   : Integer;
-  offs, bnk, bit : byte;
+  offs, bnk, bit: byte;
+  r: TxpEleVar;
 begin
-  //busca espacio para ubicarla
+  //Obtiene los valores de: offs, bnk, y bit, para el alamacenamiento.
   if absAdd=-1 then begin
     //Caso normal, sin dirección absoluta.
-    if typ.size<0 then begin
-      //Se asume que se están pidiendo bits
-      if typ.size<>-1 then begin   //por ahora se soporta 1 bit
-        GenError('Size of data not supported.');
-        exit;
-      end;
-      if not pic.GetFreeBit(offs, bnk, bit) then begin
-        GenError('RAM memory is full.');
-        exit;
-      end;
-    end else begin
-      //Se asume que se están pidiendo bytes
-      if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
-        GenError('RAM memory is full.');
-        exit;
-      end;
+    if not pic.GetFreeBit(offs, bnk, bit) then begin
+      GenError('RAM memory is full.');
+      exit;
     end;
   end else begin
     //Se debe crear en una posición absoluta
@@ -667,32 +615,129 @@ begin
     if absBit<>-1 then bit := absBit;      //para los bits no hay transformación
   end;
   //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
-  if typ.size = 1 then begin
-    //Es un simple byte
-    pic.SetNameRAM(offs,bnk, varName);
-  end else if typ.size = -1 then begin
-    //Es un boolean o bit. No pone nombre, porque varias variables pueden compartir este byte.
-//    pic.SetNameRAM(offs,bnk, '_map');   //no tiene nombre único
-  end else begin
-    //Se asume que la variable ha sido entregada con posiciones consecutivas
-    for i:=0 to typ.size -1 do
-      pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
-  end;
-  //registra variable en la tabla
+  pic.AddNameRAM(offs,bnk, varName);   //No tiene nombre único, va agrupando los nombres de cada bit
+  //registra variable en el árbol de sinatxis
   r := TxpEleVar.Create;
   r.name := varName;
-  r.typ  := typ;   //fija  referencia a tipo
-  r.offs := offs;
-  r.bank := bnk;
-  r.bit  := bit;
+  r.typ  := typBit;   //fija  referencia a tipo
+  r.adrBit.offs := offs;
+  r.adrBit.bank := bnk;
+  r.adrBit.bit  := bit;
   if not TreeElems.AddElement(r) then begin
     GenError('Duplicated identifier: "%s"', [varName]);
     exit;
   end;
   Result := r;
-  //Ya encontró tipo, llama a evento
-  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
+function TGenCodPic.CreateVarByte(const varName: string; absAdd: integer): TxpEleVar;
+var
+  offs, bnk: byte;
+  r: TxpEleVar;
+begin
+  //Obtiene los valores de: offs, y bnk, para el alamacenamiento.
+  if absAdd=-1 then begin
+    //Caso normal, sin dirección absoluta.
+    if not pic.GetFreeByte(offs, bnk) then begin
+      GenError('RAM memory is full.');
+      exit;
+    end;
+  end else begin
+    //Se debe crear en una posición absoluta
+    pic.AbsToBankRAM(absAdd, offs, bnk);   //convierte dirección
+  end;
+  //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
+  pic.SetNameRAM(offs, bnk, varName);
+  //registra variable en la tabla
+  r := TxpEleVar.Create;
+  r.name := varName;
+  r.typ  := typByte;   //fija  referencia a tipo
+  r.adrByte0.offs := offs;
+  r.adrByte0.bank := bnk;
+  if not TreeElems.AddElement(r) then begin
+    GenError('Duplicated identifier: "%s"', [varName]);
+    exit;
+  end;
+  Result := r;
+end;
+
+function TGenCodPic.CreateVar(const varName: string; typ: ttype;
+         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
+{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
+ "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
+begin
+  if typ = typBit then begin
+    Result := CreateVarBit(varName, absAdd, absBit);
+    if HayError then Exit;
+    if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
+  end else if typ = typByte then begin
+    Result := CreateVarByte(varName, absAdd);
+    if HayError then Exit;
+    if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
+  end else begin
+
+  end;
+end;
+//function TGenCodPic.CreateVar(const varName: string; typ: ttype;
+//         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
+//{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
+// "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
+//var
+//  r   : TxpEleVar;
+//  i   : Integer;
+//  offs, bnk, bit : byte;
+//begin
+//  //busca espacio para ubicarla
+//  if absAdd=-1 then begin
+//    //Caso normal, sin dirección absoluta.
+//    if typ.size<0 then begin
+//      //Se asume que se están pidiendo bits
+//      if typ.size<>-1 then begin   //por ahora se soporta 1 bit
+//        GenError('Size of data not supported.');
+//        exit;
+//      end;
+//      if not pic.GetFreeBit(offs, bnk, bit) then begin
+//        GenError('RAM memory is full.');
+//        exit;
+//      end;
+//    end else begin
+//      //Se asume que se están pidiendo bytes
+//      if not pic.GetFreeBytes(typ.size, offs, bnk) then begin
+//        GenError('RAM memory is full.');
+//        exit;
+//      end;
+//    end;
+//  end else begin
+//    //Se debe crear en una posición absoluta
+//    pic.AbsToBankRAM(absAdd, offs, bnk);   //convierte dirección
+//    if absBit<>-1 then bit := absBit;      //para los bits no hay transformación
+//  end;
+//  //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
+//  if typ.size = 1 then begin
+//    //Es un simple byte
+//    pic.SetNameRAM(offs,bnk, varName);
+//  end else if typ.size = -1 then begin
+//    //Es un boolean o bit. No pone nombre, porque varias variables pueden compartir este byte.
+////    pic.SetNameRAM(offs,bnk, '_map');   //no tiene nombre único
+//  end else begin
+//    //Se asume que la variable ha sido entregada con posiciones consecutivas
+//    for i:=0 to typ.size -1 do
+//      pic.SetNameRAM(offs+i, bnk, varName+'['+IntToStr(i)+']');
+//  end;
+//  //registra variable en la tabla
+//  r := TxpEleVar.Create;
+//  r.name := varName;
+//  r.typ  := typ;   //fija  referencia a tipo
+//  r.offs := offs;
+//  r.bank := bnk;
+//  r.bit  := bit;
+//  if not TreeElems.AddElement(r) then begin
+//    GenError('Duplicated identifier: "%s"', [varName]);
+//    exit;
+//  end;
+//  Result := r;
+//  //Ya encontró tipo, llama a evento
+//  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
+//end;
 //Métodos para fijar el resultado
 procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
 {Fija los parámetros del resultado de una subexpresion.}

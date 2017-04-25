@@ -53,10 +53,11 @@ public
   function FindOperator(const oper: string): TxpOperator; //devuelve el objeto operador
   //Funciones para facilitar el acceso a campos de la variable, cuando sea variable
   function VarName: string; inline; //nombre de la variable, cuando sea de categ. coVariab
-  function offs: TVarOffs; inline;  //dirección de la variable
+  function offs: TVarOffs; //dirección de la variable
   function Loffs: TVarOffs; inline; //dirección del byte bajo
   function Hoffs: TVarOffs; inline; //dirección del byte alto
-  function bank: TVarBank; inline;  //banco o segmento
+  function bank: TVarBank; inline;  //banco
+  function Lbank: TVarBank; inline;  //banco
   function bit : byte; inline;  //posición del bit
 private
   Val  : TConsValue;
@@ -929,27 +930,38 @@ begin
   Result := rVar.name;
 end;
 function TOperand.offs: TVarOffs;
+{Dirección de memoria, cuando es de tipo Byte, Bit o Boolean.}
 begin
-  Result := rVar.offs;
+  if (typ = typBit) or (typ = typBool) then begin
+    Result := rVar.adrBit.offs;
+  end else begin
+    Result := rVar.adrByte0.offs;
+  end;
 end;
 function TOperand.Loffs: TVarOffs;
+{Dirección de memoria baja, cuando es de tipo Word.}
 begin
-  Result := rVar.offs;
+  Result := rVar.adrByte0.offs;
 end;
 function TOperand.Hoffs: TVarOffs;
 begin
-  Result := rVar.offs+1;  //por ahora se asume que es el siguiente byte
+  Result := rVar.adrByte1.offs;
 end;
-
 function TOperand.bank: TVarBank;
+{Banco, cuando es de tipo Byte.}
 begin
-  Result := rVar.bank;
+  Result := rVar.adrByte0.bank;
+end;
+function TOperand.Lbank: TVarBank;
+{Banco del byte bajo, cuando es de tipo Word.}
+begin
+  Result := rVar.adrByte0.bank;
 end;
 function TOperand.bit: byte;
 begin
-  Result := rVar.bit;
+  //Si se pide el bit, se asume que es de tipo "Bit".
+  Result := rVar.adrBit.bit;
 end;
-
 function TOperand.aWord: word; inline;
 begin
   Result := word(valInt);

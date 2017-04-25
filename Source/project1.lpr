@@ -9,7 +9,7 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms, FormPrincipal, FormConfig, Parser, ProcAsm, FormPICExplorer,
   FrameCfgIDE, FormCodeExplorer, GenCod, GenCodPic,
-  XpresParserPIC, FrameSyntaxTree;
+  XpresParserPIC, FrameSyntaxTree, XpresElementsPIC, Globales;
 
 {$R *.res}
 

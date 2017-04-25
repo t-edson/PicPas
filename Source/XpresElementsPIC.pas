@@ -11,6 +11,54 @@ unit XpresElementsPIC;
 interface
 uses
   Classes, SysUtils, fgl, XpresTypes;
+const
+  ADRR_ERROR = $FFFF;
+type
+  {Estos tipos están relacionados con el hardware, y tal vez deberían estar declarados
+  en otra unidad. Pero se ponen aquí porque son pocos.
+  La idea es que sean simples contenedores de direcciones físicas. En un inicio se pensó
+  declararlos como RECORD por velocidad (para no usar memoria dinámica), pero dado que no
+  se tienen requerimientos altos de velocidad en PicPas, se delcaran como clases. }
+  //Tipo de registro
+  TPicRegType = (prtWorkReg,   //de trabajo
+                 prtAuxReg,    //auxiliar
+                 prtStkReg     //registro de pila
+  );
+  { TPicRegister }
+  {Objeto que sirve para modelar a un registro del PIC (una dirección de memoria, usada
+   para un fin particular)}
+  TPicRegister = class
+  public
+    assigned: boolean;  //indica si tiene una dirección física asignada
+    used   : boolean;   //Indica si está usado.
+    offs   : byte;      //Desplazamiento en memoria
+    bank   : byte;      //Banco del registro
+    typ    : TPicRegType; //Tipo de registro
+  end;
+  TPicRegister_list = specialize TFPGObjectList<TPicRegister>; //lista de registros
+
+  { TPicRegisterBit }
+  {Objeto que sirve para modelar a un bit del PIC (una dirección de memoria, usada
+   para un fin particular)}
+  TPicRegisterBit = class
+  public
+    assigned: boolean;  //indica si tiene una dirección física asignada
+    used   : boolean;   //Indica si está usado.
+    offs   : byte;      //Desplazamiento en memoria
+    bank   : byte;      //Banco del registro
+    bit    : byte;      //bit del registro
+    typ    : TPicRegType; //Tipo de registro
+  end;
+  TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros
+
+var
+  /////// Tipos de datos del lenguaje ////////////
+  typNull: TType;     //Tipo nulo (sin tipo)
+  typBit : TType;
+  typBool: TType;     //Booleanos
+  typByte: TType;     //número sin signo
+  typWord: TType;     //número sin signo
+//  tipChr : Ttype;   //un caracter
 
 type
   //Tipos de elementos del lenguaje
@@ -77,11 +125,17 @@ type
   //Clase para modelar a las variables
   TxpEleVar = class(TxpElement)
     //direción física. Usado para implementar un compilador
-    offs: TVarOffs;
-    bank: TVarBank;  //banco o segmento. Usado solo en algunas arquitecturas
-    bit : byte;      //posición del bit. Usado para variables bit o booleanas.
+//    offs: TVarOffs;
+//    bank: TVarBank;  //banco o segmento. Usado solo en algunas arquitecturas
+//    bit : byte;      //posición del bit. Usado para variables bit o booleanas.
+    adrBit: TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
+    adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Word
+    adrByte1: TPicRegister;   //Dirección física, cuando es de tipo Word
+    function AbsAdrr: word;   //Devuelve la dirección absoluta de la variable
+    function AdrrString: string;  //Devuelve la dirección física como cadena
     function BitMask: byte;  //Máscara de bit, de acuerdo al valor del campo "bit".
     constructor Create; override;
+    destructor Destroy; override;
   end;
   TxpEleVars = specialize TFPGObjectList<TxpEleVar>; //lista de variables
 
@@ -208,10 +262,38 @@ constructor TxpEleCon.Create;
 begin
   elemType:=eltCons;
 end;
+function TxpEleVar.AbsAdrr: word;
+{Devuelve la dirección absoluta de la variable. Tener en cuenta que la variable, no
+siempre tiene un solo byte, así que se trata de devolver siempre la dirección del
+byte de menor peso.}
+begin
+  if (typ = typBit) or (typ = typBool) then begin
+    Result := adrBit.bank * $80 + adrBit.offs;
+  end else if typ = typByte then begin
+    Result := adrByte0.bank * $80 + adrByte0.offs;
+  end else if typ = typWord then begin
+    Result := adrByte0.bank * $80 + adrByte0.offs;
+  end else begin
+    Result := ADRR_ERROR;
+  end;
+end;
+function TxpEleVar.AdrrString: string;
+{Devuelve una cadena, que representa a la dirección física.}
+begin
+  if (typ = typBit) or (typ = typBool) then begin
+    Result := 'bnk'+ IntToStr(adrBit.bank) + ':$' + IntToHex(adrBit.offs, 3) + '.' + IntToStr(adrBit.bit);
+  end else if typ = typByte then begin
+    Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
+  end else if typ = typWord then begin
+    Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
+  end else begin
+    Result := '';   //Error
+  end;
+end;
 function TxpEleVar.BitMask: byte;
 {Devuelve la máscara, de acuerdo a su valor de "bit".}
 begin
-    case bit of
+    case adrBit.bit of
     0: Result := %00000001;
     1: Result := %00000010;
     2: Result := %00000100;
@@ -226,6 +308,17 @@ end;
 constructor TxpEleVar.Create;
 begin
   elemType:=eltVar;
+  adrBit:= TPicRegisterBit.Create;  //
+  adrByte0:= TPicRegister.Create;
+  adrByte1:= TPicRegister.Create;
+end;
+
+destructor TxpEleVar.Destroy;
+begin
+  adrByte0.Destroy;
+  adrByte1.Destroy;
+  adrBit.Destroy;
+  inherited Destroy;
 end;
 
 { TxpEleType }

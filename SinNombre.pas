@@ -2,5 +2,5 @@
 program nombre;
 var a,b: bit;
 begin
-  a := a and b;
+  a := not b;
 end.

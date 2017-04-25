@@ -1,3 +1,13 @@
+PicPas 0.5.3
+============
+Se mueve la declaración de TPicRegister y TPicRegisterPIC, de la undiad GenCodPic a 
+XpresElementsPIC.
+Se modifica la estructura de TxpEleVar, para que pase a usar objetos de tipo TPicRegister y
+TPicRegisterBit, como contenedores de direcciones físicas.
+Se modifican TOperand.offs, TOperand.Loff, TOperand.Hoffs, y todas las funciones 
+relacionadas a las direcciones físicas.
+Se crea TOperand.Lbank: 
+
 PicPas 0.5.2
 ============
 Se cambia la librería SynFacilUtils a la versión 1.0. Esto implica modificar el código en 

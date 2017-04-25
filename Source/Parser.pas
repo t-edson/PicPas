@@ -387,17 +387,22 @@ var
         end;
       end;
     end else if cIn.tokType = tnIdentif then begin
-      //puede ser variable
+      //Puede ser variable
       xvar := TreeElems.FindVar(cIn.tok);
       if xvar<>nil then begin
-        absAdrr:=xvar.offs + xvar.bank * $80;  //debe ser absoluta
+        //Es variable
+        absAdrr := xvar.AbsAdrr;  //debe ser absoluta
+        if absAdrr = ADRR_ERROR then begin
+          GenError('Unknown type.');
+          exit;
+        end;
       end else begin
         GenError('Identifier of variable expected.');
         exit;
       end;
       cIn.Next;    //Pasa al siguiente
       if IsBit then begin
-        CheckAbsoluteBit;  //es un boolean, debe especificarse el bit
+        CheckAbsoluteBit;  //es un boolean o bit, debe especificarse el bit
         if pErr.HayError then exit;  //verifica
       end;
     end else begin   //error
@@ -1046,24 +1051,21 @@ end;
 function TCompiler.RAMusage: string;
 {Devuelve una cadena con información sobre el uso de la memoria.}
 var
-  dir: String;
-  tmp: String;
+  tmp, adStr: String;
   v: TxpEleVar;
 begin
   tmp := '';
   for v in TreeElems.AllVars do begin
+    adStr := v.AdrrString;
+    if adStr='' then adStr := 'XXXX';  //Error en dirección
     if (v.typ = typBool) or (v.typ = typBit) then begin
-      dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3) + '.' + IntToStr(v.bit);
-      tmp += ' ' + v.name + ' Db ' +  dir + LineEnding;
+      tmp += ' ' + v.name + ' Db ' +  adStr + LineEnding;
     end else if v.typ = typByte then begin
-      dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
-      tmp += ' ' + v.name + ' DB ' +  dir + LineEnding;
+      tmp += ' ' + v.name + ' DB ' +  adStr + LineEnding;
     end else if v.typ = typWord then begin
-      dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
-      tmp += ' ' + v.name + ' DW ' +  dir + LineEnding;
+      tmp += ' ' + v.name + ' DW ' +  adStr + LineEnding;
     end else begin
-      dir := 'bnk'+ IntToStr(v.bank) + ':$' + IntToHex(v.offs, 3);
-      tmp += ' "' + v.name + '"->' +  dir + LineEnding;
+      tmp += ' "' + v.name + '"->' +  adStr + LineEnding;
     end;
   end;
   Result := tmp;
@@ -1140,6 +1142,7 @@ begin
     dicSet('Invalid memory address.', 'Dirección de memoria inválida.');
     dicSet('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.');
     dicSet('Identifier of variable expected.', 'Se esperaba identificador de variable.');
+    dicSet('Unknown type.', 'Tipo desconocido');
     dicSet('Identifier of constant expected.', 'Se esperaba identificador de constante');
     dicSet('Numeric address expected.', 'Se esperaba dirección numérica.');
     dicSet('Identifier of type expected.', 'Se esperaba identificador de tipo.');
