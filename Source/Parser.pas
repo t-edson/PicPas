@@ -40,7 +40,7 @@ type
   public
     procedure Compile(NombArc: string; LinArc: Tstrings);
     function RAMusage: string;  //uso de memoria RAM
-    procedure DumpCode(l: TSTrings);  //uso de la memoria Flash
+    procedure DumpCode(l: TSTrings; incAdrr: boolean);  //uso de la memoria Flash
     procedure DumpStatistics(l: TSTrings);
     constructor Create; override;
     destructor Destroy; override;
@@ -1075,10 +1075,10 @@ begin
   Result := Result + '-------------------------' + LineEnding;
 
 end;
-procedure TCompiler.DumpCode(l: TSTrings);
+procedure TCompiler.DumpCode(l: TSTrings; incAdrr: boolean);
 begin
 //  AsmList := TStringList.Create;  //crea lista para almacenar ensamblador
-  pic.DumpCode(l);
+  pic.DumpCode(l, incAdrr);
 end;
 procedure TCompiler.DumpStatistics(l: TSTrings);
 var

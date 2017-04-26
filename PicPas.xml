@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <StateStatusbar Val="1"/>
+  <VerPanMensaj Val="True"/>
+  <VerStatusbar Val="True"/>
+  <VerBarHerram Val="True"/>
+  <Edit>
+    <cTxtNor Val="0"/>
+    <cFonEdi Val="16777215"/>
+    <cLinAct Val="65535"/>
+    <cResPal Val="15780518"/>
+    <VerBarDesV Val="True"/>
+    <VerBarDesH Val="True"/>
+    <ResPalCur Val="True"/>
+    <MarLinAct Val="False"/>
+    <VerPanVer Val="True"/>
+    <VerNumLin Val="False"/>
+    <VerMarPle Val="True"/>
+    <cFonPan Val="16777215"/>
+    <cTxtPan Val="0"/>
+    <TamLet Val="10"/>
+    <TipLet Val="Courier New"/>
+    <recient Val="SinNombre.pas
+"/>
+  </Edit>
+  <IncHeadMpu Val="True"/>
+  <IncAddress Val="False"/>
+</CONFIG>

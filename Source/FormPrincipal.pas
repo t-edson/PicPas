@@ -10,9 +10,8 @@ interface
 uses
   Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
   Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
-  StdCtrls, LCLIntf, SynFacilUtils, SynFacilHighlighter, MisUtils, FormConfig,
-  Parser, FormPICExplorer, Globales, FormCodeExplorer, FrameSyntaxTree,
-  FrameCfgIDE;
+  StdCtrls, LCLIntf, SynFacilUtils, SynFacilHighlighter, MisUtils, Parser,
+  FormPICExplorer, Globales, FormCodeExplorer, FrameSyntaxTree, FormConfig;
 
 type
   { TfrmPrincipal }
@@ -32,6 +31,7 @@ type
     acEdRedo: TAction;
     acEdSelecAll: TAction;
     acEdUndo: TAction;
+    acToolConfig2: TAction;
     acToolConfig: TAction;
     acToolCompil: TAction;
     acToolPICExpl: TAction;
@@ -116,6 +116,7 @@ type
     procedure acEdiUndoExecute(Sender: TObject);
     procedure acToolCodExpExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
+    procedure acToolConfig2Execute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
     procedure acViewStatbarExecute(Sender: TObject);
@@ -206,8 +207,8 @@ begin
   SetLanguage('en');
 //  SetLanguage('qu');
   edit.SetLanguage('en');
-  Config.Iniciar(self, edPas, edAsm);   //necesario para poder trabajar
-  Config.fcIDE.OnUpdateChanges := @ChangeAppearance;
+  Config.Iniciar(edPas, edAsm);   //necesario para poder trabajar
+  Config.OnPropertiesChanges := @ChangeAppearance;
   ChangeAppearance;   //primera actualización
   edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
   frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
@@ -245,7 +246,7 @@ end;
 
 procedure TfrmPrincipal.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
-  Config.escribirArchivoIni;  //guarda la configuración actual
+  Config.SaveToFile;  //guarda la configuración actual
 end;
 
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
@@ -291,16 +292,16 @@ begin
 end;
 procedure TfrmPrincipal.ChangeAppearance;
 begin
-  StatusBar1.Visible := Config.fcIDE.ViewStatusbar;
-  acViewStatbar.Checked := Config.fcIDE.ViewStatusbar;
-  ToolBar1.Visible := Config.fcIDE.ViewToolbar;
-  acViewToolbar.Checked:= Config.fcIDE.ViewToolbar;
+  StatusBar1.Visible := Config.ViewStatusbar;
+  acViewStatbar.Checked := Config.ViewStatusbar;
+  ToolBar1.Visible := Config.ViewToolbar;
+  acViewToolbar.Checked:= Config.ViewToolbar;
 
-  panMessages.Visible:= Config.fcIDE.ViewPanMsg;
-  Splitter2.Visible := Config.fcIDE.ViewPanMsg;
-  acViewMsgPan.Checked:= Config.fcIDE.ViewPanMsg;
+  panMessages.Visible:= Config.ViewPanMsg;
+  Splitter2.Visible := Config.ViewPanMsg;
+  acViewMsgPan.Checked:= Config.ViewPanMsg;
 
-  case Config.fcIDE.StateToolbar of
+  case Config.StateToolbar of
   stb_SmallIcon: begin
     ToolBar1.ButtonHeight:=22;
     ToolBar1.ButtonWidth:=22;
@@ -338,7 +339,7 @@ procedure TfrmPrincipal.acArcAbrirExecute(Sender: TObject);
 begin
   OpenDialog1.Filter:='Pascal files|*.pas|All files|*.*';
   edit.OpenDialog(OpenDialog1);
-  Config.escribirArchivoIni;  //para que guarde el nombre del último archivo abierto
+  Config.SaveToFile;  //para que guarde el nombre del último archivo abierto
 end;
 procedure TfrmPrincipal.acArcGuardarExecute(Sender: TObject);
 begin
@@ -368,15 +369,15 @@ end;
 //////////// Acciones de Ver ///////////////
 procedure TfrmPrincipal.acViewStatbarExecute(Sender: TObject);
 begin
-  Config.fcIDE.ViewStatusbar:=not Config.fcIDE.ViewStatusbar;
+  Config.ViewStatusbar:=not Config.ViewStatusbar;
 end;
 procedure TfrmPrincipal.acViewToolbarExecute(Sender: TObject);
 begin
-  Config.fcIDE.ViewToolbar:= not Config.fcIDE.ViewToolbar;
+  Config.ViewToolbar:= not Config.ViewToolbar;
 end;
 procedure TfrmPrincipal.acViewMsgPanExecute(Sender: TObject);
 begin
-  Config.fcIDE.ViewPanMsg:= not Config.fcIDE.ViewPanMsg;
+  Config.ViewPanMsg:= not Config.ViewPanMsg;
 end;
 
 //////////// Acciones de Herramientas ///////////////
@@ -396,13 +397,18 @@ begin
     exit;
   end;
   ListBox1.Items.Add('Compiled in: ' + IntToStr(GetTickCount-timeCnt) + ' msec');
-  //muestra estadísticas
+  //Genera código ensamblador
   edAsm.BeginUpdate(false);
-  edAsm.ClearAll;
-  edAsm.Text:= ';===RAM usage===' + LineEnding +
-               cxp.RAMusage;
+  edAsm.Lines.Clear;
+  if Config.IncHeadMpu then begin
+    //Incluye encabezado
+     edAsm.Lines.Add('    list     p='+ cxp.PicName);
+     edAsm.Lines.Add('    #include <' + cxp.PicName + '.inc>');
+//     edAsm.Lines.Add('    __CONFIG        _CP_OFF & _PWRTE_ON & _WDT_OFF & _XT_OSC');
+  end;
+  edAsm.Lines.Add(';===RAM usage===' + LineEnding + cxp.RAMusage);
   edAsm.Lines.Add(';===Blocks of Code===');
-  cxp.DumpCode(edAsm.Lines);
+  cxp.DumpCode(edAsm.Lines, Config.IncAddress);
 //  edAsm.Lines.Add(';===Statistics===');
   cxp.DumpStatistics(ListBox1.Items);
   edAsm.EndUpdate;
@@ -420,7 +426,10 @@ procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
   Config.Mostrar;
 end;
+procedure TfrmPrincipal.acToolConfig2Execute(Sender: TObject);
+begin
 
+end;
 //ADicionales
 procedure TfrmPrincipal.VerificarError;
 //Verifica si se ha producido algún error en el preprocesamiento y si lo hay

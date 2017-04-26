@@ -7,6 +7,18 @@ TPicRegisterBit, como contenedores de direcciones físicas.
 Se modifican TOperand.offs, TOperand.Loff, TOperand.Hoffs, y todas las funciones 
 relacionadas a las direcciones físicas.
 Se crea TOperand.Lbank: 
+Se cambia todo el formulario de configuración por otro para ya no usar la librería 
+ConfigFrame, sino MiCOnfig.
+Se modifica la definición de TGenCodPic.CreateVar() y se crean funciones adicionales.
+Se agregan opciones de configuración para formatear el texto en ensamblador generado.
+
+PENDIENTES
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Terminar de implementar las operaciones del tipo bit.
+Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
+consecutivas, para variables word.
+Implementar la llamada correcta para las funciones del sistema y de usuario.
 
 PicPas 0.5.2
 ============
@@ -17,16 +29,6 @@ Como producto del cambio, se puede ahora compilar PicPas con seguridad en plataf
 Se implementa la operación Oper_bit_or_byte.
 Se implementa la operación Oper_bit_xor_bit.
 Se crea el nodo "Units" en el visor de árbol de sintaxis.
-
-PENDIENTES
-Revisar si no es mejor tener funciones separadas para cada tipo, en lugar de una sola
-función TGenCodPic.CreateVar().
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Terminar de implementar las operaciones del tipo bit.
-Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
-consecutivas, para variables word.
-Implementar la llamada correcta para las funciones del sistema y de usuario.
 
 
 PicPas 0.5.1

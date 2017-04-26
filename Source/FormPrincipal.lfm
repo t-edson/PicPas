@@ -2342,6 +2342,12 @@ object frmPrincipal: TfrmPrincipal
       ImageIndex = 22
       OnExecute = acToolConfigExecute
     end
+    object acToolConfig2: TAction
+      Category = 'Tool'
+      Caption = '&Confi&gurar2'
+      ImageIndex = 22
+      OnExecute = acToolConfig2Execute
+    end
   end
   object MainMenu1: TMainMenu
     Images = ImgActions16

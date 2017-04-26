@@ -142,6 +142,7 @@ type
     tnExpDelim : integer;
     tnBlkDelim : integer;
     tnOthers   : integer;
+    function PicName: string;
     procedure StartRegs;
     constructor Create; override;
     destructor Destroy; override;
@@ -1142,6 +1143,12 @@ function TGenCodPic._CLOCK: integer; inline;
 begin
   Result := pic.frequen;
 end;
+
+function TGenCodPic.PicName: string;
+begin
+  Result := pic.Model;
+end;
+
 //Inicialización
 procedure TGenCodPic.StartRegs;
 {Inicia los registros de trabajo en la lista.}

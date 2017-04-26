@@ -7,44 +7,51 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
-  Buttons, StdCtrls,
-   //deben incluirse todos los frames de propiedades a usar
-  FrameCfgEdit, FrameCfgIDE,
-  ConfigFrame;  //necesario para manejar los Frames de configuración
-
+  Buttons, StdCtrls, ExtCtrls, ComCtrls, FrameCfgSynEdit, MiConfigXML, MisUtils;
 type
+  TStyleToolbar = (stb_SmallIcon, stb_BigIcon);
 
   { TConfig }
-
   TConfig = class(TForm)
     BitAplicar: TBitBtn;
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
-    lstCateg: TListBox;
+    chkIncAddress: TCheckBox;
+    chkIncHeadMpu: TCheckBox;
+    Edit1: TEdit;
+    fcEditor: TfraCfgSynEdit;
+    PageControl1: TPageControl;
+    Panel1: TPanel;
+    RadioGroup1: TRadioGroup;
+    tabGeneral: TTabSheet;
+    tabEditor: TTabSheet;
+    tabEnsamb: TTabSheet;
     procedure BitAceptarClick(Sender: TObject);
     procedure BitAplicarClick(Sender: TObject);
     procedure SetLanguage(lang: string);
     procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure lstCategClick(Sender: TObject);
   private
-    { private declarations }
+    FViewPanMsg: boolean;
+    FViewStatusbar: Boolean;
+    FViewToolbar: boolean;
+    procedure cfgFilePropertiesChanges;
+    procedure SetViewPanMsg(AValue: boolean);
+    procedure SetViewStatusbar(AValue: Boolean);
+    procedure SetViewToolbar(AValue: boolean);
+  public  //Propiedades generales
+    OnPropertiesChanges: procedure of object;
+    StateToolbar: TStyleToolbar;
+    property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
+    property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
+    property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
+  public  //Configuraciones para ensamblador
+    IncHeadMpu: boolean;  //Incluye encabezado con información del MPU
+    IncAddress: boolean;     //Incluye dirección física en el código desensamblado
   public
-    msjError: string;    //para los mensajes de error
-    fraError: TCfgFrame;
-    arIni   : String;      //Archivo de configuración
-    //************  Modificar Aquí ***************//
-    //frames de configuración
-    fcIDE: TfraCfgIDE;
-    fcEditor: TfcEdit;
-    fcEdiAsm: TfcEdit;
-    procedure escribirArchivoIni;
-    procedure leerArchivoIni;
-    procedure LeerDeVentana;
-    procedure MostEnVentana;
-    procedure Iniciar(f: TForm; ed0, edAsm: TSynEdit);
+    procedure Iniciar(ed0, edAsm: TSynEdit);
     procedure Mostrar;
+    procedure SaveToFile;
   end;
 
 var
@@ -58,119 +65,101 @@ implementation
 
 procedure TConfig.FormCreate(Sender: TObject);
 begin
-  //************  Modificar Aquí ***************//
-  //Crea dinámicamente los frames de configuración
-  fcIDE:= TfraCfgIDE.Create(Self);
-  fcIDE.parent := self;
-  fcEditor := TfcEdit.Create(Self);
-  fcEditor.Parent := self;
-  fcEditor.Name:='fcEditor';
-  fcEdiAsm := TfcEdit.Create(Self);
-  fcEdiAsm.Parent := self;
-
-  arIni := GetIniName;
+  cfgFile.VerifyFile;
 end;
-
 procedure TConfig.BitAceptarClick(Sender: TObject);
 begin
   bitAplicarClick(Self);
-  if fraError<>nil then exit;  //hubo error
+  if cfgFile.MsjErr<>'' then exit;  //hubo error
   self.Close;  //sale si no hay error
 end;
-
 procedure TConfig.BitAplicarClick(Sender: TObject);
 begin
-  LeerDeVentana;       //Escribe propiedades de los frames
-  if fraError<>nil then begin
-    showmessage(fraError.MsjErr);
+  cfgFile.WindowToProperties;
+  if cfgFile.MsjErr<>'' then begin
+    MsgErr(cfgFile.MsjErr);
     exit;
   end;
-  escribirArchivoIni;   //guarda propiedades en disco
+  SaveToFile;
 end;
-
-procedure TConfig.Iniciar(f: TForm; ed0, edAsm: TSynEdit);
+procedure TConfig.Iniciar(ed0, edAsm: TSynEdit);
 //Inicia el formulario de configuración. Debe llamarse antes de usar el formulario y
 //después de haber cargado todos los frames.
 begin
-  //************  Modificar Aquí ***************//
-  //inicia los Frames creados
-  fcIDE.Iniciar('cfgIDE', f);
-  fcEditor.Iniciar('Editor', ed0);
-  fcEdiAsm.Iniciar('EdiAsm', edAsm);
+  //Configuraciones generales
+  cfgFile.Asoc_Enum('StateStatusbar', @StateToolbar, SizeOf(TStyleToolbar), RadioGroup1, 1);
+  cfgFile.Asoc_Bol('VerPanMensaj', @FViewPanMsg  , true);
+  cfgFile.Asoc_Bol('VerStatusbar', @ViewStatusbar, true);
+  cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);
+  //Configuraciones del Editor
+  fcEditor.Iniciar('Edit', cfgFile, ed0);
+  //Configuraciones de Ensamblador
+  cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu, chkIncHeadMpu, false);
+  cfgFile.Asoc_Bol('IncAddress', @IncAddress, chkIncAddress, true);
 
-  LeerArchivoIni;  //lee parámetros del archivo de configuración.
+  cfgFile.OnPropertiesChanges := @cfgFilePropertiesChanges;
+  if not cfgFile.FileToProperties then begin
+    MsgErr(cfgFile.MsjErr);
+  end;
 end;
-
-procedure TConfig.FormDestroy(Sender: TObject);
-begin
-  Free_AllConfigFrames(self);  //Libera los frames de configuración
-end;
-
 procedure TConfig.FormShow(Sender: TObject);
 begin
-  MostEnVentana;   //carga las propiedades en el frame
+  if not cfgFile.PropertiesToWindow then begin
+    MsgErr(cfgFile.MsjErr);
+  end;
 end;
-
-procedure TConfig.lstCategClick(Sender: TObject);
+procedure TConfig.cfgFilePropertiesChanges;
 begin
-  Hide_AllConfigFrames(self);   //oculta todos
-  //************  Modificar Aquí ***************//
-  if lstCateg.ItemIndex = 0 then fcIDE.ShowPos(120,0) ;
-  if lstCateg.ItemIndex = 1 then fcEditor.ShowPos(120,0);
-  if lstCateg.ItemIndex = 2 then fcEdiAsm.ShowPos(120,0);
-//  if lstCateg.ItemIndex = 2 then Numeros.ShowPos(120,0);
+  fcEditor.ConfigEditor;
+  if OnPropertiesChanges<>nil then OnPropertiesChanges;
 end;
-
+procedure TConfig.SetViewPanMsg(AValue: boolean);
+begin
+  if FViewPanMsg = AValue then Exit;
+  FViewPanMsg := AValue;
+  cfgFilePropertiesChanges;
+end;
+procedure TConfig.SetViewStatusbar(AValue: Boolean);
+begin
+  if FViewStatusbar = AValue then Exit;
+  FViewStatusbar := AValue;
+  cfgFilePropertiesChanges;
+end;
+procedure TConfig.SetViewToolbar(AValue: boolean);
+begin
+  if FViewToolbar = AValue then Exit;
+  FViewToolbar := AValue;
+  cfgFilePropertiesChanges;
+end;
 procedure TConfig.Mostrar;
 //Muestra el formulario para configurarlo
 begin
-  lstCateg.ItemIndex:=0;   //define frame inicial
-  lstCategClick(self);
   Showmodal;
 end;
-
-procedure TConfig.LeerDeVentana;
-//Lee las propiedades de la ventana de configuración.
+procedure TConfig.SaveToFile;
 begin
-  fraError := WindowToProp_AllFrames(self);
+  if not cfgFile.PropertiesToFile then begin
+    MsgErr(cfgFile.MsjErr);
+  end;
 end;
-
-procedure TConfig.MostEnVentana;
-//Muestra las propiedades en la ventana de configuración.
-begin
-  fraError := PropToWindow_AllFrames(self);
-end;
-
-procedure TConfig.leerArchivoIni;
-//Lee el archivo de configuración
-begin
-  msjError := ReadFileToProp_AllFrames(self, arINI);
-end;
-
-procedure TConfig.escribirArchivoIni;
-//Escribe el archivo de configuración
-begin
-  msjError := SavePropToFile_AllFrames(self, arINI);
-end;
-
 procedure TConfig.SetLanguage(lang: string);
 begin
   fcEditor.SetLanguage(lang);
-  fcEdiAsm.SetLanguage(lang);
+//  fcEdiAsm.SetLanguage(lang);
   case lowerCase(lang) of
   'es': begin
       Caption := 'Configuración';
-      lstCateg.Clear;
-      lstCateg.AddItem('Entorno',nil);
-      lstCateg.AddItem('Editor',nil);
-      lstCateg.AddItem('Editor ASM',nil);
+      tabGeneral.Caption := 'General';
+      tabEditor.Caption := 'Editor';
+      chkIncHeadMpu.Caption := 'Incluir Encabezado de MPU';
+      chkIncAddress.Caption := 'Incluir Dirección de memoria';
     end;
   'en': begin
       Caption := 'Settings';
-      lstCateg.Clear;
-      lstCateg.AddItem('Enviroment',nil);
-      lstCateg.AddItem('Editor',nil);
-      lstCateg.AddItem('ASM Editor',nil);
+      tabGeneral.Caption := 'General';
+      tabEditor.Caption := 'Editor';
+      chkIncHeadMpu.Caption := 'Include MPU Header';
+      chkIncAddress.Caption := 'Include Memory Address';
     end;
   end;
 end;
