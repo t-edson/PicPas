@@ -659,7 +659,7 @@ object frmPrincipal: TfrmPrincipal
     ParentColor = False
     ParentFont = False
     TabOrder = 4
-    Gutter.Width = 57
+    Gutter.Width = 29
     Gutter.MouseActions = <>
     RightGutter.Width = 0
     RightGutter.MouseActions = <>
@@ -1109,6 +1109,7 @@ object frmPrincipal: TfrmPrincipal
     inline SynLeftGutterPartList1: TSynGutterPartList
       object SynGutterMarks1: TSynGutterMarks
         Width = 24
+        Visible = False
         MouseActions = <>
       end
       object SynGutterLineNumber1: TSynGutterLineNumber
@@ -1123,6 +1124,7 @@ object frmPrincipal: TfrmPrincipal
       end
       object SynGutterChanges1: TSynGutterChanges
         Width = 4
+        Visible = False
         MouseActions = <>
         ModifiedColor = 59900
         SavedColor = clGreen

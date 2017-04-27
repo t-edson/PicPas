@@ -9,23 +9,37 @@ uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
   Buttons, StdCtrls, ExtCtrls, ComCtrls, FrameCfgSynEdit, MiConfigXML, MisUtils;
 type
+  //Tipo de Barra de herramientas
   TStyleToolbar = (stb_SmallIcon, stb_BigIcon);
+  //Tipo de declaración de variables
+  TVarDecType = (dvtDBDb,  //Estilo DB/Db/DW
+                 dvtEQU    //Estilo usando macros y EQU
+                 );
+  //Niveles de optimización
+  TOptimLev = (olvFool,   //Nivel básico de optimización
+               olvSmart   //Nivel mayor de optimización
+               );
 
   { TConfig }
   TConfig = class(TForm)
     BitAplicar: TBitBtn;
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
+    chkIncDecVar: TCheckBox;
     chkIncAddress: TCheckBox;
+    chkIncComment: TCheckBox;
     chkIncHeadMpu: TCheckBox;
     Edit1: TEdit;
     fcEditor: TfraCfgSynEdit;
     PageControl1: TPageControl;
     Panel1: TPanel;
     RadioGroup1: TRadioGroup;
+    RadioGroup2: TRadioGroup;
+    grpOptimLev: TRadioGroup;
     tabGeneral: TTabSheet;
     tabEditor: TTabSheet;
     tabEnsamb: TTabSheet;
+    tabOutput: TTabSheet;
     procedure BitAceptarClick(Sender: TObject);
     procedure BitAplicarClick(Sender: TObject);
     procedure SetLanguage(lang: string);
@@ -47,7 +61,12 @@ type
     property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
   public  //Configuraciones para ensamblador
     IncHeadMpu: boolean;  //Incluye encabezado con información del MPU
-    IncAddress: boolean;     //Incluye dirección física en el código desensamblado
+    IncVarDec : boolean;  //Incluye declaración de varaibles
+    VarDecType: TVarDecType;  //tipo de declaración de variables
+    IncAddress: boolean;  //Incluye dirección física en el código desensamblado
+    IncComment: boolean;  //Incluye comentarios en el código desensamblado
+    //Configuracions para Salida
+    OptimLev : TOptimLev;
   public
     procedure Iniciar(ed0, edAsm: TSynEdit);
     procedure Mostrar;
@@ -95,8 +114,13 @@ begin
   fcEditor.Iniciar('Edit', cfgFile, ed0);
   //Configuraciones de Ensamblador
   cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu, chkIncHeadMpu, false);
+  cfgFile.Asoc_Bol('IncDecVar' , @IncVarDec , chkIncDecVar , true);
+  cfgFile.Asoc_Enum('VarDecType',@VarDecType, Sizeof(TVarDecType), RadioGroup2, 1);
   cfgFile.Asoc_Bol('IncAddress', @IncAddress, chkIncAddress, true);
-
+  cfgFile.Asoc_Bol('IncComment', @IncComment, chkIncComment, false);
+  //Configuraciones de salida
+  cfgFile.Asoc_Enum('OptimLev',@OptimLev, Sizeof(TOptimLev), grpOptimLev, 1);
+  //////////////////////////////////////////////////
   cfgFile.OnPropertiesChanges := @cfgFilePropertiesChanges;
   if not cfgFile.FileToProperties then begin
     MsgErr(cfgFile.MsjErr);
@@ -151,15 +175,29 @@ begin
       Caption := 'Configuración';
       tabGeneral.Caption := 'General';
       tabEditor.Caption := 'Editor';
-      chkIncHeadMpu.Caption := 'Incluir Encabezado de MPU';
-      chkIncAddress.Caption := 'Incluir Dirección de memoria';
+      tabEnsamb.Caption := 'Ensamblador';
+      tabOutput.Caption := 'Salida';
+      grpOptimLev.Caption := 'Nivel de optimización:';
+      grpOptimLev.Items[0] := 'Tonto';
+      grpOptimLev.Items[1] := 'Inteligente';
+      chkIncHeadMpu.Caption := 'Incluir &Encabezado de MPU';
+      chkIncDecVar.Caption := 'Incluir Declaración de variables';
+      chkIncAddress.Caption := 'Incluir &Dirección de memoria';
+      chkIncComment.Caption := 'Incluir &Comentarios';
     end;
   'en': begin
       Caption := 'Settings';
       tabGeneral.Caption := 'General';
       tabEditor.Caption := 'Editor';
-      chkIncHeadMpu.Caption := 'Include MPU Header';
-      chkIncAddress.Caption := 'Include Memory Address';
+      tabEnsamb.Caption := 'Assembler';
+      tabOutput.Caption := 'Output';
+      grpOptimLev.Caption := 'Optimization Level:';
+      grpOptimLev.Items[0] := 'Fool';
+      grpOptimLev.Items[1] := 'Smart';
+      chkIncHeadMpu.Caption := 'Include MPU &Header';
+      chkIncDecVar.Caption := 'Include &Variables declaration';
+      chkIncAddress.Caption := 'Include &Memory Address';
+      chkIncComment.Caption := 'Include &Comments';
     end;
   end;
 end;

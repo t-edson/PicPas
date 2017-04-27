@@ -474,11 +474,12 @@ begin
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      FreeStkRegisterBit(r);   //libera pila porque se usará el dato ahí contenido
       p1^.catOp := coVariab;
+      p1^.rVar := GetVarBitFromStk;
       catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
       //Luego el caso es similar a variable-expresión
       Oper_bit_and_bit;
+      FreeStkRegisterBit(r);   //Libera pila. Ya se usó el dato.
     end;
     else
       GenError('Not implemented.'); exit;
@@ -629,11 +630,12 @@ begin
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      FreeStkRegisterBit(r);   //libera pila porque se usará el dato ahí contenido
       p1^.catOp := coVariab;
+      p1^.rVar  := GetVarBitFromStk;
       catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
       //Luego el caso es similar a variable-expresión
       Oper_bit_or_bit;
+      FreeStkRegisterBit(r);   //Libera pila. Ya se usó el dato.
     end;
     else
       GenError('Not implemented.'); exit;
@@ -769,12 +771,12 @@ begin
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      FreeStkRegisterBit(r);   //libera pila porque se usará el dato ahí contenido
       p1^.catOp := coVariab;
-//      p1^.rVar := r;
+      p1^.rVar := GetVarBitFromStk;
       catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
       //Luego el caso es similar a coVariab_Expres
       Oper_bit_xor_bit;
+      FreeStkRegisterBit(r);   //Libera pila. Ya se usó el dato.
     end;
     else
       GenError('Not implemented.'); exit;

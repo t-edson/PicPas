@@ -4,11 +4,9 @@ unit Parser;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, lclProc, SynEditHighlighter, types,
-  SynFacilHighlighter, MisUtils,
-  XpresBas, XpresTypes, XpresElementsPIC, XpresParserPIC,
-  Pic16Utils, Pic16Devices, Globales, ProcAsm, GenCod,
-  GenCodPic {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
+  Classes, SysUtils, lclProc, SynEditHighlighter, types, SynFacilHighlighter,
+  MisUtils, XpresBas, XpresTypes, XpresElementsPIC, XpresParserPIC, Pic16Utils,
+  Pic16Devices, Globales, ProcAsm, GenCod, GenCodPic, FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
 type
 
  { TCompiler }
@@ -39,8 +37,8 @@ type
     procedure cInNewLine(lin: string);
   public
     procedure Compile(NombArc: string; LinArc: Tstrings);
-    function RAMusage: string;  //uso de memoria RAM
-    procedure DumpCode(l: TSTrings; incAdrr: boolean);  //uso de la memoria Flash
+    procedure RAMusage(lins: TStrings; varDecType: TVarDecType);  //uso de memoria RAM
+    procedure DumpCode(lins: TSTrings; incAdrr, incCom: boolean);  //uso de la memoria Flash
     procedure DumpStatistics(l: TSTrings);
     constructor Create; override;
     destructor Destroy; override;
@@ -241,7 +239,7 @@ end;
 procedure TCompiler.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
 begin
-  pic.addCommAsm(';'+lin);  //agrega _Línea al código ensmblador
+  pic.addCommAsm(';'+trim(lin));  //agrega _Línea al código ensmblador
 end;
 procedure TCompiler.getListOfIdent(var itemList: TStringDynArray);
 {Lee una lista de identificadores separados por comas, hasta encontra un caracter distinto
@@ -1048,37 +1046,77 @@ begin
   end;
 end;
 
-function TCompiler.RAMusage: string;
+procedure TCompiler.RAMusage(lins: TStrings; varDecType: TVarDecType);
 {Devuelve una cadena con información sobre el uso de la memoria.}
 var
-  tmp, adStr: String;
+  adStr: String;
   v: TxpEleVar;
+  nam: string;
+  reg: TPicRegister;
+  rbit: TPicRegisterBit;
 begin
-  tmp := '';
   for v in TreeElems.AllVars do begin
-    adStr := v.AdrrString;
-    if adStr='' then adStr := 'XXXX';  //Error en dirección
-    if (v.typ = typBool) or (v.typ = typBit) then begin
-      tmp += ' ' + v.name + ' Db ' +  adStr + LineEnding;
-    end else if v.typ = typByte then begin
-      tmp += ' ' + v.name + ' DB ' +  adStr + LineEnding;
-    end else if v.typ = typWord then begin
-      tmp += ' ' + v.name + ' DW ' +  adStr + LineEnding;
-    end else begin
-      tmp += ' "' + v.name + '"->' +  adStr + LineEnding;
+    case varDecType of
+    dvtDBDb: begin
+      adStr := v.AdrrString;  //dirección hexadecimal
+      if adStr='' then adStr := 'XXXX';  //Error en dirección
+      if (v.typ = typBool) or (v.typ = typBit) then begin
+        lins.Add(' ' + v.name + ' Db ' +  adStr);
+      end else if v.typ = typByte then begin
+        lins.Add(' ' + v.name + ' DB ' +  adStr);
+      end else if v.typ = typWord then begin
+        lins.Add(' ' + v.name + ' DW ' +  adStr);
+      end else begin
+        lins.Add(' "' + v.name + '"->' +  adStr);
+      end;
+    end;
+    dvtEQU: begin;
+      adStr := '0x' + IntToHex(v.AbsAdrr, 3);
+      if (v.typ = typBool) or (v.typ = typBit) then begin
+        lins.Add('#define ' + v.name + ' ' + adStr+ ','+IntToStr(v.adrBit.bit));
+      end else if v.typ = typByte then begin
+        lins.Add(v.name + ' EQU ' +  adStr);
+      end else if v.typ = typWord then begin
+        lins.Add(v.name + ' EQU ' +  adStr);
+      end else begin
+        lins.Add('"' + v.name + '"->' +  adStr);
+      end;
+    end;
     end;
   end;
-  Result := tmp;
-////////////////////
-  Result := Result + '-------------------------' + LineEnding;
-  Result := Result + ReportRAMusage;
-  Result := Result + '-------------------------' + LineEnding;
-
+  //Reporte de registros de trabajo, auxiliares y de pila
+  if (listRegAux.Count>0) or (listRegAuxBit.Count>0) then begin
+    lins.Add(';------ Work and Aux. Registers ------');
+    for reg in listRegAux do begin
+      nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
+      adStr := '0x' + IntToHex(reg.AbsAdrr, 3);
+      lins.Add(nam + ' EQU ' +  adStr);
+    end;
+    for rbit in listRegAuxBit do begin
+      nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
+      adStr := '0x' + IntToHex(rbit.AbsAdrr, 3);
+      lins.Add('#define' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
+    end;
+  end;
+  if (listRegStk.Count>0) or (listRegStkBit.Count>0) then begin
+    lins.Add(';------ Stack Registers ------');
+    for reg in listRegStk do begin
+      nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
+      adStr := '0x' + IntToHex(reg.AbsAdrr, 3);
+      lins.Add(nam + ' EQU ' +  adStr);
+    end;
+    for rbit in listRegStkBit do begin
+      nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
+      adStr := '0x' + IntToHex(rbit.AbsAdrr, 3);
+      lins.Add('#define ' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
+    end;
+  end;
+//  lins.Add(';-------------------------');
 end;
-procedure TCompiler.DumpCode(l: TSTrings; incAdrr: boolean);
+procedure TCompiler.DumpCode(lins: TSTrings; incAdrr, incCom: boolean);
 begin
 //  AsmList := TStringList.Create;  //crea lista para almacenar ensamblador
-  pic.DumpCode(l, incAdrr);
+  pic.DumpCode(lins, incAdrr, incCom);
 end;
 procedure TCompiler.DumpStatistics(l: TSTrings);
 var

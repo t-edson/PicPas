@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <Language name="Xpres" ext="xpr" ColorBlock="Block">
-  <Attribute Name="Directive" ForeCol="#FF0000"></Attribute>
+  <Attribute Name="Directive" ForeCol="#FF00FF"></Attribute>
   <Attribute Name="Keyword" ForeCol="black" Style="b"> </Attribute>
   <Attribute Name="Comment" ForeCol="Blue"> </Attribute>
   <Identifiers CharsStart= "A..Za..z_" Content = "A..Za..z0..9_"> 
@@ -17,12 +17,14 @@ DB DW DD DF DP DQ DT
     </Keyword>
 	<Directive>
 	  COMMENT MODEL DATA CONST CODE END
-	  PROC
+	  PROC EQU
 	</Directive>
   </Identifiers>
   <!--Token CharsStart="0..9" Content = '0..9' Attribute="NUMBER"> </Token-->
   <String Start="'" End="'"></String>
   <String Start="&quot;" End="&quot;"></String>
   <Comment Start=";" ></Comment>
+  <Token Start="#" End="" Attribute="Directive"/>
+  <Token Start="LIST" End="" Attribute="Directive"/>
 
 </Language>

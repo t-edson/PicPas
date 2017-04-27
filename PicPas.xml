@@ -20,9 +20,15 @@
     <cTxtPan Val="0"/>
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
-    <recient Val="SinNombre.pas
+    <recient Val="sample.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.5.1\sample.pas
+SinNombre.pas
 "/>
   </Edit>
   <IncHeadMpu Val="True"/>
+  <IncDecVar Val="True"/>
+  <VarDecType Val="1"/>
   <IncAddress Val="False"/>
+  <IncComment Val="True"/>
+  <OptimLev Val="1"/>
 </CONFIG>

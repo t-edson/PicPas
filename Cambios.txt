@@ -11,13 +11,19 @@ Se cambia todo el formulario de configuración por otro para ya no usar la librer
 ConfigFrame, sino MiCOnfig.
 Se modifica la definición de TGenCodPic.CreateVar() y se crean funciones adicionales.
 Se agregan opciones de configuración para formatear el texto en ensamblador generado.
+Se modifican las rutinas de gestión de memoria de GenCodPic, para que incluyan el nombre
+a los registros bit.
+Se agregan los métodos: TGenCodPic.GetVarByteFromStk y TGenCodPic.GetVarBitFromStk.
+Se agregan los métodos: TGenCodPic.AssignRAMinBit() y TGenCodPic.AssignRAMinByte().
+Se cambia de nombre a TGenCodPic.AssignRAM() (la versión bit) por TGenCodPic.AssignRAMbit(), 
+para seguri el orden de los nombres.
+Se eliminan TGenCodPic.CreateVarBit() y TGenCodPic.CreateVarByte().
+Se corrige un error en la evaluación de operaciones bit de tipo coExpres_Expres.
+Se mejora considerablemente el código ensamblador generado.
 
 PENDIENTES
 Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
 TPICregister.
-Terminar de implementar las operaciones del tipo bit.
-Implementar que la gestión de memoria para variables, tome posiciones no necesariamente 
-consecutivas, para variables word.
 Implementar la llamada correcta para las funciones del sistema y de usuario.
 
 PicPas 0.5.2

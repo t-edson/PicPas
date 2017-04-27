@@ -213,8 +213,8 @@ begin
   edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
   frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
   //carga archivo de ejemplo
-//  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
-  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
+  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
+//  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin
@@ -238,23 +238,19 @@ begin
   if edit.SaveQuery then Exit;   //Verifica cambios
   edit.LoadFile(SamFil);
 end;
-
 procedure TfrmPrincipal.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 begin
   if edit.SaveQuery then CanClose := false;   //cancela
 end;
-
 procedure TfrmPrincipal.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
   Config.SaveToFile;  //guarda la configuración actual
 end;
-
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
 begin
   hlAssem.Free;
   edit.Free;
 end;
-
 procedure TfrmPrincipal.ListBox1DrawItem(Control: TWinControl; Index: Integer;
   ARect: TRect; State: TOwnerDrawState);
 var
@@ -406,9 +402,12 @@ begin
      edAsm.Lines.Add('    #include <' + cxp.PicName + '.inc>');
 //     edAsm.Lines.Add('    __CONFIG        _CP_OFF & _PWRTE_ON & _WDT_OFF & _XT_OSC');
   end;
-  edAsm.Lines.Add(';===RAM usage===' + LineEnding + cxp.RAMusage);
+  if Config.IncVarDec then begin
+     edAsm.Lines.Add(';===RAM usage===');
+     cxp.RAMusage(edAsm.Lines, Config.VarDecType);
+  end;
   edAsm.Lines.Add(';===Blocks of Code===');
-  cxp.DumpCode(edAsm.Lines, Config.IncAddress);
+  cxp.DumpCode(edAsm.Lines, Config.IncAddress, Config.IncComment);
 //  edAsm.Lines.Add(';===Statistics===');
   cxp.DumpStatistics(ListBox1.Items);
   edAsm.EndUpdate;

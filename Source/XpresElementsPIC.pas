@@ -34,6 +34,7 @@ type
     offs   : byte;      //Desplazamiento en memoria
     bank   : byte;      //Banco del registro
     typ    : TPicRegType; //Tipo de registro
+    function AbsAdrr: word;  //Diección absoluta
   end;
   TPicRegister_list = specialize TFPGObjectList<TPicRegister>; //lista de registros
 
@@ -48,6 +49,7 @@ type
     bank   : byte;      //Banco del registro
     bit    : byte;      //bit del registro
     typ    : TPicRegType; //Tipo de registro
+    function AbsAdrr: word;  //Diección absoluta
   end;
   TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros
 
@@ -198,6 +200,18 @@ type
 
 implementation
 
+{ TPicRegister }
+function TPicRegister.AbsAdrr: word;
+begin
+  Result := bank * $80 + offs;
+end;
+
+{ TPicRegisterBit }
+function TPicRegisterBit.AbsAdrr: word;
+begin
+  Result := bank * $80 + offs;
+end;
+
 { TxpElement }
 function TxpElement.AddElement(elem: TxpElement): TxpElement;
 {Agrega un elemento hijo al elemento actual. Devuelve referencia. }
@@ -268,11 +282,11 @@ siempre tiene un solo byte, así que se trata de devolver siempre la dirección 
 byte de menor peso.}
 begin
   if (typ = typBit) or (typ = typBool) then begin
-    Result := adrBit.bank * $80 + adrBit.offs;
+    Result := adrBit.AbsAdrr;
   end else if typ = typByte then begin
-    Result := adrByte0.bank * $80 + adrByte0.offs;
+    Result := adrByte0.AbsAdrr;
   end else if typ = typWord then begin
-    Result := adrByte0.bank * $80 + adrByte0.offs;
+    Result := adrByte0.AbsAdrr;
   end else begin
     Result := ADRR_ERROR;
   end;
