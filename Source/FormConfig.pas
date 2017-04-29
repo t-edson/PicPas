@@ -67,8 +67,9 @@ type
     IncComment: boolean;  //Incluye comentarios en el código desensamblado
     //Configuracions para Salida
     OptimLev : TOptimLev;
+    procedure ConfigEditor(ed: TSynEdit);
   public
-    procedure Iniciar(ed0, edAsm: TSynEdit);
+    procedure Iniciar;
     procedure Mostrar;
     procedure SaveToFile;
   end;
@@ -101,7 +102,7 @@ begin
   end;
   SaveToFile;
 end;
-procedure TConfig.Iniciar(ed0, edAsm: TSynEdit);
+procedure TConfig.Iniciar;
 //Inicia el formulario de configuración. Debe llamarse antes de usar el formulario y
 //después de haber cargado todos los frames.
 begin
@@ -111,7 +112,7 @@ begin
   cfgFile.Asoc_Bol('VerStatusbar', @ViewStatusbar, true);
   cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);
   //Configuraciones del Editor
-  fcEditor.Iniciar('Edit', cfgFile, ed0);
+  fcEditor.Iniciar('Edit', cfgFile);
   //Configuraciones de Ensamblador
   cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu, chkIncHeadMpu, false);
   cfgFile.Asoc_Bol('IncDecVar' , @IncVarDec , chkIncDecVar , true);
@@ -132,9 +133,13 @@ begin
     MsgErr(cfgFile.MsjErr);
   end;
 end;
+procedure TConfig.ConfigEditor(ed: TSynEdit);
+//Configura un editor con las opciones definidas aquí
+begin
+  fcEditor.ConfigEditor(ed);
+end;
 procedure TConfig.cfgFilePropertiesChanges;
 begin
-  fcEditor.ConfigEditor;
   if OnPropertiesChanges<>nil then OnPropertiesChanges;
 end;
 procedure TConfig.SetViewPanMsg(AValue: boolean);

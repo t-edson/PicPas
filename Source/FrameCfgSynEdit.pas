@@ -44,8 +44,6 @@ type
     //genera constructor y destructor
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
-  private
-    ed: TSynEdit;
   public
     //configuración del editor
     TipLet     : string;     //tipo de letra
@@ -69,9 +67,8 @@ type
     ArcRecientes: TStringList;  //Lista de archivos recientes
 
     procedure PropToWindow;
-    procedure Iniciar(section: string; cfgFile: TMiConfigXML; ed0: TSynEdit;
-      colFonDef: TColor = clWhite); //Inicia el frame
-    procedure ConfigEditor;
+    procedure Iniciar(section: string; cfgFile: TMiConfigXML); //Inicia el frame
+    procedure ConfigEditor(ed: TSynEdit);
     procedure SetLanguage(lang: string);
   end;
 
@@ -81,14 +78,12 @@ implementation
 //  MAX_ARC_REC = 5;  //si se cambia, actualizar ActualMenusReciente()
 
 { TfraCfgSynEdit }
-procedure TfraCfgSynEdit.Iniciar(section: string; cfgFile: TMiConfigXML; ed0: TSynEdit;
-                  colFonDef: TColor = clWhite);
+procedure TfraCfgSynEdit.Iniciar(section: string; cfgFile: TMiConfigXML);
 begin
   //asigna referencia necesarias
-  ed := ed0;
   //crea las relaciones variable-control
   cfgFile.Asoc_TCol(section+ '/cTxtNor', @cTxtNor, cbutTexto, clBlack);
-  cfgFile.Asoc_TCol(section+ '/cFonEdi', @cFonEdi, cbutFondo,  colFonDef);
+  cfgFile.Asoc_TCol(section+ '/cFonEdi', @cFonEdi, cbutFondo,  clWhite);
   cfgFile.Asoc_TCol(section+ '/cLinAct', @cLinAct, cbutLinAct, clYellow);
   cfgFile.Asoc_TCol(section+ '/cResPal', @cResPal, cbutResPal, clSkyBlue);
 
@@ -100,7 +95,7 @@ begin
   cfgFile.Asoc_Bol(section+ '/VerPanVer', @VerPanVer, chkVerPanVer, true);
   cfgFile.Asoc_Bol(section+ '/VerNumLin', @VerNumLin, chkVerNumLin, false);
   cfgFile.Asoc_Bol(section+ '/VerMarPle', @VerMarPle, chkVerMarPle, true);
-  cfgFile.Asoc_TCol(section+ '/cFonPan'  , @cFonPan  , cbutFonPan  , colFonDef);
+  cfgFile.Asoc_TCol(section+ '/cFonPan'  , @cFonPan  , cbutFonPan  , clWhite);
   cfgFile.Asoc_TCol(section+ '/cTxtPan'  , @cTxtPan  , cbutTxtPan  , clBlack);
 
   cfgFile.Asoc_Int(section+ '/TamLet', @TamLet, spTam, 10);
@@ -153,7 +148,7 @@ begin
   FreeAndNil(ArcRecientes);
   inherited Destroy;
 end;
-procedure TfraCfgSynEdit.ConfigEditor;
+procedure TfraCfgSynEdit.ConfigEditor(ed: TSynEdit);
 {Configura el editor con las propiedades almacenadas}
 var
   marc: TSynEditMarkup;

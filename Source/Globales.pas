@@ -25,11 +25,40 @@ var
    MostrarError: Boolean;   //Bandera para mostrar mensajesde error.
    ActConsSeg  : Boolean;   //Activa consultas en segundo plano
 
+/////////////// Campos para manejo del diccionario //////////
+type
+ TIdLang = (
+   l_en,  //inglés
+   l_es   //español
+ );
+var
+ curLang: TIdLang;  //identificador del lenguaje
+
+//type
+// TTranslation = record
+//  en: string;
+//  es: string;
+// end;
+//
+//const
+// TestRec: TTranslation = (en: 'Something'; es: 'algo'; );
+
+function Trans(const strEn, strEs: string): string;
+//////////////////////////////////////////////////////
 function LeerParametros: boolean;
 function NombDifArc(nomBase: String): String;
 
 implementation
 
+function Trans(const strEn, strEs: string): string;
+begin
+  case curLang of
+  l_en: Result := strEn;
+  l_es: Result := strEs;
+  else
+    Result := strEn;
+  end;
+end;
 function  LeerParametros: boolean;
 {lee la linea de comandos
  Si hay error devuelve TRUE}

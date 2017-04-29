@@ -5,7 +5,7 @@ unit GenCodPic;
 interface
 uses
   Classes, SysUtils, XPresParserPIC, XpresElementsPIC, Pic16Utils, XpresTypes,
-  MisUtils, SynEditHighlighter, LCLType, LCLProc, fgl;
+  MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 8;  //tamaño de pila para subrutinas en el PIC
   MAX_REGS_AUX_BYTE = 4;    //cantidad máxima de registros a usar
@@ -702,8 +702,8 @@ begin
     {Asigna espacio para los dos bytes. Notar que:
     1. Si se especifica dirección absoluta, esta se usa solo para el primer byte.
     2. Los dos bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
-    AssignRAMinByte(absAdd, nVar.adrByte0, varName+'0');
-    AssignRAMinByte(-1, nVar.adrByte1, varName+'1');
+    AssignRAMinByte(absAdd, nVar.adrByte0, varName+'@0');
+    AssignRAMinByte(-1    , nVar.adrByte1, varName+'@1');
   end else begin
     GenError('Not implemented.', [varName]);
   end;

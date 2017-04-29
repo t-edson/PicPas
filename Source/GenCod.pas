@@ -106,13 +106,9 @@ type
       procedure codif_delay_ms(const fun: TxpEleFun);
       procedure expr_end(posExpres: TPosExpres);
       procedure expr_start;
-      procedure fun_Dec_byte(fun: TxpEleFun);
-      procedure fun_Dec_word(fun: TxpEleFun);
       procedure fun_delay_ms(fun: TxpEleFun);
-      procedure fun_delay_ms_w(fun: TxpEleFun);
-      procedure fun_Inc_byte(fun: TxpEleFun);
-      procedure fun_Inc_word(fun: TxpEleFun);
-      procedure fun_putchar(fun: TxpEleFun);
+      procedure fun_Inc(fun: TxpEleFun);
+      procedure fun_Dec(fun: TxpEleFun);
     protected
       procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
@@ -194,17 +190,10 @@ procedure TGenCod.expr_end(posExpres: TPosExpres);
 //Se ejecuta al final de una expresión, si es que no ha habido error.
 begin
   case posExpres of
-  pexPARSY: begin
-    //Se terminó de evaluar un parámetro
-    res.Push;   //Carga en registro de trabajo
-    if HayError then exit;
-    W.used:=false;  //se libera registro
-  end;
   pexPARAM: begin
     //Se terminó de evaluar un parámetro
     res.Push;   //pone parámetro en pila
     if HayError then exit;
-    W.used:=false;  //se libera registro
   end;
   end;
   if exprLevel = 1 then begin  //el último nivel
@@ -1517,99 +1506,87 @@ delay:= _PC;
   EndCodeSub;  //termina codificación
   aux.used := false;  //libera registro
 end;
-procedure TGenCod.fun_putchar(fun: TxpEleFun);
-begin
-  //Esta es una fucnión INLINE
-  //Esta función no devuelve un valor, por eso no nos preocupamos del tipo.
-end;
 procedure TGenCod.fun_delay_ms(fun: TxpEleFun);
 begin
-   if DelayCoded=-1 then begin
-     //No ha sido codificada, la codifica.
-     codif_delay_ms(fun);
-   end;
-   //El parámetro byte, debe estar en W
-   _call(DelayCoded);
+  if not CaptureTok('(') then exit;
+  if DelayCoded=-1 then begin
+    //No ha sido codificada, la codifica.
+    codif_delay_ms(fun);
+  end;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if perr.HayError then exit;   //aborta
+  //Se terminó de evaluar un parámetro
+  res.Push;   //Carga en registro de trabajo
+  if HayError then exit;
+  if res.typ = typByte then begin
+    //El parámetro byte, debe estar en W
+    _call(DelayCoded);
+  end else if res.typ = typWord then begin
+    //El parámetro word, debe estar en (H, W)
+    _call(DelayCoded+1);
+  end else begin
+    GenError('Invalid parameter type: %s', [res.typ.name]);
+    exit;
+  end;
+  //Verifica fin de parámetros
+  if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_delay_ms_w(fun: TxpEleFun);
+procedure TGenCod.fun_Inc(fun: TxpEleFun);
 begin
-   if DelayCoded=-1 then begin
-     //No ha sido codificada, la codifica.
-     codif_delay_ms(fun);
-   end;
-   //El parámetro word, debe estar en (H, W)
-   _call(DelayCoded+1);
-end;
-procedure TGenCod.fun_Inc_byte(fun: TxpEleFun);
-begin
+  if not CaptureTok('(') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if perr.HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
     GenError('Cannot increase a constant.'); exit;
   end;
   coVariab: begin
-    _INCF(res.offs, toF);
+    if res.typ = typByte then begin
+      _INCF(res.offs, toF);
+    end else if res.typ = typWord then begin
+      _INCF(res.Loffs, toF);
+      _BTFSC(_STATUS, _Z);
+      _INCF(res.Hoffs, toF);
+    end else begin
+      GenError('Invalid parameter type: %s', [res.typ.name]);
+      exit;
+    end;
   end;
   coExpres: begin  //se asume que ya está en (_H,w)
     GenError('Cannot increase an expression.'); exit;
   end;
-  else
-    GenError('Not implemented.'); exit;
   end;
+  //Verifica fin de parámetros
+  if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Inc_word(fun: TxpEleFun);
+procedure TGenCod.fun_Dec(fun: TxpEleFun);
 begin
-  case res.catOp of  //el parámetro debe estar en "res"
-  coConst : begin
-    GenError('Cannot increase a constant.'); exit;
-  end;
-  coVariab: begin
-    _INCF(res.Loffs, toF);
-    _BTFSC(_STATUS, _Z);
-    _INCF(res.Hoffs, toF);
-  end;
-  coExpres: begin  //se asume que ya está en (_H,w)
-    GenError('Cannot increase an expression.'); exit;
-  end;
-  else
-    GenError('Not implemented.'); exit;
-  end;
-end;
-procedure TGenCod.fun_Dec_byte(fun: TxpEleFun);
-begin
+  if not CaptureTok('(') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if perr.HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
     GenError('Cannot decrease a constant.'); exit;
   end;
   coVariab: begin
-    _DECF(res.offs, toF);
+    if res.typ = typByte then begin
+      _DECF(res.offs, toF);
+    end else if res.typ = typWord then begin
+      _MOVF(res.offs, toW);
+      _BTFSC(_STATUS, _Z);
+      _DECF(res.Hoffs, toF);
+      _DECF(res.Loffs, toF);
+    end else begin
+      GenError('Invalid parameter type: %s', [res.typ.name]);
+      exit;
+    end;
   end;
   coExpres: begin  //se asume que ya está en (_H,w)
     GenError('Cannot decrease an expression.'); exit;
   end;
-  else
-    GenError('Not implemented.'); exit;
   end;
+  if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Dec_word(fun: TxpEleFun);
-begin
-  case res.catOp of  //el parámetro debe estar en "res"
-  coConst : begin
-    GenError('Cannot decrease a constant.'); exit;
-  end;
-  coVariab: begin
-    _MOVF(res.offs, toW);
-    _BTFSC(_STATUS, _Z);
-    _DECF(res.Hoffs, toF);
-    _DECF(res.Loffs, toF);
-  end;
-  coExpres: begin  //se asume que ya está en (_H,w)
-    GenError('Cannot decrease an expression.'); exit;
-  end;
-  else
-    GenError('Not implemented.'); exit;
-  end;
-end;
-
 procedure TGenCod.StartSyntax;
 //Se ejecuta solo una vez al inicio
 begin
@@ -1783,27 +1760,12 @@ var
 begin
   DelayCoded := -1;  //inicia
   //////// Funciones del sistema ////////////
-  {Notar que las funciones del sistema no crean espacios de nombres y no se hace
-  validación para verificar la duplicidad (para hacer el proceso más rápido).
-  Es responsabilidad del progranador, no introducir funciones con conflictos.}
-  f := CreateSysFunction('putchar', typByte, @fun_putchar);
-  f.CreateParam('',typByte);
+  {Notar que las funciones del sistema no crean espacios de nombres.}
   f := CreateSysFunction('delay_ms', typByte, @fun_delay_ms);
-  f.CreateParam('',typByte);
   f.adrr:=-1;   //para indicar que no está codificada
-  f := CreateSysFunction('delay_ms', typByte, @fun_delay_ms_w);
-  f.CreateParam('',typWord);
-  f.adrr:=-1;   //para indicar que no está codificada
-  f := CreateSysFunction('Inc', typByte, @fun_Inc_byte);
-  f.CreateParam('',typByte);
-  f := CreateSysFunction('Inc', typByte, @fun_Inc_word);
-  f.CreateParam('',typWord);
-  f := CreateSysFunction('Dec', typByte, @fun_Dec_byte);
-  f.CreateParam('',typByte);
-  f := CreateSysFunction('Dec', typByte, @fun_Dec_word);
-  f.CreateParam('',typWord);
+  f := CreateSysFunction('Inc', typByte, @fun_Inc);
+  f := CreateSysFunction('Dec', typByte, @fun_Dec);
 end;
-
 procedure SetLanguage(lang: string);
 begin
   case lang of
@@ -1814,6 +1776,8 @@ begin
     //Update messages
     dicSet('Not implemented.', 'No implementado.');
     dicSet('Invalid value for a bit variable.', 'Valor inválido para una variable bit');
+    dicSet('")" expected.', 'Se esperaba ")"');
+    dicSet('Invalid parameter type: %s','Tipo de parámetro inválido: %s');
   end;
   end;
 end;

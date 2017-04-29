@@ -11,16 +11,17 @@ uses
   Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
   Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
   StdCtrls, LCLIntf, SynFacilUtils, SynFacilHighlighter, MisUtils, Parser,
-  FormPICExplorer, Globales, FormCodeExplorer, FrameSyntaxTree, FormConfig;
+  FormPICExplorer, Globales, FormCodeExplorer, FrameSyntaxTree, FormConfig,
+  PicPasProject, FrameEditView;
 
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
-    acArcAbrir: TAction;
-    acArcGuaCom: TAction;
-    acArcGuardar: TAction;
-    acArcNuevo: TAction;
-    acArcSalir: TAction;
+    acArcOpen: TAction;
+    acArcSaveAs: TAction;
+    acArcSave: TAction;
+    acArcNewFile: TAction;
+    acArcQuit: TAction;
     acBusBuscar: TAction;
     acBusBusSig: TAction;
     acBusReemp: TAction;
@@ -31,6 +32,8 @@ type
     acEdRedo: TAction;
     acEdSelecAll: TAction;
     acEdUndo: TAction;
+    acArcNewProj: TAction;
+    acArcCloseProj: TAction;
     acToolConfig2: TAction;
     acToolConfig: TAction;
     acToolCompil: TAction;
@@ -43,10 +46,10 @@ type
     acViewStatbar: TAction;
     acViewFilePan: TAction;
     edAsm: TSynEdit;
+    fraEditView1: TfraEditView;
     ImgMessages: TImageList;
     ImgActions32: TImageList;
     ImgActions16: TImageList;
-    ImgCompletion: TImageList;
     ListBox1: TListBox;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
@@ -64,6 +67,9 @@ type
     MenuItem21: TMenuItem;
     MenuItem22: TMenuItem;
     MenuItem24: TMenuItem;
+    MenuItem25: TMenuItem;
+    MenuItem26: TMenuItem;
+    MenuItem27: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -81,14 +87,11 @@ type
     mnEdit: TMenuItem;
     mnTools: TMenuItem;
     mnRecents: TMenuItem;
-    OpenDialog1: TOpenDialog;
     panMessages: TPanel;
-    SaveDialog1: TSaveDialog;
     splSynTree: TSplitter;
     Splitter2: TSplitter;
     splEdPas: TSplitter;
     StatusBar1: TStatusBar;
-    edPas: TSynEdit;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     ToolButton10: TToolButton;
@@ -106,11 +109,13 @@ type
     ToolButton7: TToolButton;
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
-    procedure acArcAbrirExecute(Sender: TObject);
-    procedure acArcGuaComExecute(Sender: TObject);
-    procedure acArcGuardarExecute(Sender: TObject);
-    procedure acArcNuevoExecute(Sender: TObject);
-    procedure acArcSalirExecute(Sender: TObject);
+    procedure acArcCloseProjExecute(Sender: TObject);
+    procedure acArcOpenExecute(Sender: TObject);
+    procedure acArcSaveAsExecute(Sender: TObject);
+    procedure acArcSaveExecute(Sender: TObject);
+    procedure acArcNewFileExecute(Sender: TObject);
+    procedure acArcNewProjExecute(Sender: TObject);
+    procedure acArcQuitExecute(Sender: TObject);
     procedure acEdiRedoExecute(Sender: TObject);
     procedure acEdiSelecAllExecute(Sender: TObject);
     procedure acEdiUndoExecute(Sender: TObject);
@@ -122,11 +127,9 @@ type
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
     procedure acViewMsgPanExecute(Sender: TObject);
-    procedure ChangeEditorState;
+    procedure ChangeEditorState(ed: TSynEditor);
     procedure DoSelectSample(Sender: TObject);
     procedure editChangeFileInform;
-    procedure edSpecialLineMarkup(Sender: TObject; Line: integer;
-      var Special: boolean; Markup: TSynSelectedColor);
     procedure FormClose(Sender: TObject; var {%H-}CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
@@ -136,11 +139,11 @@ type
     procedure ListBox1DrawItem({%H-}Control: TWinControl; Index: Integer;
       ARect: TRect; {%H-}State: TOwnerDrawState);
   private
-    edit: TSynFacilEditor;
+    curProj: TPicPasProject;  //Proyecto actual
     hlAssem : TSynFacilSyn;   //resaltador para ensamblador
     fraSynTree: TfraSyntaxTree;  //árbol de sintaxis
     procedure ChangeAppearance;
-    procedure MarcarError(nLin, nCol: integer);
+    procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
     procedure VerificarError;
   public
     procedure SetLanguage(lang: string);
@@ -160,32 +163,7 @@ begin
   //configura panel de mensajes
   ListBox1.Style:=lbOwnerDrawVariable;
   ListBox1.OnDrawItem:=@ListBox1DrawItem;
-  //configuración del editor
-  edit := TSynFacilEditor.Create(edPas, 'SinNombre', 'pas');
-  edPas.Options:=[eoBracketHighlight];  //quita la línea vertical
-  edPas.Options := edPas.Options - [eoSmartTabs];
-  edPas.Options := edPas.Options - [eoTrimTrailingSpaces];
-  edPas.Options := edPas.Options + [eoKeepCaretX];
-  edPas.Options := edPas.Options + [eoTabIndent];  //permite indentar con <Tab>
-  edPas.Options2:= edPas.Options2 + [eoCaretSkipTab];
-  edPas.TabWidth:= 2;
-  edPas.OnSpecialLineMarkup:=@edSpecialLineMarkup;
-//  InicEditorC1(edpas);
-
-  edit.OnChangeEditorState:=@ChangeEditorState;
-  edit.OnChangeFileInform:=@editChangeFileInform;
-  //define paneles
-  edit.PanFileSaved := StatusBar1.Panels[0]; //panel para mensaje "Guardado"
-  edit.PanCursorPos := StatusBar1.Panels[1];  //panel para la posición del cursor
-
-  edit.PanForEndLin := StatusBar1.Panels[2];  //panel para el tipo de delimitador de línea
-  edit.PanCodifFile := StatusBar1.Panels[3];  //panel para la codificación del archivo
-  edit.PanLangName  := StatusBar1.Panels[4];  //panel para el lenguaje
-  edit.PanFileName  := StatusBar1.Panels[5];  //panel para el nombre del archivo
-
-  edit.NewFile;        //para actualizar estado
-  edit.LoadSyntaxFromFile('PicPas_PIC16.xml');
-  edit.hl.IconList := ImgCompletion;
+  fraEditView1.OnChangeEditorState := @ChangeEditorState;;
   //carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
@@ -202,18 +180,18 @@ begin
   AnchorTo(splSynTree, akLeft, fraSynTree);
   edAsm.Align := alRight;
   splEdPas.Align := alRight;
-  edPas.Align := alClient;
+  fraEditView1.Align := alClient;
   //////////
   SetLanguage('en');
+  fraEditView1.SetLanguage('en');
 //  SetLanguage('qu');
-  edit.SetLanguage('en');
-  Config.Iniciar(edPas, edAsm);   //necesario para poder trabajar
+  Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
   ChangeAppearance;   //primera actualización
-  edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
+//  edit.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
   frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
   //carga archivo de ejemplo
-  if FileExists('sample.pas') then edit.LoadFile('sample.pas');
+//  if FileExists('sample.pas') then fraEditView1.AddEdit('sample.pas');
 //  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
@@ -234,13 +212,19 @@ begin
   it := TMenuItem(Sender);
   SamFil := rutSamples + DirectorySeparator + it.Caption + '.pas';
   SamFil := StringReplace(SamFil,'&','',[rfReplaceAll]);
-  //Carga archivo arrastrados
-  if edit.SaveQuery then Exit;   //Verifica cambios
-  edit.LoadFile(SamFil);
+  //Carga archivo
+  fraEditView1.LoadFile(SamFil);
 end;
 procedure TfrmPrincipal.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 begin
-  if edit.SaveQuery then CanClose := false;   //cancela
+  if curProj<>nil then begin
+    if not curProj.Close then begin
+      CanClose := False;  //Cancela
+      exit;
+    end;
+    curProj.Destroy;
+  end;
+//  if edit.SaveQuery then CanClose := false;   //cancela
 end;
 procedure TfrmPrincipal.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
@@ -249,7 +233,6 @@ end;
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
 begin
   hlAssem.Free;
-  edit.Free;
 end;
 procedure TfrmPrincipal.ListBox1DrawItem(Control: TWinControl; Index: Integer;
   ARect: TRect; State: TOwnerDrawState);
@@ -270,24 +253,55 @@ begin
   ListBox1.Canvas.TextOut (ARect.left + ImgMessages.Width + 8 , ARect.Top + 1, txt);
 end;
 procedure TfrmPrincipal.FormDropFiles(Sender: TObject; const FileNames: array of String);
+var
+  i: Integer;
 begin
   //Carga archivo arrastrados
-  if edit.SaveQuery then Exit;   //Verifica cambios
-  edit.LoadFile(FileNames[0]);
-  edit.LoadSyntaxFromPath;  //para que busque el archivo apropiado
+  for i:=0 to high(FileNames) do begin
+    fraEditView1.LoadFile(FileNames[i]);
+  end;
 end;
-procedure TfrmPrincipal.ChangeEditorState;
+procedure TfrmPrincipal.ChangeEditorState(ed: TSynEditor);
 begin
-  acArcGuardar.Enabled:=edit.Modified;
-  acEdUndo.Enabled:=edit.CanUndo;
-  acEdRedo.Enabled:=edit.CanRedo;
+  acArcSave.Enabled:=ed.Modified;
+  acEdUndo.Enabled:=ed.CanUndo;
+  acEdRedo.Enabled:=ed.CanRedo;
   //Para estas acciones no es necesario controlarlas, porque son acciones pre-determinadas
 //  acEdiCortar.Enabled  := edit.canCopy;
 //  acEdiCopiar.Enabled := edit.canCopy;
 //  acEdiPegar.Enabled:= edit.CanPaste;
 end;
 procedure TfrmPrincipal.ChangeAppearance;
+  procedure SetStateActionsProject(state: boolean);
+  begin
+    acArcSave.Enabled := state;
+    acArcSaveAs.Enabled := state;
+    acArcCloseProj.Enabled := state;
+    acEdUndo.Enabled := state;
+    acEdRedo.Enabled := state;
+    acEdCut.Enabled := state;
+    acEdCopy.Enabled := state;
+    acEdPaste.Enabled := state;
+    acEdSelecAll.Enabled := state;
+  end;
 begin
+  if curProj = nil then begin
+    SetStateActionsProject(false);
+    splEdPas.Visible := false;
+    fraSynTree.Visible := false;
+    splSynTree.Visible := false;
+//    exit;
+  end else begin
+    SetStateActionsProject(true);
+    splEdPas.Visible := true;
+    fraSynTree.Visible := true;
+    splSynTree.Visible := true;
+  end;
+  if fraEditView1.Count = 0 then
+    fraEditView1.Visible := false
+  else
+    fraEditView1.Visible := true;
+
   StatusBar1.Visible := Config.ViewStatusbar;
   acViewStatbar.Checked := Config.ViewStatusbar;
   ToolBar1.Visible := Config.ViewToolbar;
@@ -313,54 +327,83 @@ begin
   end;
 end;
 procedure TfrmPrincipal.editChangeFileInform;
+{Actualiza la barra de título, de acuerdo al estado}
+var
+  ed: TSynEditor;
 begin
-  //actualiza nombre de archivo
-  Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + edit.NomArc;
-end;
-procedure TfrmPrincipal.edSpecialLineMarkup(Sender: TObject; Line: integer;
-  var Special: boolean; Markup: TSynSelectedColor);
-begin
-  if Line = edit.linErr then begin
-      Special := True ;  //marca como línea especial
-      Markup.Background := TColor($3030A0); //color de fondo
+  if curProj= nil then begin
+    //Modo de archivos. Actualiza nombre de archivo
+    if fraEditView1.Count = 0 then begin
+      Caption := NOM_PROG + ' - ' + VER_PROG  + ' - No files.';
+    end else if fraEditView1.Count = 1 then begin
+       ed := fraEditView1.ActiveEditor;
+       Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.NomArc;
+    end else begin  //Hay varios
+      ed := fraEditView1.ActiveEditor;
+      Caption := NOM_PROG + ' - ' + VER_PROG  + ' - Several Files.';
+    end;
+  end else begin
+    //Hay un proyecto abierto
+    Caption := NOM_PROG + ' - ' + VER_PROG  + ' - Project: ' + curProj.name;
   end;
 end;
 
 /////////////////// Acciones de Archivo /////////////////////
-procedure TfrmPrincipal.acArcNuevoExecute(Sender: TObject);
+procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
 begin
-  edit.NewFile;
+  fraEditView1.AddEdit;
+  ChangeAppearance;
 end;
-procedure TfrmPrincipal.acArcAbrirExecute(Sender: TObject);
+procedure TfrmPrincipal.acArcNewProjExecute(Sender: TObject);
 begin
-  OpenDialog1.Filter:='Pascal files|*.pas|All files|*.*';
-  edit.OpenDialog(OpenDialog1);
+  if curProj<>nil then begin
+    if not curProj.Close then exit;
+    curProj.Destroy;
+  end;
+  curProj := TPicPasProject.Create;
+  curProj.Open;
+  fraEditView1.AddEdit;
+  ChangeAppearance;
+end;
+procedure TfrmPrincipal.acArcOpenExecute(Sender: TObject);
+begin
+  fraEditView1.OpenDialog('Pascal files|*.pas|All files|*.*');
   Config.SaveToFile;  //para que guarde el nombre del último archivo abierto
 end;
-procedure TfrmPrincipal.acArcGuardarExecute(Sender: TObject);
+procedure TfrmPrincipal.acArcCloseProjExecute(Sender: TObject);
 begin
-  edit.SaveFile;
+  if curProj<>nil then begin
+    if not curProj.Close then exit;
+    curProj.Destroy;
+  end;
 end;
-procedure TfrmPrincipal.acArcGuaComExecute(Sender: TObject);
+procedure TfrmPrincipal.acArcSaveExecute(Sender: TObject);
 begin
-  edit.SaveAsDialog(SaveDialog1);
+  fraEditView1.ActiveEditor.SaveFile;
 end;
-procedure TfrmPrincipal.acArcSalirExecute(Sender: TObject);
+procedure TfrmPrincipal.acArcSaveAsExecute(Sender: TObject);
+begin
+  fraEditView1.SaveAsDialog;
+end;
+procedure TfrmPrincipal.acArcQuitExecute(Sender: TObject);
 begin
   frmPrincipal.Close;
 end;
 //////////// Acciones de Edición ////////////////
 procedure TfrmPrincipal.acEdiUndoExecute(Sender: TObject);
 begin
-  edit.Undo;
+  if fraEditView1.ActiveEditor= nil then exit;
+  fraEditView1.ActiveEditor.Undo;
 end;
 procedure TfrmPrincipal.acEdiRedoExecute(Sender: TObject);
 begin
-  edit.Redo;
+  if fraEditView1.ActiveEditor= nil then exit;
+  fraEditView1.ActiveEditor.Redo;
 end;
 procedure TfrmPrincipal.acEdiSelecAllExecute(Sender: TObject);
 begin
-  edPas.SelectAll;
+  if fraEditView1.ActiveEditor= nil then exit;
+  fraEditView1.ActiveEditor.SelectAll;
 end;
 //////////// Acciones de Ver ///////////////
 procedure TfrmPrincipal.acViewStatbarExecute(Sender: TObject);
@@ -382,11 +425,12 @@ procedure TfrmPrincipal.acToolCompilExecute(Sender: TObject);
 var
   timeCnt: DWORD;
 begin
+  if fraEditView1.ActiveEditor=nil then exit;
   self.SetFocus;
   ListBox1.Items.Clear;
   timeCnt:=GetTickCount;
   ListBox1.Items.Add('Starting Compilation ...');
-  cxp.Compile(edit.NomArc, edPas.Lines);
+  cxp.Compile(fraEditView1.ActiveEditor.NomArc, fraEditView1.ActiveEditor.SynEdit.Lines);
   if cxp.HayError then begin
     ListBox1.Items.Add(cxp.PErr.TxtErrorRC);
     VerificarError;
@@ -438,44 +482,33 @@ begin
     //Selecciona posición de error en el Editor
     If cxp.ArcError <> '' Then begin
         //Se ha identificado el archivo con el error
-        If edit.NomArc = '' Then begin
-            //Tenemos el editor libre para mostrar el archivo
-            edit.LoadFile(cxp.ArcError);
-            //Ubicamos número de línea, si hay
-            MarcarError(cxp.nLinError,cxp.nColError);
-            {If MostrarError Then }cxp.ShowError;
-        end Else begin
-            //Hay un archivo cargado
-            If cxp.ArcError = edit.NomArc Then begin
-                //El error está en el mismo archivo, lo mostramos
-                If cxp.nLinError <> 0 Then begin
-                   MarcarError(cxp.nLinError,cxp.nColError);
-                   edPas.Invalidate;
-                end;
-                {If MostrarError Then }cxp.ShowError;
-            end Else begin
-                //Es otro archivo. Lo abre en otra ventana
-//               AbrirPreSQL(cxp.ArcError, cxp.TxtError);
-            end;
+        if not fraEditView1.SelectEditor(cxp.ArcError) then begin
+           //No está abierto el archivo, lo abrimos
+           fraEditView1.LoadFile(cxp.ArcError);
         end;
-    End else begin   //no hay archivo de error
+         //Ya lo tenemos cargado
+        If cxp.nLinError <> 0 Then begin
+           MarcarError(fraEditView1.ActiveEditor, cxp.nLinError, cxp.nColError);
+        end;
+        {If MostrarError Then }cxp.ShowError;
+    end else begin   //no hay archivo de error
       {If MostrarError Then }
       cxp.ShowError;
     end;
 End;
-procedure TfrmPrincipal.MarcarError(nLin, nCol: integer);
+procedure TfrmPrincipal.MarcarError(ed: TSynEditor; nLin, nCol: integer);
 begin
   //posiciona curosr
-  edPas.CaretX := nCol;
-  edPas.CaretY := nLin;
-  //define línea con error
-  edit.linErr := nLin;
-  edPas.Invalidate;  //refresca
+  ed.SynEdit.CaretX := nCol;
+  ed.SynEdit.CaretY := nLin;
+  //Define línea con error
+  ed.linErr := nLin;
+  ed.SynEdit.Invalidate;  //refresca
 end;
 procedure TfrmPrincipal.SetLanguage(lang: string);
 begin
   Config.SetLanguage(lang);
-  frmCodeExplorer.SetLanguage('en');
+  frmCodeExplorer.SetLanguage(lang);
   case lowerCase(lang) of
   'es': begin
       //menú principal
@@ -485,16 +518,18 @@ begin
       mnView.Caption:='&Ver';
       mnTools.Caption:='&Herramientas';
 
-      acArcNuevo.Caption := '&Nuevo';
-      acArcNuevo.Hint := 'Nuevo archivo';
-      acArcAbrir.Caption := '&Abrir...';
-      acArcAbrir.Hint := 'Abrir archivo';
-      acArcGuardar.Caption := '&Guardar';
-      acArcGuardar.Hint := 'Guardar archivo';
-      acArcGuaCom.Caption := 'G&uardar Como...';
-      acArcGuaCom.Hint := 'Guardar como';
-      acArcSalir.Caption := '&Salir';
-      acArcSalir.Hint := 'Cerrar el programa';
+      acArcNewFile.Caption := 'Nuevo &Archivo';
+      acArcNewFile.Hint := 'Nuevo Archivo';
+      acArcNewProj.Caption := 'Nuevo &Proyecto';
+      acArcNewProj.Hint := 'Nuevo Proyecto';
+      acArcOpen.Caption := '&Abrir...';
+      acArcOpen.Hint := 'Abrir archivo';
+      acArcSave.Caption := '&Guardar';
+      acArcSave.Hint := 'Guardar archivo';
+      acArcSaveAs.Caption := 'G&uardar Como...';
+      acArcSaveAs.Hint := 'Guardar como';
+      acArcQuit.Caption := '&Salir';
+      acArcQuit.Hint := 'Cerrar el programa';
       acEdUndo.Caption := '&Deshacer';
       acEdUndo.Hint := 'Deshacer';
       acEdRedo.Caption := '&Rehacer';
@@ -534,7 +569,64 @@ begin
       acToolConfig.Caption:='Configuración';
       acToolConfig.Hint := 'Ver configuración';
     end;
-  'en': begin
+  'qu': begin
+      //menú principal
+      mnFile.Caption:='&Khipu';
+      mnEdit.Caption:='&Edición';
+      mnFind.Caption:='&Mask''ay';
+      mnView.Caption:='&Rikhuy';
+      mnTools.Caption:='&Llank''ana';
+
+      acArcNewFile.Caption := '&Nuevo';
+      acArcNewFile.Hint := 'Nuevo archivo';
+      acArcOpen.Caption := '&Abrir...';
+      acArcOpen.Hint := 'Abrir archivo';
+      acArcSave.Caption := '&Guardar';
+      acArcSave.Hint := 'Guardar archivo';
+      acArcSaveAs.Caption := 'G&uardar Como...';
+      acArcSaveAs.Hint := 'Guardar como';
+      acArcQuit.Caption := '&Salir';
+      acArcQuit.Hint := 'Cerrar el programa';
+      acEdUndo.Caption := '&Deshacer';
+      acEdUndo.Hint := 'Deshacer';
+      acEdRedo.Caption := '&Rehacer';
+      acEdRedo.Hint := 'Reahacer';
+      acEdCut.Caption := 'Cor&tar';
+      acEdCut.Hint := 'Cortar';
+      acEdCopy.Caption := '&Copiar';
+      acEdCopy.Hint := 'Copiar';
+      acEdPaste.Caption := '&Pegar';
+      acEdPaste.Hint := 'Pegar';
+      acEdSelecAll.Caption := 'Seleccionar &Todo';
+      acEdSelecAll.Hint := 'Seleccionar todo';
+      acEdModCol.Caption := 'Modo Columna';
+      acEdModCol.Hint := 'Modo columna';
+      acBusBuscar.Caption := 'Buscar...';
+      acBusBuscar.Hint := 'Buscar texto';
+      acBusBusSig.Caption := 'Buscar &Siguiente';
+      acBusBusSig.Hint := 'Buscar Siguiente';
+      acBusReemp.Caption := '&Remplazar...';
+      acBusReemp.Hint := 'Reemplazar texto';
+
+      acViewMsgPan.Caption:='Panel de &Mensajes';
+      acViewMsgPan.Hint:='Mostrar u Ocultar el Panel de Mensajes';
+      acViewStatbar.Caption:='Barra de &Estado';
+      acViewStatbar.Hint:='Mostrar u Ocultar la barra de estado';
+      acViewToolbar.Caption:='Barra de &Herramientas';
+      acViewToolbar.Hint:='Mostrar u Ocultar la barra de herramientas';
+
+      acToolCompil.Caption:='&Compilar';
+      acToolCompil.Hint:='Compila el código fuente';
+      acToolComEjec.Caption:='Compilar y Ej&ecutar';
+      acToolComEjec.Hint:='Compilar y Ejecutar';
+      acToolPICExpl.Caption:='E&xplorador de PIC';
+      acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
+      acToolCodExp.Caption:='Explorador de Co&digo';
+      acToolCodExp.Hint:='Abre el explorador de Código';
+      acToolConfig.Caption:='Configuración';
+      acToolConfig.Hint := 'Ver configuración';
+    end;
+  else begin  //Inglés o idioma desconocido
       //menú principal
       mnFile.Caption:='&File';
       mnEdit.Caption:='&Edit';
@@ -542,16 +634,18 @@ begin
       mnView.Caption:='&View';
       mnTools.Caption:='&Tools';
 
-      acArcNuevo.Caption := '&New';
-      acArcNuevo.Hint := 'New File';
-      acArcAbrir.Caption := '&Open...';
-      acArcAbrir.Hint := 'Open file';
-      acArcGuardar.Caption := '&Save';
-      acArcGuardar.Hint := 'Save file';
-      acArcGuaCom.Caption := 'Sa&ve As ...';
-      acArcGuaCom.Hint := 'Save file as ...';
-      acArcSalir.Caption := '&Quit';
-      acArcSalir.Hint := 'Close the program';
+      acArcNewFile.Caption := 'New &File';
+      acArcNewFile.Hint := 'New File';
+      acArcNewProj.Caption := 'New &Project';
+      acArcNewProj.Hint := 'New &Project';
+      acArcOpen.Caption := '&Open...';
+      acArcOpen.Hint := 'Open file';
+      acArcSave.Caption := '&Save';
+      acArcSave.Hint := 'Save file';
+      acArcSaveAs.Caption := 'Sa&ve As ...';
+      acArcSaveAs.Hint := 'Save file as ...';
+      acArcQuit.Caption := '&Quit';
+      acArcQuit.Hint := 'Close the program';
       acEdUndo.Caption := '&Undo';
       acEdUndo.Hint := 'Undo';
       acEdRedo.Caption := '&Redo';
@@ -591,66 +685,8 @@ begin
       acToolConfig.Caption := '&Settings';
       acToolConfig.Hint := 'Settings dialog';
     end;
-  'qu': begin
-      //menú principal
-      mnFile.Caption:='&Khipu';
-      mnEdit.Caption:='&Edición';
-      mnFind.Caption:='&Mask''ay';
-      mnView.Caption:='&Rikhuy';
-      mnTools.Caption:='&Llank''ana';
-
-      acArcNuevo.Caption := '&Nuevo';
-      acArcNuevo.Hint := 'Nuevo archivo';
-      acArcAbrir.Caption := '&Abrir...';
-      acArcAbrir.Hint := 'Abrir archivo';
-      acArcGuardar.Caption := '&Guardar';
-      acArcGuardar.Hint := 'Guardar archivo';
-      acArcGuaCom.Caption := 'G&uardar Como...';
-      acArcGuaCom.Hint := 'Guardar como';
-      acArcSalir.Caption := '&Salir';
-      acArcSalir.Hint := 'Cerrar el programa';
-      acEdUndo.Caption := '&Deshacer';
-      acEdUndo.Hint := 'Deshacer';
-      acEdRedo.Caption := '&Rehacer';
-      acEdRedo.Hint := 'Reahacer';
-      acEdCut.Caption := 'Cor&tar';
-      acEdCut.Hint := 'Cortar';
-      acEdCopy.Caption := '&Copiar';
-      acEdCopy.Hint := 'Copiar';
-      acEdPaste.Caption := '&Pegar';
-      acEdPaste.Hint := 'Pegar';
-      acEdSelecAll.Caption := 'Seleccionar &Todo';
-      acEdSelecAll.Hint := 'Seleccionar todo';
-      acEdModCol.Caption := 'Modo Columna';
-      acEdModCol.Hint := 'Modo columna';
-      acBusBuscar.Caption := 'Buscar...';
-      acBusBuscar.Hint := 'Buscar texto';
-      acBusBusSig.Caption := 'Buscar &Siguiente';
-      acBusBusSig.Hint := 'Buscar Siguiente';
-      acBusReemp.Caption := '&Remplazar...';
-      acBusReemp.Hint := 'Reemplazar texto';
-
-      acViewMsgPan.Caption:='Panel de &Mensajes';
-      acViewMsgPan.Hint:='Mostrar u Ocultar el Panel de Mensajes';
-      acViewStatbar.Caption:='Barra de &Estado';
-      acViewStatbar.Hint:='Mostrar u Ocultar la barra de estado';
-      acViewToolbar.Caption:='Barra de &Herramientas';
-      acViewToolbar.Hint:='Mostrar u Ocultar la barra de herramientas';
-
-      acToolCompil.Caption:='&Compilar';
-      acToolCompil.Hint:='Compila el código fuente';
-      acToolComEjec.Caption:='Compilar y Ej&ecutar';
-      acToolComEjec.Hint:='Compilar y Ejecutar';
-      acToolPICExpl.Caption:='E&xplorador de PIC';
-      acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
-      acToolCodExp.Caption:='Explorador de Co&digo';
-      acToolCodExp.Hint:='Abre el explorador de Código';
-      acToolConfig.Caption:='Configuración';
-      acToolConfig.Hint := 'Ver configuración';
-    end;
   end;
 end;
 
 end.
-
-
+//722

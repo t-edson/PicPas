@@ -110,7 +110,7 @@ protected  //Eventos del compilador
   procedure CloseFunction;
   function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
   procedure CreateParam(fun: TxpEleFun; parName: string; typStr: string);
-  procedure CaptureParamsSys;
+  function CaptureTok(tok: string): boolean;
   procedure CaptureParams;
   //Mmanejo de expresiones
   function GetOperand: TOperand; virtual;
@@ -122,6 +122,7 @@ protected  //Eventos del compilador
 //  procedure CreateVariable(varName, varType: string);
 public
   TreeElems: TXpTreeElements; //tablas de elementos del lenguaje
+  listFunSys: TxpEleFuns;   //lista de funciones del sistema
 private
   typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
   function GetExpression(const prec: Integer): TOperand;
@@ -382,7 +383,8 @@ begin
   fun.typ := typ;
   fun.proc:= proc;
   fun.ClearParams;
-  TreeElems.AddElement(fun, false);  //no verifica duplicidad
+//  TreeElems.AddElement(fun, false);  //no verifica duplicidad
+  listFunSys.Add(fun);  //Las funciones de sistema son accesibles siempre
   Result := fun;
 end;
 procedure TCompilerBase.CreateParam(fun: TxpEleFun; parName: string;
@@ -400,41 +402,17 @@ begin
   //agrega
   fun.CreateParam(parName, typ);
 end;
-procedure TCompilerBase.CaptureParamsSys;
-//Lee los parámetros de una función en la función interna funcs[0]
+function TCompilerBase.CaptureTok(tok: string): boolean;
+{Toma el token indicado del contexto de entrada. Si no lo encuentra, genera error y
+devuelve FALSE.}
 begin
-  SkipWhites;
-  func0.ClearParams;
-  if EOBlock or EOExpres then begin
-    //no tiene parámetros
-  end else begin
-    //Debe haber parámetros
-    if cIn.tok<>'(' then begin
-      GenError('"(" expected.');
-      exit;
-    end;
-    cin.Next;
-    repeat
-      GetExpressionE(0, pexPARSY);  //captura parámetro
-      if perr.HayError then exit;   //aborta
-      //guarda tipo de parámetro
-      func0.CreateParam('',res.typ);
-      if cIn.tok = ',' then begin
-        cIn.Next;   //toma separador
-        SkipWhites;
-      end else begin
-        //no sigue separador de parámetros,
-        //debe terminar la lista de parámetros
-        //¿Verificar EOBlock or EOExpres ?
-        break;
-      end;
-    until false;
-    //busca paréntesis final
-    if cIn.tok<>')' then begin
-      GenError('")" expected.'); exit;
-    end;
-    cin.Next;
+  //Debe haber parámetros
+  if cIn.tok<>tok then begin
+    GenError('"%s" expected.', [tok]);
+    exit(false);
   end;
+  cin.Next;
+  exit(true);
 end;
 procedure TCompilerBase.CaptureParams;
 //Lee los parámetros de una función en la función interna funcs[0]
@@ -445,11 +423,7 @@ begin
     //no tiene parámetros
   end else begin
     //Debe haber parámetros
-    if cIn.tok<>'(' then begin
-      GenError('"(" expected.');
-      exit;
-    end;
-    cin.Next;
+    if not CaptureTok('(') then exit;
     repeat
       GetExpressionE(0, pexPARAM);  //captura parámetro
       if perr.HayError then exit;   //aborta
@@ -466,10 +440,7 @@ begin
       end;
     until false;
     //busca paréntesis final
-    if cIn.tok<>')' then begin
-      GenError('")" expected.'); exit;
-    end;
-    cin.Next;
+    if not CaptureTok(')') then exit;
   end;
 end;
 //Manejo de expresiones
@@ -499,26 +470,18 @@ begin
   end else if cIn.tokType = tnSysFunct then begin  //función del sistema
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
      versiones, sobrecargadas de la misma función.}
-    tmp := cIn.tok;  //guarda nombre de función
+    tmp := UpCase(cIn.tok);  //guarda nombre de función
     cIn.Next;    //Toma identificador
-    CaptureParamsSys;  //primero lee parámetros
-    if HayError then exit;
-    //Aquí se identifica la función exacta, que coincida con sus parámetros
-    { TODO : No es la forma más eficiente, explorar nuevamente todo el NAMESPACE.
-     Tal vez se debería usar funciones de tipo FindFirst y FindNExt }
-    case TreeElems.FindFuncWithParams(tmp, func0, xfun) of
-    //TFF_NONE:      //No debería pasar esto
-    TFF_PARTIAL:   //encontró la función, pero no coincidió xcon los parámetros
-       GenError('Type parameters error on %s', [tmp +'()']);
-    TFF_FULL:     //encontró completamente
-      begin   //encontró
-        Result.catOp :=coExpres; //expresión
-        Result.typ:=xfun.typ;
-        Result.txt:= cIn.tok;    //toma el texto
-        xfun.proc(xfun);  //llama al código de la función
+    //Busca la función
+    for xfun in listFunSys do begin
+      if (Upcase(xfun.name) = tmp) then begin
+        {Encontró. Llama a la función de procesamiento, quien se encargará de
+        extraer los parámetros y analizar la sintaxis.}
+        xfun.proc(xfun);
         exit;
       end;
     end;
+    GenError('Not implemented.');
   end else if cIn.tokType = tnIdentif then begin  //puede ser variable, constante, función
     ele := TreeElems.FindFirst(cIn.tok);  //identifica elemento
     if ele = nil then begin
@@ -837,10 +800,7 @@ procedure TCompilerBase.GetExpressionE(const prec: Integer;
 tiene diversos puntos de salida y Se necesita llamar siempre a expr_end() al
 terminar.
 Toma una expresión del contexto de entrada y devuelve el resultado em "res".
-"isParam" indica que la expresión evaluada es el parámetro de una función.
-"indep", indica que la expresión que se está evaluando es anidada pero es independiente
-de la expresion que la contiene, así que se puede liberar los registros o pila.
-}
+"isParam" indica que la expresión evaluada es el parámetro de una función.}
 begin
   Inc(ExprLevel);  //cuenta el anidamiento
   {$IFDEF LogExpres}
@@ -883,6 +843,7 @@ begin
   typs := TTypes.Create(true);
   //Crea arbol de elementos
   TreeElems := TXpTreeElements.Create;
+  listFunSys:= TxpEleFuns.Create(true);
   //inicia la sintaxis
   xLex := TSynFacilSyn.Create(nil);   //crea lexer
   func0 := TxpEleFun.Create;  //crea la función 0, para uso interno
@@ -919,6 +880,7 @@ begin
   cIn.Destroy; //Limpia lista de Contextos
   func0.Destroy;
   xLex.Free;
+  listFunSys.Destroy;
   TreeElems.Destroy;
   typs.Free;
   inherited Destroy;
@@ -1049,7 +1011,6 @@ function TOperand.FindOperator(const oper: string): TxpOperator;
 begin
   Result := typ.FindBinaryOperator(oper);
 end;
-
 procedure SetLanguage(lang: string);
 begin
   case lang of
@@ -1062,8 +1023,7 @@ begin
     dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
     dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
     dicSet('";" expected.', 'Se esperaba ";"');
-    dicSet('"(" expected.', 'Se esperaba "("');
-    dicSet('")" expected.', 'Se esperaba ")"');
+    dicSet('"%s" expected.', 'Se esperaba "%s"');
     dicSet('Type parameters error on %s', 'Error en tipo de parámetros de %s');
     dicSet('Unknown identifier: %s', 'Identificador desconocido: %s');
     dicSet('Function not implemented: %s', 'Función no implementada: "%s"');

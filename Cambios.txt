@@ -1,3 +1,27 @@
+PicPas 0.5.4
+============
+Se crea el tipo TxpEleFuns.
+Se crea la lista TCOmpilerBase.listFunSys, para alamcenar a las funciones del sistema.
+Se modifica TCompilerBase.GetOperand, para que pase el control a la función del sistema
+sin extraer os parámetros.
+Se elimina TCompilerBase.CaptureParamsSys.
+Se crea TCompilerBase.CaptureTok(), y se simplifica TCompilerBase.CaptureParams;
+Se cambia la forma en que se declaran las funciones del sistema. Se eliminan los parámetros
+y se deja el procesamiento por código.
+Se implementan las funciones del sistema con el nuevo esquema de trabajo.
+Se crean los métodos TxpEleVar.AbsAdrrL y TxpEleVar.AbsAdrrH.
+Se corrigen los nombres para los bytes de las variables Word, en el código ensamblador. 
+Ahora aparecen como <nombre>@<byte>
+Se crea la unidad PicPasProject, para las definiciones de proyecto.
+Se crea el concepto de Proyecto, y se modifica la interfaz para trabajar con proyectos.
+
+
+PENDIENTES
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la llamada correcta para las funciones del sistema y de usuario.
+
+
 PicPas 0.5.3
 ============
 Se mueve la declaración de TPicRegister y TPicRegisterPIC, de la undiad GenCodPic a 
@@ -21,10 +45,6 @@ Se eliminan TGenCodPic.CreateVarBit() y TGenCodPic.CreateVarByte().
 Se corrige un error en la evaluación de operaciones bit de tipo coExpres_Expres.
 Se mejora considerablemente el código ensamblador generado.
 
-PENDIENTES
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la llamada correcta para las funciones del sistema y de usuario.
 
 PicPas 0.5.2
 ============

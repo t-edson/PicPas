@@ -897,6 +897,7 @@ procedure TCompiler.CompileFile(iniMem: word);
 la posición iniMem}
 begin
   TreeElems.Clear;
+  listFunSys.Clear;
   CreateSystemElements;  //Crea los elementos del sistema
   //ClearTypes;      //limpia los tipos
   //Inicia PIC
@@ -1045,7 +1046,11 @@ begin
     //como actualizar estado
   end;
 end;
-
+function AdrStr(absAdr: word): string;
+{formatea una dirección en cadena.}
+begin
+  Result := '0x' + IntToHex(AbsAdr, 3);
+end;
 procedure TCompiler.RAMusage(lins: TStrings; varDecType: TVarDecType);
 {Devuelve una cadena con información sobre el uso de la memoria.}
 var
@@ -1071,15 +1076,16 @@ begin
       end;
     end;
     dvtEQU: begin;
-      adStr := '0x' + IntToHex(v.AbsAdrr, 3);
       if (v.typ = typBool) or (v.typ = typBit) then begin
-        lins.Add('#define ' + v.name + ' ' + adStr+ ','+IntToStr(v.adrBit.bit));
+        lins.Add('#define ' + v.name + ' ' + AdrStr(v.AbsAdrr) + ',' +
+                                             IntToStr(v.adrBit.bit));
       end else if v.typ = typByte then begin
-        lins.Add(v.name + ' EQU ' +  adStr);
+        lins.Add(v.name + ' EQU ' +  AdrStr(v.AbsAdrr));
       end else if v.typ = typWord then begin
-        lins.Add(v.name + ' EQU ' +  adStr);
+        lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAdrrL));
+        lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAdrrH));
       end else begin
-        lins.Add('"' + v.name + '"->' +  adStr);
+        lins.Add('"' + v.name + '"->' +  AdrStr(v.AbsAdrr));
       end;
     end;
     end;
@@ -1088,6 +1094,7 @@ begin
   if (listRegAux.Count>0) or (listRegAuxBit.Count>0) then begin
     lins.Add(';------ Work and Aux. Registers ------');
     for reg in listRegAux do begin
+      if not reg.assigned then continue;  //puede haber registros de trabajo no asignados
       nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
       adStr := '0x' + IntToHex(reg.AbsAdrr, 3);
       lins.Add(nam + ' EQU ' +  adStr);

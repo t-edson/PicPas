@@ -1,4 +1,4 @@
-PicPas 0.5.3
+PicPas 0.5.4
 =============
 Pascal compiler for PIC microcontrollers.
 

@@ -126,14 +126,12 @@ type
   { TxpEleVar }
   //Clase para modelar a las variables
   TxpEleVar = class(TxpElement)
-    //direción física. Usado para implementar un compilador
-//    offs: TVarOffs;
-//    bank: TVarBank;  //banco o segmento. Usado solo en algunas arquitecturas
-//    bit : byte;      //posición del bit. Usado para variables bit o booleanas.
     adrBit: TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
     adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Word
     adrByte1: TPicRegister;   //Dirección física, cuando es de tipo Word
     function AbsAdrr: word;   //Devuelve la dirección absoluta de la variable
+    function AbsAdrrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
+    function AbsAdrrH: word;   //Devuelve la dirección absoluta de la variable (HIGH)
     function AdrrString: string;  //Devuelve la dirección física como cadena
     function BitMask: byte;  //Máscara de bit, de acuerdo al valor del campo "bit".
     constructor Create; override;
@@ -161,7 +159,7 @@ type
     function DuplicateIn(list: TObject): boolean; override;
     constructor Create; override;
   end;
-//  TxpFuns = specialize TFPGObjectList<TxpFun>;
+  TxpEleFuns = specialize TFPGObjectList<TxpEleFun>;
 
   { TXpTreeElements }
   {Árbol de elementos. Solo se espera que haya una instacia de este objeto. Aquí es
@@ -291,6 +289,25 @@ begin
     Result := ADRR_ERROR;
   end;
 end;
+function TxpEleVar.AbsAdrrL: word;
+{Dirección absoluta de la variable de menor pero, cuando es de tipo WORD.}
+begin
+  if typ = typWord then begin
+    Result := adrByte0.AbsAdrr;
+  end else begin
+    Result := ADRR_ERROR;
+  end;
+end;
+function TxpEleVar.AbsAdrrH: word;
+{Dirección absoluta de la variable de mayor pero, cuando es de tipo WORD.}
+begin
+  if typ = typWord then begin
+    Result := adrByte1.AbsAdrr;
+  end else begin
+    Result := ADRR_ERROR;
+  end;
+end;
+
 function TxpEleVar.AdrrString: string;
 {Devuelve una cadena, que representa a la dirección física.}
 begin
