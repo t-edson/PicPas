@@ -1,3 +1,12 @@
+PicPas 0.5.5
+============
+Se deja de usar el componenet PageControl, como contenedor de los editores.
+Se hacen importantes cambios con respecto a la interfaz gráfica. Se crea el frame 
+FrameEditView y se implementa un sistema de pestañas, para manejar múltiples editores.
+Se re-escriben diversas funciones de manejo de archivos en FrameEditView y se modifica
+la unidad principal para manejar mejor, el sistema de múltiples pestañas.
+
+
 PicPas 0.5.4
 ============
 Se crea el tipo TxpEleFuns.

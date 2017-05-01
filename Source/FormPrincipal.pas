@@ -10,9 +10,9 @@ interface
 uses
   Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
   Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
-  StdCtrls, LCLIntf, SynFacilUtils, SynFacilHighlighter, MisUtils, Parser,
-  FormPICExplorer, Globales, FormCodeExplorer, FrameSyntaxTree, FormConfig,
-  PicPasProject, FrameEditView;
+  StdCtrls, LCLIntf, LCLType, SynFacilUtils, SynFacilHighlighter, MisUtils,
+  Parser, FormPICExplorer, Globales, FormCodeExplorer, FrameSyntaxTree,
+  FormConfig, PicPasProject, FrameEditView;
 
 type
   { TfrmPrincipal }
@@ -34,6 +34,7 @@ type
     acEdUndo: TAction;
     acArcNewProj: TAction;
     acArcCloseProj: TAction;
+    acArcCloseFile: TAction;
     acToolConfig2: TAction;
     acToolConfig: TAction;
     acToolCompil: TAction;
@@ -70,6 +71,7 @@ type
     MenuItem25: TMenuItem;
     MenuItem26: TMenuItem;
     MenuItem27: TMenuItem;
+    MenuItem28: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -109,6 +111,7 @@ type
     ToolButton7: TToolButton;
     ToolButton8: TToolButton;
     ToolButton9: TToolButton;
+    procedure acArcCloseFileExecute(Sender: TObject);
     procedure acArcCloseProjExecute(Sender: TObject);
     procedure acArcOpenExecute(Sender: TObject);
     procedure acArcSaveAsExecute(Sender: TObject);
@@ -133,6 +136,7 @@ type
     procedure FormClose(Sender: TObject; var {%H-}CloseAction: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -261,6 +265,16 @@ begin
     fraEditView1.LoadFile(FileNames[i]);
   end;
 end;
+procedure TfrmPrincipal.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Shift = [ssCtrl]) and (Key = VK_TAB) then begin
+    if fraEditView1.HasFocus then fraEditView1.SelectNextEditor;
+  end;
+  if (Shift = [ssShift, ssCtrl]) and (Key = VK_TAB) then begin
+    if fraEditView1.HasFocus then fraEditView1.SelectPrevEditor;
+  end;
+end;
 procedure TfrmPrincipal.ChangeEditorState(ed: TSynEditor);
 begin
   acArcSave.Enabled:=ed.Modified;
@@ -275,7 +289,6 @@ procedure TfrmPrincipal.ChangeAppearance;
   procedure SetStateActionsProject(state: boolean);
   begin
     acArcSave.Enabled := state;
-    acArcSaveAs.Enabled := state;
     acArcCloseProj.Enabled := state;
     acEdUndo.Enabled := state;
     acEdRedo.Enabled := state;
@@ -297,10 +310,15 @@ begin
     fraSynTree.Visible := true;
     splSynTree.Visible := true;
   end;
-  if fraEditView1.Count = 0 then
-    fraEditView1.Visible := false
-  else
+  if fraEditView1.Count = 0 then begin
+    //No hay ventanas de edición abiertas
+    fraEditView1.Visible := false;
+    acArcSaveAs.Enabled := false;
+  end else begin
+    //Hay ventanas de edición abiertas
     fraEditView1.Visible := true;
+    acArcSaveAs.Enabled := true;
+  end;
 
   StatusBar1.Visible := Config.ViewStatusbar;
   acViewStatbar.Checked := Config.ViewStatusbar;
@@ -351,8 +369,9 @@ end;
 /////////////////// Acciones de Archivo /////////////////////
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
 begin
-  fraEditView1.AddEdit;
+  fraEditView1.NewFile;
   ChangeAppearance;
+  fraEditView1.SetFocus;
 end;
 procedure TfrmPrincipal.acArcNewProjExecute(Sender: TObject);
 begin
@@ -368,7 +387,14 @@ end;
 procedure TfrmPrincipal.acArcOpenExecute(Sender: TObject);
 begin
   fraEditView1.OpenDialog('Pascal files|*.pas|All files|*.*');
+  ChangeAppearance;
+  fraEditView1.SetFocus;
   Config.SaveToFile;  //para que guarde el nombre del último archivo abierto
+end;
+procedure TfrmPrincipal.acArcCloseFileExecute(Sender: TObject);
+begin
+  fraEditView1.CloseEditor;
+  ChangeAppearance;
 end;
 procedure TfrmPrincipal.acArcCloseProjExecute(Sender: TObject);
 begin
@@ -379,7 +405,7 @@ begin
 end;
 procedure TfrmPrincipal.acArcSaveExecute(Sender: TObject);
 begin
-  fraEditView1.ActiveEditor.SaveFile;
+  fraEditView1.SaveFile;
 end;
 procedure TfrmPrincipal.acArcSaveAsExecute(Sender: TObject);
 begin

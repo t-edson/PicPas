@@ -1,5 +1,5 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 471
+  Left = 523
   Height = 583
   Top = 171
   Width = 862
@@ -7,12 +7,14 @@ object frmPrincipal: TfrmPrincipal
   Caption = 'frmPrincipal'
   ClientHeight = 563
   ClientWidth = 862
+  KeyPreview = True
   Menu = MainMenu1
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnDropFiles = FormDropFiles
+  OnKeyDown = FormKeyDown
   OnShow = FormShow
   LCLVersion = '1.6.2.0'
   object StatusBar1: TStatusBar
@@ -682,8 +684,8 @@ object frmPrincipal: TfrmPrincipal
     Align = alNone
   end
   inline fraEditView1: TfraEditView
-    Left = 192
-    Top = 80
+    Left = 232
+    Top = 97
     TabOrder = 7
   end
   object ImgActions16: TImageList
@@ -1727,6 +1729,7 @@ object frmPrincipal: TfrmPrincipal
       Hint = 'New File'
       ImageIndex = 2
       OnExecute = acArcNewFileExecute
+      ShortCut = 16462
     end
     object acEdUndo: TAction
       Category = 'Edit'
@@ -1860,7 +1863,7 @@ object frmPrincipal: TfrmPrincipal
     end
     object acArcOpen: TAction
       Category = 'Arc'
-      Caption = '&Abrir...'
+      Caption = '&Open...'
       Hint = 'Abrir Archivo'
       ImageIndex = 3
       OnExecute = acArcOpenExecute
@@ -1868,7 +1871,7 @@ object frmPrincipal: TfrmPrincipal
     end
     object acArcSave: TAction
       Category = 'Arc'
-      Caption = '&Guardar'
+      Caption = '&Save'
       Hint = 'Guardar Archivo'
       ImageIndex = 4
       OnExecute = acArcSaveExecute
@@ -1876,10 +1879,16 @@ object frmPrincipal: TfrmPrincipal
     end
     object acArcSaveAs: TAction
       Category = 'Arc'
-      Caption = 'G&uardar Como...'
+      Caption = 'Save &as...'
       Hint = 'Guardar como...'
       ImageIndex = 5
       OnExecute = acArcSaveAsExecute
+    end
+    object acArcCloseFile: TAction
+      Category = 'Arc'
+      Caption = 'Close &File'
+      ImageIndex = 31
+      OnExecute = acArcCloseFileExecute
     end
     object acArcCloseProj: TAction
       Category = 'Arc'
@@ -2095,6 +2104,9 @@ object frmPrincipal: TfrmPrincipal
           0000000000000000000000000000000000000000000000000000000000000000
           00000000000000000000000000007CBED2FF0D2D37E0282C2C39
         }
+      end
+      object MenuItem28: TMenuItem
+        Action = acArcCloseFile
       end
       object MenuItem27: TMenuItem
         Action = acArcCloseProj

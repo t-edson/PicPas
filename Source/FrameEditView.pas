@@ -3,8 +3,9 @@ unit FrameEditView;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, ComCtrls, Graphics,
-  Dialogs, ExtCtrls, SynFacilUtils, MisUtils, fgl, SynEditMiscClasses;
+  Classes, SysUtils, FileUtil, LazUTF8, LazFileUtils, SynEdit, Forms, Controls,
+  ComCtrls, Graphics, Dialogs, ExtCtrls, LCLProc, Menus, SynFacilUtils,
+  MisUtils, fgl, SynEditMiscClasses;
 type
   {Clase derivada de "TSynFacilEditor". Se usa para asociar un SynEdit a un
   TSynFacilEditor}
@@ -13,12 +14,16 @@ type
 
   TSynEditor = class(TSynFacilEditor)
   private
+    FCaption: string;
     procedure edSpecialLineMarkup(Sender: TObject; Line: integer;
       var Special: boolean; Markup: TSynSelectedColor);
+    procedure SetCaption(AValue: string);
   public  //Inicialización
-    tab: TTabSheet;   //referencia a la pestaña del PageControl
     SynEdit: TSynEdit;  //Editor SynEdit
-    constructor Create(AOwner: TComponent; nomDef0, extDef0: string);
+    tabWidth: integer;  //ancho de l engueta
+    panTabs : TPanel;   //referencia al Panel de las lenguetas.
+    property Caption: string read FCaption write SetCaption;  //etiqueta de la pestaña
+    constructor Create(AOwner: TComponent; nomDef0, extDef0: string; panTabs0: TPanel);
     destructor Destroy; override;
   end;
 
@@ -28,34 +33,59 @@ type
   TfraEditView = class(TFrame)
     Image1: TImage;
     ImgCompletion: TImageList;
+    mnCloseTab: TMenuItem;
     OpenDialog1: TOpenDialog;
-    PageControl1: TPageControl;
+    Panel1: TPanel;
+    PopUpTabs: TPopupMenu;
     SaveDialog1: TSaveDialog;
+    procedure mnCloseTabClick(Sender: TObject);
+  private  //Métodos para dibujo de las lenguetas
+    xIniTabs : integer;  //Coordenada inicial desde donde se dibujan las lenguetas
+    procedure DibLeng(x1, x2: integer; coltex: TColor; Activo: boolean; txt: string
+      );   //dibuja una lengueta
+    procedure Panel1MouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure Panel1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer
+      );
+    procedure Panel1MouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure Panel1Paint(Sender: TObject);
+    procedure InitTabs;
   private
-    curEdit: TSynEditor;
+    FTabIndex: integer;
+    procedure SetTabIndex(AValue: integer);
+  private
     editors: TEditorList;
     lang: string;
+    property TabIndex: integer read FTabIndex write SetTabIndex;   //panel actualmente activo
     procedure ChangeEditorState;
     procedure editChangeFileInform;
     function GetCanRedo: boolean;
     function GetCanUndo: boolean;
     function GetModified: boolean;
+    function LastIndex: integer;
   public
     OnChangeEditorState: TSynEditorEvent;
     OnChangeFileInform: procedure of object;
     property Modified: boolean read GetModified;
     property CanUndo: boolean read GetCanUndo;
     property CanRedo: boolean read GetCanRedo;
-
     function Count: integer;
     function ActiveEditor: TSynEditor;
-    function SearchEditor(filname: string): TSynEditor;
+    function SearchEditorIdx(filname: string): integer;
     function SelectEditor(filname: string): boolean;
+    procedure SelectNextEditor;
+    procedure SelectPrevEditor;
+    function HasFocus: boolean;
+    procedure SetFocus; override;
     function AddEdit: TSynEditor;
+    procedure NewFile;
     procedure LoadFile(fileName: string);
+    procedure SaveFile;
     function OpenDialog(filter: string): boolean;
     function SaveAsDialog: boolean;
-    procedure Refresh;
+    procedure CloseEditor;
+    procedure RefreshWindow;
   public //Inicialización
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
@@ -63,11 +93,13 @@ type
   end;
 
 implementation
-
 {$R *.lfm}
+const
+  MIN_WIDTH_TAB = 50;  //Ancho por defecto de la lengueta
+  FONT_TAB_SIZE = 9;
+  SEPAR_TABS = 2;  //Separación adicional, entre pestañas
 
 { TSynEditor }
-
 procedure TSynEditor.edSpecialLineMarkup(Sender: TObject; Line: integer;
   var Special: boolean; Markup: TSynSelectedColor);
 begin
@@ -76,10 +108,27 @@ begin
       Markup.Background := TColor($3030A0); //color de fondo
   end;
 end;
-constructor TSynEditor.Create(AOwner: TComponent; nomDef0, extDef0: string);
+procedure TSynEditor.SetCaption(AValue: string);
+{Cambiar el título, cambia el ancho de la lengueta}
+var
+  w: Integer;
+begin
+  if FCaption = AValue then Exit;
+  FCaption := AValue;
+  panTabs.Canvas.Font.Size := FONT_TAB_SIZE;  {Fija atrubutos de texto, para que el
+                                        cálculo con "TextWidth", de ancho sea correcto}
+  w := panTabs.Canvas.TextWidth(AValue) + 30;
+  if w < MIN_WIDTH_TAB then w := MIN_WIDTH_TAB;
+  tabWidth := w;
+  panTabs.Invalidate;   //Para refrescar el dibujo
+end;
+constructor TSynEditor.Create(AOwner: TComponent; nomDef0, extDef0: string;
+  panTabs0: TPanel);
 begin
   SynEdit:= TSynEdit.Create(AOwner);// Crea un editor
   inherited Create(SynEdit, nomDef0, extDef0);
+  tabWidth := 30;  //valor por defecto
+  panTabs := panTabs0;
 
   //configuración del editor
   SynEdit.Options:=[eoBracketHighlight];  //quita la línea vertical
@@ -101,17 +150,180 @@ begin
 //  self.PanFileName  := StatusBar1.Panels[5];  //panel para el nombre del archivo
 
   NewFile;        //para actualizar estado
-  LoadSyntaxFromFile('PicPas_PIC16.xml');
-
 end;
 destructor TSynEditor.Destroy;
 begin
   inherited Destroy;
 //  SynEdit.Destroy;   //Se debe destruir al final
+  FreeAndNil(SynEdit);
 end;
-
 { TfraEditView }
+procedure TfraEditView.SetTabIndex(AValue: integer);
+begin
+  if AValue>editors.Count-1 then AValue := editors.Count-1;
+  if FTabIndex = AValue then Exit;
+  if FTabIndex<>-1 then begin  //que no sea la primera vez
+    editors[FTabIndex].SynEdit.Visible := false;  //oculta el anterior
+  end;
+  FTabIndex := AValue;
+  editors[FTabIndex].SynEdit.Visible := true;  //muestra el nuevo
+  Panel1.Invalidate;   //para refrescar
+end;
+//Métodos pàra el dibujo de lenguetas
+procedure TfraEditView.DibLeng(x1, x2: integer; coltex: TColor; Activo: boolean;
+  txt: string);
+  procedure GetX1X2(const xrmin: integer; y: integer; out xr1, xr2: integer);
+  {devuelve las coordenadas x1 y x2 de la línea "y" de la lengueta}
+  begin
+    case y of
+    0: begin  //priemra fila
+        xr1 := x1+4;
+        xr2 := xrmin -4;
+      end;
+    1: begin
+        xr1 := x1+2;
+        xr2 := xrmin -2;
+      end;
+    2: begin
+        xr1 := x1+1;
+        xr2 := xrmin ;
+      end;
+    3: begin
+        xr1 := x1+1;
+        xr2 := xrmin + 1;
+      end;
+    else  //otras filas
+      xr1 := x1;
+      xr2 := xrmin + (y div 2);
+    end;
+  end;
+var
+  cv: TCanvas;
+  y1, y2, alto, xr1, xr2, xrmin, xrmin2, i: Integer;
+  r: TRect;
+  colBorde: TColor;
+begin
+  alto := panel1.Height;
+  cv := Panel1.canvas;
+  cv.Font.Size:= FONT_TAB_SIZE;
+  cv.Font.Color := clBlack;
+  cv.Font.Color := coltex;   //Color de texto
+  y1 := 0;
+  y2 := y1 + alto;
+  //Fija Línea y color de fondo
+  cv.Pen.Style := psSolid;
+  cv.Pen.Width := 1;
+  if Activo then cv.Pen.Color := clWhite else cv.Pen.Color := clMenu;
+  //Dibuja fondo de lengueta. El dibujo es línea por línea
+  xrmin := x2 - (alto div 4);  //corrige inicio, para que el punto medio de la pendiente,  caiga en x2
+  xrmin2 := x2 + (alto div 4)+1;  //corrige inicio, para que el punto medio de la pendiente,  caiga en x2
+  for i:=0 to alto-1 do begin
+    GetX1X2(xrmin, i, xr1, xr2);
+    cv.Line(xr1, i, xr2, i);
+  end;
+  //Dibuja borde de lengueta
+  colBorde := clGray;
+  cv.Pen.Color := colBorde;
+  cv.Line(x1,y1+4,x1,y2);  //lateral izquierdo
+  cv.Line(x1+4,y1, xrmin-4, y1);  //superior
+  cv.Line(xrmin+2, y1+4, xrmin2, y2);  //lateral derecho
+  //Bordes
+  GetX1X2(xrmin, 0, xr1, xr2);
+  cv.Pixels[xr1,0] := colBorde;
+  cv.Pixels[xr2,0] := colBorde;
+  GetX1X2(xrmin, 1, xr1, xr2);
+  cv.Pixels[xr1,1] := colBorde;
+  cv.Pixels[xr1+1,1] := colBorde;
+  cv.Pixels[xr2,1] := colBorde;
+  cv.Pixels[xr2-1,1] := colBorde;
+  GetX1X2(xrmin, 2, xr1, xr2);
+  cv.Pixels[xr1,2] := colBorde;
+  cv.Pixels[xr2,2] := colBorde;
+  cv.Pixels[xr2-1,2] := colBorde;
+  GetX1X2(xrmin, 3, xr1, xr2);
+  cv.Pixels[xr1,3] := colBorde;
+  cv.Pixels[xr2,3] := colBorde;
+  //Dibuja ícono
+  ImgCompletion.Draw(cv, x1+4, 4, 7);
+  //Elimina objetos y pone texto
+  r.Top := y1;
+  r.Bottom := y2;
+  r.Left := x1+20;  //Deja espacio para el ícono
+  r.Right := x2-7;  //deja espacio para el botón de cierre
+  cv.TextRect(r, x1+22, 4 ,txt);
+end;
+procedure TfraEditView.Panel1MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  x1, x2, i: Integer;
+  edi: TSynEditor;
+begin
+  x1 := xIniTabs;
+  for i := 0 to editors.Count-1 do begin
+    edi := editors[i];
+    x2 := x1 + edi.tabWidth;
+    if (X>x1) and (X<x2) then begin
+      TabIndex := i;
+      if Shift = [ssRight] then begin
+        PopUpTabs.PopUp;
+      end;
+      exit;
+    end;
+    x1 := x2 + SEPAR_TABS;
+  end;
+end;
+procedure TfraEditView.Panel1MouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+begin
 
+end;
+procedure TfraEditView.Panel1MouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  //Pasa el enfoque al editor que se ha seleccionado
+  if TabIndex<>-1 then begin
+    try
+      editors[TabIndex].SynEdit.SetFocus;
+    except
+
+    end;
+  end;
+end;
+procedure TfraEditView.Panel1Paint(Sender: TObject);
+var
+  x1, i, x2, xa: Integer;
+  edi: TSynEditor;
+begin
+  //Dibuja las pestañas
+  x1 := xIniTabs;
+  for i := 0 to editors.Count-1 do begin
+    edi := editors[i];
+    x2 := x1 + edi.tabWidth;
+    if i = TabIndex then begin
+      //No dibuja ahora al activo, lo deja para después.
+      xa := x1;   //guarda coordenada
+    end else begin
+      DibLeng(x1, x2, clBlack, false, edi.Caption);
+    end;
+    x1 := x2 + SEPAR_TABS;
+  end;
+  //Dibuja al final al activo, para que aparezca enciama
+  if TabIndex<>-1 then begin
+    edi := editors[TabIndex];
+    x1 := xa;
+    x2 := x1 + edi.tabWidth;
+    DibLeng(x1, x2, clBlack, true, edi.Caption);
+  end;
+end;
+procedure TfraEditView.InitTabs;
+{Inicia el dibujo de las lenguetas}
+begin
+  xIniTabs := 20;
+  Panel1.OnMouseMove := @Panel1MouseMove;
+  panel1.OnMouseDown := @Panel1MouseDown;
+  panel1.OnMouseUp := @Panel1MouseUp;
+end;
+//////////////////////////////////////////////////////////////
 procedure TfraEditView.ChangeEditorState;
 var
   ed: TSynEditor;
@@ -119,7 +331,6 @@ begin
   ed := ActiveEditor;
   if OnChangeEditorState<>nil then OnChangeEditorState(ed);
 end;
-
 procedure TfraEditView.editChangeFileInform;
 begin
   if OnChangeFileInform<>nil then OnChangeFileInform;
@@ -133,7 +344,7 @@ var
   i: Integer;
 begin
   if editors.Count = 0 then exit(nil);
-  i := PageControl1.ActivePage.TabIndex;
+  i := TabIndex;
   Result := editors[i];   //Solo funcionará si no se desordenan las enguetas
 //  con := PageControl1.ActivePage.Controls[0];
 //  MsgBox(con.ClassName);
@@ -146,33 +357,67 @@ begin
 //    exit(nil);
 //  end;
 end;
-function TfraEditView.SearchEditor(filname: string): TSynEditor;
-{Busca entre las ventanas abiertas al archivo indicado. Si no lo encuentra devuelve NIL}
+function TfraEditView.SearchEditorIdx(filname: string): integer;
+{Busca entre las ventanas abiertas al archivo indicado, y devuelve el índice del
+editor. Si no lo encuentra devuelve -1}
 var
   ed: TSynEditor;
+  i: integer;
 begin
-  for ed in editors do begin
-    if Upcase(ed.NomArc) = UpCase(filname) then exit(ed);
+  for i:=0 to editors.Count-1 do begin
+    ed := editors[i];
+    if Upcase(ed.NomArc) = UpCase(filname) then exit(i);
   end;
-  exit(nil);
+  exit(-1);
 end;
 function TfraEditView.SelectEditor(filname: string): boolean;
 {Activa el editor que corresponde al archivo indicado. Si no encuentra el archivo,
 devuelve FALSE.}
 var
-  ed: TSynEditor;
-  tab: TTabSheet;
+  edIdx: integer;
 begin
-  ed := SearchEditor(filname);
-  if ed= nil then begin
+  edIdx := SearchEditorIdx(filname);
+  if edIdx = -1 then begin
     exit(false);
   end else begin
-    tab := ed.tab;  //ubica lengueta
-    PageControl1.ActivePage := tab;  //la activa
+    TabIndex := edIdx;
     exit(true);
   end;
 end;
-
+procedure TfraEditView.SelectNextEditor;
+{Selecciona al siguiente editor.}
+begin
+  if Count = 0 then exit;
+  if TabIndex=-1 then exit;
+  if TabIndex = LastIndex then TabIndex := 0 else TabIndex := TabIndex + 1;
+  SetFocus;
+end;
+procedure TfraEditView.SelectPrevEditor;
+{Selecciona al editor anterior.}
+begin
+  if Count = 0 then exit;
+  if TabIndex=-1 then exit;
+  if TabIndex = 0 then TabIndex := LastIndex else TabIndex := TabIndex -1;
+  SetFocus;
+end;
+function TfraEditView.HasFocus: boolean;
+{Indica si alguno de los editores, tiene el enfoque.}
+var
+  i: Integer;
+begin
+  for i:=0 to editors.Count-1 do begin
+    if editors[i].SynEdit.Focused then exit(true);
+  end;
+  exit(false);
+end;
+procedure TfraEditView.SetFocus;
+begin
+//  inherited SetFocus;
+  if TabIndex = -1 then exit;
+  if editors[TabIndex].SynEdit.Visible then begin
+    editors[TabIndex].SynEdit.SetFocus;
+  end;
+end;
 function TfraEditView.GetCanRedo: boolean;
 var
   ed: TSynEditor;
@@ -200,45 +445,60 @@ begin
   ed := ActiveEditor;
   Result := ed.Modified;
 end;
-
 function TfraEditView.Count: integer;
 begin
   Result := editors.Count;
 end;
-
+function TfraEditView.LastIndex: integer;
+{Devuelve el índice de la última pestaña.}
+begin
+  Result :=editors.Count - 1;
+end;
 function TfraEditView.AddEdit: TSynEditor;
 {Agrega una nueva ventana de eición a la vista, y devuelve la referencia.}
 var
   ed: TSynEditor;
-  tab: TTabSheet;
 begin
-  tab := PageControl1.AddTabSheet;
-  {Crea Editor. Notar que se crea teniendo como Owner a "tab", para que se libere }
-  ed := TSynEditor.Create(tab, 'SinNombre', 'pas');
+  //Crea Editor.
+  ed := TSynEditor.Create(self, 'SinNombre', 'pas', Panel1);
   ed.OnChangeEditorState := @ChangeEditorState;
   ed.OnChangeFileInform := @editChangeFileInform;
   ed.hl.IconList := ImgCompletion;
   ed.SetLanguage(lang);
   //Configura PageControl
-  ed.tab := tab;   //actualiza la pestaña
-  ed.SynEdit.Parent := tab;  //lo ubica en la pestaña
+  ed.SynEdit.Parent := self;
   ed.SynEdit.Align := alClient;
-  tab.Caption := 'XXX';
-  //Actualzia referencias
+  ed.Caption := 'NewFile' + IntToStr(editors.Count+1);
+  ed.NomArc := '';  //Pone sin nombre para saber que no se ha guardado
   editors.Add(ed);   //agrega a la lista
-  curEdit := ed;     //actualiza referencia  ¿Es necesario? ¿No basta con ver la página activa?
+  TabIndex := LastIndex;
+  //Actualzia referencias
   Result := ed;
-  Refresh;
+//  RefreshWindow;
+end;
+procedure TfraEditView.NewFile;
+{Abre una nueva ventana de edición.}
+var
+  ed: TSynEditor;
+begin
+  ed := AddEdit;
+  ed.LoadSyntaxFromFile('PicPas_PIC16.xml');
 end;
 procedure TfraEditView.LoadFile(fileName: string);
 //Carga un archivo en el editor
 var
   ed: TSynEditor;
+  ext: string;
 begin
   ed := AddEdit;
   ed.LoadFile(fileName);
-  ed.LoadSyntaxFromPath;  //para que busque el archivo apropiado
-  ed.tab.Caption := fileName;
+  //Carga la sintaxis apropiada
+  ext := ExtractFileExt(fileName);
+  case Upcase(ext) of
+  '.PAS': ed.LoadSyntaxFromFile('PicPas_PIC16.xml');
+  end;
+  //ed.LoadSyntaxFromPath;  //para que busque el archivo apropiado
+  ed.Caption := ExtractFileNameOnly(fileName);
 end;
 function TfraEditView.OpenDialog(filter: string): boolean;
 //Muestra el cuadro de diálogo para abrir un archivo. Si hay error devuelve FALSE.
@@ -250,62 +510,82 @@ begin
   LoadFile(arc0);  //legalmente debería darle en UTF-8
   Result := true;   //sale sin incidencias
 end;
-function TfraEditView.SaveAsDialog: boolean;
-//Guarda el contenido del editor, permitiendo cambiar el nombre con un diálogo.
-//Si se ignora la acción, devuelve "true".
-//Si ocurre algún error, muestra el mensaje en pantalla y actualiza "Error".
-var
-  arc0, NomArc: String;
-  resp: TModalResult;
+procedure TfraEditView.SaveFile;
 begin
-  Result := false;
-  if not SaveDialog1.Execute then begin  //se canceló
-    Result := true;   //Sale con "true"
-    exit;    //se canceló
-  end;
-  arc0 := SaveDialog1.FileName;
-  if FileExists(arc0) then begin
-    resp := MessageDlg('', dic('El archivo %s ya existe.' + LineEnding +
-                  '¿Deseas sobreescribirlo?',[arc0]),
-                       mtConfirmation, [mbYes, mbNo, mbCancel],0);
-    if (resp = mrCancel) or (resp = mrNo) then Exit;
-  end;
-  NomArc := UTF8ToSys(arc0);   //asigna nuevo nombre
-  if ExtractFileExt(NomArc) = '' then NomArc += '.' + ActiveEditor.extDef;  //completa extensión
-  ActiveEditor.NomArc := NomArc;
-  ActiveEditor.SaveFile;   //lo guarda
-end;
-
-procedure TfraEditView.Refresh;
-{Refresca el frame, para mostrar correctamente a lso editores.}
-begin
-  if editors.Count=0 then begin
-    //No hay editores abiertos
-    PageControl1.Visible := false;
-  end else if editors.Count = 1 then begin
-    //Hay un solo editor
-    PageControl1.Visible := true;
-
+  if ActiveEditor=nil then exit;
+  if ActiveEditor.NomArc='' then begin
+    //Es un archivo nuevo
+    SaveAsDialog;
   end else begin
-    //Hay varios editores
-    PageControl1.Visible := true;
-
+    ActiveEditor.SaveFile;
   end;
 end;
-
+function TfraEditView.SaveAsDialog: boolean;
+begin
+  if ActiveEditor=nil then exit;
+  Result := ActiveEditor.SaveAsDialog(SaveDialog1);
+  if Result then exit;   //se canceló
+  //ACtualiza etiqueta
+  ActiveEditor.Caption := ExtractFileNameOnly(ActiveEditor.NomArc);
+end;
+procedure TfraEditView.CloseEditor;
+{Cierra el editor actual}
+begin
+  if ActiveEditor=nil then exit;
+  if ActiveEditor.SaveQuery then exit;  //cancelado
+debugln('eliminando: ' + IntToStr(FTabIndex));
+  editors.Delete(TabIndex);
+  //Hay que actualiza TabIndex
+  if editors.Count = 0 then begin
+    //Era el único
+    FTabIndex := -1;
+  end else begin
+    //había al menos 2
+    if TabIndex > editors.Count - 1 then begin
+      //Quedó apuntando fuera
+      FTabIndex := editors.Count - 1;   //limita
+      //No es necesario ocultar el anterior, porque se eliminó
+debugln('mostrando: ' + IntToStr(FTabIndex));
+      editors[FTabIndex].SynEdit.Visible := true;  //muestra el nuevo
+    end else begin
+      //Queda apuntando al siguiente. No es necesario modificar.
+      //No es necesario ocultar el anterior, porque se eliminó
+debugln('mostrando: ' + IntToStr(FTabIndex));
+      editors[FTabIndex].SynEdit.Visible := true;  //muestra el nuevo
+    end;
+  end;
+  Panel1.Invalidate;   //para refrescar
+end;
+procedure TfraEditView.RefreshWindow;
+{Refresca el frame, para mostrar correctamente a los editores.}
+begin
+  Panel1.Invalidate;
+//  if editors.Count=0 then begin
+//    //No hay editores abiertos
+//    PageControl1.Visible := false;
+//  end else if editors.Count = 1 then begin
+//    //Hay un solo editor
+//    PageControl1.Visible := true;
+//
+//  end else begin
+//    //Hay varios editores
+//    PageControl1.Visible := true;
+//
+//  end;
+end;
 constructor TfraEditView.Create(AOwner: TComponent);
 begin
   inherited;
   editors:= TEditorList.Create(true);
-  PageControl1.Align := alClient;
+  panel1.OnPaint := @Panel1Paint;
+  FTabIndex := -1;
+  InitTabs;
 end;
-
 destructor TfraEditView.Destroy;
 begin
   editors.Destroy;
   inherited Destroy;
 end;
-
 procedure TfraEditView.SetLanguage(lang0: string);
 begin
   lang := lang0;
@@ -316,6 +596,9 @@ begin
     end;
   end;
 end;
-
+procedure TfraEditView.mnCloseTabClick(Sender: TObject);
+begin
+  CloseEditor;
+end;
 end.
 //92
