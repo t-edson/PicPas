@@ -313,13 +313,11 @@ procedure TfrmPrincipal.ChangeAppearance;
 begin
   if curProj = nil then begin
     SetStateActionsProject(false);
-    splEdPas.Visible := false;
     fraSynTree.Visible := false;
     splSynTree.Visible := false;
 //    exit;
   end else begin
     SetStateActionsProject(true);
-    splEdPas.Visible := true;
     fraSynTree.Visible := true;
     splSynTree.Visible := true;
   end;

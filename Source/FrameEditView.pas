@@ -4,7 +4,7 @@ unit FrameEditView;
 interface
 uses
   Classes, SysUtils, FileUtil, LazUTF8, LazFileUtils, SynEdit, Forms, Controls,
-  ComCtrls, Graphics, Dialogs, ExtCtrls, LCLProc, Menus, SynFacilUtils,
+  Graphics, Dialogs, ExtCtrls, LCLProc, Menus, SynFacilUtils,
   MisUtils, fgl, SynEditMiscClasses;
 type
   {Clase derivada de "TSynFacilEditor". Se usa para asociar un SynEdit a un
