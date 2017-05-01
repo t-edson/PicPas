@@ -147,6 +147,7 @@ type
     hlAssem : TSynFacilSyn;   //resaltador para ensamblador
     fraSynTree: TfraSyntaxTree;  //árbol de sintaxis
     procedure ChangeAppearance;
+    procedure fraEditView1SelectEditor;
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
     procedure VerificarError;
   public
@@ -168,6 +169,7 @@ begin
   ListBox1.Style:=lbOwnerDrawVariable;
   ListBox1.OnDrawItem:=@ListBox1DrawItem;
   fraEditView1.OnChangeEditorState := @ChangeEditorState;;
+  fraEditView1.OnSelectEditor := @fraEditView1SelectEditor;
   //carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
@@ -206,6 +208,8 @@ begin
   end;
   //Inicia arbol de sintaxis
   fraSynTree.Init(cxp.TreeElems);
+  //Inicia encabezado
+  editChangeFileInform;
 end;
 procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
 //Se ha seleccionado un archivo de ejemplo.
@@ -228,7 +232,7 @@ begin
     end;
     curProj.Destroy;
   end;
-//  if edit.SaveQuery then CanClose := false;   //cancela
+  if fraEditView1.CloseAll then CanClose := false;   //cancela
 end;
 procedure TfrmPrincipal.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
@@ -274,6 +278,10 @@ begin
   if (Shift = [ssShift, ssCtrl]) and (Key = VK_TAB) then begin
     if fraEditView1.HasFocus then fraEditView1.SelectPrevEditor;
   end;
+  if (Shift = [ssCtrl]) and (Key = VK_F4) then begin
+    if fraEditView1.HasFocus then acArcCloseFileExecute(self);
+    Shift := []; Key := 0;  //para qie no pase
+  end;
 end;
 procedure TfrmPrincipal.ChangeEditorState(ed: TSynEditor);
 begin
@@ -284,6 +292,11 @@ begin
 //  acEdiCortar.Enabled  := edit.canCopy;
 //  acEdiCopiar.Enabled := edit.canCopy;
 //  acEdiPegar.Enabled:= edit.CanPaste;
+end;
+procedure TfrmPrincipal.fraEditView1SelectEditor;
+begin
+  ChangeAppearance;
+  editChangeFileInform;
 end;
 procedure TfrmPrincipal.ChangeAppearance;
   procedure SetStateActionsProject(state: boolean);
@@ -353,12 +366,12 @@ begin
     //Modo de archivos. Actualiza nombre de archivo
     if fraEditView1.Count = 0 then begin
       Caption := NOM_PROG + ' - ' + VER_PROG  + ' - No files.';
-    end else if fraEditView1.Count = 1 then begin
-       ed := fraEditView1.ActiveEditor;
-       Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.NomArc;
     end else begin  //Hay varios
       ed := fraEditView1.ActiveEditor;
-      Caption := NOM_PROG + ' - ' + VER_PROG  + ' - Several Files.';
+      if ed.NomArc='' then
+        Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.Caption
+      else
+        Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.NomArc;
     end;
   end else begin
     //Hay un proyecto abierto
@@ -370,7 +383,6 @@ end;
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
 begin
   fraEditView1.NewFile;
-  ChangeAppearance;
   fraEditView1.SetFocus;
 end;
 procedure TfrmPrincipal.acArcNewProjExecute(Sender: TObject);
@@ -381,20 +393,18 @@ begin
   end;
   curProj := TPicPasProject.Create;
   curProj.Open;
-  fraEditView1.AddEdit;
-  ChangeAppearance;
+  fraEditView1.NewFile;
 end;
 procedure TfrmPrincipal.acArcOpenExecute(Sender: TObject);
 begin
   fraEditView1.OpenDialog('Pascal files|*.pas|All files|*.*');
-  ChangeAppearance;
   fraEditView1.SetFocus;
   Config.SaveToFile;  //para que guarde el nombre del último archivo abierto
 end;
 procedure TfrmPrincipal.acArcCloseFileExecute(Sender: TObject);
 begin
   fraEditView1.CloseEditor;
-  ChangeAppearance;
+  fraEditView1.SetFocus;
 end;
 procedure TfrmPrincipal.acArcCloseProjExecute(Sender: TObject);
 begin
@@ -444,19 +454,24 @@ procedure TfrmPrincipal.acViewMsgPanExecute(Sender: TObject);
 begin
   Config.ViewPanMsg:= not Config.ViewPanMsg;
 end;
-
 //////////// Acciones de Herramientas ///////////////
 procedure TfrmPrincipal.acToolCompilExecute(Sender: TObject);
 {Compila el contenido del archivo actual}
 var
   timeCnt: DWORD;
+  filName: String;
 begin
   if fraEditView1.ActiveEditor=nil then exit;
   self.SetFocus;
   ListBox1.Items.Clear;
   timeCnt:=GetTickCount;
   ListBox1.Items.Add('Starting Compilation ...');
-  cxp.Compile(fraEditView1.ActiveEditor.NomArc, fraEditView1.ActiveEditor.SynEdit.Lines);
+  filName := fraEditView1.ActiveEditor.NomArc;
+  if filName='' then begin
+    //Aún no tiene nombre el archivo
+    filName := '@';   //indica que es la ventana actual
+  end;
+  cxp.Compile(filName, fraEditView1.ActiveEditor.SynEdit.Lines);
   if cxp.HayError then begin
     ListBox1.Items.Add(cxp.PErr.TxtErrorRC);
     VerificarError;
@@ -499,14 +514,14 @@ procedure TfrmPrincipal.acToolConfig2Execute(Sender: TObject);
 begin
 
 end;
-//ADicionales
+//Adicionales
 procedure TfrmPrincipal.VerificarError;
 //Verifica si se ha producido algún error en el preprocesamiento y si lo hay
 //Ve la mejor forma de msotrarlo
 begin
     If not cxp.HayError Then exit;  //verificación
     //Selecciona posición de error en el Editor
-    If cxp.ArcError <> '' Then begin
+    if cxp.ArcError <> '' Then begin
         //Se ha identificado el archivo con el error
         if not fraEditView1.SelectEditor(cxp.ArcError) then begin
            //No está abierto el archivo, lo abrimos

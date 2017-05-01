@@ -5,7 +5,6 @@ object fraEditView: TfraEditView
   Width = 320
   ClientHeight = 240
   ClientWidth = 320
-  LCLVersion = '1.6.2.0'
   TabOrder = 0
   DesignLeft = 364
   DesignTop = 148
@@ -436,6 +435,10 @@ object fraEditView: TfraEditView
   object PopUpTabs: TPopupMenu
     left = 200
     top = 48
+    object mnNewTab: TMenuItem
+      Caption = '&New'
+      OnClick = mnNewTabClick
+    end
     object mnCloseTab: TMenuItem
       Caption = '&Close'
       OnClick = mnCloseTabClick

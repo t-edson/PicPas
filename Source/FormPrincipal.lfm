@@ -1857,6 +1857,7 @@ object frmPrincipal: TfrmPrincipal
     object acArcNewProj: TAction
       Category = 'Arc'
       Caption = 'New &Project'
+      Enabled = False
       Hint = 'New Project'
       ImageIndex = 27
       OnExecute = acArcNewProjExecute
