@@ -48,10 +48,12 @@ type
   private
     FViewPanMsg: boolean;
     FViewStatusbar: Boolean;
+    FViewSynTree: boolean;
     FViewToolbar: boolean;
     procedure cfgFilePropertiesChanges;
     procedure SetViewPanMsg(AValue: boolean);
     procedure SetViewStatusbar(AValue: Boolean);
+    procedure SetViewSynTree(AValue: boolean);
     procedure SetViewToolbar(AValue: boolean);
   public  //Propiedades generales
     OnPropertiesChanges: procedure of object;
@@ -59,6 +61,7 @@ type
     property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
     property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
     property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
+    property ViewSynTree: boolean read FViewSynTree write SetViewSynTree;
   public  //Configuraciones para ensamblador
     IncHeadMpu: boolean;  //Incluye encabezado con información del MPU
     IncVarDec : boolean;  //Incluye declaración de varaibles
@@ -111,6 +114,7 @@ begin
   cfgFile.Asoc_Bol('VerPanMensaj', @FViewPanMsg  , true);
   cfgFile.Asoc_Bol('VerStatusbar', @ViewStatusbar, true);
   cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);
+  cfgFile.Asoc_Bol('ViewSynTree', @FViewSynTree, true);
   //Configuraciones del Editor
   fcEditor.Iniciar('Edit', cfgFile);
   //Configuraciones de Ensamblador
@@ -154,6 +158,13 @@ begin
   FViewStatusbar := AValue;
   cfgFilePropertiesChanges;
 end;
+
+procedure TConfig.SetViewSynTree(AValue: boolean);
+begin
+  if FViewSynTree = AValue then Exit;
+  FViewSynTree := AValue;
+end;
+
 procedure TConfig.SetViewToolbar(AValue: boolean);
 begin
   if FViewToolbar = AValue then Exit;

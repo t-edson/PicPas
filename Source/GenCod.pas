@@ -55,12 +55,7 @@ type
     { TGenCod }
     TGenCod = class(TGenCodPic)
     protected
-      //campos para controlar la codificación de rutinas iniciales
-      iniBloSub  : integer;   //inicio del blqoue de subrutinas
-      curBloSub  : integer;   //fin del bloque de subrutinas
-      finBloSub  : integer;   //tamaño máximo del bloque de subrutinas
-      iFlashTmp  : integer;   //almacenamiento temporal para pic.iFlash
-      Traslape   : boolean;   //bandera de traslape
+      FirstPass  : boolean;   //Indica que está en la primera pasada.
       procedure callFunct(fun: TxpEleFun);
     private  //Operaciones con Bit
       procedure bit_load;
@@ -71,6 +66,9 @@ type
       procedure Oper_bit_or_bit;
       procedure Oper_bit_or_byte;
       procedure Oper_bit_xor_bit;
+      procedure Oper_bit_xor_byte;
+      procedure Oper_bit_equ_bit;
+      procedure Oper_bit_equ_byte;
       procedure Oper_not_bit;
     private  //Operaciones con boolean
       procedure bool_load;
@@ -78,6 +76,7 @@ type
       procedure Oper_not_bool;
       procedure Oper_bool_and_bool;
       procedure Oper_bool_or_bool;
+      procedure Oper_bool_xor_bool;
     private  //Operaciones con byte
       procedure byte_OnPush(const OpPtr: pointer);
       procedure byte_load;
@@ -100,10 +99,9 @@ type
       procedure Oper_word_add_word;
       procedure Oper_word_add_byte;
     private  //Funciones internas.
-      DelayCoded: integer;  //bandera para codificación de retardo
       //Rutinas adicionales
       procedure codif_1mseg;
-      procedure codif_delay_ms(const fun: TxpEleFun);
+      procedure codif_delay_ms(fun: TxpEleFun);
       procedure expr_end(posExpres: TPosExpres);
       procedure expr_start;
       procedure fun_delay_ms(fun: TxpEleFun);
@@ -125,24 +123,19 @@ implementation
 procedure TGenCod.StartCodeSub(fun: TxpEleFun);
 {debe ser llamado para iniciar la codificación de una subrutina}
 begin
-  iFlashTmp :=  pic.iFlash;     //guarda puntero
-  pic.iFlash := curBloSub;  //empieza a codificar aquí
-  fun.adrr := curBloSub;  //fija inicio de rutina
+//  iFlashTmp :=  pic.iFlash; //guarda puntero
+//  pic.iFlash := curBloSub;  //empieza a codificar aquí
 end;
 procedure TGenCod.EndCodeSub;
 {debe ser llamado al terminar la codificaión de una subrutina}
 begin
-  curBloSub := pic.iFlash;  //indica siguiente posición libre
-  if curBloSub > finBloSub then begin
-    //hubo traslape
-    Traslape:=true;
-  end;
-  pic.iFlash := iFlashTmp;     //retorna puntero
+//  curBloSub := pic.iFlash;  //indica siguiente posición libre
+//  pic.iFlash := iFlashTmp;  //retorna puntero
 end;
 procedure TGenCod.callFunct(fun: TxpEleFun);
 {Rutina que debe llamara a uan función definida por el usuario}
 begin
-  //por ahora no hay problema de paginación
+  //Por ahora no se implementa apginación, pero despuñes habrái que considerarlo.
   _CALL(fun.adrr);
 end;
 {procedure PushW;
@@ -166,8 +159,6 @@ procedure TGenCod.Cod_StartProgram;
 //Codifica la parte inicial del programa
 begin
   //Code('.CODE');   //inicia la sección de código
-  CurrBank := 0;
-  StartRegs;  //Inicia registros
 end;
 procedure TGenCod.Cod_EndProgram;
 //Codifica la parte inicial del programa
@@ -200,7 +191,6 @@ begin
 //    Code('  ;fin expres');
   end;
 end;
-
 ////////////operaciones con Bit
 procedure TGenCod.bit_load;
 begin
@@ -701,9 +691,11 @@ begin
           //a XOR b' = (z XOR b)'
           p2^.Inverted := false;
           Oper_bit_xor_bit;
-          res.Inverted := not res.Inverted;
+          res.Invert;  //Invierte la lógica
           exit;
         end else begin  //Caso normal
+          {Se puede optimizar, si las variables tienen el mismo orden de bit, o cercano,
+          para aplicar rotaciones y máscaras, y luego aplicar XOR.}
           SetResultExpres_bit(false);  //Fija resultado,
           SaveW(reg); //Va a usa W
           //Mueve p2 a Z
@@ -712,7 +704,7 @@ begin
           _ANDWF(p2^.offs, toW);  //Z está invertido
           //Aplica un XOR entre p1 y Z'.
           _BANKSEL(p1^.bank);
-          _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
+          _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es que se necesita
           _BTFSS(p1^.offs, p1^.bit);  //Si es 1, invierte, pero ya esta invertido, así que lo deja
           _ANDWF(Z.offs, toW);  //Si es 0, deja tal cual, pero como está invertido, hay que corregir
           RestoreW(reg);
@@ -771,6 +763,39 @@ begin
       GenError('Not implemented.'); exit;
     end;
 end;
+procedure TGenCod.Oper_bit_xor_byte;
+begin
+  if p2^.catOp <> coConst then begin
+    GenError('Incompatible types: (bit) XOR (byte).'); exit;
+  end;
+  //p2 es constante
+  if p2^.valInt = 0 then begin
+    p2^.typ := typBit;   //convierte en bit
+    p2^.valBool := false;
+    Oper_bit_xor_bit;  //opera como bit
+  end else if p2^.valInt = 1 then begin
+    p2^.typ := typBit;   //convierte en bit
+    p2^.valBool := true;
+    Oper_bit_xor_bit;  //opera como bit
+  end else begin
+    GenError('Incompatible types: (bit) XOR (byte).'); exit;
+  end;
+end;
+procedure TGenCod.Oper_bit_equ_bit;
+begin
+  //Una comparación, es lo mismo que un XOR negado
+  Oper_bit_xor_bit;  //puede devolver error
+  //Niega la lógica
+  res.Invert;  //Invierte la lógica
+  res.typ := typBool;   //devuelve boolean
+end;
+procedure TGenCod.Oper_bit_equ_byte;
+begin
+  //Una comparación, es lo mismo que un XOR negado
+  Oper_bit_xor_byte;  //puede devolver error
+  res.Invert;  //Invierte la lógica
+  res.typ := typBool;   //devuelve boolean
+end;
 procedure TGenCod.Oper_not_bit;
 begin
   case p1^.catOp of
@@ -815,6 +840,11 @@ end;
 procedure TGenCod.Oper_bool_or_bool;
 begin
   Oper_bit_or_bit;  //A bajo nivel es lo mismo
+  res.typ := typBool;  //pero debe devolver este tipo
+end;
+procedure TGenCod.Oper_bool_xor_bool;
+begin
+  Oper_bit_xor_bit;  //A bajo nivel es lo mismo
   res.typ := typBool;  //pero debe devolver este tipo
 end;
 ////////////operaciones con Byte
@@ -1067,7 +1097,7 @@ end;
 procedure TGenCod.Oper_byte_difer_byte;
 begin
   Oper_byte_igual_byte;  //usa el mismo código
-  res.Inverted := not res.Inverted;  //solo indica que la Lógica se ha invertido
+  res.Invert;  //Invierte la lógica
 end;
 ////////////operaciones con Word
 procedure TGenCod.word_OnPush(const OpPtr: pointer);
@@ -1105,8 +1135,6 @@ begin
   res := p1^;   //No debería ser necesario copiar todos los campos
 end;
 procedure TGenCod.Oper_word_asig_word;
-var
-  reg: TPicRegister;
 begin
   if p1^.catOp <> coVariab then begin  //validación
     GenError('Solo se puede asignar a variable.'); exit;
@@ -1474,14 +1502,13 @@ begin
     GenError('Clock frequency not supported.');
   end;
 end;
-procedure TGenCod.codif_delay_ms(const fun: TxpEleFun);
+procedure TGenCod.codif_delay_ms(fun: TxpEleFun);
 //Codifica rutina de retardo en milisegundos
 var
   delay: Word;
   aux: TPicRegister;
 begin
   StartCodeSub(fun);  //inicia codificación
-  DelayCoded := fun.adrr;  //toma dirección
   PutComLine(';rutina delay.');
   RequireH(false);   //Se asegura de que se exista y lo marca como "usado".
   aux := GetAuxRegisterByte;  //Pide un registro libre
@@ -1509,10 +1536,6 @@ end;
 procedure TGenCod.fun_delay_ms(fun: TxpEleFun);
 begin
   if not CaptureTok('(') then exit;
-  if DelayCoded=-1 then begin
-    //No ha sido codificada, la codifica.
-    codif_delay_ms(fun);
-  end;
   GetExpressionE(0, pexPARSY);  //captura parámetro
   if perr.HayError then exit;   //aborta
   //Se terminó de evaluar un parámetro
@@ -1520,10 +1543,10 @@ begin
   if HayError then exit;
   if res.typ = typByte then begin
     //El parámetro byte, debe estar en W
-    _call(DelayCoded);
+    _call(fun.adrr);
   end else if res.typ = typWord then begin
     //El parámetro word, debe estar en (H, W)
-    _call(DelayCoded+1);
+    _call(fun.adrr+1);
   end else begin
     GenError('Invalid parameter type: %s', [res.typ.name]);
     exit;
@@ -1692,17 +1715,21 @@ begin
 
   opr:=typBit.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_not_bit);
 
-  opr:=typBit.CreateBinaryOperator('AND',4,'and');  //suma
+  opr:=typBit.CreateBinaryOperator('AND',4,'and');
   opr.CreateOperation(typBit,@Oper_bit_and_bit);
   opr.CreateOperation(typByte,@Oper_bit_and_byte);
 
-  opr:=typBit.CreateBinaryOperator('OR',4,'or');  //suma
+  opr:=typBit.CreateBinaryOperator('OR',4,'or');
   opr.CreateOperation(typBit,@Oper_bit_or_bit);
   opr.CreateOperation(typByte,@Oper_bit_or_byte);
 
-  opr:=typBit.CreateBinaryOperator('XOR',4,'or');  //suma
+  opr:=typBit.CreateBinaryOperator('XOR',4,'or');
   opr.CreateOperation(typBit,@Oper_bit_xor_bit);
-//  opr.CreateOperation(typByte,@Oper_bit_xor_byte);
+  opr.CreateOperation(typByte,@Oper_bit_xor_byte);
+
+  opr:=typBit.CreateBinaryOperator('=',4,'equal');
+  opr.CreateOperation(typBit,@Oper_bit_equ_bit);
+  opr.CreateOperation(typByte,@Oper_bit_equ_byte);
 
   //////// Operaciones con Boolean ////////////
   typBool.OperationLoad:=@bool_load;
@@ -1716,6 +1743,9 @@ begin
 
   opr:=typBool.CreateBinaryOperator('OR',4,'or');  //suma
   opr.CreateOperation(typBool,@Oper_bool_or_bool);
+
+  opr:=typBool.CreateBinaryOperator('XOR',4,'or');  //suma
+  opr.CreateOperation(typBool,@Oper_bool_xor_bool);
 
   //////// Operaciones con Byte ////////////
   {Los operadores deben crearse con su precedencia correcta}
@@ -1758,11 +1788,11 @@ procedure TGenCod.CreateSystemElements;
 var
   f: TxpEleFun;  //índice para funciones
 begin
-  DelayCoded := -1;  //inicia
   //////// Funciones del sistema ////////////
   {Notar que las funciones del sistema no crean espacios de nombres.}
   f := CreateSysFunction('delay_ms', typByte, @fun_delay_ms);
-  f.adrr:=-1;   //para indicar que no está codificada
+  f.adrr:=$0;
+  f.compile := @codif_delay_ms;  //rutina de compilación
   f := CreateSysFunction('Inc', typByte, @fun_Inc);
   f := CreateSysFunction('Dec', typByte, @fun_Dec);
 end;

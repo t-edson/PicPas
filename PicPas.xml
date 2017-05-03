@@ -4,6 +4,7 @@
   <VerPanMensaj Val="True"/>
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
+  <ViewSynTree Val="True"/>
   <Edit>
     <cTxtNor Val="0"/>
     <cFonEdi Val="16777215"/>
@@ -29,7 +30,7 @@ SinNombre.pas
   <IncHeadMpu Val="True"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>
-  <IncAddress Val="False"/>
+  <IncAddress Val="True"/>
   <IncComment Val="True"/>
   <OptimLev Val="1"/>
 </CONFIG>

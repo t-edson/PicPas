@@ -1,3 +1,42 @@
+PicPas 0.5.6
+============
+Se implementa la operación bit_xor_byte().
+Se implementan las operaciones bit_equ_bit(), bit_equ_byte y Oper_bool_xor_bool().
+Se corrige una llamada a Cod_StartProgram en TCompiler.CompileFile():
+Se cambia la versión de PicUtils a la 0.7.
+Se implementa el método de compilación en dos pasadas. Se elimina el método anterior, 
+de múltiples pasadas, incluyendo sus variables.
+Se implementa un método para realizar, la compilación-enlace.
+Se aumentan campos a la clase TxpElement, para gaurdar la ubicación del elemento en el
+código fuente.
+Se modifican las definciones de las clases de los elementos TxpEleVar y TxpEleFun, para 
+adecuarse al nuevo esquema de trabajo.
+Se cambian diversas rutinas de la unidad "Parser", para adaptarse a la nueva forma de
+trabajo.
+Se modifica TGenCodPic.CreateVar(), para que se pueda usar por el "enlazador".
+Se reordenan los métodos de la unidad "Parser".
+Se incluye la opción de contar las veces en que una variable o función es llamada.
+Se revisa y modifican FindFirst y FindNext de TXpTreeElements.
+Se crea la función TXpTreeElements.FindNextFunc().
+Se elimina TXpTreeElements.FindFuncWithParams().
+Se modifica TCompilerBase.GetOperand() para hacerla m´s eficiente y confiable en el 
+reconocimiento de funciones.
+
+PENDIENTES
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la llamada correcta para las funciones del sistema y de usuario.
+Implementar el sistema de mensajes "Warning".
+Implementar la traducción de idiomas.
+Mejorar el formato del ASM, generado, incluyendo etiquetas para las subrutinas, y plegado.
+Corregir el problema de la alteración del árbol de sintaxis en la "segunda pasada", del 
+compilador.
+Corregir el problema de la pérdida del nombre en las variables bit, en el código 
+ensamblador.
+
 PicPas 0.5.5
 ============
 Se deja de usar el componenet PageControl, como contenedor de los editores.
@@ -23,12 +62,6 @@ Se corrigen los nombres para los bytes de las variables Word, en el código ensam
 Ahora aparecen como <nombre>@<byte>
 Se crea la unidad PicPasProject, para las definiciones de proyecto.
 Se crea el concepto de Proyecto, y se modifica la interfaz para trabajar con proyectos.
-
-
-PENDIENTES
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la llamada correcta para las funciones del sistema y de usuario.
 
 
 PicPas 0.5.3

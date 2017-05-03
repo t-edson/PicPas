@@ -45,7 +45,7 @@ type
     acViewMsgPan: TAction;
     ActionList: TActionList;
     acViewStatbar: TAction;
-    acViewFilePan: TAction;
+    acViewSynTree: TAction;
     edAsm: TSynEdit;
     fraEditView1: TfraEditView;
     ImgMessages: TImageList;
@@ -72,6 +72,7 @@ type
     MenuItem26: TMenuItem;
     MenuItem27: TMenuItem;
     MenuItem28: TMenuItem;
+    MenuItem29: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -127,6 +128,7 @@ type
     procedure acToolConfig2Execute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
+    procedure acViewSynTreeExecute(Sender: TObject);
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
     procedure acViewMsgPanExecute(Sender: TObject);
@@ -198,7 +200,7 @@ begin
   frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
   //carga archivo de ejemplo
 //  if FileExists('sample.pas') then fraEditView1.AddEdit('sample.pas');
-//  if FileExists('SinNombre.pas') then edit.LoadFile('SinNombre.pas');
+  if FileExists('SinNombre.pas') then fraEditView1.LoadFile('SinNombre.pas');
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin
@@ -313,13 +315,9 @@ procedure TfrmPrincipal.ChangeAppearance;
 begin
   if curProj = nil then begin
     SetStateActionsProject(false);
-    fraSynTree.Visible := false;
-    splSynTree.Visible := false;
 //    exit;
   end else begin
     SetStateActionsProject(true);
-    fraSynTree.Visible := true;
-    splSynTree.Visible := true;
   end;
   if fraEditView1.Count = 0 then begin
     //No hay ventanas de edición abiertas
@@ -331,8 +329,12 @@ begin
     acArcSaveAs.Enabled := true;
   end;
 
+  fraSynTree.Visible := Config.ViewSynTree;
+  splSynTree.Visible := Config.ViewSynTree;
+
   StatusBar1.Visible := Config.ViewStatusbar;
   acViewStatbar.Checked := Config.ViewStatusbar;
+
   ToolBar1.Visible := Config.ViewToolbar;
   acViewToolbar.Checked:= Config.ViewToolbar;
 
@@ -451,6 +453,10 @@ end;
 procedure TfrmPrincipal.acViewMsgPanExecute(Sender: TObject);
 begin
   Config.ViewPanMsg:= not Config.ViewPanMsg;
+end;
+procedure TfrmPrincipal.acViewSynTreeExecute(Sender: TObject);
+begin
+  Config.ViewSynTree := not config.ViewSynTree;
 end;
 //////////// Acciones de Herramientas ///////////////
 procedure TfrmPrincipal.acToolCompilExecute(Sender: TObject);

@@ -3,18 +3,23 @@ unit FrameSyntaxTree;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls, Menus,
-  XpresElementsPIC;
+  MisUtils, XpresElementsPIC;
 type
   { TfraSyntaxTree }
   TfraSyntaxTree = class(TFrame)
     ImageList1: TImageList;
     Label1: TLabel;
-    MenuItem1: TMenuItem;
+    mnGoTo: TMenuItem;
+    mnRefresh: TMenuItem;
+    mnProper: TMenuItem;
     PopupMenu1: TPopupMenu;
     TreeView1: TTreeView;
-    procedure MenuItem1Click(Sender: TObject);
+    procedure mnProperClick(Sender: TObject);
+    procedure mnRefreshClick(Sender: TObject);
   private
     syntaxTree: TXpTreeElements;
+    procedure AddNodeTo(nodParent: TTreeNode; nodName: string; imgIndex: integer;
+      Data: Pointer);
   public
     procedure Init(syntaxTree0: TXpTreeElements);
     procedure Refresh;
@@ -25,20 +30,25 @@ implementation
 {$R *.lfm}
 
 { TfraSyntaxTree }
-procedure TfraSyntaxTree.MenuItem1Click(Sender: TObject);  //Refresh
-begin
-  Refresh;
-end;
-
 procedure TfraSyntaxTree.Init(syntaxTree0: TXpTreeElements);
 begin
   syntaxTree := syntaxTree0;
 end;
-
+procedure TfraSyntaxTree.AddNodeTo(nodParent: TTreeNode; nodName: string; imgIndex: integer;
+                                   Data: Pointer);
+{Agrega un elemento a un noco.}
+var
+  nod: TTreeNode;
+begin
+  nod := TreeView1.Items.AddChild(nodParent, nodName);
+  nod.ImageIndex := imgIndex;
+  nod.SelectedIndex := imgIndex;
+  nod.Data := Data;
+end;
 procedure TfraSyntaxTree.Refresh;
 var
   elem : TxpElement;
-  nodMain, nod, nodVar, nodOtr, nodFun, nodCte, nodUni: TTreeNode;
+  nodMain, nodVar, nodOtr, nodFun, nodCte, nodUni: TTreeNode;
 begin
   TreeView1.Items.BeginUpdate;
   TreeView1.Items.Clear;
@@ -50,10 +60,8 @@ begin
   nodUni := TreeView1.Items.AddChild(nodMain, 'Units');
   nodUni.ImageIndex := 0;
   nodUni.SelectedIndex := 0;
-  nodVar := TreeView1.Items.AddChild(nodMain, 'Variables');
-  nodVar.ImageIndex := 0;
-  nodVar.SelectedIndex := 0;
-  nodCte:= nil;
+  nodVar := nil;
+  nodCte := nil;
   nodFun := nil;
   nodOtr := nil;  //por defecto
   //Agrega elementos
@@ -69,31 +77,28 @@ begin
         nodCte.ImageIndex := 0;
         nodCte.SelectedIndex := 0;
       end;
-      nod := TreeView1.Items.AddChild(nodCte, elem.name);
-      nod.ImageIndex := 4;
-      nod.SelectedIndex := 4;
-    end else if elem is TxpEleVar then begin  //varible
-      nod := TreeView1.Items.AddChild(nodVar, elem.name);
-      nod.ImageIndex := 2;
-      nod.SelectedIndex := 2;
+      AddNodeTo(nodCte, elem.name, 4, elem);
+    end else if elem is TxpEleVar then begin  //variable
+      if nodVar = nil then begin
+        nodVar := TreeView1.Items.AddChild(nodMain, 'Variables');
+        nodVar.ImageIndex := 0;
+        nodVar.SelectedIndex := 0;
+      end;
+      AddNodeTo(nodVar, elem.name, 2, elem);
     end else if elem is TxpEleFun then begin  //función
       if nodFun = nil then begin  //Si no se ha creado, lo crea
         nodFun := TreeView1.Items.AddChild(nodMain, 'Functions');
         nodFun.ImageIndex := 0;
         nodFun.SelectedIndex := 0;
       end;
-      nod := TreeView1.Items.AddChild(nodFun, elem.name);
-      nod.ImageIndex := 3;
-      nod.SelectedIndex := 3;
+      AddNodeTo(nodFun, elem.name, 3, elem);
     end else begin
       if nodOtr = nil then begin  //Si no se ha creado, lo crea
         nodOtr := TreeView1.Items.AddChild(nodMain, 'Others');
         nodOtr.ImageIndex := 0;
         nodOtr.SelectedIndex := 0;
       end;
-      nod := TreeView1.Items.AddChild(nodOtr, elem.name);
-//      nod.ImageIndex := 1;
-//      nod.SelectedIndex := 1;
+      AddNodeTo(nodOtr, elem.name, -1, nil);
     end;
   end;
   nodMain.Expanded := true;
@@ -103,6 +108,39 @@ begin
   if nodFun<>nil then nodFun.Expanded := true;
   if nodOtr<>nil then nodOtr.Expanded := true;
   TreeView1.Items.EndUpdate;
+end;
+//Opciones del menú
+procedure TfraSyntaxTree.mnRefreshClick(Sender: TObject);  //Refresh
+begin
+  Refresh;
+end;
+procedure TfraSyntaxTree.mnProperClick(Sender: TObject);
+var
+  elem: TxpElement;
+  fun: TxpEleFun;
+  xvar: TxpEleVar;
+begin
+  if TreeView1.Selected = nil then exit;
+  if TreeView1.Selected.Data = nil then exit;
+  elem := TxpElement(TreeView1.Selected.Data);
+  if elem is TxpEleVar then begin
+    xvar := TxpEleVar(elem);
+    MsgBox('Nombre: ' + elem.name + LineEnding +
+           'Tipo: ' + elem.typ.name + LineEnding +
+           'Direcc. Solicitada: ' + IntToStr(xvar.solAdr) + ':' + IntToStr(xvar.solBit) + LineEnding +
+           'Direcc. Asignada: ' + xvar.AddrString + LineEnding +
+           'Num.Llamadas: ' + IntToStr(xvar.nCalled) );
+  end;
+  if elem is TxpEleFun then begin
+    fun := TxpEleFun(elem);
+    MsgBox('Nombre: ' + elem.name + LineEnding +
+           'Ubicación: ' + fun.srcFile + ':(' + IntToStr(fun.srcRow) + ',' +
+                                             IntToStr(fun.srcCol)+')' + LineEnding +
+           'Dirección: $' + IntToHex(fun.adrr, 3) + LineEnding +
+           'Num.Llamadas: ' + IntToStr(fun.nCalled) + lineending +
+           'Tamaño: ' + IntToStr(fun.srcSize)
+           );
+  end;
 end;
 
 end.

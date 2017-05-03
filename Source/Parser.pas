@@ -11,30 +11,33 @@ type
 
  { TCompiler }
   TCompiler = class(TGenCod)
-  private
-    ////////////////////////////////////////
+  private  //Funciones básicas
     lexDir : TSynFacilSyn;  //lexer para analizar directivas
-    procedure CaptureDecParams(fun: TxpEleFun);
-    procedure CompileConstDeclar;
-    procedure CompileIF;
-    procedure CompileProcDeclar;
-    procedure CompileREPEAT;
-    procedure CompileWHILE;
-    procedure CompileInstructionDummy;
-    procedure CompileInstruction;
-    function CreateCons(const consName: string; typ: ttype): TxpEleCon;
-    procedure DefLexDirectiv;
+    procedure cInNewLine(lin: string);
+    function StartOfSection: boolean;
+    procedure ResetFlashAndRAM;
     procedure getListOfIdent(var itemList: TStringDynArray);
     procedure ProcComments;
-    procedure CompileCurBlock;
-    procedure CompileFile(iniMem: word);
-    procedure CompileVarDeclar;
-    function StartOfSection: boolean;
-  protected
+    procedure CaptureDecParams(fun: TxpEleFun);
+    function CreateCons(const consName: string; typ: ttype): TxpEleCon;
+    procedure CompileIF;
+    procedure CompileREPEAT;
+    procedure CompileWHILE;
+  protected   //Métodos OVERRIDE
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
     procedure TipDefecString(var Op: TOperand; tokcad: string); override;
     procedure TipDefecBoolean(var Op: TOperand; tokcad: string); override;
-    procedure cInNewLine(lin: string);
+  private //Compilación se secciones
+    procedure CompileConstDeclar;
+    procedure CompileVarDeclar;
+    procedure CompileProcDeclar(fun: TxpEleFun);
+    procedure CompileProcDeclar;
+    procedure CompileInstructionDummy;
+    procedure CompileInstruction;
+    procedure DefLexDirectiv;
+    procedure CompileCurBlock;
+    procedure CompileProgram;
+    procedure CompileLinkProgram;
   public
     procedure Compile(NombArc: string; LinArc: Tstrings);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType);  //uso de memoria RAM
@@ -61,6 +64,395 @@ end;
 function HayError: boolean;
 begin
   Result := cxp.HayError;
+end;
+//Funciones básicas
+procedure TCompiler.cInNewLine(lin: string);
+//Se pasa a una nueva _Línea en el contexto de entrada
+begin
+  pic.addCommAsm(';'+trim(lin));  //agrega _Línea al código ensmblador
+end;
+function TCompiler.StartOfSection: boolean;
+begin
+  Result := (cIn.tokL ='var') or (cIn.tokL ='const') or
+            (cIn.tokL ='type') or (cIn.tokL ='procedure');
+end;
+procedure TCompiler.ResetFlashAndRAM;
+{Reinicia el dispositivo, para empezar a escribir en la posición $000 de la FLASH, y
+en laposición inicial de la RAM.}
+begin
+  pic.iFlash := 0;  //Ubica puntero al inicio.
+  pic.ClearMemRAM;  //Pone las celdas como no usadas y elimina nombres.
+  CurrBank := 0;
+  StartRegs;        //Limpia registros de trabajo, auxiliares, y de pila.
+end;
+procedure TCompiler.getListOfIdent(var itemList: TStringDynArray);
+{Lee una lista de identificadores separados por comas, hasta encontra un caracter distinto
+de coma. Si el primer elemento no es un identificador o si después de la coma no sigue un
+identificador, genera error.}
+var
+  item: String;
+  n: Integer;
+begin
+  repeat
+    cIn.SkipWhites;
+    //ahora debe haber un identificador
+    if cIn.tokType <> tnIdentif then begin
+      GenError('Identifier expected.');
+      exit;
+    end;
+    //hay un identificador
+    item := cIn.tok;
+    cIn.Next;  //lo toma
+    cIn.SkipWhites;
+    //sgrega nombre de ítem
+    n := high(itemList)+1;
+    setlength(itemList, n+1);  //hace espacio
+    itemList[n] := item;  //agrega nombre
+    if cIn.tok <> ',' then break; //sale
+    cIn.Next;  //toma la coma
+  until false;
+end;
+procedure TCompiler.ProcComments;
+//Procesa comentarios y directivas
+  function tokType: integer;
+  begin
+    Result := lexdir.GetTokenKind;
+  end;
+  procedure skipWhites;
+  begin
+    if tokType = lexDir.tnSpace then
+      lexDir.Next;  //quita espacios
+  end;
+var
+  f: Integer;
+begin
+  cIn.SkipWhites;
+  while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
+    if cIn.tokType = tnAsm then begin
+      //procesa la línea ASM
+      ProcASMlime(cIn.tok);
+      if HayError then exit;
+    end else begin
+      //Se ha detectado una directiva
+      //Usa SynFacilSyn como lexer para analizar texto
+      lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
+      if tokType = lexDir.tnSpace then  lexDir.Next;  //quita espacios
+      if tokType <> lexDir.tnIdentif then begin
+        GenError('Error in directive.');
+        exit;
+      end;
+      //sigue identificador
+      case UpperCase(lexDir.GetToken) of
+      'PROCESSOR': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+        if not GetHardwareInfo(pic, lexDir.GetToken) then begin
+          GenError('Unknown device: %s', [lexDir.GetToken]);
+          exit;
+        end;
+      end;
+      'FREQUENCY': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+        if tokType <> lexDir.tnNumber then begin
+          GenError('Error in directive.');
+          exit;
+        end;
+        if not TryStrToInt(lexDir.GetToken, f) then begin
+          GenError('Error in frecuencia.');
+          exit;
+        end;
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+        case UpperCase(lexDir.GetToken) of
+        'KHZ': f := f * 1000;
+        'MHZ': f := f * 1000000;
+        else
+          GenError('Error in directive.');
+          exit;
+        end;
+        pic.frequen:=f; //asigna freecuencia
+      end;
+      'POINTERS': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+
+      end;
+      'CONFIG': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+
+      end;
+      'DEFINE': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+
+      end;
+      else
+        GenError('Unknown directive: %s', [lexDir.GetToken]);
+        exit;
+      end;
+    end;
+    //pasa w siguiente
+    cIn.Next;
+    cIn.SkipWhites;  //limpia blancos
+  end;
+end;
+procedure TCompiler.CaptureDecParams(fun: TxpEleFun);
+//Lee la declaración de parámetros de una función.
+var
+  parType: String;
+  parName: String;
+begin
+  SkipWhites;
+  if EOBlock or EOExpres then begin
+    //no tiene parámetros
+  end else begin
+    //Debe haber parámetros
+    if cIn.tok<>'(' then begin
+      GenError('"(" expected.');
+      exit;
+    end;
+    cin.Next;
+    repeat
+      if cIn.tokType <> tnIdentif then begin
+        GenError('Identifier expected.');
+        exit;
+      end;
+      parName := cIn.tok;   //lee tipo de parámetro
+      cIn.Next;
+      cIn.SkipWhites;
+      if cIn.tok<>':' then begin
+        GenError('":" expected.');
+        exit;
+      end;
+      cIn.Next;
+      cIn.SkipWhites;
+
+      if (cIn.tokType <> tnType) then begin
+        GenError('Identifier of type expected.');
+        exit;
+      end;
+      parType := cIn.tok;   //lee tipo de parámetro
+      cIn.Next;
+      //ya tiene el nombre y el tipo
+      CreateParam(fun, parName, parType);
+      if HayError then exit;
+      if cIn.tok = ';' then begin
+        cIn.Next;   //toma separador
+        SkipWhites;
+      end else begin
+        //no sigue separador de parámetros,
+        //debe terminar la lista de parámetros
+        //¿Verificar EOBlock or EOExpres ?
+        break;
+      end;
+    until false;
+    //busca paréntesis final
+    if cIn.tok<>')' then begin
+      GenError('")" expected.'); exit;
+    end;
+    cin.Next;
+  end;
+end;
+function TCompiler.CreateCons(const consName: string; typ: ttype): TxpEleCon;
+{Rutina para crear una constante. Devuelve índice a la variable creada.}
+var
+  r  : TxpEleCon;
+begin
+  //registra variable en la tabla
+  r := TxpEleCon.Create;
+  r.name:=consName;
+  r.typ := typ;   //fija  referencia a tipo
+  if not TreeElems.AddElement(r) then begin
+    GenError('Duplicated identifier: "%s"', [consName]);
+    exit;
+  end;
+  Result := r;
+end;
+procedure TCompiler.CompileIF;
+{Compila uan extructura IF}
+var
+  dg: Integer;
+  dg2: Integer;
+begin
+  GetExpressionE(0);
+  if HayError then exit;
+  if res.typ<>typBool then begin
+    GenError('Boolean expression expected.');
+    exit;
+  end;
+  cIn.SkipWhites;
+  if cIn.tokL<>'then' then begin
+    GenError('"then" expected.');
+    exit;
+  end;
+  cIn.Next;   //toma "then"
+  //aquí debe estar el cuerpo del "if"
+  case res.catOp of
+  coConst: begin  //la condición es fija
+    if res.valBool then begin
+      //es verdadero, siempre se ejecuta
+      CompileInstruction;
+      if HayError then exit;
+      if cIn.tokL = 'else' then begin
+        //hay bloque ELSE, pero no se ejecutará nunca
+        cIn.Next;   //toma "else"
+        CompileInstructionDummy;  //solo para mantener la sintaxis
+        if HayError then exit;
+      end;
+    end else begin
+      //aquí se debería lanzar una advertencia
+      CompileInstructionDummy;  //solo para mantener la sintaxis
+      if HayError then exit;
+      if cIn.tokL = 'else' then begin
+        //hay bloque ELSE, que sí se ejecutará
+        cIn.Next;   //toma "else"
+        CompileInstruction;
+        if HayError then exit;
+      end;
+    end;
+  end;
+  coVariab:begin
+    _BTFSS(res.offs, res.bit);  //verifica condición
+    _GOTO_PEND(dg);  //salto pendiente
+    CompileInstruction;
+    if HayError then exit;
+    if cIn.tokL <> 'else' then begin  //no hay blqoue ELSE
+      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+    end else begin
+      //hay bloque ELSE
+      cIn.Next;   //toma "else"
+      _GOTO_PEND(dg2);  //salto pendiente
+      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+      CompileInstruction;
+      if HayError then exit;
+      pic.codGotoAt(dg2, _PC);   //termina de codificar el salto
+    end;
+  end;
+  coExpres:begin
+    if res.Inverted then  //_Lógica invertida
+      _BTFSC(_STATUS, BooleanBit)  //verifica condición
+    else
+      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    _GOTO_PEND(dg);  //salto pendiente
+    CompileInstruction;
+    if HayError then exit;
+    if cIn.tokL <> 'else' then begin  //no hay blqoue ELSE
+      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+    end else begin
+      //hay bloque ELSE
+      cIn.Next;   //toma "else"
+      _GOTO_PEND(dg2);  //salto pendiente
+      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+      CompileInstruction;
+      if HayError then exit;
+      pic.codGotoAt(dg2, _PC);   //termina de codificar el salto
+    end;
+  end;
+  end;
+end;
+procedure TCompiler.CompileREPEAT;
+{Compila uan extructura WHILE}
+var
+  l1: Word;
+begin
+  l1 := _PC;        //guarda dirección de inicio
+//  CompileInstruction;  //debería completarse las instrucciones de tipo "break"
+  CompileCurBlock;
+  if HayError then exit;
+  cIn.SkipWhites;
+  if cIn.tokL<>'until' then begin
+    GenError('"until" expected.');
+    exit;
+  end;
+  cIn.Next;   //toma "until"
+  GetExpressionE(0);
+  if HayError then exit;
+  if res.typ<>typBool then begin
+    GenError('Boolean expression expected.');
+    exit;
+  end;
+  case res.catOp of
+  coConst: begin  //la condición es fija
+    if res.valBool then begin
+      //lazo nulo
+    end else begin
+      //lazo infinito
+      _GOTO(l1);
+    end;
+  end;
+  coVariab:begin
+    _BTFSS(res.offs, res.bit);  //verifica condición
+    _GOTO(l1);
+    //sale cuando la condición es verdadera
+  end;
+  coExpres:begin
+    if res.Inverted then  //_Lógica invertida
+      _BTFSC(_STATUS, BooleanBit)  //verifica condición
+    else
+      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    _GOTO(l1);
+    //sale cuando la condición es verdadera
+  end;
+  end;
+end;
+procedure TCompiler.CompileWHILE;
+{Compila uan extructura WHILE}
+var
+  l1: Word;
+  dg: Integer;
+begin
+  l1 := _PC;        //guarda dirección de inicio
+  GetExpressionE(0);
+  if HayError then exit;
+  if res.typ<>typBool then begin
+    GenError('Boolean expression expected.');
+    exit;
+  end;
+  cIn.SkipWhites;
+  if cIn.tokL<>'do' then begin
+    GenError('"do" expected.');
+    exit;
+  end;
+  cIn.Next;   //toma "do"
+  //aquí debe estar el cuerpo del "while"
+  case res.catOp of
+  coConst: begin  //la condición es fija
+    if res.valBool then begin
+      //lazo infinito
+      CompileInstruction;  //debería completarse las instrucciones de tipo "break"
+      if HayError then exit;
+      _GOTO(l1);
+    end else begin
+      //lazo nulo
+      //aquí se debería lanzar una advertencia
+      CompileInstructionDummy;
+      if HayError then exit;
+    end;
+  end;
+  coVariab:begin
+    _BTFSS(res.offs, res.bit);  //verifica condición
+    _GOTO_PEND(dg);  //salto pendiente
+    CompileInstruction;
+    if HayError then exit;
+    _GOTO(l1);
+    //ya se tiene el destino del salto
+    pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+  end;
+  coExpres:begin
+    if res.Inverted then  //_Lógica invertida
+      _BTFSC(_STATUS, BooleanBit)  //verifica condición
+    else
+      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    _GOTO_PEND(dg);  //salto pendiente
+    CompileInstruction;
+    if HayError then exit;
+    _GOTO(l1);
+    //ya se tiene el destino del salto
+    pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+  end;
+  end;
 end;
 //Métodos OVERRIDE
 procedure TCompiler.TipDefecNumber(var Op: TOperand; toknum: string);
@@ -150,138 +542,44 @@ begin
   Op.valBool:= (tokcad[1] in ['t','T']);
   Op.typ:=typBool;
 end;
-procedure TCompiler.ProcComments;
-//Procesa comentarios y directivas
-  function tokType: integer;
-  begin
-    Result := lexdir.GetTokenKind;
-  end;
-  procedure skipWhites;
-  begin
-    if tokType = lexDir.tnSpace then
-      lexDir.Next;  //quita espacios
-  end;
+//Compilación se secciones
+procedure TCompiler.CompileConstDeclar;
 var
-  f: Integer;
+//  consType: String;
+  consNames: array of string;  //nombre de variables
+  c: TxpEleCon;
+  tmp: String;
 begin
-  cIn.SkipWhites;
-  while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
-    if cIn.tokType = tnAsm then begin
-      //procesa la línea ASM
-      ProcASMlime(cIn.tok);
-      if HayError then exit;
-    end else begin
-      //Se ha detectado una directiva
-      //Usa SynFacilSyn como lexer para analizar texto
-      lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
-      if tokType = lexDir.tnSpace then  lexDir.Next;  //quita espacios
-      if tokType <> lexDir.tnIdentif then begin
-        GenError('Error in directive.');
-        exit;
-      end;
-      //sigue identificador
-      case UpperCase(lexDir.GetToken) of
-      'PROCESSOR': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-        if not GetHardwareInfo(pic, lexDir.GetToken) then begin
-          GenError('Unknown device: %s', [lexDir.GetToken]);
-          exit;
-        end;
-      end;
-      'FREQUENCY': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-        if tokType <> lexDir.tnNumber then begin
-          GenError('Error in directive.');
-          exit;
-        end;
-        if not TryStrToInt(lexDir.GetToken, f) then begin
-          GenError('Error in frecuencia.');
-          exit;
-        end;
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-        case UpperCase(lexDir.GetToken) of
-        'KHZ': f := f * 1000;
-        'MHZ': f := f * 1000000;
-        else
-          GenError('Error in directive.');
-          exit;
-        end;
-        pic.frequen:=f; //asigna freecuencia
-      end;
-      'POINTERS': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-
-      end;
-      'CONFIG': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-
-      end;
-      'DEFINE': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-
-      end;
-      else
-        GenError('Unknown directive: %s', [lexDir.GetToken]);
-        exit;
-      end;
-    end;
-    //pasa w siguiente
-    cIn.Next;
-    cIn.SkipWhites;  //limpia blancos
-  end;
-end;
-procedure TCompiler.cInNewLine(lin: string);
-//Se pasa a una nueva _Línea en el contexto de entrada
-begin
-  pic.addCommAsm(';'+trim(lin));  //agrega _Línea al código ensmblador
-end;
-procedure TCompiler.getListOfIdent(var itemList: TStringDynArray);
-{Lee una lista de identificadores separados por comas, hasta encontra un caracter distinto
-de coma. Si el primer elemento no es un identificador o si después de la coma no sigue un
-identificador, genera error.}
-var
-  item: String;
-  n: Integer;
-begin
-  repeat
-    cIn.SkipWhites;
-    //ahora debe haber un identificador
-    if cIn.tokType <> tnIdentif then begin
-      GenError('Identifier expected.');
-      exit;
-    end;
-    //hay un identificador
-    item := cIn.tok;
-    cIn.Next;  //lo toma
-    cIn.SkipWhites;
-    //sgrega nombre de ítem
-    n := high(itemList)+1;
-    setlength(itemList, n+1);  //hace espacio
-    itemList[n] := item;  //agrega nombre
-    if cIn.tok <> ',' then break; //sale
-    cIn.Next;  //toma la coma
-  until false;
-end;
-function TCompiler.CreateCons(const consName: string; typ: ttype): TxpEleCon;
-{Rutina para crear una constante. Devuelve índice a la variable creada.}
-var
-  r  : TxpEleCon;
-begin
-  //registra variable en la tabla
-  r := TxpEleCon.Create;
-  r.name:=consName;
-  r.typ := typ;   //fija  referencia a tipo
-  if not TreeElems.AddElement(r) then begin
-    GenError('Duplicated identifier: "%s"', [consName]);
+  setlength(consNames,0);  //inicia arreglo
+  //procesa lista de constantes a,b,c ;
+  getListOfIdent(consNames);
+  if HayError then begin  //precisa el error
+    GenError('Identifier of constant expected.');
     exit;
   end;
-  Result := r;
+  //puede seguir "=" o identificador de tipo
+  if cIn.tok = '=' then begin
+    cIn.Next;  //pasa al siguiente
+    //Debe seguir una expresióc constante, que no genere código
+    GetExpressionE(0);
+    if HayError then exit;
+    if res.catOp <> coConst then begin
+      GenError('Constant expression expected.');
+    end;
+    //Hasta aquí todo bien, crea la(s) constante(s).
+    for tmp in consNames do begin
+      //crea constante
+      c := CreateCons(tmp, res.typ);
+      res.CopyConsValTo(c); //asigna valor
+    end;
+//  end else if cIn.tok = ':' then begin
+  end else begin
+    GenError('"=", ":" or "," expected.');
+    exit;
+  end;
+  if not CaptureDelExpres then exit;
+  ProcComments;
+  //puede salir con error
 end;
 procedure TCompiler.CompileVarDeclar;
 {Compila la declaración de variables. Usa una sintaxis, sencilla, similar w la de
@@ -389,7 +687,7 @@ var
       xvar := TreeElems.FindVar(cIn.tok);
       if xvar<>nil then begin
         //Es variable
-        absAdrr := xvar.AbsAdrr;  //debe ser absoluta
+        absAdrr := xvar.AbsAddr;  //debe ser absoluta
         if absAdrr = ADRR_ERROR then begin
           GenError('Unknown type.');
           exit;
@@ -415,6 +713,7 @@ var
   tmp: String;
   isAbsolute: Boolean;
   typ: TType;
+  nVar: TxpEleVar;
 begin
   setlength(varNames,0);  //inicia arreglo
   //procesa variables a,b,c : int;
@@ -446,11 +745,23 @@ begin
     if Perr.HayError then exit;
     //reserva espacio para las variables
     for tmp in varNames do begin
-      if isAbsolute then  //crea en posición absoluta
-        CreateVar(tmp, typ, absAdrr, absBit)
-      else
-        CreateVar(tmp, typ);
+      nVar := TxpEleVar.Create;
+      nVar.name := tmp;
+      nVar.typ := typ;
+      if isAbsolute then begin //crea en posición absoluta
+        nVar.solAdr := absAdrr;
+        nVar.solBit := absBit;
+      end else begin
+        nVar.solAdr := -1;
+        nVar.solBit := -1;
+      end;
+      CreateVar(nVar);  //Crea la variable
       if Perr.HayError then exit;
+      if not TreeElems.AddElement(nVar) then begin
+        GenError('Duplicated identifier: "%s"', [tmp]);
+        nVar.Destroy;
+        exit;
+      end;
     end;
   end else begin
     GenError('":" or "," expected.');
@@ -460,133 +771,9 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler.CompileConstDeclar;
-var
-//  consType: String;
-  consNames: array of string;  //nombre de variables
-  c: TxpEleCon;
-  tmp: String;
+procedure TCompiler.CompileProcDeclar(fun: TxpEleFun);
+{Compila la declaración de un procedimiento}
 begin
-  setlength(consNames,0);  //inicia arreglo
-  //procesa lista de constantes a,b,c ;
-  getListOfIdent(consNames);
-  if HayError then begin  //precisa el error
-    GenError('Identifier of constant expected.');
-    exit;
-  end;
-  //puede seguir "=" o identificador de tipo
-  if cIn.tok = '=' then begin
-    cIn.Next;  //pasa al siguiente
-    //Debe seguir una expresióc constante, que no genere código
-    GetExpressionE(0);
-    if HayError then exit;
-    if res.catOp <> coConst then begin
-      GenError('Constant expression expected.');
-    end;
-    //Hasta aquí todo bien, crea la(s) constante(s).
-    for tmp in consNames do begin
-      //crea constante
-      c := CreateCons(tmp, res.typ);
-      res.CopyConsValTo(c); //asigna valor
-    end;
-//  end else if cIn.tok = ':' then begin
-  end else begin
-    GenError('"=", ":" or "," expected.');
-    exit;
-  end;
-  if not CaptureDelExpres then exit;
-  ProcComments;
-  //puede salir con error
-end;
-procedure TCompiler.CaptureDecParams(fun: TxpEleFun);
-//Lee la declaración de parámetros de una función.
-var
-  parType: String;
-  parName: String;
-begin
-  SkipWhites;
-  if EOBlock or EOExpres then begin
-    //no tiene parámetros
-  end else begin
-    //Debe haber parámetros
-    if cIn.tok<>'(' then begin
-      GenError('"(" expected.');
-      exit;
-    end;
-    cin.Next;
-    repeat
-      if cIn.tokType <> tnIdentif then begin
-        GenError('Identifier expected.');
-        exit;
-      end;
-      parName := cIn.tok;   //lee tipo de parámetro
-      cIn.Next;
-      cIn.SkipWhites;
-      if cIn.tok<>':' then begin
-        GenError('":" expected.');
-        exit;
-      end;
-      cIn.Next;
-      cIn.SkipWhites;
-
-      if (cIn.tokType <> tnType) then begin
-        GenError('Identifier of type expected.');
-        exit;
-      end;
-      parType := cIn.tok;   //lee tipo de parámetro
-      cIn.Next;
-      //ya tiene el nombre y el tipo
-      CreateParam(fun, parName, parType);
-      if HayError then exit;
-      if cIn.tok = ';' then begin
-        cIn.Next;   //toma separador
-        SkipWhites;
-      end else begin
-        //no sigue separador de parámetros,
-        //debe terminar la lista de parámetros
-        //¿Verificar EOBlock or EOExpres ?
-        break;
-      end;
-    until false;
-    //busca paréntesis final
-    if cIn.tok<>')' then begin
-      GenError('")" expected.'); exit;
-    end;
-    cin.Next;
-  end;
-end;
-procedure TCompiler.CompileProcDeclar;
-{Compila la declaración de procedimientos. Tanto procedimeintos como funciones
- se manejan internamente como funciones}
-var
-  procName: String;
-  fun: TxpEleFun;
-begin
-  cIn.SkipWhites;
-  //ahora debe haber un identificador
-  if cIn.tokType <> tnIdentif then begin
-    GenError('Identifier expected.');
-    exit;
-  end;
-  //hay un identificador
-  procName := cIn.tok;
-  cIn.Next;  //lo toma
-  {Ya tiene los datos mínimos para crear la función. La crea con "proc" en NIL,
-  para indicar que es una función definida por el usuario.}
-  fun := CreateFunction(procName, typNull, @callFunct);
-  CaptureDecParams(fun);
-  if HayError then exit;
-  //recién aquí puede verificar, porque ya se leyeron los parámetros
-  if not ValidateFunction then exit;
-  cIn.SkipWhites;
-  if cIn.tok=';' then begin //encontró delimitador de expresión
-    cIn.Next;   //lo toma
-    ProcComments;  //quita espacios
-    if HayError then exit;   //puede dar error por código assembler o directivas
-  end else begin  //hay otra cosa
-    GenError('";" expected.');  //por ahora
-    exit;  //debe ser un error
-  end;
   //Empiezan las declaraciones
   while StartOfSection do begin
     if cIn.tokL = 'var' then begin
@@ -619,6 +806,7 @@ begin
   _RETURN();  //instrucción de salida
   EndCodeSub;  //termina codificación
   CloseFunction;  //cierra espacio de nombres de la función
+  fun.srcSize := pic.iFlash - fun.adrr;   //calcula tamaño
   if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
     ProcComments;  //quita espacios
@@ -628,189 +816,65 @@ begin
     exit;  //debe ser un error
   end;
 end;
-procedure TCompiler.CompileWHILE;
-{Compila uan extructura WHILE}
+procedure TCompiler.CompileProcDeclar;
+{Compila la declaración de procedimientos. Tanto procedimientos como funciones
+ se manejan internamente como funciones}
 var
-  l1: Word;
-  dg: Integer;
+  procName: String;
+  fun: TxpEleFun;
+  srcFile: string;
+  srcRow: LongInt;
+  srcCol: Integer;
 begin
-  l1 := _PC;        //guarda dirección de inicio
-  GetExpressionE(0);
-  if HayError then exit;
-  if res.typ<>typBool then begin
-    GenError('Boolean expression expected.');
-    exit;
+  if FirstPass then begin
+    {En la primera pasada, todos los procedimientos se codifican al inicio de la memoria
+    FLASH, y las variables y registros se ubican al inicio de la memeoria RAM, ya que lo
+    que importa es simplemente recabar información del procedimiento, y no tanto
+    codificarlo. Se hace como si solo existiera este procedimiento, para compilar.}
+    ResetFlashAndRAM;
+    //Toma información de ubicaicón
+    srcFile := cIn.curCon.arc;
+    srcRow := cIn.curCon.row;
+    srcCol := cIn.curCon.col;
+    {Notar que las variables globales, (y de procedimientos) declaradas anteriormente,
+    siguen existiendo en el árbol de sintaxis, porque es necesariop, para validar los
+    accesos a estas variables globales.}
   end;
   cIn.SkipWhites;
-  if cIn.tokL<>'do' then begin
-    GenError('"do" expected.');
+  //Ahora debe haber un identificador
+  if cIn.tokType <> tnIdentif then begin
+    GenError('Identifier expected.');
     exit;
   end;
-  cIn.Next;   //toma "do"
-  //aquí debe estar el cuerpo del "while"
-  case res.catOp of
-  coConst: begin  //la condición es fija
-    if res.valBool then begin
-      //lazo infinito
-      CompileInstruction;  //debería completarse las instrucciones de tipo "break"
-      if HayError then exit;
-      _GOTO(l1);
-    end else begin
-      //lazo nulo
-      //aquí se debería lanzar una advertencia
-      CompileInstructionDummy;
-      if HayError then exit;
-    end;
+  //hay un identificador
+  procName := cIn.tok;
+  cIn.Next;  //lo toma
+  {Ya tiene los datos mínimos para crear la función. La crea con "proc" en NIL,
+  para indicar que es una función definida por el usuario.}
+  fun := CreateFunction(procName, typNull, @callFunct);   ///????? No será en la 1ra pasada
+  fun.adrr := pic.iFlash;    //toma dirección de inicio
+  if FirstPass then begin
+    //Solo en la primera pasada se lee esta infromación
+    fun.srcFile := srcFile;
+    fun.srcRow := srcRow;
+    fun.srcCol := srcCol;
   end;
-  coVariab:begin
-    _BTFSS(res.offs, res.bit);  //verifica condición
-    _GOTO_PEND(dg);  //salto pendiente
-    CompileInstruction;
-    if HayError then exit;
-    _GOTO(l1);
-    //ya se tiene el destino del salto
-    pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-  end;
-  coExpres:begin
-    if res.Inverted then  //_Lógica invertida
-      _BTFSC(_STATUS, BooleanBit)  //verifica condición
-    else
-      _BTFSS(_STATUS, BooleanBit);  //verifica condición
-    _GOTO_PEND(dg);  //salto pendiente
-    CompileInstruction;
-    if HayError then exit;
-    _GOTO(l1);
-    //ya se tiene el destino del salto
-    pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-  end;
-  end;
-end;
-procedure TCompiler.CompileREPEAT;
-{Compila uan extructura WHILE}
-var
-  l1: Word;
-begin
-  l1 := _PC;        //guarda dirección de inicio
-//  CompileInstruction;  //debería completarse las instrucciones de tipo "break"
-  CompileCurBlock;
+  CaptureDecParams(fun);
   if HayError then exit;
+  //Recién aquí puede verificar, porque ya se leyeron los parámetros
+  if not ValidateFunction then exit;
   cIn.SkipWhites;
-  if cIn.tokL<>'until' then begin
-    GenError('"until" expected.');
-    exit;
+  if cIn.tok=';' then begin //encontró delimitador de expresión
+    cIn.Next;   //lo toma
+    ProcComments;  //quita espacios
+    if HayError then exit;   //puede dar error por código assembler o directivas
+  end else begin  //hay otra cosa
+    GenError('";" expected.');  //por ahora
+    exit;  //debe ser un error
   end;
-  cIn.Next;   //toma "until"
-  GetExpressionE(0);
-  if HayError then exit;
-  if res.typ<>typBool then begin
-    GenError('Boolean expression expected.');
-    exit;
-  end;
-  case res.catOp of
-  coConst: begin  //la condición es fija
-    if res.valBool then begin
-      //lazo nulo
-    end else begin
-      //lazo infinito
-      _GOTO(l1);
-    end;
-  end;
-  coVariab:begin
-    _BTFSS(res.offs, res.bit);  //verifica condición
-    _GOTO(l1);
-    //sale cuando la condición es verdadera
-  end;
-  coExpres:begin
-    if res.Inverted then  //_Lógica invertida
-      _BTFSC(_STATUS, BooleanBit)  //verifica condición
-    else
-      _BTFSS(_STATUS, BooleanBit);  //verifica condición
-    _GOTO(l1);
-    //sale cuando la condición es verdadera
-  end;
-  end;
-end;
-procedure TCompiler.CompileIF;
-{Compila uan extructura IF}
-var
-  dg: Integer;
-  dg2: Integer;
-begin
-  GetExpressionE(0);
-  if HayError then exit;
-  if res.typ<>typBool then begin
-    GenError('Boolean expression expected.');
-    exit;
-  end;
-  cIn.SkipWhites;
-  if cIn.tokL<>'then' then begin
-    GenError('"then" expected.');
-    exit;
-  end;
-  cIn.Next;   //toma "then"
-  //aquí debe estar el cuerpo del "if"
-  case res.catOp of
-  coConst: begin  //la condición es fija
-    if res.valBool then begin
-      //es verdadero, siempre se ejecuta
-      CompileInstruction;
-      if HayError then exit;
-      if cIn.tokL = 'else' then begin
-        //hay bloque ELSE, pero no se ejecutará nunca
-        cIn.Next;   //toma "else"
-        CompileInstructionDummy;  //solo para mantener la sintaxis
-        if HayError then exit;
-      end;
-    end else begin
-      //aquí se debería lanzar una advertencia
-      CompileInstructionDummy;  //solo para mantener la sintaxis
-      if HayError then exit;
-      if cIn.tokL = 'else' then begin
-        //hay bloque ELSE, que sí se ejecutará
-        cIn.Next;   //toma "else"
-        CompileInstruction;
-        if HayError then exit;
-      end;
-    end;
-  end;
-  coVariab:begin
-    _BTFSS(res.offs, res.bit);  //verifica condición
-    _GOTO_PEND(dg);  //salto pendiente
-    CompileInstruction;
-    if HayError then exit;
-    if cIn.tokL <> 'else' then begin  //no hay blqoue ELSE
-      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-    end else begin
-      //hay bloque ELSE
-      cIn.Next;   //toma "else"
-      _GOTO_PEND(dg2);  //salto pendiente
-      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-      CompileInstruction;
-      if HayError then exit;
-      pic.codGotoAt(dg2, _PC);   //termina de codificar el salto
-    end;
-  end;
-  coExpres:begin
-    if res.Inverted then  //_Lógica invertida
-      _BTFSC(_STATUS, BooleanBit)  //verifica condición
-    else
-      _BTFSS(_STATUS, BooleanBit);  //verifica condición
-    _GOTO_PEND(dg);  //salto pendiente
-    CompileInstruction;
-    if HayError then exit;
-    if cIn.tokL <> 'else' then begin  //no hay blqoue ELSE
-      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-    end else begin
-      //hay bloque ELSE
-      cIn.Next;   //toma "else"
-      _GOTO_PEND(dg2);  //salto pendiente
-      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-      CompileInstruction;
-      if HayError then exit;
-      pic.codGotoAt(dg2, _PC);   //termina de codificar el salto
-    end;
-  end;
-  end;
+  //Ahora empieza el cuerpo de la función o las declaraciones
+  fun.posCtx := cIn.PosAct;  //guarda posición dentro del contexto actual
+  CompileProcDeclar(fun);
 end;
 procedure TCompiler.CompileInstructionDummy;
 {Compila una instrucción pero sin generar código. }
@@ -860,6 +924,7 @@ begin
       //debe ser es una expresión
       GetExpressionE(0);
     end;
+debugln('PC:' + IntToStr(_PC));
   end;
 end;
 procedure TCompiler.CompileCurBlock;
@@ -887,30 +952,18 @@ begin
     end;
   end;
 end;
-function TCompiler.StartOfSection: boolean;
-begin
-  Result := (cIn.tokL ='var') or (cIn.tokL ='const') or
-            (cIn.tokL ='type') or (cIn.tokL ='procedure');
-end;
-procedure TCompiler.CompileFile(iniMem: word);
+procedure TCompiler.CompileProgram;
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
-la posición iniMem}
+la posición actual de memoria en el PIC (iFlash).}
 begin
   TreeElems.Clear;
   listFunSys.Clear;
   CreateSystemElements;  //Crea los elementos del sistema
   //ClearTypes;      //limpia los tipos
   //Inicia PIC
-  pic.ClearMemRAM;
-  pic.ClearMemFlash;
-  pic.iFlash:=0;       //posición a escribir
-  _GOTO(iniMem);       //instrucción de salto inicial
-  pic.iFlash:=iniMem;  //inicia puntero a Flash
-  //inicia punteros para subrutinas
-  iniBloSub := 1;       //empieza después del GOTO
-  curBloSub := iniBloSub; //inicialmente está libre
-
   ExprLevel := 0;  //inicia
+  pic.ClearMemFlash;
+  ResetFlashAndRAM;
   Perr.Clear;
   ProcComments;
   if Perr.HayError then exit;
@@ -930,6 +983,7 @@ begin
     exit;
   end;
   ProcComments;
+  Cod_StartProgram;  //Se pone antes de codificar procedimientos y funciones
   if Perr.HayError then exit;
   //Empiezan las declaraciones
   while StartOfSection do begin
@@ -953,13 +1007,19 @@ begin
       exit;
     end;
   end;
-  {Verifica el traslape al final para darle tiempo a Compile todos los procedimientos
-  y así tener una idea de hasta cuánta memoria se requerirá}
-  if traslape or pErr.HayError then exit;
   //procesa cuerpo
+  if FirstPass then begin
+    {En la primera pasada el cuerpo principal, se codifica al inicio, al igual que
+    los procedimientos.}
+    pic.iFlash := 0;
+  end;
   if cIn.tokL = 'begin' then begin
-    Cod_StartProgram;
     cIn.Next;   //coge "begin"
+    //Guardamos la ubicación física, real, en el archivo, después del BEGIN
+    TreeElems.main.posCtx := cIn.PosAct;
+    TreeElems.main.srcFile := cIn.curCon.arc;
+    TreeElems.main.srcRow := cIn.curCon.row;
+    TreeElems.main.srcCol := cIn.curCon.col;
     //codifica el contenido
     CompileCurBlock;   //compila el cuerpo
     if Perr.HayError then exit;
@@ -991,12 +1051,65 @@ begin
   end;
   Cod_EndProgram;
 end;
-procedure TCompiler.Compile(NombArc: string; LinArc: Tstrings);
-//Compila el contenido de un archivo w ensamblador
+procedure TCompiler.CompileLinkProgram;
+{Genera el código compilado final. Usa la información del árbol de sintaxis, para
+ubicar a los diversos elementos que deben compilarse.
+Se debe llamar después de compilar con CompileProgram.}
 var
-  iniCOD: Integer;
-  posCxt: TPosCont;
-  nPass : integer;
+  elem : TxpElement;
+  xvar : TxpEleVar;
+  fun  : TxpEleFun;
+  iniMain: integer;
+begin
+//  pic.iFlash := 0;     //posición a escribir
+  ExprLevel := 0;
+  pic.ClearMemFlash;
+  ResetFlashAndRAM;
+  Perr.Clear;
+  //Genera espacio para las variables globales
+  for elem in TreeElems.main.elements do if elem is TxpEleVar then begin
+      xvar := TxpEleVar(elem);
+      if xvar.nCalled>0 then begin
+        //Asigna una dirección válida para esta variable
+        CreateVar(xVar);  //Crea la variable
+      end else begin
+        //Esta variable no se usa
+        //WARNINGGGGGGG
+        xvar.ResetAddress
+      end;
+  end;
+  pic.iFlash:= 0;  //inicia puntero a Flash
+  _GOTO_PEND(iniMain);       //instrucción de salto inicial
+  //Codifica las funciones del sistema usadas
+  for fun in listFunSys do begin
+    if (fun.nCalled > 0) and (fun.compile<>nil) then begin
+      //Función usada y que tiene una subrutina ASM
+      fun.adrr := pic.iFlash;  //actualiza la dirección final
+      fun.compile(fun);   //codifica
+    end;
+  end;
+  //Codifica las subrutinas usadas
+  for elem in TreeElems.main.elements do if elem is TxpEleFun then begin
+      fun := TxpEleFun(elem);
+      if fun.nCalled>0 then begin
+        //Compila la función en la dirección actual
+        fun.adrr := pic.iFlash;  //actualiza la dirección final
+        cIn.PosAct := fun.posCtx;
+        CompileProcDeclar(fun);
+      end else begin
+        //Esta función no se usa
+        //WARNINGGGGGGG
+      end;
+  end;
+  //Compila cuerpo del programa principal
+  pic.codGotoAt(iniMain, _PC);   //termina de codificar el salto
+  cIn.PosAct := TreeElems.main.posCtx;   //ubica escaner
+  CompileCurBlock;
+  {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
+  _SLEEP();   //agrega instrucción final
+end;
+procedure TCompiler.Compile(NombArc: string; LinArc: Tstrings);
+//Compila el contenido de un archivo.
 begin
   //se pone en un "try" para capturar errores y para tener un punto salida de salida
   //único
@@ -1011,32 +1124,22 @@ begin
     cIn.ClearAll;       //elimina todos los Contextos de entrada
     //compila el texto indicado
     cIn.NewContextFromFile(NombArc, LinArc);   //Crea nuevo contenido
-    posCxt := cIn.PosAct;    //Guarda la posición inicial del archivo
     if PErr.HayError then exit;
-    {EL método de codificación consiste en dejar espacios fijos al inicio para ir
-    llenándolos con las rutinas que sean usadas, e ir expandiendo este espacio en bloques
-    mientras se vayan llenando.}
-    iniCOD := 0;         //dirección de inicio del código principal
-    nPass := 1;          //cuenta el número de pasadas
-    repeat
-      inc(iniCOD, $20);    //incrementa dirección de inicio
-      cIn.PosAct := posCxt; //Posiciona al inicio
-      finBloSub := iniCOD;  //_Límite de espacio, para posibles rutinas usadas
-      debugln('*** Compilación ' + IntToStr(nPass) + ' en '+ IntToHex(iniCOD,3));
-      Traslape := false;   //inicia bandera
-      CompileFile(iniCOD); //puede dar error
-      if pErr.HayError then break;
-      inc(nPass);
-    until not traslape;
-    if PErr.HayError then exit;
-    //Se pudo Compile sin traslape y sin error. Se procede a juntar el código de subrutinas
-    //con del programa principal, en una última compilación.
-    iniCOD := curBloSub; //empieza a codificar exactamente en donde terminarán las subrutinas
-    cIn.PosAct := posCxt; //Posiciona al inicio
-    debugln('*** Compilación ' + IntToStr(nPass) + ' en '+ IntToHex(iniCOD,3));
-    CompileFile(iniCOD);
-    if PErr.HayError then exit;  //No debería generar ya error
 
+    {Se hace una primera pasada para ver, a modo de exploración, para ver qué
+    procedimientos, y varaibles son realmente usados, de modo que solo estos, serán
+    codificados en la segunda pasada. Así evitamos incluir, código innecesario.}
+    debugln('*** Compiling: Pass 1.');
+    pic.iFlash := 0;     //dirección de inicio del código principal
+    FirstPass := true;
+    CompileProgram;  //puede dar error
+    if pErr.HayError then exit;
+    debugln('*** Compiling/Linking: Pass 2.');
+    {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,
+    que debe haber sido actualizado en la primera pasada.
+    Esto es lo más cercano a un enlazador, que hay en PicPas.}
+    FirstPass := false;
+    CompileLinkProgram;
     cIn.RemoveContext;//es necesario por dejar limpio
     //genera archivo hexa
     pic.GenHex(rutApp + 'salida.hex');
@@ -1063,7 +1166,7 @@ begin
   for v in TreeElems.AllVars do begin
     case varDecType of
     dvtDBDb: begin
-      adStr := v.AdrrString;  //dirección hexadecimal
+      adStr := v.AddrString;  //dirección hexadecimal
       if adStr='' then adStr := 'XXXX';  //Error en dirección
       if (v.typ = typBool) or (v.typ = typBit) then begin
         lins.Add(' ' + v.name + ' Db ' +  adStr);
@@ -1077,15 +1180,19 @@ begin
     end;
     dvtEQU: begin;
       if (v.typ = typBool) or (v.typ = typBit) then begin
-        lins.Add('#define ' + v.name + ' ' + AdrStr(v.AbsAdrr) + ',' +
+        lins.Add('#define ' + v.name + ' ' + AdrStr(v.AbsAddr) + ',' +
                                              IntToStr(v.adrBit.bit));
       end else if v.typ = typByte then begin
-        lins.Add(v.name + ' EQU ' +  AdrStr(v.AbsAdrr));
+        if v.nCalled = 0 then begin
+          lins.Add(v.name + ' EQU <unused>');
+        end else begin
+          lins.Add(v.name + ' EQU ' +  AdrStr(v.AbsAddr));
+        end;
       end else if v.typ = typWord then begin
-        lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAdrrL));
-        lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAdrrH));
+        lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAddrL));
+        lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAddrH));
       end else begin
-        lins.Add('"' + v.name + '"->' +  AdrStr(v.AbsAdrr));
+        lins.Add('"' + v.name + '"->' +  AdrStr(v.AbsAddr));
       end;
     end;
     end;
@@ -1140,7 +1247,6 @@ begin
   l.Add('Flash Used = ' + IntToStr(used) +'/'+ IntToStr(tot) + ' (' +
         FloatToStrF(100*used/tot, ffGeneral, 1, 3) + '%)' );
 end;
-
 procedure TCompiler.DefLexDirectiv;
 {Define la sintaxis del lexer que se usará para analizar las directivas. La que
  debe estar entre los símbolo {$ ... }

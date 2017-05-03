@@ -34,9 +34,16 @@ object fraSyntaxTree: TfraSyntaxTree
   object PopupMenu1: TPopupMenu
     left = 95
     top = 128
-    object MenuItem1: TMenuItem
+    object mnGoTo: TMenuItem
+      Caption = '&Go to'
+    end
+    object mnRefresh: TMenuItem
       Caption = '&Refresh'
-      OnClick = MenuItem1Click
+      OnClick = mnRefreshClick
+    end
+    object mnProper: TMenuItem
+      Caption = '&Properties'
+      OnClick = mnProperClick
     end
   end
   object ImageList1: TImageList

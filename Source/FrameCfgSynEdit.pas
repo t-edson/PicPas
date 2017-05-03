@@ -41,9 +41,6 @@ type
     procedure chkMarLinActChange(Sender: TObject);
     procedure chkResPalCurChange(Sender: TObject);
     procedure chkVerPanVerChange(Sender: TObject);
-    //genera constructor y destructor
-    constructor Create(AOwner: TComponent) ; override;
-    destructor Destroy; override;
   public
     //configuración del editor
     TipLet     : string;     //tipo de letra
@@ -70,6 +67,10 @@ type
     procedure Iniciar(section: string; cfgFile: TMiConfigXML); //Inicia el frame
     procedure ConfigEditor(ed: TSynEdit);
     procedure SetLanguage(lang: string);
+  public
+    //genera constructor y destructor
+    constructor Create(AOwner: TComponent) ; override;
+    destructor Destroy; override;
   end;
 
 implementation

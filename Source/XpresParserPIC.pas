@@ -59,6 +59,8 @@ public
   function bank: TVarBank; inline;  //banco
   function Lbank: TVarBank; inline;  //banco
   function bit : byte; inline;  //posición del bit
+public  //Manejo de la lógica
+  procedure Invert;  //Invierte la lógica del operando
 private
   Val  : TConsValue;
   procedure SetvalBool(AValue: boolean);
@@ -105,7 +107,6 @@ protected  //Eventos del compilador
   function FindType(TypName: string): TType;
   //Manejo de funciones
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
-  //  procedure CreateFunction(funName, varType: string);
   function ValidateFunction: boolean;
   procedure CloseFunction;
   function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
@@ -328,31 +329,11 @@ begin
   fun := TxpEleFun.Create;
   fun.name:= funName;
   fun.typ := typ;
-  fun.proc:= proc;
+  fun.procCall:= proc;
   fun.ClearParams;
   TreeElems.OpenElement(fun);  //Se abre un nuevo espacio de nombres, pero no se valida duplicidad aún
   Result := fun;
 end;
-{procedure TCompilerBase.CreateFunction(funName, varType: string);
-//Define una nueva función en memoria.
-var t: ttype;
-  hay: Boolean;
-begin
-  //Verifica el tipo
-  hay := false;
-  for t in typs do begin
-    if t.name=varType then begin
-       hay:=true; break;
-    end;
-  end;
-  if not hay then begin
-    GenError('Undefined type "%s"', [varType]);
-    exit;
-  end;
-  CreateFunction(funName, t, nil);
-  //Ya encontró tipo, llama a evento
-//  if t.OnGlobalDef<>nil then t.OnGlobalDef(funName, '');
-end;}
 function TCompilerBase.ValidateFunction: boolean;
 {Valida la última función introducida, verificando que no haya otra función con el
  mismo nombre y mismos parámetros. De ser así devuelve FALSE.
@@ -381,7 +362,7 @@ begin
   fun := TxpEleFun.Create;  //Se crea como una función normal
   fun.name:= funName;
   fun.typ := typ;
-  fun.proc:= proc;
+  fun.procCall:= proc;
   fun.ClearParams;
 //  TreeElems.AddElement(fun, false);  //no verifica duplicidad
   listFunSys.Add(fun);  //Las funciones de sistema son accesibles siempre
@@ -457,6 +438,7 @@ var
   Op: TOperand;
   posAct: TPosCont;
   opr: TxpOperator;
+  Found: Boolean;
 begin
   PErr.Clear;
   SkipWhites;
@@ -477,7 +459,9 @@ begin
       if (Upcase(xfun.name) = tmp) then begin
         {Encontró. Llama a la función de procesamiento, quien se encargará de
         extraer los parámetros y analizar la sintaxis.}
-        xfun.proc(xfun);
+        xfun.nCalled := xfun.nCalled + 1;  //lleva la cuenta
+        xfun.procCall(xfun);  //para que codifique el _CALL o lo pimplemente
+        Result.txt:= tmp;     //toma el texto
         exit;
       end;
     end;
@@ -492,6 +476,7 @@ begin
     if ele.elemType = eltVar then begin
       //es una variable
       xvar := TxpEleVar(ele);
+      inc(xvar.nCalled);  //lleva la cuenta
       Result.catOp:=coVariab;    //variable
       Result.typ:=xvar.typ;
       Result.catTyp:= xvar.typ.cat;  //categoría
@@ -515,20 +500,30 @@ begin
       CaptureParams;  //primero lee parámetros
       if HayError then exit;
       //Aquí se identifica la función exacta, que coincida con sus parámetros
-      { TODO : No es la forma más eficiente, explorar nuevamente todo el NAMESPACE.
-       Tal vez se debería usar funciones de tipo FindFirst y FindNExt }
-      case TreeElems.FindFuncWithParams(tmp, func0, xfun) of
-      //TFF_NONE:      //No debería pasar esto
-      TFF_PARTIAL:   //encontró la función, pero no coincidió xcon los parámetros
-         GenError('Type parameters error on %s', [tmp +'()']);
-      TFF_FULL:     //encontró completamente
-        begin   //encontró
-          Result.catOp :=coExpres; //expresión
-          Result.txt:= cIn.tok;    //toma el texto
-          Result.typ:=xfun.typ;
-          xfun.proc(xfun);  //llama al código de la función
-          exit;
-        end;
+      xfun := TxpEleFun(ele);
+      //Primero vemos si la priemra función encontrada, coincide:
+      if func0.SameParams(xfun) then begin
+        //Coincide
+        Found := true;
+      end else begin
+        //No es, es una pena. Ahora tenemos que seguir buscando en el árbol de sintaxis.
+        repeat
+          //Usar FindNextFunc, es la forma es eficiente, porque retoma la búsqueda anterior.
+          xfun := TreeElems.FindNextFunc;
+        until (xfun = nil) or func0.SameParams(xfun);
+        Found := (xfun <> nil);
+      end;
+      if Found then begin
+        Result.catOp :=coExpres; //expresión
+        Result.txt:= cIn.tok;    //toma el texto
+        Result.typ:=xfun.typ;
+        xfun.nCalled := xfun.nCalled + 1;  //lleva la cuenta
+        xfun.procCall(xfun);  //para que codifique el _CALL
+        exit;
+      end else begin
+        //Encontró la función, pero no coincidió con los parámetros
+        GenError('Type parameters error on %s', [tmp +'()']);
+        exit;
       end;
     end else begin
       GenError('Not implemented.');
@@ -924,6 +919,18 @@ begin
   //Si se pide el bit, se asume que es de tipo "Bit".
   Result := rVar.adrBit.bit;
 end;
+
+procedure TOperand.Invert;
+begin
+  if catOp = coConst then begin
+    //Para constantes, no se puede negar la lógica, sino el valor
+    valBool := not valBool;
+  end else begin
+    //Variables y expresiones, sí.
+    Inverted := not Inverted;  //invierte lógica
+  end;
+end;
+
 function TOperand.aWord: word; inline;
 begin
   Result := word(valInt);

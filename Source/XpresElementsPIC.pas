@@ -10,7 +10,7 @@ unit XpresElementsPIC;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, fgl, XpresTypes;
+  Classes, SysUtils, fgl, XpresTypes, XpresBas;
 const
   ADRR_ERROR = $FFFF;
 type
@@ -80,20 +80,25 @@ type
   //Clase base para todos los elementos
   TxpElement = class
   public
-  private
-//    amb  : string;      //ámbito o alcance de la constante
   public
     name : string;       //nombre de la variable
     typ  : TType;        //tipo del elemento, si aplica
     Parent: TxpElement;    //referencia al padre
     elemType: TxpElemType; //no debería ser necesario
-    Used: integer;       //veces que se usa este nombre
+//    Used: integer;       //veces que se usa este nombre
     elements: TxpElements;  //referencia a nombres anidados, cuando sea función
     function AddElement(elem: TxpElement): TxpElement;
     function DuplicateIn(list: TObject): boolean; virtual;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
     constructor Create; virtual;
     destructor Destroy; override;
+  public  //Ubicación física de la declaración del elmento
+    posCtx: TPosCont;  //Ubicación en el código fuente
+    {Datos de la ubicación en el código fuente. Guardan parte de la información de,
+    posCtx, pero se mantienen, aún después de cerrar los contextos de entrada.}
+    srcFile: string;   //archivo donde se encuentra la declaración
+    srcRow : integer;  //número de línea de la declaración
+    srcCol : integer;  //número de columna de la declaración
   end;
 
   TVarOffs = word;
@@ -102,6 +107,10 @@ type
   //Clase para modelar al bloque principal
   { TxpEleMain }
   TxpEleMain = class(TxpElement)
+    //Como este nodo representa al programa principal, se incluye información física
+    adrr   : integer;  //dirección física
+    srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
+                        porque el tamaño puede variar al reubicarse.}
     constructor Create; override;
   end;
 
@@ -126,14 +135,21 @@ type
   { TxpEleVar }
   //Clase para modelar a las variables
   TxpEleVar = class(TxpElement)
-    adrBit: TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
+    nCalled: integer;  //Número de veces que es llamada la variable
+    {Campos de dirección solicitadas en la declaración de la variable, cuando es
+    Absoluta. Si no se usan, se ponen en -1}
+    solAdr : integer;    //dirección absoluta.
+    solBit : shortint;   //posición del bit
+    //Campos para guardar las direcciones físicas asignadas en RAM.
+    adrBit : TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
     adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Word
     adrByte1: TPicRegister;   //Dirección física, cuando es de tipo Word
-    function AbsAdrr: word;   //Devuelve la dirección absoluta de la variable
-    function AbsAdrrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
-    function AbsAdrrH: word;   //Devuelve la dirección absoluta de la variable (HIGH)
-    function AdrrString: string;  //Devuelve la dirección física como cadena
+    function AbsAddr : word;   //Devuelve la dirección absoluta de la variable
+    function AbsAddrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
+    function AbsAddrH: word;   //Devuelve la dirección absoluta de la variable (HIGH)
+    function AddrString: string;  //Devuelve la dirección física como cadena
     function BitMask: byte;  //Máscara de bit, de acuerdo al valor del campo "bit".
+    procedure ResetAddress;  //Limpia las direcciones físicas
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -147,11 +163,19 @@ type
   private
     pars: array of TType;  //parámetros de entrada
   public
-    //direción física. Usado para implementar un compilador
-    adrr: integer;  //dirección física
-    //Campos usados para implementar el intérprete sin máquina virtual
-    proc: TProcExecFunction;  //referencia a la función que implementa
-    posF: TPoint;    //posición donde empieza la función en el código fuente
+    nCalled: integer;  //Número de veces que es llamada la función
+    //Direción física.
+    adrr: integer;     //Dirección física
+    srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
+                        porque el tamaño puede variar al reubicarse.}
+    {Referencia a la función que implementa, la llamada a la función en ensambaldor.
+    En funciones del sistema, puede que se implemente INLINE, sin llamada a subrutinas,
+    pero en las funciones comunes, siempre usa CALL ... }
+    procCall: TProcExecFunction;
+    {Método que llama a una rutina que codificará la rutina ASM que implementa la función.
+     La idea es que este campo solo se use para algunas funciones del sistema.}
+    compile: TProcExecFunction;
+    ///////////////
     procedure ClearParams;
     procedure CreateParam(parName: string; typ0: TType);
     function SameParams(Fun2: TxpEleFun): boolean;
@@ -186,10 +210,9 @@ type
     function ValidateCurElement: boolean;
     procedure CloseElement;
     //Métodos para identificación de nombres
-    function FindFirst(const name: string): TxpElement;
     function FindNext: TxpElement;
-    function FindFuncWithParams(const funName: string; const func0: TxpEleFun;
-      var fmatch: TxpEleFun): TFindFuncResult;
+    function FindFirst(const name: string): TxpElement;
+    function FindNextFunc: TxpEleFun;
     function FindVar(varName: string): TxpEleVar;
   public  //constructor y destructror
     constructor Create; virtual;
@@ -261,20 +284,18 @@ begin
   elements.Free;  //por si contenía una lista
   inherited Destroy;
 end;
-
 { TxpEleMain }
 constructor TxpEleMain.Create;
 begin
   elemType:=eltMain;
   Parent := nil;  //la raiz no tiene padre
 end;
-
 { TxpEleCon }
 constructor TxpEleCon.Create;
 begin
   elemType:=eltCons;
 end;
-function TxpEleVar.AbsAdrr: word;
+function TxpEleVar.AbsAddr: word;
 {Devuelve la dirección absoluta de la variable. Tener en cuenta que la variable, no
 siempre tiene un solo byte, así que se trata de devolver siempre la dirección del
 byte de menor peso.}
@@ -289,7 +310,7 @@ begin
     Result := ADRR_ERROR;
   end;
 end;
-function TxpEleVar.AbsAdrrL: word;
+function TxpEleVar.AbsAddrL: word;
 {Dirección absoluta de la variable de menor pero, cuando es de tipo WORD.}
 begin
   if typ = typWord then begin
@@ -298,7 +319,7 @@ begin
     Result := ADRR_ERROR;
   end;
 end;
-function TxpEleVar.AbsAdrrH: word;
+function TxpEleVar.AbsAddrH: word;
 {Dirección absoluta de la variable de mayor pero, cuando es de tipo WORD.}
 begin
   if typ = typWord then begin
@@ -307,8 +328,7 @@ begin
     Result := ADRR_ERROR;
   end;
 end;
-
-function TxpEleVar.AdrrString: string;
+function TxpEleVar.AddrString: string;
 {Devuelve una cadena, que representa a la dirección física.}
 begin
   if (typ = typBit) or (typ = typBool) then begin
@@ -335,6 +355,18 @@ begin
     7: Result := %10000000;
     end;
 end;
+procedure TxpEleVar.ResetAddress;
+begin
+  adrBit.bank := 0;
+  adrBit.offs := 0;
+  adrBit.bit := 0;
+
+  adrByte0.bank := 0;
+  adrByte0.offs := 0;
+
+  adrByte1.bank := 0;
+  adrByte1.offs := 0;
+end;
 { TxpEleVar }
 constructor TxpEleVar.Create;
 begin
@@ -343,7 +375,6 @@ begin
   adrByte0:= TPicRegister.Create;
   adrByte1:= TPicRegister.Create;
 end;
-
 destructor TxpEleVar.Destroy;
 begin
   adrByte0.Destroy;
@@ -351,13 +382,11 @@ begin
   adrBit.Destroy;
   inherited Destroy;
 end;
-
 { TxpEleType }
 constructor TxpEleType.Create;
 begin
   elemType:=eltType;
 end;
-
 { TxpEleFun }
 procedure TxpEleFun.ClearParams;
 //Elimina los parámetros de una función
@@ -433,7 +462,6 @@ constructor TxpEleFun.Create;
 begin
   elemType:=eltFunc;
 end;
-
 { TXpTreeElements }
 procedure TXpTreeElements.Clear;
 begin
@@ -514,87 +542,53 @@ begin
     curNode := curNode.Parent;
 end;
 //Métodos para identificación de nombres
+function TXpTreeElements.FindNext: TxpElement;
+{Realiza una búsqueda recursiva en el nodo "curFindNode", a partir de la posición,
+"curFindIdx", el elemento con nombre "curFindName"}
+begin
+  if curFindNode.FindIdxElemName(curFindName, curFindIdx) then begin
+    //Lo encontró, asigna resultado
+    Result := curFindNode.elements[curFindIdx];
+    //Deja estado listo para la siguiente búsqueda
+    curFindIdx := curFindIdx + 1;
+    exit;
+  end else begin
+    //No encontró
+    if curFindNode.Parent = nil then begin
+      Result := nil;
+      exit;  //no hay espacios padres
+    end;
+    //busca en el espacio padre
+    curFindNode := curFindNode.Parent;  //apunta al padre
+    curFindIdx := 0;  //empieza desde el inicio
+    Result := FindNext();  //Recursividad IMPORTANTE: Usar paréntesis.
+    exit;
+  end;
+end;
 function TXpTreeElements.FindFirst(const name: string): TxpElement;
 {Busca un nombre siguiendo la estructura del espacio de nombres (primero en el espacio
  actual y luego en los espacios padres).
  Si encuentra devuelve la referencia. Si no encuentra, devuelve NIL}
-  function FindFirstIn(nod: TxpElement): TxpElement;
-  var
-    idx0: integer;
-  begin
-    curFindNode := nod;  //Busca primero en el espacio actual
-    {Busca con FindIdxElemName() para poder saber donde se deja la exploración y poder
-     retomarla luego con FindNext().}
-    idx0 := 0;  //la primera búsqueda se hace desde el inicio
-    if curFindNode.FindIdxElemName(name, idx0) then begin
-      //Lo encontró, deja estado listo para la siguiente búsqueda
-      curFindIdx:= idx0+1;
-      Result := curFindNode.elements[idx0];
-      exit;
-    end else begin
-      //No encontró
-      if nod.Parent = nil then begin
-        Result := nil;
-        exit;  //no hay espacios padres
-      end;
-      //busca en el espacio padre
-      Result := FindFirstIn(nod.Parent);  //recursividad
-      exit;
-    end;
-  end;
 begin
-  curFindName := name;     //actualiza para FindNext()
-  Result := FindFirstIn(curNode);
+  //Busca recursivamente, a partir del espacio actual
+  curFindNode := curNode;  //Actualiza nodo actual de búsqueda
+  curFindName := name;  //Esta valor no cambairá en toda la búsqueda
+  curFindIdx := 0;      //Busca desde el inicio
+  Result := FindNext;
 end;
-function TXpTreeElements.FindNext: TxpElement;
-{Continúa la búsqueda iniciada con FindFirst().}
-begin
-
-end;
-function TXpTreeElements.FindFuncWithParams(const funName: string; const func0: TxpEleFun;
-  var fmatch: TxpEleFun): TFindFuncResult;
-{Busca una función que coincida con el nombre "funName" y con los parámetros de func0
-El resultado puede ser:
- TFF_NONE   -> No se encuentra.
- TFF_PARTIAL-> Se encuentra solo el nombre.
- TFF_FULL   -> Se encuentra y coninciden sus parámetros, actualiza "fmatch".
-}
+function TXpTreeElements.FindNextFunc: TxpEleFun;
+{Explora recursivamente haciá la raiz, en el arbol de sintaxis, hasta encontrar el nombre
+de la fución indicada. Debe llamarse después de FindFirst().
+Si no enecuentra devuelve NIL.}
 var
-  tmp: String;
-  params : string;   //parámetros de la función
   ele: TxpElement;
-  hayFunc: Boolean;
 begin
-  Result := TFF_NONE;   //por defecto
-  hayFunc := false;
-  tmp := UpCase(funName);
-  for ele in curNode.elements do begin
-    if (ele.elemType = eltFunc) and (Upcase(ele.name) = tmp) then begin
-      //coincidencia de nombre, compara parámetros
-      hayFunc := true;  //para indicar que encontró el nombre
-      if func0.SameParams(TxpEleFun(ele)) then begin
-        fmatch := TxpEleFun(ele);  //devuelve ubicación
-        Result := TFF_FULL;     //encontró
-        exit;
-      end;
-    end;
-  end;
-  //si llego hasta aquí es porque no encontró coincidencia
-  if hayFunc then begin
-    //Encontró al menos el nombre de la función, pero no coincide en los parámetros
-    Result := TFF_PARTIAL;
-    {Construye la lista de parámetros de las funciones con el mismo nombre. Solo
-    hacemos esta tarea pesada aquí, porque  sabemos que se detendrá la compilación}
-    params := '';   //aquí almacenará la lista
-{    for i:=idx0 to high(funcs) do begin  //no debe empezar 1n 0, porque allí está func[0]
-      if Upcase(funcs[i].name)= tmp then begin
-        for j:=0 to high(funcs[i].pars) do begin
-          params += funcs[i].pars[j].name + ',';
-        end;
-        params += LineEnding;
-      end;
-    end;}
-  end;
+  repeat
+    ele := FindNext;
+  until (ele=nil) or (ele is TxpEleFun);
+  //Puede que haya encontrado la función o no
+  if ele = nil then exit(nil);  //No encontró
+  Result := TxpEleFun(ele);   //devuelve como función
 end;
 function TXpTreeElements.FindVar(varName: string): TxpEleVar;
 {Busca una variable con el nombre indicado en el espacio de nombres actual}

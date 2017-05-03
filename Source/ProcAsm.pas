@@ -133,8 +133,6 @@ begin
 end;
 function CaptureNbit(var b: byte): boolean;
 {Captura el número de bit de una instrucción y devuelve en "b". Si no encuentra devuelve error}
-var
-  dest: String;
 begin
   skipWhites;
   if tokType = lexAsm.tkNumber then begin
@@ -224,8 +222,6 @@ begin
 end;
 procedure ProcASM(const AsmLin: string);
 {Procesa una línea en ensamblador}
-var
-  lbl: String;
 begin
   inc(asmRow);   //cuenta destíneas
   if Trim(AsmLin) = '' then exit;
@@ -236,7 +232,7 @@ begin
     if cpx.HayError then exit;
   end else if tokType = lexAsm.tkIdentif then begin
     //puede ser una etiqueta
-    lbl := lexAsm.GetToken;   //guarda posible etiqueta
+    //lbl := lexAsm.GetToken;   //guarda posible etiqueta
     lexAsm.Next;
     if lexAsm.GetToken = ':' then begin
       //definitivamente es una etiqueta

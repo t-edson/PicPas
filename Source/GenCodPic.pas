@@ -80,8 +80,7 @@ type
     objeto "pic", se colocan mejor aquí.}
     procedure AssignRAMinBit(absAdd, absBit: integer; var reg: TPicRegisterBit; regName: string);
     procedure AssignRAMinByte(absAdd: integer; var reg: TPicRegister; regName: string);
-    function CreateVar(const varName: string; typ: ttype; absAdd: integer=-1;
-      absBit: integer=-1): TxpEleVar;
+    procedure CreateVar(nVar: TxpEleVar);
   protected  //Métodos para fijar el resultado
     procedure SetResult(typ: TType; CatOp: TCatOperan);
     procedure SetResultConst_bool(valBool: boolean);
@@ -677,28 +676,26 @@ begin
     pic.SetNameRAM(reg.offs, reg.bank, regName);
   end;
 end;
-function TGenCodPic.CreateVar(const varName: string; typ: ttype;
-         absAdd: integer = -1; absBit: integer = -1): TxpEleVar;
-{Rutina para crear variable. Devuelve referencia a la variable creada. Si se especifican
- "absAdd" y/o "absBit", se coloca a la variable en una dirección absoluta.}
+procedure TGenCodPic.CreateVar(nVar: TxpEleVar);
+{Rutina para asignar espacio físico a una variable. Funciona también en variables
+ABSOLUTE. }
 var
-  nVar: TxpEleVar;
+  varName: String;
+  absAdd: integer;
+  absBit: integer;
 begin
-  nVar := TxpEleVar.Create;
-  nVar.name := varName;
-  Result := nVar;
-  if typ = typBit then begin
-    nVar.typ  := typBit;   //fija  referencia a tipo
+  //Valores solicitados. Ya deben estar iniciado este campo
+  varName := nVar.name;
+  absAdd  := nVar.solAdr;  //si no aplica, debe valer -1
+  absBit  := nVar.solBit;  //si no aplica, debe valer -1
+  if nVar.typ = typBit then begin
     AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
-  end else if typ = typBool then begin
-    nVar.typ  := typBool;   //fija  referencia a tipo
+  end else if nVar.typ = typBool then begin
     AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
-  end else if typ = typByte then begin
-    nVar.typ  := typByte;   //fija  referencia a tipo
+  end else if nVar.typ = typByte then begin
     AssignRAMinByte(absAdd, nVar.adrByte0, varName);
-  end else if typ = typWord then begin
+  end else if nVar.typ = typWord then begin
     //registra variable en la tabla
-    nVar.typ  := typWord;   //fija  referencia a tipo
     {Asigna espacio para los dos bytes. Notar que:
     1. Si se especifica dirección absoluta, esta se usa solo para el primer byte.
     2. Los dos bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
@@ -711,12 +708,7 @@ begin
     nVar.Destroy;   //No se usó
     exit;
   end;
-  if not TreeElems.AddElement(Result) then begin
-    GenError('Duplicated identifier: "%s"', [varName]);
-    nVar.Destroy;
-    exit;
-  end;
-  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
+  if nVar.typ.OnGlobalDef<>nil then nVar.typ.OnGlobalDef(varName, '');
 end;
 //Métodos para fijar el resultado
 procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
