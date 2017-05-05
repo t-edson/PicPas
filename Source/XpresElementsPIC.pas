@@ -71,7 +71,6 @@ type
                  eltCons,  //constante
                  eltType   //tipo
                 );
-  TFindFuncResult = (TFF_NONE, TFF_PARTIAL, TFF_FULL);
 
   TxpElement = class;
   TxpElements = specialize TFPGObjectList<TxpElement>;
@@ -79,7 +78,8 @@ type
   { TxpElement }
   //Clase base para todos los elementos
   TxpElement = class
-  public
+  private
+    function AddElement(elem: TxpElement): TxpElement;
   public
     name : string;       //nombre de la variable
     typ  : TType;        //tipo del elemento, si aplica
@@ -87,7 +87,6 @@ type
     elemType: TxpElemType; //no debería ser necesario
 //    Used: integer;       //veces que se usa este nombre
     elements: TxpElements;  //referencia a nombres anidados, cuando sea función
-    function AddElement(elem: TxpElement): TxpElement;
     function DuplicateIn(list: TObject): boolean; virtual;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
     constructor Create; virtual;
@@ -201,11 +200,13 @@ type
     curFindIdx: integer;
   public
     main    : TxpEleMain;  //nodo raiz
+    OnTreeChange: procedure of object;
     procedure Clear;
     function AllVars: TxpEleVars;
     function CurNodeName: string;
     //funciones para llenado del arbol
     function AddElement(elem: TxpElement; verifDuplic: boolean=true): boolean;
+    procedure AddElementAndOpen(elem: TxpElement);
     procedure OpenElement(elem: TxpElement);
     function ValidateCurElement: boolean;
     procedure CloseElement;
@@ -502,7 +503,8 @@ begin
 end;
 //funciones para llenado del arbol
 function TXpTreeElements.AddElement(elem: TxpElement; verifDuplic: boolean = true): boolean;
-{Agrega un elemento al nodo actual. Si ya existe el nombre del nodo, devuelve false}
+{Agrega un elemento al nodo actual. Si ya existe el nombre del nodo, devuelve false.
+Este es el punto único de entrada para realizar cambios en el árbol.}
 begin
   Result := true;
   //Verifica si hay conflicto. Solo es necesario buscar en el nodo actual.
@@ -511,16 +513,22 @@ begin
   end;
   //agrega el nodo
   curNode.AddElement(elem);
+  if OnTreeChange<>nil then exit;
 end;
-procedure TXpTreeElements.OpenElement(elem: TxpElement);
-{Agrega un elemento y cambia el nodo actual. Este método está reservado para
-las funciones o procedimientos}
+procedure TXpTreeElements.AddElementAndOpen(elem: TxpElement);
+{Agrega un elemento y cambia el nodo actual al espacio de este elemento nuevo. Este
+método está reservado para las funciones o procedimientos}
 begin
   {las funciones o procedimientos no se validan inicialmente, sino hasta que
   tengan todos sus parámetros agregados, porque pueden ser sobrecargados.}
-  curNode.AddElement(elem);
+  AddElement(elem, false);
   //Genera otro espacio de nombres
   elem.elements := TxpElements.Create(true);  //su propia lista
+  curNode := elem;  //empieza a trabajar en esta lista
+end;
+procedure TXpTreeElements.OpenElement(elem: TxpElement);
+{Accede al espacio de nombres del elemento indicado.}
+begin
   curNode := elem;  //empieza a trabajar en esta lista
 end;
 function TXpTreeElements.ValidateCurElement: boolean;

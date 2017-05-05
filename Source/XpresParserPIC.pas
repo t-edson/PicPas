@@ -11,7 +11,7 @@ Las variables públicas más importantes de este módulo son:
 Para mayor información sobre el uso del framework Xpres, consultar la documentación
 técnica.
 }
-{$Define LogExpres}
+//{$Define LogExpres}
 unit XpresParserPIC;
 interface
 uses
@@ -108,7 +108,6 @@ protected  //Eventos del compilador
   //Manejo de funciones
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
   function ValidateFunction: boolean;
-  procedure CloseFunction;
   function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
   procedure CreateParam(fun: TxpEleFun; parName: string; typStr: string);
   function CaptureTok(tok: string): boolean;
@@ -331,7 +330,6 @@ begin
   fun.typ := typ;
   fun.procCall:= proc;
   fun.ClearParams;
-  TreeElems.OpenElement(fun);  //Se abre un nuevo espacio de nombres, pero no se valida duplicidad aún
   Result := fun;
 end;
 function TCompilerBase.ValidateFunction: boolean;
@@ -344,12 +342,6 @@ begin
     exit(false);
   end;
   exit(true);  //validación sin error
-end;
-procedure TCompilerBase.CloseFunction;
-{Cierra el espacio de trabajo de la función actual. Se debe llamar después de procesar
-todo el cuerpo de la función}
-begin
-  TreeElems.CloseElement;
 end;
 function TCompilerBase.CreateSysFunction(funName: string; typ: ttype;
   proc: TProcExecFunction): TxpEleFun;

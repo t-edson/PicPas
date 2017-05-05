@@ -1,10 +1,10 @@
-PicPas 0.5.6
+PicPas 0.5.7
 =============
 Pascal compiler for PIC microcontrollers.
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/Sin-título.png "Título de la imagen")
 
-NOTE: This compiler is still in alpha phase and has limited functionality.
+NOTE: This compiler is still in beta phase and has limited functionality.
 
 PicPas is a simple compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
 

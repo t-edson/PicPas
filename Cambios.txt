@@ -1,3 +1,43 @@
+PicPas 0.5.7
+============
+Se incluyen optimizaciones, para algunos casos con las operaciones XOR (que es lo mismo que 
+comparación de bits).
+Se incluyen rutinas de verificación de error, para la instrucción SaveW().
+Se incluye una verificación adicional de error en TCompiler.CompileInstruction;
+Se incluye verificación para límite de memoria Flash.
+Se modifican las rutinas de geenración de comentarios, y se incluye la rutina 
+TGenCodPic.PutLabel() para agregar etiquetas al código ensamblador.
+Se mejora el formato de los comentarios en el código ensamblador.
+Se incluye plegado de código para el código en ensamblador.
+Se cambia el nombre de TXpTreeElements.OpenElement() por 
+TXpTreeElements.CreateAndOpenElement().
+Se crea TXpTreeElements.OpenElement(), pero con otra función.
+Se elimina el enumerado TFindFuncResult.
+Se modifica TCompiler.CompileProgram, para que reinicie también la RAM y flash, antes
+de compilar el programa principal.
+Se crea el evento TXpTreeElements.OnTreeChange.
+Se incluye información de la compilación, en la documentación.
+Se elimina el método TCompileBase.CloseFunction().
+
+PENDIENTES
+Revisar la implementación de las estructuras. 
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la llamada correcta para las funciones del sistema y de usuario(con parámetros).
+Implementar el sistema de mensajes "Warning".
+Implementar la traducción de idiomas.
+Implementar el uso adecuado, del árbol,ya que en la segunda pasada está lleno y la 
+búsqueda de nombres puede dar resultados distintos a la de la primera pasada.
+
+Corregir el problema de la pérdida del nombre en las variables bit, en el código 
+ensamblador.
+Se detectó un error al momento de abrir varias ventanas y compilar una de ellas. Daba error
+en otra ventana.
+
+
 PicPas 0.5.6
 ============
 Se implementa la operación bit_xor_byte().
@@ -21,21 +61,6 @@ Se crea la función TXpTreeElements.FindNextFunc().
 Se elimina TXpTreeElements.FindFuncWithParams().
 Se modifica TCompilerBase.GetOperand() para hacerla m´s eficiente y confiable en el 
 reconocimiento de funciones.
-
-PENDIENTES
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la llamada correcta para las funciones del sistema y de usuario.
-Implementar el sistema de mensajes "Warning".
-Implementar la traducción de idiomas.
-Mejorar el formato del ASM, generado, incluyendo etiquetas para las subrutinas, y plegado.
-Corregir el problema de la alteración del árbol de sintaxis en la "segunda pasada", del 
-compilador.
-Corregir el problema de la pérdida del nombre en las variables bit, en el código 
-ensamblador.
 
 PicPas 0.5.5
 ============

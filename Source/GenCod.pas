@@ -225,14 +225,14 @@ begin
     if p1^.rVar = p2^.rVar then begin
       //Es asignación de la misma variable.
       if p2^.Inverted then begin  //Es a := not a
-        SaveW(OLD_W); //Va a usar W, así que lo guarda si es necesario
-        if HayError then exit;   //verifica error.
+        SaveW(OLD_W); if HayError then exit;  //Va a usar W
+          //verifica error.
         _MOVLW(p1^.rVar.BitMask);  //carga máscara
         _BANKSEL(p1^.bank);
         _XORWF(p1^.offs, toF);
         RestoreW(OLD_W); //Restaura W, si estaba ocupado
       end else begin  //Es a := a
-        PutComLine('No code, by optimizing.');
+        PutTopComm('No code, by optimizing.');
       end;
     end else begin
       //Es asignación de otra variable
@@ -389,7 +389,7 @@ begin
           exit;
         end else if p2^.Inverted then begin
           SetResultExpres_bit(false);  //Fija resultado
-          SaveW(reg); //Va a usa W
+          SaveW(reg); if HayError then exit;  //Va a usar W
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -401,7 +401,7 @@ begin
           RestoreW(reg);
         end else begin  //Caso normal
           SetResultExpres_bit(true);  //Fija resultado, con lógica invertida
-          SaveW(reg); //Va a usa W
+          SaveW(reg); if HayError then exit;  //Va a usar W
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -545,7 +545,7 @@ begin
           exit;
         end else if p2^.Inverted then begin
           SetResultExpres_bit(false);  //Fija resultado
-          SaveW(reg); //Va a usa W
+          SaveW(reg); if HayError then exit;  //Va a usar W
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -557,7 +557,7 @@ begin
           RestoreW(reg);
         end else begin  //Caso normal
           SetResultExpres_bit(true);  //Fija resultado, con lógica invertida
-          SaveW(reg); //Va a usa W
+          SaveW(reg); if HayError then exit;  //Va a usar W
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -694,20 +694,64 @@ begin
           res.Invert;  //Invierte la lógica
           exit;
         end else begin  //Caso normal
-          {Se puede optimizar, si las variables tienen el mismo orden de bit, o cercano,
-          para aplicar rotaciones y máscaras, y luego aplicar XOR.}
-          SetResultExpres_bit(false);  //Fija resultado,
-          SaveW(reg); //Va a usa W
-          //Mueve p2 a Z
-          _BANKSEL(p2^.bank);
-          _MOVLW(p2^.rVar.BitMask);
-          _ANDWF(p2^.offs, toW);  //Z está invertido
-          //Aplica un XOR entre p1 y Z'.
-          _BANKSEL(p1^.bank);
-          _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es que se necesita
-          _BTFSS(p1^.offs, p1^.bit);  //Si es 1, invierte, pero ya esta invertido, así que lo deja
-          _ANDWF(Z.offs, toW);  //Si es 0, deja tal cual, pero como está invertido, hay que corregir
-          RestoreW(reg);
+          {Se optimiza bien, esta operación, porque es la única rutina usada para todos
+          loa casos de XOR, y porque también se utiliza el XOR para las comparaciones de
+          bits.}
+          if p1^.bit = p2^.bit then begin
+            //Están en el mismo bit, se puede optimizar
+            SetResultExpres_bit(true);  //Fija resultado
+            SaveW(reg); if HayError then exit;  //Va a usar W
+            _BANKSEL(p2^.bank);
+            _MOVF(p2^.offs, toW);  //mueve a W
+            _BANKSEL(p1^.bank);
+            _XORWF(p1^.offs, toW);      //APlica XOR,
+            _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
+            RestoreW(reg);
+          end else if p1^.bit = p2^.bit +1 then begin
+            //p1 está a un bit a la izquierda, se puede optimizar
+            SetResultExpres_bit(true);  //Fija resultado
+            SaveW(reg); if HayError then exit;  //Va a usar W
+            _BANKSEL(p2^.bank);
+            _RLF(p2^.offs, toW);  //alinea y mueve a W
+            _BANKSEL(p1^.bank);
+            _XORWF(p1^.offs, toW);      //APlica XOR,
+            _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
+            RestoreW(reg);
+          end else if p1^.bit = p2^.bit-1 then begin
+            //p1 está a un bit a la derecha, se puede optimizar
+            SetResultExpres_bit(true);  //Fija resultado
+            SaveW(reg); if HayError then exit;  //Va a usar W
+            _BANKSEL(p2^.bank);
+            _RRF(p2^.offs, toW);  //alinea y mueve a W
+            _BANKSEL(p1^.bank);
+            _XORWF(p1^.offs, toW);      //APlica XOR,
+            _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
+            RestoreW(reg);
+          end else if abs(p1^.bit - p2^.bit) = 4 then begin
+            //p1 está a un nibble de distancia, se puede optimizar
+            SetResultExpres_bit(true);  //Fija resultado
+            SaveW(reg); if HayError then exit;  //Va a usar W
+            _BANKSEL(p2^.bank);
+            _SWAPF(p2^.offs, toW);  //alinea y mueve a W
+            _BANKSEL(p1^.bank);
+            _XORWF(p1^.offs, toW);      //APlica XOR,
+            _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
+            RestoreW(reg);
+          end else begin
+            //La forma larga
+            SetResultExpres_bit(false);  //Fija resultado,
+            SaveW(reg); if HayError then exit;  //Va a usar W
+            //Mueve p2 a Z
+            _BANKSEL(p2^.bank);
+            _MOVLW(p2^.rVar.BitMask);
+            _ANDWF(p2^.offs, toW);  //Z está invertido
+            //Aplica un XOR entre p1 y Z'.
+            _BANKSEL(p1^.bank);
+            _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es que se necesita
+            _BTFSS(p1^.offs, p1^.bit);  //Si es 1, invierte, pero ya esta invertido, así que lo deja
+            _ANDWF(Z.offs, toW);  //Si es 0, deja tal cual, pero como está invertido, hay que corregir
+            RestoreW(reg);
+          end;
         end;
       end;
     end;
@@ -1036,7 +1080,7 @@ begin
   end;
   coConst_Variab: begin
     SetResultExpres_bool(false);   //Se pide Z para el resultado
-    SaveW(OLD_W); //Va a usar W, así que lo guarda si es necesario
+    SaveW(OLD_W); if HayError then exit;  //Va a usar W
     if HayError then exit;   //verifica error.
     _MOVLW(p1^.valInt);
     _BANKSEL(p2^.bank);  //verifica banco destino
@@ -1049,7 +1093,7 @@ begin
   end;
   coVariab_Const: begin
     SetResultExpres_bool(false);   //Se pide Z para el resultado
-    SaveW(OLD_W); //Va a usar W, así que lo guarda si es necesario
+    SaveW(OLD_W); if HayError then exit;  //Va a usar W
     if HayError then exit;   //verifica error.
     _MOVLW(p2^.valInt);
     _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1058,7 +1102,7 @@ begin
   end;
   coVariab_Variab:begin
     SetResultExpres_bool(false);   //Se pide Z para el resultado
-    SaveW(OLD_W); //Va a usar W, así que lo guarda si es necesario
+    SaveW(OLD_W); if HayError then exit;  //Va a usar W
     if HayError then exit;   //verifica error.
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVF(p1^.offs, toW);
@@ -1457,7 +1501,7 @@ end;
 procedure TGenCod.codif_1mseg;
 //Codifica rutina de reatrdo de 1mseg.
 begin
-  PutComLine('|;inicio rutina 1 mseg.');
+  PutFwdComm(';inicio rutina 1 mseg.');
   if _CLOCK = 1000000 then begin
     _MOVLW(62);  //contador de iteraciones
     _ADDLW(255);  //lazo de 4 ciclos
@@ -1509,7 +1553,8 @@ var
   aux: TPicRegister;
 begin
   StartCodeSub(fun);  //inicia codificación
-  PutComLine(';rutina delay.');
+//  PutLabel('__delay_ms');
+  PutTopComm('    ;delay routine.');
   RequireH(false);   //Se asegura de que se exista y lo marca como "usado".
   aux := GetAuxRegisterByte;  //Pide un registro libre
   {Esta rutina recibe los milisegundos en los registros en (H,w) o en (w)

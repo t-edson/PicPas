@@ -5,8 +5,7 @@ unit Globales;
 {$mode objfpc}{$H+}
 interface
 uses  Classes, SysUtils, Forms, SynEdit, SynEditKeyCmds, MisUtils,
-      SynEditTypes, StrUtils, lclType, FileUtil,
-      types, LazLogger, Menus ;
+      lclType, FileUtil, LazLogger, Menus ;
 
 const
   NOM_PROG = 'PicPas';   //nombre de programa

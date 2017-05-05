@@ -23,14 +23,16 @@ type
     procedure CompileIF;
     procedure CompileREPEAT;
     procedure CompileWHILE;
+    procedure TreeElemsTreeChange;
   protected   //Métodos OVERRIDE
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
     procedure TipDefecString(var Op: TOperand; tokcad: string); override;
     procedure TipDefecBoolean(var Op: TOperand; tokcad: string); override;
-  private //Compilación se secciones
+  private  //Rutinas para la compilación y enlace
+    procedure CompileProcDeclar(fun: TxpEleFun);
+  private //Compilación de secciones
     procedure CompileConstDeclar;
     procedure CompileVarDeclar;
-    procedure CompileProcDeclar(fun: TxpEleFun);
     procedure CompileProcDeclar;
     procedure CompileInstructionDummy;
     procedure CompileInstruction;
@@ -69,7 +71,7 @@ end;
 procedure TCompiler.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
 begin
-  pic.addCommAsm(';'+trim(lin));  //agrega _Línea al código ensmblador
+  pic.addTopComm('    ;'+trim(lin));  //agrega _Línea al código ensmblador
 end;
 function TCompiler.StartOfSection: boolean;
 begin
@@ -454,6 +456,10 @@ begin
   end;
   end;
 end;
+procedure TCompiler.TreeElemsTreeChange;
+begin
+  GenError('Internal Error: Syntax Tree modified on linking.');
+end;
 //Métodos OVERRIDE
 procedure TCompiler.TipDefecNumber(var Op: TOperand; toknum: string);
 {Procesa constantes numéricas, ubicándolas en el tipo de dato apropiado (byte, word, ... )
@@ -542,7 +548,44 @@ begin
   Op.valBool:= (tokcad[1] in ['t','T']);
   Op.typ:=typBool;
 end;
-//Compilación se secciones
+//Rutinas para la compilación y enlace
+procedure TCompiler.CompileProcDeclar(fun: TxpEleFun);
+{Compila la declaración de un procedimiento}
+begin
+  //Empiezan las declaraciones
+  while StartOfSection do begin
+    if cIn.tokL = 'var' then begin
+      cIn.Next;    //lo toma
+      while not StartOfSection and (cIn.tokL <>'begin') do begin
+        CompileVarDeclar;
+        if pErr.HayError then exit;;
+      end;
+    end else if cIn.tokL = 'const' then begin
+      cIn.Next;    //lo toma
+      while not StartOfSection and (cIn.tokL <>'begin') do begin
+        CompileConstDeclar;
+        if pErr.HayError then exit;;
+      end;
+//    end else if cIn.tokL = 'procedure' then begin
+//      cIn.Next;    //lo toma
+//      CompileProcDeclar;
+    end else begin
+      GenError('Not implemented: "%s"', [cIn.tok]);
+      exit;
+    end;
+  end;
+  if cIn.tokL <> 'begin' then begin
+    GenError('"begin" expected.');
+    exit;
+  end;
+  StartCodeSub(fun);  //inicia codificación de subrutina
+  CompileInstruction;
+  if HayError then exit;
+  _RETURN();  //instrucción de salida
+  EndCodeSub;  //termina codificación
+  fun.srcSize := pic.iFlash - fun.adrr;   //calcula tamaño
+end;
+//Compilación de secciones
 procedure TCompiler.CompileConstDeclar;
 var
 //  consType: String;
@@ -771,51 +814,6 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler.CompileProcDeclar(fun: TxpEleFun);
-{Compila la declaración de un procedimiento}
-begin
-  //Empiezan las declaraciones
-  while StartOfSection do begin
-    if cIn.tokL = 'var' then begin
-      cIn.Next;    //lo toma
-      while not StartOfSection and (cIn.tokL <>'begin') do begin
-        CompileVarDeclar;
-        if pErr.HayError then exit;;
-      end;
-    end else if cIn.tokL = 'const' then begin
-      cIn.Next;    //lo toma
-      while not StartOfSection and (cIn.tokL <>'begin') do begin
-        CompileConstDeclar;
-        if pErr.HayError then exit;;
-      end;
-    end else if cIn.tokL = 'procedure' then begin
-      cIn.Next;    //lo toma
-      CompileProcDeclar;
-    end else begin
-      GenError('Not implemented: "%s"', [cIn.tok]);
-      exit;
-    end;
-  end;
-  if cIn.tokL <> 'begin' then begin
-    GenError('"begin" expected.');
-    exit;
-  end;
-  StartCodeSub(fun);  //inicia codificación de subrutina
-  CompileInstruction;
-  if HayError then exit;
-  _RETURN();  //instrucción de salida
-  EndCodeSub;  //termina codificación
-  CloseFunction;  //cierra espacio de nombres de la función
-  fun.srcSize := pic.iFlash - fun.adrr;   //calcula tamaño
-  if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
-    cIn.Next;   //lo toma
-    ProcComments;  //quita espacios
-    if HayError then exit;   //puede dar error por código assembler o directivas
-  end else begin  //hay otra cosa
-    GenError('";" expected.');  //por ahora
-    exit;  //debe ser un error
-  end;
-end;
 procedure TCompiler.CompileProcDeclar;
 {Compila la declaración de procedimientos. Tanto procedimientos como funciones
  se manejan internamente como funciones}
@@ -851,7 +849,8 @@ begin
   cIn.Next;  //lo toma
   {Ya tiene los datos mínimos para crear la función. La crea con "proc" en NIL,
   para indicar que es una función definida por el usuario.}
-  fun := CreateFunction(procName, typNull, @callFunct);   ///????? No será en la 1ra pasada
+  fun := CreateFunction(procName, typNull, @callFunct);
+  TreeElems.AddElementAndOpen(fun);  //Se abre un nuevo espacio de nombres
   fun.adrr := pic.iFlash;    //toma dirección de inicio
   if FirstPass then begin
     //Solo en la primera pasada se lee esta infromación
@@ -861,7 +860,7 @@ begin
   end;
   CaptureDecParams(fun);
   if HayError then exit;
-  //Recién aquí puede verificar, porque ya se leyeron los parámetros
+  //Recién aquí puede verificar duplicidad, porque ya se leyeron los parámetros
   if not ValidateFunction then exit;
   cIn.SkipWhites;
   if cIn.tok=';' then begin //encontró delimitador de expresión
@@ -875,6 +874,15 @@ begin
   //Ahora empieza el cuerpo de la función o las declaraciones
   fun.posCtx := cIn.PosAct;  //guarda posición dentro del contexto actual
   CompileProcDeclar(fun);
+  TreeElems.CloseElement; //cierra espacio de nombres de la función
+  if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
+    cIn.Next;   //lo toma
+    ProcComments;  //quita espacios
+    if HayError then exit;   //puede dar error por código assembler o directivas
+  end else begin  //hay otra cosa
+    GenError('";" expected.');  //por ahora
+    exit;  //debe ser un error
+  end;
 end;
 procedure TCompiler.CompileInstructionDummy;
 {Compila una instrucción pero sin generar código. }
@@ -888,7 +896,7 @@ begin
   { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
 end;
 procedure TCompiler.CompileInstruction;
-{Compila una única instrucción o un bloque BEGIN ... END}
+{Compila una única instrucción o un bloque BEGIN ... END. Puede generara Error.}
 begin
   ProcComments;
   if HayError then exit;   //puede dar error por código assembler o directivas
@@ -924,7 +932,11 @@ begin
       //debe ser es una expresión
       GetExpressionE(0);
     end;
-debugln('PC:' + IntToStr(_PC));
+    if HayError then exit;;
+    if pic.MsjError<>'' then begin
+      //El pic también puede dar error
+      GenError(pic.MsjError);
+    end;
   end;
 end;
 procedure TCompiler.CompileCurBlock;
@@ -957,14 +969,17 @@ procedure TCompiler.CompileProgram;
 la posición actual de memoria en el PIC (iFlash).}
 begin
   TreeElems.Clear;
+  TreeElems.OnTreeChange := nil;   //Se va a modificar el árbol
   listFunSys.Clear;
   CreateSystemElements;  //Crea los elementos del sistema
   //ClearTypes;      //limpia los tipos
   //Inicia PIC
   ExprLevel := 0;  //inicia
   pic.ClearMemFlash;
-  ResetFlashAndRAM;
+  ResetFlashAndRAM;  {Realmente lo que importa aquí sería limpiar solo la RAM, porque
+                      cada procedimiento, reiniciará el puntero de FLASH}
   Perr.Clear;
+  pic.MsjError := '';
   ProcComments;
   if Perr.HayError then exit;
   if cIn.tokL = 'program' then begin
@@ -1008,6 +1023,8 @@ begin
     end;
   end;
   //procesa cuerpo
+  ResetFlashAndRAM;  {No es tan necesario, pero para seguir un orden y tener limpio
+                     también, la flash y memoria, después de algún psoible procedimiento.}
   if FirstPass then begin
     {En la primera pasada el cuerpo principal, se codifica al inicio, al igual que
     los procedimientos.}
@@ -1054,18 +1071,20 @@ end;
 procedure TCompiler.CompileLinkProgram;
 {Genera el código compilado final. Usa la información del árbol de sintaxis, para
 ubicar a los diversos elementos que deben compilarse.
-Se debe llamar después de compilar con CompileProgram.}
+Se debe llamar después de compilar con CompileProgram.
+Esto es lo más cercano a un enlazador, que hay en PicPas.}
 var
   elem : TxpElement;
   xvar : TxpEleVar;
   fun  : TxpEleFun;
   iniMain: integer;
 begin
-//  pic.iFlash := 0;     //posición a escribir
+  TreeElems.OnTreeChange := @TreeElemsTreeChange;  //Protege las modificaciones
   ExprLevel := 0;
   pic.ClearMemFlash;
   ResetFlashAndRAM;
   Perr.Clear;
+  pic.MsjError := '';
   //Genera espacio para las variables globales
   for elem in TreeElems.main.elements do if elem is TxpEleVar then begin
       xvar := TxpEleVar(elem);
@@ -1085,7 +1104,13 @@ begin
     if (fun.nCalled > 0) and (fun.compile<>nil) then begin
       //Función usada y que tiene una subrutina ASM
       fun.adrr := pic.iFlash;  //actualiza la dirección final
+      PutLabel('__'+fun.name);
       fun.compile(fun);   //codifica
+      if HayError then exit;  //Puede haber error
+      if pic.MsjError<>'' then begin //Error en el mismo PIC
+          GenError(pic.MsjError);
+          exit;
+      end;
     end;
   end;
   //Codifica las subrutinas usadas
@@ -1095,7 +1120,11 @@ begin
         //Compila la función en la dirección actual
         fun.adrr := pic.iFlash;  //actualiza la dirección final
         cIn.PosAct := fun.posCtx;
+        PutLabel('__'+fun.name);
+        TreeElems.OpenElement(fun);  //Ubica el espacio de nombres, de forma similar a la pre-compilación
         CompileProcDeclar(fun);
+        TreeElems.CloseElement;
+        if HayError then exit;  //Puede haber error
       end else begin
         //Esta función no se usa
         //WARNINGGGGGGG
@@ -1104,7 +1133,9 @@ begin
   //Compila cuerpo del programa principal
   pic.codGotoAt(iniMain, _PC);   //termina de codificar el salto
   cIn.PosAct := TreeElems.main.posCtx;   //ubica escaner
+  PutLabel('__main_program__');
   CompileCurBlock;
+  PutLabel('__end_program__');
   {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
   _SLEEP();   //agrega instrucción final
 end;
@@ -1129,20 +1160,22 @@ begin
     {Se hace una primera pasada para ver, a modo de exploración, para ver qué
     procedimientos, y varaibles son realmente usados, de modo que solo estos, serán
     codificados en la segunda pasada. Así evitamos incluir, código innecesario.}
+consoleTickStart;
     debugln('*** Compiling: Pass 1.');
     pic.iFlash := 0;     //dirección de inicio del código principal
     FirstPass := true;
     CompileProgram;  //puede dar error
     if pErr.HayError then exit;
+consoleTickCount('-->First Pass.');
     debugln('*** Compiling/Linking: Pass 2.');
     {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,
-    que debe haber sido actualizado en la primera pasada.
-    Esto es lo más cercano a un enlazador, que hay en PicPas.}
+    que debe haber sido actualizado en la primera pasada.}
     FirstPass := false;
     CompileLinkProgram;
     cIn.RemoveContext;//es necesario por dejar limpio
     //genera archivo hexa
     pic.GenHex(rutApp + 'salida.hex');
+consoleTickCount('-->Second Pass.');
   finally
     ejecProg := false;
     //tareas de finalización
@@ -1242,7 +1275,7 @@ begin
   used := pic.UsedMemRAM;
   l.Add('RAM Used   = ' + IntToStr(used) +'/'+ IntToStr(tot) + 'B (' +
         FloatToStrF(100*used/tot, ffGeneral, 1, 3) + '%)' );
-  tot := pic.TotalMemFlash;
+  tot := pic.MaxFlash;
   used := pic.UsedMemFlash;
   l.Add('Flash Used = ' + IntToStr(used) +'/'+ IntToStr(tot) + ' (' +
         FloatToStrF(100*used/tot, ffGeneral, 1, 3) + '%)' );

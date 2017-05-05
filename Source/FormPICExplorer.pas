@@ -63,7 +63,7 @@ begin
   txtDescr.Lines.Add('Number of RAM banks: ' + IntToStr(pic.NumBanks));
   txtDescr.Lines.Add('Number of Flash pages: ' + IntToStr(pic.NumPages));
   txtDescr.Lines.Add('Total RAM Memory: ' + IntToStr(pic.TotalMemRAM));
-  txtDescr.Lines.Add('Total Flash Memory: ' + IntToStr(pic.TotalMemFlash));
+  txtDescr.Lines.Add('Total Flash Memory: ' + IntToStr(pic.MaxFlash));
   txtDescr.Lines.EndUpdate;
 end;
 

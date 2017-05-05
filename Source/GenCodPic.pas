@@ -35,8 +35,10 @@ type
     listRegStkBit: TPicRegisterBit_list;
     stackTop: integer;   //índice al límite superior de la pila
     stackTopBit: integer;   //índice al límite superior de la pila
-    procedure PutComLine(cmt: string);
-    procedure PutComm(cmt: string);
+    procedure PutLabel(lbl: string); inline;
+    procedure PutTopComm(cmt: string); inline;
+    procedure PutComm(cmt: string); inline;
+    procedure PutFwdComm(cmt: string); inline;
     function ReportRAMusage: string;
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
@@ -166,13 +168,26 @@ begin
   linRep := linRep + regPtr^.name +
             ' DB ' + 'bnk'+ IntToStr(bnk) + ':$' + IntToHex(offs, 3) + LineEnding;
 end;
-procedure TGenCodPic.PutComLine(cmt: string); inline; //agrega comentario al código
+procedure TGenCodPic.PutLabel(lbl: string);
+{Agrega uan etiqueta antes de la instrucción. Se recomienda incluir solo el nombre de
+la etiqueta, sin ":", ni comentarios, porque este campo se usará para desensamblar.}
 begin
-  pic.addCommAsm(cmt);  //agrega línea al código ensmblador
+  pic.addTopLabel(lbl);  //agrega línea al código ensmblador
 end;
-procedure TGenCodPic.PutComm(cmt: string); inline; //agrega comentario lateral al código
+procedure TGenCodPic.PutTopComm(cmt: string);
+//Agrega comentario al inicio de la posición de memoria
 begin
-  pic.addCommAsm1('|'+cmt);  //agrega línea al código ensmblador
+  pic.addTopComm(cmt);  //agrega línea al código ensmblador
+end;
+procedure TGenCodPic.PutComm(cmt: string);
+//Agrega comentario lateral al código. Se llama después de poner la instrucción.
+begin
+  pic.addSideComm(cmt, true);  //agrega línea al código ensmblador
+end;
+procedure TGenCodPic.PutFwdComm(cmt: string);
+//Agrega comentario lateral al código. Se llama antes de poner la instrucción.
+begin
+  pic.addSideComm(cmt, false);  //agrega línea al código ensmblador
 end;
 function TGenCodPic.ReportRAMusage: string;
 {Genera un reporte de uso de la memoria RAM}
@@ -417,7 +432,8 @@ begin
 end;
 procedure TGenCodPic.SaveW(out reg: TPicRegister);
 {Verifica si el registro W, está siendo usado y de ser así genera la instrucción para
-guardarlo en un registro auxiliar. Esta función trabaja normalmente con RestoreW()}
+guardarlo en un registro auxiliar. Esta función trabaja normalmente con RestoreW().
+Puede generar error.}
 begin
   if W.used then begin
     reg := GetAuxRegisterByte;
