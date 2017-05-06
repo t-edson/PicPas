@@ -31,6 +31,7 @@ type
     chkIncHeadMpu: TCheckBox;
     Edit1: TEdit;
     fcEditor: TfraCfgSynEdit;
+    Label1: TLabel;
     PageControl1: TPageControl;
     Panel1: TPanel;
     RadioGroup1: TRadioGroup;

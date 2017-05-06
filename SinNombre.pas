@@ -2,6 +2,7 @@
 {$PROCESSOR PIC16F84}
 {$FREQUENCY 8Mhz}
 program LedBlink;
+uses a, b;
 var
 PORTB: BYTE absolute $06;
 PinPausa: boolean absolute PORTB.1;

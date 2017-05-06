@@ -55,7 +55,6 @@ type
     { TGenCod }
     TGenCod = class(TGenCodPic)
     protected
-      FirstPass  : boolean;   //Indica que está en la primera pasada.
       procedure callFunct(fun: TxpEleFun);
     private  //Operaciones con Bit
       procedure bit_load;
@@ -1562,8 +1561,8 @@ begin
   Se supone que para pasar los parámetros, ya se requirió H, así que no es necesario
   crearlo.}
   if HayError then exit;
-  _CLRF(H.offs); PutComm(' ;pto. de entrada con parámetro en (0,w)');
-  _MOVWF(aux.offs); PutComm(';pto. de entrada con parámetro en (H,w)');
+  _CLRF(H.offs);   PutComm(' ;enter when parameters in (0,w)');
+  _MOVWF(aux.offs); PutComm(';enter when parameters in (H,w)');
   _INCF(H.offs,toF);
   _INCF(aux.offs,toF);  //corrección
 delay:= _PC;
@@ -1582,7 +1581,7 @@ procedure TGenCod.fun_delay_ms(fun: TxpEleFun);
 begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
-  if perr.HayError then exit;   //aborta
+  if HayError then exit;   //aborta
   //Se terminó de evaluar un parámetro
   res.Push;   //Carga en registro de trabajo
   if HayError then exit;
@@ -1603,7 +1602,7 @@ procedure TGenCod.fun_Inc(fun: TxpEleFun);
 begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
-  if perr.HayError then exit;   //aborta
+  if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
     GenError('Cannot increase a constant.'); exit;
@@ -1631,7 +1630,7 @@ procedure TGenCod.fun_Dec(fun: TxpEleFun);
 begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
-  if perr.HayError then exit;   //aborta
+  if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
     GenError('Cannot decrease a constant.'); exit;

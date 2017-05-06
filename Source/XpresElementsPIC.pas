@@ -63,13 +63,15 @@ var
 //  tipChr : Ttype;   //un caracter
 
 type
+
   //Tipos de elementos del lenguaje
   TxpElemType = (eltNone,  //sin tipo
                  eltMain,  //programa principal
                  eltVar,   //variable
                  eltFunc,  //función
                  eltCons,  //constante
-                 eltType   //tipo
+                 eltType,  //tipo
+                 eltUnit   //unidad
                 );
 
   TxpElement = class;
@@ -85,19 +87,17 @@ type
     typ  : TType;        //tipo del elemento, si aplica
     Parent: TxpElement;    //referencia al padre
     elemType: TxpElemType; //no debería ser necesario
-//    Used: integer;       //veces que se usa este nombre
+    nCalled: integer;  //Número de veces que es llamada la función
     elements: TxpElements;  //referencia a nombres anidados, cuando sea función
-    function DuplicateIn(list: TObject): boolean; virtual;
+    function DuplicateIn(list: TxpElements): boolean; virtual;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
     constructor Create; virtual;
     destructor Destroy; override;
   public  //Ubicación física de la declaración del elmento
     posCtx: TPosCont;  //Ubicación en el código fuente
     {Datos de la ubicación en el código fuente. Guardan parte de la información de,
-    posCtx, pero se mantienen, aún después de cerrar los contextos de entrada.}
-    srcFile: string;   //archivo donde se encuentra la declaración
-    srcRow : integer;  //número de línea de la declaración
-    srcCol : integer;  //número de columna de la declaración
+    posCtx, pero se mantiene, aún después de cerrar los contextos de entrada.}
+    src: TSrcPos;
   end;
 
   TVarOffs = word;
@@ -134,7 +134,6 @@ type
   { TxpEleVar }
   //Clase para modelar a las variables
   TxpEleVar = class(TxpElement)
-    nCalled: integer;  //Número de veces que es llamada la variable
     {Campos de dirección solicitadas en la declaración de la variable, cuando es
     Absoluta. Si no se usan, se ponen en -1}
     solAdr : integer;    //dirección absoluta.
@@ -162,7 +161,6 @@ type
   private
     pars: array of TType;  //parámetros de entrada
   public
-    nCalled: integer;  //Número de veces que es llamada la función
     //Direción física.
     adrr: integer;     //Dirección física
     srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
@@ -179,10 +177,17 @@ type
     procedure CreateParam(parName: string; typ0: TType);
     function SameParams(Fun2: TxpEleFun): boolean;
     function ParamTypesList: string;
-    function DuplicateIn(list: TObject): boolean; override;
+    function DuplicateIn(list: TxpElements): boolean; override;
     constructor Create; override;
   end;
   TxpEleFuns = specialize TFPGObjectList<TxpEleFun>;
+
+  { TxpEleUnit }
+  //Clase para modelar a las constantes
+  TxpEleUnit = class(TxpElement)
+    constructor Create; override;
+  end;
+  TxpEleUnits = specialize TFPGObjectList<TxpEleUnit>; //lista de constantes
 
   { TXpTreeElements }
   {Árbol de elementos. Solo se espera que haya una instacia de este objeto. Aquí es
@@ -192,7 +197,6 @@ type
   buscar los nombres de los elementos, en una estructura en arbol}
   TXpTreeElements = class
   private
-    curNode : TxpElement;  //referencia al nodo actual
     vars    : TxpEleVars;
     //variables de estado para la búsqueda con FindFirst() - FindNext()
     curFindName: string;
@@ -200,6 +204,7 @@ type
     curFindIdx: integer;
   public
     main    : TxpEleMain;  //nodo raiz
+    curNode : TxpElement;  //referencia al nodo actual
     OnTreeChange: procedure of object;
     procedure Clear;
     function AllVars: TxpEleVars;
@@ -242,14 +247,14 @@ begin
   elements.Add(elem);   //agrega a la lista de nombres
   Result := elem;       //no tiene mucho sentido
 end;
-function TxpElement.DuplicateIn(list: TObject): boolean;
+function TxpElement.DuplicateIn(list: TxpElements): boolean;
 {Debe indicar si el elemento está duplicado en la lista de elementos proporcionada.}
 var
   uName: String;
   ele: TxpElement;
 begin
   uName := upcase(name);
-  for ele in TxpElements(list) do begin
+  for ele in list do begin
     if upcase(ele.name) = uName then begin
       exit(true);
     end;
@@ -436,13 +441,13 @@ begin
   if length(tmp)>0 then tmp := copy(tmp,1,length(tmp)-2);
   Result := '('+tmp+')';
 end;
-function TxpEleFun.DuplicateIn(list: TObject): boolean;
+function TxpEleFun.DuplicateIn(list: TxpElements): boolean;
 var
   uName: String;
   ele: TxpElement;
 begin
   uName := upcase(name);
-  for ele in TxpElements(list) do begin
+  for ele in list do begin
     if ele = self then Continue;  //no se compara el mismo
     if upcase(ele.name) = uName then begin
       //hay coincidencia de nombre
@@ -462,6 +467,11 @@ end;
 constructor TxpEleFun.Create;
 begin
   elemType:=eltFunc;
+end;
+{ TxpEleUnit }
+constructor TxpEleUnit.Create;
+begin
+  elemType:=eltUnit;
 end;
 { TXpTreeElements }
 procedure TXpTreeElements.Clear;

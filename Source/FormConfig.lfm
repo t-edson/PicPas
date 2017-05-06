@@ -56,26 +56,18 @@ object Config: TConfig
     Height = 277
     Top = 0
     Width = 371
-    ActivePage = tabOutput
+    ActivePage = tabGeneral
     Align = alClient
-    TabIndex = 3
+    TabIndex = 0
     TabOrder = 1
     object tabGeneral: TTabSheet
       Caption = 'General'
       ClientHeight = 249
       ClientWidth = 363
-      object Edit1: TEdit
-        Left = 10
-        Height = 23
-        Top = 24
-        Width = 80
-        TabOrder = 0
-        Text = 'Edit1'
-      end
       object RadioGroup1: TRadioGroup
         Left = 10
         Height = 49
-        Top = 64
+        Top = 40
         Width = 222
         AutoFill = True
         Caption = 'Toolbar'
@@ -93,7 +85,24 @@ object Config: TConfig
           'Small Icons'
           'Big Icons'
         )
+        TabOrder = 0
+      end
+      object Label1: TLabel
+        Left = 16
+        Height = 15
+        Top = 104
+        Width = 57
+        Caption = 'Units Path:'
+        ParentColor = False
+      end
+      object Edit1: TEdit
+        Left = 16
+        Height = 23
+        Top = 128
+        Width = 296
+        Enabled = False
         TabOrder = 1
+        Text = '{AppPath}/units/'
       end
     end
     object tabEditor: TTabSheet

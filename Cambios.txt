@@ -1,3 +1,49 @@
+PicPas 0.5.8
+============
+Se crea el evento TCompilerBase.OnWarning y las funciones sobrecaragdas GenWarn().
+Se crea el frame FrameMessagesWin y se incluyen ocpiones mejoradas para visualizar los
+mesnajes de compilación.
+Se reemplaza el ListBox, de la ventana principal, por un FrameMessagesWin.
+Se activa la generación de advertencias, desde el compilador.
+Se elimina la dependencia del objeto PError, de Xpres, para usar rutinas propias de 
+gestión de errores.
+Se cambia de nombre a CompileVarDeclar por CompileGlobalVarDeclar.
+Se cambia de nombre a TGenCodPic.CreateVar() por TGenCodPic.CreateVarinRAM()
+Se crea el método TCompilerBase.CreateVar().
+Se mueve parte del código de verificación de CompileProcDeclar(), a CompileProcDeclar,
+porque no tiene sentido incluirlo allí.
+Se crea el tipo TSrcPos, y se usa en TxpELement.
+Se adecúa TCompiler.CompileProcDeclar, para trabajar con TSrcPos.
+Se cambia de nombre a CompileProcDeclar() por CompileProcBody().
+Se modifica TCompiler.CompileGlobalVarDeclar(), para que actualice la ubicación de la 
+variable en el código fuente.
+Se agrega protección a incrementar el contador TxpElement.nCalled, en la segunda pasada.
+Se implementa la lectura de las unidades, pero no la exploración.
+Se crea la variable global "rutUnits", para almacenar las ruta deonde se buscarán las 
+unidades de PicPas.
+Se crean la nueva clase TxpEleUnit (y todo el código relacionado), para modelar a las 
+unidades.
+Se crea el método TCompilerBase.CreateUsesDeclaration().
+Se modifica el explorador de código para que muestre también a las unidades.
+Se modifica DuplicateIn() de algunos elementos, para que usen listas en lugar de TObject.
+
+PENDIENTES
+Revisar la implementación de las estructuras. 
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la llamada correcta para las funciones del sistema y de usuario(con parámetros).
+Implementar la traducción de idiomas.
+Implementar el uso adecuado, del árbol,ya que en la segunda pasada está lleno y la 
+búsqueda de nombres puede dar resultados distintos a la de la primera pasada.
+
+Corregir el problema de la pérdida del nombre en las variables bit, en el código 
+ensamblador.
+Se detectó un error al momento de abrir varias ventanas y compilar una de ellas. Daba error
+en otra ventana.
+
 PicPas 0.5.7
 ============
 Se incluyen optimizaciones, para algunos casos con las operaciones XOR (que es lo mismo que 
@@ -18,24 +64,6 @@ de compilar el programa principal.
 Se crea el evento TXpTreeElements.OnTreeChange.
 Se incluye información de la compilación, en la documentación.
 Se elimina el método TCompileBase.CloseFunction().
-
-PENDIENTES
-Revisar la implementación de las estructuras. 
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la llamada correcta para las funciones del sistema y de usuario(con parámetros).
-Implementar el sistema de mensajes "Warning".
-Implementar la traducción de idiomas.
-Implementar el uso adecuado, del árbol,ya que en la segunda pasada está lleno y la 
-búsqueda de nombres puede dar resultados distintos a la de la primera pasada.
-
-Corregir el problema de la pérdida del nombre en las variables bit, en el código 
-ensamblador.
-Se detectó un error al momento de abrir varias ventanas y compilar una de ellas. Daba error
-en otra ventana.
 
 
 PicPas 0.5.6

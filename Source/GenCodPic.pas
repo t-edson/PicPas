@@ -82,7 +82,7 @@ type
     objeto "pic", se colocan mejor aquí.}
     procedure AssignRAMinBit(absAdd, absBit: integer; var reg: TPicRegisterBit; regName: string);
     procedure AssignRAMinByte(absAdd: integer; var reg: TPicRegister; regName: string);
-    procedure CreateVar(nVar: TxpEleVar);
+    procedure CreateVarInRAM(nVar: TxpEleVar);
   protected  //Métodos para fijar el resultado
     procedure SetResult(typ: TType; CatOp: TCatOperan);
     procedure SetResultConst_bool(valBool: boolean);
@@ -692,7 +692,7 @@ begin
     pic.SetNameRAM(reg.offs, reg.bank, regName);
   end;
 end;
-procedure TGenCodPic.CreateVar(nVar: TxpEleVar);
+procedure TGenCodPic.CreateVarInRAM(nVar: TxpEleVar);
 {Rutina para asignar espacio físico a una variable. Funciona también en variables
 ABSOLUTE. }
 var

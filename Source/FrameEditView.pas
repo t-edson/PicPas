@@ -179,7 +179,7 @@ begin
   SynEdit.Options2:= SynEdit.Options2 + [eoCaretSkipTab];
   SynEdit.TabWidth:= 2;
   SynEdit.OnSpecialLineMarkup:=@edSpecialLineMarkup;
-//  InicEditorC1(SynEdit);
+  InicEditorC1(SynEdit);
   //define paneles
 //  self.PanFileSaved := StatusBar1.Panels[0]; //panel para mensaje "Guardado"
 //  self.PanCursorPos := StatusBar1.Panels[1];  //panel para la posición del cursor

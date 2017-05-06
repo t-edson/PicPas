@@ -7,9 +7,9 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, FormPrincipal, Parser, ProcAsm, FormPICExplorer,
-  FormCodeExplorer, GenCod, GenCodPic, XpresParserPIC,
-  FrameSyntaxTree, XpresElementsPIC, Globales, FormConfig, PicPasProject, FrameEditView;
+  Forms, FormPrincipal, Parser, ProcAsm, FormPICExplorer, FormCodeExplorer,
+  GenCod, GenCodPic, XpresParserPIC, FrameSyntaxTree, XpresElementsPIC,
+  Globales, FormConfig, PicPasProject, FrameEditView, FrameMessagesWin;
 
 {$R *.res}
 

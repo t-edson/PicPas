@@ -94,6 +94,7 @@ protected  //Eventos del compilador
   OnExprEnd  : procedure(posExpres: TPosExpres) of object;  {Se genera
                                              el terminar de evaluar una expresión}
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
+  FirstPass  : boolean;   //Indica que está en la primera pasada.
   function CaptureDelExpres: boolean;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;
   procedure TipDefecString(var Op: TOperand; tokcad: string); virtual; abstract;
@@ -105,6 +106,8 @@ protected  //Eventos del compilador
   procedure ClearTypes;
   function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
   function FindType(TypName: string): TType;
+  //Manejo de variables
+  function CreateVar(varName: string; typ: ttype; absAddr, absBit: integer): TxpEleVar;
   //Manejo de funciones
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
   function ValidateFunction: boolean;
@@ -112,14 +115,13 @@ protected  //Eventos del compilador
   procedure CreateParam(fun: TxpEleFun; parName: string; typStr: string);
   function CaptureTok(tok: string): boolean;
   procedure CaptureParams;
+  //Manejo de Unidades
+  function CreateUnit(uniName: string): TxpEleUnit;
   //Mmanejo de expresiones
   function GetOperand: TOperand; virtual;
   function GetOperandPrec(pre: integer): TOperand;
   function GetOperator(const Op: Toperand): Txpoperator;
   procedure GetExpressionE(const prec: Integer; posExpres: TPosExpres = pexINDEP);
-//  procedure GetBoolExpression;
-//  procedure CreateVariable(const varName: string; typ: ttype);
-//  procedure CreateVariable(varName, varType: string);
 public
   TreeElems: TXpTreeElements; //tablas de elementos del lenguaje
   listFunSys: TxpEleFuns;   //lista de funciones del sistema
@@ -172,15 +174,16 @@ public
   catOperation: TCatOperation;  //combinación de categorías de los operandos
   operType : TOperType; //Tipo de oepración
   function CatOperationToStr(Op: string=','): string;
-public  //Manejo de errores
-  PErr  : TPError;     //Objeto de Error
-  function HayError: boolean;
+public  //Manejo de errores y advertencias
+  HayError: boolean;
+  OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
+  OnError  : procedure(errTxt: string; fileName: string; row, col: integer) of object;
+  procedure ClearError;
+  procedure GenWarn(msg: string);
+  procedure GenWarn(msg: string; const Args: array of const);
+  procedure GenWarn(msg: string; const Args: array of const; fil: String; row, col: integer);
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
-  function ArcError: string;
-  function nLinError: integer;
-  function nColError: integer;
-  procedure ShowError;
 public  //Inicialización
   constructor Create; virtual;
   destructor Destroy; override;
@@ -205,44 +208,48 @@ begin
   coExpres_Expres: exit('Expression'+ Op +'Expression');
   end;
 end;
-function TCompilerBase.HayError: boolean;
+procedure TCompilerBase.ClearError;
 begin
-  Result := PErr.HayError;
+  HayError := false;
 end;
 procedure TCompilerBase.GenError(msg: string);
 {Función de acceso rápido para Perr.GenError(). Pasa como posición a la posición
 del contexto actual. Realiza la traducción del mensaje también.}
 begin
-  if (cIn = nil) or (cIn.curCon = nil) then
-    Perr.GenError(dic(msg),'',1)
-  else
-    Perr.GenError(dic(msg), cIn.curCon);
+  if (cIn = nil) or (cIn.curCon = nil) then begin
+    if OnError<>nil then OnError(msg, '', -1,-1);
+    HayError := true;
+  end else begin
+    if OnError<>nil then OnError(msg, cIn.curCon.arc, cIn.curCon.row, cIn.curCon.col);
+    HayError := true;
+  end;
 end;
 procedure TCompilerBase.GenError(msg: String; const Args: array of const);
 {Versión con parámetros de GenError.}
 begin
-  if (cIn = nil) or (cIn.curCon = nil) then
-    Perr.GenError(dic(msg, Args),'',1)
-  else
-    Perr.GenError(dic(msg, Args), cIn.curCon);
+  GenError(Format(msg, Args));
 end;
-function TCompilerBase.ArcError: string;
+procedure TCompilerBase.GenWarn(msg: string);
+{Genera un mensaje de Advertencia. }
 begin
-  Result:= Perr.ArcError;
+  if (cIn = nil) or (cIn.curCon = nil) then begin
+    if OnWarning<>nil then OnWarning(msg, '', -1,-1);
+  end else begin
+    if OnWarning<>nil then OnWarning(msg, cIn.curCon.arc, cIn.curCon.row, cIn.curCon.col);
+  end;
 end;
-function TCompilerBase.nLinError: integer;
+procedure TCompilerBase.GenWarn(msg: string; const Args: array of const);
 begin
-  Result := Perr.nLinError;
+  if (cIn = nil) or (cIn.curCon = nil) then begin
+    if OnWarning<>nil then OnWarning(Format(msg, Args), '', -1, -1);
+  end else begin
+    if OnWarning<>nil then OnWarning(Format(msg, Args), cIn.curCon.arc, cIn.curCon.row, cIn.curCon.col);
+  end;
 end;
-function TCompilerBase.nColError: integer;
+procedure TCompilerBase.GenWarn(msg: string; const Args: array of const;
+  fil: String; row, col: integer);
 begin
-  Result := Perr.nColError;
-end;
-procedure TCompilerBase.ShowError;
-begin
-  Application.MessageBox(PChar(Perr.TxtErrorRC),
-                         PChar(Perr.NombPrograma), MB_ICONERROR);
-//  Perr.Show;
+  if OnWarning<>nil then OnWarning(Format(msg, Args), fil, row, col);
 end;
 function TCompilerBase.EOExpres: boolean; inline;
 //Indica si se ha llegado al final de una expresión.
@@ -318,10 +325,22 @@ begin
   end;
   exit(nil)
 end;
+function TCompilerBase.CreateVar(varName: string; typ: ttype; absAddr,
+  absBit: integer): TxpEleVar;
+var
+  xVar: TxpEleVar;
+begin
+  xVar := TxpEleVar.Create;
+  xVar.name := varName;
+  xVar.typ := typ;
+  xVar.solAdr := absAddr;   //Si no es ABSOLUTE, valdrá -1
+  xVar.solBit := absBit;
+  Result := xVAr;
+end;
 //Manejo de funciones
 function TCompilerBase.CreateFunction(funName: string; typ: ttype;
   proc: TProcExecFunction): TxpEleFun;
-{Crea una nueva función y devuelve un índice a la función.}
+{Crea una nueva función y devuelve la referecnia a la función.}
 var
   fun : TxpEleFun;
 begin
@@ -399,7 +418,7 @@ begin
     if not CaptureTok('(') then exit;
     repeat
       GetExpressionE(0, pexPARAM);  //captura parámetro
-      if perr.HayError then exit;   //aborta
+      if HayError then exit;   //aborta
       //guarda tipo de parámetro
       func0.CreateParam('',res.typ);
       if cIn.tok = ',' then begin
@@ -416,6 +435,15 @@ begin
     if not CaptureTok(')') then exit;
   end;
 end;
+function TCompilerBase.CreateUnit(uniName: string): TxpEleUnit;
+var
+  uni: TxpEleUnit;
+begin
+  uni := TxpEleUnit.Create;
+  uni.name := uniName;
+  Result := uni;
+end;
+
 //Manejo de expresiones
 function TCompilerBase.GetOperand: TOperand;
 {Parte de la funcion analizadora de expresiones que genera codigo para leer un operando.
@@ -432,14 +460,14 @@ var
   opr: TxpOperator;
   Found: Boolean;
 begin
-  PErr.Clear;
+  ClearError;
   SkipWhites;
   Result.Inverted := false;   //inicia campo
   if cIn.tokType = tnNumber then begin  //constantes numéricas
     Result.catOp:=coConst;       //constante es Mono Operando
     Result.txt:= cIn.tok;     //toma el texto
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
-    if pErr.HayError then exit;  //verifica
+    if HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tokType = tnSysFunct then begin  //función del sistema
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
@@ -451,7 +479,7 @@ begin
       if (Upcase(xfun.name) = tmp) then begin
         {Encontró. Llama a la función de procesamiento, quien se encargará de
         extraer los parámetros y analizar la sintaxis.}
-        xfun.nCalled := xfun.nCalled + 1;  //lleva la cuenta
+        if FirstPass then Inc(xfun.nCalled);  //lleva la cuenta
         xfun.procCall(xfun);  //para que codifique el _CALL o lo pimplemente
         Result.txt:= tmp;     //toma el texto
         exit;
@@ -468,7 +496,7 @@ begin
     if ele.elemType = eltVar then begin
       //es una variable
       xvar := TxpEleVar(ele);
-      inc(xvar.nCalled);  //lleva la cuenta
+      if FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
       Result.catOp:=coVariab;    //variable
       Result.typ:=xvar.typ;
       Result.catTyp:= xvar.typ.cat;  //categoría
@@ -509,7 +537,7 @@ begin
         Result.catOp :=coExpres; //expresión
         Result.txt:= cIn.tok;    //toma el texto
         Result.typ:=xfun.typ;
-        xfun.nCalled := xfun.nCalled + 1;  //lleva la cuenta
+        if FirstPass then Inc(xfun.nCalled);  //lleva la cuenta
         xfun.procCall(xfun);  //para que codifique el _CALL
         exit;
       end else begin
@@ -525,7 +553,7 @@ begin
     Result.catOp:=coConst;       //constante es Mono Operando
     Result.txt:= cIn.tok;     //toma el texto
     TipDefecBoolean(Result, cIn.tok); //encuentra tipo y valor
-    if pErr.HayError then exit;  //verifica
+    if HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tok = '(' then begin  //"("
     cIn.Next;
@@ -533,7 +561,7 @@ begin
     GetExpression(0);
     Dec(ExprLevel);
     Result := res;
-    if PErr.HayError then exit;
+    if HayError then exit;
     If cIn.tok = ')' Then begin
        cIn.Next;  //lo toma
     end Else begin
@@ -587,7 +615,7 @@ var
   Operation: TxpOperation;
 begin
    {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Oper('+Op1.txt + opr.txt + Op2.txt+')');{$ENDIF}
-   PErr.IniError;
+   ClearError;
    //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
    Operation := opr.FindOperation(Op2.typ);
    if Operation = nil then begin
@@ -616,7 +644,7 @@ operador de Op1.
 El resultado debe devolverse en "res".}
 begin
   {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Eval('+ opr.txt + Op1.txt + ')'); {$ENDIF}
-   PErr.IniError;
+   ClearError;
    if opr.OperationPre = nil then begin
       GenError('Illegal Operation: %s',
                  [opr.txt + '('+Op1.typ.name+')']);
@@ -636,7 +664,7 @@ operador de Op1.
 El resultado debe devolverse en "res".}
 begin
   {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Eval('+Op1.txt + opr.txt +')'); {$ENDIF}
-   PErr.IniError;
+   ClearError;
    if opr.OperationPost = nil then begin
       GenError('Illegal Operation: %s',
                  ['('+Op1.typ.name+')' + opr.txt]);
@@ -661,7 +689,7 @@ begin
   {$IFDEF LogExpres}
   debugln(space(2*ExprLevel)+' Eval('+Op1.txt+')');
   {$ENDIF}
-  PErr.IniError;
+  ClearError;
   {Llama al evento asociado con p1 como operando. }
   p1 := @Op1; {Solo hay un parámetro}
   {Ejecuta la operación. El resultado debe dejarse en "res"}
@@ -683,7 +711,7 @@ begin
   debugln(space(ExprLevel)+' GetOperandP('+IntToStr(pre)+')');
   {$ENDIF}
   Op1 :=  GetOperand;  //toma el operador
-  if pErr.HayError then exit;
+  if HayError then exit;
   //verifica si termina la expresion
   pos := cIn.PosAct;    //Guarda por si lo necesita
   SkipWhites;
@@ -701,7 +729,7 @@ begin
     If opr.prec > pre Then begin  //¿Delimitado por precedencia de operador?
       //es de mayor precedencia, se debe Oper antes.
       Op2 := GetOperandPrec(pre);  //toma el siguiente operando (puede ser recursivo)
-      if pErr.HayError then exit;
+      if HayError then exit;
       Oper(Op1, opr, Op2);  //devuelve en "res"
       Result:=res;
     End else begin  //la precedencia es menor o igual, debe salir
@@ -732,10 +760,10 @@ var
 begin
   Op1.catTyp:=t_integer;    //asumir opcion por defecto
   Op2.catTyp:=t_integer;   //asumir opcion por defecto
-  pErr.Clear;
+  ClearError;
   //----------------coger primer operando------------------
   Op1 := GetOperand;
-  if pErr.HayError then exit;
+  if HayError then exit;
   {$IFDEF LogExpres} debugln(space(ExprLevel)+' Op1='+Op1.txt); {$ENDIF}
   //verifica si termina la expresion
   SkipWhites;
@@ -761,7 +789,7 @@ begin
     End;
     if opr1.OperationPost<>nil then begin  //Verifica si es operación Unaria
       OperPost(Op1, opr1);
-      if PErr.HayError then exit;
+      if HayError then exit;
       Op1 := res;
       SkipWhites;
       opr1 := GetOperator(Op1);
@@ -770,11 +798,11 @@ begin
     //--------------------coger segundo operando--------------------
     Op2 := GetOperandPrec(Opr1.prec);   //toma operando con precedencia
     {$IFDEF LogExpres} debugln(space(ExprLevel)+' Op2='+Op2.txt); {$ENDIF}
-    if pErr.HayError then exit;
+    if HayError then exit;
     //prepara siguiente operación
     Oper(Op1, opr1, Op2);    //evalua resultado en "res"
     Op1 := res;
-    if PErr.HayError then exit;
+    if HayError then exit;
     SkipWhites;
     opr1 := GetOperator(Op1);   {lo toma ahora con el tipo de la evaluación Op1 (opr1) Op2
                                 porque puede que Op1 (opr1) Op2, haya cambiado de tipo}
@@ -783,7 +811,7 @@ begin
 end;
 procedure TCompilerBase.GetExpressionE(const prec: Integer;
   posExpres: TPosExpres);
-{Envoltura para GetExpressionCore(). Se coloca así porque GetExpressionCore()
+{Envoltura para GetExpression(). Se coloca así porque GetExpression()
 tiene diversos puntos de salida y Se necesita llamar siempre a expr_end() al
 terminar.
 Toma una expresión del contexto de entrada y devuelve el resultado em "res".
@@ -795,7 +823,7 @@ begin
   {$ENDIF}
   if OnExprStart<>nil then OnExprStart;  //llama a evento
   res := GetExpression(prec);
-  if PErr.HayError then exit;
+  if HayError then exit;
   if OnExprEnd<>nil then OnExprEnd(posExpres);    //llama al evento de salida
   {$IFDEF LogExpres}
   debugln(space(ExprLevel)+'>Fin.expr');
@@ -825,7 +853,7 @@ end;}
 //Inicialización
 constructor TCompilerBase.Create;
 begin
-  PErr.IniError;   //inicia motor de errores
+  ClearError;   //inicia motor de errores
   //Inicia lista de tipos
   typs := TTypes.Create(true);
   //Crea arbol de elementos
@@ -835,7 +863,6 @@ begin
   xLex := TSynFacilSyn.Create(nil);   //crea lexer
   func0 := TxpEleFun.Create;  //crea la función 0, para uso interno
 
-  if HayError then PErr.Show;
   cIn := TContexts.Create(xLex); //Crea lista de Contextos
   ejecProg := false;
   //Actualiza las referencias a los tipos de tokens existentes en SynFacilSyn

@@ -17,8 +17,7 @@ var
 
    rutApp     : string;      //ruta de la aplicación
    rutSamples : string;      //ruta de la carpeta de scripts
-   rutMacros  : string;      //ruta de la carpeta de macros
-   rutLenguajes: string;     //ruta para guardar las sintaxis
+   rutUnits   : string;     //ruta para guardar las sintaxis
 
    archivoEnt  : string;    //archivo de entrada
    MostrarError: Boolean;   //Bandera para mostrar mensajesde error.
@@ -135,8 +134,7 @@ initialization
   //inicia directorios de la aplicación
   rutApp :=  ExtractFilePath(Application.ExeName);  //incluye el '\' final
   rutSamples := rutApp + 'samples';
-//  rutMacros := rutApp + 'macros';
-//  rutLenguajes := rutApp + 'lenguajes';
+  rutUnits   := rutApp + 'units';
   archivoEnt := '';    //archivo de entrada
   //verifica existencia de carpetas de trabajo
   try
@@ -144,17 +142,10 @@ initialization
       msgexc('No se encuentra carpeta /samples. Se creará.');
       CreateDir(rutSamples);
     end;
-{    if not DirectoryExists(rutMacros) then begin
-      msgexc('No se encuentra carpeta /macros. Se creará.');
-      CreateDir(rutMacros);
+   if not DirectoryExists(rutUnits) then begin
+      msgexc('No se encuentra carpeta /units. Se creará.');
+      CreateDir(rutUnits);
     end;
-    if not DirectoryExists(rutLenguajes) then begin
-      msgexc('No se encuentra carpeta /lenguajes. Se creará.');
-      CreateDir(rutLenguajes);
-    end;
-    if not FileExists(rutApp+'plink.exe') then begin
-      msgErr('No se encuentra archivo plink.exe');
-    end;}
   except
     msgErr('Error. No se puede leer o crear directorios.');
   end;
@@ -163,8 +154,7 @@ finalization
   //Por algún motivo, la unidad HeapTrc indica que hay gotera de memoria si no se liberan
   //estas cadenas:
   rutApp :=  '';
-  rutMacros := '';
   rutSamples := '';
-  rutLenguajes := '';
+  rutUnits := '';
 end.
 

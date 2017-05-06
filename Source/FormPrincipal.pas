@@ -3,17 +3,14 @@ Compilador en Pascal para micorocntroladores PIC de la serie 16.
 
                                         Por Tito Hinostroza   22/08/2015 }
 unit FormPrincipal;
-
 {$mode objfpc}{$H+}
 {$define }
 interface
 uses
-  Classes, SysUtils, types, FileUtil, SynEdit, SynEditMiscClasses, Forms,
-  Controls, Graphics, Dialogs, Menus, ComCtrls, ActnList, StdActns, ExtCtrls,
-  StdCtrls, LCLIntf, LCLType, SynFacilUtils, SynFacilHighlighter, MisUtils,
-  Parser, FormPICExplorer, Globales, FormCodeExplorer, FrameSyntaxTree,
-  FormConfig, PicPasProject, FrameEditView;
-
+  Classes, SysUtils, types, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
+  ActnList, StdActns, ExtCtrls, StdCtrls, LCLIntf, LCLType, SynFacilHighlighter,
+  SynFacilUtils, MisUtils, Parser, FormPICExplorer, Globales, FormCodeExplorer,
+  FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView, FrameMessagesWin;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -48,10 +45,8 @@ type
     acViewSynTree: TAction;
     edAsm: TSynEdit;
     fraEditView1: TfraEditView;
-    ImgMessages: TImageList;
     ImgActions32: TImageList;
     ImgActions16: TImageList;
-    ListBox1: TListBox;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     MenuItem10: TMenuItem;
@@ -142,12 +137,11 @@ type
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure ListBox1DrawItem({%H-}Control: TWinControl; Index: Integer;
-      ARect: TRect; {%H-}State: TOwnerDrawState);
   private
     curProj: TPicPasProject;  //Proyecto actual
     hlAssem : TSynFacilSyn;   //resaltador para ensamblador
-    fraSynTree: TfraSyntaxTree;  //árbol de sintaxis
+    fraSynTree : TfraSyntaxTree;  //árbol de sintaxis
+    fraMessages: TfraMessagesWin;
     procedure ChangeAppearance;
     procedure fraEditView1SelectEditor;
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
@@ -161,15 +155,15 @@ var
 
 implementation
 {$R *.lfm}
-
 { TfrmPrincipal }
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
+  fraMessages := TfraMessagesWin.Create(self);
+  fraMessages.Parent := panMessages;  //Ubica
+  fraMessages.Align := alClient;
   //configura panel de mensajes
-  ListBox1.Style:=lbOwnerDrawVariable;
-  ListBox1.OnDrawItem:=@ListBox1DrawItem;
   fraEditView1.OnChangeEditorState := @ChangeEditorState;;
   fraEditView1.OnSelectEditor := @fraEditView1SelectEditor;
   //carga un resaltador a la ventana de ensamblador
@@ -187,6 +181,7 @@ begin
   splSynTree.Align := alLeft;
   AnchorTo(splSynTree, akLeft, fraSynTree);
   edAsm.Align := alRight;
+  InicEditorC1(edAsm);
   splEdPas.Align := alRight;
   fraEditView1.Align := alClient;
   //////////
@@ -243,24 +238,6 @@ end;
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
 begin
   hlAssem.Free;
-end;
-procedure TfrmPrincipal.ListBox1DrawItem(Control: TWinControl; Index: Integer;
-  ARect: TRect; State: TOwnerDrawState);
-var
-  txt: String;
-begin
-  ListBox1.Canvas.FillRect(ARect);  //fondo
-  //dibuja ícono
-  txt := ListBox1.Items[index];
-  if txt='' then exit;
-  if txt[1] = '[' then begin
-    //ícono de error
-    ImgMessages.Draw(ListBox1.Canvas,ARect.Left + 2, ARect.Top + 1, 2);
-  end else begin
-    ImgMessages.Draw(ListBox1.Canvas,ARect.Left + 2, ARect.Top + 1, 0);
-  end;
-  //escribe el texto
-  ListBox1.Canvas.TextOut (ARect.left + ImgMessages.Width + 8 , ARect.Top + 1, txt);
 end;
 procedure TfrmPrincipal.FormDropFiles(Sender: TObject; const FileNames: array of String);
 var
@@ -378,7 +355,6 @@ begin
     Caption := NOM_PROG + ' - ' + VER_PROG  + ' - Project: ' + curProj.name;
   end;
 end;
-
 /////////////////// Acciones de Archivo /////////////////////
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
 begin
@@ -462,14 +438,11 @@ end;
 procedure TfrmPrincipal.acToolCompilExecute(Sender: TObject);
 {Compila el contenido del archivo actual}
 var
-  timeCnt: DWORD;
   filName: String;
 begin
   if fraEditView1.ActiveEditor=nil then exit;
   self.SetFocus;
-  ListBox1.Items.Clear;
-  timeCnt:=GetTickCount;
-  ListBox1.Items.Add('Starting Compilation ...');
+  fraMessages.InitCompilation(cxp);  //Limpia mensajes
   filName := fraEditView1.ActiveEditor.NomArc;
   if filName='' then begin
     //Aún no tiene nombre el archivo
@@ -477,11 +450,11 @@ begin
   end;
   cxp.Compile(filName, fraEditView1.ActiveEditor.SynEdit.Lines);
   if cxp.HayError then begin
-    ListBox1.Items.Add(cxp.PErr.TxtErrorRC);
+    fraMessages.EndCompilation;
     VerificarError;
     exit;
   end;
-  ListBox1.Items.Add('Compiled in: ' + IntToStr(GetTickCount-timeCnt) + ' msec');
+  fraMessages.EndCompilation;
   //Genera código ensamblador
   edAsm.BeginUpdate(false);
   edAsm.Lines.Clear;
@@ -497,9 +470,9 @@ begin
   end;
   edAsm.Lines.Add(';===Blocks of Code===');
   cxp.DumpCode(edAsm.Lines, Config.IncAddress, Config.IncComment);
-//  edAsm.Lines.Add(';===Statistics===');
-  cxp.DumpStatistics(ListBox1.Items);
   edAsm.EndUpdate;
+  //Actualiz panel de árbol de sintaxis
+  fraSynTree.Refresh;
 end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin
@@ -522,23 +495,26 @@ end;
 procedure TfrmPrincipal.VerificarError;
 //Verifica si se ha producido algún error en el preprocesamiento y si lo hay
 //Ve la mejor forma de msotrarlo
+var
+  msg, filname: string;
+  row, col: integer;
 begin
-    If not cxp.HayError Then exit;  //verificación
+    fraMessages.GetFirstError(msg, filname, row, col);
+    if msg='' then exit;
     //Selecciona posición de error en el Editor
-    if cxp.ArcError <> '' Then begin
+    if filname <> '' Then begin
         //Se ha identificado el archivo con el error
-        if not fraEditView1.SelectEditor(cxp.ArcError) then begin
+        if not fraEditView1.SelectEditor(filname) then begin
            //No está abierto el archivo, lo abrimos
-           fraEditView1.LoadFile(cxp.ArcError);
+           fraEditView1.LoadFile(filname);
         end;
          //Ya lo tenemos cargado
-        If cxp.nLinError <> 0 Then begin
-           MarcarError(fraEditView1.ActiveEditor, cxp.nLinError, cxp.nColError);
+        If row <> -1 Then begin
+           MarcarError(fraEditView1.ActiveEditor, row, col);
         end;
-        {If MostrarError Then }cxp.ShowError;
+        {If MostrarError Then }MsgErr(msg);
     end else begin   //no hay archivo de error
-      {If MostrarError Then }
-      cxp.ShowError;
+      {If MostrarError Then } MsgErr(msg);
     end;
 End;
 procedure TfrmPrincipal.MarcarError(ed: TSynEditor; nLin, nCol: integer);
@@ -734,4 +710,4 @@ begin
 end;
 
 end.
-//722
+//777

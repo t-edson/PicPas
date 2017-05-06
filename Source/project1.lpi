@@ -67,7 +67,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="15">
+    <Units Count="16">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -146,6 +146,13 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
       </Unit14>
+      <Unit15>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fraMessagesWin"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+      </Unit15>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -156,7 +163,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.1;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.7;..\..\_Librerias\Xpres-1.3;frames"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.1;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.7;..\..\_Librerias\Xpres-1.3;..\..\_Librerias\UtilsGrilla 0.8"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

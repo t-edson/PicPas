@@ -57,21 +57,21 @@ begin
   nodMain.ImageIndex := 1;
   nodMain.SelectedIndex := 1;
   //Agrega grupos
-  nodUni := TreeView1.Items.AddChild(nodMain, 'Units');
-  nodUni.ImageIndex := 0;
-  nodUni.SelectedIndex := 0;
+  nodUni := nil;
   nodVar := nil;
   nodCte := nil;
   nodFun := nil;
   nodOtr := nil;  //por defecto
   //Agrega elementos
   for elem in syntaxTree.main.elements do begin
-//    if elem is TxpEleu then begin
-//      nod := TreeView1.Items.AddChild(nodUni, elem.name);
-//      nod.ImageIndex := 5;
-//      nod.SelectedIndex := 5;
-//    end;
-    if elem is TxpEleCon then begin  //constante
+    if elem is TxpEleUnit then begin
+      if noduni = nil then begin
+        nodUni := TreeView1.Items.AddChild(nodMain, 'Units');
+        nodUni.ImageIndex := 0;
+        nodUni.SelectedIndex := 0;
+      end;
+      AddNodeTo(nodUni, elem.name, 6, elem);
+    end else if elem is TxpEleCon then begin  //constante
       if nodCte= nil then begin
         nodCte := TreeView1.Items.AddChild(nodMain, 'Constants');
         nodCte.ImageIndex := 0;
@@ -103,6 +103,7 @@ begin
   end;
   nodMain.Expanded := true;
 //  if nodUni<>nil then nodUni.Expanded := true;
+  if nodUni<>nil then nodUni.Expanded := true;
   if nodCte<>nil then nodCte.Expanded := true;
   if nodVar<>nil then nodVar.Expanded := true;
   if nodFun<>nil then nodFun.Expanded := true;
@@ -127,6 +128,8 @@ begin
     xvar := TxpEleVar(elem);
     MsgBox('Nombre: ' + elem.name + LineEnding +
            'Tipo: ' + elem.typ.name + LineEnding +
+           'Ubicación: ' + elem.src.Fil + ':(' + IntToStr(elem.src.Row) + ',' +
+                                             IntToStr(elem.src.Col)+')' + LineEnding +
            'Direcc. Solicitada: ' + IntToStr(xvar.solAdr) + ':' + IntToStr(xvar.solBit) + LineEnding +
            'Direcc. Asignada: ' + xvar.AddrString + LineEnding +
            'Num.Llamadas: ' + IntToStr(xvar.nCalled) );
@@ -134,8 +137,9 @@ begin
   if elem is TxpEleFun then begin
     fun := TxpEleFun(elem);
     MsgBox('Nombre: ' + elem.name + LineEnding +
-           'Ubicación: ' + fun.srcFile + ':(' + IntToStr(fun.srcRow) + ',' +
-                                             IntToStr(fun.srcCol)+')' + LineEnding +
+           'Tipo: ' + elem.typ.name + LineEnding +
+           'Ubicación: ' + fun.src.Fil + ':(' + IntToStr(fun.src.Row) + ',' +
+                                             IntToStr(fun.src.Col)+')' + LineEnding +
            'Dirección: $' + IntToHex(fun.adrr, 3) + LineEnding +
            'Num.Llamadas: ' + IntToStr(fun.nCalled) + lineending +
            'Tamaño: ' + IntToStr(fun.srcSize)
