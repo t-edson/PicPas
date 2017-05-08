@@ -18,6 +18,7 @@ var
    rutApp     : string;      //ruta de la aplicación
    rutSamples : string;      //ruta de la carpeta de scripts
    rutUnits   : string;     //ruta para guardar las sintaxis
+   rutTemp    : string;     //ruta para los archivos temporales
 
    archivoEnt  : string;    //archivo de entrada
    MostrarError: Boolean;   //Bandera para mostrar mensajesde error.
@@ -135,6 +136,7 @@ initialization
   rutApp :=  ExtractFilePath(Application.ExeName);  //incluye el '\' final
   rutSamples := rutApp + 'samples';
   rutUnits   := rutApp + 'units';
+  rutTemp    := rutApp + 'temp';
   archivoEnt := '';    //archivo de entrada
   //verifica existencia de carpetas de trabajo
   try
@@ -142,10 +144,14 @@ initialization
       msgexc('No se encuentra carpeta /samples. Se creará.');
       CreateDir(rutSamples);
     end;
-   if not DirectoryExists(rutUnits) then begin
-      msgexc('No se encuentra carpeta /units. Se creará.');
-      CreateDir(rutUnits);
-    end;
+    if not DirectoryExists(rutUnits) then begin
+       msgexc('No se encuentra carpeta /units. Se creará.');
+       CreateDir(rutUnits);
+     end;
+    if not DirectoryExists(rutTemp) then begin
+       msgexc('No se encuentra carpeta /temp. Se creará.');
+       CreateDir(rutTemp);
+     end;
   except
     msgErr('Error. No se puede leer o crear directorios.');
   end;
@@ -156,5 +162,6 @@ finalization
   rutApp :=  '';
   rutSamples := '';
   rutUnits := '';
+  rutTemp := '';
 end.
 

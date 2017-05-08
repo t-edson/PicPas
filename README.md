@@ -1,6 +1,6 @@
-PicPas 0.5.8
+PicPas 0.5.9
 =============
-Pascal compiler for PIC microcontrollers.
+Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/Sin-título.png "Título de la imagen")
 
@@ -46,7 +46,7 @@ To compile PicPas, it's needed to have the following libraries:
 
 * SynFacilUtils
 * MisUtils
-* ConfigFrame 
+* MiConfig
 * PicUtils 
 * Xpres 
 

@@ -95,9 +95,10 @@ type
     destructor Destroy; override;
   public  //Ubicación física de la declaración del elmento
     posCtx: TPosCont;  //Ubicación en el código fuente
-    {Datos de la ubicación en el código fuente. Guardan parte de la información de,
-    posCtx, pero se mantiene, aún después de cerrar los contextos de entrada.}
-    src: TSrcPos;
+    {Datos de la ubicación en el código fuente, donde el elemento es declarado. Guardan
+    parte de la información de posCtx, pero se mantiene, aún después de cerrar los
+    contextos de entrada.}
+    srcDec: TSrcPos;
   end;
 
   TVarOffs = word;

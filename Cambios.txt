@@ -1,3 +1,48 @@
+PicPas 0.5.9
+============
+Se ordenan y uniformizan los mensajes de Error y Advertencia. Se crean nuevas versiones
+de métodos para generar mensajes de error.
+Se define que los editores trabajen con una ruta de archivos temporales:
+<AppPath>/temp y para que los archivos se guarden siempre, antes de compilarse.
+Se mejora la administración de archivos, en las ventanas de edición, para la compilación.
+Se mejora el tratamiento de unidades. Se reconoce la sintaxis básica con declaraciones 
+de variables y constantes.
+Se corrige el lexer para el código ensamblador, que había quedado desactualizado, con los
+últimos cambios.
+Se corrigen 2 llamadas erróneas a Oper_bit_or_bit en TGenCod.Oper_bit_xor_bit().
+Se elimina el campo BooleanBit, de TGenCodPic.
+Se crea la bandera "InvertedFromC", para permitir optimizaciones con expresiones lógicas.
+Se implementa la operación Oper_byte_great_byte(). Aün no se ha validado.
+Se corrige un error en la asignación de nombres de las lenguetas cuando se guarda un 
+archivo.
+Se mejora el manejo del diálogo "Guardar COmo ...", para que incluya la extensión "*.pas"
+por defecto.
+Se actualiza para trabajar con la versión 1.2 de SynFacilUtils.
+Se revias el procesamiento de constantes para mejorar la detección de errores y recabar
+información sobre su uso.
+Se agregan "ELSE" y "ABSOLUTE", como palabras reservada en la definición de sintaxis.
+Se cambia el nombre a TXpElemnt.src por TXpElemnt.srcDec 
+Se empieza con la creación del manual de usuario.
+Se crea el método TfraEditView.SelectOrLoad().
+
+
+PENDIENTES
+Revisar la implementación de las estructuras. 
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la llamada correcta para las funciones del sistema y de usuario(con parámetros).
+Implementar la traducción de idiomas.
+Implementar el uso adecuado, del árbol,ya que en la segunda pasada está lleno y la 
+búsqueda de nombres puede dar resultados distintos a la de la primera pasada.
+
+Corregir el problema de la pérdida del nombre en las variables bit, en el código 
+ensamblador.
+Se detectó un error al momento de abrir varias ventanas y compilar una de ellas. Daba error
+en otra ventana.
+
 PicPas 0.5.8
 ============
 Se crea el evento TCompilerBase.OnWarning y las funciones sobrecaragdas GenWarn().
@@ -26,23 +71,6 @@ unidades.
 Se crea el método TCompilerBase.CreateUsesDeclaration().
 Se modifica el explorador de código para que muestre también a las unidades.
 Se modifica DuplicateIn() de algunos elementos, para que usen listas en lugar de TObject.
-
-PENDIENTES
-Revisar la implementación de las estructuras. 
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la llamada correcta para las funciones del sistema y de usuario(con parámetros).
-Implementar la traducción de idiomas.
-Implementar el uso adecuado, del árbol,ya que en la segunda pasada está lleno y la 
-búsqueda de nombres puede dar resultados distintos a la de la primera pasada.
-
-Corregir el problema de la pérdida del nombre en las variables bit, en el código 
-ensamblador.
-Se detectó un error al momento de abrir varias ventanas y compilar una de ellas. Daba error
-en otra ventana.
 
 PicPas 0.5.7
 ============

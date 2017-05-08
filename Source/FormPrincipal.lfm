@@ -1842,7 +1842,6 @@ object frmPrincipal: TfrmPrincipal
       Category = 'Tool'
       Caption = '&Confi&gurar2'
       ImageIndex = 22
-      OnExecute = acToolConfig2Execute
     end
     object acArcNewProj: TAction
       Category = 'Arc'

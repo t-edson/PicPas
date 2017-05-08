@@ -29,17 +29,17 @@ var
   pic   : TPIC16;        //referencia al PIC
   cpx   : TCompilerBase;
 
-function tokType: TSynHighlighterAttributes; inline;
+function tokType: integer; inline;
 begin
-  Result := TSynHighlighterAttributes(PtrUInt(lexAsm.GetTokenKind));
+  Result := lexAsm.GetTokenKind;
 end;
 procedure skipWhites;
 //salta blancos o comentarios
 begin
-  if tokType = lexAsm.tkSpace then
+  if tokType = lexAsm.tnSpace then
     lexAsm.Next;  //quita espacios
   //puede que siga comentario
-  if tokType = lexAsm.tkComment then
+  if tokType = lexAsm.tnComment then
     lexAsm.Next;
   //después de un comentario no se espera nada.
 end;
@@ -59,11 +59,18 @@ begin
 end;
 function CaptureRegister(var f: byte): boolean;
 {Captura la referencia a un registro y devuelve en "f". Si no encuentra devuelve error}
+var
+  n: LongInt;
 begin
   skipWhites;
-  if tokType = lexAsm.tkNumber then begin
+  if tokType = lexAsm.tnNumber then begin
     //es una dirección numérica
-    f := StrToInt(lexAsm.GetToken);
+    n := StrToInt(lexAsm.GetToken);  //Puede reconcoer hexadecimales con $, binario con %
+    if n>255 then begin
+      n := n and $7F;
+      cpx.GenWarn('Address truncated to fit instruction.');
+    end;
+    f := n;   { TODO : Falta verrificación de rango. }
     lexAsm.Next;
     Result := true;
     exit;
@@ -78,7 +85,7 @@ function CaptureAddress(var a: word): boolean;
 {Captura una dirección a una instrucción y devuelve en "a". Si no encuentra devuelve error}
 begin
   skipWhites;
-  if tokType = lexAsm.tkNumber then begin
+  if tokType = lexAsm.tnNumber then begin
     //es una dirección numérica
     a := StrToInt(lexAsm.GetToken);
     lexAsm.Next;
@@ -96,7 +103,7 @@ var
   n: Integer;
 begin
   skipWhites;
-  if tokType = lexAsm.tkNumber then begin
+  if tokType = lexAsm.tnNumber then begin
     //es una dirección numérica
     n := StrToInt(lexAsm.GetToken);
     if (n>255) then begin
@@ -135,7 +142,7 @@ function CaptureNbit(var b: byte): boolean;
 {Captura el número de bit de una instrucción y devuelve en "b". Si no encuentra devuelve error}
 begin
   skipWhites;
-  if tokType = lexAsm.tkNumber then begin
+  if tokType = lexAsm.tnNumber then begin
     //es una dirección numérica
     b := StrToInt(lexAsm.GetToken);
     if (b>7) then begin
@@ -214,7 +221,7 @@ begin
   end;
   //no debe quedar más que espacios o comentarios
   skipWhites;
-  if tokType <> lexAsm.tkEol then begin
+  if tokType <> lexAsm.tnEol then begin
     cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
     exit;
   end;
@@ -227,10 +234,10 @@ begin
   if Trim(AsmLin) = '' then exit;
   //procesa la destínea
   lexAsm.SetLine(asmLin, asmRow);  //inicia cadena
-  if tokType = lexAsm.tkKeyword then begin
+  if tokType = lexAsm.tnKeyword then begin
     ProcInstrASM;
     if cpx.HayError then exit;
-  end else if tokType = lexAsm.tkIdentif then begin
+  end else if tokType = lexAsm.tnIdentif then begin
     //puede ser una etiqueta
     //lbl := lexAsm.GetToken;   //guarda posible etiqueta
     lexAsm.Next;
@@ -238,7 +245,7 @@ begin
       //definitivamente es una etiqueta
       lexAsm.Next;
       skipwhites;
-      if tokType <> lexAsm.tkEol then begin
+      if tokType <> lexAsm.tnEol then begin
         //Hay algo más. Solo puede ser una instrucción
         ProcInstrASM;
         if cpx.HayError then exit;
@@ -246,21 +253,21 @@ begin
     end else begin
       //puede ser una etiqueta
       skipwhites;
-      if tokType <> lexAsm.tkEol then begin
+      if tokType <> lexAsm.tnEol then begin
         //Hay algo más. Solo puede ser una instrucción
         ProcInstrASM;
         if cpx.HayError then exit;
       end;
     end;
-  end else if tokType = lexAsm.tkComment then begin
+  end else if tokType = lexAsm.tnComment then begin
     skipWhites;
-    if tokType <> lexAsm.tkEol then begin
+    if tokType <> lexAsm.tnEol then begin
       cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
       exit;
     end;
-  end else if tokType = lexAsm.tkSpace then begin
+  end else if tokType = lexAsm.tnSpace then begin
     skipWhites;
-    if tokType <> lexAsm.tkEol then begin
+    if tokType <> lexAsm.tnEol then begin
       //Hay algo más. Solo puede ser una instrucción
       ProcInstrASM;
       if cpx.HayError then exit;

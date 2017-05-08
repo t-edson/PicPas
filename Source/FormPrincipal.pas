@@ -8,9 +8,10 @@ unit FormPrincipal;
 interface
 uses
   Classes, SysUtils, types, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
-  ActnList, StdActns, ExtCtrls, StdCtrls, LCLIntf, LCLType, SynFacilHighlighter,
-  SynFacilUtils, MisUtils, Parser, FormPICExplorer, Globales, FormCodeExplorer,
-  FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView, FrameMessagesWin;
+  ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, SynFacilHighlighter,
+  SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
+  FormCodeExplorer, FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
+  FrameMessagesWin;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -120,7 +121,6 @@ type
     procedure acEdiUndoExecute(Sender: TObject);
     procedure acToolCodExpExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
-    procedure acToolConfig2Execute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
     procedure acViewSynTreeExecute(Sender: TObject);
@@ -144,6 +144,7 @@ type
     fraMessages: TfraMessagesWin;
     procedure ChangeAppearance;
     procedure fraEditView1SelectEditor;
+    procedure fraSynTreeSelectElemen(out srcPos: TSrcPos);
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
     procedure VerificarError;
   public
@@ -156,6 +157,10 @@ var
 implementation
 {$R *.lfm}
 { TfrmPrincipal }
+procedure TfrmPrincipal.fraSynTreeSelectElemen(out srcPos: TSrcPos);
+begin
+//  fraEditView1.SelectOrLoad()
+end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   fraSynTree := TfraSyntaxTree.Create(self);
@@ -164,8 +169,10 @@ begin
   fraMessages.Parent := panMessages;  //Ubica
   fraMessages.Align := alClient;
   //configura panel de mensajes
-  fraEditView1.OnChangeEditorState := @ChangeEditorState;;
+  fraEditView1.OnChangeEditorState := @ChangeEditorState;
   fraEditView1.OnSelectEditor := @fraEditView1SelectEditor;
+  //COnfigura Árbol de sintaxis
+  fraSynTree.OnSelectElemen := @fraSynTreeSelectElemen;
   //carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
@@ -186,6 +193,7 @@ begin
   fraEditView1.Align := alClient;
   //////////
   SetLanguage('en');
+  fraEditView1.tmpPath := rutTemp;   //fija ruta de trabajo
   fraEditView1.SetLanguage('en');
 //  SetLanguage('qu');
   Config.Iniciar;   //necesario para poder trabajar
@@ -442,12 +450,19 @@ var
 begin
   if fraEditView1.ActiveEditor=nil then exit;
   self.SetFocus;
-  fraMessages.InitCompilation(cxp);  //Limpia mensajes
   filName := fraEditView1.ActiveEditor.NomArc;
   if filName='' then begin
-    //Aún no tiene nombre el archivo
-    filName := '@';   //indica que es la ventana actual
+    //No tiene nombre. No debería pasar, porque "fraEditView1" debe generar nombres.
+    if fraEditView1.SaveAsDialog then begin
+      MsgExc('File must be saved before compiling.');
+      exit;
+    end;
+  end else begin
+    //Este es el caso normal
+//    fraEditView1.SaveFile;  //Guarda primero el archivo
+    fraEditView1.SaveAll;   //puede que se esté editando archivos que usa el programa
   end;
+  fraMessages.InitCompilation(cxp);  //Limpia mensajes
   cxp.Compile(filName, fraEditView1.ActiveEditor.SynEdit.Lines);
   if cxp.HayError then begin
     fraMessages.EndCompilation;
@@ -487,10 +502,6 @@ procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
   Config.Mostrar;
 end;
-procedure TfrmPrincipal.acToolConfig2Execute(Sender: TObject);
-begin
-
-end;
 //Adicionales
 procedure TfrmPrincipal.VerificarError;
 //Verifica si se ha producido algún error en el preprocesamiento y si lo hay
@@ -503,11 +514,7 @@ begin
     if msg='' then exit;
     //Selecciona posición de error en el Editor
     if filname <> '' Then begin
-        //Se ha identificado el archivo con el error
-        if not fraEditView1.SelectEditor(filname) then begin
-           //No está abierto el archivo, lo abrimos
-           fraEditView1.LoadFile(filname);
-        end;
+        fraEditView1.SelectOrLoad(filname);  //Selecciona o abre
          //Ya lo tenemos cargado
         If row <> -1 Then begin
            MarcarError(fraEditView1.ActiveEditor, row, col);
@@ -519,6 +526,7 @@ begin
 End;
 procedure TfrmPrincipal.MarcarError(ed: TSynEditor; nLin, nCol: integer);
 begin
+  fraEditView1.SetFocus;
   //posiciona curosr
   ed.SynEdit.CaretX := nCol;
   ed.SynEdit.CaretY := nLin;

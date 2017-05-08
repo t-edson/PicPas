@@ -1,6 +1,6 @@
 PicPas
 ======
-Compilador en Pascal para microcontroladores PIC. 
+Compilador multiplataforma en Pascal para microcontroladores PIC de la serie 16F. 
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/Sin-título.png "Título de la imagen")
 
@@ -46,7 +46,7 @@ Para compilar PicPas se debe disponer de las librerías indicadas en las propied
 
 * SynFacilUtils
 * MisUtils
-* ConfigFrame 
+* MiConfig
 * PicUtils 
 * Xpres 
 

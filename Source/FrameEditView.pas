@@ -4,8 +4,8 @@ unit FrameEditView;
 interface
 uses
   Classes, SysUtils, FileUtil, LazUTF8, LazFileUtils, SynEdit, Forms, Controls,
-  Graphics, Dialogs, ExtCtrls, LCLProc, Menus, SynFacilUtils,
-  MisUtils, fgl, SynEditMiscClasses;
+  Graphics, Dialogs, ExtCtrls, LCLProc, Menus, LCLType, Globales, SynFacilUtils,
+  MisUtils, fgl, SynEditMiscClasses, SynEditKeyCmds, SynPluginMultiCaret;
 type
   {Clase derivada de "TSynFacilEditor". Se usa para asociar un SynEdit a un
   TSynFacilEditor}
@@ -24,7 +24,7 @@ type
     panTabs : TPanel;   //referencia al Panel de las lenguetas.
     property Caption: string read FCaption write SetCaption;  //etiqueta de la pestaña
     function SaveAsDialog(SaveDialog1: TSaveDialog): boolean; override;
-    function SaveQuery(SaveDialog1: TSaveDialog): boolean;
+    function SaveQuery(SaveDialog1: TSaveDialog): boolean; reintroduce;
     constructor Create(AOwner: TComponent; nomDef0, extDef0: string; panTabs0: TPanel);
     destructor Destroy; override;
   end;
@@ -45,6 +45,7 @@ type
     procedure mnNewTabClick(Sender: TObject);
   private  //Métodos para dibujo de las lenguetas
     xIniTabs : integer;  //Coordenada inicial desde donde se dibujan las lenguetas
+    procedure RefreshTabs;
     procedure SetTabIndex(AValue: integer);
     procedure DibLeng(x1, x2: integer; coltex: TColor; Activo: boolean; txt: string
       );   //dibuja una lengueta
@@ -60,25 +61,29 @@ type
     FTabIndex: integer;
     editors  : TEditorList;
     lang     : string;
+    fMultiCaret: TSynPluginMultiCaret;
     procedure ChangeEditorState;
     procedure editChangeFileInform;
     function GetCanRedo: boolean;
     function GetCanUndo: boolean;
     function GetModified: boolean;
     function LastIndex: integer;
-    function AddEdit: TSynEditor;
+    function NewName: string;
+    function AddEdit(ext: string): TSynEditor;
     procedure DeleteEdit;
   public  //Manejo de pestañas
     property TabIndex: integer read FTabIndex write SetTabIndex;   //panel actualmente activo
     function Count: integer;
     function ActiveEditor: TSynEditor;
     function SearchEditorIdx(filname: string): integer;
+    function SearchEditorIdxByTab(tabName: string): integer;
     function SelectEditor(filname: string): boolean;
     procedure SelectNextEditor;
     procedure SelectPrevEditor;
     function HasFocus: boolean;
     procedure SetFocus; override;
   public  //Administración de archivos
+    tmpPath: string;  //ruta usada para crear archivos temporales para los editores
     OnChangeEditorState: TSynEditorEvent;
     OnChangeFileInform: procedure of object;
     OnSelectEditor: procedure of object;  //Cuando cambia la selección de editor
@@ -86,8 +91,10 @@ type
     property CanUndo: boolean read GetCanUndo;
     property CanRedo: boolean read GetCanRedo;
     procedure NewFile;
-    procedure LoadFile(fileName: string);
+    function LoadFile(fileName: string): boolean;
+    function SelectOrLoad(fileName: string): boolean;
     procedure SaveFile;
+    procedure SaveAll;
     function OpenDialog(filter: string): boolean;
     function SaveAsDialog: boolean;
     procedure CloseEditor;
@@ -130,10 +137,12 @@ begin
 end;
 function TSynEditor.SaveAsDialog(SaveDialog1: TSaveDialog): boolean;
 begin
+  SaveDialog1.Filter := 'Pascal files|*.pas|All files|*.*';
+  SaveDialog1.DefaultExt := '.pas';
   Result := inherited SaveAsDialog(SaveDialog1);
   if Result then exit;
   //Se ha cambiado el nombre del archivo. Actualiza.
-  Caption := ExtractFileNameOnly(NomArc);
+  Caption := ExtractFileName(NomArc);
 end;
 function TSynEditor.SaveQuery(SaveDialog1: TSaveDialog): boolean;
 {Versión de SaveQuery(), que verifica si el editor tiene nombre.}
@@ -197,6 +206,16 @@ begin
   FreeAndNil(SynEdit);  //El "Owner", intentará destruirlo, por eso lo ponemos en NIL
 end;
 { TfraEditView }
+procedure TfraEditView.RefreshTabs;
+begin
+  if editors.Count = 1 then begin
+    //No vale la pena
+    Panel1.Visible := false;
+  end else begin
+    Panel1.Visible := true;
+  end;
+  Panel1.Invalidate;   //para refrescar
+end;
 procedure TfraEditView.SetTabIndex(AValue: integer);
 begin
   if AValue>editors.Count-1 then AValue := editors.Count-1;
@@ -207,7 +226,7 @@ begin
   FTabIndex := AValue;   //cambia valor
   editors[FTabIndex].SynEdit.Visible := true;  //muestra el nuevo
   if OnSelectEditor<>nil then OnSelectEditor;  //dispara evento
-  Panel1.Invalidate;   //para refrescar
+  RefreshTabs;
 end;
 //Métodos pàra el dibujo de lenguetas
 procedure TfraEditView.DibLeng(x1, x2: integer; coltex: TColor; Activo: boolean;
@@ -303,9 +322,12 @@ begin
     edi := editors[i];
     x2 := x1 + edi.tabWidth;
     if (X>x1) and (X<x2) then begin
-      TabIndex := i;
+      TabIndex := i;  //Selecciona
       if Shift = [ssRight] then begin
         PopUpTabs.PopUp;
+      end else if Shift = [ssMiddle] then begin
+        //Cerrar el archivo
+        CloseEditor;
       end;
       exit;
     end;
@@ -407,10 +429,22 @@ function TfraEditView.LastIndex: integer;
 begin
   Result :=editors.Count - 1;
 end;
-function TfraEditView.AddEdit: TSynEditor;
+function TfraEditView.NewName: string;
+{Genera un nombre de archivo que no se repita enter las pestañas.}
+var
+  n: Integer;
+begin
+  n := 0;
+  repeat
+    inc(n);
+    Result := 'NewFile' + IntToStr(n);
+  until SearchEditorIdxByTab(Result)=-1;
+end;
+function TfraEditView.AddEdit(ext: string): TSynEditor;
 {Agrega una nueva ventana de eición a la vista, y devuelve la referencia.}
 var
   ed: TSynEditor;
+  n: Integer;
 begin
   //Crea Editor.
   ed := TSynEditor.Create(self, 'SinNombre', 'pas', Panel1);
@@ -421,7 +455,38 @@ begin
   //Configura PageControl
   ed.SynEdit.Parent := self;
   ed.SynEdit.Align := alClient;
-  ed.Caption := 'NewFile' + IntToStr(editors.Count+1);
+  //Configura el plegado con Alt+Shift+"-"
+  n := 84;
+  ed.SynEdit.Keystrokes[n].Key := VK_SUBTRACT;
+  ed.SynEdit.Keystrokes[n].Shift := [ssShift,ssAlt];
+  ed.SynEdit.Keystrokes[n].ShiftMask := [];
+  ed.SynEdit.Keystrokes.EndUpdate;
+  //Configura el desplegado con Alt+Shift+"+"
+  n := 85;
+  ed.SynEdit.Keystrokes[n].Key := VK_ADD;
+  ed.SynEdit.Keystrokes[n].Shift := [ssShift,ssAlt];
+  ed.SynEdit.Keystrokes[n].ShiftMask := [];
+  ed.SynEdit.Keystrokes.EndUpdate;
+  //Configura múltiples cursores
+  fMultiCaret := TSynPluginMultiCaret.Create(self);
+  with fMultiCaret do begin
+    Editor := ed.SynEdit;//Here what's you missed It's worked for me great.
+    with KeyStrokes do begin
+      with Add do begin
+        Command    := ecPluginMultiCaretSetCaret;
+        Key        := VK_INSERT;
+        Shift      := [ssShift, ssCtrl];
+        ShiftMask  := [ssShift,ssCtrl,ssAlt];
+      end;
+      with Add do begin
+        Command    := ecPluginMultiCaretUnsetCaret;
+        Key        := VK_DELETE;
+        Shift      := [ssShift, ssCtrl];
+        ShiftMask  := [ssShift,ssCtrl,ssAlt];
+      end;
+    end;
+  end;
+  ed.Caption := NewName + ext;   //Pone nombre diferente
   ed.NomArc := '';  //Pone sin nombre para saber que no se ha guardado
   editors.Add(ed);   //agrega a la lista
   TabIndex := LastIndex;
@@ -438,7 +503,7 @@ begin
     //Era el único
     FTabIndex := -1;
   end else begin
-    //había al menos 2
+    //Había al menos 2
     if TabIndex > editors.Count - 1 then begin
       //Quedó apuntando fuera
       FTabIndex := editors.Count - 1;   //limita
@@ -451,7 +516,7 @@ begin
     end;
   end;
   if OnSelectEditor<>nil then OnSelectEditor;
-  Panel1.Invalidate;   //para refrescar
+  RefreshTabs;
 end;
 ///Manejo de pestañas
 function TfraEditView.Count: integer;
@@ -478,6 +543,17 @@ begin
   for i:=0 to editors.Count-1 do begin
     ed := editors[i];
     if Upcase(ed.NomArc) = UpCase(filname) then exit(i);
+  end;
+  exit(-1);
+end;
+function TfraEditView.SearchEditorIdxByTab(tabName: string): integer;
+var
+  ed: TSynEditor;
+  i: integer;
+begin
+  for i:=0 to editors.Count-1 do begin
+    ed := editors[i];
+    if Upcase(ed.Caption) = UpCase(tabName) then exit(i);
   end;
   exit(-1);
 end;
@@ -540,24 +616,44 @@ procedure TfraEditView.NewFile;
 var
   ed: TSynEditor;
 begin
-  ed := AddEdit;
+  ed := AddEdit('.pas');
+  ed.NomArc := tmpPath + DirectorySeparator + ed.Caption;
   ed.LoadSyntaxFromFile('PicPas_PIC16.xml');
 end;
-procedure TfraEditView.LoadFile(fileName: string);
-//Carga un archivo en el editor
+function TfraEditView.LoadFile(fileName: string): boolean;
+//Carga un archivo en el editor. Si encuentra algún error. Devuelve FALSE.
 var
   ed: TSynEditor;
   ext: string;
 begin
-  ed := AddEdit;
+  Result := true;   //por defecto
+  ed := AddEdit('');
+  if Pos(DirectorySeparator, fileName) = 0 then begin
+    //Es ruta relativa, la vuelve abosulta
+    fileName := rutApp + fileName;
+  end;
   ed.LoadFile(fileName);
+  if ed.Error<>'' then Result := false;  //Hubo error
   //Carga la sintaxis apropiada
   ext := ExtractFileExt(fileName);
   case Upcase(ext) of
   '.PAS': ed.LoadSyntaxFromFile('PicPas_PIC16.xml');
   end;
   //ed.LoadSyntaxFromPath;  //para que busque el archivo apropiado
-  ed.Caption := ExtractFileNameOnly(fileName);
+  ed.Caption := ExtractFileName(fileName);
+end;
+function TfraEditView.SelectOrLoad(fileName: string): boolean;
+{Selecciona la ventana del editor que contiene al archivo solicitado. Si no lo tiene
+abierto, lo intenta abrir. Si falla, devuelve FALSE}
+begin
+  //Se ha identificado el archivo con el error
+  if SelectEditor(filename) then begin
+    //Lo tenía abierto.
+    exit(true);
+  end else begin
+    //No está abierto el archivo, lo abrimos
+    Result := LoadFile(filename);
+  end;
 end;
 function TfraEditView.OpenDialog(filter: string): boolean;
 //Muestra el cuadro de diálogo para abrir un archivo. Si hay error devuelve FALSE.
@@ -579,12 +675,20 @@ begin
     ActiveEditor.SaveFile;
   end;
 end;
+procedure TfraEditView.SaveAll;
+var
+  i: Integer;
+begin
+  for i:=0 to editors.Count-1 do begin
+    editors[i].SaveFile;
+  end;
+end;
 function TfraEditView.SaveAsDialog: boolean;
+{Muestra la ventana para grabar un archivo. Si se cancela, devuelve TRUE.}
 begin
   if ActiveEditor=nil then exit;
   Result := ActiveEditor.SaveAsDialog(SaveDialog1);
   if Result then exit;   //se canceló
-  //ACtualiza etiqueta
 end;
 procedure TfraEditView.CloseEditor;
 {Cierra el editor actual.}

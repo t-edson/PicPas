@@ -2,23 +2,22 @@
 {$PROCESSOR PIC16F84}
 {$FREQUENCY 8Mhz}
 program LedBlink;
-uses a, b;
+uses prueba;
+const 
+  zz, bb = $20;
+  ddd = %100 and zz;
 var
-PORTB: BYTE absolute $06;
-PinPausa: boolean absolute PORTB.1;
-x: byte;
-procedure proc1;
+  PORTB: BYTE absolute $06;
+	a, 
+  b,
+  c: byte;
 begin
-  delay_ms(100);
-end;
-procedure DetectaEntrada;
-begin
-  PinPausa := true;
-  proc1;
-end;
-var y: byte;
-begin
-  PORTB := 5;
-//  delay_ms(500);
-  DetectaEntrada;
+  b > ddd + 1;
+  if true  then begin
+	  a  := 1;
+  end else begin
+	  b  := 0;
+  end;
+
 end.
+

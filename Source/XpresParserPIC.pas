@@ -106,6 +106,8 @@ protected  //Eventos del compilador
   procedure ClearTypes;
   function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
   function FindType(TypName: string): TType;
+  //Manejo de constantes
+  function CreateCons(consName: string; typ: ttype): TxpEleCon;
   //Manejo de variables
   function CreateVar(varName: string; typ: ttype; absAddr, absBit: integer): TxpEleVar;
   //Manejo de funciones
@@ -179,11 +181,17 @@ public  //Manejo de errores y advertencias
   OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
   OnError  : procedure(errTxt: string; fileName: string; row, col: integer) of object;
   procedure ClearError;
+  procedure GenWarn(msg: string; fil: String; row, col: integer);
+  procedure GenWarn(msg: string; const Args: array of const; fil: String; row, col: integer);
   procedure GenWarn(msg: string);
   procedure GenWarn(msg: string; const Args: array of const);
-  procedure GenWarn(msg: string; const Args: array of const; fil: String; row, col: integer);
+  procedure GenWarnPos(msg: string; const Args: array of const; srcPos: TSrcPos);
+  //Rutinas de generación de error
+  procedure GenError(msg: string; fil: String; row, col: integer);
+  procedure GenError(msg: String; const Args: array of const; fil: String; row, col: integer);
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
+  procedure GenErrorPos(msg: String; const Args: array of const; srcPos: TSrcPos);
 public  //Inicialización
   constructor Create; virtual;
   destructor Destroy; override;
@@ -207,49 +215,6 @@ begin
   coExpres_Variab: exit('Expression'+ Op +'Variable');
   coExpres_Expres: exit('Expression'+ Op +'Expression');
   end;
-end;
-procedure TCompilerBase.ClearError;
-begin
-  HayError := false;
-end;
-procedure TCompilerBase.GenError(msg: string);
-{Función de acceso rápido para Perr.GenError(). Pasa como posición a la posición
-del contexto actual. Realiza la traducción del mensaje también.}
-begin
-  if (cIn = nil) or (cIn.curCon = nil) then begin
-    if OnError<>nil then OnError(msg, '', -1,-1);
-    HayError := true;
-  end else begin
-    if OnError<>nil then OnError(msg, cIn.curCon.arc, cIn.curCon.row, cIn.curCon.col);
-    HayError := true;
-  end;
-end;
-procedure TCompilerBase.GenError(msg: String; const Args: array of const);
-{Versión con parámetros de GenError.}
-begin
-  GenError(Format(msg, Args));
-end;
-procedure TCompilerBase.GenWarn(msg: string);
-{Genera un mensaje de Advertencia. }
-begin
-  if (cIn = nil) or (cIn.curCon = nil) then begin
-    if OnWarning<>nil then OnWarning(msg, '', -1,-1);
-  end else begin
-    if OnWarning<>nil then OnWarning(msg, cIn.curCon.arc, cIn.curCon.row, cIn.curCon.col);
-  end;
-end;
-procedure TCompilerBase.GenWarn(msg: string; const Args: array of const);
-begin
-  if (cIn = nil) or (cIn.curCon = nil) then begin
-    if OnWarning<>nil then OnWarning(Format(msg, Args), '', -1, -1);
-  end else begin
-    if OnWarning<>nil then OnWarning(Format(msg, Args), cIn.curCon.arc, cIn.curCon.row, cIn.curCon.col);
-  end;
-end;
-procedure TCompilerBase.GenWarn(msg: string; const Args: array of const;
-  fil: String; row, col: integer);
-begin
-  if OnWarning<>nil then OnWarning(Format(msg, Args), fil, row, col);
 end;
 function TCompilerBase.EOExpres: boolean; inline;
 //Indica si se ha llegado al final de una expresión.
@@ -325,8 +290,20 @@ begin
   end;
   exit(nil)
 end;
+function TCompilerBase.CreateCons(consName: string; typ: ttype): TxpEleCon;
+{Rutina para crear una constante. Devuelve referencia a la constante creada.}
+var
+  conx  : TxpEleCon;
+begin
+  //registra variable en la tabla
+  conx := TxpEleCon.Create;
+  conx.name:=consName;
+  conx.typ := typ;   //fija  referencia a tipo
+  Result := conx;
+end;
 function TCompilerBase.CreateVar(varName: string; typ: ttype; absAddr,
   absBit: integer): TxpEleVar;
+{Rutina para crear una variable. Devuelve referencia a la variable creada.}
 var
   xVar: TxpEleVar;
 begin
@@ -506,6 +483,7 @@ begin
     end else if ele.elemType = eltCons then begin  //es constante
       //es una constante
       xcon := TxpEleCon(ele);
+      if FirstPass then Inc(xcon.nCalled);  //lleva la cuenta
       Result.catOp:=coConst;    //constante
       Result.typ:=xcon.typ;
       Result.catTyp:= xcon.typ.cat;  //categoría
@@ -833,23 +811,75 @@ begin
   if ExprLevel = 0 then debugln('');
   {$ENDIF}
 end;
-{procedure TCompilerBase.GetBoolExpression;
-//Simplifica la evaluación de expresiones booleanas, validando el tipo
+//Manejo de errores y advertencias
+procedure TCompilerBase.ClearError;
 begin
-  GetExpression(0);  //evalua expresión
-  if PErr.HayError then exit;
-  if res.Typ.cat <> t_boolean then begin
-    GenError('Se esperaba expresión booleana');
+  HayError := false;
+end;
+procedure TCompilerBase.GenWarn(msg: string; fil: String; row, col: integer);
+{Genera un mensaje de advertencia en la posición indicada.}
+begin
+  if OnWarning<>nil then OnWarning(msg, fil, row, col);
+end;
+procedure TCompilerBase.GenWarn(msg: string; const Args: array of const;
+  fil: String; row, col: integer);
+begin
+  GenWarn(Format(msg, Args), fil, row, col);
+end;
+procedure TCompilerBase.GenWarn(msg: string);
+{Genera un mensaje de Advertencia, en la posición actual del contexto. }
+begin
+  if (cIn = nil) or (cIn.curCon = nil) then begin
+    GenWarn(msg, '', -1, -1);
+  end else begin
+    GenWarn(msg, cIn.curCon.arc, cIn.curCon.row, cIn.curCon.col);
   end;
 end;
-
-function GetNullExpression(): TOperand;
-//Simplifica la evaluación de expresiones sin dar error cuando encuentra algún delimitador
+procedure TCompilerBase.GenWarn(msg: string; const Args: array of const);
+{Genera un mensaje de Advertencia, en la posición actual del contexto. }
 begin
-  if
-  GetExpression(0);  //evalua expresión
-  if PErr.HayError then exit;
-end;}
+  GenWarn(Format(msg, Args));
+end;
+procedure TCompilerBase.GenWarnPos(msg: string; const Args: array of const;
+  srcPos: TSrcPos);
+begin
+  GenWarn(Format(msg, Args), srcPos.fil, srcPos.row, srcPos.col);
+end;
+//Rutinas de generación de error
+procedure TCompilerBase.GenError(msg: string; fil: String; row, col: integer);
+{Genera un mensaje de error en la posición indicada.}
+begin
+  if OnError<>nil then OnError(msg, fil, row, col);
+  HayError := true;
+end;
+procedure TCompilerBase.GenError(msg: String; const Args: array of const;
+  fil: String; row, col: integer);
+{Versión con parámetros de GenError.}
+begin
+  GenError(Format(msg, Args), fil, row, col);
+end;
+procedure TCompilerBase.GenError(msg: string);
+{Función de acceso rápido para Perr.GenError(). Pasa como posición a la posición
+del contexto actual. Realiza la traducción del mensaje también.}
+begin
+  if (cIn = nil) or (cIn.curCon = nil) then begin
+    GenError(msg, '', -1, -1);
+  end else begin
+    GenError(msg, cIn.curCon.arc, cIn.curCon.row, cIn.curCon.col);
+  end;
+end;
+procedure TCompilerBase.GenError(msg: String; const Args: array of const);
+{Genera un mensaje de error eb la posición actual del contexto.}
+begin
+  GenError(Format(msg, Args));
+end;
+procedure TCompilerBase.GenErrorPos(msg: String; const Args: array of const;
+  srcPos: TSrcPos);
+{Genera error en una posición específica del código}
+begin
+  GenError(Format(msg, Args), srcPos.fil, srcPos.row, srcPos.col);
+end;
+
 //Inicialización
 constructor TCompilerBase.Create;
 begin

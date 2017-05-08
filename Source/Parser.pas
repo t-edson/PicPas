@@ -12,6 +12,7 @@ type
  { TCompiler }
   TCompiler = class(TGenCod)
   private  //Funciones básicas
+    mainFile: string;  //archivo inicial que se compila
     lexDir : TSynFacilSyn;  //lexer para analizar directivas
     procedure cInNewLine(lin: string);
     function StartOfSection: boolean;
@@ -20,7 +21,6 @@ type
       srcPosArray: TSrcPosArray);
     procedure ProcComments;
     procedure CaptureDecParams(fun: TxpEleFun);
-    function CreateCons(const consName: string; typ: ttype): TxpEleCon;
     procedure CompileIF;
     procedure CompileREPEAT;
     procedure CompileWHILE;
@@ -39,7 +39,8 @@ type
     procedure CompileInstruction;
     procedure DefLexDirectiv;
     procedure CompileCurBlock;
-    procedure CompileUsesDeclaration(uName: string);
+    procedure CompileUnit(uni: TxpEleUnit);
+    procedure CompileUsesDeclaration;
     procedure CompileProgram;
     procedure CompileLinkProgram;
   public
@@ -111,14 +112,14 @@ begin
     end;
     //hay un identificador
     item := cIn.tok;
-    cIn.Next;  //lo toma
-    cIn.SkipWhites;
     //sgrega nombre de ítem
     n := high(itemList)+1;
     setlength(itemList, n+1);  //hace espacio
     setlength(srcPosArray, n+1);  //hace espacio
     itemList[n] := item;  //agrega nombre
-    srcPosArray[n] := cIn.ReadSrcPos;  //agrega ubicaión
+    srcPosArray[n] := cIn.ReadSrcPos;  //agrega ubicación de declaración
+    cIn.Next;  //lo toma identificador despues, de guardar ubicación
+    cIn.SkipWhites;
     if cIn.tok <> ',' then break; //sale
     cIn.Next;  //toma la coma
   until false;
@@ -266,21 +267,6 @@ begin
     cin.Next;
   end;
 end;
-function TCompiler.CreateCons(const consName: string; typ: ttype): TxpEleCon;
-{Rutina para crear una constante. Devuelve índice a la variable creada.}
-var
-  r  : TxpEleCon;
-begin
-  //registra variable en la tabla
-  r := TxpEleCon.Create;
-  r.name:=consName;
-  r.typ := typ;   //fija  referencia a tipo
-  if not TreeElems.AddElement(r) then begin
-    GenError('Duplicated identifier: "%s"', [consName]);
-    exit;
-  end;
-  Result := r;
-end;
 procedure TCompiler.CompileIF;
 {Compila uan extructura IF}
 var
@@ -342,10 +328,11 @@ begin
     end;
   end;
   coExpres:begin
-    if res.Inverted then  //_Lógica invertida
-      _BTFSC(_STATUS, BooleanBit)  //verifica condición
-    else
-      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    if res.Inverted then begin //_Lógica invertida
+      _BTFSC(Z.offs, Z.bit);   //verifica condición
+    end else begin
+      _BTFSS(Z.offs, Z.bit);   //verifica condición
+    end;
     _GOTO_PEND(dg);  //salto pendiente
     CompileInstruction;
     if HayError then exit;
@@ -399,10 +386,11 @@ begin
     //sale cuando la condición es verdadera
   end;
   coExpres:begin
-    if res.Inverted then  //_Lógica invertida
-      _BTFSC(_STATUS, BooleanBit)  //verifica condición
-    else
-      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    if res.Inverted then begin //_Lógica invertida
+      _BTFSC(Z.offs, Z.bit);   //verifica condición
+    end else begin
+      _BTFSS(Z.offs, Z.bit);   //verifica condición
+    end;
     _GOTO(l1);
     //sale cuando la condición es verdadera
   end;
@@ -452,10 +440,11 @@ begin
     pic.codGotoAt(dg, _PC);   //termina de codificar el salto
   end;
   coExpres:begin
-    if res.Inverted then  //_Lógica invertida
-      _BTFSC(_STATUS, BooleanBit)  //verifica condición
-    else
-      _BTFSS(_STATUS, BooleanBit);  //verifica condición
+    if res.Inverted then begin  //_Lógica invertida
+      _BTFSC(Z.offs, Z.bit);   //verifica condición
+    end else begin
+      _BTFSS(Z.offs, Z.bit);   //verifica condición
+    end;
     _GOTO_PEND(dg);  //salto pendiente
     CompileInstruction;
     if HayError then exit;
@@ -572,12 +561,11 @@ end;
 procedure TCompiler.CompileConstDeclar;
 var
   consNames: array of string;  //nombre de variables
-  c: TxpEleCon;
-  tmp: String;
+  cons: TxpEleCon;
   srcPosArray: TSrcPosArray;
+  i: integer;
 begin
-  setlength(consNames,0);  //inicia arreglo
-  //procesa lista de constantes a,b,c ;
+  //procesa lista de constantes a,b,cons ;
   getListOfIdent(consNames, srcPosArray);
   if HayError then begin  //precisa el error
     GenError('Identifier of constant expected.');
@@ -586,21 +574,27 @@ begin
   //puede seguir "=" o identificador de tipo
   if cIn.tok = '=' then begin
     cIn.Next;  //pasa al siguiente
-    //Debe seguir una expresióc constante, que no genere código
+    //Debe seguir una expresiócons constante, que no genere consódigo
     GetExpressionE(0);
     if HayError then exit;
     if res.catOp <> coConst then begin
       GenError('Constant expression expected.');
     end;
     //Hasta aquí todo bien, crea la(s) constante(s).
-    for tmp in consNames do begin
+    for i:= 0 to high(consNames) do begin
       //crea constante
-      c := CreateCons(tmp, res.typ);
-      res.CopyConsValTo(c); //asigna valor
+      cons := CreateCons(consNames[i], res.typ);
+      cons.srcDec := srcPosArray[i];  //guarda punto de declaración
+      if not TreeElems.AddElement(cons) then begin
+        GenErrorPos('Duplicated identifier: "%s"', [cons.name], cons.srcDec);
+        cons.Destroy;   //hay una constante creada
+        exit;
+      end;
+      res.CopyConsValTo(cons); //asigna valor
     end;
 //  end else if cIn.tok = ':' then begin
   end else begin
-    GenError('"=", ":" or "," expected.');
+    GenError('"=" or "," expected.');
     exit;
   end;
   if not CaptureDelExpres then exit;
@@ -745,8 +739,7 @@ var
   srcPosArray: TSrcPosArray;
   i: Integer;
 begin
-  setlength(varNames,0);  //inicia arreglo
-  //procesa variables a,b,c : int;
+  //Procesa variables a,b,c : int;
   getListOfIdent(varNames, srcPosArray);
   if HayError then begin  //precisa el error
     GenError('Identifier of variable expected.');
@@ -754,7 +747,7 @@ begin
   end;
   //usualmente debería seguir ":"
   if cIn.tok = ':' then begin
-    //debe venir el tipo de la variable
+    //Debe seguir, el tipo de la variable
     cIn.Next;  //lo toma
     cIn.SkipWhites;
     if (cIn.tokType <> tnType) then begin
@@ -776,14 +769,14 @@ begin
     //reserva espacio para las variables
     for i := 0 to high(varNames) do begin
       xvar := CreateVar(varNames[i], typ, absAddr, absBit);
-      xvar.src := srcPosArray[i];  //Actualiza posición
+      xvar.srcDec := srcPosArray[i];  //Actualiza posición
       CreateVarInRAM(xvar);  //Crea la variable
       if HayError then begin
         xvar.Destroy;   //Hay una variable creada
         exit;
       end;
       if not TreeElems.AddElement(xvar) then begin
-        GenError('Duplicated identifier: "%s"', [varNames[i]]);
+        GenErrorPos('Duplicated identifier: "%s"', [xvar.name], xvar.srcDec);
         xvar.Destroy;   //Hay una variable creada
         exit;
       end;
@@ -823,7 +816,7 @@ begin
   {Ya tiene los datos mínimos para crear la función. La crea con "proc" en NIL,
   para indicar que es una función definida por el usuario.}
   fun := CreateFunction(procName, typNull, @callFunct);
-  fun.src := srcPos;   //Toma ubicación en el código
+  fun.srcDec := srcPos;   //Toma ubicación en el código
   TreeElems.AddElementAndOpen(fun);  //Se abre un nuevo espacio de nombres
 
   CaptureDecParams(fun);
@@ -959,10 +952,137 @@ begin
     end;
   end;
 end;
-procedure TCompiler.CompileUsesDeclaration(uName: string);
+procedure TCompiler.CompileUnit(uni: TxpEleUnit);
+{Realiza la compilación de una unidad}
+begin
+  ClearError;
+  pic.MsjError := '';
+  ProcComments;
+  if HayError then exit;
+  //Busca UNIT
+  if cIn.tokL = 'unit' then begin
+    cIn.Next;  //pasa al nombre
+    ProcComments;
+    if HayError then exit;   //puede dar error por código assembler o directivas
+    if cIn.Eof then begin
+      GenError('Name of unit expected.');
+      exit;
+    end;
+    if UpCase(cIn.tok)<>UpCase(uni.name) then begin
+      GenError('Name of unit doesn''t match file name.');
+      exit;
+    end;
+    cIn.Next;  //Toma el nombre y pasa al siguiente
+    if not CaptureDelExpres then exit;
+  end else begin
+    GenError('Expected: UNIT');
+    exit;
+  end;
+  ProcComments;
+  if HayError then exit;
+  if cIn.tokL <> 'interface' then begin
+    GenError('Expected: INTERFACE');
+    exit;
+  end;
+  cIn.Next;   //toma
+  ProcComments;
+  if cIn.Eof then begin
+    GenError('Expected "uses", "var", "type", "const" or "implementation".');
+    exit;
+  end;
+  ProcComments;
+  //Busca USES
+  CompileUsesDeclaration;
+  if cIn.Eof then begin
+    GenError('Expected "var", "type" or "const".');
+    exit;
+  end;
+  ProcComments;
+//  Cod_StartProgram;  //Se pone antes de codificar procedimientos y funciones
+  if HayError then exit;
+  //Empiezan las declaraciones
+  while StartOfSection do begin
+    if cIn.tokL = 'var' then begin
+      cIn.Next;    //lo toma
+      while not StartOfSection and (cIn.tokL <>'implementation') do begin
+        CompileGlobalVarDeclar;
+        if HayError then exit;;
+      end;
+    end else if cIn.tokL = 'const' then begin
+      cIn.Next;    //lo toma
+      while not StartOfSection and (cIn.tokL <>'implementation') do begin
+        CompileConstDeclar;
+        if HayError then exit;;
+      end;
+    end else if cIn.tokL = 'procedure' then begin
+      cIn.Next;    //lo toma
+      CompileProcDeclar;
+    end else begin
+      GenError('Not implemented: "%s"', [cIn.tok]);
+      exit;
+    end;
+  end;
+  ProcComments;
+  if HayError then exit;
+  if cIn.tokL <> 'implementation' then begin
+    GenError('Expected: IMPLEMENTATION');
+    exit;
+  end;
+  cIn.Next;   //toma
+  ProcComments;
+  if cIn.Eof then begin
+    GenError('Expected "end".');
+//    GenError('Expected "end", "initilization", or "finalization".');
+    exit;
+  end;
+  ProcComments;
+//  //procesa cuerpo
+//  ResetFlashAndRAM;  {No es tan necesario, pero para seguir un orden y tener limpio
+//                     también, la flash y memoria, después de algún psoible procedimiento.}
+//  if cIn.tokL = 'begin' then begin
+//    cIn.Next;   //coge "begin"
+//    //Guardamos la ubicación física, real, en el archivo, después del BEGIN
+//    TreeElems.main.posCtx := cIn.PosAct;
+//    TreeElems.main.src.Fil := cIn.curCon.arc;
+//    TreeElems.main.src.Row := cIn.curCon.row;
+//    TreeElems.main.src.Col := cIn.curCon.col;
+//    //codifica el contenido
+//    CompileCurBlock;   //compila el cuerpo
+//    if HayError then exit;
+//    if cIn.Eof then begin
+//      GenError('Unexpected end of file. "end" expected.');
+//      exit;       //sale
+//    end;
+//    if cIn.tokL <> 'end' then begin  //verifica si termina el programa
+//      GenError('"end" expected.');
+//      exit;       //sale
+//    end;
+//    cIn.Next;   //coge "end"
+//    //debería seguir el punto
+//    if cIn.tok <> '.' then begin
+//      GenError('"." expected.');
+//      exit;       //sale
+//    end;
+//    cIn.Next;
+//    //no debe haber más instrucciones
+//    cIn.SkipWhites;
+//    if not cIn.Eof then begin
+//      GenError('Syntax error. Nothing should be after "END."');
+//      exit;       //sale
+//    end;
+//    _SLEEP();   //agrega instrucción final
+//  end else begin
+//    GenError('Expected "begin", "var", "type" or "const".');
+//    exit;
+//  end;
+//  Cod_EndProgram;
+end;
+procedure TCompiler.CompileUsesDeclaration;
 {Compila la unidad indicada.}
 var
   uni: TxpEleUnit;
+  uPath: String;
+  uName: String;
 begin
   if cIn.tokL = 'uses' then begin
     cIn.Next;  //pasa al nombre
@@ -983,16 +1103,34 @@ begin
         uni.Destroy;
         exit;
       end;
-      uni.src := cIn.ReadSrcPos;   //guarda posición de declaración
-{----}TreeElems.AddElementAndOpen(uni);
+      uni.srcDec := cIn.ReadSrcPos;   //guarda posición de declaración
       //Ubica al archivo de la unidad
-      //Primero busca en la misma ubicaicón del archivo fuente
-      if FileExists(uName) then begin
-        //Lo encontró, debe estar en la
+      uName := uName + '.pas';  //nombre de archivo
+      //Primero busca en la misma ubicación del archivo fuente
+      uPath := ExtractFileDir(mainFile) + DirectorySeparator + uName;
+      if FileExists(uPath) then begin
+        //Lo encontró. Deja en "uPath"
       end else begin
-
+        //No lo encontró, busca en la carpeta de librerías
+        uPath := rutUnits + DirectorySeparator + uName;
+        if FileExists(uPath) then begin
+          //Lo encontró. Deja en "uPath"
+        end else begin
+          //No lo encuentra
+          uPath := '';
+        end;
       end;
-
+      if uPath = '' then begin
+        GenError('File not found: %s', [uName]);
+        uni.Destroy;
+        exit;
+      end;
+{----}TreeElems.AddElementAndOpen(uni);
+      cIn.NewContextFromFile(uPath);
+      //Aquí ya se puede realizar otra exploración, como si fuera el archivo principal
+      CompileUnit(uni);
+      cIn.CloseContext;  //cierra el contexto
+      if HayError then exit;  //EL error debe haber guardado la ubicaicón del error
 {----}TreeElems.CloseElement; //cierra espacio de nombres de la función
       cIn.Next;  //toma nombre
       cIn.SkipWhites;
@@ -1005,8 +1143,6 @@ end;
 procedure TCompiler.CompileProgram;
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
 la posición actual de memoria en el PIC (iFlash).}
-var
-  uName: String;
 begin
   TreeElems.Clear;
   TreeElems.OnTreeChange := nil;   //Se va a modificar el árbol
@@ -1023,6 +1159,11 @@ begin
   ProcComments;
   if HayError then exit;
   //Busca PROGRAM
+  if cIn.tokL = 'unit' then begin
+    //Se intenta compilar una unidad
+    GenError('Cannot compile a unit.');
+    exit;
+  end;
   if cIn.tokL = 'program' then begin
     cIn.Next;  //pasa al nombre
     ProcComments;
@@ -1035,12 +1176,12 @@ begin
     if not CaptureDelExpres then exit;
   end;
   if cIn.Eof then begin
-    GenError('Expected "begin", "var", "type" or "const".');
+    GenError('Expected "program", "begin", "var", "type" or "const".');
     exit;
   end;
   ProcComments;
   //Busca USES
-  CompileUsesDeclaration(uName);
+  CompileUsesDeclaration;
 
   if cIn.Eof then begin
     GenError('Expected "begin", "var", "type" or "const".');
@@ -1078,9 +1219,7 @@ begin
     cIn.Next;   //coge "begin"
     //Guardamos la ubicación física, real, en el archivo, después del BEGIN
     TreeElems.main.posCtx := cIn.PosAct;
-    TreeElems.main.src.Fil := cIn.curCon.arc;
-    TreeElems.main.src.Row := cIn.curCon.row;
-    TreeElems.main.src.Col := cIn.curCon.col;
+    TreeElems.main.srcDec := cIn.ReadSrcPos;
     //codifica el contenido
     CompileCurBlock;   //compila el cuerpo
     if HayError then exit;
@@ -1129,6 +1268,13 @@ begin
   ResetFlashAndRAM;
   ClearError;
   pic.MsjError := '';
+  //Verifica las constantes usadas
+  for elem in TreeElems.main.elements do if elem is TxpEleCon then begin
+      if elem.nCalled = 0 then begin
+        GenWarnPos('Unused constant: %s', [elem.name], elem.srcDec);
+      end;
+  end;
+  pic.iFlash:= 0;  //inicia puntero a Flash
   //Genera espacio para las variables globales
   for elem in TreeElems.main.elements do if elem is TxpEleVar then begin
       xvar := TxpEleVar(elem);
@@ -1136,7 +1282,7 @@ begin
         //Asigna una dirección válida para esta variable
         CreateVarInRAM(xVar);  //Crea la variable
       end else begin
-        GenWarn('Unused variable: %s', [xVar.name], xvar.src.Fil, xvar.src.Row, xvar.src.Col);
+        GenWarnPos('Unused variable: %s', [xVar.name], xvar.srcDec);
         xvar.ResetAddress
       end;
   end;
@@ -1170,7 +1316,7 @@ begin
         if HayError then exit;     //Puede haber error
       end else begin
         //Esta función no se usa
-        GenWarn('Unused procedure: %s', [fun.name], fun.src.fil, fun.src.Row, fun.src.Col);
+        GenWarnPos('Unused procedure: %s', [fun.name], fun.srcDec);
       end;
   end;
   //Compila cuerpo del programa principal
@@ -1185,6 +1331,7 @@ end;
 procedure TCompiler.Compile(NombArc: string; LinArc: Tstrings);
 //Compila el contenido de un archivo.
 begin
+  mainFile := NombArc;
   //se pone en un "try" para capturar errores y para tener un punto salida de salida
   //único
   if ejecProg then begin
@@ -1215,9 +1362,9 @@ consoleTickCount('-->First Pass.');
     que debe haber sido actualizado en la primera pasada.}
     FirstPass := false;
     CompileLinkProgram;
-    cIn.RemoveContext;//es necesario por dejar limpio
-    //genera archivo hexa
-    pic.GenHex(rutApp + 'salida.hex');
+    cIn.ClearAll;//es necesario por dejar limpio
+    //Genera archivo hexa, en la misma ruta del programa
+    pic.GenHex(ExtractFileDir(mainFile) + DirectorySeparator + 'output.hex');
 consoleTickCount('-->Second Pass.');
   finally
     ejecProg := false;

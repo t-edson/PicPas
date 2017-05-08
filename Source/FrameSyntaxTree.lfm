@@ -28,10 +28,13 @@ object fraSyntaxTree: TfraSyntaxTree
     Align = alClient
     DefaultItemHeight = 18
     Images = ImageList1
-    PopupMenu = PopupMenu1
+    RightClickSelect = True
     TabOrder = 0
+    OnDblClick = TreeView1DblClick
+    OnMouseUp = TreeView1MouseUp
+    Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoRightClickSelect, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
   end
-  object PopupMenu1: TPopupMenu
+  object PopupElem: TPopupMenu
     left = 95
     top = 128
     object mnGoTo: TMenuItem
@@ -276,5 +279,20 @@ object fraSyntaxTree: TfraSyntaxTree
       002D0000002D0000002D0000002D0000002D0000002D0000002D000000220000
       000BFFFFFF00FFFFFF00FFFFFF00
     }
+  end
+  object PopupGroup: TPopupMenu
+    left = 40
+    top = 208
+    object mnGoTo1: TMenuItem
+      Caption = '&Go to'
+    end
+    object mnRefresh1: TMenuItem
+      Caption = '&Refresh'
+      OnClick = mnRefreshClick
+    end
+    object mnProper1: TMenuItem
+      Caption = '&Properties'
+      OnClick = mnProperClick
+    end
   end
 end

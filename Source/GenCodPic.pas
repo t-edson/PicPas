@@ -49,9 +49,10 @@ type
     LastCatOp  : TCatOperan;  //Categoría de operando, de la subexpresión anterior.
     CurrBank   : Byte;        //Banco RAM actual
     //Variables de estado de las expresiones booleanas
-    BooleanBit : 0..7;        {Indica el bit de STATUS, que se usa, para devolver el
-                               resultado de una expresión booleana o de bit.(Z o C). Por
-                               lo general, estará siempre en 2 = Z.}
+    InvertedFromC: boolean; {Indica que el resultado de una expresión Booleana o Bit, se
+                             ha obtenido, en la última subexpresion, copaindo el bit C al
+                             bit Z, con inversión lógica. Se usa para opciones de
+                             optimziación de código.}
   private  //Rutinas de gestión de memoria de bajo nivel
     procedure AssignRAM(reg: TPicRegister; regName: string);  //Asigna a una dirección física
     procedure AssignRAMbit(reg: TPicRegisterBit; regName: string);  //Asigna a una dirección física
@@ -728,12 +729,15 @@ begin
 end;
 //Métodos para fijar el resultado
 procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
-{Fija los parámetros del resultado de una subexpresion.}
+{Fija los parámetros del resultado de una subexpresion. Este método se debe ejcutar,
+siempre antes de evaluar cada subexpresión, así que es una especie de evento
+"OnSubExpresionStart".}
 begin
   res.typ := typ;
   res.catOp := CatOp;
   LastCatOp := CatOp;  {Guarda la categoría, para que la siguiente instrucción sepa
                        cuál fue la categoría de la última expresión}
+  InvertedFromC:=false;   //para limpiar el estado
 end;
 procedure TGenCodPic.SetResultConst_bool(valBool: boolean);
 begin
