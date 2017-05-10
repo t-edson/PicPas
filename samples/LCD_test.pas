@@ -93,15 +93,14 @@ var
   LCDData : byte absolute PORTB;       // 8 BIT DATA BUS.
   RS      : boolean absolute PORTA.0;  // SELECT REGISTER.
   EN      : boolean absolute PORTA.1;  // ENABLE STARTS DATA READ/WRITE.
-  Aux1    : byte;
   Counter : byte;
  
 //***************************************************************************//
 // Envia un datos en Display.
 //***************************************************************************//
-procedure LcdSend;
+procedure LcdSend(dat: byte);
 begin
-  LCDData := Aux1; // Coloca dato en puerto de datos del LCD.
+  LCDData := dat; // Coloca dato en puerto de datos del LCD.
   EN := true;       // pulso de 2 ms.
   delay_ms(2);
   EN := false;
@@ -112,9 +111,8 @@ end;
 //***************************************************************************//
 procedure LCDCommand(comm: byte);
 begin
-  Aux1 := comm; 
   RS := CmdMode;
-  LcdSend;
+  LcdSend(comm);
 end;
  
 //***************************************************************************//
@@ -122,9 +120,8 @@ end;
 //***************************************************************************//
 procedure LCDWriteChar(c: byte);
 begin
-  Aux1 := c;
   RS := CharMode;
-  LcdSend;
+  LcdSend(c);
 end;
  
 //***************************************************************************//
