@@ -1,23 +1,27 @@
- {Prueba Puertos de Entrada y Salida.}
-{$PROCESSOR PIC16F84}
-{$FREQUENCY 8Mhz}
-program LedBlink;
-uses prueba;
+program aaa; //No es necesario ver duplicidad, es el primer identificador.
+uses  Pic16f84a;
 const 
-  zz, bb = $20;
-  ddd = %100 and zz;
+  a = 1;        //Verificación de duplicidad.
+	b = a + 1;
 var
-  PORTB: BYTE absolute $06;
-	a, 
-  b,
-  c: byte;
-begin
-  b > ddd + 1;
-  if true  then begin
-	  a  := 1;
-  end else begin
-	  b  := 0;
-  end;
+  x: byte; 
+  y: word;   //Verificación de duplicidad.
 
+procedure proc(par1: byte); //Verificación de duplicidad, excepto el primero.
+var 
+  x: byte;
+begin
+  //x := 1;
+//  portB := 1;
+end;
+
+var
+  x1: byte; //Verificación de duplicidad.
+
+begin
+   //Cuerpo del programa
+  proc(1);
+//  portB := 1;
+//  trisA := $22;
 end.
 

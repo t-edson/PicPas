@@ -14,7 +14,10 @@ type
   private  //Funciones básicas
     mainFile: string;  //archivo inicial que se compila
     lexDir : TSynFacilSyn;  //lexer para analizar directivas
+    function AddVariable(varName: string; typ: ttype; absAddr, absBit: integer;
+      srcPos: TSrcPos): TxpEleVar;
     procedure cInNewLine(lin: string);
+    procedure CompileProcHeader(var fun: TxpEleFun);
     function StartOfSection: boolean;
     procedure ResetFlashAndRAM;
     procedure getListOfIdent(var itemList: TStringDynArray; out
@@ -32,8 +35,8 @@ type
   private  //Rutinas para la compilación y enlace
     procedure CompileProcBody(fun: TxpEleFun);
   private //Compilación de secciones
-    procedure CompileConstDeclar;
-    procedure CompileGlobalVarDeclar;
+    procedure CompileGlobalConstDeclar;
+    procedure CompileVarDeclar;
     procedure CompileProcDeclar;
     procedure CompileInstructionDummy;
     procedure CompileInstruction;
@@ -210,11 +213,34 @@ begin
     cIn.SkipWhites;  //limpia blancos
   end;
 end;
+function TCompiler.AddVariable(varName: string; typ: ttype; absAddr, absBit: integer;
+  srcPos: TSrcPos): TxpEleVar;
+{Crea una variable, le asigna memoria, y la agrega en el nodo actual del árbol de
+sintaxis. Verifica errores. SI no hay errores, devuelve la referencia a la variable.}
+var
+  xvar: TxpEleVar;
+begin
+  xvar := CreateVar(varName, typ, absAddr, absBit);
+  xvar.srcDec := srcPos;  //Actualiza posición
+  Result := xvar;
+  CreateVarInRAM(xvar);  //Crea la variable
+  if HayError then begin
+    xvar.Destroy;   //Hay una variable creada
+    exit;
+  end;
+  if not TreeElems.AddElement(xvar) then begin
+    GenErrorPos('Duplicated identifier: "%s"', [xvar.name], xvar.srcDec);
+    xvar.Destroy;   //Hay una variable creada
+    exit;
+  end;
+end;
 procedure TCompiler.CaptureDecParams(fun: TxpEleFun);
 //Lee la declaración de parámetros de una función.
 var
   parType: String;
   parName: String;
+  typ: TType;
+  xvar: TxpEleVar;
 begin
   SkipWhites;
   if EOBlock or EOExpres then begin
@@ -247,9 +273,20 @@ begin
       end;
       parType := cIn.tok;   //lee tipo de parámetro
       cIn.Next;
-      //ya tiene el nombre y el tipo
-      CreateParam(fun, parName, parType);
+      //Valida el tipo
+      typ := FindType(parType);
+      if typ = nil then begin
+        GenError('Undefined type "%s"', [parType]);
+        exit;
+      end;
+      //Ya tiene el nombre y el tipo
+      //Crea el parámetro como una varaible local
+      xvar := AddVariable(parName, typ, -1, -1, cIn.ReadSrcPos);
       if HayError then exit;
+      //Ahora ya tiene la variable
+      fun.CreateParam(parName, typ, xvar);
+      if HayError then exit;
+      //Busca delimitador
       if cIn.tok = ';' then begin
         cIn.Next;   //toma separador
         SkipWhites;
@@ -558,7 +595,7 @@ begin
   fun.srcSize := pic.iFlash - fun.adrr;   //calcula tamaño
 end;
 //Compilación de secciones
-procedure TCompiler.CompileConstDeclar;
+procedure TCompiler.CompileGlobalConstDeclar;
 var
   consNames: array of string;  //nombre de variables
   cons: TxpEleCon;
@@ -601,10 +638,8 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler.CompileGlobalVarDeclar;
-{Compila la declaración de variables. Usa una sintaxis, sencilla, similar w la de
- Pascal. Lo normal seríw que se sobreescriba este método para adecuarlo al lenguaje
- que se desee implementar. }
+procedure TCompiler.CompileVarDeclar;
+{Compila la declaración de variables en el ndo actual. }
 var
   absAddr: integer;
   absBit: integer;
@@ -637,6 +672,7 @@ var
   {Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
   pone "IsAbs" en TRUE y actualiza los valores "absAddr" y "absBit". }
   var
+    elem: TxpElement;
     xvar: TxpEleVar;
     n: integer;
     tmp: String;
@@ -707,9 +743,14 @@ var
       end;
     end else if cIn.tokType = tnIdentif then begin
       //Puede ser variable
-      xvar := TreeElems.FindVar(cIn.tok);
-      if xvar<>nil then begin
+      elem := TreeElems.FindFirst(cIn.tok);
+      if elem=nil then begin
+        GenError('Unknown identifier.');
+        exit;
+      end;
+      if elem is TxpEleVar then begin
         //Es variable
+        xvar := TxpEleVar(elem);
         absAddr := xvar.AbsAddr;  //debe ser absoluta
         if absAddr = ADRR_ERROR then begin
           GenError('Unknown type.');
@@ -735,7 +776,6 @@ var
   varNames: array of string;  //nombre de variables
   isAbsolute: Boolean;
   typ: TType;
-  xvar: TxpEleVar;
   srcPosArray: TSrcPosArray;
   i: Integer;
 begin
@@ -768,18 +808,8 @@ begin
     if HayError then exit;
     //reserva espacio para las variables
     for i := 0 to high(varNames) do begin
-      xvar := CreateVar(varNames[i], typ, absAddr, absBit);
-      xvar.srcDec := srcPosArray[i];  //Actualiza posición
-      CreateVarInRAM(xvar);  //Crea la variable
-      if HayError then begin
-        xvar.Destroy;   //Hay una variable creada
-        exit;
-      end;
-      if not TreeElems.AddElement(xvar) then begin
-        GenErrorPos('Duplicated identifier: "%s"', [xvar.name], xvar.srcDec);
-        xvar.Destroy;   //Hay una variable creada
-        exit;
-      end;
+      AddVariable(varNames[i], typ, absAddr, absBit, srcPosArray[i]);
+      if HayError then exit;
     end;
   end else begin
     GenError('":" or "," expected.');
@@ -789,22 +819,18 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler.CompileProcDeclar;
-{Compila la declaración de procedimientos. Tanto procedimientos como funciones
- se manejan internamente como funciones}
+procedure TCompiler.CompileProcHeader(var fun: TxpEleFun);
+{Hace el propcesamiento del encabezado de la declaración de una función/procedimiento.
+Devuelve la referencia al objeto TxpEleFun creado, en "fun".
+Conviene separar el procesamiento del enzabezado, para poder usar esta rutina, también,
+en el procesamiento de unidades.}
 var
-  procName: String;
-  fun: TxpEleFun;
   srcPos: TSrcPos;
+  procName: String;
 begin
-  {Este método, solo se ejecutará en la primera pasada, en donde todos los procedimientos
-  se codifican al inicio de la memoria FLASH, y las variables y registros se ubican al
-  inicio de la memeoria RAM, ya que lo que importa es simplemente recabar información
-  del procedimiento, y no tanto codificarlo. }
-  ResetFlashAndRAM;   //Limpia RAM y FLASH
   //Toma información de ubicación, al inicio del procedimiento
-  srcPos := cIn.ReadSrcPos;
   cIn.SkipWhites;
+  srcPos := cIn.ReadSrcPos;
   //Ahora debe haber un identificador
   if cIn.tokType <> tnIdentif then begin
     GenError('Identifier expected.');
@@ -832,18 +858,33 @@ begin
     GenError('";" expected.');  //por ahora
     exit;  //debe ser un error
   end;
+end;
+procedure TCompiler.CompileProcDeclar;
+{Compila la declaración de procedimientos. Tanto procedimientos como funciones
+ se manejan internamente como funciones}
+var
+  fun: TxpEleFun;
+  bod: TxpEleBody;
+begin
+  {Este método, solo se ejecutará en la primera pasada, en donde todos los procedimientos
+  se codifican al inicio de la memoria FLASH, y las variables y registros se ubican al
+  inicio de la memeoria RAM, ya que lo que importa es simplemente recabar información
+  del procedimiento, y no tanto codificarlo. }
+  ResetFlashAndRAM;   //Limpia RAM y FLASH
+  CompileProcHeader(fun);  //Procesa el encabezado
+  if HayError then exit;
   //Empiezan las declaraciones VAR, CONST, PROCEDURE, TYPE
   while StartOfSection do begin
     if cIn.tokL = 'var' then begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'begin') do begin
-        CompileGlobalVarDeclar;
+        CompileVarDeclar;
         if HayError then exit;;
       end;
     end else if cIn.tokL = 'const' then begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'begin') do begin
-        CompileConstDeclar;
+        CompileGlobalConstDeclar;
         if HayError then exit;;
       end;
 //    end else if cIn.tokL = 'procedure' then begin
@@ -855,13 +896,17 @@ begin
     end;
   end;
   if cIn.tokL <> 'begin' then begin
-    GenError('"begin" expected.');
+    GenError('Expected "begin", "var", "type" or "const".');
     exit;
   end;
   //Ahora empieza el cuerpo de la función o las declaraciones
   fun.adrr := pic.iFlash;    //toma dirección de inicio del código. Es solo referencial.
   fun.posCtx := cIn.PosAct;  //Guarda posición para la segunda compilación
+  bod := CreateBody;   //crea elemento del cuerpo de la función
+  bod.srcDec := cIn.ReadSrcPos;
+  TreeElems.AddElementAndOpen(bod);  //Abre nodo Body
   CompileProcBody(fun);
+  TreeElems.CloseElement;  //Cierra Nodo Body
   TreeElems.CloseElement; //cierra espacio de nombres de la función
   if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
     cIn.Next;   //lo toma
@@ -954,6 +999,8 @@ begin
 end;
 procedure TCompiler.CompileUnit(uni: TxpEleUnit);
 {Realiza la compilación de una unidad}
+var
+  fun: TxpEleFun;
 begin
   ClearError;
   pic.MsjError := '';
@@ -1005,18 +1052,20 @@ begin
     if cIn.tokL = 'var' then begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'implementation') do begin
-        CompileGlobalVarDeclar;
+        CompileVarDeclar;
         if HayError then exit;;
       end;
     end else if cIn.tokL = 'const' then begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'implementation') do begin
-        CompileConstDeclar;
+        CompileGlobalConstDeclar;
         if HayError then exit;;
       end;
     end else if cIn.tokL = 'procedure' then begin
       cIn.Next;    //lo toma
-      CompileProcDeclar;
+      CompileProcHeader(fun);
+      if HayError then exit;
+      TreeElems.CloseElement;   //CompileProcHeader, deja abierto el elemento
     end else begin
       GenError('Not implemented: "%s"', [cIn.tok]);
       exit;
@@ -1040,12 +1089,11 @@ begin
 //  ResetFlashAndRAM;  {No es tan necesario, pero para seguir un orden y tener limpio
 //                     también, la flash y memoria, después de algún psoible procedimiento.}
 //  if cIn.tokL = 'begin' then begin
+//    bod := CreateBody;
+//    bod.srcDec := cIn.ReadSrcPos;
 //    cIn.Next;   //coge "begin"
 //    //Guardamos la ubicación física, real, en el archivo, después del BEGIN
-//    TreeElems.main.posCtx := cIn.PosAct;
-//    TreeElems.main.src.Fil := cIn.curCon.arc;
-//    TreeElems.main.src.Row := cIn.curCon.row;
-//    TreeElems.main.src.Col := cIn.curCon.col;
+//    bod.posCtx := cIn.PosAct;
 //    //codifica el contenido
 //    CompileCurBlock;   //compila el cuerpo
 //    if HayError then exit;
@@ -1143,6 +1191,8 @@ end;
 procedure TCompiler.CompileProgram;
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
 la posición actual de memoria en el PIC (iFlash).}
+var
+  bod: TxpEleBody;
 begin
   TreeElems.Clear;
   TreeElems.OnTreeChange := nil;   //Se va a modificar el árbol
@@ -1195,13 +1245,13 @@ begin
     if cIn.tokL = 'var' then begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'begin') do begin
-        CompileGlobalVarDeclar;
+        CompileVarDeclar;
         if HayError then exit;;
       end;
     end else if cIn.tokL = 'const' then begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'begin') do begin
-        CompileConstDeclar;
+        CompileGlobalConstDeclar;
         if HayError then exit;;
       end;
     end else if cIn.tokL = 'procedure' then begin
@@ -1214,41 +1264,43 @@ begin
   end;
   //procesa cuerpo
   ResetFlashAndRAM;  {No es tan necesario, pero para seguir un orden y tener limpio
-                     también, la flash y memoria, después de algún psoible procedimiento.}
-  if cIn.tokL = 'begin' then begin
-    cIn.Next;   //coge "begin"
-    //Guardamos la ubicación física, real, en el archivo, después del BEGIN
-    TreeElems.main.posCtx := cIn.PosAct;
-    TreeElems.main.srcDec := cIn.ReadSrcPos;
-    //codifica el contenido
-    CompileCurBlock;   //compila el cuerpo
-    if HayError then exit;
-    if cIn.Eof then begin
-      GenError('Unexpected end of file. "end" expected.');
-      exit;       //sale
-    end;
-    if cIn.tokL <> 'end' then begin  //verifica si termina el programa
-      GenError('"end" expected.');
-      exit;       //sale
-    end;
-    cIn.Next;   //coge "end"
-    //debería seguir el punto
-    if cIn.tok <> '.' then begin
-      GenError('"." expected.');
-      exit;       //sale
-    end;
-    cIn.Next;
-    //no debe haber más instrucciones
-    cIn.SkipWhites;
-    if not cIn.Eof then begin
-      GenError('Syntax error. Nothing should be after "END."');
-      exit;       //sale
-    end;
-    _SLEEP();   //agrega instrucción final
-  end else begin
+                     también, la flash y memoria, después de algún posible procedimiento.}
+  if cIn.tokL <> 'begin' then begin
     GenError('Expected "begin", "var", "type" or "const".');
     exit;
   end;
+  bod := CreateBody;
+  bod.srcDec := cIn.ReadSrcPos;
+  TreeElems.AddElementAndOpen(bod);  //Abre nodo Body
+  cIn.Next;   //coge "begin"
+  //Guardamos popsisicón en contexto para la segunda compilación
+  bod.posCtx := cIn.PosAct;
+  //codifica el contenido
+  CompileCurBlock;   //compila el cuerpo
+  TreeElems.CloseElement;   //No debería ser tan necesario.
+  if HayError then exit;
+  if cIn.Eof then begin
+    GenError('Unexpected end of file. "end" expected.');
+    exit;       //sale
+  end;
+  if cIn.tokL <> 'end' then begin  //verifica si termina el programa
+    GenError('"end" expected.');
+    exit;       //sale
+  end;
+  cIn.Next;   //coge "end"
+  //debería seguir el punto
+  if cIn.tok <> '.' then begin
+    GenError('"." expected.');
+    exit;       //sale
+  end;
+  cIn.Next;
+  //no debe haber más instrucciones
+  cIn.SkipWhites;
+  if not cIn.Eof then begin
+    GenError('Syntax error. Nothing should be after "END."');
+    exit;       //sale
+  end;
+  _SLEEP();   //agrega instrucción final
   Cod_EndProgram;
 end;
 procedure TCompiler.CompileLinkProgram;
@@ -1257,7 +1309,8 @@ ubicar a los diversos elementos que deben compilarse.
 Se debe llamar después de compilar con CompileProgram.
 Esto es lo más cercano a un enlazador, que hay en PicPas.}
 var
-  elem : TxpElement;
+  elem, elem2 : TxpElement;
+  bod: TxpEleBody;
   xvar : TxpEleVar;
   fun  : TxpEleFun;
   iniMain: integer;
@@ -1275,16 +1328,41 @@ begin
       end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
-  //Genera espacio para las variables globales
-  for elem in TreeElems.main.elements do if elem is TxpEleVar then begin
+  //Genera espacio para las variables globales y de funciones
+  for elem in TreeElems.main.elements do begin
+    //Variable global
+    if elem is TxpEleVar then begin
       xvar := TxpEleVar(elem);
       if xvar.nCalled>0 then begin
         //Asigna una dirección válida para esta variable
         CreateVarInRAM(xVar);  //Crea la variable
+        if HayError then exit;
       end else begin
         GenWarnPos('Unused variable: %s', [xVar.name], xvar.srcDec);
         xvar.ResetAddress
       end;
+    end;
+    //Variables de funciones
+    if elem is TxpEleFun then begin
+      if elem.elements = nil then continue;
+      //tiene elementos
+      for elem2 in elem.elements do if elem2 is TxpEleVar then begin
+        xvar := TxpEleVar(elem2);
+        if elem.nCalled = 0 then begin
+          //La función no se usa, por lo tanto, la variable tampoco.
+          xvar.nCalled := 0;   //actualiza
+          xvar.ResetAddress;   //limpia
+          continue;  //función no usada
+        end;
+        if xvar.nCalled>0 then begin
+          //Asigna una dirección válida para esta variable
+          CreateVarInRAM(xVar);  //Crea la variable
+        end else begin
+          GenWarnPos('Unused variable: %s', [elem.name + '.'+ xVar.name], xvar.srcDec);
+          xvar.ResetAddress
+        end;
+      end;
+    end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
   _GOTO_PEND(iniMain);       //instrucción de salto inicial
@@ -1310,9 +1388,10 @@ begin
         fun.adrr := pic.iFlash;    //Actualiza la dirección final
         cIn.PosAct := fun.posCtx;  //Posiciona escáner
         PutLabel('__'+fun.name);
-        TreeElems.OpenElement(fun); //Ubica el espacio de nombres, de forma similar a la pre-compilación
+        TreeElems.OpenElement(fun.BodyNode); //Ubica el espacio de nombres, de forma similar a la pre-compilación
         CompileProcBody(fun);
-        TreeElems.CloseElement;
+        TreeElems.CloseElement;  //cierra el body
+        TreeElems.CloseElement;  //cierra la función
         if HayError then exit;     //Puede haber error
       end else begin
         //Esta función no se usa
@@ -1321,9 +1400,17 @@ begin
   end;
   //Compila cuerpo del programa principal
   pic.codGotoAt(iniMain, _PC);   //termina de codificar el salto
-  cIn.PosAct := TreeElems.main.posCtx;   //ubica escaner
+  bod := TreeElems.BodyNode;  //lee Nodo del cuerpo principal
+  if bod = nil then begin
+    GenError('Body program not found.');
+    exit;
+  end;
+  bod.adrr := pic.iFlash;  //guarda la dirección de codificación
+  cIn.PosAct := bod.posCtx;   //ubica escaner
   PutLabel('__main_program__');
+  TreeElems.OpenElement(bod);
   CompileCurBlock;
+  TreeElems.CloseElement;   //cierra el cuerpo principal
   PutLabel('__end_program__');
   {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
   _SLEEP();   //agrega instrucción final
@@ -1350,13 +1437,14 @@ begin
     {Se hace una primera pasada para ver, a modo de exploración, para ver qué
     procedimientos, y varaibles son realmente usados, de modo que solo estos, serán
     codificados en la segunda pasada. Así evitamos incluir, código innecesario.}
-consoleTickStart;
+    consoleTickStart;
     debugln('*** Compiling: Pass 1.');
     pic.iFlash := 0;     //dirección de inicio del código principal
     FirstPass := true;
     CompileProgram;  //puede dar error
     if HayError then exit;
-consoleTickCount('-->First Pass.');
+    consoleTickCount('** First Pass.');
+
     debugln('*** Compiling/Linking: Pass 2.');
     {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,
     que debe haber sido actualizado en la primera pasada.}
@@ -1365,7 +1453,7 @@ consoleTickCount('-->First Pass.');
     cIn.ClearAll;//es necesario por dejar limpio
     //Genera archivo hexa, en la misma ruta del programa
     pic.GenHex(ExtractFileDir(mainFile) + DirectorySeparator + 'output.hex');
-consoleTickCount('-->Second Pass.');
+    consoleTickCount('** Second Pass.');
   finally
     ejecProg := false;
     //tareas de finalización
@@ -1521,7 +1609,6 @@ begin
   lexDir.Destroy;
   inherited Destroy;
 end;
-
 procedure SetLanguage(lang: string);
 begin
   case lang of
@@ -1543,6 +1630,7 @@ begin
     dicSet('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.');
     dicSet('Identifier of variable expected.', 'Se esperaba identificador de variable.');
     dicSet('Unknown type.', 'Tipo desconocido');
+    dicSet('Unknown identifier.', 'Identificador desconocido.');
     dicSet('Identifier of constant expected.', 'Se esperaba identificador de constante');
     dicSet('Numeric address expected.', 'Se esperaba dirección numérica.');
     dicSet('Identifier of type expected.', 'Se esperaba identificador de tipo.');

@@ -16,7 +16,10 @@ unit XpresParserPIC;
 interface
 uses
   Classes, SysUtils, Forms, LCLType, lclProc, SynEditHighlighter,
-  SynFacilHighlighter, XpresBas, XpresTypes, XpresElementsPIC, MisUtils;
+  SynFacilHighlighter, XpresBas, XpresTypes, XpresElementsPIC, MisUtils,
+  Pic16Utils;
+const
+  TIT_BODY_ELE = 'Body';
 type
 //Tipo de expresión, de acuerdo a la posición en que aparece
 TPosExpres = (pexINDEP,  //Expresión independiente
@@ -93,6 +96,7 @@ protected  //Eventos del compilador
                                              evaluación de una expresión.}
   OnExprEnd  : procedure(posExpres: TPosExpres) of object;  {Se genera
                                              el terminar de evaluar una expresión}
+  pic        : TPIC16;           //Objeto PIC de la serie 16.
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
   FirstPass  : boolean;   //Indica que está en la primera pasada.
   function CaptureDelExpres: boolean;
@@ -114,9 +118,11 @@ protected  //Eventos del compilador
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
   function ValidateFunction: boolean;
   function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
-  procedure CreateParam(fun: TxpEleFun; parName: string; typStr: string);
+  procedure CaptureParamsFinal(fun: TxpEleFun);
   function CaptureTok(tok: string): boolean;
   procedure CaptureParams;
+  //Manejo del cuerpo del programa
+  function CreateBody: TxpEleBody;
   //Manejo de Unidades
   function CreateUnit(uniName: string): TxpEleUnit;
   //Mmanejo de expresiones
@@ -301,6 +307,7 @@ begin
   conx.typ := typ;   //fija  referencia a tipo
   Result := conx;
 end;
+//Manejo de variables
 function TCompilerBase.CreateVar(varName: string; typ: ttype; absAddr,
   absBit: integer): TxpEleVar;
 {Rutina para crear una variable. Devuelve referencia a la variable creada.}
@@ -356,21 +363,21 @@ begin
   listFunSys.Add(fun);  //Las funciones de sistema son accesibles siempre
   Result := fun;
 end;
-procedure TCompilerBase.CreateParam(fun: TxpEleFun; parName: string;
-  typStr: string);
-//Crea un parámetro para una función
-var
-  typ : TType;
-begin
-  //busca tipo
-  typ := FindType(typStr);
-  if typ = nil then begin
-    GenError('Undefined type "%s"', [typStr]);
-    exit;
-  end;
-  //agrega
-  fun.CreateParam(parName, typ);
-end;
+//procedure TCompilerBase.CreateParam(fun: TxpEleFun; parName: string;
+//  typStr: string);
+////Crea un parámetro para una función
+//var
+//  typ : TType;
+//begin
+//  //busca tipo
+//  typ := FindType(typStr);
+//  if typ = nil then begin
+//    GenError('Undefined type "%s"', [typStr]);
+//    exit;
+//  end;
+//  //agrega
+//  fun.CreateParam(parName, typ);
+//end;
 function TCompilerBase.CaptureTok(tok: string): boolean;
 {Toma el token indicado del contexto de entrada. Si no lo encuentra, genera error y
 devuelve FALSE.}
@@ -397,7 +404,7 @@ begin
       GetExpressionE(0, pexPARAM);  //captura parámetro
       if HayError then exit;   //aborta
       //guarda tipo de parámetro
-      func0.CreateParam('',res.typ);
+      func0.CreateParam('',res.typ, nil);
       if cIn.tok = ',' then begin
         cIn.Next;   //toma separador
         SkipWhites;
@@ -411,6 +418,44 @@ begin
     //busca paréntesis final
     if not CaptureTok(')') then exit;
   end;
+end;
+procedure TCompilerBase.CaptureParamsFinal(fun: TxpEleFun);
+{Captura los parámetros asignándolos a las variables de la función que representan a los
+parámetros.}
+var
+  i: Integer;
+  par: TxpParFunc;
+  Op1: TOperand;
+  op: TxpOperator;
+begin
+  if EOBlock or EOExpres then exit;  //sin parámetros
+  CaptureTok('(');   //No debe dar error porque ya se verificó
+  for i := 0 to high(fun.pars) do begin
+    par := fun.pars[i];
+    //Evalúa parámetro
+    GetExpressionE(0, pexPARAM);
+    if HayError then exit;   //aborta
+    if cIn.tok = ',' then begin
+      cIn.Next;
+      SkipWhites;
+    end;
+    //Genera código para la asignación
+    Op1.catOp := coVariab;  //configura el operando como variable
+    Op1.rVar  := par.pvar;
+    if FirstPass then Inc(par.pvar.nCalled);   //se está usando
+    Op1.typ   := par.pvar.typ;  //necesario para "FindOperator"
+    op := Op1.FindOperator(':=');  //busca la operación
+    Oper(Op1, op, res);   //Codifica la asignación
+  end;
+  if not CaptureTok(')') then exit;
+end;
+function TCompilerBase.CreateBody: TxpEleBody;
+var
+  body: TxpEleBody;
+begin
+  body := TxpEleBody.Create;
+  body.name := TIT_BODY_ELE;
+  Result := body;
 end;
 function TCompilerBase.CreateUnit(uniName: string): TxpEleUnit;
 var
@@ -433,9 +478,10 @@ var
   tmp, oprTxt: String;
   ele: TxpElement;
   Op: TOperand;
-  posAct: TPosCont;
+  posAct, posPar: TPosCont;
   opr: TxpOperator;
   Found: Boolean;
+  posFlash: Integer;
 begin
   ClearError;
   SkipWhites;
@@ -493,13 +539,14 @@ begin
     end else if ele.elemType = eltFunc then begin  //es función
       {Se sabe que es función, pero no se tiene la función exacta porque puede haber
        versiones, sobrecargadas de la misma función.}
-      tmp := cIn.tok;  //guarda nombre de función
       cIn.Next;    //Toma identificador
+      posPar := cIn.PosAct;  //guarda porque va a pasar otra vez por aquí
+      posFlash := pic.iFlash;  //guarda posición, antes del c´doigo de evaluación
       CaptureParams;  //primero lee parámetros
       if HayError then exit;
       //Aquí se identifica la función exacta, que coincida con sus parámetros
       xfun := TxpEleFun(ele);
-      //Primero vemos si la priemra función encontrada, coincide:
+      //Primero vemos si la primera función encontrada, coincide:
       if func0.SameParams(xfun) then begin
         //Coincide
         Found := true;
@@ -512,15 +559,21 @@ begin
         Found := (xfun <> nil);
       end;
       if Found then begin
+        //Ya se identificó a la función que cuadra con los parámetros
         Result.catOp :=coExpres; //expresión
         Result.txt:= cIn.tok;    //toma el texto
         Result.typ:=xfun.typ;
         if FirstPass then Inc(xfun.nCalled);  //lleva la cuenta
+        {Ahora que ya sabe cúal es la función referenciada, captura de nuevo los
+        parámetros, pero asignándola al parámetro que corresponde.}
+        cIn.PosAct := posPar;
+        pic.iFlash := posFlash;
+        CaptureParamsFinal(xfun);  //evalúa y asigna
         xfun.procCall(xfun);  //para que codifique el _CALL
         exit;
       end else begin
         //Encontró la función, pero no coincidió con los parámetros
-        GenError('Type parameters error on %s', [tmp +'()']);
+        GenError('Type parameters error on %s', [ele.name + '()']);
         exit;
       end;
     end else begin
@@ -591,16 +644,17 @@ usarse también "res" para cálculo de expresiones constantes.
 }
 var
   Operation: TxpOperation;
+  tmp: String;
 begin
    {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Oper('+Op1.txt + opr.txt + Op2.txt+')');{$ENDIF}
    ClearError;
    //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
    Operation := opr.FindOperation(Op2.typ);
    if Operation = nil then begin
-//      GenError('No se ha definido la operación: (' +
-//                    Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')');
+      tmp := '(' + Op1.typ.name + ') '+ opr.txt;
+      tmp := tmp +  ' ('+Op2.typ.name+')';
       GenError('Illegal Operation: %s',
-               ['(' + Op1.typ.name + ') '+ opr.txt + ' ('+Op2.typ.name+')']);
+               [tmp]);
       exit;
     end;
    {Llama al evento asociado con p1 y p2 como operandos. }

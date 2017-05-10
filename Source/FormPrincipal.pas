@@ -7,11 +7,11 @@ unit FormPrincipal;
 {$define }
 interface
 uses
-  Classes, SysUtils, types, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
-  ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, SynFacilHighlighter,
-  SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
+  Classes, SysUtils, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
+  ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
+  SynFacilUtils, MisUtils, Parser, FormPICExplorer, Globales,
   FormCodeExplorer, FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
-  FrameMessagesWin;
+  FrameMessagesWin, XpresElementsPIC;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -144,7 +144,7 @@ type
     fraMessages: TfraMessagesWin;
     procedure ChangeAppearance;
     procedure fraEditView1SelectEditor;
-    procedure fraSynTreeSelectElemen(out srcPos: TSrcPos);
+    procedure fraSynTreeSelectElemen(var elem: TxpElement);
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
     procedure VerificarError;
   public
@@ -157,9 +157,9 @@ var
 implementation
 {$R *.lfm}
 { TfrmPrincipal }
-procedure TfrmPrincipal.fraSynTreeSelectElemen(out srcPos: TSrcPos);
+procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
 begin
-//  fraEditView1.SelectOrLoad()
+  fraEditView1.SelectOrLoad(elem.srcDec, false);
 end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
@@ -467,6 +467,7 @@ begin
   if cxp.HayError then begin
     fraMessages.EndCompilation;
     VerificarError;
+    fraSynTree.Refresh;  //refresca lo que se tenga del árbol
     exit;
   end;
   fraMessages.EndCompilation;

@@ -179,13 +179,13 @@ end;
 procedure TGenCod.expr_end(posExpres: TPosExpres);
 //Se ejecuta al final de una expresión, si es que no ha habido error.
 begin
-  case posExpres of
-  pexPARAM: begin
-    //Se terminó de evaluar un parámetro
-    res.Push;   //pone parámetro en pila
-    if HayError then exit;
-  end;
-  end;
+//  case posExpres of
+//  pexPARAM: begin
+//    //Se terminó de evaluar un parámetro
+//    res.Push;   //pone parámetro en pila
+//    if HayError then exit;
+//  end;
+//  end;
   if exprLevel = 1 then begin  //el último nivel
 //    Code('  ;fin expres');
   end;

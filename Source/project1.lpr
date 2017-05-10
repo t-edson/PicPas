@@ -7,9 +7,10 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, FormPrincipal, Parser, ProcAsm, FormPICExplorer, FormCodeExplorer,
-  GenCod, GenCodPic, XpresParserPIC, FrameSyntaxTree, XpresElementsPIC,
-  Globales, FormConfig, PicPasProject, FrameEditView, FrameMessagesWin;
+  Forms, lazcontrols, FormPrincipal, Parser, ProcAsm, FormPICExplorer,
+  FormCodeExplorer, GenCod, GenCodPic, XpresParserPIC, FrameSyntaxTree,
+  XpresElementsPIC, Globales, FormConfig, PicPasProject, FrameEditView,
+  FrameMessagesWin, FormElemProperty;
 
 {$R *.res}
 
@@ -20,6 +21,7 @@ begin
   Application.CreateForm(TfrmPICExplorer, frmPICExplorer);
   Application.CreateForm(TfrmCodeExplorer, frmCodeExplorer);
   Application.CreateForm(TConfig, Config);
+  Application.CreateForm(TfrmElemProperty, frmElemProperty);
 //  Application.CreateForm(TfraCfgGeneral, fraCfgGeneral);
   Application.Run;
 end.

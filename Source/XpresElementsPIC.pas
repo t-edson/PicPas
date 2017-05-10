@@ -10,7 +10,7 @@ unit XpresElementsPIC;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, fgl, XpresTypes, XpresBas;
+  Classes, SysUtils, fgl, XpresTypes, XpresBas, LCLProc;
 const
   ADRR_ERROR = $FFFF;
 type
@@ -71,11 +71,14 @@ type
                  eltFunc,  //función
                  eltCons,  //constante
                  eltType,  //tipo
-                 eltUnit   //unidad
+                 eltUnit,  //unidad
+                 elBody    //cuerpo del programa
                 );
 
   TxpElement = class;
   TxpElements = specialize TFPGObjectList<TxpElement>;
+
+  TxpEleBody = class;
 
   { TxpElement }
   //Clase base para todos los elementos
@@ -83,14 +86,17 @@ type
   private
     function AddElement(elem: TxpElement): TxpElement;
   public
-    name : string;       //nombre de la variable
-    typ  : TType;        //tipo del elemento, si aplica
-    Parent: TxpElement;    //referencia al padre
+    name : string;        //nombre de la variable
+    typ  : TType;         //tipo del elemento, si aplica
+    Parent: TxpElement;   //referencia al padre
     elemType: TxpElemType; //no debería ser necesario
-    nCalled: integer;  //Número de veces que es llamada la función
-    elements: TxpElements;  //referencia a nombres anidados, cuando sea función
+    nCalled : integer;    //Número de veces que es llamada la función
+    elements: TxpElements; //referencia a nombres anidados, cuando sea función
     function DuplicateIn(list: TxpElements): boolean; virtual;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
+    function LastNode: TxpElement;
+    function BodyNode: TxpEleBody;
+    function Index: integer;
     constructor Create; virtual;
     destructor Destroy; override;
   public  //Ubicación física de la declaración del elmento
@@ -108,7 +114,6 @@ type
   { TxpEleMain }
   TxpEleMain = class(TxpElement)
     //Como este nodo representa al programa principal, se incluye información física
-    adrr   : integer;  //dirección física
     srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
                         porque el tamaño puede variar al reubicarse.}
     constructor Create; override;
@@ -154,14 +159,19 @@ type
   end;
   TxpEleVars = specialize TFPGObjectList<TxpEleVar>; //lista de variables
 
+  //Parámetro de una función
+  TxpParFunc = record
+    name: string;    //nombre de parámetro
+    typ : TType;     //tipo del parñametro
+    pvar: TxpEleVar; //referecnia a la variable que se usa para el parámetro
+  end;
   { TxpEleFun }
   //Clase para almacenar información de las funciones
   TxpEleFun = class;
   TProcExecFunction = procedure(fun: TxpEleFun) of object;  //con índice de función
   TxpEleFun = class(TxpElement)
-  private
-    pars: array of TType;  //parámetros de entrada
   public
+    pars: array of TxpParFunc;  //parámetros de entrada
     //Direción física.
     adrr: integer;     //Dirección física
     srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
@@ -175,7 +185,7 @@ type
     compile: TProcExecFunction;
     ///////////////
     procedure ClearParams;
-    procedure CreateParam(parName: string; typ0: TType);
+    procedure CreateParam(parName: string; typ0: ttype; pvar: TxpEleVar);
     function SameParams(Fun2: TxpEleFun): boolean;
     function ParamTypesList: string;
     function DuplicateIn(list: TxpElements): boolean; override;
@@ -189,6 +199,15 @@ type
     constructor Create; override;
   end;
   TxpEleUnits = specialize TFPGObjectList<TxpEleUnit>; //lista de constantes
+
+  //Clase para modelar al cuerpo principal del programa
+
+  { TxpEleBody }
+
+  TxpEleBody = class(TxpElement)
+    adrr   : integer;  //dirección física
+    constructor Create; override;
+  end;
 
   { TXpTreeElements }
   {Árbol de elementos. Solo se espera que haya una instacia de este objeto. Aquí es
@@ -210,6 +229,8 @@ type
     procedure Clear;
     function AllVars: TxpEleVars;
     function CurNodeName: string;
+    function LastNode: TxpElement;
+    function BodyNode: TxpEleBody;
     //funciones para llenado del arbol
     function AddElement(elem: TxpElement; verifDuplic: boolean=true): boolean;
     procedure AddElementAndOpen(elem: TxpElement);
@@ -227,6 +248,7 @@ type
   end;
 
 implementation
+
 
 { TPicRegister }
 function TPicRegister.AbsAdrr: word;
@@ -263,7 +285,7 @@ begin
   exit(false);
 end;
 function TxpElement.FindIdxElemName(const eName: string; var idx0: integer): boolean;
-{Busca un nombre en su lista de elementos. Inicia buscando en idx0, hasta el final.
+{Busca un nombre en su lista de elementos. Inicia buscando desde idx0, hasta el inicio.
  Si encuentra, devuelve TRUE y deja en idx0, la posición en donde se encuentra.}
 var
   i: Integer;
@@ -271,9 +293,7 @@ var
 begin
   uName := upcase(eName);
   //empieza la búsqueda en "idx0"
-  for i := idx0 to elements.Count-1 do begin
-    { TODO : Tal vez sería mejor usar el método de búsqueda interno de la lista,
-     que es más rápido, pero trabaja con listas ordenadas. }
+  for i := idx0 downto 0 do begin
     if upCase(elements[i].name) = uName then begin
       //sale dejando idx0 en la posición encontrada
       idx0 := i;
@@ -281,6 +301,31 @@ begin
     end;
   end;
   exit(false);
+end;
+function TxpElement.LastNode: TxpElement;
+{Devuelve una referencia al último nodo de "elements"}
+begin
+  if elements = nil then exit(nil);
+  if elements.Count = 0 then exit(nil);
+  Result := elements[elements.Count-1];
+end;
+function TxpElement.BodyNode: TxpEleBody;
+{Devuelve la referecnia al cuerpo del programa. Aplicable a nodos de tipo función o
+"Main". Si no lo encuentra, devuelve NIL.}
+var
+  elem: TxpElement;
+begin
+  elem := LastNode;   //Debe ser el último
+  if not(elem is TxpEleBody) then begin
+    exit(nil);  //No deberría pasar
+  end;
+  //Devuelve referencia
+  Result := TxpEleBody(elem);
+end;
+function TxpElement.Index: integer;
+{Devuelve la ubicación del elemento, dentro de su nodo padre.}
+begin
+  Result := Parent.elements.IndexOf(self);  //No es muy rápido
 end;
 constructor TxpElement.Create;
 begin
@@ -400,7 +445,7 @@ procedure TxpEleFun.ClearParams;
 begin
   setlength(pars,0);
 end;
-procedure TxpEleFun.CreateParam(parName: string; typ0: ttype);
+procedure TxpEleFun.CreateParam(parName: string; typ0: ttype; pvar: TxpEleVar);
 //Crea un parámetro para la función
 var
   n: Integer;
@@ -408,7 +453,9 @@ begin
   //agrega
   n := high(pars)+1;
   setlength(pars, n+1);
-  pars[n] := typ0;  //agrega referencia
+  pars[n].name := parName;
+  pars[n].typ  := typ0;  //agrega referencia
+  pars[n].pvar := pvar;
 end;
 function TxpEleFun.SameParams(Fun2: TxpEleFun): boolean;
 {Compara los parámetros de la función con las de otra. Si tienen el mismo número
@@ -421,7 +468,7 @@ begin
     exit(false);   //distinto número de parámetros
   //hay igual número de parámetros, verifica
   for i := 0 to High(pars) do begin
-    if pars[i] <> Fun2.pars[i] then begin
+    if pars[i].typ <> Fun2.pars[i].typ then begin
       exit(false);
     end;
   end;
@@ -474,6 +521,11 @@ constructor TxpEleUnit.Create;
 begin
   elemType:=eltUnit;
 end;
+{ TxpEleBody }
+constructor TxpEleBody.Create;
+begin
+  elemType := elBody;
+end;
 { TXpTreeElements }
 procedure TXpTreeElements.Clear;
 begin
@@ -512,6 +564,16 @@ function TXpTreeElements.CurNodeName: string;
 begin
   Result := curNode.name;
 end;
+function TXpTreeElements.LastNode: TxpElement;
+{Devuelve una referencia al último nodo de "main"}
+begin
+  Result := main.LastNode;
+end;
+function TXpTreeElements.BodyNode: TxpEleBody;
+{Devuelve la referecnia al cuerpo principal del programa.}
+begin
+  Result := main.BodyNode;
+end;
 //funciones para llenado del arbol
 function TXpTreeElements.AddElement(elem: TxpElement; verifDuplic: boolean = true): boolean;
 {Agrega un elemento al nodo actual. Si ya existe el nombre del nodo, devuelve false.
@@ -522,7 +584,8 @@ begin
   if verifDuplic and elem.DuplicateIn(curNode.elements) then begin
     exit(false);  //ya existe
   end;
-  //agrega el nodo
+  //Agrega el nodo
+//  elem.idx := curNode.elements.Count;  //actualiza su índice
   curNode.AddElement(elem);
   if OnTreeChange<>nil then exit;
 end;
@@ -563,37 +626,80 @@ end;
 //Métodos para identificación de nombres
 function TXpTreeElements.FindNext: TxpElement;
 {Realiza una búsqueda recursiva en el nodo "curFindNode", a partir de la posición,
-"curFindIdx", el elemento con nombre "curFindName"}
+"curFindIdx", hacia "atrás", el elemento con nombre "curFindName". También implementa
+la búsqueda en unidades.
+Esta rutina es quien define la resolución de nombres (alcance) en PicPas.}
+var
+  tmp: String;
+  elem: TxpElement;
 begin
-  if curFindNode.FindIdxElemName(curFindName, curFindIdx) then begin
-    //Lo encontró, asigna resultado
-    Result := curFindNode.elements[curFindIdx];
-    //Deja estado listo para la siguiente búsqueda
-    curFindIdx := curFindIdx + 1;
-    exit;
-  end else begin
-    //No encontró
-    if curFindNode.Parent = nil then begin
-      Result := nil;
-      exit;  //no hay espacios padres
+  debugln(' Explorando nivel: [%s] en pos: %d', [curFindNode.name, curFindIdx - 1]);
+  tmp := UpCase(curFindName);  //convierte pra comparación
+  repeat
+    curFindIdx := curFindIdx - 1;  //Siempre salta a la posición anterior
+    if curFindIdx<0 then begin
+      //No encontró, en ese nivel. Hay que ir más atrás. Pero esto se resuelve aquí.
+      if curFindNode.Parent = nil then begin
+        //No hay nodo padre. Este es el nodo Main
+        Result := nil;
+        exit;  //aquí termina la búsqueda
+      end;
+      //Busca en el espacio padre
+      curFindIdx := curFindNode.Index;  //posición actual
+      curFindNode := curFindNode.Parent;  //apunta al padre
+      Result := FindNext();  //Recursividad IMPORTANTE: Usar paréntesis.
+      exit;
     end;
-    //busca en el espacio padre
-    curFindNode := curFindNode.Parent;  //apunta al padre
-    curFindIdx := 0;  //empieza desde el inicio
-    Result := FindNext();  //Recursividad IMPORTANTE: Usar paréntesis.
-    exit;
-  end;
+    //Verifica ahora este elemento
+    elem := curFindNode.elements[curFindIdx];
+    if UpCase(elem.name) = tmp then begin
+      //Encontró en "curFindIdx"
+      Result := elem;
+      //La siguiente búsqueda empezará en "curFindIdx-1".
+      exit;
+    end else begin
+      //No tiene el mismo nombre, a lo mejor es una unidad
+      if elem is TxpEleUnit then begin
+        //¡Diablos es una unidad! Ahora tenemos que implementar la búsqueda.
+        curFindIdx := elem.elements.Count;  //para que busque desde el último
+        curFindNode := elem;  //apunta a la unidad
+        Result := FindNext();  //Recursividad IMPORTANTE: Usar paréntesis.
+        exit;  {Afortunadamente, "FindNExt", o sea yo mismo, sabe salir del nivel, cuando
+               ya no hay más elementos, así garantizamos que terminará bien, al menos
+               en teoría.}
+      end;
+    end;
+  until false;
 end;
 function TXpTreeElements.FindFirst(const name: string): TxpElement;
-{Busca un nombre siguiendo la estructura del espacio de nombres (primero en el espacio
- actual y luego en los espacios padres).
+{Rutina que permite resolver un identificador dentro del árbol de sintaxis, siguiendo las
+reglas de alcance de identifiacdores (primero en el espacio actual y luego en los
+espacios padres).
  Si encuentra devuelve la referencia. Si no encuentra, devuelve NIL}
 begin
+  debugln(' Resolviendo %s', [name]);
   //Busca recursivamente, a partir del espacio actual
-  curFindNode := curNode;  //Actualiza nodo actual de búsqueda
-  curFindName := name;  //Esta valor no cambairá en toda la búsqueda
-  curFindIdx := 0;      //Busca desde el inicio
-  Result := FindNext;
+  if curNode is TxpEleBody then begin
+    {Para los cuerpos de procemientos o de programa, se debe explorar hacia atrás a
+    partir de la posición del nodo actual.}
+    curFindIdx := curNode.Index;  //Ubica posición
+    curFindNode := curNode.Parent;  //Actualiza nodo actual de búsqueda
+    curFindName := name;  //Esta valor no cambairá en toda la búsqueda
+    Result := FindNext;
+  end else begin
+    {La otras forma de resolución, debe ser:
+    1. Declaración de constantes, cuando se definen como expresión con otras constantes
+    2. Declaración de variables, , cuando se definen como ABSOLUTE <variable>
+    }
+    curFindNode := curNode;  //Actualiza nodo actual de búsqueda
+    curFindName := name;  //Esta valor no cambiará en toda la búsqueda
+    {Formalmente debería apuntar a la posicñon del elemento actual, pero se deja
+    apuntando a la posición final, sin peligro, porque, la resolución de nombres para
+    consatntes se hace solo en la primera pasada (con el árbol de sintaxis llenándose.)}
+    curFindIdx := curNode.elements.Count;
+    //Busca
+    Result := FindNext;
+  end;
 end;
 function TXpTreeElements.FindNextFunc: TxpEleFun;
 {Explora recursivamente haciá la raiz, en el arbol de sintaxis, hasta encontrar el nombre
@@ -628,6 +734,7 @@ end;
 constructor TXpTreeElements.Create;
 begin
   main:= TxpEleMain.Create;  //No debería
+  main.name := 'Main';
   main.elements := TxpElements.Create(true);  //debe tener lista
   curNode := main;  //empieza con el nodo principal como espacio de nombres actual
 end;

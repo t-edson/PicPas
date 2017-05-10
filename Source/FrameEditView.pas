@@ -5,13 +5,22 @@ interface
 uses
   Classes, SysUtils, FileUtil, LazUTF8, LazFileUtils, SynEdit, Forms, Controls,
   Graphics, Dialogs, ExtCtrls, LCLProc, Menus, LCLType, Globales, SynFacilUtils,
-  MisUtils, fgl, SynEditMiscClasses, SynEditKeyCmds, SynPluginMultiCaret;
+  SynFacilCompletion, MisUtils, XpresBas, fgl, SynEditMiscClasses,
+  SynEditKeyCmds, SynPluginMultiCaret;
 type
   {Clase derivada de "TSynFacilEditor". Se usa para asociar un SynEdit a un
   TSynFacilEditor}
 
-  { TSynEditor }
+  //Versión personalizada de  TSynFacilComplet
 
+  { TSynFacilComplet2 }
+
+  TSynFacilComplet2 = class(TSynFacilComplet)
+    function IsKeyword(const AKeyword: string): boolean; override;
+  end;
+
+  { TSynEditor }
+  {VErsión personalizada de TSynFacilEditor, que usa TSynFacilComplet2, como resaltador}
   TSynEditor = class(TSynFacilEditor)
   private
     FCaption: string;
@@ -93,6 +102,7 @@ type
     procedure NewFile;
     function LoadFile(fileName: string): boolean;
     function SelectOrLoad(fileName: string): boolean;
+    function SelectOrLoad(const srcPos: TSrcPos; highlightLine: boolean): boolean;
     procedure SaveFile;
     procedure SaveAll;
     function OpenDialog(filter: string): boolean;
@@ -112,6 +122,20 @@ const
   FONT_TAB_SIZE = 9;
   SEPAR_TABS = 2;  //Separación adicional, entre pestañas
 
+{ TSynFacilComplet2 }
+function TSynFacilComplet2.IsKeyword(const AKeyword: string): boolean;
+{Esta rutina es llamada por el Markup, que resalta palabras iguales. Se implementa
+para evitar que se resalten palabras muy conocidas}
+begin
+  //Para el lenguaje Pascal, esta rutina funciona bien
+  case UpCase(AKeyword) of
+  'CONS','VAR','TYPE','BEGIN','END','IF','THEN','ELSE','WHILE',
+  'DO','REPEAT','UNTIL','FOR','TO','AND','OR','XOR','NOT','DIV','MOD','IN':
+    exit(true)
+  else
+    exit(false);
+  end;
+end;
 { TSynEditor }
 procedure TSynEditor.edSpecialLineMarkup(Sender: TObject; Line: integer;
   var Special: boolean; Markup: TSynSelectedColor);
@@ -175,7 +199,27 @@ constructor TSynEditor.Create(AOwner: TComponent; nomDef0, extDef0: string;
   panTabs0: TPanel);
 begin
   SynEdit:= TSynEdit.Create(AOwner);// Crea un editor
-  inherited Create(SynEdit, nomDef0, extDef0);
+//  inherited Create(SynEdit, nomDef0, extDef0);
+  ////////////// Código modificado del constructor /////////////
+  ed := SynEdit;
+  hl := TSynFacilComplet2.Create(ed.Owner);  //crea resaltador
+  hl.SelectEditor(ed);  //inicia
+  //intercepta eventos
+  ed.OnChange:=@edChange;   //necesita interceptar los cambios
+  ed.OnStatusChange:=@edStatusChange;
+  ed.OnMouseDown:=@edMouseDown;
+  ed.OnKeyUp:=@edKeyUp;     //para funcionamiento del completado
+  ed.OnKeyDown:=@edKeyDown;
+  ed.OnKeyPress:=@edKeyPress;
+  ed.OnUTF8KeyPress:=@edUTF8KeyPress;
+  ed.OnCommandProcessed:=@edCommandProcessed;  //necesita para actualizar el cursor
+//  RecentFiles := TStringList.Create;
+  MaxRecents := 1;   //Inicia con 1
+  //guarda parámetros
+  nomDef := nomDef0;
+  extDef := extDef0;
+  NewFile;   //Inicia editor con archivo vacío
+  ///////////////////////////////////////////////////////////////
   tabWidth := 30;  //valor por defecto
   panTabs := panTabs0;
 
@@ -655,6 +699,24 @@ begin
     Result := LoadFile(filename);
   end;
 end;
+
+function TfraEditView.SelectOrLoad(const srcPos: TSrcPos; highlightLine: boolean): boolean;
+//Versión de SelectOrLoad(), que además posiciona el cursor en la coordenada indicada
+begin
+  Result := SelectOrLoad(srcPos.fil);
+  if Result then begin
+    if (srcpos.row>=0) and (srcpos.col>=0)  then begin
+      //posiciona curosr
+      ActiveEditor.SynEdit.CaretX := srcPos.col;
+      ActiveEditor.SynEdit.CaretY := srcPos.row;
+      //Define línea con error
+      if highlightLine then ActiveEditor.linErr := srcPos.row;
+      ActiveEditor.SynEdit.Invalidate;  //refresca
+      SetFocus;
+    end;
+  end;
+end;
+
 function TfraEditView.OpenDialog(filter: string): boolean;
 //Muestra el cuadro de diálogo para abrir un archivo. Si hay error devuelve FALSE.
 var arc0: string;

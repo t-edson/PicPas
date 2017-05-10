@@ -1,3 +1,43 @@
+PicPas 0.6.0
+============
+Se modifica TSynEditor.Create(), para crear una clase derivada de TSYnFacilCompletion.
+Se crean más menús PopUp en el árbol de sintaxis, y se crean acciones. Se mejoran los 
+menús y se permite ubicar la declaración de un elemento.
+Se crea el formulario frmElemProperty, para mostrar las propiedades de un elemento del 
+árbol de sintaxis.
+Se crea TCompiler.CompileProcDeclarHeader() y se activa el procesamiento de declaraciones
+de funciones en la INTERFAZ de las unidades.
+Se mejora la ventana del árbol de sintaxis, que ahora tiene el t´tutlo "Explorador de 
+Código", incuye un cuadro de búsqueda y maneja dos modos de visualización.
+Se crea la clase TxpEleBody y se define que se cree el nodo Body, como un nodo 
+independiente, dentro del árbol de sintaxis, para las funciones y el programa principal.
+Se crean los métodos TxpElement.LastNode y TxpElement.BodyNode.
+Se implementa la detección de variables locales y parámetros de procedimientos.
+Se crea el tipo TxpParFunc, y se modifica la definición  de TxpEleFun.pars[].
+Se implementa el paso de parámetros a procedimientos.
+Se crea el método Index, para ubicar a los elementos dentro de su contenedor.
+Se re-escriben las rutinas TXpTreeElements.FindFirst() y TXpTreeElements.FindNext()
+para implementar la búsqueda recursiva hacia "atrás".
+Se activa la búsqueda recursiva de nombres a través de las unidades. Aún está por 
+verificar.
+Se mejora la resolución de nombres para las variables absolutas.
+Se completa la documentación técnica y el manual de usuario.
+
+PENDIENTES
+Revisar la implementación de las estructuras. 
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la traducción de idiomas.
+Corregir el problema de la pérdida del nombre en las variables bit, en el código 
+ensamblador.
+Implementar la reutilización de variables usadas como parámetros.
+Implementar el uso de parámetros de tipo REGISTER, para usar el registro W, o HW o Z.
+Revisar el paso de parámetros byte a word o bits. 
+
+
 PicPas 0.5.9
 ============
 Se ordenan y uniformizan los mensajes de Error y Advertencia. Se crean nuevas versiones
@@ -26,22 +66,6 @@ Se empieza con la creación del manual de usuario.
 Se crea el método TfraEditView.SelectOrLoad().
 
 
-PENDIENTES
-Revisar la implementación de las estructuras. 
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la llamada correcta para las funciones del sistema y de usuario(con parámetros).
-Implementar la traducción de idiomas.
-Implementar el uso adecuado, del árbol,ya que en la segunda pasada está lleno y la 
-búsqueda de nombres puede dar resultados distintos a la de la primera pasada.
-
-Corregir el problema de la pérdida del nombre en las variables bit, en el código 
-ensamblador.
-Se detectó un error al momento de abrir varias ventanas y compilar una de ellas. Daba error
-en otra ventana.
 
 PicPas 0.5.8
 ============

@@ -25,7 +25,6 @@ type
     function OperandsUseW: boolean;
     procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
   protected
-    pic    : TPIC16;           //Objeto PIC de la serie 16.
     W      : TPicRegister;     //Registro Interno.
     Z      : TPicRegisterBit;  //Registro Interno.
     H      : TPicRegister;     //Registros de trabajo. Se crean siempre.
