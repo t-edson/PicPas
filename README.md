@@ -2,7 +2,7 @@ PicPas 0.6.0
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/Sin-título.png "Título de la imagen")
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas-768x523.png "Título de la imagen")
 
 NOTE: This compiler is still in beta phase and has limited functionality.
 
