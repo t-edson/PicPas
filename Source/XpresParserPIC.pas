@@ -492,7 +492,21 @@ begin
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
-  end else if cIn.tokType = tnSysFunct then begin  //función del sistema
+  end else if cIn.tokType = tnString then begin  //constante cadena
+    Result.catOp:=coConst;       //constante es Mono Operando
+    if length(cIn.tok)=2 then begin  //Es ''
+      GenError('Char expected.');
+      exit;
+    end else if length(cIn.tok)>3 then begin  //Es 'aaaa...'
+      GenError('Too long string for a Char.');
+      exit;
+    end;
+    Result.txt:= cIn.tok;     //toma el texto
+    Result.valInt := ord(cIn.tok[2]);
+    Result.typ := typChar;
+    cIn.Next;    //Pasa al siguiente
+  end else if (cIn.tokType = tnSysFunct) or //función del sistema
+              (cIn.tokL = 'bit') then begin  //"bit" es de tipo "tnType"
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
      versiones, sobrecargadas de la misma función.}
     tmp := UpCase(cIn.tok);  //guarda nombre de función
@@ -504,6 +518,7 @@ begin
         extraer los parámetros y analizar la sintaxis.}
         if FirstPass then Inc(xfun.nCalled);  //lleva la cuenta
         xfun.procCall(xfun);  //para que codifique el _CALL o lo pimplemente
+        Result := res;  //copia tipo y categoría y otros campso relevantes
         Result.txt:= tmp;     //toma el texto
         exit;
       end;

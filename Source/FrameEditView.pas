@@ -671,7 +671,7 @@ var
   ext: string;
 begin
   Result := true;   //por defecto
-  ed := AddEdit('');
+  ed := AddEdit('');   //Dispara OnSelecEditor
   if Pos(DirectorySeparator, fileName) = 0 then begin
     //Es ruta relativa, la vuelve abosulta
     fileName := rutApp + fileName;
@@ -685,6 +685,9 @@ begin
   end;
   //ed.LoadSyntaxFromPath;  //para que busque el archivo apropiado
   ed.Caption := ExtractFileName(fileName);
+  {Dispara otra vez, para actualizar bien el nombre del archivo, en el Caption de la
+  ventana principal.}
+  if OnSelectEditor<>nil then OnSelectEditor;
 end;
 function TfraEditView.SelectOrLoad(fileName: string): boolean;
 {Selecciona la ventana del editor que contiene al archivo solicitado. Si no lo tiene
@@ -751,6 +754,7 @@ begin
   if ActiveEditor=nil then exit;
   Result := ActiveEditor.SaveAsDialog(SaveDialog1);
   if Result then exit;   //se canceló
+  if OnSelectEditor<>nil then OnSelectEditor;
 end;
 procedure TfraEditView.CloseEditor;
 {Cierra el editor actual.}

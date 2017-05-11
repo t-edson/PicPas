@@ -28,6 +28,10 @@
   delay_ms(100);
   "inc(\_);"
   "dec(\_);"
+  "chr(\_);"
+  "chr(65);"
+  "ord(\_);"
+  "ord('A');"
     </List>
 	<OpenOn AfterPattern="':'" FilterBy="none" Action="RepLastTok" Block="BeginEnd">
 	  ":= "
@@ -36,7 +40,7 @@
 	  ":= "
 	</OpenOn>	
 	<!-- Completado para tipos -->
-    <List Name='types' IconIndex='1'>  bit; byte; word; boolean; </List>
+    <List Name='types' IconIndex='1'>  bit; byte; word; boolean; char; </List>
 	<OpenOn AfterPattern="':',space" FilterBy="none" Action="Insert" Block="var">
 	  <Include List="types"/>
 	</OpenOn>	
@@ -133,7 +137,7 @@
     </token>
     <!--tipos de datos--> 
     <token attribute="Types"> 
-	byte word boolean
+	bit byte word boolean char
     </token>
   </Identifiers>
   

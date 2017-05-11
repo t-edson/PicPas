@@ -130,6 +130,7 @@ object fraMessagesWin: TfraMessagesWin
       Options = [goFixedVertLine, goFixedHorzLine, goRangeSelect, goSmoothScroll]
       ScrollBars = ssAutoVertical
       TabOrder = 0
+      OnDblClick = grillaDblClick
     end
   end
   object ImgMessages: TImageList

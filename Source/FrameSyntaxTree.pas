@@ -241,8 +241,16 @@ begin
   if TreeView1.Selected = nil then exit(false);
   nod := TreeView1.Selected;
   if viewMode = vmGroups  then begin
-    if nod.Level = 2 then exit(true);
+    if nod.Level = 2 then begin
+      //Es esta vista, todos los del segucdo nivel deben ser elementos.
+      exit(true);
+    end;
     if (nod.Level = 1) and (nod.Text = TIT_BODY_ELE) then exit(true);
+    if nod.Level = 3 then begin
+      //Los de tercer nivel, deben ser los elementos locales de procedimientos
+      //o de las unidades.
+      exit(true);
+    end;
   end;
   if viewMode = vmDeclar then begin
     //En modo de declaraciones, es más fácil. Todos son elementos.

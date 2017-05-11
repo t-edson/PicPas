@@ -88,11 +88,17 @@ type
     procedure SetResultConst_bool(valBool: boolean);
     procedure SetResultConst_bit(valBit: boolean);
     procedure SetResultConst_byte(valByte: integer);
+    procedure SetResultConst_char(valByte: integer);
     procedure SetResultConst_word(valWord: integer);
+
     procedure SetResultVariab_bit(rVar: TxpEleVar; Inverted: boolean);
+    procedure SetResultVariab_byte(rVar: TxpEleVar);
+    procedure SetResultVariab_char(rVar: TxpEleVar);
+
     procedure SetResultExpres_bit(Inverted: boolean);
     procedure SetResultExpres_bool(Inverted: boolean);
     procedure SetResultExpres_byte;
+    procedure SetResultExpres_char;
     procedure SetResultExpres_word;
   protected  //Instrucciones
     procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin
@@ -710,6 +716,8 @@ begin
     AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
   end else if nVar.typ = typByte then begin
     AssignRAMinByte(absAdd, nVar.adrByte0, varName);
+  end else if nVar.typ = typChar then begin
+    AssignRAMinByte(absAdd, nVar.adrByte0, varName);
   end else if nVar.typ = typWord then begin
     //registra variable en la tabla
     {Asigna espacio para los dos bytes. Notar que:
@@ -720,10 +728,7 @@ begin
   end else begin
     GenError('Not implemented.', [varName]);
   end;
-  if HayError then begin
-    nVar.Destroy;   //No se usó
-    exit;
-  end;
+  if HayError then  exit;
   if nVar.typ.OnGlobalDef<>nil then nVar.typ.OnGlobalDef(varName, '');
 end;
 //Métodos para fijar el resultado
@@ -758,6 +763,11 @@ begin
   SetResult(typByte, coConst);
   res.valInt := valByte;
 end;
+procedure TGenCodPic.SetResultConst_char(valByte: integer);
+begin
+  SetResult(typChar, coConst);
+  res.valInt := valByte;
+end;
 procedure TGenCodPic.SetResultConst_word(valWord: integer);
 begin
   if not ValidateWordRange(valWord) then
@@ -771,9 +781,20 @@ begin
   res.rVar := rVar;
   res.Inverted := Inverted;
 end;
+procedure TGenCodPic.SetResultVariab_byte(rVar: TxpEleVar);
+begin
+  SetResult(typByte, coVariab);
+  res.rVar := rVar;
+end;
+procedure TGenCodPic.SetResultVariab_char(rVar: TxpEleVar);
+begin
+  SetResult(typChar, coVariab);
+  res.rVar := rVar;
+end;
 procedure TGenCodPic.SetResultExpres_bit(Inverted: boolean);
 {Define el resultado como una expresión de tipo Bit, y se asegura de reservar el registro
-Z, para devolver la salida.}
+Z, para devolver la salida. Debe llamarse cuando se tienen los operandos de
+la oepración en p1^y p2^, porque toma infiormación de allí.}
 begin
   SetResult(typBit, coExpres);
   res.Inverted := Inverted;
@@ -789,7 +810,8 @@ begin
 end;
 procedure TGenCodPic.SetResultExpres_bool(Inverted: boolean);
 {Define el resultado como una expresión de tipo Boolean, y se asegura de reservar el
-registro Z, para devolver la salida.}
+registro Z, para devolver la salida. Debe llamarse cuando se tienen los operandos de
+la oepración en p1^y p2^, porque toma infiormación de allí.}
 begin
   SetResult(typBool, coExpres);
   res.Inverted := Inverted;
@@ -805,9 +827,26 @@ begin
 end;
 procedure TGenCodPic.SetResultExpres_byte;
 {Define el resultado como una expresión de tipo Byte, y se asegura de reservar el
-registro W, para devolver la salida.}
+registro W, para devolver la salida. Debe llamarse cuando se tienen los operandos de
+la oepración en p1^y p2^, porque toma infiormación de allí.}
 begin
   SetResult(typByte, coExpres);
+  //Verifica si el registro W, está ocupado
+  if OperandsUseW then begin
+    //Se está usando W, como resultado de una expresión en p1 o p2
+    //No es necesario solicitar el registro
+  end else begin
+    //No se está usando W, al menos en alguno de los operandos
+    //Hay que pedir el registro formalmente
+    RequireResult_W;  //Vamos a devolver en W
+  end;
+end;
+procedure TGenCodPic.SetResultExpres_char;
+{Define el resultado como una expresión de tipo Char, y se asegura de reservar el
+registro W, para devolver la salida. Debe llamarse cuando se tienen los operandos de
+la oepración en p1^y p2^, porque toma infiormación de allí.}
+begin
+  SetResult(typChar, coExpres);
   //Verifica si el registro W, está ocupado
   if OperandsUseW then begin
     //Se está usando W, como resultado de una expresión en p1 o p2

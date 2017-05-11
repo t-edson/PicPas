@@ -1,27 +1,13 @@
-PicPas 0.6.0
+PicPas 0.6.1
 ============
-Se modifica TSynEditor.Create(), para crear una clase derivada de TSYnFacilCompletion.
-Se crean más menús PopUp en el árbol de sintaxis, y se crean acciones. Se mejoran los 
-menús y se permite ubicar la declaración de un elemento.
-Se crea el formulario frmElemProperty, para mostrar las propiedades de un elemento del 
-árbol de sintaxis.
-Se crea TCompiler.CompileProcDeclarHeader() y se activa el procesamiento de declaraciones
-de funciones en la INTERFAZ de las unidades.
-Se mejora la ventana del árbol de sintaxis, que ahora tiene el t´tutlo "Explorador de 
-Código", incuye un cuadro de búsqueda y maneja dos modos de visualización.
-Se crea la clase TxpEleBody y se define que se cree el nodo Body, como un nodo 
-independiente, dentro del árbol de sintaxis, para las funciones y el programa principal.
-Se crean los métodos TxpElement.LastNode y TxpElement.BodyNode.
-Se implementa la detección de variables locales y parámetros de procedimientos.
-Se crea el tipo TxpParFunc, y se modifica la definición  de TxpEleFun.pars[].
-Se implementa el paso de parámetros a procedimientos.
-Se crea el método Index, para ubicar a los elementos dentro de su contenedor.
-Se re-escriben las rutinas TXpTreeElements.FindFirst() y TXpTreeElements.FindNext()
-para implementar la búsqueda recursiva hacia "atrás".
-Se activa la búsqueda recursiva de nombres a través de las unidades. Aún está por 
-verificar.
-Se mejora la resolución de nombres para las variables absolutas.
-Se completa la documentación técnica y el manual de usuario.
+Se corrige un error en la actualización del nombre ed archivo, cuando se abre uno nuevo.
+Se implementa el tipo char, y las operaciones de asignación, y comparación.
+Se implementan las funciones de sistemas Ord() y Chr() y bit().
+Se crean los operadores desplazamiento >> y << y se implementan parcialmente
+Se activa la opción de mostrar la posición del error o advertencia, cuando se hace doble
+click en el panel de mensajes.
+Se mejora identificación de elementos, en el explorador de código, para cuando se busca
+la declaración en el editor.
 
 PENDIENTES
 Revisar la implementación de las estructuras. 
@@ -36,6 +22,38 @@ ensamblador.
 Implementar la reutilización de variables usadas como parámetros.
 Implementar el uso de parámetros de tipo REGISTER, para usar el registro W, o HW o Z.
 Revisar el paso de parámetros byte a word o bits. 
+Revisar el posible problema de pérdidad de resultado en el generador de código, cuando se
+hace:   
+SetResultExpres_bit(false);  //Fija resultado
+SaveW(reg); 
+...  // se actualiza Z.
+RestoreW(reg); //<-Se pierde Z, si se restaura W.
+
+
+PicPas 0.6.0
+============
+Se modifica TSynEditor.Create(), para crear una clase derivada de TSYnFacilCompletion.
+Se crean más menús PopUp en el árbol de sintaxis, y se crean acciones. Se mejoran los 
+menús y se permite ubicar la declaración de un elemento.
+Se crea el formulario frmElemProperty, para mostrar las propiedades de un elemento del 
+árbol de sintaxis.
+Se crea TCompiler.CompileProcDeclarHeader() y se activa el procesamiento de declaraciones
+de funciones en la INTERFAZ de las unidades.
+Se mejora la ventana del árbol de sintaxis, que ahora tiene el títutlo "Explorador de 
+Código", incuye un cuadro de búsqueda y maneja dos modos de visualización.
+Se crea la clase TxpEleBody y se define que se cree el nodo Body, como un nodo 
+independiente, dentro del árbol de sintaxis, para las funciones y el programa principal.
+Se crean los métodos TxpElement.LastNode y TxpElement.BodyNode.
+Se implementa la detección de variables locales y parámetros de procedimientos.
+Se crea el tipo TxpParFunc, y se modifica la definición  de TxpEleFun.pars[].
+Se implementa el paso de parámetros a procedimientos.
+Se crea el método Index, para ubicar a los elementos dentro de su contenedor.
+Se re-escriben las rutinas TXpTreeElements.FindFirst() y TXpTreeElements.FindNext()
+para implementar la búsqueda recursiva hacia "atrás".
+Se activa la búsqueda recursiva de nombres a través de las unidades. Aún está por 
+verificar.
+Se mejora la resolución de nombres para las variables absolutas.
+Se completa la documentación técnica y el manual de usuario.
 
 
 PicPas 0.5.9

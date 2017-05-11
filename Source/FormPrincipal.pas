@@ -9,7 +9,7 @@ interface
 uses
   Classes, SysUtils, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
   ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
-  SynFacilUtils, MisUtils, Parser, FormPICExplorer, Globales,
+  SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
   FormCodeExplorer, FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
   FrameMessagesWin, XpresElementsPIC;
 type
@@ -144,6 +144,7 @@ type
     fraMessages: TfraMessagesWin;
     procedure ChangeAppearance;
     procedure fraEditView1SelectEditor;
+    procedure fraMessagesDblClickMessage(const srcPos: TSrcPos);
     procedure fraSynTreeSelectElemen(var elem: TxpElement);
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
     procedure VerificarError;
@@ -168,6 +169,7 @@ begin
   fraMessages := TfraMessagesWin.Create(self);
   fraMessages.Parent := panMessages;  //Ubica
   fraMessages.Align := alClient;
+  fraMessages.OnDblClickMessage := @fraMessagesDblClickMessage;
   //configura panel de mensajes
   fraEditView1.OnChangeEditorState := @ChangeEditorState;
   fraEditView1.OnSelectEditor := @fraEditView1SelectEditor;
@@ -284,6 +286,10 @@ procedure TfrmPrincipal.fraEditView1SelectEditor;
 begin
   ChangeAppearance;
   editChangeFileInform;
+end;
+procedure TfrmPrincipal.fraMessagesDblClickMessage(const srcPos: TSrcPos);
+begin
+  fraEditView1.SelectOrLoad(srcPos, false);
 end;
 procedure TfrmPrincipal.ChangeAppearance;
   procedure SetStateActionsProject(state: boolean);

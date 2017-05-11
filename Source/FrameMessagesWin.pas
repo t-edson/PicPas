@@ -4,7 +4,7 @@ unit FrameMessagesWin;
 interface
 uses
   Classes, SysUtils, FileUtil, LazFileUtils, Forms, Controls, Grids, Graphics,
-  ExtCtrls, StdCtrls, Parser, UtilsGrilla, BasicGrilla;
+  ExtCtrls, StdCtrls, Parser, UtilsGrilla, BasicGrilla, MisUtils, XpresBas;
 type
 
   { TUtilGrillaFil2 }
@@ -32,6 +32,7 @@ type
     procedure chkErrorsChange(Sender: TObject);
     procedure chkInformChange(Sender: TObject);
     procedure chkWarnsChange(Sender: TObject);
+    procedure grillaDblClick(Sender: TObject);
     procedure PanGrillaResize(Sender: TObject);
     procedure panStatisPaint(Sender: TObject);
   private
@@ -43,6 +44,7 @@ type
     procedure FilterGrid;
     procedure CountMessages;
   public
+    OnDblClickMessage: procedure(const srcPos: TSrcPos) of object;
     procedure GetFirstError(out msg: string; out filname: string; out row,
       col: integer);
     procedure InitCompilation(cxp0: TCompiler);
@@ -187,6 +189,23 @@ end;
 procedure TfraMessagesWin.chkWarnsChange(Sender: TObject);
 begin
   FilterGrid;
+end;
+procedure TfraMessagesWin.grillaDblClick(Sender: TObject);
+var
+  row, col: Longint;
+  arc: String;
+  srcPos: TSrcPos;
+begin
+  if grilla.Row = -1 then exit;
+  arc := grilla.Cells[GCOL_FILE, grilla.row];
+  TryStrToInt(grilla.Cells[GCOL_ROW, grilla.row], row);
+  TryStrToInt(grilla.Cells[GCOL_COL, grilla.row], col);
+  srcPos.fil := arc;
+  srcPos.row := row;
+  srcPos.col := col;
+  if arc<>'' then begin
+    if OnDblClickMessage<>nil then OnDblClickMessage(srcPos);
+  end;
 end;
 procedure TfraMessagesWin.PanGrillaResize(Sender: TObject);
 begin

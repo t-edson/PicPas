@@ -60,6 +60,7 @@ var
   typBool: TType;     //Booleanos
   typByte: TType;     //número sin signo
   typWord: TType;     //número sin signo
+  typChar: TType;     //caracter individual
 //  tipChr : Ttype;   //un caracter
 
 type
@@ -146,7 +147,7 @@ type
     solBit : shortint;   //posición del bit
     //Campos para guardar las direcciones físicas asignadas en RAM.
     adrBit : TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
-    adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Word
+    adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Char/Word
     adrByte1: TPicRegister;   //Dirección física, cuando es de tipo Word
     function AbsAddr : word;   //Devuelve la dirección absoluta de la variable
     function AbsAddrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
@@ -633,7 +634,7 @@ var
   tmp: String;
   elem: TxpElement;
 begin
-  debugln(' Explorando nivel: [%s] en pos: %d', [curFindNode.name, curFindIdx - 1]);
+//  debugln(' Explorando nivel: [%s] en pos: %d', [curFindNode.name, curFindIdx - 1]);
   tmp := UpCase(curFindName);  //convierte pra comparación
   repeat
     curFindIdx := curFindIdx - 1;  //Siempre salta a la posición anterior
@@ -677,7 +678,7 @@ reglas de alcance de identifiacdores (primero en el espacio actual y luego en lo
 espacios padres).
  Si encuentra devuelve la referencia. Si no encuentra, devuelve NIL}
 begin
-  debugln(' Resolviendo %s', [name]);
+//  debugln(' Resolviendo %s', [name]);
   //Busca recursivamente, a partir del espacio actual
   if curNode is TxpEleBody then begin
     {Para los cuerpos de procemientos o de programa, se debe explorar hacia atrás a
