@@ -117,7 +117,7 @@ protected  //Eventos del compilador
   //Manejo de funciones
   function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
   function ValidateFunction: boolean;
-  function CreateSysFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
+  function CreateSysFunction(funName: string; proc: TProcExecFunction): TxpEleFun;
   procedure CaptureParamsFinal(fun: TxpEleFun);
   function CaptureTok(tok: string): boolean;
   procedure CaptureParams;
@@ -346,8 +346,7 @@ begin
   end;
   exit(true);  //validación sin error
 end;
-function TCompilerBase.CreateSysFunction(funName: string; typ: ttype;
-  proc: TProcExecFunction): TxpEleFun;
+function TCompilerBase.CreateSysFunction(funName: string; proc: TProcExecFunction): TxpEleFun;
 {Crea una función del sistema. A diferencia de las funciones definidas por el usuario,
 una función del sistema se crea, sin crear espacios de nombre. La idea es poder
 crearlas rápidamente.}
@@ -356,7 +355,7 @@ var
 begin
   fun := TxpEleFun.Create;  //Se crea como una función normal
   fun.name:= funName;
-  fun.typ := typ;
+  fun.typ := typNull;
   fun.procCall:= proc;
   fun.ClearParams;
 //  TreeElems.AddElement(fun, false);  //no verifica duplicidad
@@ -517,7 +516,8 @@ begin
         {Encontró. Llama a la función de procesamiento, quien se encargará de
         extraer los parámetros y analizar la sintaxis.}
         if FirstPass then Inc(xfun.nCalled);  //lleva la cuenta
-        xfun.procCall(xfun);  //para que codifique el _CALL o lo pimplemente
+        xfun.procCall(xfun);  //Para que devuelva el tipo y codifique el _CALL o lo implemente
+        //Puede devolver typNull, si no es una función.
         Result := res;  //copia tipo y categoría y otros campso relevantes
         Result.txt:= tmp;     //toma el texto
         exit;

@@ -21,6 +21,7 @@
   "while ... |while \_ do begin\n\n\uend;"
   "repeat ... |repeat \n\t\_\n\uend;"
   "program ... begin ... end.|{Description of the program.}\nprogram nombre;\nbegin\n  \_\nend."
+  "unit ... end.|{Description of the unit.}\nunit unitName;\ninterface\n  \_\nimplementation\n\nend."
   "procedure ... begin ... end;|procedure proc1;\n\ubegin\n\u  \_\n\uend;"
   "const ... |const\n\u  \_consName = 0;"
   "var ... |var\n\u  \_varName: byte;"
@@ -32,6 +33,8 @@
   "chr(65);"
   "ord(\_);"
   "ord('A');"
+  "SetAsInput(\_);"
+  "SetAsOutput(\_);"
     </List>
 	<OpenOn AfterPattern="':'" FilterBy="none" Action="RepLastTok" Block="BeginEnd">
 	  ":= "

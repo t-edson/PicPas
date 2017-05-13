@@ -19,30 +19,36 @@ type
   TOptimLev = (olvFool,   //Nivel básico de optimización
                olvSmart   //Nivel mayor de optimización
                );
-
+  TTreeViewMode = (vmGroups,   //Muestra por grupos
+                   vmDeclar    //Muestra en el orden de declaración
+                   );
   { TConfig }
   TConfig = class(TForm)
     BitAplicar: TBitBtn;
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
+    chkExcUnus: TCheckBox;
     chkIncDecVar: TCheckBox;
     chkIncAddress: TCheckBox;
     chkIncComment: TCheckBox;
     chkIncHeadMpu: TCheckBox;
+    ComboBox1: TComboBox;
     Edit1: TEdit;
     fcEditor: TfraCfgSynEdit;
     Label1: TLabel;
+    Label2: TLabel;
     PageControl1: TPageControl;
     Panel1: TPanel;
     RadioGroup1: TRadioGroup;
-    RadioGroup2: TRadioGroup;
     grpOptimLev: TRadioGroup;
+    RadioGroup2: TRadioGroup;
     tabGeneral: TTabSheet;
     tabEditor: TTabSheet;
     tabEnsamb: TTabSheet;
     tabOutput: TTabSheet;
     procedure BitAceptarClick(Sender: TObject);
     procedure BitAplicarClick(Sender: TObject);
+    procedure chkIncDecVarChange(Sender: TObject);
     procedure SetLanguage(lang: string);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -57,22 +63,27 @@ type
     procedure SetViewSynTree(AValue: boolean);
     procedure SetViewToolbar(AValue: boolean);
   public  //Propiedades generales
-    OnPropertiesChanges: procedure of object;
     StateToolbar: TStyleToolbar;
+    language : string;
     property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
     property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
     property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
     property ViewSynTree: boolean read FViewSynTree write SetViewSynTree;
-  public  //Configuraciones para ensamblador
+  public
+    //Configuración de vista
+    viewMode  : TTreeViewMode;
+    //Configuraciones para ensamblador
     IncHeadMpu: boolean;  //Incluye encabezado con información del MPU
     IncVarDec : boolean;  //Incluye declaración de varaibles
     VarDecType: TVarDecType;  //tipo de declaración de variables
     IncAddress: boolean;  //Incluye dirección física en el código desensamblado
     IncComment: boolean;  //Incluye comentarios en el código desensamblado
+    ExcUnused : boolean;
     //Configuracions para Salida
     OptimLev : TOptimLev;
     procedure ConfigEditor(ed: TSynEdit);
   public
+    OnPropertiesChanges: procedure of object;
     procedure Iniciar;
     procedure Mostrar;
     procedure SaveToFile;
@@ -82,11 +93,8 @@ var
   Config: TConfig;
 
 implementation
-
 {$R *.lfm}
-
 { TConfig }
-
 procedure TConfig.FormCreate(Sender: TObject);
 begin
   cfgFile.VerifyFile;
@@ -106,6 +114,11 @@ begin
   end;
   SaveToFile;
 end;
+procedure TConfig.chkIncDecVarChange(Sender: TObject);
+begin
+  RadioGroup2.Enabled := chkIncDecVar.Checked;
+  chkExcUnus.Enabled := chkIncDecVar.Checked;
+end;
 procedure TConfig.Iniciar;
 //Inicia el formulario de configuración. Debe llamarse antes de usar el formulario y
 //después de haber cargado todos los frames.
@@ -116,14 +129,18 @@ begin
   cfgFile.Asoc_Bol('VerStatusbar', @ViewStatusbar, true);
   cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);
   cfgFile.Asoc_Bol('ViewSynTree', @FViewSynTree, true);
+  cfgFile.Asoc_Str('language'   , @language, ComboBox1, 'en - English');
   //Configuraciones del Editor
   fcEditor.Iniciar('Edit', cfgFile);
+  //COnfiguracuón de Vista
+  cfgFile.Asoc_Enum('viewMode',  @viewMode  , SizeOf(TTreeViewMode), 0);
   //Configuraciones de Ensamblador
   cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu, chkIncHeadMpu, false);
   cfgFile.Asoc_Bol('IncDecVar' , @IncVarDec , chkIncDecVar , true);
   cfgFile.Asoc_Enum('VarDecType',@VarDecType, Sizeof(TVarDecType), RadioGroup2, 1);
   cfgFile.Asoc_Bol('IncAddress', @IncAddress, chkIncAddress, true);
   cfgFile.Asoc_Bol('IncComment', @IncComment, chkIncComment, false);
+  cfgFile.Asoc_Bol('ExcUnused' , @ExcUnused , chkExcUnus, false);
   //Configuraciones de salida
   cfgFile.Asoc_Enum('OptimLev',@OptimLev, Sizeof(TOptimLev), grpOptimLev, 1);
   //////////////////////////////////////////////////
@@ -131,6 +148,7 @@ begin
   if not cfgFile.FileToProperties then begin
     MsgErr(cfgFile.MsjErr);
   end;
+  chkIncDecVarChange(self);   //para actualizar
 end;
 procedure TConfig.FormShow(Sender: TObject);
 begin

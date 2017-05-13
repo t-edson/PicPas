@@ -350,7 +350,6 @@ object frmPrincipal: TfrmPrincipal
       end    
       item
         Command = ecInsertLine
-        ShortCut = 16462
       end    
       item
         Command = ecDeleteWord
@@ -673,8 +672,8 @@ object frmPrincipal: TfrmPrincipal
     Align = alNone
   end
   inline fraEditView1: TfraEditView
-    Left = 232
-    Top = 97
+    Left = 200
+    Top = 128
     TabOrder = 7
   end
   object ImgActions16: TImageList

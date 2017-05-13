@@ -4,11 +4,8 @@ interface
 uses
   Classes, SysUtils, FileUtil, TreeFilterEdit, Forms, Controls, StdCtrls,
   ComCtrls, Menus, ActnList, ExtCtrls, ComboEx, XpresElementsPIC, Globales,
-  FormElemProperty, XpresParserPIC, MisUtils, XpresBas;
+  FormElemProperty, XpresParserPIC, FormConfig, MisUtils;
 type
-  TTreeViewMode = (vmGroups,   //Muestra por grupos
-                   vmDeclar    //Muestra en el orden de declaración
-                   );
   { TfraSyntaxTree }
   TfraSyntaxTree = class(TFrame)
     acGenRefres: TAction;
@@ -16,12 +13,18 @@ type
     acGenProp: TAction;
     acGenViewGr: TAction;
     acGenViewDec: TAction;
+    acGenExpAll: TAction;
     ActionList1: TActionList;
     ComboBoxEx1: TComboBoxEx;
     ImageList1: TImageList;
     Label1: TLabel;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
+    MenuItem3: TMenuItem;
+    MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
+    MenuItem6: TMenuItem;
+    MenuItem7: TMenuItem;
     mnGoTo: TMenuItem;
     mnRefresh: TMenuItem;
     mnProper: TMenuItem;
@@ -33,6 +36,7 @@ type
     PopupFrame: TPopupMenu;
     TreeFilterEdit1: TTreeFilterEdit;
     TreeView1: TTreeView;
+    procedure acGenExpAllExecute(Sender: TObject);
     procedure acGenGoToExecute(Sender: TObject);
     procedure acGenRefresExecute(Sender: TObject);
     procedure acGenPropExecute(Sender: TObject);
@@ -42,12 +46,13 @@ type
     procedure TreeView1DblClick(Sender: TObject);
     procedure TreeView1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure TreeView1SelectionChanged(Sender: TObject);
   private
     syntaxTree: TXpTreeElements;
-    viewMode: TTreeViewMode;
     function AddNodeTo(nodParent: TTreeNode; elem: TxpElement): TTreeNode;
-    procedure RefreshByDeclar;
-    procedure RefreshByGroups;
+    procedure frmElemPropertyExplore(elem: TxpElement);
+    procedure RefreshByDeclar(nodMain: TTreeNode; curEle: TxpElement);
+    procedure RefreshByGroups(nodMain: TTreeNode; curEle: TxpElement);
     function SelectedIsMain: boolean;
     function SelectedIsGroup: boolean;
     function SelectedIsElement: boolean;
@@ -55,7 +60,7 @@ type
     OnSelectElemen: procedure(var elem: TxpElement) of object;
     procedure Init(syntaxTree0: TXpTreeElements);
     procedure Refresh;
-    procedure SetLanguage;
+    procedure SetLanguage(idLang: string);
   end;
 
 implementation
@@ -68,9 +73,10 @@ var
   TIT_OTHER: String;
 
 { TfraSyntaxTree }
-procedure TfraSyntaxTree.SetLanguage;
+procedure TfraSyntaxTree.SetLanguage(idLang: string);
 {Fija el lenguaje de acuerdo al valor de Globales.curLang}
 begin
+  curLang := idLang;
   TIT_MAIN := trans('Program','Programa');
   TIT_UNIT := trans('Units','Unidades');
   TIT_CONS := trans('Constants','Constantes');
@@ -78,13 +84,14 @@ begin
   TIT_FUNC := trans('Functions','Funciones');
   TIT_OTHER:= trans('Others','Otros');
   Label1.Caption := Trans('Code Explorer', 'Explorador de Código');
+  Refresh;
 end;
 procedure TfraSyntaxTree.Init(syntaxTree0: TXpTreeElements);
 begin
   syntaxTree := syntaxTree0;
   TreeView1.ReadOnly := true;
-  viewMode := vmGroups;
-  SetLanguage;
+  frmElemProperty.OnExplore := @frmElemPropertyExplore;
+  SetLanguage('en');   //Inicia idioma
 end;
 function TfraSyntaxTree.AddNodeTo(nodParent: TTreeNode; elem: TxpElement): TTreeNode;
 {Agrega un elemento a un noco.}
@@ -114,16 +121,15 @@ begin
   nod.Data := elem;
   Result := nod;
 end;
-procedure TfraSyntaxTree.RefreshByGroups;
-var
-  elem, elFun, elUni: TxpElement;
-  nodMain, nodVar, nodOtr, nodFun, nodCte, nodUni, nodEleUni, nodEleFun: TTreeNode;
+procedure TfraSyntaxTree.frmElemPropertyExplore(elem: TxpElement);
 begin
-  TreeView1.Items.BeginUpdate;
-  TreeView1.Items.Clear;
-  nodMain := TreeView1.Items.AddChild(nil, TIT_MAIN);
-  nodMain.ImageIndex := 1;
-  nodMain.SelectedIndex := 1;
+  acGenGoToExecute(self);
+end;
+procedure TfraSyntaxTree.RefreshByGroups(nodMain: TTreeNode; curEle: TxpElement);
+var
+  elem, elFun: TxpElement;
+  nodVar, nodOtr, nodFun, nodCte, nodUni, nodEleUni, nodEleFun: TTreeNode;
+begin
   //Agrega grupos
   nodUni := nil;
   nodVar := nil;
@@ -131,7 +137,7 @@ begin
   nodFun := nil;
   nodOtr := nil;  //por defecto
   //Agrega elementos
-  for elem in syntaxTree.main.elements do begin
+  for elem in curEle.elements do begin
     if elem is TxpEleUnit then begin
       if noduni = nil then begin
         nodUni := TreeView1.Items.AddChild(nodMain, TIT_UNIT);
@@ -140,9 +146,8 @@ begin
       end;
       nodEleUni := AddNodeTo(nodUni, elem);
       //Agrega los elementos de la unidad
-      for elUni in elem.elements do begin
-        AddNodeTo(nodEleUni, elUni);
-      end;
+      RefreshByDeclar(nodEleUni, elem);  //No agrupa
+      nodEleUni.Expanded := false;
     end else if elem is TxpEleCon then begin  //constante
       if nodCte= nil then begin
         nodCte := TreeView1.Items.AddChild(nodMain, TIT_CONS);
@@ -188,22 +193,20 @@ begin
   if nodVar<>nil then nodVar.Expanded := true;
   if nodFun<>nil then nodFun.Expanded := true;
   if nodOtr<>nil then nodOtr.Expanded := true;
-  TreeView1.Items.EndUpdate;
 end;
-procedure TfraSyntaxTree.RefreshByDeclar;
+procedure TfraSyntaxTree.RefreshByDeclar(nodMain: TTreeNode; curEle: TxpElement);
 var
   elem, elem2: TxpElement;
-  nodMain, nodElem: TTreeNode;
+  nodElem: TTreeNode;
 begin
-  TreeView1.Items.BeginUpdate;
-  TreeView1.Items.Clear;
-  nodMain := TreeView1.Items.AddChild(nil, TIT_MAIN);
-  nodMain.ImageIndex := 1;
-  nodMain.SelectedIndex := 1;
   //Agrega elementos
-  for elem in syntaxTree.main.elements do begin
+  for elem in curEle.elements do begin
       nodElem := AddNodeTo(nodMain, elem);
-      if elem.elements<>nil then begin
+      if elem is TxpEleUnit then begin
+        //Es una unidad
+        RefreshByDeclar(nodElem, elem);  //Llamada recursiva
+        nodElem.Expanded := false;
+      end else if elem.elements<>nil then begin
         //Tiene sus propios elementos
         for elem2 in elem.elements do begin
           AddNodeTo(nodElem, elem2);
@@ -211,12 +214,31 @@ begin
       end;
   end;
   nodMain.Expanded := true;
-  TreeView1.Items.EndUpdate;
 end;
 procedure TfraSyntaxTree.Refresh;
+var
+  nodMain: TTreeNode;
 begin
-  if viewMode = vmGroups then RefreshByGroups;
-  if viewMode = vmDeclar then RefreshByDeclar;
+  case Config.viewMode of
+  vmGroups: begin
+    TreeView1.Items.BeginUpdate;
+    TreeView1.Items.Clear;
+    nodMain := TreeView1.Items.AddChild(nil, TIT_MAIN);
+    nodMain.ImageIndex := 1;
+    nodMain.SelectedIndex := 1;
+    RefreshByGroups(nodMain, syntaxTree.main);
+    TreeView1.Items.EndUpdate;
+  end;
+  vmDeclar: begin
+    TreeView1.Items.BeginUpdate;
+    TreeView1.Items.Clear;
+    nodMain := TreeView1.Items.AddChild(nil, TIT_MAIN);
+    nodMain.ImageIndex := 1;
+    nodMain.SelectedIndex := 1;
+    RefreshByDeclar(nodMain, syntaxTree.main);
+    TreeView1.Items.EndUpdate;
+  end;
+  end;
 end;
 function TfraSyntaxTree.SelectedIsMain: boolean;
 //Indica si el nodo seleccionado es el nodo raiz
@@ -228,7 +250,7 @@ end;
 function TfraSyntaxTree.SelectedIsGroup: boolean;
 begin
   if TreeView1.Selected = nil then exit(false);
-  if (viewMode = vmGroups) and (TreeView1.Selected.Level = 1) then begin
+  if (Config.viewMode = vmGroups) and (TreeView1.Selected.Level = 1) then begin
     exit(true);
   end;
   exit(false);
@@ -240,7 +262,7 @@ var
 begin
   if TreeView1.Selected = nil then exit(false);
   nod := TreeView1.Selected;
-  if viewMode = vmGroups  then begin
+  if Config.viewMode = vmGroups  then begin
     if nod.Level = 2 then begin
       //Es esta vista, todos los del segucdo nivel deben ser elementos.
       exit(true);
@@ -252,7 +274,7 @@ begin
       exit(true);
     end;
   end;
-  if viewMode = vmDeclar then begin
+  if Config.viewMode = vmDeclar then begin
     //En modo de declaraciones, es más fácil. Todos son elementos.
     if nod.Level >= 1 then exit(true);
   end;
@@ -277,6 +299,19 @@ begin
     end;
   end;
 end;
+procedure TfraSyntaxTree.TreeView1SelectionChanged(Sender: TObject);
+var
+  elem: TxpElement;
+begin
+  if not frmElemProperty.Visible then exit;
+  if TreeView1.Selected = nil then exit;
+  if TreeView1.Selected.Data = nil then begin
+    frmElemProperty.Clear;
+    exit;
+  end;
+  elem := TxpElement(TreeView1.Selected.Data);
+  frmElemProperty.Exec(elem);
+end;
 procedure TfraSyntaxTree.TreeView1DblClick(Sender: TObject);
 begin
   acGenGoToExecute(self);
@@ -284,8 +319,8 @@ end;
 procedure TfraSyntaxTree.ComboBoxEx1Change(Sender: TObject);
 begin
   case ComboBoxEx1.ItemIndex of
-  0: viewMode := vmGroups;
-  1: viewMode := vmDeclar;
+  0: Config.viewMode := vmGroups;
+  1: Config.viewMode := vmDeclar;
   end;
   Refresh;
 end;
@@ -303,61 +338,34 @@ begin
     if OnSelectElemen <> nil  then OnSelectElemen(elem);
   end;
 end;
+procedure TfraSyntaxTree.acGenExpAllExecute(Sender: TObject);
+var
+  i: Integer;
+begin
+  for i := 0 to TreeView1.Items.Count - 1 do begin
+    TreeView1.Items[i].Expanded := true;
+  end;
+end;
 procedure TfraSyntaxTree.acGenPropExecute(Sender: TObject);
 var
   elem: TxpElement;
-  fun: TxpEleFun;
-  xvar: TxpEleVar;
-  cons: TxpEleCon;
-  tmp: String;
 begin
   if TreeView1.Selected = nil then exit;
   if TreeView1.Selected.Data = nil then exit;
   elem := TxpElement(TreeView1.Selected.Data);
-  tmp := '';
-  if elem is TxpEleCon then begin
-    cons := TxpEleCon(elem);
-    tmp := 'Nombre: ' + elem.name + LineEnding +
-           'Tipo: ' + elem.typ.name + LineEnding +
-           'Ubicación: ' + elem.srcDec.Fil + ':(' + IntToStr(elem.srcDec.Row) + ',' +
-                                             IntToStr(elem.srcDec.Col)+')' + LineEnding +
-           'Num.Llamadas: ' + IntToStr(cons.nCalled);
-  end;
-  if elem is TxpEleVar then begin
-    xvar := TxpEleVar(elem);
-    tmp := 'Nombre: ' + elem.name + LineEnding +
-           'Tipo: ' + elem.typ.name + LineEnding +
-           'Ubicación: ' + elem.srcDec.Fil + ':(' + IntToStr(elem.srcDec.Row) + ',' +
-                                             IntToStr(elem.srcDec.Col)+')' + LineEnding +
-           'Direcc. Solicitada: ' + IntToStr(xvar.solAdr) + ':' + IntToStr(xvar.solBit) + LineEnding +
-           'Direcc. Asignada: ' + xvar.AddrString + LineEnding +
-           'Num.Llamadas: ' + IntToStr(xvar.nCalled) ;
-  end;
-  if elem is TxpEleFun then begin
-    fun := TxpEleFun(elem);
-    tmp := 'Nombre: ' + elem.name + LineEnding +
-           'Tipo: ' + elem.typ.name + LineEnding +
-           'Ubicación: ' + fun.srcDec.Fil + ':(' + IntToStr(fun.srcDec.Row) + ',' +
-                                             IntToStr(fun.srcDec.Col)+')' + LineEnding +
-           'Dirección: $' + IntToHex(fun.adrr, 3) + LineEnding +
-           'Num.Llamadas: ' + IntToStr(fun.nCalled) + lineending +
-           'Tamaño: ' + IntToStr(fun.srcSize);
-  end;
-  if tmp<>'' then begin
-    frmElemProperty.Memo1.Text := tmp;
-    frmElemProperty.ShowModal;
-  end;
+  frmElemProperty.Exec(elem);
+  frmElemProperty.Show;
 end;
 procedure TfraSyntaxTree.acGenViewGrExecute(Sender: TObject);
 {Muestra elementos por grupos}
 begin
-  viewMode := vmGroups;
+  Config.viewMode := vmGroups;
   Refresh;
 end;
 procedure TfraSyntaxTree.acGenViewDecExecute(Sender: TObject);
 {Muestra elementos por declaración}
 begin
-  viewMode := vmDeclar;
+  Config.viewMode := vmDeclar;
   Refresh;
 end;
 

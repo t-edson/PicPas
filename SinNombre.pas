@@ -1,24 +1,22 @@
 {$PROCESSOR PIC16F84}
 {$FREQUENCY 8Mhz}
-program LCD8bit;
-uses PIC16F84A; 
+program LCD8bit; 
+uses PIC16F84A;  
 var
-  LCDData : byte absolute PORTB;       // 8 BIT DATA BUS.
-  RS      : boolean absolute PORTA.0;  // SELECT REGISTER.
-  EN      : boolean absolute PORTA.1;  // ENABLE STARTS DATA READ/WRITE.
-  Counter : byte;
-procedure proc1;
-var
-aa: byte;
+  pin1	: bit absolute PORTB.1;
+  pin2	: bit absolute $0.0;
+var 
+  n: byte;
 begin
-  
-end; 
-var n: byte;
-begin
-  while true do
-  begin
+  while true do begin
 	  n  := 8;
-    chr(n + ord('0')); 
   end;
+//  SetAsOutput(pin); 
+  pin1 := 1;
+	mapVarTo(pin2, pin1);
+  pin2 := 1;
+  SetAsInput(pin1);
+  SetAsInput(pin2);
 end.
+
 ///***************************************************************************//

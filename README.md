@@ -1,8 +1,8 @@
-PicPas 0.6.1
+PicPas 0.6.2
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas-768x523.png "Título de la imagen")
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/Sin-título.png "Título de la imagen")
 
 NOTE: This compiler is still in beta phase and has limited functionality.
 
@@ -12,7 +12,7 @@ No additional libraries or software required to compile. PicPas generates the *.
 
 PicPas works with a simplified version of the Pascal language, that has been adapted to work with limited resources small devices.
 
-Currently, it only supports types bit, byte, boolean and word (limited support).
+Currently, it only supports the follwing types bit, byte, char, boolean and word (limited support).
 
 It includes a simple IDE to facilitate the development of programs.
 

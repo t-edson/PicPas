@@ -160,6 +160,7 @@
         <Filename Value="FormElemProperty.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmElemProperty"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit16>
     </Units>

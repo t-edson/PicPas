@@ -119,6 +119,9 @@ type
       procedure fun_Ord(fun: TxpEleFun);
       procedure fun_Chr(fun: TxpEleFun);
       procedure fun_Bit(fun: TxpEleFun);
+      procedure fun_SetAsInput(fun: TxpEleFun);
+      procedure fun_SetAsOutput(fun: TxpEleFun);
+      procedure fun_MapVarTo(fun: TxpEleFun);
     protected
       procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
@@ -1998,6 +2001,7 @@ begin
     GenError('Cannot increase an expression.'); exit;
   end;
   end;
+  res.typ := typNull;  //No es función
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
 end;
@@ -2085,7 +2089,7 @@ begin
   coExpres: begin  //se asume que ya está en (w)
     if res.typ = typByte then begin
       //Es la misma expresión, solo que ahora es Char.
-      res.typ := typChar; //No se puede usar SetResultExpres_char, porque no hya p1 y p2;
+      res.typ := typChar; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
     end else begin
       GenError('Cannot convert to char.'); exit;
     end;
@@ -2113,7 +2117,8 @@ begin
   coVariab: begin
     if res.typ = typByte then begin
       //Se asumirá que cualuier valor diferente de cero, devuelve 1
-      SetResultExpres_bit(true);
+      res.typ := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
+      res.catOp := coExpres;
       SaveW(OLD_W); if HayError then exit;  //Va a usar W
       _MOVF(res.offs, toW);   //el resultado aparecerá en Z, invertido
       RestoreW(OLD_W);   ///ERROR, modifica Z otra vez
@@ -2123,7 +2128,7 @@ begin
   end;
   coExpres: begin  //se asume que ya está en (w)
     if res.typ = typByte then begin
-      SetResultExpres_bit(true);
+      res.typ := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
       _ADDLW(0);   //el resultado aparecerá en Z, invertido
     end else begin
       GenError('Cannot convert to bit.'); exit;
@@ -2132,7 +2137,93 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
+procedure TGenCod.fun_SetAsInput(fun: TxpEleFun);
+begin
+  if not CaptureTok('(') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if HayError then exit;   //aborta
+  case res.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    GenError('PORT or BIT variable expected.'); exit;
+  end;
+  coVariab: begin
+    if res.typ = typByte then begin
+      //Se asume que será algo como PORTA, PORTB, ...
+      _MOVLW($FF);   //todos como entrads
+      _BANKSEL(1);   //los registros TRIS, están en el banco 1
+      _MOVWF(res.offs); //escribe en TRIS
+    end else if res.typ = typBit then begin
+      //Se asume que será algo como PORTA.0, PORTB.0, ...
+      _BANKSEL(1);   //los registros TRIS, están en el banco 1
+      _BSF(res.offs, res.bit); //escribe en TRIS
+    end else begin
+      GenError('Invalid type.'); exit;
+    end;
+    res.typ := typNull;  //No es función así que no es necesario fijar el resultado
+  end;
+  coExpres: begin  //se asume que ya está en (w)
+    GenError('PORT variable expected.'); exit;
+  end;
+  end;
+  if not CaptureTok(')') then exit;
+end;
+procedure TGenCod.fun_SetAsOutput(fun: TxpEleFun);
+begin
+  if not CaptureTok('(') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if HayError then exit;   //aborta
+  case res.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    GenError('PORT variable expected.'); exit;
+  end;
+  coVariab: begin
+    if res.typ = typByte then begin
+      //Se asume que será algo como PORTA, PORTB, ...
+      _BANKSEL(1);   //los registros TRIS, están en el banco 1
+      _CLRF(res.offs); //escribe en TRIS
+    end else if res.typ = typBit then begin
+      //Se asume que será algo como PORTA.0, PORTB.0, ...
+      _BANKSEL(1);   //los registros TRIS, están en el banco 1
+      _BCF(res.offs, res.bit); //escribe en TRIS
+    end else begin
+      GenError('Invalid type.'); exit;
+    end;
+    res.typ := typNull;  //No es función así que no es necesario fijar el resultado
+  end;
+  coExpres: begin  //se asume que ya está en (w)
+    GenError('PORT variable expected.'); exit;
+  end;
+  end;
+  if not CaptureTok(')') then exit;
+end;
+procedure TGenCod.fun_MapVarTo(fun: TxpEleFun);
+var
+  var1: TOperand;
+begin
+  if not CaptureTok('(') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if res.catOp <> coVariab then begin
+    GenError('Variable expected.');
+    exit;
+  end;
+  var1 := res;  //Guarda
+  if not CaptureTok(',') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if res.catOp <> coVariab then begin
+    GenError('Variable expected.');
+    exit;
+  end;
+  //Tiene los operandos en var1 y Res.
+  //Mapea var1, para que esté en res
+  var1.rVar.adrBit.offs := res.rVar.adrBit.offs;
+  var1.rVar.adrBit.bit := res.rVar.adrBit.bit;
 
+  var1.rVar.adrByte0.offs := res.rVar.adrByte0.offs;
+  var1.rVar.adrByte1.offs := res.rVar.adrByte1.offs;
+
+  res.typ := typNull;
+  if not CaptureTok(')') then exit;
+end;
 procedure TGenCod.StartSyntax;
 //Se ejecuta solo una vez al inicio
 begin
@@ -2169,7 +2260,8 @@ begin
   //tipos predefinidos
   xLex.AddIdentSpecList('bit boolean byte word char', tnType);
   //funciones del sistema
-  xLex.AddIdentSpecList('putchar delay_ms Inc Dec Ord Chr', tnSysFunct);
+  xLex.AddIdentSpecList('delay_ms Inc Dec Ord Chr', tnSysFunct);
+  xLex.AddIdentSpecList('SetAsInput SetAsOutput MapVarTo', tnSysFunct);
   //símbolos especiales
   xLex.AddSymbSpec('+',  tnOperator);
   xLex.AddSymbSpec('-',  tnOperator);
@@ -2332,14 +2424,17 @@ var
 begin
   //////// Funciones del sistema ////////////
   {Notar que las funciones del sistema no crean espacios de nombres.}
-  f := CreateSysFunction('delay_ms', typByte, @fun_delay_ms);
+  f := CreateSysFunction('delay_ms', @fun_delay_ms);
   f.adrr:=$0;
   f.compile := @codif_delay_ms;  //rutina de compilación
-  f := CreateSysFunction('Inc', typByte, @fun_Inc);
-  f := CreateSysFunction('Dec', typByte, @fun_Dec);
-  f := CreateSysFunction('Ord', typByte, @fun_Ord);
-  f := CreateSysFunction('Chr', typByte, @fun_Chr);
-  f := CreateSysFunction('Bit', typByte, @fun_Bit);
+  f := CreateSysFunction('Inc', @fun_Inc);
+  f := CreateSysFunction('Dec', @fun_Dec);
+  f := CreateSysFunction('Ord', @fun_Ord);
+  f := CreateSysFunction('Chr', @fun_Chr);
+  f := CreateSysFunction('Bit', @fun_Bit);
+  f := CreateSysFunction('SetAsInput', @fun_SetAsInput);
+  f := CreateSysFunction('SetAsOutput', @fun_SetAsOutput);
+  f := CreateSysFunction('MapVarTo', @fun_MapVarTo);
 end;
 procedure SetLanguage(lang: string);
 begin

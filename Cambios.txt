@@ -1,13 +1,21 @@
-PicPas 0.6.1
+PicPas 0.6.2
 ============
-Se corrige un error en la actualización del nombre ed archivo, cuando se abre uno nuevo.
-Se implementa el tipo char, y las operaciones de asignación, y comparación.
-Se implementan las funciones de sistemas Ord() y Chr() y bit().
-Se crean los operadores desplazamiento >> y << y se implementan parcialmente
-Se activa la opción de mostrar la posición del error o advertencia, cuando se hace doble
-click en el panel de mensajes.
-Se mejora identificación de elementos, en el explorador de código, para cuando se busca
-la declaración en el editor.
+Se define la combinación <Ctrl>+<delete> para borrrar la palabra actual.
+Se activa el menú de archivos recientes, para cuando se abre nuevos archivos.
+Se activa la compilación independiente de unidades.
+Se implementa la declaración de procedimientos en las unidades.
+Se implementa mayor nivel de detalle para ver a las unidades en el Explorador de Código.
+Se habilita el guardar el modo de vista del Explorador de código.
+Se crea la opción de configuración "Excluir variables no usadas.", para el código 
+ensamblador.
+Se mejora, considerablemente, la ventana de propiedades de elementos del explorador de 
+código.
+Se incluye el tratamiento de variables char en la rutina TxpEleVar.AbsAddr.
+Se agregan las funciones del sistema SetAsInput() y SetAsOutput().
+Se revisan las funciones de idioma, en el formualrio principal.
+Se crea la opción de configruación "Lenguaje", en la ventana "Config".
+Se modifica TfrmPrincipal.fraEditView1SelectEditor(), para evitar llamar a 
+ChangeAppearance(), cuando se cambia la selección del editor.
 
 PENDIENTES
 Revisar la implementación de las estructuras. 
@@ -28,6 +36,18 @@ SetResultExpres_bit(false);  //Fija resultado
 SaveW(reg); 
 ...  // se actualiza Z.
 RestoreW(reg); //<-Se pierde Z, si se restaura W.
+
+
+PicPas 0.6.1
+============
+Se corrige un error en la actualización del nombre ed archivo, cuando se abre uno nuevo.
+Se implementa el tipo char, y las operaciones de asignación, y comparación.
+Se implementan las funciones de sistemas Ord() y Chr() y bit().
+Se crean los operadores desplazamiento >> y << y se implementan parcialmente
+Se activa la opción de mostrar la posición del error o advertencia, cuando se hace doble
+click en el panel de mensajes.
+Se mejora identificación de elementos, en el explorador de código, para cuando se busca
+la declaración en el editor.
 
 
 PicPas 0.6.0

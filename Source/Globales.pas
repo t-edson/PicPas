@@ -25,13 +25,8 @@ var
    ActConsSeg  : Boolean;   //Activa consultas en segundo plano
 
 /////////////// Campos para manejo del diccionario //////////
-type
- TIdLang = (
-   l_en,  //inglés
-   l_es   //español
- );
 var
- curLang: TIdLang;  //identificador del lenguaje
+ curLang: string;  //identificador del lenguaje
 
 //type
 // TTranslation = record
@@ -52,8 +47,8 @@ implementation
 function Trans(const strEn, strEs: string): string;
 begin
   case curLang of
-  l_en: Result := strEn;
-  l_es: Result := strEs;
+  'en': Result := strEn;
+  'es': Result := strEs;
   else
     Result := strEn;
   end;

@@ -5,7 +5,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, LazUTF8, LazFileUtils, SynEdit, Forms, Controls,
   Graphics, Dialogs, ExtCtrls, LCLProc, Menus, LCLType, Globales, SynFacilUtils,
-  SynFacilCompletion, MisUtils, XpresBas, fgl, SynEditMiscClasses,
+  SynFacilCompletion, MisUtils, XpresBas, strutils, fgl, SynEditMiscClasses,
   SynEditKeyCmds, SynPluginMultiCaret;
 type
   {Clase derivada de "TSynFacilEditor". Se usa para asociar un SynEdit a un
@@ -109,7 +109,16 @@ type
     function SaveAsDialog: boolean;
     procedure CloseEditor;
     function CloseAll: boolean;
+  private  //Manejo de menús recientes
+    mnRecents   : TMenuItem;  //Menú de archivos recientes
+    RecentFiles : TStringList;  //Lista de archivos recientes
+    MaxRecents  : integer;    //Máxima cantidad de archivos recientes
+    procedure RecentClick(Sender: TObject);
+    procedure ActualMenusReciente(Sender: TObject);
+    procedure AgregArcReciente(arch: string);
   public //Inicialización
+    procedure InitMenuRecents(menRecents0: TMenuItem; RecentList: TStringList;
+      MaxRecents0: integer = 5);
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
     procedure SetLanguage(lang0: string);
@@ -499,18 +508,30 @@ begin
   //Configura PageControl
   ed.SynEdit.Parent := self;
   ed.SynEdit.Align := alClient;
-  //Configura el plegado con Alt+Shift+"-"
+  //Configura el borrado de la palabra actual
+  n := 46;
+  ed.SynEdit.Keystrokes.BeginUpdate;
+  ed.SynEdit.Keystrokes[n].Key := VK_DELETE;
+  ed.SynEdit.Keystrokes[n].Shift := [ssCtrl];
+  ed.SynEdit.Keystrokes[n].ShiftMask := [];
+  ed.SynEdit.Keystrokes.EndUpdate;
+  //Deshabilita Ctrl+N
+  n := ed.SynEdit.Keystrokes.FindCommand(ecInsertLine);
+  ed.SynEdit.Keystrokes[n].ShortCut := 0;   //Esto debe dehabilitarlo
   n := 84;
+  ed.SynEdit.Keystrokes.BeginUpdate;
   ed.SynEdit.Keystrokes[n].Key := VK_SUBTRACT;
   ed.SynEdit.Keystrokes[n].Shift := [ssShift,ssAlt];
   ed.SynEdit.Keystrokes[n].ShiftMask := [];
   ed.SynEdit.Keystrokes.EndUpdate;
   //Configura el desplegado con Alt+Shift+"+"
   n := 85;
+  ed.SynEdit.Keystrokes.BeginUpdate;
   ed.SynEdit.Keystrokes[n].Key := VK_ADD;
   ed.SynEdit.Keystrokes[n].Shift := [ssShift,ssAlt];
   ed.SynEdit.Keystrokes[n].ShiftMask := [];
   ed.SynEdit.Keystrokes.EndUpdate;
+
   //Configura múltiples cursores
   fMultiCaret := TSynPluginMultiCaret.Create(self);
   with fMultiCaret do begin
@@ -671,6 +692,7 @@ var
   ext: string;
 begin
   Result := true;   //por defecto
+  if SelectEditor(filename) then exit; //Ya estaba abierto
   ed := AddEdit('');   //Dispara OnSelecEditor
   if Pos(DirectorySeparator, fileName) = 0 then begin
     //Es ruta relativa, la vuelve abosulta
@@ -719,7 +741,6 @@ begin
     end;
   end;
 end;
-
 function TfraEditView.OpenDialog(filter: string): boolean;
 //Muestra el cuadro de diálogo para abrir un archivo. Si hay error devuelve FALSE.
 var arc0: string;
@@ -728,9 +749,11 @@ begin
   if not OpenDialog1.Execute then exit(true);    //se canceló
   arc0 := OpenDialog1.FileName;
   LoadFile(arc0);  //legalmente debería darle en UTF-8
+  AgregArcReciente(arc0);
   Result := true;   //sale sin incidencias
 end;
 procedure TfraEditView.SaveFile;
+//Guarda el editor actual
 begin
   if ActiveEditor=nil then exit;
   if ActiveEditor.NomArc='' then begin
@@ -739,12 +762,18 @@ begin
   end else begin
     ActiveEditor.SaveFile;
   end;
+  //Actualiza por si acaso, era un archivo nuevo
+  AgregArcReciente(ActiveEditor.NomArc);
 end;
 procedure TfraEditView.SaveAll;
 var
   i: Integer;
 begin
   for i:=0 to editors.Count-1 do begin
+    if editors[i].Modified then begin
+      //Actualiza por si acaso, era un archivo nuevo
+      AgregArcReciente(editors[i].NomArc);
+    end;
     editors[i].SaveFile;
   end;
 end;
@@ -773,7 +802,78 @@ begin
   end;
   exit(false);
 end;
+procedure TfraEditView.RecentClick(Sender: TObject);
+//Se selecciona un archivo de la lista de recientes
+begin
+  LoadFile(MidStr(TMenuItem(Sender).Caption,4,150));
+end;
+procedure TfraEditView.ActualMenusReciente(Sender: TObject);
+{Actualiza el menú de archivos recientes con la lista de los archivos abiertos
+recientemente. }
+var
+  i: Integer;
+begin
+  if mnRecents = nil then exit;
+  if RecentFiles = nil then exit;
+  //proteciión
+  if RecentFiles.Count = 0 then begin
+    mnRecents[0].Caption:=dic('No hay archivos');
+    mnRecents[0].Enabled:=false;
+    for i:= 1 to mnRecents.Count-1 do begin
+      mnRecents[i].Visible:=false;
+    end;
+    exit;
+  end;
+  //hace visible los ítems
+  mnRecents[0].Enabled:=true;
+  for i:= 0 to mnRecents.Count-1 do begin
+    if i<RecentFiles.Count then
+      mnRecents[i].Visible:=true
+    else
+      mnRecents[i].Visible:=false;
+  end;
+  //pone etiquetas a los menús, incluyendo un atajo numérico
+  for i:=0 to RecentFiles.Count-1 do begin
+    mnRecents[i].Caption := '&'+IntToStr(i+1)+' '+RecentFiles[i];
+  end;
+end;
+procedure TfraEditView.AgregArcReciente(arch: string);
+//Agrega el nombre de un archivo reciente
+var hay: integer; //bandera-índice
+    i: integer;
+begin
+  if RecentFiles = nil then exit;
+  //verifica si ya existe
+  hay := -1;   //valor inicial
+  for i:= 0 to RecentFiles.Count-1 do
+    if RecentFiles[i] = arch then hay := i;
+  if hay = -1 then  //no existe
+    RecentFiles.Insert(0,arch)  //agrega al inicio
+  else begin //ya existe
+    RecentFiles.Delete(hay);     //lo elimina
+    RecentFiles.Insert(0,arch);  //lo agrega al inicio
+  end;
+  while RecentFiles.Count>MaxRecents do  //mantiene tamaño máximo
+    RecentFiles.Delete(MaxRecents);
+end;
 //Inicialización
+procedure TfraEditView.InitMenuRecents(menRecents0: TMenuItem; RecentList: TStringList;
+      MaxRecents0: integer=5);
+//Configura un menú, con el historial de los archivos abiertos recientemente
+//"nRecents", es el número de archivos recientes que se guardará
+var
+  i: Integer;
+begin
+  mnRecents := menRecents0;
+  RecentFiles := RecentList;  //gaurda referencia a lista
+  MaxRecents := MaxRecents0;
+  //configura menú
+  mnRecents.Caption:= dic('&Recientes');
+  mnRecents.OnClick:=@ActualMenusReciente;
+  for i:= 1 to MaxRecents do begin
+    AddItemToMenu(mnRecents, '&'+IntToStr(i), @RecentClick);
+  end;
+end;
 constructor TfraEditView.Create(AOwner: TComponent);
 begin
   inherited;

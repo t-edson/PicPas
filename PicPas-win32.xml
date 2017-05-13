@@ -5,9 +5,10 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
+  <language Val="es - Español"/>
   <Edit>
-    <cTxtNor Val="0"/>
-    <cFonEdi Val="16777215"/>
+    <cTxtNor Val="12632256"/>
+    <cFonEdi Val="0"/>
     <cLinAct Val="65535"/>
     <cResPal Val="15780518"/>
     <VerBarDesV Val="True"/>
@@ -21,12 +22,19 @@
     <cTxtPan Val="0"/>
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
-    <recient Val=""/>
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.2\units\LCDconst.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.2\units\PIC16F84A.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.2\SinNombre.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.2\samples\LCD_test\LCD_test.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.2\temp\NewFile1.pas
+"/>
   </Edit>
+  <viewMode Val="0"/>
   <IncHeadMpu Val="False"/>
   <IncDecVar Val="True"/>
-  <VarDecType Val="1"/>
+  <VarDecType Val="0"/>
   <IncAddress Val="True"/>
   <IncComment Val="True"/>
+  <ExcUnused Val="True"/>
   <OptimLev Val="1"/>
 </CONFIG>

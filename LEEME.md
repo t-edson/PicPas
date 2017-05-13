@@ -12,7 +12,7 @@ No se requiere librerias ni programas adicionales para la compilación. PicPas g
 
 PicPas trabaja con una versión simplificada de Pascal, que ha sido adaptada para trabajar con dispositivos de recursos limitados. 
 
-Por el momento solo soporta los tipos bit, byte, boolean y word (soporte limitado). 
+Por el momento solo soporta los tipos bit, byte, char boolean y word (soporte limitado). 
 
 Incluye una pequeña IDE para facilitar el desarrollo de programas.
 

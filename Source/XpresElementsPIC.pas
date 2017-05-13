@@ -55,7 +55,7 @@ type
 
 var
   /////// Tipos de datos del lenguaje ////////////
-  typNull: TType;     //Tipo nulo (sin tipo)
+  typNull: TType;     //Tipo nulo (sin tipo) Usado para procedimientos
   typBit : TType;
   typBool: TType;     //Booleanos
   typByte: TType;     //número sin signo
@@ -145,6 +145,11 @@ type
     Absoluta. Si no se usan, se ponen en -1}
     solAdr : integer;    //dirección absoluta.
     solBit : shortint;   //posición del bit
+    {Bandera para indicar si la variable, ha sido declarada en la sección INTERFACE. Este
+    campo es úitl para cuando se procesan unidades.}
+    InInterface: boolean;
+    //Bandera para indicar si la variable, se está usando como parámetro
+    IsParameter: boolean;
     //Campos para guardar las direcciones físicas asignadas en RAM.
     adrBit : TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
     adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Char/Word
@@ -174,7 +179,7 @@ type
   public
     pars: array of TxpParFunc;  //parámetros de entrada
     //Direción física.
-    adrr: integer;     //Dirección física
+    adrr: integer;     //Dirección física, en donde se compila
     srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
                         porque el tamaño puede variar al reubicarse.}
     {Referencia a la función que implementa, la llamada a la función en ensambaldor.
@@ -184,12 +189,19 @@ type
     {Método que llama a una rutina que codificará la rutina ASM que implementa la función.
      La idea es que este campo solo se use para algunas funciones del sistema.}
     compile: TProcExecFunction;
+    {Bandera para indicar si la función, ha sido implementada. Este campo es util, para
+     cuando se usa FORWARD o cuando se compilan unidades.}
+    Implemented: boolean;
+    {Bandera para indicar si la función, ha sido declarada en la sección INTERFACE. Este
+    campo es úitl para cuando se procesan unidades.}
+    InInterface: boolean;
     ///////////////
     procedure ClearParams;
     procedure CreateParam(parName: string; typ0: ttype; pvar: TxpEleVar);
     function SameParams(Fun2: TxpEleFun): boolean;
     function ParamTypesList: string;
     function DuplicateIn(list: TxpElements): boolean; override;
+    procedure SetElementsUnused;
     constructor Create; override;
   end;
   TxpEleFuns = specialize TFPGObjectList<TxpEleFun>;
@@ -218,7 +230,6 @@ type
   buscar los nombres de los elementos, en una estructura en arbol}
   TXpTreeElements = class
   private
-    vars    : TxpEleVars;
     //variables de estado para la búsqueda con FindFirst() - FindNext()
     curFindName: string;
     curFindNode: TxpElement;
@@ -226,9 +237,12 @@ type
   public
     main    : TxpEleMain;  //nodo raiz
     curNode : TxpElement;  //referencia al nodo actual
+    AllVars    : TxpEleVars;
+    funcs   : TxpEleFuns;
     OnTreeChange: procedure of object;
     procedure Clear;
-    function AllVars: TxpEleVars;
+    procedure RefreshAllVars;
+    procedure RefreshAllFuncs;
     function CurNodeName: string;
     function LastNode: TxpElement;
     function BodyNode: TxpEleBody;
@@ -355,7 +369,7 @@ byte de menor peso.}
 begin
   if (typ = typBit) or (typ = typBool) then begin
     Result := adrBit.AbsAdrr;
-  end else if typ = typByte then begin
+  end else if (typ = typByte) or (typ = typChar) then begin
     Result := adrByte0.AbsAdrr;
   end else if typ = typWord then begin
     Result := adrByte0.AbsAdrr;
@@ -386,7 +400,7 @@ function TxpEleVar.AddrString: string;
 begin
   if (typ = typBit) or (typ = typBool) then begin
     Result := 'bnk'+ IntToStr(adrBit.bank) + ':$' + IntToHex(adrBit.offs, 3) + '.' + IntToStr(adrBit.bit);
-  end else if typ = typByte then begin
+  end else if (typ = typByte) or (typ = typChar) then begin
     Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
   end else if typ = typWord then begin
     Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
@@ -513,6 +527,20 @@ begin
   end;
   exit(false);
 end;
+procedure TxpEleFun.SetElementsUnused;
+{Marca todos sus elementos con "nCalled = 0". Se usa cuando se determina que una función
+no es usada.}
+var
+  elem: TxpElement;
+begin
+  if elements = nil then exit;  //No tiene
+  for elem in elements do begin
+    elem.nCalled := 0;
+    if elem is TxpEleVar then begin
+      TxpEleVar(elem).ResetAddress;
+    end;
+  end;
+end;
 constructor TxpEleFun.Create;
 begin
   elemType:=eltFunc;
@@ -533,9 +561,9 @@ begin
   main.elements.Clear;  //esto debe hacer un borrado recursivo
   curNode := main;      //retorna al nodo principal
 end;
-function TXpTreeElements.AllVars: TxpEleVars;
-{Devuelve una lista de todas las variables usadas, incluyendo las de las funciones y
- procedimientos.}
+procedure TXpTreeElements.RefreshAllVars;
+{Devuelve una lista de todas las variables del árbol de sintaxis, incluyendo las de las
+funciones y procedimientos.}
   procedure AddVars(nod: TxpElement);
   var
     ele : TxpElement;
@@ -543,7 +571,7 @@ function TXpTreeElements.AllVars: TxpEleVars;
     if nod.elements<>nil then begin
       for ele in nod.elements do begin
         if ele.elemType = eltVar then begin
-          vars.Add(TxpEleVar(ele));
+          AllVars.Add(TxpEleVar(ele));
         end else begin
           if ele.elements<>nil then
             AddVars(ele);  //recursivo
@@ -552,13 +580,30 @@ function TXpTreeElements.AllVars: TxpEleVars;
     end;
   end;
 begin
-  if vars = nil then begin  //debe estar creada la lista
-    vars := TxpEleVars.Create(false);
-  end else begin
-    vars.Clear;   //por si estaba llena
+  AllVars.Clear;   //por si estaba llena
+  AddVars(main);
+end;
+procedure TXpTreeElements.RefreshAllFuncs;
+{Actualiza una lista de todas las funciones del árbol de sintaxis, incluyendo las de las
+unidades.}
+  procedure AddFuncs(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      for ele in nod.elements do begin
+        if ele.elemType = eltFunc then begin
+          funcs.Add(TxpEleFun(ele));
+        end else begin
+          if ele.elements<>nil then
+            AddFuncs(ele);  //recursivo
+        end;
+      end;
+    end;
   end;
-  AddVars(curNode);
-  Result := vars;
+begin
+  funcs.Clear;   //por si estaba llena
+  AddFuncs(main);
 end;
 function TXpTreeElements.CurNodeName: string;
 {Devuelve el nombre del nodo actual}
@@ -737,12 +782,15 @@ begin
   main:= TxpEleMain.Create;  //No debería
   main.name := 'Main';
   main.elements := TxpElements.Create(true);  //debe tener lista
+  funcs := TxpEleFuns.Create(false);   //Crea lista
+  AllVars := TxpEleVars.Create(false);   //Crea lista
   curNode := main;  //empieza con el nodo principal como espacio de nombres actual
 end;
 destructor TXpTreeElements.Destroy;
 begin
   main.Destroy;
-  vars.Free;    //por si estaba creada
+  AllVars.Free;    //por si estaba creada
+  funcs.Free;
   inherited Destroy;
 end;
 end.
