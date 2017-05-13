@@ -5,6 +5,7 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
+  <language Val="en - English"/>
   <Edit>
     <cTxtNor Val="0"/>
     <cFonEdi Val="16777215"/>
@@ -23,10 +24,12 @@
     <TipLet Val="Courier New"/>
     <recient Val=""/>
   </Edit>
+  <viewMode Val="0"/>
   <IncHeadMpu Val="False"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>
   <IncAddress Val="True"/>
   <IncComment Val="False"/>
+  <ExcUnused Val="False"/>
   <OptimLev Val="1"/>
 </CONFIG>
