@@ -10,7 +10,7 @@ uses
   Classes, SysUtils, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
   ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
   SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
-  FormCodeExplorer, FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
+  FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
   FrameMessagesWin, XpresElementsPIC;
 type
   { TfrmPrincipal }
@@ -38,7 +38,6 @@ type
     acToolCompil: TAction;
     acToolPICExpl: TAction;
     acToolComEjec: TAction;
-    acToolCodExp: TAction;
     acViewToolbar: TAction;
     acViewMsgPan: TAction;
     ActionList: TActionList;
@@ -119,7 +118,6 @@ type
     procedure acEdiRedoExecute(Sender: TObject);
     procedure acEdiSelecAllExecute(Sender: TObject);
     procedure acEdiUndoExecute(Sender: TObject);
-    procedure acToolCodExpExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
@@ -145,6 +143,7 @@ type
     procedure ChangeAppearance;
     procedure fraEditView1SelectEditor;
     procedure fraMessagesDblClickMessage(const srcPos: TSrcPos);
+    procedure fraSynTreeOpenFile(filname: string);
     procedure fraSynTreeSelectElemen(var elem: TxpElement);
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
     procedure VerificarError;
@@ -161,7 +160,6 @@ implementation
 procedure TfrmPrincipal.SetLanguage(idLang: string);
 begin
   Config.SetLanguage(idLang);
-  frmCodeExplorer.SetLanguage(idLang);
   fraSynTree.SetLanguage(idLang);
   fraEditView1.SetLanguage(idLang);
   case lowerCase(idLang) of
@@ -219,8 +217,6 @@ begin
       acToolComEjec.Hint:='Compilar y Ejecutar';
       acToolPICExpl.Caption:='E&xplorador de PIC';
       acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
-      acToolCodExp.Caption:='Explorador de Co&digo';
-      acToolCodExp.Hint:='Abre el explorador de Código';
       acToolConfig.Caption:='Configuración';
       acToolConfig.Hint := 'Ver configuración';
     end;
@@ -276,8 +272,6 @@ begin
       acToolComEjec.Hint:='Compilar y Ejecutar';
       acToolPICExpl.Caption:='E&xplorador de PIC';
       acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
-      acToolCodExp.Caption:='Explorador de Co&digo';
-      acToolCodExp.Hint:='Abre el explorador de Código';
       acToolConfig.Caption:='Configuración';
       acToolConfig.Hint := 'Ver configuración';
     end;
@@ -335,8 +329,6 @@ begin
       acToolComEjec.Hint:='Compile and Execute';
       acToolPICExpl.Caption:='PIC E&xplorer';
       acToolPICExpl.Hint:='Open the PIC devices explorer';
-      acToolCodExp.Caption:='Co&de Explorer';
-      acToolCodExp.Hint:='Open the Code Explorer';
       acToolConfig.Caption := '&Settings';
       acToolConfig.Hint := 'Settings dialog';
     end;
@@ -345,6 +337,11 @@ end;
 procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
 begin
   fraEditView1.SelectOrLoad(elem.srcDec, false);
+end;
+procedure TfrmPrincipal.fraSynTreeOpenFile(filname: string);
+{El explorador de código, solicita abrir un archivo.}
+begin
+  fraEditView1.LoadFile(filname);
 end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
@@ -359,6 +356,7 @@ begin
   fraEditView1.OnSelectEditor := @fraEditView1SelectEditor;
   //COnfigura Árbol de sintaxis
   fraSynTree.OnSelectElemen := @fraSynTreeSelectElemen;
+  fraSynTree.OnOpenFile := @fraSynTreeOpenFile;
   //carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
@@ -382,10 +380,6 @@ begin
   Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
   fraEditView1.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
-  frmCodeExplorer.Init(cxp.TreeElems);  //inicia explorador de código
-  //carga archivo de ejemplo
-//  if FileExists('sample.pas') then fraEditView1.AddEdit('sample.pas');
-  if FileExists('SinNombre.pas') then fraEditView1.LoadFile('SinNombre.pas');
   ChangeAppearance;   //primera actualización
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
@@ -395,7 +389,11 @@ begin
     Hay := FindNext(SR) = 0;
   end;
   //Inicia encabezado
-  editChangeFileInform;
+//  editChangeFileInform;
+  //Carga último archivo
+  if Config.LoadLast then fraEditView1.LoadLastFileEdited;
+  //  if FileExists('sample.pas') then fraEditView1.AddEdit('sample.pas');
+//  if FileExists('SinNombre.pas') then fraEditView1.LoadFile('SinNombre.pas');
 end;
 procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
 //Se ha seleccionado un archivo de ejemplo.
@@ -422,6 +420,7 @@ begin
 end;
 procedure TfrmPrincipal.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
+  Config.SynTreeWidth := fraSynTree.Width;   //Guarda ancho
   Config.SaveToFile;  //guarda la configuración actual
 end;
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
@@ -504,6 +503,7 @@ begin
   end;
 
   fraSynTree.Visible := Config.ViewSynTree;
+  fraSynTree.Width := Config.SynTreeWidth;
   splSynTree.Visible := Config.ViewSynTree;
 
   StatusBar1.Visible := Config.ViewStatusbar;
@@ -536,12 +536,12 @@ procedure TfrmPrincipal.editChangeFileInform;
 var
   ed: TSynEditor;
 begin
+  ed := fraEditView1.ActiveEditor;
   if curProj= nil then begin
     //Modo de archivos. Actualiza nombre de archivo
     if fraEditView1.Count = 0 then begin
       Caption := NOM_PROG + ' - ' + VER_PROG  + ' - No files.';
     end else begin  //Hay varios
-      ed := fraEditView1.ActiveEditor;
       if ed.NomArc='' then
         Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.Caption
       else
@@ -550,6 +550,9 @@ begin
   end else begin
     //Hay un proyecto abierto
     Caption := NOM_PROG + ' - ' + VER_PROG  + ' - Project: ' + curProj.name;
+  end;
+  if (ed<>nil) and (ed.NomArc<>'') then begin
+     fraSynTree.LocateFile(ed.NomArc);
   end;
 end;
 /////////////////// Acciones de Archivo /////////////////////
@@ -682,11 +685,6 @@ end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin
   frmPICExplorer.Show;
-end;
-procedure TfrmPrincipal.acToolCodExpExecute(Sender: TObject);
-begin
-  frmCodeExplorer.Refresh;
-  frmCodeExplorer.Show;
 end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin

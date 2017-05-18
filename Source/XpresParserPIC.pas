@@ -43,13 +43,6 @@ public
   rVar : TxpEleVar;    //referencia a la variable, en caso de que sea variable
   Inverted: boolean; {Este campo se usa para cuando el operando es de tipo Bit o Boolean.
                       Indica que la lógica debe leerse de forma invertida.}
-  {---------------------------------------------------------
-  Estos campos describen al operando, independientemente de que se le encuentree
-  un tipo, válido. Si se le encuentra un tipo válido, se tendrá la referencia al tipo
-  en "typ", y allí se tendrán los campos que describirán cómo se debe tratar realmente
-  al operando. No tienen por qué coincidir con los campos equivalentes de "typ"}
-  catTyp: TCatType;  //Categoría de Tipo de dato.
-  size  : integer;   //Tamaño del operando en bytes.
   {---------------------------------------------------------}
   procedure Push; inline;  //pone el operador en la pila
   procedure Pop; inline;   //saca el operador en la pila
@@ -140,7 +133,6 @@ private
   procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
   procedure OperPre(var Op1: TOperand; opr: TxpOperator);
   procedure OperPost(var Op1: TOperand; opr: TxpOperator);
-  procedure Oper(var Op1: TOperand);
 public  //Referencias a los tipos predefinidos de tokens.
   tnEol     : integer;
   tnSymbol  : integer;
@@ -169,6 +161,13 @@ public  //Referencias a los tipos predefinidos de tokens.
   tkBoolean : TSynHighlighterAttributes;
   tkSysFunct: TSynHighlighterAttributes;
   tkType    : TSynHighlighterAttributes;
+public //Tipos adicionales de tokens
+  tnStruct   : integer;
+  tnDirective: integer;
+  tnAsm      : integer;
+  tnExpDelim : integer;
+  tnBlkDelim : integer;
+  tnOthers   : integer;
 public
   xLex   : TSynFacilSyn; //resaltador - lexer
   cIn    : TContexts;   //entrada de datos
@@ -234,11 +233,11 @@ end;
 function TCompilerBase.EOBlock: boolean; inline;
 //Indica si se ha llegado el final de un bloque
 begin
-  Result := false;
+  Result := cIn.tokType = tnBlkDelim;
   {No está implementado aquí, pero en la práctica puede ser conveniente definir un tipo de token
-   como "tkBlkDelim", para mejorar el tiempo de respuesta del procesamiento, de modo que la
+   como "tnBlkDelim", para mejorar el tiempo de respuesta del procesamiento, de modo que la
    condición sería:
-  Result := cIn.tokType = tkBlkDelim;}
+  Result := cIn.tokType = tnBlkDelim;}
 end;
 procedure TCompilerBase.SkipWhites;
 {Se crea como rutina aparte, para facilitar el poder cambiar el comportamiento y
@@ -392,7 +391,6 @@ end;
 procedure TCompilerBase.CaptureParams;
 //Lee los parámetros de una función en la función interna funcs[0]
 begin
-  SkipWhites;
   func0.ClearParams;
   if EOBlock or EOExpres then begin
     //no tiene parámetros
@@ -420,7 +418,8 @@ begin
 end;
 procedure TCompilerBase.CaptureParamsFinal(fun: TxpEleFun);
 {Captura los parámetros asignándolos a las variables de la función que representan a los
-parámetros.}
+parámetros. No hace falta verificar, no debería dar error, porque ya se verificó con
+CaptureParams. }
 var
   i: Integer;
   par: TxpParFunc;
@@ -439,12 +438,18 @@ begin
       SkipWhites;
     end;
     //Genera código para la asignación
-    Op1.catOp := coVariab;  //configura el operando como variable
-    Op1.rVar  := par.pvar;
-    if FirstPass then Inc(par.pvar.nCalled);   //se está usando
-    Op1.typ   := par.pvar.typ;  //necesario para "FindOperator"
-    op := Op1.FindOperator(':=');  //busca la operación
-    Oper(Op1, op, res);   //Codifica la asignación
+    if par.pvar.IsRegister then begin
+      {Cuando es parámetro registro, no se asigna, se deja en el registro(s) de
+       trabajo.}
+      res.Push;
+    end else begin
+      Op1.catOp := coVariab;  //configura el operando como variable
+      Op1.rVar  := par.pvar;
+      if FirstPass then Inc(par.pvar.nCalled);   //se está usando
+      Op1.typ   := par.pvar.typ;  //necesario para "FindOperator"
+      op := Op1.FindOperator(':=');  //busca la operación
+      Oper(Op1, op, res);   //Codifica la asignación
+    end;
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -535,10 +540,17 @@ begin
       //es una variable
       xvar := TxpEleVar(ele);
       if FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
-      Result.catOp:=coVariab;    //variable
-      Result.typ:=xvar.typ;
-      Result.catTyp:= xvar.typ.cat;  //categoría
-      Result.rVar:=xvar;   //guarda referencia a la variable
+      if xvar.IsRegister then begin
+        //Es una variables REGISTER
+        Result.catOp:=coExpres;
+        Result.typ:=xvar.typ;
+        //Faltaría asegurarse de que los registros estén disponibles
+        Result.typ.OperationPop(@Result);   //OperationPop,Realmente llamrse "DefineRegister"
+      end else begin
+        Result.catOp:=coVariab;    //variable
+        Result.typ:=xvar.typ;
+        Result.rVar:=xvar;   //guarda referencia a la variable
+      end;
       Result.txt:= cIn.tok;     //toma el texto
       cIn.Next;    //Pasa al siguiente
     end else if ele.elemType = eltCons then begin  //es constante
@@ -547,7 +559,6 @@ begin
       if FirstPass then Inc(xcon.nCalled);  //lleva la cuenta
       Result.catOp:=coConst;    //constante
       Result.typ:=xcon.typ;
-      Result.catTyp:= xcon.typ.cat;  //categoría
       Result.GetConsValFrom(xcon);  //lee valor
       Result.txt:= cIn.tok;     //toma el texto
       cIn.Next;    //Pasa al siguiente
@@ -555,6 +566,7 @@ begin
       {Se sabe que es función, pero no se tiene la función exacta porque puede haber
        versiones, sobrecargadas de la misma función.}
       cIn.Next;    //Toma identificador
+      SkipWhites;  //QUita posibles blancos
       posPar := cIn.PosAct;  //guarda porque va a pasar otra vez por aquí
       posFlash := pic.iFlash;  //guarda posición, antes del c´doigo de evaluación
       CaptureParams;  //primero lee parámetros
@@ -725,26 +737,26 @@ begin
    //Completa campos de "res", si es necesario
    {$IFDEF LogExpres} res.txt := '%';{$ENDIF}   //indica que es expresión
 end;
-procedure TCompilerBase.Oper(var Op1: TOperand);
-{Ejecuta una operación con un solo operando, que puede ser una constante, una variable
-o la llamada a una función.
-El resultado debe devolverse en "res".
-La implementación debe decidir, qué hacer cuando se encuentra un solo operando como
-expresión. En algunos casos puede ser inválido.
-}
-begin
-  {$IFDEF LogExpres}
-  debugln(space(2*ExprLevel)+' Eval('+Op1.txt+')');
-  {$ENDIF}
-  ClearError;
-  {Llama al evento asociado con p1 como operando. }
-  p1 := @Op1; {Solo hay un parámetro}
-  {Ejecuta la operación. El resultado debe dejarse en "res"}
-  if Op1.typ.OperationLoad <> nil then Op1.typ.OperationLoad();
-  //Completa campos de "res", si es necesario
-//   res.txt := Op1.txt + opr.txt + Op2.txt;   //texto de la expresión
-//   res.uop := opr;   //última operación ejecutada
-end;
+//procedure TCompilerBase.Oper(var Op1: TOperand);
+//{Ejecuta una operación con un solo operando, que puede ser una constante, una variable
+//o la llamada a una función.
+//El resultado debe devolverse en "res".
+//La implementación debe decidir, qué hacer cuando se encuentra un solo operando como
+//expresión. En algunos casos puede ser inválido.
+//}
+//begin
+//  {$IFDEF LogExpres}
+//  debugln(space(2*ExprLevel)+' Eval('+Op1.txt+')');
+//  {$ENDIF}
+//  ClearError;
+//  {Llama al evento asociado con p1 como operando. }
+//  p1 := @Op1; {Solo hay un parámetro}
+//  {Ejecuta la operación. El resultado debe dejarse en "res"}
+//  if Op1.typ.OperationLoad <> nil then Op1.typ.OperationLoad();
+//  //Completa campos de "res", si es necesario
+////   res.txt := Op1.txt + opr.txt + Op2.txt;   //texto de la expresión
+////   res.uop := opr;   //última operación ejecutada
+//end;
 function TCompilerBase.GetOperandPrec(pre: integer): TOperand;
 //Toma un operando realizando hasta encontrar un operador de precedencia igual o menor
 //a la indicada
@@ -805,8 +817,6 @@ var
   Op1, Op2  : TOperand;   //Operandos
   opr1: TxpOperator;  //Operadores
 begin
-  Op1.catTyp:=t_integer;    //asumir opcion por defecto
-  Op2.catTyp:=t_integer;   //asumir opcion por defecto
   ClearError;
   //----------------coger primer operando------------------
   Op1 := GetOperand;
@@ -1075,13 +1085,14 @@ end;
 procedure TOperand.CopyConsValTo(var c: TxpEleCon);
 begin
   //hace una copia selectiva por velocidad, de acuerdo a la categoría
-  case catTyp of
+  case typ.cat of
   t_boolean : c.val.ValBool:=val.ValBool;
   t_integer,
   t_uinteger: c.val.ValInt  := val.ValInt;
   t_float   : c.val.ValFloat:= val.ValFloat;
   t_string  : c.val.ValStr  := val.ValStr;
   else
+    MsgErr('Internal PicPas error');
     {En teoría, cualquier valor constante que pueda contener TOperand, debería poder
     transferirse a una cosntante, porque usan el mismo contenedor, así que si pasa esto
     solo puede ser que faltó implementar.}
@@ -1092,13 +1103,14 @@ procedure TOperand.GetConsValFrom(const c: TxpEleCon);
 {Copia valores constante desde una constante. Primero TOperand, debería tener inicializado
  correctamente su campo "catTyp". }
 begin
-  case catTyp of
+  case typ.cat of
   t_boolean : val.ValBool := c.val.ValBool;
   t_integer,
   t_uinteger: val.ValInt := c.val.ValInt;
   t_float   : val.ValFloat := c.val.ValFloat;
   t_string  : val.ValStr := c.val.ValStr;
   else
+    MsgErr('Internal PicPas error');
     //faltó implementar.
   end;
 end;

@@ -1,4 +1,4 @@
-PicPas 0.6.2
+PicPas 0.6.3
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 

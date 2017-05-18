@@ -150,6 +150,10 @@ type
     InInterface: boolean;
     //Bandera para indicar si la variable, se está usando como parámetro
     IsParameter: boolean;
+    {Bandera para indicar que el valor de la variable se alamcena en lso registros de
+    trabajo, es decir que se manejan, más como expresión que como variables. Se diseñó,
+    como una forma rápida para pasar parámetros a funciones.}
+    IsRegister: boolean;
     //Campos para guardar las direcciones físicas asignadas en RAM.
     adrBit : TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
     adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Char/Word
@@ -233,12 +237,13 @@ type
     //variables de estado para la búsqueda con FindFirst() - FindNext()
     curFindName: string;
     curFindNode: TxpElement;
-    curFindIdx: integer;
+    curFindIdx : integer;
+    inUnit     : boolean;
   public
     main    : TxpEleMain;  //nodo raiz
     curNode : TxpElement;  //referencia al nodo actual
     AllVars    : TxpEleVars;
-    funcs   : TxpEleFuns;
+    AllFuncs   : TxpEleFuns;
     OnTreeChange: procedure of object;
     procedure Clear;
     procedure RefreshAllVars;
@@ -560,6 +565,9 @@ procedure TXpTreeElements.Clear;
 begin
   main.elements.Clear;  //esto debe hacer un borrado recursivo
   curNode := main;      //retorna al nodo principal
+  //ELimina lista internas
+  AllVars.Clear;
+  AllFuncs.Clear;
 end;
 procedure TXpTreeElements.RefreshAllVars;
 {Devuelve una lista de todas las variables del árbol de sintaxis, incluyendo las de las
@@ -593,7 +601,7 @@ unidades.}
     if nod.elements<>nil then begin
       for ele in nod.elements do begin
         if ele.elemType = eltFunc then begin
-          funcs.Add(TxpEleFun(ele));
+          AllFuncs.Add(TxpEleFun(ele));
         end else begin
           if ele.elements<>nil then
             AddFuncs(ele);  //recursivo
@@ -602,7 +610,7 @@ unidades.}
     end;
   end;
 begin
-  funcs.Clear;   //por si estaba llena
+  AllFuncs.Clear;   //por si estaba llena
   AddFuncs(main);
 end;
 function TXpTreeElements.CurNodeName: string;
@@ -693,7 +701,9 @@ begin
       //Busca en el espacio padre
       curFindIdx := curFindNode.Index;  //posición actual
       curFindNode := curFindNode.Parent;  //apunta al padre
+      if inUnit then inUnit := false;   //Sale de una unidad
       Result := FindNext();  //Recursividad IMPORTANTE: Usar paréntesis.
+//      Result := nil;
       exit;
     end;
     //Verifica ahora este elemento
@@ -705,14 +715,16 @@ begin
       exit;
     end else begin
       //No tiene el mismo nombre, a lo mejor es una unidad
-      if elem is TxpEleUnit then begin
+      if (elem is TxpEleUnit) and not inUnit then begin   //Si es el priemr nodo de unidad
         //¡Diablos es una unidad! Ahora tenemos que implementar la búsqueda.
+        inUnit := true;   //Marca, para que solo busque en un nivel
         curFindIdx := elem.elements.Count;  //para que busque desde el último
         curFindNode := elem;  //apunta a la unidad
         Result := FindNext();  //Recursividad IMPORTANTE: Usar paréntesis.
-        exit;  {Afortunadamente, "FindNExt", o sea yo mismo, sabe salir del nivel, cuando
-               ya no hay más elementos, así garantizamos que terminará bien, al menos
-               en teoría.}
+        if Result <> nil then begin  //¿Ya encontró?
+          exit;  //Sí. No hay más que hacer aquí
+        end;
+        //No encontró. Hay que seguir buscando
       end;
     end;
   until false;
@@ -723,14 +735,14 @@ reglas de alcance de identifiacdores (primero en el espacio actual y luego en lo
 espacios padres).
  Si encuentra devuelve la referencia. Si no encuentra, devuelve NIL}
 begin
-//  debugln(' Resolviendo %s', [name]);
   //Busca recursivamente, a partir del espacio actual
+  curFindName := name;     //Este valor no cambiará en toda la búsqueda
+  inUnit := false;     //Inicia bandera
   if curNode is TxpEleBody then begin
     {Para los cuerpos de procemientos o de programa, se debe explorar hacia atrás a
     partir de la posición del nodo actual.}
     curFindIdx := curNode.Index;  //Ubica posición
     curFindNode := curNode.Parent;  //Actualiza nodo actual de búsqueda
-    curFindName := name;  //Esta valor no cambairá en toda la búsqueda
     Result := FindNext;
   end else begin
     {La otras forma de resolución, debe ser:
@@ -738,10 +750,10 @@ begin
     2. Declaración de variables, , cuando se definen como ABSOLUTE <variable>
     }
     curFindNode := curNode;  //Actualiza nodo actual de búsqueda
-    curFindName := name;  //Esta valor no cambiará en toda la búsqueda
     {Formalmente debería apuntar a la posicñon del elemento actual, pero se deja
     apuntando a la posición final, sin peligro, porque, la resolución de nombres para
-    consatntes se hace solo en la primera pasada (con el árbol de sintaxis llenándose.)}
+    consatntes y variables, se hace solo en la primera pasada (con el árbol de sintaxis
+    llenándose.)}
     curFindIdx := curNode.elements.Count;
     //Busca
     Result := FindNext;
@@ -782,7 +794,7 @@ begin
   main:= TxpEleMain.Create;  //No debería
   main.name := 'Main';
   main.elements := TxpElements.Create(true);  //debe tener lista
-  funcs := TxpEleFuns.Create(false);   //Crea lista
+  AllFuncs := TxpEleFuns.Create(false);   //Crea lista
   AllVars := TxpEleVars.Create(false);   //Crea lista
   curNode := main;  //empieza con el nodo principal como espacio de nombres actual
 end;
@@ -790,7 +802,7 @@ destructor TXpTreeElements.Destroy;
 begin
   main.Destroy;
   AllVars.Free;    //por si estaba creada
-  funcs.Free;
+  AllFuncs.Free;
   inherited Destroy;
 end;
 end.

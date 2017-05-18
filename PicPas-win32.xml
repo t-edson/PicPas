@@ -5,6 +5,8 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
+  <SynTreeWidth Val="204"/>
+  <chkLoadLast Val="True"/>
   <language Val="es - Español"/>
   <Edit>
     <cTxtNor Val="12632256"/>
@@ -22,17 +24,17 @@
     <cTxtPan Val="0"/>
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.2\units\LCDconst.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.2\units\PIC16F84A.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.2\SinNombre.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.2\samples\LCD_test\LCD_test.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.2\temp\NewFile1.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.3\samples\BlinkLed.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.3\TestCode\MustPass\conditional1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.3\TestCode\TestWithProcedure.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.3\TestCode\MustPass\1_progam1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.3\TestCode\Operations\Test1.pas
 "/>
   </Edit>
-  <viewMode Val="0"/>
+  <viewMode Val="2"/>
   <IncHeadMpu Val="False"/>
   <IncDecVar Val="True"/>
-  <VarDecType Val="0"/>
+  <VarDecType Val="1"/>
   <IncAddress Val="True"/>
   <IncComment Val="True"/>
   <ExcUnused Val="True"/>

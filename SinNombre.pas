@@ -1,22 +1,46 @@
 {$PROCESSOR PIC16F84}
 {$FREQUENCY 8Mhz}
-program LCD8bit; 
-uses PIC16F84A;  
-var
-  pin1	: bit absolute PORTB.1;
-  pin2	: bit absolute $0.0;
-var 
-  n: byte;
+uses LCDlib, Lcdconst;
 begin
-  while true do begin
-	  n  := 8;
+  LCDInit;
+  while true do
+  begin
+    LCDWriteChar('H'); 
+    LCDWriteChar('e'); 
+    LCDWriteChar('l'); 
+    LCDWriteChar('l'); 
+    LCDWriteChar('o'); 
+    LCDWriteChar(' '); 
+    LCDWriteChar('W'); 
+    LCDWriteChar('o'); 
+    LCDWriteChar('r'); 
+    LCDWriteChar('l'); 
+    LCDWriteChar('d'); 
+ 
+    LcdCommand(LCD_SET_DISPLAY_ADDRESS + LCD_ROW_1);
+ 
+    LCDWriteChar('P'); 
+    LCDWriteChar('i'); 
+    LCDWriteChar('c'); 
+    LCDWriteChar('P'); 
+    LCDWriteChar('a'); 
+    LCDWriteChar('s'); 
+    LCDWriteChar(' '); 
+    LCDWriteChar('0'); 
+    LCDWriteChar('.'); 
+    LCDWriteChar('6'); 
+    LCDWriteChar('.'); 
+    LCDWriteChar('3'); 
+    LCDWriteChar(' '); 
+   
+    Counter := 3;
+    repeat
+      LCDWriteChar('>'); 
+      delay_ms(1000);
+      dec(Counter);
+    until Counter = 0;
+ 
+    LcdCommand(LCD_CLEAR_DISPLAY);
   end;
-//  SetAsOutput(pin); 
-  pin1 := 1;
-	mapVarTo(pin2, pin1);
-  pin2 := 1;
-  SetAsInput(pin1);
-  SetAsInput(pin2);
 end.
 
-///***************************************************************************//

@@ -4,7 +4,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, TreeFilterEdit, Forms, Controls, StdCtrls,
   ComCtrls, Menus, ActnList, ExtCtrls, ComboEx, XpresElementsPIC, Globales,
-  FormElemProperty, XpresParserPIC, FormConfig, MisUtils;
+  FormElemProperty, XpresParserPIC, FormConfig, FrameArcExplor, MisUtils;
 type
   { TfraSyntaxTree }
   TfraSyntaxTree = class(TFrame)
@@ -16,6 +16,7 @@ type
     acGenExpAll: TAction;
     ActionList1: TActionList;
     ComboBoxEx1: TComboBoxEx;
+    frmArcExplor1: TfrmArcExplor;
     ImageList1: TImageList;
     Label1: TLabel;
     MenuItem1: TMenuItem;
@@ -50,6 +51,8 @@ type
   private
     syntaxTree: TXpTreeElements;
     function AddNodeTo(nodParent: TTreeNode; elem: TxpElement): TTreeNode;
+    procedure frmArcExplor1DoubleClickFile(nod: TExplorNode);
+    procedure frmArcExplor1MenuOpenFile(nod: TExplorNode);
     procedure frmElemPropertyExplore(elem: TxpElement);
     procedure RefreshByDeclar(nodMain: TTreeNode; curEle: TxpElement);
     procedure RefreshByGroups(nodMain: TTreeNode; curEle: TxpElement);
@@ -58,6 +61,10 @@ type
     function SelectedIsElement: boolean;
   public
     OnSelectElemen: procedure(var elem: TxpElement) of object;
+    OnOpenFile: procedure(filname: string) of object;
+    //Se requeire información del archivo actual
+    OnReqCurFile: procedure(var filname: string) of object;
+    procedure LocateFile(filname: string);
     procedure Init(syntaxTree0: TXpTreeElements);
     procedure Refresh;
     procedure SetLanguage(idLang: string);
@@ -86,12 +93,28 @@ begin
   Label1.Caption := Trans('Code Explorer', 'Explorador de Código');
   Refresh;
 end;
+procedure TfraSyntaxTree.frmArcExplor1DoubleClickFile(nod: TExplorNode);
+begin
+  if OnOpenFile<>nil then OnOpenFile(nod.Path);
+end;
+procedure TfraSyntaxTree.frmArcExplor1MenuOpenFile(nod: TExplorNode);
+begin
+  if OnOpenFile<>nil then OnOpenFile(nod.Path);
+end;
 procedure TfraSyntaxTree.Init(syntaxTree0: TXpTreeElements);
 begin
   syntaxTree := syntaxTree0;
   TreeView1.ReadOnly := true;
   frmElemProperty.OnExplore := @frmElemPropertyExplore;
   SetLanguage('en');   //Inicia idioma
+  //Configura filtros del explorador de archivos
+  frmArcExplor1.Filter.Items.Add('*.pas,*.pp');  //los filtros se separan por comas
+  frmArcExplor1.Filter.Items.Add('*');  //para seleccionar todos
+  frmArcExplor1.Filter.ItemIndex:=0;    //selecciona la primera opción por defecto
+  frmArcExplor1.InternalPopupFile := true;
+  frmArcExplor1.InternalPopupFolder := true;
+  frmArcExplor1.OnDoubleClickFile := @frmArcExplor1DoubleClickFile;
+  frmArcExplor1.OnMenuOpenFile := @frmArcExplor1MenuOpenFile;
 end;
 function TfraSyntaxTree.AddNodeTo(nodParent: TTreeNode; elem: TxpElement): TTreeNode;
 {Agrega un elemento a un noco.}
@@ -221,6 +244,9 @@ var
 begin
   case Config.viewMode of
   vmGroups: begin
+    TreeView1.Visible := true;
+    frmArcExplor1.Visible := false;
+
     TreeView1.Items.BeginUpdate;
     TreeView1.Items.Clear;
     nodMain := TreeView1.Items.AddChild(nil, TIT_MAIN);
@@ -230,6 +256,9 @@ begin
     TreeView1.Items.EndUpdate;
   end;
   vmDeclar: begin
+    TreeView1.Visible := true;
+    frmArcExplor1.Visible := false;
+
     TreeView1.Items.BeginUpdate;
     TreeView1.Items.Clear;
     nodMain := TreeView1.Items.AddChild(nil, TIT_MAIN);
@@ -237,6 +266,12 @@ begin
     nodMain.SelectedIndex := 1;
     RefreshByDeclar(nodMain, syntaxTree.main);
     TreeView1.Items.EndUpdate;
+  end;
+  vmFileExp: begin  //Modo de explorador de archivos
+    TreeView1.Visible := false;
+    frmArcExplor1.Visible := true;
+    frmArcExplor1.Align := alClient;
+
   end;
   end;
 end;
@@ -280,6 +315,14 @@ begin
   end;
   exit(false);
 end;
+procedure TfraSyntaxTree.LocateFile(filname: string);
+begin
+  //Ubica el archvio actual en el explorador de archivo
+  if not self.Visible then exit;
+  if frmArcExplor1.Visible then begin
+    frmArcExplor1.LocateFileOnTree(filname);
+  end;
+end;
 procedure TfraSyntaxTree.TreeView1MouseUp(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
@@ -321,6 +364,7 @@ begin
   case ComboBoxEx1.ItemIndex of
   0: Config.viewMode := vmGroups;
   1: Config.viewMode := vmDeclar;
+  2: Config.viewMode := vmFileExp;
   end;
   Refresh;
 end;

@@ -1,21 +1,31 @@
-PicPas 0.6.2
+PicPas 0.6.3
 ============
-Se define la combinación <Ctrl>+<delete> para borrrar la palabra actual.
-Se activa el menú de archivos recientes, para cuando se abre nuevos archivos.
-Se activa la compilación independiente de unidades.
-Se implementa la declaración de procedimientos en las unidades.
-Se implementa mayor nivel de detalle para ver a las unidades en el Explorador de Código.
-Se habilita el guardar el modo de vista del Explorador de código.
-Se crea la opción de configuración "Excluir variables no usadas.", para el código 
-ensamblador.
-Se mejora, considerablemente, la ventana de propiedades de elementos del explorador de 
+Se permite la declaración de varios parámetros de una función, separadas por comas.
+Se eliminan los campos TOPerand.size y TOPerand.catTyp y se cambia el código para evitar 
+usarlos.
+Se pemite definir parámetros de tipo REGISTER. Queda pendiente probar el código de 
+reconocimiento de estas variables incluido TCompilerBase.GetOperand:
+Se deja de implementar el evento OperationLoad  de TType, y se pasa a usar el evento 
+OperationPop.
+Se corrige la exploración de unidades anidadas.
+Se corrige la resolución de nombres cuandos se incluyen varias unidades y para no buscar 
+más allá de un nivel de anidamiento.
+Se agregan los delimitadores (* y *), como comentarios en la definición de la sintaxis
+del lexer.
+Se agregan las operaciones Oper_bit_dif_bit, Oper_bit_dif_byte, Oper_bool_equ_bool,
+Oper_bool_dif_bool.
+Se mueve la declaración de los tipos de tokens adicionales a la unidad XpresParserPIC.
+Se crea el método TCompiler.CompileCurBlockDummy;
+Se crea el campo TCompiler.mode, y se implementa el modo PicPas;
+Se modifica TCompiler.CompileIF, para soportar el modo PicPas y el modo Pascal.
+Se agrega al Explorador de Código, una vista de explorador de archivo.
+Se permite la selección del archivo actual en el explorador de archivo.
+Se elimina el formulario CodeExplorer, porque ya se tiene un explorador de código.
+Se define que se guarde en las configuraciones, el ancho del panel explorador de
 código.
-Se incluye el tratamiento de variables char en la rutina TxpEleVar.AbsAddr.
-Se agregan las funciones del sistema SetAsInput() y SetAsOutput().
-Se revisan las funciones de idioma, en el formualrio principal.
-Se crea la opción de configruación "Lenguaje", en la ventana "Config".
-Se modifica TfrmPrincipal.fraEditView1SelectEditor(), para evitar llamar a 
-ChangeAppearance(), cuando se cambia la selección del editor.
+Se crea el método TfraEditView.LoadLastFileEdited() y se incluye la opción: "Abrir 
+ultimo archivo editado al abrir", en la configuraciones.
+Se modifica la sintaxis del IF, para adaptarse a la nueva sintaxis de PicPas.
 
 PENDIENTES
 Revisar la implementación de las estructuras. 
@@ -36,6 +46,28 @@ SetResultExpres_bit(false);  //Fija resultado
 SaveW(reg); 
 ...  // se actualiza Z.
 RestoreW(reg); //<-Se pierde Z, si se restaura W.
+Las funciones no usadas, en las unidades, aún se compilan, cuando la usa una función 
+no usada.
+¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
+
+PicPas 0.6.2
+============
+Se define la combinación <Ctrl>+<delete> para borrrar la palabra actual.
+Se activa el menú de archivos recientes, para cuando se abre nuevos archivos.
+Se activa la compilación independiente de unidades.
+Se implementa la declaración de procedimientos en las unidades.
+Se implementa mayor nivel de detalle para ver a las unidades en el Explorador de Código.
+Se habilita el guardar el modo de vista del Explorador de código.
+Se crea la opción de configuración "Excluir variables no usadas.", para el código 
+ensamblador.
+Se mejora, considerablemente, la ventana de propiedades de elementos del explorador de 
+código.
+Se incluye el tratamiento de variables char en la rutina TxpEleVar.AbsAddr.
+Se agregan las funciones del sistema SetAsInput() y SetAsOutput().
+Se revisan las funciones de idioma, en el formulario principal.
+Se crea la opción de configruación "Lenguaje", en la ventana "Config".
+Se modifica TfrmPrincipal.fraEditView1SelectEditor(), para evitar llamar a 
+ChangeAppearance(), cuando se cambia la selección del editor.
 
 
 PicPas 0.6.1

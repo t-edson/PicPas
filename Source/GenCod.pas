@@ -57,7 +57,7 @@ type
     protected
       procedure callFunct(fun: TxpEleFun);
     private  //Operaciones con Bit
-      procedure bit_load;
+      procedure bit_DefineRegisters(const OpPtr: pointer);
       procedure Oper_bit_asig_bit;
       procedure Oper_bit_asig_byte;
       procedure Oper_bit_and_bit;
@@ -68,17 +68,21 @@ type
       procedure Oper_bit_xor_byte;
       procedure Oper_bit_equ_bit;
       procedure Oper_bit_equ_byte;
+      procedure Oper_bit_dif_bit;
+      procedure Oper_bit_dif_byte;
       procedure Oper_not_bit;
     private  //Operaciones con boolean
-      procedure bool_load;
+      procedure bool_DefineRegisters(const OpPtr: pointer);
       procedure Oper_bool_asig_bool;
       procedure Oper_not_bool;
       procedure Oper_bool_and_bool;
       procedure Oper_bool_or_bool;
       procedure Oper_bool_xor_bool;
+      procedure Oper_bool_equ_bool;
+      procedure Oper_bool_dif_bool;
     private  //Operaciones con byte
       procedure byte_OnPush(const OpPtr: pointer);
-      procedure byte_load;
+      procedure byte_DefineRegisters(const OpPtr: pointer);
       procedure byte_oper_byte(const InstLW, InstWF: TPIC16Inst);
       procedure Oper_byte_asig_byte;
       procedure Oper_byte_sub_byte;
@@ -91,19 +95,20 @@ type
       procedure Oper_byte_equal_byte;
       procedure Oper_byte_difer_byte;
       procedure Oper_byte_great_byte;
+      procedure Oper_byte_less_byte;
       procedure CodifShift_by_W(aux: TPicRegister; toRight: boolean);
       procedure Oper_byte_shr_byte;
       procedure Oper_byte_shl_byte;
     private  //Operaciones con Word
       procedure word_OnPush(const OpPtr: pointer);
-      procedure word_load;
+      procedure word_DefineRegisters(const OpPtr: pointer);
       procedure Oper_word_asig_word;
       procedure Oper_word_asig_byte;
       procedure Oper_word_add_word;
       procedure Oper_word_add_byte;
     private  //Operaciones con Char
       procedure char_OnPush(const OpPtr: pointer);
-      procedure char_load;
+      procedure char_DefineRegisters(const OpPtr: pointer);
       procedure Oper_char_asig_char;
       procedure Oper_char_equal_char;
       procedure Oper_char_difer_char;
@@ -206,12 +211,9 @@ begin
   end;
 end;
 ////////////operaciones con Bit
-procedure TGenCod.bit_load;
+procedure TGenCod.bit_DefineRegisters(const OpPtr: pointer);
 begin
-  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
-  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
-  ya se generó el código. }
-  res := p1^;   //No debería ser necesario copiar todos los campos
+  //No es encesario, definir registros adicionales a W
 end;
 procedure TGenCod.Oper_bit_asig_bit;
 var
@@ -854,6 +856,18 @@ begin
   res.Invert;  //Invierte la lógica
   res.typ := typBool;   //devuelve boolean
 end;
+procedure TGenCod.Oper_bit_dif_bit;
+begin
+  //Esta comparación, es lo mismo que un XOR
+  Oper_bit_xor_bit;  //puede devolver error
+  res.typ := typBool;   //devuelve boolean
+end;
+procedure TGenCod.Oper_bit_dif_byte;
+begin
+  //Una comparación, es lo mismo que un XOR
+  Oper_bit_xor_byte;  //puede devolver error
+  res.typ := typBool;   //devuelve boolean
+end;
 procedure TGenCod.Oper_not_bit;
 begin
   case p1^.catOp of
@@ -874,12 +888,9 @@ begin
   end;
 end;
 ////////////operaciones con Boolean
-procedure TGenCod.bool_load;
+procedure TGenCod.bool_DefineRegisters(const OpPtr: pointer);
 begin
-  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
-  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
-  ya se generó el código. }
-  res := p1^;   //No debería ser necesario copiar todos los campos
+  //No es encesario, definir registros adicionales a W
 end;
 procedure TGenCod.Oper_bool_asig_bool;
 begin
@@ -905,6 +916,15 @@ begin
   Oper_bit_xor_bit;  //A bajo nivel es lo mismo
   res.typ := typBool;  //pero debe devolver este tipo
 end;
+procedure TGenCod.Oper_bool_equ_bool;
+begin
+  Oper_bit_equ_bit;  //Es lo mismo
+end;
+procedure TGenCod.Oper_bool_dif_bool;
+begin
+  Oper_bit_dif_bit;
+end;
+
 ////////////operaciones con Byte
 procedure TGenCod.byte_OnPush(const OpPtr: pointer);
 {Pone un byte en la pila. Se usa para pasar parámetros a función.}
@@ -924,12 +944,9 @@ begin
   end;
   end;
 end;
-procedure TGenCod.byte_load;
+procedure TGenCod.byte_DefineRegisters(const OpPtr: pointer);
 begin
-  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
-  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
-  ya se generó el código. }
-  res := p1^;   //No debería ser necesario copiar todos los campos
+  //No es encesario, definir registros adicionales a W
 end;
 procedure TGenCod.Oper_byte_asig_byte;
 begin
@@ -1165,24 +1182,23 @@ begin
   end;
   coConst_Variab: begin
     SetResultExpres_bool(false);   //Se pide Z para el resultado
-    SaveW(OLD_W); if HayError then exit;  //Va a usar W
+    _MOVLW(p1^.valInt);
     _BANKSEL(p2^.bank);  //verifica banco destino
-    _MOVF(p2^.offs, toW);
-    _ADDLW(256 - p1^.valInt);  //Si p1 > p2: C=0.
+    _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
     //El resultado está en C (invertido), hay que pasarlo a Z
     _MOVLW($01 << _C);     //carga máscara de C
     _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
     InvertedFromC := true;  //Indica que se ha hecho Z = 'C.
-    RestoreW(OLD_W);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetResultExpres_bool(false);   //Se pide Z para el resultado
-    _ADDLW(256 - p1^.valInt);  //Si p1 > p2: C=0.
+//    _MOVLW(p1^.valInt);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
     //El resultado está en C (invertido), hay que pasarlo a Z
     _MOVLW($01 << _C);     //carga máscara de C
     _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
     InvertedFromC := true;  //Indica que se ha hecho Z = 'C.
-    RestoreW(OLD_W);
   end;
   coVariab_Const: begin
     ExchangeP1_P2;  //Convierte a coConst_Variab
@@ -1230,6 +1246,75 @@ begin
     Oper_byte_great_byte;
     FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
   end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+end;
+procedure TGenCod.Oper_byte_less_byte;
+begin
+  case catOperation of
+  coConst_Const: begin  //compara constantes. Caso especial
+    SetResultConst_bool(p1^.valInt < p2^.valInt);
+  end;
+  coConst_Variab: begin
+//    ExchangeP1_P2;
+
+  end;
+//  coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+//    SetResultExpres_bool(false);   //Se pide Z para el resultado
+//    _ADDLW(256 - p1^.valInt);  //Si p1 > p2: C=0.
+//    //El resultado está en C (invertido), hay que pasarlo a Z
+//    _MOVLW($01 << _C);     //carga máscara de C
+//    _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
+//    InvertedFromC := true;  //Indica que se ha hecho Z = 'C.
+//    RestoreW(OLD_W);
+//  end;
+//  coVariab_Const: begin
+//    ExchangeP1_P2;  //Convierte a coConst_Variab
+//    Oper_byte_great_byte;
+//  end;
+//  coVariab_Variab:begin
+//    SetResultExpres_bool(false);   //Se pide Z para el resultado
+//    SaveW(OLD_W); if HayError then exit;  //Va a usar W
+//    _BANKSEL(p1^.bank);  //verifica banco destino
+//    _MOVF(p1^.offs, toW);
+//    _BANKSEL(p2^.bank);  //verifica banco destino
+//    _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
+//    //El resultado está en C (invertido), hay que pasarlo a Z
+//    _MOVLW($01 << _C);     //carga máscara de C
+//    _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
+//    InvertedFromC := true;  //Indica que se ha hecho Z = 'C.
+//    RestoreW(OLD_W);
+//  end;
+//  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+//    ExchangeP1_P2;  //Convierte a coExpres_Variab
+//    Oper_byte_great_byte;
+//  end;
+//  coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+////    SetResultExpres_bool(false);   //Se pide Z para el resultado
+////    //ReserveW; if HayError then exit;
+////    _SUBLW(p2^.valInt);  //si iguales _Z=1
+////  end;
+//  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+//    SetResultExpres_bool(false);   //Se pide Z para el resultado
+////    _BANKSEL(p1^.bank);  //verifica banco destino
+////    _MOVF(p1^.offs, toW);
+//    _BANKSEL(p2^.bank);  //verifica banco destino
+//    _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
+//    //El resultado está en C (invertido), hay que pasarlo a Z
+//    _MOVLW($01 << _C);     //carga máscara de C
+//    _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
+//    InvertedFromC := true;  //Indica que se ha hecho Z = 'C.
+//  end;
+//  coExpres_Expres:begin
+//    //la expresión p1 debe estar salvada y p2 en el acumulador
+//    p1^.catOp := coVariab;  //Convierte a variable
+//    p1^.rVar := GetVarByteFromStk;
+//    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+//    //Luego el caso es similar a coVariab_Expres
+//    Oper_byte_great_byte;
+//    FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
+//  end;
   else
     GenError('Not implemented.'); exit;
   end;
@@ -1468,7 +1553,7 @@ end;
 //////////// Operaciones con Word
 procedure TGenCod.word_OnPush(const OpPtr: pointer);
 {Carga el valor de una expresión a los registros de trabajo. Notar que no tiene que ver
-con el nombre "OnPush". Solo se usa este evento predeclarado.}
+con el nombre "OnPush". Solo se usa porque ya existe este evento predeclarado.}
 var
   Op: ^TOperand;
 begin
@@ -1493,12 +1578,12 @@ begin
   end;
   end;
 end;
-procedure TGenCod.word_load;
+procedure TGenCod.word_DefineRegisters(const OpPtr: pointer);
 begin
-  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
-  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
-  ya se generó el código. }
-  res := p1^;   //No debería ser necesario copiar todos los campos
+  //A parte de W, solo se requiere H
+  if not H.assigned then begin
+    AssignRAM(H, '_H');
+  end;
 end;
 procedure TGenCod.Oper_word_asig_word;
 begin
@@ -1825,12 +1910,9 @@ procedure TGenCod.char_OnPush(const OpPtr: pointer);
 begin
   byte_OnPush(OpPtr);  //es lo mismo
 end;
-procedure TGenCod.char_load;
+procedure TGenCod.char_DefineRegisters(const OpPtr: pointer);
 begin
-  {Solo devuelve el mismo operador. No hace nada porque, si es constante o variable única,
-  no necesita generar código (se hará si forma parte de una expresión), y si es expresión
-  ya se generó el código. }
-  res := p1^;   //No debería ser necesario copiar todos los campos
+  //No es encesario, definir registros adicionales a W
 end;
 procedure TGenCod.Oper_char_asig_char;
 begin
@@ -2250,10 +2332,10 @@ begin
   xLex.DefTokContent('[$]','[0-9A-Fa-f]*', tnNumber);
   xLex.DefTokContent('[%]','[01]*', tnNumber);
   //define palabras claves
-  xLex.AddIdentSpecList('THEN var type ELSE absolute', tnKeyword);
+  xLex.AddIdentSpecList('THEN var type absolute', tnKeyword);
   xLex.AddIdentSpecList('program public private method const', tnKeyword);
   xLex.AddIdentSpecList('class create destroy sub do begin', tnKeyword);
-  xLex.AddIdentSpecList('END UNTIL', tnBlkDelim);
+  xLex.AddIdentSpecList('END ELSE UNTIL', tnBlkDelim);
   xLex.AddIdentSpecList('true false', tnBoolean);
   xLex.AddIdentSpecList('if while repeat for', tnStruct);
   xLex.AddIdentSpecList('and or xor not div mod in', tnOperator);
@@ -2272,6 +2354,7 @@ begin
   xLex.AddSymbSpec('**', tnOperator);
   xLex.AddSymbSpec('=',  tnOperator);
   xLex.AddSymbSpec('>',  tnOperator);
+  xLex.AddSymbSpec('<',  tnOperator);
   xLex.AddSymbSpec('>=', tnOperator);
   xLex.AddSymbSpec('<;', tnOperator);
   xLex.AddSymbSpec('<=', tnOperator);
@@ -2290,6 +2373,7 @@ begin
   xLex.DefTokDelim('"','"', tnString);
   xLex.DefTokDelim('//','', xLex.tnComment);
   xLex.DefTokDelim('{','}', xLex.tnComment, tdMulLin);
+  xLex.DefTokDelim('(\*','\*)', xLex.tnComment, tdMulLin);
   xLex.DefTokDelim('{$','}', tnDirective);
   xLex.DefTokDelim('Asm','End', tnAsm, tdMulLin);
   //define bloques de sintaxis
@@ -2316,7 +2400,7 @@ begin
   //tipo numérico de dos byte
   typWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
   //tipo caracter
-  typChar :=CreateType('char',t_string,1);   //de 1 byte
+  typChar :=CreateType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como númeor
 
   {Los operadores deben crearse con su precedencia correcta
   Precedencia de operadores en Pascal:
@@ -2327,7 +2411,7 @@ begin
   2)    :=                  (menor precedencia)
   }
   //////// Operaciones con Bit ////////////
-  typBit.OperationLoad:=@bit_load;
+  typBit.OperationPop:=@bit_DefineRegisters;
   opr:=typBit.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typBit, @Oper_bit_asig_bit);
   opr.CreateOperation(typByte, @Oper_bit_asig_byte);
@@ -2350,8 +2434,12 @@ begin
   opr.CreateOperation(typBit,@Oper_bit_equ_bit);
   opr.CreateOperation(typByte,@Oper_bit_equ_byte);
 
+  opr:=typBit.CreateBinaryOperator('<>',4,'difer');
+  opr.CreateOperation(typBit,@Oper_bit_dif_bit);
+  opr.CreateOperation(typByte,@Oper_bit_dif_byte);
+
   //////// Operaciones con Boolean ////////////
-  typBool.OperationLoad:=@bool_load;
+  typBool.OperationPop:=@bool_DefineRegisters;
   opr:=typBool.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typBool,@Oper_bool_asig_bool);
 
@@ -2366,9 +2454,15 @@ begin
   opr:=typBool.CreateBinaryOperator('XOR',4,'or');  //suma
   opr.CreateOperation(typBool,@Oper_bool_xor_bool);
 
+  opr:=typBool.CreateBinaryOperator('=',4,'equal');
+  opr.CreateOperation(typBool,@Oper_bool_equ_bool);
+
+  opr:=typBool.CreateBinaryOperator('<>',4,'difer');
+  opr.CreateOperation(typBool,@Oper_bool_dif_bool);
+
   //////// Operaciones con Byte ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  typByte.OperationLoad:=@byte_load;
+  typByte.OperationPop:=@byte_DefineRegisters;
   typByte.OperationPush:=@byte_OnPush;
   opr:=typByte.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typByte,@Oper_byte_asig_byte);
@@ -2391,6 +2485,9 @@ begin
   opr.CreateOperation(typByte,@Oper_byte_difer_byte);
   opr:=typByte.CreateBinaryOperator('>',3,'great');
   opr.CreateOperation(typByte,@Oper_byte_great_byte);
+  opr:=typByte.CreateBinaryOperator('<',3,'less');
+  opr.CreateOperation(typByte,@Oper_byte_less_byte);
+
   opr:=typByte.CreateBinaryOperator('>>',3,'shr');  { TODO : Definir bien la precedencia }
   opr.CreateOperation(typByte,@Oper_byte_shr_byte);
   opr:=typByte.CreateBinaryOperator('<<',3,'shl');
@@ -2398,7 +2495,7 @@ begin
   //////// Operaciones con Word ////////////
   {Los operadores deben crearse con su precedencia correcta}
   typWord.OperationPush:=@word_OnPush;
-  typWord.OperationLoad:=@word_load;
+  typWord.OperationPop:=@word_DefineRegisters;
   opr:=typWord.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typWord,@Oper_word_asig_word);
   opr.CreateOperation(typByte,@Oper_word_asig_byte);
@@ -2408,8 +2505,8 @@ begin
 
   //////// Operaciones con Char ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  typChar.OperationLoad:=@char_load;
   typChar.OperationPush:=@char_OnPush;
+  typChar.OperationPop:=@char_DefineRegisters;
   opr:=typChar.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typChar,@Oper_char_asig_char);
   opr:=typChar.CreateBinaryOperator('=',3,'equal');  //asignación

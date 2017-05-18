@@ -40,14 +40,17 @@ type
     procedure CompileGlobalConstDeclar;
     procedure CompileVarDeclar(IsInterface: boolean = false);
     procedure CompileProcDeclar(IsImplementation: boolean);
-    procedure CompileInstructionDummy;
     procedure CompileInstruction;
+    procedure CompileInstructionDummy;
     procedure DefLexDirectiv;
     procedure CompileCurBlock;
+    procedure CompileCurBlockDummy;
     procedure CompileUnit(uni: TxpElement);
     procedure CompileUsesDeclaration;
     procedure CompileProgram;
     procedure CompileLinkProgram;
+  private  //Variables internas del compilador
+    mode : (modPascal, modPicPas);
   public
     procedure Compile(NombArc: string; LinArc: Tstrings);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
@@ -142,6 +145,7 @@ procedure TCompiler.ProcComments;
   end;
 var
   f: Integer;
+  txtMode: String;
 begin
   cIn.SkipWhites;
   while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
@@ -153,7 +157,7 @@ begin
       //Se ha detectado una directiva
       //Usa SynFacilSyn como lexer para analizar texto
       lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
-      if tokType = lexDir.tnSpace then  lexDir.Next;  //quita espacios
+      if tokType = lexDir.tnSpace then lexDir.Next;  //quita espacios
       if tokType <> lexDir.tnIdentif then begin
         GenError('Error in directive.');
         exit;
@@ -203,7 +207,19 @@ begin
       'DEFINE': begin
         lexDir.Next;  //pasa al siguiente
         skipWhites;
-
+      end;
+      'MODE': begin  //Define el dialecto del lenguaje
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+        txtMode := UpCase(lexDir.GetToken);
+        if txtMode = 'PICPAS' then begin
+          self.mode := modPicPas;
+        end else if txtMode = 'PASCAL' then begin
+          self.mode := modPascal;
+        end else begin
+          GenError('Mode unknown: %s', [txtMode]);
+          exit;
+        end;
       end;
       else
         GenError('Unknown directive: %s', [lexDir.GetToken]);
@@ -223,8 +239,14 @@ begin
     exit;       //sale
   end;
   if cIn.tokL <> 'end' then begin  //verifica si termina el programa
-    GenError('"end" expected.');
-    exit;       //sale
+    if cIn.tokL = 'else' then begin
+      //Precisa un poco más en el error
+      GenError('"else" unexpected.');
+      exit;       //sale
+    end else begin
+      GenError('"end" expected.');
+      exit;       //sale
+    end;
   end;
   cIn.Next;   //coge "end"
   //debería seguir el punto
@@ -234,7 +256,7 @@ begin
   end;
   cIn.Next;
   //no debe haber más instrucciones
-  cIn.SkipWhites;
+  ProcComments;
   if not cIn.Eof then begin
     GenError('Syntax error. Nothing should be after "END."');
     exit;       //sale
@@ -268,6 +290,10 @@ var
   parName: String;
   typ: TType;
   xvar: TxpEleVar;
+  IsRegister: Boolean;
+  itemList: TStringDynArray;
+  srcPosArray: TSrcPosArray;
+  i: Integer;
 begin
   SkipWhites;
   if EOBlock or EOExpres then begin
@@ -279,14 +305,26 @@ begin
       exit;
     end;
     cin.Next;
+    cin.SkipWhites;
     repeat
-      if cIn.tokType <> tnIdentif then begin
+      IsRegister := false;
+      if cIn.tokL = 'register' then begin
+        IsRegister := true;
+        cin.Next;
+        cin.SkipWhites;
+      end;
+      getListOfIdent(itemList, srcPosArray);
+      if HayError then begin  //precisa el error
         GenError('Identifier expected.');
         exit;
       end;
-      parName := cIn.tok;   //lee tipo de parámetro
-      cIn.Next;
-      cIn.SkipWhites;
+//      if cIn.tokType <> tnIdentif then begin
+//        GenError('Identifier expected.');
+//        exit;
+//      end;
+//      parName := cIn.tok;   //lee tipo de parámetro
+//      cIn.Next;
+//      cIn.SkipWhites;
       if cIn.tok<>':' then begin
         GenError('":" expected.');
         exit;
@@ -306,14 +344,33 @@ begin
         GenError('Undefined type "%s"', [parType]);
         exit;
       end;
-      //Ya tiene el nombre y el tipo
+      //Ya tiene los nombres y el tipo
       //Crea el parámetro como una varaible local
-      xvar := AddVariable(parName, typ, -1, -1, cIn.ReadSrcPos);
-      xvar.IsParameter := true;  //Marca bandera
-      if HayError then exit;
-      //Ahora ya tiene la variable
-      fun.CreateParam(parName, typ, xvar);
-      if HayError then exit;
+      for i:= 0 to high(itemList) do begin
+        //Crea los parámetros de la lista.
+        if IsRegister then begin
+          //Parámetro REGISTER. Solo puede haber uno
+          if high(itemList)>0 then begin
+            GenErrorPos('Only one register parameter is allowed.', [], srcPosArray[1]);
+            exit;
+          end;
+          {Crea como variable absoluta a una posición cualquiera porque esta variable,
+          no debería estar mapeada.}
+          xvar := AddVariable(itemList[i], typ, 0, 0, srcPosArray[i]);
+          xvar.IsParameter := true;  //Marca bandera
+          xvar.IsRegister := IsRegister;
+          if HayError then exit;
+        end else begin
+          //Parámetro normal
+          xvar := AddVariable(itemList[i], typ, -1, -1, srcPosArray[i]);
+          xvar.IsParameter := true;  //Marca bandera
+          xvar.IsRegister := IsRegister;
+          if HayError then exit;
+        end;
+        //Ahora ya tiene la variable
+        fun.CreateParam(itemList[i], typ, xvar);
+        if HayError then exit;
+      end;
       //Busca delimitador
       if cIn.tok = ';' then begin
         cIn.Next;   //toma separador
@@ -334,9 +391,74 @@ begin
 end;
 procedure TCompiler.CompileIF;
 {Compila uan extructura IF}
-var
-  dg: Integer;
-  dg2: Integer;
+  function CompileBody(GenCode: boolean = true): boolean;
+  {Compila el cuerpo de un THEN o de su parte ELSE, considerando el modo del compilador.
+  Si se genera error, devuelve FALSE.}
+  begin
+    if GenCode then begin
+      //Este es el modo normal. Genera código.
+      if mode = modPascal then begin
+        //En modo Pascal se espera una instrucción
+        CompileInstruction
+      end else begin
+        CompileCurBlock;
+      end;
+      if HayError then exit(false);
+      exit(true);
+    end else begin
+      //Este modo no geenrará instrucciones
+      GenWarn('Instruction will never execute.');
+      if mode = modPascal then begin
+        //En modo Pascal se espera una instrucción
+        CompileInstructionDummy //solo para mantener la sintaxis
+      end else begin
+        CompileCurBlockDummy;  //solo para mantener la sintaxis
+      end;
+      if HayError then exit(false);
+      exit(true);
+    end;
+  end;
+  function CompileThenElse: boolean;
+  {Compila la parte THEN ... ELSE, de una condicional. Si la condición, es verdadera,
+   Antes de llamar a esta rutina, debe incluirse un salto de tipo BTFSS o BTFSC, para
+   cuando la condificón es verdadera.}
+  var
+    jFALSE, jEND_TRUE: integer;
+  begin
+    _GOTO_PEND(jFALSE);  //salto pendiente
+    //Es TRUE
+    if not CompileBody then exit;
+//    if cIn.tokL = 'elsif' then begin
+//      //Hay bloque ELSIF
+//      cIn.Next;   //toma "else"
+//      _GOTO_PEND(jEND_TRUE);   //llega por aquí si es TRUE
+//_lbl(jFALSE);   //termina de codificar el salto
+////      GetExpressionE(0);   //Evalúa la otra condición
+//
+//      _GOTO_PEND(jFALSE);  //salto pendiente
+//      //Es TRUE
+//      if not CompileBody then exit;
+//_lbl(jEND_TRUE);   //termina de codificar el salto
+//    end;
+    if cIn.tokL = 'else' then begin  //hay bloque ELSE
+      //hay bloque ELSE
+      cIn.Next;   //toma "else"
+      _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
+_lbl(jFALSE);   //termina de codificar el salto
+      if not CompileBody then exit;
+_lbl(jEND_TRUE);   //termina de codificar el salto
+    end else begin
+_lbl(jFALSE);   //termina de codificar el salto
+    end;
+    if mode = modPicPas then begin
+      //En modo PicPas, debe haber un delimitador de bloque
+      if cIn.tokL <> 'end' then begin
+        GenError('END expected.');
+        exit;
+      end;
+      cIn.Next;
+    end;
+  end;
 begin
   GetExpressionE(0);
   if HayError then exit;
@@ -350,47 +472,42 @@ begin
     exit;
   end;
   cIn.Next;   //toma "then"
-  //aquí debe estar el cuerpo del "if"
+  //Aquí debe estar el cuerpo del "if"
   case res.catOp of
   coConst: begin  //la condición es fija
     if res.valBool then begin
-      //es verdadero, siempre se ejecuta
-      CompileInstruction;
-      if HayError then exit;
+      //Es verdadero, siempre se ejecuta
+      if not CompileBody then exit;
       if cIn.tokL = 'else' then begin
-        //hay bloque ELSE, pero no se ejecutará nunca
+        //Hay bloque ELSE, pero no se ejecutará nunca
         cIn.Next;   //toma "else"
-        CompileInstructionDummy;  //solo para mantener la sintaxis
-        if HayError then exit;
+        if not CompileBody(false) then exit;
       end;
     end else begin
-      //aquí se debería lanzar una advertencia
-      CompileInstructionDummy;  //solo para mantener la sintaxis
-      if HayError then exit;
+      //Es falso, nunca se ejecuta
+      if not CompileBody(false) then exit;
       if cIn.tokL = 'else' then begin
         //hay bloque ELSE, que sí se ejecutará
         cIn.Next;   //toma "else"
-        CompileInstruction;
-        if HayError then exit;
+        if not CompileBody then exit;
       end;
+    end;
+    if mode = modPicPas then begin
+      //En modo PicPas, debe haber un delimitador de bloque
+      if cIn.tokL <> 'end' then begin
+        GenError('END expected.');
+        exit;
+      end;
+      cIn.Next;
     end;
   end;
   coVariab:begin
-    _BTFSS(res.offs, res.bit);  //verifica condición
-    _GOTO_PEND(dg);  //salto pendiente
-    CompileInstruction;
-    if HayError then exit;
-    if cIn.tokL <> 'else' then begin  //no hay blqoue ELSE
-      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+    if res.Inverted then begin
+      _BTFSC(res.offs, res.bit);  //verifica condición
     end else begin
-      //hay bloque ELSE
-      cIn.Next;   //toma "else"
-      _GOTO_PEND(dg2);  //salto pendiente
-      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-      CompileInstruction;
-      if HayError then exit;
-      pic.codGotoAt(dg2, _PC);   //termina de codificar el salto
+      _BTFSS(res.offs, res.bit);  //verifica condición
     end;
+    CompileThenElse;
   end;
   coExpres:begin
     if res.Inverted then begin //_Lógica invertida
@@ -398,20 +515,7 @@ begin
     end else begin
       _BTFSS(Z.offs, Z.bit);   //verifica condición
     end;
-    _GOTO_PEND(dg);  //salto pendiente
-    CompileInstruction;
-    if HayError then exit;
-    if cIn.tokL <> 'else' then begin  //no hay blqoue ELSE
-      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-    end else begin
-      //hay bloque ELSE
-      cIn.Next;   //toma "else"
-      _GOTO_PEND(dg2);  //salto pendiente
-      pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-      CompileInstruction;
-      if HayError then exit;
-      pic.codGotoAt(dg2, _PC);   //termina de codificar el salto
-    end;
+    CompileThenElse;
   end;
   end;
 end;
@@ -532,7 +636,6 @@ var
 //  f: extended;  //para almacenar a reales
 begin
   if pos('.',toknum) <> 0 then begin  //es flotante
-    Op.catTyp := t_float;   //es flotante
     GenError('Unvalid float number.');  //No hay soporte aún para flotantes
 //    try
 //      f := StrToFloat(toknum);  //carga con la mayor precisión posible
@@ -564,7 +667,6 @@ begin
 //      Op.typ:=typs[imen];
 //
   end else begin     //es entero
-    Op.catTyp := t_uinteger;   //es entero sin signo
     //Intenta convertir la cadena. Notar que se reconocen los formatos $FF y %0101
     if not TryStrToInt64(toknum, n) then begin
       //Si el lexer ha hecho bien su trabajo, esto solo debe pasar, cuando el
@@ -576,10 +678,8 @@ begin
     {Asigna un tipo, de acuerdo al rango. Notar que el tipo más pequeño, usado
     es el byte, y no el bit.}
     if (n>=0) and  (n<=255) then begin
-      Op.size := 1;
       Op.typ := typByte;
     end else if (n>= 0) and  (n<=65535) then begin
-      Op.size := 2;
       Op.typ := typWord;
     end else  begin //no encontró
       GenError('No type defined to accommodate this number.');
@@ -605,8 +705,6 @@ end;
 procedure TCompiler.TipDefecBoolean(var Op: TOperand; tokcad: string);
 //Devuelve el tipo de cadena encontrado en un token
 begin
-  Op.catTyp := t_boolean;   //es flotante
-  Op.size:=-1;   //se usará un byte
   //convierte valor constante
   Op.valBool:= (tokcad[1] in ['t','T']);
   Op.typ:=typBool;
@@ -719,7 +817,7 @@ var
     if cIn.tokType = tnNumber then begin
       TipDefecNumber(Number, cIn.tok); //encuentra tipo de número, tamaño y valor
       if HayError then exit;  //verifica
-      if Number.catTyp = t_float then begin
+      if Number.typ.cat = t_float then begin
         //Caso especial porque el puede ser el formato <dirección>.<bit> que es
         //totalmenet válido, y el lexer lo captura como un solo token.
         if IsBit then begin
@@ -774,7 +872,7 @@ var
       //Puede ser variable
       elem := TreeElems.FindFirst(cIn.tok);
       if elem=nil then begin
-        GenError('Unknown identifier.');
+        GenError('Unknown identifier. %s', [cIn.tok]);
         exit;
       end;
       if elem is TxpEleVar then begin
@@ -782,7 +880,7 @@ var
         xvar := TxpEleVar(elem);
         absAddr := xvar.AbsAddr;  //debe ser absoluta
         if absAddr = ADRR_ERROR then begin
-          GenError('Unknown type.');
+          GenError('Internal Error: TxpEleVar.AbsAddr.');
           exit;
         end;
       end else begin
@@ -962,7 +1060,7 @@ begin
 //      cIn.Next;    //lo toma
 //      CompileProcDeclar;
     end else begin
-      GenError('Not implemented: "%s"', [cIn.tok]);
+      GenError('Expected VAR, CONST or BEGIN.');
       exit;
     end;
   end;
@@ -987,17 +1085,6 @@ begin
     GenError('";" expected.');  //por ahora
     exit;  //debe ser un error
   end;
-end;
-procedure TCompiler.CompileInstructionDummy;
-{Compila una instrucción pero sin generar código. }
-var
-  p: Integer;
-begin
-  p := pic.iFlash;
-  CompileInstruction;  //compila solo para mantener la sintaxis
-  pic.iFlash := p;     //elimina lo compilado
-  //puede salir con error
-  { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
 end;
 procedure TCompiler.CompileInstruction;
 {Compila una única instrucción o un bloque BEGIN ... END. Puede generara Error.}
@@ -1043,6 +1130,17 @@ begin
     end;
   end;
 end;
+procedure TCompiler.CompileInstructionDummy;
+{Compila una instrucción pero sin generar código. }
+var
+  p: Integer;
+begin
+  p := pic.iFlash;
+  CompileInstruction;  //compila solo para mantener la sintaxis
+  pic.iFlash := p;     //elimina lo compilado
+  //puede salir con error
+  { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
+end;
 procedure TCompiler.CompileCurBlock;
 {Compila el bloque de código actual hasta encontrar un delimitador de bloque, o fin
 de archivo. }
@@ -1058,15 +1156,25 @@ begin
     //busca delimitador
     ProcComments;
     if HayError then exit;   //puede dar error por código assembler o directivas
+    //LO común es que haya un delimitador de expresión
     if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
-      cIn.Next;   //lo toma
-      ProcComments;  //quita espacios
-      if HayError then exit;   //puede dar error por código assembler o directivas
-    end else begin  //hay otra cosa
-      GenError('";" expected.');  //por ahora
-      exit;  //debe ser un error
+      cIn.Next;      //Lo toma
+      ProcComments;  //Quita espacios
+      if HayError then exit; //Puede dar error por código assembler o directivas
+      //Queda listo para la siguiente instrucción
     end;
   end;
+end;
+procedure TCompiler.CompileCurBlockDummy;
+{Compila un bloque pero sin geenrar código.}
+var
+  p: Integer;
+begin
+  p := pic.iFlash;
+  CompileCurBlock;  //compila solo para mantener la sintaxis
+  pic.iFlash := p;     //elimina lo compilado
+  //puede salir con error
+  { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
 end;
 procedure TCompiler.CompileUnit(uni: TxpElement);
 {Realiza la compilación de una unidad}
@@ -1074,6 +1182,7 @@ var
   fun: TxpEleFun;
   elem: TxpElement;
 begin
+debugln('   Ini Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
   ClearError;
   pic.MsjError := '';
   ProcComments;
@@ -1206,6 +1315,7 @@ begin
 //    exit;
 //  end;
 //  Cod_EndProgram;
+debugln('   Fin Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
 end;
 procedure TCompiler.CompileUsesDeclaration;
 {Compila la unidad indicada.}
@@ -1213,6 +1323,7 @@ var
   uni: TxpEleUnit;
   uPath: String;
   uName: String;
+  p: TPosCont;
 begin
   if cIn.tokL = 'uses' then begin
     cIn.Next;  //pasa al nombre
@@ -1256,10 +1367,12 @@ begin
         exit;
       end;
 {----}TreeElems.AddElementAndOpen(uni);
+      p := cIn.PosAct;
       cIn.NewContextFromFile(uPath);
       //Aquí ya se puede realizar otra exploración, como si fuera el archivo principal
       CompileUnit(uni);
-      cIn.CloseContext;  //cierra el contexto
+//      cIn.CloseContext;  //cierra el contexto
+      cIn.PosAct := p;
       if HayError then exit;  //EL error debe haber guardado la ubicaicón del error
 {----}TreeElems.CloseElement; //cierra espacio de nombres de la función
       cIn.Next;  //toma nombre
@@ -1304,7 +1417,6 @@ begin
   ProcComments;
   //Busca USES
   CompileUsesDeclaration;
-
   if cIn.Eof then begin
     GenError('Expected "begin", "var", "type" or "const".');
     exit;
@@ -1324,7 +1436,7 @@ begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'begin') do begin
         CompileGlobalConstDeclar;
-        if HayError then exit;;
+        if HayError then exit;
       end;
     end else if cIn.tokL = 'procedure' then begin
       cIn.Next;    //lo toma
@@ -1384,7 +1496,7 @@ begin
   pic.iFlash:= 0;  //inicia puntero a Flash
   //Explora funciones, para marcar sus elementos locales como no usados
   TreeElems.RefreshAllFuncs;
-  for fun in TreeElems.funcs do begin
+  for fun in TreeElems.AllFuncs do begin
     if fun.nCalled = 0 then begin
       //Si no se usa la función, tampoco sus elementos
       fun.SetElementsUnused;
@@ -1422,7 +1534,7 @@ begin
     end;
   end;
   //Codifica las subrutinas usadas
-  for fun in TreeElems.funcs do begin
+  for fun in TreeElems.AllFuncs do begin
       if fun.nCalled>0 then begin
         //Compila la función en la dirección actual
         fun.adrr := pic.iFlash;    //Actualiza la dirección final
@@ -1474,6 +1586,7 @@ procedure TCompiler.Compile(NombArc: string; LinArc: Tstrings);
 var
   p: SizeInt;
 begin
+  mode := modPicPas;   //Por defecto en sintaxis nueva
   mainFile := NombArc;
   //se pone en un "try" para capturar errores y para tener un punto salida de salida
   //único
@@ -1663,9 +1776,9 @@ begin
   { TODO : Por implementar }
 end;
 procedure TCompiler.DefLexDirectiv;
-{Define la sintaxis del lexer que se usará para analizar las directivas. La que
+(*Define la sintaxis del lexer que se usará para analizar las directivas. La que
  debe estar entre los símbolo {$ ... }
-}
+*)
 begin
   //solo se requiere identificadores y números
   lexDir.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
@@ -1678,6 +1791,7 @@ begin
   lexDir := TSynFacilSyn.Create(nil);  //crea lexer para analzar directivas
   DefLexDirectiv;
   cIn.OnNewLine:=@cInNewLine;
+  mode := modPicPas;   //Por defecto en sintaxis nueva
   StartSyntax;   //Debe hacerse solo una vez al inicio
   DefCompiler;   //Debe hacerse solo una vez al inicio
   InitAsm(pic, self);   //inicia el procesamiento de ASM

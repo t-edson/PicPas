@@ -20,13 +20,15 @@ type
                olvSmart   //Nivel mayor de optimización
                );
   TTreeViewMode = (vmGroups,   //Muestra por grupos
-                   vmDeclar    //Muestra en el orden de declaración
+                   vmDeclar,   //Muestra en el orden de declaración
+                   vmFileExp   //Muestra el explorador de archivos
                    );
   { TConfig }
   TConfig = class(TForm)
     BitAplicar: TBitBtn;
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
+    chkLoadLast: TCheckBox;
     chkExcUnus: TCheckBox;
     chkIncDecVar: TCheckBox;
     chkIncAddress: TCheckBox;
@@ -65,6 +67,8 @@ type
   public  //Propiedades generales
     StateToolbar: TStyleToolbar;
     language : string;
+    SynTreeWidth: integer;   //Ancho del panel del árbol ed sintaxis
+    LoadLast : boolean;  //Cargar el último archivo editado
     property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
     property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
     property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
@@ -128,7 +132,9 @@ begin
   cfgFile.Asoc_Bol('VerPanMensaj', @FViewPanMsg  , true);
   cfgFile.Asoc_Bol('VerStatusbar', @ViewStatusbar, true);
   cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);
-  cfgFile.Asoc_Bol('ViewSynTree', @FViewSynTree, true);
+  cfgFile.Asoc_Bol('ViewSynTree',  @FViewSynTree, true);
+  cfgFile.Asoc_Int('SynTreeWidth', @SynTreeWidth, 130);
+  cfgFile.Asoc_Bol('chkLoadLast', @LoadLast, chkLoadLast, false);
   cfgFile.Asoc_Str('language'   , @language, ComboBox1, 'en - English');
   //Configuraciones del Editor
   fcEditor.Iniciar('Edit', cfgFile);

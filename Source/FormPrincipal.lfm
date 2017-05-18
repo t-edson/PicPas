@@ -1,12 +1,12 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 523
-  Height = 583
-  Top = 171
-  Width = 862
+  Left = 320
+  Height = 625
+  Top = 106
+  Width = 918
   AllowDropFiles = True
   Caption = 'frmPrincipal'
-  ClientHeight = 563
-  ClientWidth = 862
+  ClientHeight = 605
+  ClientWidth = 918
   KeyPreview = True
   Menu = MainMenu1
   OnClose = FormClose
@@ -20,8 +20,8 @@ object frmPrincipal: TfrmPrincipal
   object StatusBar1: TStatusBar
     Left = 0
     Height = 23
-    Top = 540
-    Width = 862
+    Top = 582
+    Width = 918
     Panels = <    
       item
         Width = 70
@@ -47,7 +47,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 26
     Top = 0
-    Width = 862
+    Width = 918
     Caption = 'ToolBar1'
     Images = ImgActions16
     ParentShowHint = False
@@ -650,8 +650,8 @@ object frmPrincipal: TfrmPrincipal
   object panMessages: TPanel
     Left = 0
     Height = 82
-    Top = 458
-    Width = 862
+    Top = 500
+    Width = 918
     Align = alBottom
     TabOrder = 4
   end
@@ -659,8 +659,8 @@ object frmPrincipal: TfrmPrincipal
     Cursor = crVSplit
     Left = 0
     Height = 6
-    Top = 452
-    Width = 862
+    Top = 494
+    Width = 918
     Align = alBottom
     ResizeAnchor = akBottom
   end
@@ -1825,12 +1825,6 @@ object frmPrincipal: TfrmPrincipal
       OnExecute = acViewSynTreeExecute
       ShortCut = 113
     end
-    object acToolCodExp: TAction
-      Category = 'Tool'
-      Caption = 'Explorador de Código'
-      ImageIndex = 30
-      OnExecute = acToolCodExpExecute
-    end
     object acToolConfig: TAction
       Category = 'Tool'
       Caption = '&Confi&gurar'
@@ -2722,7 +2716,7 @@ object frmPrincipal: TfrmPrincipal
         }
       end
       object MenuItem8: TMenuItem
-        Action = acToolCodExp
+        Caption = 'Explorador de Código'
         Bitmap.Data = {
           36040000424D3604000000000000360000002800000010000000100000000100
           2000000000000004000064000000640000000000000000000000000000000000
@@ -2759,6 +2753,7 @@ object frmPrincipal: TfrmPrincipal
           00007F7F00029148240791482407914824077F7F000200000000000000000000
           0000000000000000000000000000000000000000000000000000
         }
+        ImageIndex = 30
       end
       object MenuItem23: TMenuItem
         Action = acToolConfig

@@ -52,7 +52,7 @@ type
                              ha obtenido, en la última subexpresion, copaindo el bit C al
                              bit Z, con inversión lógica. Se usa para opciones de
                              optimziación de código.}
-  private  //Rutinas de gestión de memoria de bajo nivel
+  protected  //Rutinas de gestión de memoria de bajo nivel
     procedure AssignRAM(reg: TPicRegister; regName: string);  //Asigna a una dirección física
     procedure AssignRAMbit(reg: TPicRegisterBit; regName: string);  //Asigna a una dirección física
     function CreateRegisterByte(RegType: TPicRegType): TPicRegister;
@@ -123,6 +123,7 @@ type
     procedure _DECFSZ(const f: byte; d: TPIC16destin);
     procedure _GOTO(const a: word);
     procedure _GOTO_PEND(var igot: integer);
+    procedure _LBL(igot: integer);
     procedure _INCF(const f: byte; d: TPIC16destin);
     procedure _INCFSZ(const f: byte; d: TPIC16destin);
     procedure _IORLW(const k: word);
@@ -145,13 +146,6 @@ type
     function _PC: word;
     function _CLOCK: integer;
   public  //Inicialización
-    //Atributos adicionales
-    tnStruct   : integer;
-    tnDirective: integer;
-    tnAsm      : integer;
-    tnExpDelim : integer;
-    tnBlkDelim : integer;
-    tnOthers   : integer;
     function PicName: string;
     procedure StartRegs;
     constructor Create; override;
@@ -1160,6 +1154,11 @@ procedure TGenCodPic._GOTO_PEND(var  igot: integer);
 begin
   igot := pic.iFlash;  //guarda posición de instrucción de salto
   pic.codAsmA(GOTO_, 0);  //pone salto indefinido
+end;
+procedure TGenCodPic._LBL(igot: integer);
+{Termina de codiricar el GOTO_PEND}
+begin
+  pic.codGotoAt(igot, _PC);
 end;
 function TGenCodPic._PC: word; inline;
 {Devuelve la dirección actual en Flash}

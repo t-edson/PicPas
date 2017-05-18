@@ -34,7 +34,7 @@ type
     property Caption: string read FCaption write SetCaption;  //etiqueta de la pestaña
     function SaveAsDialog(SaveDialog1: TSaveDialog): boolean; override;
     function SaveQuery(SaveDialog1: TSaveDialog): boolean; reintroduce;
-    constructor Create(AOwner: TComponent; nomDef0, extDef0: string; panTabs0: TPanel);
+    constructor Create(AOwner: TComponent; nomDef0, extDef0: string; panTabs0: TPanel); reintroduce;
     destructor Destroy; override;
   end;
 
@@ -109,6 +109,7 @@ type
     function SaveAsDialog: boolean;
     procedure CloseEditor;
     function CloseAll: boolean;
+    procedure LoadLastFileEdited;
   private  //Manejo de menús recientes
     mnRecents   : TMenuItem;  //Menú de archivos recientes
     RecentFiles : TStringList;  //Lista de archivos recientes
@@ -699,7 +700,11 @@ begin
     fileName := rutApp + fileName;
   end;
   ed.LoadFile(fileName);
-  if ed.Error<>'' then Result := false;  //Hubo error
+  if ed.Error='' then begin
+    AgregArcReciente(fileName);
+  end else begin
+    Result := false;  //Hubo error
+  end;
   //Carga la sintaxis apropiada
   ext := ExtractFileExt(fileName);
   case Upcase(ext) of
@@ -766,6 +771,7 @@ begin
   AgregArcReciente(ActiveEditor.NomArc);
 end;
 procedure TfraEditView.SaveAll;
+{Guarda todas las ventanas abiertas en el editor.}
 var
   i: Integer;
 begin
@@ -774,7 +780,10 @@ begin
       //Actualiza por si acaso, era un archivo nuevo
       AgregArcReciente(editors[i].NomArc);
     end;
-    editors[i].SaveFile;
+    if editors[i].NomArc<>'' then begin
+      //No deberái pasar que el archivo esté sin nombre.
+      editors[i].SaveFile;
+    end;
   end;
 end;
 function TfraEditView.SaveAsDialog: boolean;
@@ -802,10 +811,20 @@ begin
   end;
   exit(false);
 end;
+procedure TfraEditView.LoadLastFileEdited;
+{Carga el último archivo de la lista de recientes}
+begin
+  if mnRecents.Count = 0 then exit;
+  ActualMenusReciente(self);
+  mnRecents.Items[0].Click;
+end;
 procedure TfraEditView.RecentClick(Sender: TObject);
 //Se selecciona un archivo de la lista de recientes
+var
+  cap: string;
 begin
-  LoadFile(MidStr(TMenuItem(Sender).Caption,4,150));
+  cap := TMenuItem(Sender).Caption;
+  LoadFile(MidStr(cap, 4,150));
 end;
 procedure TfraEditView.ActualMenusReciente(Sender: TObject);
 {Actualiza el menú de archivos recientes con la lista de los archivos abiertos

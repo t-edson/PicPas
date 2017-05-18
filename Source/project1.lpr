@@ -8,7 +8,7 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, lazcontrols, FormPrincipal, Parser, ProcAsm, FormPICExplorer,
-  FormCodeExplorer, GenCod, GenCodPic, XpresParserPIC, FrameSyntaxTree,
+  GenCod, GenCodPic, XpresParserPIC, FrameSyntaxTree,
   XpresElementsPIC, Globales, FormConfig, PicPasProject, FrameEditView,
   FrameMessagesWin, FormElemProperty;
 
@@ -19,7 +19,6 @@ begin
   Application.Initialize;
   Application.CreateForm(TfrmPrincipal, frmPrincipal);
   Application.CreateForm(TfrmPICExplorer, frmPICExplorer);
-  Application.CreateForm(TfrmCodeExplorer, frmCodeExplorer);
   Application.CreateForm(TConfig, Config);
   Application.CreateForm(TfrmElemProperty, frmElemProperty);
 //  Application.CreateForm(TfraCfgGeneral, fraCfgGeneral);

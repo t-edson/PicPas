@@ -98,70 +98,70 @@
         <ResourceBaseClass Value="Form"/>
       </Unit4>
       <Unit5>
-        <Filename Value="FormCodeExplorer.pas"/>
+        <Filename Value="GenCod.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="frmCodeExplorer"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
       </Unit5>
       <Unit6>
-        <Filename Value="GenCod.pas"/>
+        <Filename Value="GenCodPic.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
       <Unit7>
-        <Filename Value="GenCodPic.pas"/>
+        <Filename Value="XpresParserPIC.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit7>
       <Unit8>
-        <Filename Value="XpresParserPIC.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit8>
-      <Unit9>
         <Filename Value="FrameSyntaxTree.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fraSyntaxTree"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="Globales.pas"/>
+        <IsPartOfProject Value="True"/>
       </Unit9>
       <Unit10>
-        <Filename Value="Globales.pas"/>
+        <Filename Value="XpresElementsPIC.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit10>
       <Unit11>
-        <Filename Value="XpresElementsPIC.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit11>
-      <Unit12>
         <Filename Value="FormConfig.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="Config"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-      </Unit12>
-      <Unit13>
+      </Unit11>
+      <Unit12>
         <Filename Value="PicPasProject.pas"/>
         <IsPartOfProject Value="True"/>
-      </Unit13>
-      <Unit14>
+      </Unit12>
+      <Unit13>
         <Filename Value="FrameEditView.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fraEditView"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-      </Unit14>
-      <Unit15>
+      </Unit13>
+      <Unit14>
         <Filename Value="FrameMessagesWin.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fraMessagesWin"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-      </Unit15>
-      <Unit16>
+      </Unit14>
+      <Unit15>
         <Filename Value="FormElemProperty.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmElemProperty"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+      </Unit15>
+      <Unit16>
+        <Filename Value="FrameArcExplor.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmArcExplor"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
       </Unit16>
     </Units>
   </ProjectOptions>

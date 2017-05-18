@@ -22,7 +22,7 @@
   "repeat ... |repeat \n\t\_\n\uend;"
   "program ... begin ... end.|{Description of the program.}\nprogram nombre;\nbegin\n  \_\nend."
   "unit ... end.|{Description of the unit.}\nunit unitName;\ninterface\n  \_\nimplementation\n\nend."
-  "procedure ... begin ... end;|procedure proc1;\n\ubegin\n\u  \_\n\uend;"
+  "procedure ... begin ... end;|procedure proc1;\n\u\ubegin\n\u  \_\n\uend;"
   "const ... |const\n\u  \_consName = 0;"
   "var ... |var\n\u  \_varName: byte;"
   delay_ms
@@ -115,7 +115,7 @@
     begin 
     case  const  constructor class 
     destructor do  downto dispose  
-    else  end exit except  exports 
+    else elsif end exit except  exports 
     for function file finalization finally
     goto
     if  implementation  inherited  inline  interface initialization  is 
@@ -123,7 +123,7 @@
     nil new
     object  of  on  operator out 
     procedure packed program 
-    repeat record  reintroduce raise 
+    repeat record register
     string self  set  shl  shr  
     then to try type threadvar 
     unit  until  uses 
@@ -171,4 +171,10 @@
     <Block Name="FuncBody"  Start="Begin" End= "End" CloseParent="true" BackCol="transparent"></Block>
   </Block>
   <Block Name="BeginEnd"  Start="Begin" End= "End"></Block><!--Al final para dar prioridad al Begin-End de PROCEDURE-->
+  <!-- Bloque específico para la nueva sintaxis de PicPas -->
+  <Block Start="IF" End="END" Folding="False">
+	<Section Start="THEN"> </Section>
+	<Section Start="ELSIF"> </Section>
+	<Section Start="ELSE"> </Section>
+  </Block>
 </Language>
