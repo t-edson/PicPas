@@ -1,11 +1,11 @@
  //Main menu
   mnFile.Caption :=Trans('&File'  , '&Archivo', '');
-  mnEdit.Caption :=Trans('&Edit'  , '&Edici髇', '');
+  mnEdit.Caption :=Trans('&Edit'  , '&Edici贸n', '');
   mnFind.Caption :=Trans('&Search', '&Buscar', '');
   mnView.Caption :=Trans('&View'  , '&Ver', '');
   mnTools.Caption:=Trans('&Tools' , '&Herramientas', '');
   //File Actions
-  acArcNewFile.Caption := Trans('New &File'   , 'Nuevo &Archivo', '');
+  acArcNewFile.Caption := Trans('New &File'   , 'Nuevo &Archivo', 'Musuq &Khipu', '');
   acArcNewFile.Hint    := Trans('New File'    , 'Nuevo Archivo', '');
   acArcNewProj.Caption := Trans('New &Project', 'Nuevo &Proyecto', '');
   acArcNewProj.Hint    := Trans('New &Project', 'Nuevo Proyecto', '');
@@ -49,10 +49,10 @@
   acViewToolbar.Hint   := Trans('Show/hide the Tool Bar', 'Mostrar u Ocultar la barra de herramientas', '');
 
   acToolCompil.Caption:= Trans('&Compile'               , '&Compilar', '');
-  acToolCompil.Hint:=    Trans('Compile the source code', 'Compila el c骴igo fuente', '');
+  acToolCompil.Hint:=    Trans('Compile the source code', 'Compila el c贸digo fuente', '');
   acToolComEjec.Caption:=Trans('Compile and E&xecute'   , 'Compilar y Ej&ecutar', '');
   acToolComEjec.Hint:=   Trans('Compile and Execute'    , 'Compilar y Ejecutar', '');
   acToolPICExpl.Caption:=Trans('PIC E&xplorer'          , 'E&xplorador de PIC', '');
   acToolPICExpl.Hint:=   Trans('Open the PIC devices explorer','Abre el explorador de dispositivos PIC', '');
-  acToolConfig.Caption:= Trans('&Settings'              , 'Configuraci髇', '');
-  acToolConfig.Hint :=   Trans('Settings dialog'        , 'Ver configuraci髇', '');
+  acToolConfig.Caption:= Trans('&Settings'              , 'Configuraci贸n', '');
+  acToolConfig.Hint :=   Trans('Settings dialog'        , 'Ver configuraci贸n', '');
