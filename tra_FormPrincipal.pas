@@ -6,7 +6,7 @@
   mnTools.Caption:=Trans('&Tools' , '&Herramientas', '');
   //File Actions
   acArcNewFile.Caption := Trans('New &File'   , 'Nuevo &Archivo', 'Musuq &Khipu');
-  acArcNewFile.Hint    := Trans('New File'    , 'Nuevo Archivo', '');
+  acArcNewFile.Hint    := Trans('New File'    , 'Nuevo Archivo', 'Musuq Khipu');
   acArcNewProj.Caption := Trans('New &Project', 'Nuevo &Proyecto', '');
   acArcNewProj.Hint    := Trans('New &Project', 'Nuevo Proyecto', '');
   acArcOpen.Caption    := Trans('&Open...'    , '&Abrir...', '');
