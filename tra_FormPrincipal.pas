@@ -55,4 +55,4 @@
   acToolPICExpl.Caption:=Trans('PIC E&xplorer'          , 'E&xplorador de PIC', '');
   acToolPICExpl.Hint:=   Trans('Open the PIC devices explorer','Abre el explorador de dispositivos PIC', '');
   acToolConfig.Caption:= Trans('&Settings'              , 'Configuración', '');
-  acToolConfig.Hint :=   Trans('Settings dialog'        , 'Ver configuración', '');
+  acToolConfig.Hint :=   Trans('Settings dialog'        , 'Ver configuración', '?');
