@@ -162,177 +162,66 @@ begin
   Config.SetLanguage(idLang);
   fraSynTree.SetLanguage(idLang);
   fraEditView1.SetLanguage(idLang);
-  case lowerCase(idLang) of
-  'es': begin
-      //menú principal
-      mnFile.Caption:='&Archivo';
-      mnEdit.Caption:='&Edición';
-      mnFind.Caption:='&Buscar';
-      mnView.Caption:='&Ver';
-      mnTools.Caption:='&Herramientas';
+  curLang := idLang;
+ //Main menu
+  mnFile.Caption :=Trans('&File'  , '&Archivo');
+  mnEdit.Caption :=Trans('&Edit'  , '&Edición');
+  mnFind.Caption :=Trans('&Search', '&Buscar');
+  mnView.Caption :=Trans('&View'  , '&Ver');
+  mnTools.Caption:=Trans('&Tools' , '&Herramientas');
+  //File Actions
+  acArcNewFile.Caption := Trans('New &File'   , 'Nuevo &Archivo');
+  acArcNewFile.Hint    := Trans('New File'    , 'Nuevo Archivo');
+  acArcNewProj.Caption := Trans('New &Project', 'Nuevo &Proyecto');
+  acArcNewProj.Hint    := Trans('New &Project', 'Nuevo Proyecto');
+  acArcOpen.Caption    := Trans('&Open...'    , '&Abrir...');
+  acArcOpen.Hint       := Trans('Open file'   , 'Abrir archivo');
+  acArcSave.Caption    := Trans('&Save'       , '&Guardar');
+  acArcSave.Hint       := Trans('Save file'   , 'Guardar archivo');
+  acArcSaveAs.Caption  := Trans('Sa&ve As...' , 'G&uardar Como...');
+  acArcSaveAs.Hint     := Trans('Save file as...', 'Guardar como...');
+  acArcQuit.Caption    := Trans('&Quit'       , '&Salir');
+  acArcQuit.Hint       := Trans('Close the program','Cerrar el programa');
+  //Edit Actions
+  acEdUndo.Caption     := Trans('&Undo'       , '&Deshacer');
+  acEdUndo.Hint        := Trans('Undo'        , 'Deshacer');
+  acEdRedo.Caption     := Trans('&Redo'       , '&Rehacer');
+  acEdRedo.Hint        := Trans('Redo'        , 'Reahacer');
+  acEdCut.Caption      := Trans('C&ut'        , 'Cor&tar');
+  acEdCut.Hint         := Trans('Cut'         , 'Cortar');
+  acEdCopy.Caption     := Trans('&Copy'       , '&Copiar');
+  acEdCopy.Hint        := Trans('Copy'        , 'Copiar');
+  acEdPaste.Caption    := Trans('&Paste'      , '&Pegar');
+  acEdPaste.Hint       := Trans('Paste'       , 'Pegar');
+  acEdSelecAll.Caption := Trans('Select &All' , 'Seleccionar &Todo');
+  acEdSelecAll.Hint    := Trans('Select all'  , 'Seleccionar todo');
+  acEdModCol.Caption   := Trans('Column mode' , 'Modo Columna');
+  acEdModCol.Hint      := Trans('Column mode' , 'Modo columna');
+  //Search Actions
+  acBusBuscar.Caption  := Trans('Search...'   , 'Buscar...');
+  acBusBuscar.Hint     := Trans('Search text' , 'Buscar texto');
+  acBusBusSig.Caption  := Trans('Search &Next', 'Buscar &Siguiente');
+  acBusBusSig.Hint     := Trans('Search Next' , 'Buscar Siguiente');
+  acBusReemp.Caption   := Trans('&Replace...' , '&Remplazar...');
+  acBusReemp.Hint      := Trans('Replace text', 'Reemplazar texto');
 
-      acArcNewFile.Caption := 'Nuevo &Archivo';
-      acArcNewFile.Hint := 'Nuevo Archivo';
-      acArcNewProj.Caption := 'Nuevo &Proyecto';
-      acArcNewProj.Hint := 'Nuevo Proyecto';
-      acArcOpen.Caption := '&Abrir...';
-      acArcOpen.Hint := 'Abrir archivo';
-      acArcSave.Caption := '&Guardar';
-      acArcSave.Hint := 'Guardar archivo';
-      acArcSaveAs.Caption := 'G&uardar Como...';
-      acArcSaveAs.Hint := 'Guardar como';
-      acArcQuit.Caption := '&Salir';
-      acArcQuit.Hint := 'Cerrar el programa';
-      acEdUndo.Caption := '&Deshacer';
-      acEdUndo.Hint := 'Deshacer';
-      acEdRedo.Caption := '&Rehacer';
-      acEdRedo.Hint := 'Reahacer';
-      acEdCut.Caption := 'Cor&tar';
-      acEdCut.Hint := 'Cortar';
-      acEdCopy.Caption := '&Copiar';
-      acEdCopy.Hint := 'Copiar';
-      acEdPaste.Caption := '&Pegar';
-      acEdPaste.Hint := 'Pegar';
-      acEdSelecAll.Caption := 'Seleccionar &Todo';
-      acEdSelecAll.Hint := 'Seleccionar todo';
-      acEdModCol.Caption := 'Modo Columna';
-      acEdModCol.Hint := 'Modo columna';
-      acBusBuscar.Caption := 'Buscar...';
-      acBusBuscar.Hint := 'Buscar texto';
-      acBusBusSig.Caption := 'Buscar &Siguiente';
-      acBusBusSig.Hint := 'Buscar Siguiente';
-      acBusReemp.Caption := '&Remplazar...';
-      acBusReemp.Hint := 'Reemplazar texto';
 
-      acViewMsgPan.Caption:='Panel de &Mensajes';
-      acViewMsgPan.Hint:='Mostrar u Ocultar el Panel de Mensajes';
-      acViewStatbar.Caption:='Barra de &Estado';
-      acViewStatbar.Hint:='Mostrar u Ocultar la barra de estado';
-      acViewToolbar.Caption:='Barra de &Herramientas';
-      acViewToolbar.Hint:='Mostrar u Ocultar la barra de herramientas';
+  acViewMsgPan.Caption := Trans('&Messages Panel', 'Panel de &Mensajes');
+  acViewMsgPan.Hint    := Trans('Show/hide the Messages Panel','Mostrar u Ocultar el Panel de Mensajes');
+  acViewStatbar.Caption:= Trans('&Status Bar'    , 'Barra de &Estado');
+  acViewStatbar.Hint   := Trans('Show o hide the Status Bar','Mostrar u Ocultar la barra de estado');
+  acViewToolbar.Caption:= Trans('&Tool Bar'      , 'Barra de &Herramientas');
+  acViewToolbar.Hint   := Trans('Show/hide the Tool Bar', 'Mostrar u Ocultar la barra de herramientas');
 
-      acToolCompil.Caption:='&Compilar';
-      acToolCompil.Hint:='Compila el código fuente';
-      acToolComEjec.Caption:='Compilar y Ej&ecutar';
-      acToolComEjec.Hint:='Compilar y Ejecutar';
-      acToolPICExpl.Caption:='E&xplorador de PIC';
-      acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
-      acToolConfig.Caption:='Configuración';
-      acToolConfig.Hint := 'Ver configuración';
-    end;
-  'qu': begin
-      //menú principal
-      mnFile.Caption:='&Khipu';
-      mnEdit.Caption:='&Edición';
-      mnFind.Caption:='&Mask''ay';
-      mnView.Caption:='&Rikhuy';
-      mnTools.Caption:='&Llank''ana';
+  acToolCompil.Caption:= Trans('&Compile'               , '&Compilar');
+  acToolCompil.Hint:=    Trans('Compile the source code', 'Compila el código fuente');
+  acToolComEjec.Caption:=Trans('Compile and E&xecute'   , 'Compilar y Ej&ecutar');
+  acToolComEjec.Hint:=   Trans('Compile and Execute'    , 'Compilar y Ejecutar');
+  acToolPICExpl.Caption:=Trans('PIC E&xplorer'          , 'E&xplorador de PIC');
+  acToolPICExpl.Hint:=   Trans('Open the PIC devices explorer','Abre el explorador de dispositivos PIC');
+  acToolConfig.Caption:= Trans('&Settings'              , 'Configuración');
+  acToolConfig.Hint :=   Trans('Settings dialog'        , 'Ver configuración');
 
-      acArcNewFile.Caption := '&Nuevo';
-      acArcNewFile.Hint := 'Nuevo archivo';
-      acArcOpen.Caption := '&Abrir...';
-      acArcOpen.Hint := 'Abrir archivo';
-      acArcSave.Caption := '&Guardar';
-      acArcSave.Hint := 'Guardar archivo';
-      acArcSaveAs.Caption := 'G&uardar Como...';
-      acArcSaveAs.Hint := 'Guardar como';
-      acArcQuit.Caption := '&Salir';
-      acArcQuit.Hint := 'Cerrar el programa';
-      acEdUndo.Caption := '&Deshacer';
-      acEdUndo.Hint := 'Deshacer';
-      acEdRedo.Caption := '&Rehacer';
-      acEdRedo.Hint := 'Reahacer';
-      acEdCut.Caption := 'Cor&tar';
-      acEdCut.Hint := 'Cortar';
-      acEdCopy.Caption := '&Copiar';
-      acEdCopy.Hint := 'Copiar';
-      acEdPaste.Caption := '&Pegar';
-      acEdPaste.Hint := 'Pegar';
-      acEdSelecAll.Caption := 'Seleccionar &Todo';
-      acEdSelecAll.Hint := 'Seleccionar todo';
-      acEdModCol.Caption := 'Modo Columna';
-      acEdModCol.Hint := 'Modo columna';
-      acBusBuscar.Caption := 'Buscar...';
-      acBusBuscar.Hint := 'Buscar texto';
-      acBusBusSig.Caption := 'Buscar &Siguiente';
-      acBusBusSig.Hint := 'Buscar Siguiente';
-      acBusReemp.Caption := '&Remplazar...';
-      acBusReemp.Hint := 'Reemplazar texto';
-
-      acViewMsgPan.Caption:='Panel de &Mensajes';
-      acViewMsgPan.Hint:='Mostrar u Ocultar el Panel de Mensajes';
-      acViewStatbar.Caption:='Barra de &Estado';
-      acViewStatbar.Hint:='Mostrar u Ocultar la barra de estado';
-      acViewToolbar.Caption:='Barra de &Herramientas';
-      acViewToolbar.Hint:='Mostrar u Ocultar la barra de herramientas';
-
-      acToolCompil.Caption:='&Compilar';
-      acToolCompil.Hint:='Compila el código fuente';
-      acToolComEjec.Caption:='Compilar y Ej&ecutar';
-      acToolComEjec.Hint:='Compilar y Ejecutar';
-      acToolPICExpl.Caption:='E&xplorador de PIC';
-      acToolPICExpl.Hint:='Abre el explorador de dispositivos PIC';
-      acToolConfig.Caption:='Configuración';
-      acToolConfig.Hint := 'Ver configuración';
-    end;
-  else begin  //Inglés o idioma desconocido
-      //menú principal
-      mnFile.Caption:='&File';
-      mnEdit.Caption:='&Edit';
-      mnFind.Caption:='&Search';
-      mnView.Caption:='&View';
-      mnTools.Caption:='&Tools';
-
-      acArcNewFile.Caption := 'New &File';
-      acArcNewFile.Hint := 'New File';
-      acArcNewProj.Caption := 'New &Project';
-      acArcNewProj.Hint := 'New &Project';
-      acArcOpen.Caption := '&Open...';
-      acArcOpen.Hint := 'Open file';
-      acArcSave.Caption := '&Save';
-      acArcSave.Hint := 'Save file';
-      acArcSaveAs.Caption := 'Sa&ve As ...';
-      acArcSaveAs.Hint := 'Save file as ...';
-      acArcQuit.Caption := '&Quit';
-      acArcQuit.Hint := 'Close the program';
-      acEdUndo.Caption := '&Undo';
-      acEdUndo.Hint := 'Undo';
-      acEdRedo.Caption := '&Redo';
-      acEdRedo.Hint := 'Redo';
-      acEdCut.Caption := 'C&ut';
-      acEdCut.Hint := 'Cut';
-      acEdCopy.Caption := '&Copy';
-      acEdCopy.Hint := 'Copy';
-      acEdPaste.Caption := '&Paste';
-      acEdPaste.Hint := 'Paste';
-      acEdSelecAll.Caption := 'Select &All';
-      acEdSelecAll.Hint := 'Select all';
-      acEdModCol.Caption := 'Column mode';
-      acEdModCol.Hint := 'Column mode';
-      acBusBuscar.Caption := 'Search...';
-      acBusBuscar.Hint := 'Search text';
-      acBusBusSig.Caption := 'Search &Next';
-      acBusBusSig.Hint := 'Search Next';
-      acBusReemp.Caption := '&Replace...';
-      acBusReemp.Hint := 'Replace text';
-
-      acViewMsgPan.Caption:='&Messages Panel';
-      acViewMsgPan.Hint:='Show o hide the Messages Panel';
-      acViewStatbar.Caption:='&Status Bar';
-      acViewStatbar.Hint:='Show o hide the Status Bar';
-      acViewToolbar.Caption:='&Tool Bar';
-      acViewToolbar.Hint:='Show o hide the Tool Bar';
-
-      acToolCompil.Caption:='&Compile';
-      acToolCompil.Hint:='Compile the source code';
-      acToolComEjec.Caption:='Compile and E&xecute';
-      acToolComEjec.Hint:='Compile and Execute';
-      acToolPICExpl.Caption:='PIC E&xplorer';
-      acToolPICExpl.Hint:='Open the PIC devices explorer';
-      acToolConfig.Caption := '&Settings';
-      acToolConfig.Hint := 'Settings dialog';
-    end;
-  end;
 end;
 procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
 begin
@@ -724,4 +613,4 @@ begin
 end;
 
 end.
-//729
+

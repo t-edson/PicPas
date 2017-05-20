@@ -44,7 +44,7 @@ interface
 
 uses
   Classes, Windows, SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls,
-  LCLType, Menus, Masks, Dialogs, strutils, MisUtils;
+  LCLType, Menus, Masks, LazUTF8, Dialogs, strutils, MisUtils;
 
 type
   TNodeType = (ntyDrive, ntyFile, ntyFolder);

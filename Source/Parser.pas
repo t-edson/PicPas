@@ -287,7 +287,6 @@ procedure TCompiler.CaptureDecParams(fun: TxpEleFun);
 //Lee la declaración de parámetros de una función.
 var
   parType: String;
-  parName: String;
   typ: TType;
   xvar: TxpEleVar;
   IsRegister: Boolean;
@@ -318,13 +317,6 @@ begin
         GenError('Identifier expected.');
         exit;
       end;
-//      if cIn.tokType <> tnIdentif then begin
-//        GenError('Identifier expected.');
-//        exit;
-//      end;
-//      parName := cIn.tok;   //lee tipo de parámetro
-//      cIn.Next;
-//      cIn.SkipWhites;
       if cIn.tok<>':' then begin
         GenError('":" expected.');
         exit;
@@ -407,6 +399,7 @@ procedure TCompiler.CompileIF;
       exit(true);
     end else begin
       //Este modo no geenrará instrucciones
+      cIn.SkipWhites;
       GenWarn('Instruction will never execute.');
       if mode = modPascal then begin
         //En modo Pascal se espera una instrucción
@@ -418,7 +411,21 @@ procedure TCompiler.CompileIF;
       exit(true);
     end;
   end;
-  function CompileThenElse: boolean;
+  function VerifyEND: boolean;
+  {Compila la parte final de la estructura, que en el modo PicPas, debe ser el
+   delimitador END. Si encuentra error, devuelve FALSE.}
+  begin
+    Result := true;   //por defecto
+    if mode = modPicPas then begin
+      //En modo PicPas, debe haber un delimitador de bloque
+      if cIn.tokL <> 'end' then begin
+        GenError('END expected.');
+        exit(false);
+      end;
+      cIn.Next;
+    end;
+  end;
+  procedure CompileThenElse;
   {Compila la parte THEN ... ELSE, de una condicional. Si la condición, es verdadera,
    Antes de llamar a esta rutina, debe incluirse un salto de tipo BTFSS o BTFSC, para
    cuando la condificón es verdadera.}
@@ -426,37 +433,28 @@ procedure TCompiler.CompileIF;
     jFALSE, jEND_TRUE: integer;
   begin
     _GOTO_PEND(jFALSE);  //salto pendiente
-    //Es TRUE
+    //Compila la parte TRUE
     if not CompileBody then exit;
-//    if cIn.tokL = 'elsif' then begin
-//      //Hay bloque ELSIF
-//      cIn.Next;   //toma "else"
-//      _GOTO_PEND(jEND_TRUE);   //llega por aquí si es TRUE
-//_lbl(jFALSE);   //termina de codificar el salto
-////      GetExpressionE(0);   //Evalúa la otra condición
-//
-//      _GOTO_PEND(jFALSE);  //salto pendiente
-//      //Es TRUE
-//      if not CompileBody then exit;
-//_lbl(jEND_TRUE);   //termina de codificar el salto
-//    end;
-    if cIn.tokL = 'else' then begin  //hay bloque ELSE
+    //Verifica si sigue el ELSE
+    if cIn.tokL = 'else' then begin
       //hay bloque ELSE
       cIn.Next;   //toma "else"
       _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
-_lbl(jFALSE);   //termina de codificar el salto
+      _lbl(jFALSE);   //termina de codificar el salto
       if not CompileBody then exit;
-_lbl(jEND_TRUE);   //termina de codificar el salto
-    end else begin
-_lbl(jFALSE);   //termina de codificar el salto
-    end;
-    if mode = modPicPas then begin
-      //En modo PicPas, debe haber un delimitador de bloque
-      if cIn.tokL <> 'end' then begin
-        GenError('END expected.');
-        exit;
-      end;
+      _lbl(jEND_TRUE);   //termina de codificar el salto
+      VerifyEND;   //puede salir con error
+    end else if cIn.tokL = 'elsif' then begin
       cIn.Next;
+      _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
+      _lbl(jFALSE);   //termina de codificar el salto
+      CompileIF;  //más fácil es la forma recursiva
+      if HayError then exit;
+      _lbl(jEND_TRUE);   //termina de codificar el salto
+      //No es necesario verificar el END final.
+    end else begin
+      _lbl(jFALSE);   //termina de codificar el salto
+      VerifyEND;  //puede salir con error
     end;
   end;
 begin
@@ -482,6 +480,9 @@ begin
         //Hay bloque ELSE, pero no se ejecutará nunca
         cIn.Next;   //toma "else"
         if not CompileBody(false) then exit;
+        VerifyEND;
+      end else begin
+        VerifyEND;
       end;
     end else begin
       //Es falso, nunca se ejecuta
@@ -490,15 +491,15 @@ begin
         //hay bloque ELSE, que sí se ejecutará
         cIn.Next;   //toma "else"
         if not CompileBody then exit;
+        VerifyEND;
+      end else if cIn.tokL = 'elsif' then begin
+        cIn.Next;
+        CompileIF;  //más fácil es la forma recursiva
+        if HayError then exit;
+        //No es necesario verificar el END final.
+      end else begin
+        VerifyEND;
       end;
-    end;
-    if mode = modPicPas then begin
-      //En modo PicPas, debe haber un delimitador de bloque
-      if cIn.tokL <> 'end' then begin
-        GenError('END expected.');
-        exit;
-      end;
-      cIn.Next;
     end;
   end;
   coVariab:begin
@@ -510,10 +511,23 @@ begin
     CompileThenElse;
   end;
   coExpres:begin
-    if res.Inverted then begin //_Lógica invertida
-      _BTFSC(Z.offs, Z.bit);   //verifica condición
+    if InvertedFromC then begin
+      //El resultado de la expresión, está en Z, pero a partir una copia negada de C
+      //Se optimiza, eliminando las instrucciones de copia de C a Z
+      pic.iFlash := pic.iFlash-2;
+      //La lógica se invierte
+      if res.Inverted then begin //_Lógica invertida
+        _BTFSS(C.offs, C.bit);   //verifica condición
+      end else begin
+        _BTFSC(C.offs, C.bit);   //verifica condición
+      end;
     end else begin
-      _BTFSS(Z.offs, Z.bit);   //verifica condición
+      //El resultado de la expresión, está en Z. Caso normal
+      if res.Inverted then begin //_Lógica invertida
+        _BTFSC(Z.offs, Z.bit);   //verifica condición
+      end else begin
+        _BTFSS(Z.offs, Z.bit);   //verifica condición
+      end;
     end;
     CompileThenElse;
   end;
@@ -1182,7 +1196,7 @@ var
   fun: TxpEleFun;
   elem: TxpElement;
 begin
-debugln('   Ini Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
+//debugln('   Ini Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
   ClearError;
   pic.MsjError := '';
   ProcComments;
@@ -1315,7 +1329,7 @@ debugln('   Ini Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon
 //    exit;
 //  end;
 //  Cod_EndProgram;
-debugln('   Fin Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
+//debugln('   Fin Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
 end;
 procedure TCompiler.CompileUsesDeclaration;
 {Compila la unidad indicada.}

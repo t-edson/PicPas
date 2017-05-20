@@ -1,3 +1,45 @@
+PicPas 0.6.4
+============
+Se cambia a 3 dígitos el ancho del operando en las instrucciones GOTO y RETURN, en la 
+salida en ensamblador.
+Se implementa la opción ELSIF, de la estructura condicional IF, y se habilita el modo
+Pascal.
+Se crean las operaciones Oper_byte_difer_bit, Oper_byte_or_bit, Oper_byte_xor_bit;
+Se corrige un error en el generador de código, cuando trabaja las operaciones AND y OR 
+de variables en lógica invertida.
+Se corrige un error en TGenCodPic.GetVarBitFromStk(). Estaba usando el índice stackTop,
+en lugar de stackTopBit.
+Se corrige TGenCodPic.GetVarByteFromStk(), en el valor del índice de la pila.
+Se termina de implementar y validar la operación TGenCod.Oper_byte_great_byte.
+Se crea el registro TGenCodPic.C, para usarla como bandera al igual que Z.
+Se incluye optimización de la condicional, usando la bandera "InvertedFromC".
+Se implementan las operaciones Oper_byte_less_byte, Oper_byte_gequ_byte, 
+Oper_byte_lequ_byte.
+Se modifica la configuración del autocompletado, para usar la nueva sinatxis del IF.
+Se implementan más programas de pruebas para el compilador.
+
+PENDIENTES
+Revisar la implementación de las estructuras. 
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la traducción de idiomas.
+Implementar la reutilización de variables usadas como parámetros.
+Revisar el paso de parámetros byte a word o bits. 
+Revisar el posible problema de pérdida de resultado en el generador de código, cuando se
+hace:   
+SetResultExpres_bit(false);  //Fija resultado
+SaveW(reg); 
+...  // se actualiza Z.
+RestoreW(reg); //<-Se pierde Z, si se restaura W.
+Las funciones no usadas, en las unidades, aún se compilan, cuando la usa una función 
+no usada.
+¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
+Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
+
+
 PicPas 0.6.3
 ============
 Se permite la declaración de varios parámetros de una función, separadas por comas.
@@ -26,29 +68,6 @@ código.
 Se crea el método TfraEditView.LoadLastFileEdited() y se incluye la opción: "Abrir 
 ultimo archivo editado al abrir", en la configuraciones.
 Se modifica la sintaxis del IF, para adaptarse a la nueva sintaxis de PicPas.
-
-PENDIENTES
-Revisar la implementación de las estructuras. 
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la traducción de idiomas.
-Corregir el problema de la pérdida del nombre en las variables bit, en el código 
-ensamblador.
-Implementar la reutilización de variables usadas como parámetros.
-Implementar el uso de parámetros de tipo REGISTER, para usar el registro W, o HW o Z.
-Revisar el paso de parámetros byte a word o bits. 
-Revisar el posible problema de pérdidad de resultado en el generador de código, cuando se
-hace:   
-SetResultExpres_bit(false);  //Fija resultado
-SaveW(reg); 
-...  // se actualiza Z.
-RestoreW(reg); //<-Se pierde Z, si se restaura W.
-Las funciones no usadas, en las unidades, aún se compilan, cuando la usa una función 
-no usada.
-¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
 
 PicPas 0.6.2
 ============

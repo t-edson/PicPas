@@ -27,6 +27,7 @@ type
   protected
     W      : TPicRegister;     //Registro Interno.
     Z      : TPicRegisterBit;  //Registro Interno.
+    C      : TPicRegisterBit;  //Registro Interno.
     H      : TPicRegister;     //Registros de trabajo. Se crean siempre.
     listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
     listRegStk: TPicRegister_list;  //lista de registros de pila
@@ -591,7 +592,7 @@ la pila. Se usa como un medio de trabajar con los datos de la pila.}
 var
   topreg: TPicRegister;
 begin
-  topreg := listRegStk[stackTop];  //toma referecnia de registro de la pila
+  topreg := listRegStk[stackTop-1];  //toma referecnia de registro de la pila
   //Usamos la variable "varStkByte" que existe siempre, para devolver la referencia.
   //Primero la hacemos apuntar a la dirección física de la pila
   varStkByte.adrByte0.offs    := topreg.offs;
@@ -609,7 +610,7 @@ la pila. Se usa como un medio de trabajar con los datos de la pila.}
 var
   topreg: TPicRegisterBit;
 begin
-  topreg := listRegStkBit[stackTop];  //toma referecnia de registro de la pila
+  topreg := listRegStkBit[stackTopBit-1];  //toma referecnia de registro de la pila
   //Usamos la variable "varStkBit" que existe siempre, para devolver la referencia.
   //Primero la hacemos apuntar a la dirección física de la pila
   varStkBit.adrBit.offs    := topreg.offs;
@@ -822,7 +823,7 @@ end;
 procedure TGenCodPic.SetResultExpres_byte;
 {Define el resultado como una expresión de tipo Byte, y se asegura de reservar el
 registro W, para devolver la salida. Debe llamarse cuando se tienen los operandos de
-la oepración en p1^y p2^, porque toma infiormación de allí.}
+la oepración en p1^y p2^, porque toma información de allí.}
 begin
   SetResult(typByte, coExpres);
   //Verifica si el registro W, está ocupado
@@ -1215,11 +1216,18 @@ begin
   Z.offs := _STATUS;
   Z.bit := _Z;
   Z.assigned := true;   //ya está asignado desde el principio
+  {Crea registro de trabajo C. El registro C, es el registro interno del PIC, y está
+  siempre asignado en RAM. }
+  C := TPicRegisterBit.Create;
+  C.offs := _STATUS;
+  C.bit := _C;
+  C.assigned := true;   //ya está asignado desde el principio
 end;
 destructor TGenCodPic.Destroy;
 begin
-  W.Destroy;
+  C.Destroy;
   Z.Destroy;
+  W.Destroy;
   listRegAuxBit.Destroy;
   listRegStkBit.Destroy;
   listRegStk.Destroy;
