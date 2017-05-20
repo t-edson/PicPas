@@ -17,6 +17,8 @@ Se implementan las operaciones Oper_byte_less_byte, Oper_byte_gequ_byte,
 Oper_byte_lequ_byte.
 Se modifica la configuración del autocompletado, para usar la nueva sinatxis del IF.
 Se implementan más programas de pruebas para el compilador.
+Se mejora la opción de traducción para español, en diversas unidades.
+Se eliminan la funciones de error que no se usaban en la unidad Parser.
 
 PENDIENTES
 Revisar la implementación de las estructuras. 

@@ -5,7 +5,6 @@ object fraEditView: TfraEditView
   Width = 320
   ClientHeight = 240
   ClientWidth = 320
-  LCLVersion = '1.6.2.0'
   TabOrder = 0
   DesignLeft = 364
   DesignTop = 148

@@ -7,7 +7,7 @@
   <ViewSynTree Val="True"/>
   <SynTreeWidth Val="225"/>
   <chkLoadLast Val="True"/>
-  <language Val="en - English"/>
+  <language Val="es - Español"/>
   <Edit>
     <cTxtNor Val="12632256"/>
     <cFonEdi Val="0"/>
@@ -25,10 +25,10 @@
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
     <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\Operations\TestBit.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\Operations\TestByte.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.6.4\temp\NewFile1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\Operations\Test2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\Operations\Test1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\MustPass\conditional2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\MustPass\conditional1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\Operations\TestByte.pas
 "/>
   </Edit>
   <viewMode Val="2"/>

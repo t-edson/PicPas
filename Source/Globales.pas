@@ -37,14 +37,14 @@ var
 //const
 // TestRec: TTranslation = (en: 'Something'; es: 'algo'; );
 
-function Trans(const strEn, strEs: string): string;
+function Trans(const strEn, strEs, strQu: string): string;
 //////////////////////////////////////////////////////
 function LeerParametros: boolean;
 function NombDifArc(nomBase: String): String;
 
 implementation
 
-function Trans(const strEn, strEs: string): string;
+function Trans(const strEn, strEs, strQu: string): string;
 begin
   case curLang of
   'en': Result := strEn;

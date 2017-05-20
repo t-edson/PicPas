@@ -68,19 +68,62 @@ var
 
 implementation
 
-procedure GenError(msg: string);
-begin
-  cxp.GenError(msg);
-end;
-procedure GenError(msg: string; const Args: array of const);
-begin
-  cxp.GenError(msg,Args);
-end;
-function HayError: boolean;
-begin
-  Result := cxp.HayError;
-end;
 //Funciones básicas
+procedure SetLanguage(lang: string);
+begin
+  case lang of
+  'en': begin
+    dicClear;  //it's yet in English
+  end;
+  'es': begin
+    //Update messages
+    dicSet('Not implemented.', 'No implementado');
+    dicSet('Not implemented: "%s"', 'No implementado: "%s"');
+    dicSet('Identifier expected.', 'Identificador esperado.');
+    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
+    dicSet('Unvalid float number.', 'Número decimal no válido.');
+    dicSet('Error in number.', 'Error en número');
+    dicSet('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.');
+    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
+    dicSet('"." expected.', 'Se esperaba "."');
+    dicSet('Invalid memory address.', 'Dirección de memoria inválida.');
+    dicSet('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.');
+    dicSet('Identifier of variable expected.', 'Se esperaba identificador de variable.');
+    dicSet('Unknown type.', 'Tipo desconocido');
+    dicSet('Unknown identifier.', 'Identificador desconocido.');
+    dicSet('Identifier of constant expected.', 'Se esperaba identificador de constante');
+    dicSet('Numeric address expected.', 'Se esperaba dirección numérica.');
+    dicSet('Identifier of type expected.', 'Se esperaba identificador de tipo.');
+    dicSet('":" or "," expected.', 'Se esperaba ":" o ",".');
+    dicSet('"=", ":" or "," expected.', 'Se esperaba "=", ":" o ",".');
+    dicSet('"begin" expected.', 'Se esperaba "begin".');
+    dicSet('"end" expected.', 'Se esperaba "end".');
+    dicSet('"." expected.', 'Se esperaba "."');
+    dicSet('"(" expected.', 'Se esperaba "("');
+    dicSet('":" expected.', 'Se esperaba ":"');
+    dicSet('";" expected.', 'Se esperaba ";"');
+    dicSet('Boolean expression expected.', 'Se esperaba expresión booleana.');
+    dicSet('"do" expected.', 'Se esperaba "do".');
+    dicSet('"then" expected.', 'Se esperaba "then"');
+    dicSet('"until" expected.', 'Se esperaba "until"');
+    dicSet('Unknown structure.', 'Estructura desconocida.');
+    dicSet('Name of program expected.', 'Se esperaba nombre de programa.');
+    dicSet('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
+    dicSet('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".');
+    dicSet('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.');
+    dicSet('Constant expression expected.', 'Se esperaba una expresión constante');
+    dicSet('Clock frequency not supported.', 'Frecuencia de reloj no soportada.');
+    dicSet('Error in directive.', 'Error en directiva');
+    dicSet('Unknown directive: %s', 'Directiva desconocida: %s');
+    dicSet('Cannot increase a constant.', 'No se puede incrementar una constante.');
+    dicSet('Cannot increase an expression.','No se puede incrementar una expresión.');
+    dicSet('Cannot decrease a constant.', 'No se puede disminuir una constante.');
+    dicSet('Cannot decrease an expression.','No se puede disminuir una expresión.');
+    dicSet('Unknown device: %s', 'Dispositivo desconocido: %s');
+    dicSet('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."');
+  end;
+  end;
+end;
 procedure TCompiler.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
 begin
@@ -1814,61 +1857,6 @@ destructor TCompiler.Destroy;
 begin
   lexDir.Destroy;
   inherited Destroy;
-end;
-procedure SetLanguage(lang: string);
-begin
-  case lang of
-  'en': begin
-    dicClear;  //it's yet in English
-  end;
-  'es': begin
-    //Update messages
-    dicSet('Not implemented.', 'No implementado');
-    dicSet('Not implemented: "%s"', 'No implementado: "%s"');
-    dicSet('Identifier expected.', 'Identificador esperado.');
-    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
-    dicSet('Unvalid float number.', 'Número decimal no válido.');
-    dicSet('Error in number.', 'Error en número');
-    dicSet('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.');
-    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
-    dicSet('"." expected.', 'Se esperaba "."');
-    dicSet('Invalid memory address.', 'Dirección de memoria inválida.');
-    dicSet('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.');
-    dicSet('Identifier of variable expected.', 'Se esperaba identificador de variable.');
-    dicSet('Unknown type.', 'Tipo desconocido');
-    dicSet('Unknown identifier.', 'Identificador desconocido.');
-    dicSet('Identifier of constant expected.', 'Se esperaba identificador de constante');
-    dicSet('Numeric address expected.', 'Se esperaba dirección numérica.');
-    dicSet('Identifier of type expected.', 'Se esperaba identificador de tipo.');
-    dicSet('":" or "," expected.', 'Se esperaba ":" o ",".');
-    dicSet('"=", ":" or "," expected.', 'Se esperaba "=", ":" o ",".');
-    dicSet('"begin" expected.', 'Se esperaba "begin".');
-    dicSet('"end" expected.', 'Se esperaba "end".');
-    dicSet('"." expected.', 'Se esperaba "."');
-    dicSet('"(" expected.', 'Se esperaba "("');
-    dicSet('":" expected.', 'Se esperaba ":"');
-    dicSet('";" expected.', 'Se esperaba ";"');
-    dicSet('Boolean expression expected.', 'Se esperaba expresión booleana.');
-    dicSet('"do" expected.', 'Se esperaba "do".');
-    dicSet('"then" expected.', 'Se esperaba "then"');
-    dicSet('"until" expected.', 'Se esperaba "until"');
-    dicSet('Unknown structure.', 'Estructura desconocida.');
-    dicSet('Name of program expected.', 'Se esperaba nombre de programa.');
-    dicSet('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
-    dicSet('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".');
-    dicSet('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.');
-    dicSet('Constant expression expected.', 'Se esperaba una expresión constante');
-    dicSet('Clock frequency not supported.', 'Frecuencia de reloj no soportada.');
-    dicSet('Error in directive.', 'Error en directiva');
-    dicSet('Unknown directive: %s', 'Directiva desconocida: %s');
-    dicSet('Cannot increase a constant.', 'No se puede incrementar una constante.');
-    dicSet('Cannot increase an expression.','No se puede incrementar una expresión.');
-    dicSet('Cannot decrease a constant.', 'No se puede disminuir una constante.');
-    dicSet('Cannot decrease an expression.','No se puede disminuir una expresión.');
-    dicSet('Unknown device: %s', 'Dispositivo desconocido: %s');
-    dicSet('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."');
-  end;
-  end;
 end;
 
 initialization

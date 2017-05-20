@@ -105,7 +105,7 @@ type
     function SelectOrLoad(const srcPos: TSrcPos; highlightLine: boolean): boolean;
     procedure SaveFile;
     procedure SaveAll;
-    function OpenDialog(filter: string): boolean;
+    function OpenDialog: boolean;
     function SaveAsDialog: boolean;
     procedure CloseEditor;
     function CloseAll: boolean;
@@ -122,7 +122,7 @@ type
       MaxRecents0: integer = 5);
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
-    procedure SetLanguage(lang0: string);
+    procedure SetLanguage(idLang: string);
   end;
 
 implementation
@@ -133,6 +133,12 @@ const
   SEPAR_TABS = 2;  //Separación adicional, entre pestañas
 
 { TSynFacilComplet2 }
+var
+  MSG_NOFIL: string;
+  MSG_MODIF: string;
+  MSG_PASFI: string;
+  MSG_ALLFI: string;
+
 function TSynFacilComplet2.IsKeyword(const AKeyword: string): boolean;
 {Esta rutina es llamada por el Markup, que resalta palabras iguales. Se implementa
 para evitar que se resalten palabras muy conocidas}
@@ -171,7 +177,7 @@ begin
 end;
 function TSynEditor.SaveAsDialog(SaveDialog1: TSaveDialog): boolean;
 begin
-  SaveDialog1.Filter := 'Pascal files|*.pas|All files|*.*';
+  SaveDialog1.Filter := MSG_PASFI + '|*.pas|' + MSG_ALLFI + '|*.*';
   SaveDialog1.DefaultExt := '.pas';
   Result := inherited SaveAsDialog(SaveDialog1);
   if Result then exit;
@@ -188,8 +194,7 @@ var
 begin
   Result := false;
   if SynEdit.Modified then begin
-    resp := MessageDlg('', dic('El archivo %s ha sido modificado.' +  LineEnding +
-                     '¿Deseas guardar los cambios?',[ExtractFileName(NomArc)]),
+    resp := MessageDlg('', Format(MSG_MODIF, [ExtractFileName(NomArc)]),
                        mtConfirmation, [mbYes, mbNo, mbCancel],0);
     if resp = mrCancel then begin
       Result := true;   //Sale con "true"
@@ -260,6 +265,20 @@ begin
   FreeAndNil(SynEdit);  //El "Owner", intentará destruirlo, por eso lo ponemos en NIL
 end;
 { TfraEditView }
+procedure TfraEditView.SetLanguage(idLang: string);
+begin
+  lang := idLang;
+  curLang := idLang;
+  MSG_NOFIL := trans('No files'    , 'No hay archivos','');
+  MSG_PASFI := trans('Pascal Files', 'Archivos Pascal','');
+  MSG_ALLFI := trans('All files'   , 'Todos los archivos','');
+  MSG_MODIF := trans('File %s has been modified. Save?',
+                     'El archivo %s ha sido modificado. Guardar cambios?',
+                     '');
+  mnNewTab.Caption   := Trans('New', 'Nuevo','');
+  mnCloseTab.Caption := Trans('Close', 'Cerrar','');
+  if mnRecents<>nil then mnRecents.Caption:= trans('&Recents' ,'&Recientes','');
+end;
 procedure TfraEditView.RefreshTabs;
 begin
   if editors.Count = 1 then begin
@@ -729,7 +748,6 @@ begin
     Result := LoadFile(filename);
   end;
 end;
-
 function TfraEditView.SelectOrLoad(const srcPos: TSrcPos; highlightLine: boolean): boolean;
 //Versión de SelectOrLoad(), que además posiciona el cursor en la coordenada indicada
 begin
@@ -746,11 +764,11 @@ begin
     end;
   end;
 end;
-function TfraEditView.OpenDialog(filter: string): boolean;
+function TfraEditView.OpenDialog: boolean;
 //Muestra el cuadro de diálogo para abrir un archivo. Si hay error devuelve FALSE.
 var arc0: string;
 begin
-  OpenDialog1.Filter:=filter;
+  OpenDialog1.Filter:= MSG_PASFI + '|*.pas|' + MSG_ALLFI + '|*.*';
   if not OpenDialog1.Execute then exit(true);    //se canceló
   arc0 := OpenDialog1.FileName;
   LoadFile(arc0);  //legalmente debería darle en UTF-8
@@ -836,7 +854,7 @@ begin
   if RecentFiles = nil then exit;
   //proteciión
   if RecentFiles.Count = 0 then begin
-    mnRecents[0].Caption:=dic('No hay archivos');
+    mnRecents[0].Caption := MSG_NOFIL;
     mnRecents[0].Enabled:=false;
     for i:= 1 to mnRecents.Count-1 do begin
       mnRecents[i].Visible:=false;
@@ -887,7 +905,6 @@ begin
   RecentFiles := RecentList;  //gaurda referencia a lista
   MaxRecents := MaxRecents0;
   //configura menú
-  mnRecents.Caption:= dic('&Recientes');
   mnRecents.OnClick:=@ActualMenusReciente;
   for i:= 1 to MaxRecents do begin
     AddItemToMenu(mnRecents, '&'+IntToStr(i), @RecentClick);
@@ -905,16 +922,6 @@ destructor TfraEditView.Destroy;
 begin
   editors.Destroy;
   inherited Destroy;
-end;
-procedure TfraEditView.SetLanguage(lang0: string);
-begin
-  lang := lang0;
-  case lowerCase(lang) of
-  'es': begin
-    end;
-  'en': begin
-    end;
-  end;
 end;
 //Menú
 procedure TfraEditView.mnNewTabClick(Sender: TObject);

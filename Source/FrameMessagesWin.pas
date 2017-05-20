@@ -4,7 +4,8 @@ unit FrameMessagesWin;
 interface
 uses
   Classes, SysUtils, FileUtil, LazFileUtils, Forms, Controls, Grids, Graphics,
-  ExtCtrls, StdCtrls, Parser, UtilsGrilla, BasicGrilla, MisUtils, XpresBas;
+  ExtCtrls, StdCtrls, Parser, Globales, UtilsGrilla, BasicGrilla, MisUtils,
+  XpresBas;
 type
 
   { TUtilGrillaFil2 }
@@ -55,7 +56,7 @@ type
   public //Inicialización
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
-    procedure SetLanguage(lang0: string);
+    procedure SetLanguage(idLang: string);
   end;
 
 implementation
@@ -75,6 +76,13 @@ var
   GCOL_COL: integer;  //número ed columna
   GCOL_MSG: integer;  //mensaje
 
+var  //Cadenas de traducción
+  MSG_INICOMP: string;
+  MSG_WARN   : string;
+  MSG_WARNS  : string;
+  MSG_ERROR  : string;
+  MSG_ERRORS : string;
+  MSG_COMPIL : string;
 { TUtilGrillaFil2 }
 procedure TUtilGrillaFil2.grillaDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
@@ -127,6 +135,21 @@ begin
 end;
 
 { TfraMessagesWin }
+procedure TfraMessagesWin.SetLanguage(idLang: string);
+begin
+  curLang := idLang;
+  MSG_INICOMP := trans('Starting Compilation...', 'Iniciando compilación...','');
+  MSG_WARN   := trans('Warning'     , 'Advertencia' , '');
+  MSG_WARNS  := trans('Warnings'    , 'Advertencias', '');
+  MSG_ERROR  := trans('Error'       , 'Error'       , '');
+  MSG_ERRORS := trans('Errors'      , 'Errores'     , '');
+  MSG_COMPIL := trans('Compiled in: ', 'Compilado en: ', '');
+
+  chkInform.Caption  := Trans('Information', 'Información' ,'');
+  chkWarns.Caption   := Trans('Warnings'   , 'Advertencias','');
+  chkErrors.Caption  := Trans('Errors'     , 'Errores'     ,'');
+  PanGrilla.Caption  := Trans('<< No messages >>', '<< Sin mensajes >>', '');
+end;
 procedure TfraMessagesWin.AddInformation(infTxt: string);
 var
   f: Integer;
@@ -151,7 +174,7 @@ begin
   grilla.RowCount := f + 1;
   grilla.Cells[GCOL_ICO, f] := ICO_WAR;  //ícono
   grilla.Cells[GCOL_TXT, f] := ExtractFileNameOnly(fileName) +
-    '['+ IntToStr(row) + ',' + IntToStr(col) + '] '+  ' Warning: ' + warTxt;
+    '['+ IntToStr(row) + ',' + IntToStr(col) + '] '+ MSG_WARN + ': ' + warTxt;
   grilla.Cells[GCOL_FILE, f] := fileName;
   grilla.Cells[GCOL_ROW, f] := IntToStr(row);
   grilla.Cells[GCOL_COL, f] := IntToStr(col);
@@ -169,7 +192,7 @@ begin
   grilla.RowCount := f + 1;
   grilla.Cells[GCOL_ICO, f] := ICO_ERR;  //ícono
   grilla.Cells[GCOL_TXT, f] := ExtractFileNameOnly(fileName) +
-    '['+ IntToStr(row) + ',' + IntToStr(col) + '] '+  ' Error: ' + errTxt;
+    '['+ IntToStr(row) + ',' + IntToStr(col) + '] ' + MSG_ERROR + ': ' + errTxt;
   grilla.Cells[GCOL_FILE, f] := fileName;
   grilla.Cells[GCOL_ROW, f] := IntToStr(row);
   grilla.Cells[GCOL_COL, f] := IntToStr(col);
@@ -284,10 +307,7 @@ begin
   cxp.OnWarning := @AddWarning;  //Inicia evento
   cxp.OnError := @AddError;
   timeCnt:=GetTickCount64;
-  AddInformation('Starting Compilation ...');
-//  chkInform.Checked := true;
-//  chkWarns.Checked := true;
-//  chkErrors.Checked := true;
+  AddInformation(MSG_INICOMP);
 end;
 procedure TfraMessagesWin.EndCompilation;
 var
@@ -296,16 +316,16 @@ begin
   //Construye información adicional
   CountMessages;
   if nWar = 1 then begin
-    infWar := '1 warning'
+    infWar := '1 ' + MSG_WARN;
   end else begin
-    infWar := IntToStr(nWar) + ' warnings';
+    infWar := IntToStr(nWar) + ' ' + MSG_WARNS;
   end;
   if nErr = 1 then begin
-    infErr := '1 error'
+    infErr := '1 ' + MSG_ERROR;
   end else begin
-    infErr := IntToStr(nErr) + ' errors';
+    infErr := IntToStr(nErr) + ' ' + MSG_ERRORS;
   end;
-  AddInformation('Compiled in: ' + IntToStr(GetTickCount64-timeCnt) + ' msec. <<' +
+  AddInformation(MSG_COMPIL + IntToStr(GetTickCount64-timeCnt) + ' msec. <<' +
                  infWar + ', ' + infErr + '>>');
   //Actualiza estadísticas de uso
   if nErr=0 then begin
@@ -417,17 +437,6 @@ destructor TfraMessagesWin.Destroy;
 begin
   UtilGrilla.Destroy;
   inherited Destroy;
-end;
-procedure TfraMessagesWin.SetLanguage(lang0: string);
-begin
-  case lowerCase(lang0) of
-  'en': begin
-    PanGrilla.Caption := '<< No messages >>';
-  end;
-  'es': begin
-    PanGrilla.Caption := '<< Sin mensajes >>';
-  end;
-  end;
 end;
 
 end.
