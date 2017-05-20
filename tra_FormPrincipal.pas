@@ -9,7 +9,7 @@
   acArcNewFile.Hint    := Trans('New File'    , 'Nuevo Archivo', 'Musuq Khipu');
   acArcNewProj.Caption := Trans('New &Project', 'Nuevo &Proyecto', '');
   acArcNewProj.Hint    := Trans('New &Project', 'Nuevo Proyecto', '');
-  acArcOpen.Caption    := Trans('&Open...'    , '&Abrir...', '');
+  acArcOpen.Caption    := Trans('&Open...'    , '&Abrir...', '&Kichay');
   acArcOpen.Hint       := Trans('Open file'   , 'Abrir archivo', '');
   acArcSave.Caption    := Trans('&Save'       , '&Guardar', '');
   acArcSave.Hint       := Trans('Save file'   , 'Guardar archivo', '');
