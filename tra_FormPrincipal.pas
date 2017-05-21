@@ -33,8 +33,6 @@
  acEdPaste.Hint       := Trans('Paste'       , 'Pegar', '');
  acEdSelecAll.Caption := Trans('Select &All' , 'Seleccionar &Todo', '');
  acEdSelecAll.Hint    := Trans('Select all'  , 'Seleccionar todo', '');
- acEdModCol.Caption   := Trans('Column mode' , 'Modo Columna', '');
- acEdModCol.Hint      := Trans('Column mode' , 'Modo columna', '');
  //Search Actions
  acBusBuscar.Caption  := Trans('Search...'   , 'Buscar...', '');
  acBusBuscar.Hint     := Trans('Search text' , 'Buscar texto', '');
@@ -42,14 +40,14 @@
  acBusBusSig.Hint     := Trans('Search Next' , 'Buscar Siguiente', '');
  acBusReemp.Caption   := Trans('&Replace...' , '&Remplazar...', '');
  acBusReemp.Hint      := Trans('Replace text', 'Reemplazar texto', '');
-
-
+ //View actions
  acViewMsgPan.Caption := Trans('&Messages Panel', 'Panel de &Mensajes', '');
  acViewMsgPan.Hint    := Trans('Show/hide the Messages Panel','Mostrar u Ocultar el Panel de Mensajes', '');
  acViewStatbar.Caption:= Trans('&Status Bar'    , 'Barra de &Estado', '');
  acViewStatbar.Hint   := Trans('Show o hide the Status Bar','Mostrar u Ocultar la barra de estado', '');
  acViewToolbar.Caption:= Trans('&Tool Bar'      , 'Barra de &Herramientas', '');
  acViewToolbar.Hint   := Trans('Show/hide the Tool Bar', 'Mostrar u Ocultar la barra de herramientas', '');
+ acViewSynTree.Caption:= Trans('&Code explorer' , '&Explorador de código.', '');
 
  acToolCompil.Caption:= Trans('&Compile'               , '&Compilar', '');
  acToolCompil.Hint:=    Trans('Compile the source code', 'Compila el código fuente', '');
