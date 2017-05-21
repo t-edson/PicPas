@@ -651,7 +651,7 @@ begin
       _GOTO(l1);
     end else begin
       //lazo nulo
-      //aquí se debería lanzar una advertencia
+      GenWarn('Instruction will never execute.');
       CompileInstructionDummy;
       if HayError then exit;
     end;

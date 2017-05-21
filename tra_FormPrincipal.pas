@@ -38,7 +38,7 @@
  acBusBuscar.Hint     := Trans('Search text' , 'Buscar texto', '');
  acBusBusSig.Caption  := Trans('Search &Next', 'Buscar &Siguiente', '');
  acBusBusSig.Hint     := Trans('Search Next' , 'Buscar Siguiente', '');
- acBusReemp.Caption   := Trans('&Replace...' , '&Remplazar...', '');
+ acBusReemp.Caption   := Trans('&Replace...' , '&Reemplazar...', '');
  acBusReemp.Hint      := Trans('Replace text', 'Reemplazar texto', '');
  //View actions
  acViewMsgPan.Caption := Trans('&Messages Panel', 'Panel de &Mensajes', '');

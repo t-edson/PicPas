@@ -7,7 +7,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
-  Buttons, StdCtrls, ExtCtrls, ComCtrls, FrameCfgSynEdit, MiConfigXML, MisUtils;
+  Buttons, StdCtrls, ExtCtrls, ComCtrls, FrameCfgSynEdit, Globales, MiConfigXML,
+  MisUtils;
 type
   //Tipo de Barra de herramientas
   TStyleToolbar = (stb_SmallIcon, stb_BigIcon);
@@ -51,7 +52,7 @@ type
     procedure BitAceptarClick(Sender: TObject);
     procedure BitAplicarClick(Sender: TObject);
     procedure chkIncDecVarChange(Sender: TObject);
-    procedure SetLanguage(lang: string);
+    procedure SetLanguage(idLang: string);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
@@ -188,6 +189,7 @@ procedure TConfig.SetViewSynTree(AValue: boolean);
 begin
   if FViewSynTree = AValue then Exit;
   FViewSynTree := AValue;
+  cfgFilePropertiesChanges;
 end;
 
 procedure TConfig.SetViewToolbar(AValue: boolean);
@@ -207,40 +209,24 @@ begin
     MsgErr(cfgFile.MsjErr);
   end;
 end;
-procedure TConfig.SetLanguage(lang: string);
+procedure TConfig.SetLanguage(idLang: string);
 begin
-  fcEditor.SetLanguage(lang);
-//  fcEdiAsm.SetLanguage(lang);
-  case lowerCase(lang) of
-  'es': begin
-      Caption := 'Configuración';
-      tabGeneral.Caption := 'General';
-      tabEditor.Caption := 'Editor';
-      tabEnsamb.Caption := 'Ensamblador';
-      tabOutput.Caption := 'Salida';
-      grpOptimLev.Caption := 'Nivel de optimización:';
-      grpOptimLev.Items[0] := 'Tonto';
-      grpOptimLev.Items[1] := 'Inteligente';
-      chkIncHeadMpu.Caption := 'Incluir &Encabezado de MPU';
-      chkIncDecVar.Caption := 'Incluir Declaración de variables';
-      chkIncAddress.Caption := 'Incluir &Dirección de memoria';
-      chkIncComment.Caption := 'Incluir &Comentarios';
-    end;
-  'en': begin
-      Caption := 'Settings';
-      tabGeneral.Caption := 'General';
-      tabEditor.Caption := 'Editor';
-      tabEnsamb.Caption := 'Assembler';
-      tabOutput.Caption := 'Output';
-      grpOptimLev.Caption := 'Optimization Level:';
-      grpOptimLev.Items[0] := 'Fool';
-      grpOptimLev.Items[1] := 'Smart';
-      chkIncHeadMpu.Caption := 'Include MPU &Header';
-      chkIncDecVar.Caption := 'Include &Variables declaration';
-      chkIncAddress.Caption := 'Include &Memory Address';
-      chkIncComment.Caption := 'Include &Comments';
-    end;
-  end;
+  fcEditor.SetLanguage(idLang);
+  curLang := idLang;
+//  TIT_OTHER:= trans('Others','Otros','');
+
+  Caption := 'Configuración';
+  tabGeneral.Caption   := Trans('Settings'              , 'General', '');
+  tabEditor.Caption    := Trans('General'               , 'Editor', '');
+  tabEnsamb.Caption    := Trans('Editor'                , 'Ensamblador', '');
+  tabOutput.Caption    := Trans('Assembler'             , 'Salida', '');
+  grpOptimLev.Caption  := Trans('Output'                , 'Nivel de optimización:', '');
+  grpOptimLev.Items[0] := Trans('Optimization Level:'   , 'Tonto', '');
+  grpOptimLev.Items[1] := Trans('Fool'                  , 'Inteligente', '');
+  chkIncHeadMpu.Caption:= Trans('Smart'                 , 'Incluir &Encabezado de MPU', '');
+  chkIncDecVar.Caption := Trans('Include MPU &Header'   , 'Incluir Declaración de variables', '');
+  chkIncAddress.Caption:= Trans('Include &Variables declaration','Incluir &Dirección de memoria', '');
+  chkIncComment.Caption:= Trans('Include &Memory Address', 'Incluir &Comentarios', '');
 end;
 
 end.

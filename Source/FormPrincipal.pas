@@ -25,7 +25,6 @@ type
     acBusReemp: TAction;
     acEdCopy: TEditCopy;
     acEdCut: TEditCut;
-    acEdModCol: TAction;
     acEdPaste: TEditPaste;
     acEdRedo: TAction;
     acEdSelecAll: TAction;
@@ -68,7 +67,6 @@ type
     MenuItem27: TMenuItem;
     MenuItem28: TMenuItem;
     MenuItem29: TMenuItem;
-    MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
     MenuItem2: TMenuItem;
@@ -462,7 +460,7 @@ begin
 end;
 procedure TfrmPrincipal.acViewSynTreeExecute(Sender: TObject);
 begin
-  Config.ViewSynTree := not config.ViewSynTree;
+  Config.ViewSynTree := not Config.ViewSynTree;
 end;
 //////////// Acciones de Herramientas ///////////////
 procedure TfrmPrincipal.acToolCompilExecute(Sender: TObject);
