@@ -2,7 +2,7 @@ PicPas 0.6.5
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png"Título de la imagen")
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "Título de la imagen")
 
 PicPas is a simple compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
 
