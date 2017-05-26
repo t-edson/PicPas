@@ -36,7 +36,7 @@ begin
 end.```
 ```
 
-## Instalation
+## Installation
 
 PicPas doesn't need installation, and have not dependencies, except the commons of the operative system, where it's runnig.
 
@@ -53,20 +53,20 @@ PicPas doens't follow the common Pascal syntax. Instead, a new Modula-2, style s
 The common control structures have the following forms:
 
 ```
-IF <<condition>> THEN 
-  <<block of code>>
+IF <condition> THEN 
+  <block of code>
 END;
 
-WHILE <<condition>> DO
-  <<block of code>>
+WHILE <condition> DO
+  <block of code>
 END;
 
 REPEAT
-  <<block of code>>
-UNTIL  <<condition>>;
+  <block of code>
+UNTIL <condition>;
 
-FOR  <<variable>> := <<start-value>> TO <<end-value>> DO 
-  <<block of code>>
+FOR  <variable> := <start-value> TO <end-value> DO 
+  <block of code>
 END;
 ```
 
