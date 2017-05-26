@@ -57,6 +57,20 @@ IF <condition> THEN
   <block of code>
 END;
 
+IF <condition> THEN 
+  <block of code>
+ELSE
+  <block of code>
+END;
+
+IF <condition> THEN 
+  <block of code>
+ELSIF <condition> THEN 
+  <block of code>
+ELSE
+  <block of code>
+END;
+
 WHILE <condition> DO
   <block of code>
 END;
