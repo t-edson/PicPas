@@ -9,7 +9,7 @@
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <CursorPos X="89" Y="12"/>
+        <CursorPos Y="9"/>
         <UsageCount Value="219"/>
       </Unit0>
       <Unit1>
@@ -18,9 +18,6 @@
         <ComponentName Value="frmPrincipal"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <TopLine Value="136"/>
-        <CursorPos X="22" Y="160"/>
-        <FoldState Value=" T4805 T5kM02 T8k62B1 T3kd03129141A2]VMm721041C15]U6lP0[M40m2F4M piYnDN553"/>
         <UsageCount Value="219"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -28,16 +25,16 @@
       <Unit2>
         <Filename Value="Parser.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <WindowIndex Value="1"/>
-        <TopLine Value="543"/>
-        <CursorPos X="3" Y="563"/>
-        <FoldState Value=" TL001 T4503 TMlS610915]I3id0g5 pkIjC234]9AmK0T12]S6kK02312 T0kTb31 picbW33]8dIw3F]8XjGJ[H5aUa4A82321111G513 TKiha025"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="1383"/>
+        <CursorPos X="34" Y="1411"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
-          <EditorIndex Value="2"/>
-          <TopLine Value="1380"/>
-          <CursorPos X="34" Y="1411"/>
+          <IsVisibleTab Value="True"/>
+          <WindowIndex Value="1"/>
+          <TopLine Value="542"/>
+          <CursorPos X="3" Y="563"/>
+          <FoldState Value=" TL001 T4503 TMlS610915]I3id0g5 pkIjC234]9AmK0T12]S6kK02312 T0kTb31 picbW33]8dIw3F]8XjGJ[H5aUa4A82321111G513 TKiha025"/>
         </ExtraEditor1>
         <UsageCount Value="200"/>
         <Bookmarks Count="2">
@@ -49,7 +46,7 @@
       <Unit3>
         <Filename Value="ProcAsm.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <CursorPos Y="62"/>
         <UsageCount Value="202"/>
         <Bookmarks Count="1">
@@ -71,7 +68,7 @@
       <Unit5>
         <Filename Value="GenCod.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="8"/>
         <TopLine Value="2356"/>
         <CursorPos Y="2364"/>
         <ExtraEditorCount Value="1"/>
@@ -106,7 +103,7 @@
       <Unit7>
         <Filename Value="XpresParserPIC.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="9"/>
         <TopLine Value="171"/>
         <CursorPos X="66" Y="199"/>
         <ExtraEditorCount Value="1"/>
@@ -125,16 +122,16 @@
         <ComponentName Value="fraSyntaxTree"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="51"/>
-        <CursorPos X="11" Y="93"/>
-        <FoldState Value=" T8i72A TMo561 T3jW0R2231]J6jY019 T0jcS29 piZi7Q4D3517 THpJ24k"/>
+        <EditorIndex Value="2"/>
+        <CursorPos X="65" Y="7"/>
         <UsageCount Value="202"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit8>
       <Unit9>
         <Filename Value="Globales.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <TopLine Value="14"/>
         <CursorPos Y="44"/>
         <UsageCount Value="202"/>
@@ -143,7 +140,7 @@
       <Unit10>
         <Filename Value="XpresElementsPIC.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="7"/>
         <TopLine Value="370"/>
         <CursorPos X="3" Y="375"/>
         <ExtraEditorCount Value="1"/>
@@ -195,8 +192,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="305"/>
-        <CursorPos X="25" Y="328"/>
+        <TopLine Value="346"/>
+        <CursorPos Y="365"/>
         <UsageCount Value="200"/>
       </Unit14>
       <Unit15>
@@ -218,10 +215,11 @@
         <ResourceBaseClass Value="Frame"/>
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="45"/>
-        <CursorPos X="21" Y="46"/>
+        <TopLine Value="517"/>
+        <CursorPos X="8" Y="528"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit16>
       <Unit17>
         <Filename Value="FormCodeExplorer.pas"/>
@@ -276,10 +274,10 @@
       </Unit21>
       <Unit22>
         <Filename Value="..\..\_Librerias\Xpres-1.3\XpresBas.pas"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="125"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="123"/>
         <CursorPos X="14" Y="145"/>
-        <UsageCount Value="12"/>
+        <UsageCount Value="14"/>
         <Loaded Value="True"/>
       </Unit22>
       <Unit23>
@@ -359,126 +357,120 @@
         <UsageCount Value="9"/>
       </Unit32>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="43" Column="33" TopLine="24"/>
+        <Caret Line="258" Column="18" TopLine="213"/>
       </Position1>
       <Position2>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="53" Column="17" TopLine="24"/>
       </Position2>
       <Position3>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="226" Column="7" TopLine="192"/>
+        <Caret Line="237" Column="22" TopLine="210"/>
       </Position3>
       <Position4>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="67" Column="28" TopLine="28"/>
+        <Caret Line="254" Column="26" TopLine="225"/>
       </Position4>
       <Position5>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="282" Column="7" TopLine="237"/>
+        <Caret Line="382" Column="42" TopLine="347"/>
       </Position5>
       <Position6>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="76" Column="9" TopLine="43"/>
+        <Caret Line="381" TopLine="350"/>
       </Position6>
       <Position7>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="356" Column="24" TopLine="325"/>
+        <Caret Line="388" TopLine="350"/>
       </Position7>
       <Position8>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="195" Column="10" TopLine="88"/>
+        <Caret Line="381" TopLine="350"/>
       </Position8>
       <Position9>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="258" Column="18" TopLine="213"/>
+        <Caret Line="211" TopLine="95"/>
       </Position9>
       <Position10>
         <Filename Value="ProcAsm.pas"/>
+        <Caret Line="212" TopLine="95"/>
       </Position10>
       <Position11>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="237" Column="22" TopLine="210"/>
+        <Caret Line="213" TopLine="95"/>
       </Position11>
       <Position12>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="254" Column="26" TopLine="225"/>
+        <Caret Line="215" TopLine="95"/>
       </Position12>
       <Position13>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="382" Column="42" TopLine="347"/>
+        <Caret Line="216" TopLine="95"/>
       </Position13>
       <Position14>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="381" TopLine="350"/>
+        <Caret Line="218" TopLine="95"/>
       </Position14>
       <Position15>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="388" TopLine="350"/>
+        <Caret Line="220" Column="33" TopLine="101"/>
       </Position15>
       <Position16>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="381" TopLine="350"/>
-      </Position16>
-      <Position17>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="211" TopLine="95"/>
-      </Position17>
-      <Position18>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="212" TopLine="95"/>
-      </Position18>
-      <Position19>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="213" TopLine="95"/>
-      </Position19>
-      <Position20>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="215" TopLine="95"/>
-      </Position20>
-      <Position21>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="216" TopLine="95"/>
-      </Position21>
-      <Position22>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="218" TopLine="95"/>
-      </Position22>
-      <Position23>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="220" Column="33" TopLine="101"/>
-      </Position23>
-      <Position24>
         <Filename Value="Globales.pas"/>
         <Caret Line="167" Column="31" TopLine="130"/>
-      </Position24>
-      <Position25>
+      </Position16>
+      <Position17>
         <Filename Value="Globales.pas"/>
         <Caret Line="44" Column="11"/>
-      </Position25>
-      <Position26>
+      </Position17>
+      <Position18>
         <Filename Value="Globales.pas"/>
         <Caret Line="48" Column="3" TopLine="28"/>
-      </Position26>
-      <Position27>
+      </Position18>
+      <Position19>
         <Filename Value="Globales.pas"/>
         <Caret Line="49" Column="18" TopLine="28"/>
-      </Position27>
-      <Position28>
+      </Position19>
+      <Position20>
         <Filename Value="FormPrincipal.pas"/>
         <Caret Line="181" TopLine="152"/>
+      </Position20>
+      <Position21>
+        <Filename Value="FrameArcExplor.pas"/>
+        <Caret Line="280" Column="26" TopLine="260"/>
+      </Position21>
+      <Position22>
+        <Filename Value="FrameArcExplor.pas"/>
+        <Caret Line="46" Column="21" TopLine="45"/>
+      </Position22>
+      <Position23>
+        <Filename Value="FrameArcExplor.pas"/>
+      </Position23>
+      <Position24>
+        <Filename Value="FrameArcExplor.pas"/>
+        <Caret Line="46" Column="21" TopLine="45"/>
+      </Position24>
+      <Position25>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="160" Column="22" TopLine="136"/>
+      </Position25>
+      <Position26>
+        <Filename Value="FrameSyntaxTree.pas"/>
+        <Caret Line="93" Column="11" TopLine="66"/>
+      </Position26>
+      <Position27>
+        <Filename Value="FrameSyntaxTree.pas"/>
+      </Position27>
+      <Position28>
+        <Filename Value="FrameArcExplor.pas"/>
+        <Caret Line="2" Column="15"/>
       </Position28>
       <Position29>
         <Filename Value="FrameArcExplor.pas"/>
-        <Caret Line="280" Column="26" TopLine="260"/>
+        <Caret Line="45" Column="5" TopLine="33"/>
       </Position29>
-      <Position30>
-        <Filename Value="FrameArcExplor.pas"/>
-        <Caret Line="46" Column="12" TopLine="39"/>
-      </Position30>
     </JumpHistory>
   </ProjectSession>
   <Debugging>

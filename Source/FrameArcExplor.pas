@@ -43,7 +43,7 @@ unit FrameArcExplor;
 interface
 
 uses
-  Classes, Windows, SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls,
+  Classes,  {$IFDEF MSWINDOWS} Windows, {$ENDIF} SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls,
   LCLType, Menus, Masks, LazUTF8, Dialogs, strutils, MisUtils;
 
 type
@@ -521,8 +521,9 @@ begin
   TreeView1.Images:=ImageList2;   //asigna íconos
   TreeView1.Options:= TreeView1.Options + [tvoReadOnly];  //para que no permita editar el nodo
 
-  //crea lista de unidades
+  //Crea lista de unidades
   unidades := TStringList.Create;
+  {$IFDEF MSWINDOWS}
   for Drive := 'A' to 'Z' do
   begin
     DriveLetter := Drive + ':\';
@@ -534,6 +535,7 @@ begin
      DRIVE_RAMDISK:   unidades.Add(DriveLetter + ' RAM Disk');
     end;
   end;
+  {$ENDIF}
   //prepara nodos iniciales
   TreeView1.Items.Clear;
   for DriveLetter in unidades do begin
