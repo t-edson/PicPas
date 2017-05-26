@@ -84,13 +84,7 @@ procedure TfraSyntaxTree.SetLanguage(idLang: string);
 {Fija el lenguaje de acuerdo al valor de Globales.curLang}
 begin
   curLang := idLang;
-  TIT_MAIN := trans('Program','Programa','');
-  TIT_UNIT := trans('Units','Unidades','');
-  TIT_CONS := trans('Constants','Constantes','');
-  TIT_VARS := trans('Variables','Variables','');
-  TIT_FUNC := trans('Functions','Funciones','');
-  TIT_OTHER:= trans('Others','Otros','');
-  Label1.Caption := Trans('Code Explorer', 'Explorador de Código','');
+  {$I ..\tra_FrameSyntaxTree.pas}
   Refresh;
 end;
 procedure TfraSyntaxTree.frmArcExplor1DoubleClickFile(nod: TExplorNode);

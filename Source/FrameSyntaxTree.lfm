@@ -26,6 +26,7 @@ object fraSyntaxTree: TfraSyntaxTree
     Top = 42
     Width = 159
     Align = alClient
+    DefaultItemHeight = 18
     Images = ImageList1
     RightClickSelect = True
     ScrollBars = ssAutoBoth
@@ -58,7 +59,7 @@ object fraSyntaxTree: TfraSyntaxTree
     end
     object ComboBoxEx1: TComboBoxEx
       Left = 118
-      Height = 23
+      Height = 22
       Top = 1
       Width = 40
       Align = alRight
@@ -85,15 +86,6 @@ object fraSyntaxTree: TfraSyntaxTree
     Left = 74
     Top = 200
     TabOrder = 2
-    inherited Filter: TComboBox
-      Height = 29
-      ItemHeight = 0
-    end
-    inherited TreeView1: TTreeView
-      Height = 440
-      Top = 29
-      DefaultItemHeight = 20
-    end
   end
   object PopupElem: TPopupMenu
     Images = ImageList1

@@ -48,16 +48,16 @@ procedure SetLanguage(idLang: string);
 begin
   curLang := idLang;
   //Update messages
-  ER_EXPEC_COMMA := trans('Expected ",".', 'Se esperaba ","','');
-  ER_EXP_ADR_VAR := trans('Expected address or variable name.','Se esperaba dirección o variable.','');
-  ER_NOTYPVAR_AL := trans('Cannot get address of this Variable', 'No se puede obtener la dirección de esta variable.', '');
-  ER_INV_ASMCODE := trans('Invalid ASM Opcode: %s', 'Instrucción inválida: %s','');
-  ER_EXPECT_W_F  := trans('Expected "w" or "f".','Se esperaba "w" or "f".','');
-  ER_SYNTAX_ERR_ := trans('Syntax error: "%s"', 'Error de sintaxis: "%s"','');
-  ER_EXPE_NUMBIT := trans('Expected number of bit: 0..7.', 'Se esperaba número de bit: 0..7','');
-  ER_EXPECT_ADDR := trans('Expected address.', 'Se esperaba dirección','');
-  ER_EXPECT_BYTE := trans('Expected byte.', 'Se esperaba byte','');
-  WA_ADDR_TRUNC  := trans('Address truncated to fit instruction.', 'Dirección truncada, al tamaño de la instrucción', '');
+  ER_EXPEC_COMMA := trans('Expected ",".', 'Se esperaba ","','','');
+  ER_EXP_ADR_VAR := trans('Expected address or variable name.','Se esperaba dirección o variable.','','');
+  ER_NOTYPVAR_AL := trans('Cannot get address of this Variable', 'No se puede obtener la dirección de esta variable.', '','');
+  ER_INV_ASMCODE := trans('Invalid ASM Opcode: %s', 'Instrucción inválida: %s','','');
+  ER_EXPECT_W_F  := trans('Expected "w" or "f".','Se esperaba "w" or "f".','','');
+  ER_SYNTAX_ERR_ := trans('Syntax error: "%s"', 'Error de sintaxis: "%s"','','');
+  ER_EXPE_NUMBIT := trans('Expected number of bit: 0..7.', 'Se esperaba número de bit: 0..7','','');
+  ER_EXPECT_ADDR := trans('Expected address.', 'Se esperaba dirección','','');
+  ER_EXPECT_BYTE := trans('Expected byte.', 'Se esperaba byte','','');
+  WA_ADDR_TRUNC  := trans('Address truncated to fit instruction.', 'Dirección truncada, al tamaño de la instrucción', '','');
 end;
 procedure GenError(msg: string);
 {Genera un error corrigiendo la posición horizontal}

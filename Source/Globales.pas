@@ -37,7 +37,7 @@ var
 //const
 // TestRec: TTranslation = (en: 'Something'; es: 'algo'; );
 
-function Trans(const strEn, strEs, strQu: string): string;
+function Trans(const strEn, strEs, strQu, strDe: string): string;
 //////////////////////////////////////////////////////
 function LeerParametros: boolean;
 function NombDifArc(nomBase: String): String;
@@ -47,11 +47,13 @@ const
   WA_DIR_NOEXIST = 'Directory: %s no found. It will be created';
   ER_CANN_READDI = 'Cannot read or create directories.';
 
-function Trans(const strEn, strEs, strQu: string): string;
+function Trans(const strEn, strEs, strQu, strDe: string): string;
 begin
   case curLang of
   'en': Result := strEn;
   'es': Result := strEs;
+  'qu': Result := strQu;
+  'de': Result := strDe;
   else
     Result := strEn;
   end;
