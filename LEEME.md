@@ -4,8 +4,6 @@ Compilador multiplataforma en Pascal para microcontroladores PIC de la serie 16F
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/Sin-título.png "Título de la imagen")
 
-NOTA: Este compilador está aún en fase Beta y tiene funcionalidades limitadas.
-
 PicPas es un compilador sencillo, escrito en Lazarus, que genera código ejecutable, para los microcontroladores PIC de rango medio (la serie 16F).
 
 No se requiere librerias ni programas adicionales para la compilación. PicPas genera el archivo *.hex directamente.
@@ -14,7 +12,7 @@ PicPas trabaja con una versión simplificada de Pascal, que ha sido adaptada par
 
 Por el momento solo soporta los tipos bit, byte, char boolean y word (soporte limitado). 
 
-Incluye una pequeña IDE para facilitar el desarrollo de programas.
+Incluye una IDE completa, para facilitar el desarrollo de programas.
 
 El compilador incluye opciones de optimización de código, de modo que genera un código bastante compacto, como el que podría generar cualquier compilador comercial.
 
@@ -31,12 +29,26 @@ var
   pin: bit absolute PORTB.7;
 begin                          
   TRISB := 0;   //all outputs
-  while true do begin
+  while true do
     delay_ms(1000);
     pin := not pin;
   end;
 end.```
 ```
+
+## Instalación
+
+PicPas no necesita instalación, y no tiene mayores dependencias que las propias del sistema operativo, donde se ejecuta.
+
+Para ejecutarlo, basta con descargar la carpeta de GitHub. Ahi se incluye una versión compilada para Windows-32bits (PicPas-win32.exe) y Ubuntu (PicPas-linux).
+
+Si se requiere versiones para otra plataforma, se necesitará compilar  el proyecto para esa plataforma en particular.
+
+Al iniciar, puede que PicPas, genere mensajes de advertencia, si no encuentra las carpetas requeridas.
+
+## Sintaxis
+
+Para información sobre el lenguaje revisar el Manual de Usuario.
 
 ## Código Fuente
 
