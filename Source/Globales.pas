@@ -43,6 +43,9 @@ function LeerParametros: boolean;
 function NombDifArc(nomBase: String): String;
 
 implementation
+const
+  WA_DIR_NOEXIST = 'Directory: %s no found. It will be created';
+  ER_CANN_READDI = 'Cannot read or create directories.';
 
 function Trans(const strEn, strEs, strQu: string): string;
 begin
@@ -136,19 +139,19 @@ initialization
   //verifica existencia de carpetas de trabajo
   try
     if not DirectoryExists(rutSamples) then begin
-      msgexc('No se encuentra carpeta /samples. Se creará.');
+      msgexc(WA_DIR_NOEXIST, [rutSamples]);
       CreateDir(rutSamples);
     end;
     if not DirectoryExists(rutUnits) then begin
-       msgexc('No se encuentra carpeta /units. Se creará.');
+       msgexc(WA_DIR_NOEXIST, [rutUnits]);
        CreateDir(rutUnits);
      end;
     if not DirectoryExists(rutTemp) then begin
-       msgexc('No se encuentra carpeta /temp. Se creará.');
+       msgexc(WA_DIR_NOEXIST, [rutTemp]);
        CreateDir(rutTemp);
      end;
   except
-    msgErr('Error. No se puede leer o crear directorios.');
+    msgErr(ER_CANN_READDI);
   end;
 
 finalization

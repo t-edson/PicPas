@@ -1,3 +1,50 @@
+PicPas 0.6.5
+============
+Se corrige la traducción al español, en la unidad FormConfig.
+Se crea el patrón de pruebas para las sumas y restas de bytes, y se corrigen algunos casos
+con error de la substracción de bytes.
+Se corrige un error en el autocompletado, relativo a la tabulación inteligente.
+Se crea el método TCompiler.Cod_JumpIfTrue, para simplificar las estructuras condicionales.
+Se mueven las rutinas CompileBody() y VerifyEND(), fuera de CompileIF(), para que sirvan a
+otras estructuras.
+Se crea la nueva sintaxis, de la estructura WHILE.
+Se actualiza el código de REPEAT, para que considere la optimzación de la bandera C a Z.
+Se crea el patrón de pruebas para las estructuras IF, WHILE y REPEAT.
+Se modifica la configuración del autocompletado, para incluir la nueva sintaxis del WHILE.
+Se hace una implementación básica del lazo FOR.
+Se implementa la función del sistema word(), para covnertir constantes byte.
+Se avanza en la traducción de la unidad Parser, al español.
+Se reemplazan algunas rutinas de identificación de tokens, por CaptureTok() en Parser.pas
+Se actualiza la traducción de la unidad ProcAsm.
+Se implemanta los saltos y llamadas a subrutinas para que reconozcan la dirección "$", como
+dirección actual.
+Se crean rutinas de geenración de error en la unidad ProcAsm, para precisar la columna de 
+la generación del error.
+Se habilita el acceso a variables bytes, desde bloques ASM.
+Se crea procedimiento de conversión de idioma en la unidad Globales.
+
+PENDIENTES
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la traducción de idiomas, en la unidad Parser.
+Implementar la reutilización de variables usadas como parámetros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+Revisar el posible problema de pérdida de resultado en el generador de código, cuando se
+hace:   
+SetResultExpres_bit(false);  //Fija resultado
+SaveW(reg); 
+...  // se actualiza Z.
+RestoreW(reg); //<-Se pierde Z, si se restaura W.
+Las funciones no usadas, en las unidades, aún se compilan, cuando la usa una función 
+no usada.
+¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
+Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
+
+
 PicPas 0.6.4
 ============
 Se cambia a 3 dígitos el ancho del operando en las instrucciones GOTO y RETURN, en la 
@@ -20,27 +67,6 @@ Se implementan más programas de pruebas para el compilador.
 Se mejora la opción de traducción para español, en diversas unidades.
 Se eliminan la funciones de error que no se usaban en la unidad Parser.
 Se elimina la acción "ModoCOlumna", que ya no tiene sentido.
-
-PENDIENTES
-Revisar la implementación de las estructuras. 
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la traducción de idiomas.
-Implementar la reutilización de variables usadas como parámetros.
-Revisar el paso de parámetros byte a word o bits. 
-Revisar el posible problema de pérdida de resultado en el generador de código, cuando se
-hace:   
-SetResultExpres_bit(false);  //Fija resultado
-SaveW(reg); 
-...  // se actualiza Z.
-RestoreW(reg); //<-Se pierde Z, si se restaura W.
-Las funciones no usadas, en las unidades, aún se compilan, cuando la usa una función 
-no usada.
-¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
-Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
 
 
 PicPas 0.6.3

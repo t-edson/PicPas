@@ -131,7 +131,7 @@ type
       procedure fun_Bit(fun: TxpEleFun);
       procedure fun_SetAsInput(fun: TxpEleFun);
       procedure fun_SetAsOutput(fun: TxpEleFun);
-      procedure fun_MapVarTo(fun: TxpEleFun);
+      procedure fun_Word(fun: TxpEleFun);
     protected
       procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
@@ -1072,12 +1072,80 @@ begin
   Oper_word_add_byte; //Y llama a la función opuesta
 end;
 procedure TGenCod.Oper_byte_sub_byte;
+var
+  reg: TPicRegisterBit;
+  r: TPicRegister;
 begin
-  if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
+  case catOperation of
+  coConst_Const:begin  //suma de dos constantes. Caso especial
     SetResultConst_byte(p1^.valInt-p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
-  end else  //caso general
+  end;
+  coConst_Variab: begin
+    SetResultExpres_byte;
+    SaveZ(reg);  //va a alterar Z
+    _BANKSEL(p2^.bank);
+    _MOVF(p2^.offs, toW);
+    _SUBLW(p1^.valInt);   //K - W -> W
+    RestoreZ(reg);
+  end;
+  coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+    SetResultExpres_byte;
+    SaveZ(reg);  //va a alterar Z
+    _SUBLW(p1^.valInt);   //K - W -> W
+    RestoreZ(reg);
+  end;
+  coVariab_Const: begin
+    SetResultExpres_byte;
+    SaveZ(reg);  //va a alterar Z
+    _MOVLW(p2^.valInt);
+    _BANKSEL(p1^.bank);
+    _SUBWF(p1^.offs, toW);  //F - W -> W
+    RestoreZ(reg);
+  end;
+  coVariab_Variab:begin
+    SetResultExpres_byte;
+    SaveZ(reg);  //va a alterar Z
+    _BANKSEL(p2^.bank);
+    _MOVF(p2^.offs, toW);
+    _BANKSEL(p1^.bank);
+    _SUBWF(p1^.offs, toW);  //F - W -> W
+    RestoreZ(reg);
+  end;
+  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+    SetResultExpres_byte;
+    SaveZ(reg);  //va a alterar Z
+    _BANKSEL(p1^.bank);
+    _SUBWF(p1^.offs, toW);  //F - W -> W
+    RestoreZ(reg);
+  end;
+  coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    SetResultExpres_byte;
+    SaveZ(reg);  //va a alterar Z
+    _SUBLW(p2^.valInt);  //K - W -> W
+    _SUBLW(0);  //K - W -> W   //invierte W
+    RestoreZ(reg);
+  end;
+  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+    SetResultExpres_byte;
+    SaveZ(reg);  //va a alterar Z
+    _BANKSEL(p2^.bank);
+    _SUBWF(p2^.offs, toW);  //F - W -> W
+    _SUBLW(0);  //K - W -> W   //invierte W
+    RestoreZ(reg);
+  end;
+  coExpres_Expres:begin
+    SetResultExpres_byte;
+    SaveZ(reg);  //va a alterar Z
+    //la expresión p1 debe estar salvada y p2 en el acumulador
+    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
+    _BANKSEL(r.bank);
+    _SUBWF(r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    RestoreZ(reg);
+  end;
+  else  //caso general
     byte_oper_byte(SUBLW, SUBWF);
+  end;
 end;
 procedure TGenCod.Oper_byte_and_byte;
 begin
@@ -2292,32 +2360,43 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_MapVarTo(fun: TxpEleFun);
-var
-  var1: TOperand;
+procedure TGenCod.fun_Word(fun: TxpEleFun);
 begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
-  if res.catOp <> coVariab then begin
-    GenError('Variable expected.');
-    exit;
+  if HayError then exit;   //aborta
+  case res.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    if res.typ = typByte then begin
+      res.typ := typWord;  //solo cambia el tipo
+    end else if res.typ = typWord then begin
+      //ya es Word
+    end else begin
+      GenError('Cannot convert to word.'); exit;
+    end;
   end;
-  var1 := res;  //Guarda
-  if not CaptureTok(',') then exit;
-  GetExpressionE(0, pexPARSY);  //captura parámetro
-  if res.catOp <> coVariab then begin
-    GenError('Variable expected.');
-    exit;
+  coVariab: begin
+//    if res.typ = typByte then begin
+//      typWord.OperationPop;   //Para asegurar que exista H
+//      res.typ := typWord; //No se puede usar SetResultExpres_word, porque no hay p1 y p2;
+//      res.catOp := coExpres;  //Va a devolver una expresión
+//  !!! Debería guardar en pila, el posible valor de W
+//      SaveW(OLD_W); if HayError then exit;  //Va a usar W
+//      _MOVF(res.offs, toW);   //el resultado aparecerá en Z, invertido
+//      RestoreW(OLD_W);   ///ERROR, modifica Z otra vez
+//    end else begin
+      GenError('Cannot convert to word.'); exit;
+//    end;
   end;
-  //Tiene los operandos en var1 y Res.
-  //Mapea var1, para que esté en res
-  var1.rVar.adrBit.offs := res.rVar.adrBit.offs;
-  var1.rVar.adrBit.bit := res.rVar.adrBit.bit;
-
-  var1.rVar.adrByte0.offs := res.rVar.adrByte0.offs;
-  var1.rVar.adrByte1.offs := res.rVar.adrByte1.offs;
-
-  res.typ := typNull;
+  coExpres: begin  //se asume que ya está en (w)
+//    if res.typ = typByte then begin
+//      res.typ := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
+//      _ADDLW(0);   //el resultado aparecerá en Z, invertido
+//    end else begin
+      GenError('Cannot convert to word.'); exit;
+//    end;
+  end;
+  end;
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.StartSyntax;
@@ -2553,7 +2632,7 @@ begin
   f := CreateSysFunction('Bit', @fun_Bit);
   f := CreateSysFunction('SetAsInput', @fun_SetAsInput);
   f := CreateSysFunction('SetAsOutput', @fun_SetAsOutput);
-  f := CreateSysFunction('MapVarTo', @fun_MapVarTo);
+  f := CreateSysFunction('Word', @fun_Word);
 end;
 procedure SetLanguage(lang: string);
 begin

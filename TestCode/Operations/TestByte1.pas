@@ -1,5 +1,5 @@
-{Rutina de verificación para operaciones básicas con datos de 
-tipo BYTE. 
+{Rutina de verificación para operaciones de comparación con datos 
+de tipo BYTE. 
 Se debe simular el programa en el circuito "Test1.DSN". Se debe 
 escuchar, una serie de pitidos cortos. Si se escucha un pitido 
 largo, es que hubo algún error en el resultado de alguna operación.}

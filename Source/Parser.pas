@@ -17,6 +17,9 @@ type
     function AddVariable(varName: string; typ: ttype; absAddr, absBit: integer;
       srcPos: TSrcPos): TxpEleVar;
     procedure cInNewLine(lin: string);
+    procedure Cod_JumpIfTrue;
+    function CompileBody(GenCode: boolean = true): boolean;
+    procedure CompileFOR;
     procedure CompileLastEnd;
     procedure CompileProcHeader(var fun: TxpEleFun; ValidateDup: boolean = true);
     function IsUnit: boolean;
@@ -30,6 +33,7 @@ type
     procedure CompileREPEAT;
     procedure CompileWHILE;
     procedure TreeElemsTreeChange;
+    function VerifyEND: boolean;
   protected   //Métodos OVERRIDE
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
     procedure TipDefecString(var Op: TOperand; tokcad: string); override;
@@ -66,63 +70,58 @@ type
 var
   cxp : TCompiler;
 
+procedure SetLanguage(idLang: string);
+
 implementation
+var
+  ER_NOT_IMPLEM_, ER_IDEN_EXPECT, ER_DUPLIC_IDEN, ER_INVAL_FLOAT: string;
+  ER_ERR_IN_NUMB, ER_NOTYPDEFNUM, ER_UNDEF_TYPE_: string;
+  ER_INV_MAD_DEV, ER_EXP_VAR_IDE, ER_INV_MEMADDR, ER_UNKNOWN_ID_: string;
+  ER_IDE_CON_EXP, ER_NUM_ADD_EXP, ER_IDE_TYP_EXP, ER_SEM_COM_EXP: String;
 
 //Funciones básicas
-procedure SetLanguage(lang: string);
+procedure SetLanguage(idLang: string);
 begin
-  case lang of
-  'en': begin
-    dicClear;  //it's yet in English
-  end;
-  'es': begin
-    //Update messages
-    dicSet('Not implemented.', 'No implementado');
-    dicSet('Not implemented: "%s"', 'No implementado: "%s"');
-    dicSet('Identifier expected.', 'Identificador esperado.');
-    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
-    dicSet('Unvalid float number.', 'Número decimal no válido.');
-    dicSet('Error in number.', 'Error en número');
-    dicSet('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.');
-    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
-    dicSet('"." expected.', 'Se esperaba "."');
-    dicSet('Invalid memory address.', 'Dirección de memoria inválida.');
-    dicSet('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.');
-    dicSet('Identifier of variable expected.', 'Se esperaba identificador de variable.');
-    dicSet('Unknown type.', 'Tipo desconocido');
-    dicSet('Unknown identifier.', 'Identificador desconocido.');
-    dicSet('Identifier of constant expected.', 'Se esperaba identificador de constante');
-    dicSet('Numeric address expected.', 'Se esperaba dirección numérica.');
-    dicSet('Identifier of type expected.', 'Se esperaba identificador de tipo.');
-    dicSet('":" or "," expected.', 'Se esperaba ":" o ",".');
-    dicSet('"=", ":" or "," expected.', 'Se esperaba "=", ":" o ",".');
-    dicSet('"begin" expected.', 'Se esperaba "begin".');
-    dicSet('"end" expected.', 'Se esperaba "end".');
-    dicSet('"." expected.', 'Se esperaba "."');
-    dicSet('"(" expected.', 'Se esperaba "("');
-    dicSet('":" expected.', 'Se esperaba ":"');
-    dicSet('";" expected.', 'Se esperaba ";"');
-    dicSet('Boolean expression expected.', 'Se esperaba expresión booleana.');
-    dicSet('"do" expected.', 'Se esperaba "do".');
-    dicSet('"then" expected.', 'Se esperaba "then"');
-    dicSet('"until" expected.', 'Se esperaba "until"');
-    dicSet('Unknown structure.', 'Estructura desconocida.');
-    dicSet('Name of program expected.', 'Se esperaba nombre de programa.');
-    dicSet('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".');
-    dicSet('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".');
-    dicSet('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.');
-    dicSet('Constant expression expected.', 'Se esperaba una expresión constante');
-    dicSet('Clock frequency not supported.', 'Frecuencia de reloj no soportada.');
-    dicSet('Error in directive.', 'Error en directiva');
-    dicSet('Unknown directive: %s', 'Directiva desconocida: %s');
-    dicSet('Cannot increase a constant.', 'No se puede incrementar una constante.');
-    dicSet('Cannot increase an expression.','No se puede incrementar una expresión.');
-    dicSet('Cannot decrease a constant.', 'No se puede disminuir una constante.');
-    dicSet('Cannot decrease an expression.','No se puede disminuir una expresión.');
-    dicSet('Unknown device: %s', 'Dispositivo desconocido: %s');
-    dicSet('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."');
-  end;
-  end;
+  curLang := idLang;
+  //Update messages
+  ER_NOT_IMPLEM_ := trans('Not implemented: "%s"', 'No implementado: "%s"','');
+  ER_IDEN_EXPECT := trans('Identifier expected.', 'Identificador esperado.','');
+  ER_DUPLIC_IDEN := trans('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"','');
+  ER_INVAL_FLOAT := trans('Unvalid float number.', 'Número decimal no válido.','');
+  ER_ERR_IN_NUMB := trans('Error in number.', 'Error en número','');
+  ER_NOTYPDEFNUM := trans('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.','');
+  ER_UNDEF_TYPE_ := trans('Undefined type "%s"', 'Tipo "%s" no definido.','');
+  ER_INV_MEMADDR := trans('Invalid memory address.', 'Dirección de memoria inválida.','');
+  ER_INV_MAD_DEV := trans('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.','');
+  ER_EXP_VAR_IDE := trans('Identifier of variable expected.', 'Se esperaba identificador de variable.','');
+  ER_UNKNOWN_ID_ := trans('Unknown identifier: %s', 'Identificador desconocido: %s','');
+  ER_IDE_CON_EXP := trans('Identifier of constant expected.', 'Se esperaba identificador de constante','');
+  ER_NUM_ADD_EXP := trans('Numeric address expected.', 'Se esperaba dirección numérica.','');
+  ER_IDE_TYP_EXP := trans('Identifier of type expected.', 'Se esperaba identificador de tipo.','');
+  ER_SEM_COM_EXP := trans('":" or "," expected.', 'Se esperaba ":" o ",".','');
+
+//  ER_NOT_IMPLEM_ := trans('"=", ":" or "," expected.', 'Se esperaba "=", ":" o ",".','');
+//  ER_NOT_IMPLEM_ := trans('"begin" expected.', 'Se esperaba "begin".','');
+//  ER_NOT_IMPLEM_ := trans('"end" expected.', 'Se esperaba "end".','');
+//  ER_NOT_IMPLEM_ := trans('Boolean expression expected.', 'Se esperaba expresión booleana.','');
+//  ER_NOT_IMPLEM_ := trans('"do" expected.', 'Se esperaba "do".','');
+//  ER_NOT_IMPLEM_ := trans('"then" expected.', 'Se esperaba "then"','');
+//  ER_NOT_IMPLEM_ := trans('"until" expected.', 'Se esperaba "until"','');
+//  ER_NOT_IMPLEM_ := trans('Unknown structure.', 'Estructura desconocida.','');
+//  ER_NOT_IMPLEM_ := trans('Name of program expected.', 'Se esperaba nombre de programa.','');
+//  ER_NOT_IMPLEM_ := trans('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".','');
+//  ER_NOT_IMPLEM_ := trans('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".','');
+//  ER_NOT_IMPLEM_ := trans('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.','');
+//  ER_NOT_IMPLEM_ := trans('Constant expression expected.', 'Se esperaba una expresión constante','');
+//  ER_NOT_IMPLEM_ := trans('Clock frequency not supported.', 'Frecuencia de reloj no soportada.','');
+//  ER_NOT_IMPLEM_ := trans('Error in directive.', 'Error en directiva','');
+//  ER_NOT_IMPLEM_ := trans('Unknown directive: %s', 'Directiva desconocida: %s','');
+//  ER_NOT_IMPLEM_ := trans('Cannot increase a constant.', 'No se puede incrementar una constante.','');
+//  ER_NOT_IMPLEM_ := trans('Cannot increase an expression.','No se puede incrementar una expresión.','');
+//  ER_NOT_IMPLEM_ := trans('Cannot decrease a constant.', 'No se puede disminuir una constante.','');
+//  ER_NOT_IMPLEM_ := trans('Cannot decrease an expression.','No se puede disminuir una expresión.','');
+//  ER_NOT_IMPLEM_ := trans('Unknown device: %s', 'Dispositivo desconocido: %s','');
+//  ER_NOT_IMPLEM_ := trans('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."','');
 end;
 procedure TCompiler.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
@@ -158,7 +157,7 @@ begin
     cIn.SkipWhites;
     //ahora debe haber un identificador
     if cIn.tokType <> tnIdentif then begin
-      GenError('Identifier expected.');
+      GenError(ER_IDEN_EXPECT);
       exit;
     end;
     //hay un identificador
@@ -176,7 +175,9 @@ begin
   until false;
 end;
 procedure TCompiler.ProcComments;
-//Procesa comentarios y directivas
+{Procesa comentarios, directivas y bloques ASM. Los bloques ASM, se processan también
+como comentarios o directivas, para poder ubicarlos dentro ed instrucciones, y poder
+darle mayor poder, en el futuro.}
   function tokType: integer;
   begin
     Result := lexdir.GetTokenKind;
@@ -292,12 +293,8 @@ begin
     end;
   end;
   cIn.Next;   //coge "end"
-  //debería seguir el punto
-  if cIn.tok <> '.' then begin
-    GenError('"." expected.');
-    exit;       //sale
-  end;
-  cIn.Next;
+  //Debería seguir el punto
+  if not CaptureTok('.') then exit;
   //no debe haber más instrucciones
   ProcComments;
   if not cIn.Eof then begin
@@ -342,11 +339,7 @@ begin
     //no tiene parámetros
   end else begin
     //Debe haber parámetros
-    if cIn.tok<>'(' then begin
-      GenError('"(" expected.');
-      exit;
-    end;
-    cin.Next;
+    if not CaptureTok('(') then exit;
     cin.SkipWhites;
     repeat
       IsRegister := false;
@@ -357,18 +350,14 @@ begin
       end;
       getListOfIdent(itemList, srcPosArray);
       if HayError then begin  //precisa el error
-        GenError('Identifier expected.');
+        GenError(ER_IDEN_EXPECT);
         exit;
       end;
-      if cIn.tok<>':' then begin
-        GenError('":" expected.');
-        exit;
-      end;
-      cIn.Next;
+      if not CaptureTok(':') then exit;
       cIn.SkipWhites;
 
       if (cIn.tokType <> tnType) then begin
-        GenError('Identifier of type expected.');
+        GenError(ER_IDE_TYP_EXP);
         exit;
       end;
       parType := cIn.tok;   //lee tipo de parámetro
@@ -424,82 +413,54 @@ begin
     cin.Next;
   end;
 end;
+function TCompiler.CompileBody(GenCode: boolean = true): boolean;
+{Compila el cuerpo de un THEN o de su parte ELSE, considerando el modo del compilador.
+Si se genera error, devuelve FALSE.}
+begin
+  if GenCode then begin
+    //Este es el modo normal. Genera código.
+    if mode = modPascal then begin
+      //En modo Pascal se espera una instrucción
+      CompileInstruction
+    end else begin
+      //En modo normal
+      CompileCurBlock;
+    end;
+    if HayError then exit(false);
+    exit(true);
+  end else begin
+    //Este modo no generará instrucciones
+    cIn.SkipWhites;
+    GenWarn('Instruction will never execute.');
+    if mode = modPascal then begin
+      //En modo Pascal se espera una instrucción
+      CompileInstructionDummy //solo para mantener la sintaxis
+    end else begin
+      //En modo normal
+      CompileCurBlockDummy;  //solo para mantener la sintaxis
+    end;
+    if HayError then exit(false);
+    exit(true);
+  end;
+end;
+function TCompiler.VerifyEND: boolean;
+{Compila la parte final de la estructura, que en el modo PicPas, debe ser el
+ delimitador END. Si encuentra error, devuelve FALSE.}
+begin
+  Result := true;   //por defecto
+  if mode = modPicPas then begin
+    //En modo PicPas, debe haber un delimitador de bloque
+    if cIn.tokL <> 'end' then begin
+      GenError('END expected.');
+      exit(false);
+    end;
+    cIn.Next;
+  end;
+end;
 procedure TCompiler.CompileIF;
-{Compila uan extructura IF}
-  function CompileBody(GenCode: boolean = true): boolean;
-  {Compila el cuerpo de un THEN o de su parte ELSE, considerando el modo del compilador.
-  Si se genera error, devuelve FALSE.}
-  begin
-    if GenCode then begin
-      //Este es el modo normal. Genera código.
-      if mode = modPascal then begin
-        //En modo Pascal se espera una instrucción
-        CompileInstruction
-      end else begin
-        CompileCurBlock;
-      end;
-      if HayError then exit(false);
-      exit(true);
-    end else begin
-      //Este modo no geenrará instrucciones
-      cIn.SkipWhites;
-      GenWarn('Instruction will never execute.');
-      if mode = modPascal then begin
-        //En modo Pascal se espera una instrucción
-        CompileInstructionDummy //solo para mantener la sintaxis
-      end else begin
-        CompileCurBlockDummy;  //solo para mantener la sintaxis
-      end;
-      if HayError then exit(false);
-      exit(true);
-    end;
-  end;
-  function VerifyEND: boolean;
-  {Compila la parte final de la estructura, que en el modo PicPas, debe ser el
-   delimitador END. Si encuentra error, devuelve FALSE.}
-  begin
-    Result := true;   //por defecto
-    if mode = modPicPas then begin
-      //En modo PicPas, debe haber un delimitador de bloque
-      if cIn.tokL <> 'end' then begin
-        GenError('END expected.');
-        exit(false);
-      end;
-      cIn.Next;
-    end;
-  end;
-  procedure CompileThenElse;
-  {Compila la parte THEN ... ELSE, de una condicional. Si la condición, es verdadera,
-   Antes de llamar a esta rutina, debe incluirse un salto de tipo BTFSS o BTFSC, para
-   cuando la condificón es verdadera.}
-  var
-    jFALSE, jEND_TRUE: integer;
-  begin
-    _GOTO_PEND(jFALSE);  //salto pendiente
-    //Compila la parte TRUE
-    if not CompileBody then exit;
-    //Verifica si sigue el ELSE
-    if cIn.tokL = 'else' then begin
-      //hay bloque ELSE
-      cIn.Next;   //toma "else"
-      _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
-      _lbl(jFALSE);   //termina de codificar el salto
-      if not CompileBody then exit;
-      _lbl(jEND_TRUE);   //termina de codificar el salto
-      VerifyEND;   //puede salir con error
-    end else if cIn.tokL = 'elsif' then begin
-      cIn.Next;
-      _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
-      _lbl(jFALSE);   //termina de codificar el salto
-      CompileIF;  //más fácil es la forma recursiva
-      if HayError then exit;
-      _lbl(jEND_TRUE);   //termina de codificar el salto
-      //No es necesario verificar el END final.
-    end else begin
-      _lbl(jFALSE);   //termina de codificar el salto
-      VerifyEND;  //puede salir con error
-    end;
-  end;
+{Compila una extructura IF}
+var
+  jFALSE, jEND_TRUE: integer;
 begin
   GetExpressionE(0);
   if HayError then exit;
@@ -519,11 +480,28 @@ begin
     if res.valBool then begin
       //Es verdadero, siempre se ejecuta
       if not CompileBody then exit;
+      while cIn.tokL = 'elsif' do begin
+        cIn.Next;   //toma "elsif"
+        GetExpressionE(0);
+        if HayError then exit;
+        if res.typ<>typBool then begin
+          GenError('Boolean expression expected.');
+          exit;
+        end;
+        cIn.SkipWhites;
+        if cIn.tokL<>'then' then begin
+          GenError('"then" expected.');
+          exit;
+        end;
+        cIn.Next;   //toma "then"
+        //Compila el cuerpo pero sin cósigo
+        if not CompileBody(false) then exit;
+      end;
       if cIn.tokL = 'else' then begin
         //Hay bloque ELSE, pero no se ejecutará nunca
         cIn.Next;   //toma "else"
         if not CompileBody(false) then exit;
-        VerifyEND;
+        if not VerifyEND then exit;
       end else begin
         VerifyEND;
       end;
@@ -545,15 +523,49 @@ begin
       end;
     end;
   end;
-  coVariab:begin
+  coVariab, coExpres:begin
+    Cod_JumpIfTrue;
+    _GOTO_PEND(jFALSE);  //salto pendiente
+    //Compila la parte TRUE
+    if not CompileBody then exit;
+    //Verifica si sigue el ELSE
+    if cIn.tokL = 'else' then begin
+      //hay bloque ELSE
+      cIn.Next;   //toma "else"
+      _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
+      _LABEL(jFALSE);   //termina de codificar el salto
+      if not CompileBody then exit;
+      _LABEL(jEND_TRUE);   //termina de codificar el salto
+      VerifyEND;   //puede salir con error
+    end else if cIn.tokL = 'elsif' then begin
+      cIn.Next;
+      _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
+      _LABEL(jFALSE);   //termina de codificar el salto
+      CompileIF;  //más fácil es la forma recursiva
+      if HayError then exit;
+      _LABEL(jEND_TRUE);   //termina de codificar el salto
+      //No es necesario verificar el END final.
+    end else begin
+      _LABEL(jFALSE);   //termina de codificar el salto
+      VerifyEND;  //puede salir con error
+    end;
+  end;
+  end;
+end;
+procedure  TCompiler.Cod_JumpIfTrue;
+{Codifica una instrucción de salto, si es que el resultado de la última expresión es
+verdadera. Se debe asegurar que la expresión es de tipo booleana y que es de categoría
+coVariab o coExpres.}
+begin
+  if res.catOp = coVariab then begin
+    //Las variables booleanas, pueden estar invertidas
     if res.Inverted then begin
       _BTFSC(res.offs, res.bit);  //verifica condición
     end else begin
       _BTFSS(res.offs, res.bit);  //verifica condición
     end;
-    CompileThenElse;
-  end;
-  coExpres:begin
+  end else if res.catOp = coExpres then begin
+    //Los resultados de expresión, pueden optimizarse
     if InvertedFromC then begin
       //El resultado de la expresión, está en Z, pero a partir una copia negada de C
       //Se optimiza, eliminando las instrucciones de copia de C a Z
@@ -572,8 +584,6 @@ begin
         _BTFSS(Z.offs, Z.bit);   //verifica condición
       end;
     end;
-    CompileThenElse;
-  end;
   end;
 end;
 procedure TCompiler.CompileREPEAT;
@@ -582,7 +592,6 @@ var
   l1: Word;
 begin
   l1 := _PC;        //guarda dirección de inicio
-//  CompileInstruction;  //debería completarse las instrucciones de tipo "break"
   CompileCurBlock;
   if HayError then exit;
   cIn.SkipWhites;
@@ -606,17 +615,8 @@ begin
       _GOTO(l1);
     end;
   end;
-  coVariab:begin
-    _BTFSS(res.offs, res.bit);  //verifica condición
-    _GOTO(l1);
-    //sale cuando la condición es verdadera
-  end;
-  coExpres:begin
-    if res.Inverted then begin //_Lógica invertida
-      _BTFSC(Z.offs, Z.bit);   //verifica condición
-    end else begin
-      _BTFSS(Z.offs, Z.bit);   //verifica condición
-    end;
+  coVariab, coExpres: begin
+    Cod_JumpIfTrue;
     _GOTO(l1);
     //sale cuando la condición es verdadera
   end;
@@ -645,39 +645,102 @@ begin
   case res.catOp of
   coConst: begin  //la condición es fija
     if res.valBool then begin
-      //lazo infinito
-      CompileInstruction;  //debería completarse las instrucciones de tipo "break"
-      if HayError then exit;
+      //Lazo infinito
+      if not CompileBody then exit;
+      if not VerifyEND then exit;
       _GOTO(l1);
     end else begin
       //lazo nulo
-      GenWarn('Instruction will never execute.');
-      CompileInstructionDummy;
-      if HayError then exit;
+      //Compila la parte TRUE
+      if not CompileBody(false) then exit;
+      if not VerifyEND then exit;
     end;
   end;
-  coVariab:begin
-    _BTFSS(res.offs, res.bit);  //verifica condición
+  coVariab, coExpres: begin
+    Cod_JumpIfTrue;
     _GOTO_PEND(dg);  //salto pendiente
-    CompileInstruction;
-    if HayError then exit;
+    if not CompileBody then exit;
+    if not VerifyEND then exit;
     _GOTO(l1);
     //ya se tiene el destino del salto
-    pic.codGotoAt(dg, _PC);   //termina de codificar el salto
+    _LABEL(dg);   //termina de codificar el salto
   end;
-  coExpres:begin
-    if res.Inverted then begin  //_Lógica invertida
-      _BTFSC(Z.offs, Z.bit);   //verifica condición
-    end else begin
-      _BTFSS(Z.offs, Z.bit);   //verifica condición
+  end;
+end;
+procedure TCompiler.CompileFOR;
+{Compila uan extructura WHILE}
+var
+  l1: Word;
+  dg: Integer;
+  Op1, Op2: TOperand;
+  opr1: TxpOperator;
+begin
+  Op1 :=  GetOperand;
+  if Op1.catOp <> coVariab then begin
+    GenError('Variable expected.');
+    exit;
+  end;
+  if HayError then exit;
+  if (Op1.typ<>typByte) and (Op1.typ<>typWord) then begin
+    GenError('Only BYTE or WORD index is allowed in FOR.');
+    exit;
+  end;
+  SkipWhites;
+  opr1 := GetOperator(Op1);   //debe ser ":="
+  if opr1.txt <> ':=' then begin
+    GenError('":=" expected.');
+    exit;
+  end;
+  GetExpressionE(0);
+  if HayError then exit;
+  //Ya se tiene la asignación inicial
+  Oper(Op1, opr1, res);   //codifica asignación
+  if HayError then exit;
+  if cIn.tokL <> 'to' then begin
+    GenError('"to" expected.');
+    exit;
+  end;
+  cIn.Next;
+  //Toma expresión Final
+  GetExpressionE(0);
+  if HayError then exit;
+  cIn.SkipWhites;
+  if cIn.tokL<>'do' then begin
+    GenError('"do" expected.');
+    exit;
+  end;
+  cIn.Next;   //toma "do"
+  //Aquí debe estar el cuerpo del "for"
+  if (res.catOp = coConst) or (res.catOp = coVariab) then begin
+    //Es un for con valor final de tipo constante
+    //Se podría optimizar, si el valor inicial es también constante
+    l1 := _PC;        //guarda dirección de inicio
+    //Codifica rutina de comparación, para salir
+    opr1 := Op1.typ.FindBinaryOperator('<=');  //Busca operador de comparación
+    if opr1 = nullOper then begin
+      GenError('Internal: No operator <= defined for %s.', [Op1.typ.name]);
+      exit;
     end;
+    Op2 := res;   //Copia porque la operación Oper() modificará res
+    Oper(Op1, opr1, Op2);   //"res" mantiene la constante o variable
+    Cod_JumpIfTrue;
     _GOTO_PEND(dg);  //salto pendiente
-    CompileInstruction;
-    if HayError then exit;
-    _GOTO(l1);
+    if not CompileBody then exit;
+    if not VerifyEND then exit;
+    //Incrementa variable cursor
+    if Op1.typ = typByte then begin
+      _INCF(Op1.offs, toF);
+    end else if Op1.typ = typWord then begin
+      _INCF(Op1.Loffs, toF);
+      _BTFSC(_STATUS, _Z);
+      _INCF(Op1.Hoffs, toF);
+    end;
+    _GOTO(l1);  //repite el lazo
     //ya se tiene el destino del salto
-    pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-  end;
+    _LABEL(dg);   //termina de codificar el salto
+  end else begin
+    GenError('Last value must be Constant or Variable');
+    exit;
   end;
 end;
 procedure TCompiler.TreeElemsTreeChange;
@@ -788,7 +851,7 @@ begin
   //procesa lista de constantes a,b,cons ;
   getListOfIdent(consNames, srcPosArray);
   if HayError then begin  //precisa el error
-    GenError('Identifier of constant expected.');
+    GenError(ER_IDE_CON_EXP);
     exit;
   end;
   //puede seguir "=" o identificador de tipo
@@ -832,22 +895,18 @@ var
   procedure CheckAbsoluteBit;
   {Extrae la parte del bit de una dirección absoluta. Actualiza "absBit"}
   begin
-    if cIn.tok<>'.' then begin
-      GenError('"." expected.');
-      exit;
-    end;
-    cIn.Next;    //Pasa al siguiente
+    if not CaptureTok('.') then exit;
     //toma posición de bit
     TipDefecNumber(Number, cIn.tok); //encuentra tipo de número, tamaño y valor
     if HayError then exit;  //verifica
     if Number.CanBeByte then
        absBit := Number.valInt
     else begin
-      GenError('Invalid memory address.');
+      GenError(ER_INV_MEMADDR);
       exit;
     end;
     if absBit > 7 then begin
-      GenError('Invalid memory address.');
+      GenError(ER_INV_MEMADDR);
       exit;
     end;
     cIn.Next;    //Pasa al siguiente
@@ -881,7 +940,7 @@ var
           //Puede ser válido el número "decimal", hay que extraer los campos,
           //pero primero hay que asegurarnos que no tenga notación exponencial.
           if (pos('e', cIn.tok)<>0) or (pos('E', cIn.tok)<>0) then begin
-            GenError('Invalid memory address.');
+            GenError(ER_INV_MEMADDR);
             exit;
           end;
           //ya sabemos que tiene que ser decimal, con punto
@@ -889,22 +948,22 @@ var
           n := pos('.', cIn.tok);   //no debe fallar
           tmp := copy(cIn.tok, n+1, 1000);   //copia parte decimal
           if length(tmp)<>1 then begin  //valida longitud
-            GenError('Invalid memory address.');
+            GenError(ER_INV_MEMADDR);
             exit;
           end;
           absBit:=StrToInt(tmp);   //no debe fallar
           //valida
           if not pic.ValidRAMaddr(absAddr) then begin
-            GenError('Invalid memory address for this device.');
+            GenError(ER_INV_MAD_DEV);
             exit;
           end;
           if absBit > 7 then begin
-            GenError('Invalid memory address.');
+            GenError(ER_INV_MEMADDR);
             exit;
           end;
           cIn.Next;    //Pasa al siguiente
         end else begin  //no puede ser correcto
-          GenError('Invalid memory address.');
+          GenError(ER_INV_MEMADDR);
           exit;
         end;
       end else begin
@@ -912,11 +971,11 @@ var
         if Number.CanBeWord then
            absAddr := Number.aWord
         else begin
-          GenError('Invalid memory address.');
+          GenError(ER_INV_MEMADDR);
           exit;
         end;
         if not pic.ValidRAMaddr(absAddr) then begin
-          GenError('Invalid memory address for this device.');
+          GenError(ER_INV_MAD_DEV);
           exit;
         end;
         cIn.Next;    //Pasa al siguiente
@@ -929,7 +988,7 @@ var
       //Puede ser variable
       elem := TreeElems.FindFirst(cIn.tok);
       if elem=nil then begin
-        GenError('Unknown identifier. %s', [cIn.tok]);
+        GenError(ER_UNKNOWN_ID_, [cIn.tok]);
         exit;
       end;
       if elem is TxpEleVar then begin
@@ -941,7 +1000,7 @@ var
           exit;
         end;
       end else begin
-        GenError('Identifier of variable expected.');
+        GenError(ER_EXP_VAR_IDE);
         exit;
       end;
       cIn.Next;    //Pasa al siguiente
@@ -950,7 +1009,7 @@ var
         if HayError then exit;  //verifica
       end;
     end else begin   //error
-      GenError('Numeric address expected.');
+      GenError(ER_NUM_ADD_EXP);
       exit;
     end;
   end;
@@ -967,7 +1026,7 @@ begin
   //Procesa variables a,b,c : int;
   getListOfIdent(varNames, srcPosArray);
   if HayError then begin  //precisa el error
-    GenError('Identifier of variable expected.');
+    GenError(ER_EXP_VAR_IDE);
     exit;
   end;
   //usualmente debería seguir ":"
@@ -976,7 +1035,7 @@ begin
     cIn.Next;  //lo toma
     cIn.SkipWhites;
     if (cIn.tokType <> tnType) then begin
-      GenError('Identifier of type expected.');
+      GenError(ER_IDE_TYP_EXP);
       exit;
     end;
     varType := cIn.tok;   //lee tipo
@@ -998,7 +1057,7 @@ begin
       if HayError then exit;
     end;
   end else begin
-    GenError('":" or "," expected.');
+    GenError(ER_SEM_COM_EXP);
     exit;
   end;
   if not CaptureDelExpres then exit;
@@ -1019,7 +1078,7 @@ begin
   srcPos := cIn.ReadSrcPos;
   //Ahora debe haber un identificador
   if cIn.tokType <> tnIdentif then begin
-    GenError('Identifier expected.');
+    GenError(ER_IDEN_EXPECT);
     exit;
   end;
   //hay un identificador
@@ -1037,14 +1096,8 @@ begin
     if not ValidateFunction then exit;
   end;
   cIn.SkipWhites;
-  if cIn.tok=';' then begin //encontró delimitador de expresión
-    cIn.Next;   //lo toma
-    ProcComments;  //quita espacios
-    if HayError then exit;   //puede dar error por código assembler o directivas
-  end else begin  //hay otra cosa
-    GenError('";" expected.');  //por ahora
-    exit;  //debe ser un error
-  end;
+  if not CaptureTok(';') then exit;
+  ProcComments;  //Quita espacios. Puede salir con error
 end;
 procedure TCompiler.CompileProcDeclar(IsImplementation: boolean);
 {Compila la declaración de procedimientos. Tanto procedimientos como funciones
@@ -1134,14 +1187,8 @@ begin
   CompileProcBody(fun);
   TreeElems.CloseElement;  //Cierra Nodo Body
   TreeElems.CloseElement; //cierra espacio de nombres de la función
-  if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
-    cIn.Next;   //lo toma
-    ProcComments;  //quita espacios
-    if HayError then exit;   //puede dar error por código assembler o directivas
-  end else begin  //hay otra cosa
-    GenError('";" expected.');  //por ahora
-    exit;  //debe ser un error
-  end;
+  if not CaptureTok(';') then exit;
+  ProcComments;  //Quita espacios. Puede salir con error
 end;
 procedure TCompiler.CompileInstruction;
 {Compila una única instrucción o un bloque BEGIN ... END. Puede generara Error.}
@@ -1172,6 +1219,9 @@ begin
       end else if cIn.tokl = 'repeat' then begin
         cIn.Next;         //pasa "until"
         CompileREPEAT;
+      end else if cIn.tokl = 'for' then begin
+        cIn.Next;         //pasa "until"
+        CompileFOR;
       end else begin
         GenError('Unknown structure.');
         exit;
@@ -1306,7 +1356,7 @@ begin
       fun.InInterface := true;  //marca ubicación
       TreeElems.CloseElement;   //CompileProcHeader, deja abierto el elemento
     end else begin
-      GenError('Not implemented: "%s"', [cIn.tok]);
+      GenError(ER_NOT_IMPLEM_, [cIn.tok]);
       exit;
     end;
   end;
@@ -1339,7 +1389,7 @@ begin
       CompileProcDeclar(true);  //Compila en IMPLEMENTATION
       if HayError then exit;
     end else begin
-      GenError('Not implemented: "%s"', [cIn.tok]);
+      GenError(ER_NOT_IMPLEM_, [cIn.tok]);
       exit;
     end;
   end;
@@ -1389,7 +1439,7 @@ begin
       cIn.SkipWhites;
       //ahora debe haber un identificador
       if cIn.tokType <> tnIdentif then begin
-        GenError('Identifier expected.');
+        GenError(ER_IDEN_EXPECT);
         exit;
       end;
       //hay un identificador de unidad
@@ -1500,7 +1550,7 @@ begin
       CompileProcDeclar(false);
       if HayError then exit;
     end else begin
-      GenError('Not implemented: "%s"', [cIn.tok]);
+      GenError(ER_NOT_IMPLEM_, [cIn.tok]);
       exit;
     end;
   end;
@@ -1866,4 +1916,4 @@ initialization
 finalization
   cxp.Destroy;
 end.
-
+//1952

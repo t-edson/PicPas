@@ -7,7 +7,7 @@
   <ViewSynTree Val="True"/>
   <SynTreeWidth Val="225"/>
   <chkLoadLast Val="True"/>
-  <language Val="es - Español"/>
+  <language Val="en - English"/>
   <Edit>
     <cTxtNor Val="12632256"/>
     <cFonEdi Val="0"/>
@@ -24,14 +24,14 @@
     <cTxtPan Val="0"/>
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\Operations\TestBit.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.4\temp\NewFile1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\MustPass\conditional2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\MustPass\conditional1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.4\TestCode\Operations\TestByte.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.5\TestCode\MustPass\loops1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.5\TestCode\MustPass\conditional2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.5\TestCode\MustPass\conditional1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.5\TestCode\MustPass\b_unit4.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.5\TestCode\MustPass\b_unit3.pas
 "/>
   </Edit>
-  <viewMode Val="2"/>
+  <viewMode Val="1"/>
   <IncHeadMpu Val="False"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>

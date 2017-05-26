@@ -8,8 +8,9 @@ unit ProcAsm;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, strutils, MisUtils, SynFacilHighlighter,
-  SynEditHighlighter, Pic16Utils, XpresParserPIC;
+  Classes, SysUtils, fgl, strutils, MisUtils, SynFacilHighlighter,
+  SynEditHighlighter, LCLProc, Pic16Utils, XpresBas, XpresParserPIC, Globales,
+  XpresElementsPIC;
 var
   asmRow: integer;     //número de fila explorada
   asmErr: string;      //texto del error
@@ -19,16 +20,62 @@ type
   TerrRoutine = procedure(msg: string) of object;
   TerrRoutine2 = procedure(msg: string; const Args: array of const);
 
+procedure SetLanguage(idLang: string);
 procedure InitAsm(pic0: TPIC16; cpx0: TCompilerBase);
 procedure ProcASMlime(const AsmLin: string);  //Procesa una línea de código ASM
 
 implementation
+type
+  //Datos de una etiqueta
+  TPicLabel = class
+    txt: string;   //nombre de la etiqueta
+    add: integer;  //dirección
+  end;
+  TPicLabel_list = specialize TFPGObjectList<TPicLabel>;
+
 var
   InAsm : boolean;
-  lexAsm: TSynFacilSyn;  //lexer para analizar ASM
-  pic   : TPIC16;        //referencia al PIC
+  lexAsm: TSynFacilSyn;   //lexer para analizar ASM
+  pic   : TPIC16;         //referencia al PIC
+  labels: TPicLabel_list; //Lista de etiquetas
   cpx   : TCompilerBase;
+var  //Mensajes
+  ER_EXPEC_COMMA, ER_EXP_ADR_VAR, ER_NOTYPVAR_AL, ER_INV_ASMCODE: String;
+  ER_EXPECT_W_F, ER_SYNTAX_ERR_, ER_EXPE_NUMBIT, ER_EXPECT_ADDR: String;
+  ER_EXPECT_BYTE, WA_ADDR_TRUNC: String;
 
+procedure SetLanguage(idLang: string);
+begin
+  curLang := idLang;
+  //Update messages
+  ER_EXPEC_COMMA := trans('Expected ",".', 'Se esperaba ","','');
+  ER_EXP_ADR_VAR := trans('Expected address or variable name.','Se esperaba dirección o variable.','');
+  ER_NOTYPVAR_AL := trans('Cannot get address of this Variable', 'No se puede obtener la dirección de esta variable.', '');
+  ER_INV_ASMCODE := trans('Invalid ASM Opcode: %s', 'Instrucción inválida: %s','');
+  ER_EXPECT_W_F  := trans('Expected "w" or "f".','Se esperaba "w" or "f".','');
+  ER_SYNTAX_ERR_ := trans('Syntax error: "%s"', 'Error de sintaxis: "%s"','');
+  ER_EXPE_NUMBIT := trans('Expected number of bit: 0..7.', 'Se esperaba número de bit: 0..7','');
+  ER_EXPECT_ADDR := trans('Expected address.', 'Se esperaba dirección','');
+  ER_EXPECT_BYTE := trans('Expected byte.', 'Se esperaba byte','');
+  WA_ADDR_TRUNC  := trans('Address truncated to fit instruction.', 'Dirección truncada, al tamaño de la instrucción', '');
+end;
+procedure GenError(msg: string);
+{Genera un error corrigiendo la posición horizontal}
+var
+  p: TSrcPos;
+begin
+  p := cpx.cIn.ReadSrcPos;
+  p.col := lexAsm.GetX;  //corrige columna
+  cpx.GenErrorPos(msg, [], p);
+end;
+procedure GenError(msg: string; const Args: array of const);
+var
+  p: TSrcPos;
+begin
+  p := cpx.cIn.ReadSrcPos;
+  p.col := lexAsm.GetX;  //corrige columna
+  cpx.GenErrorPos(msg, Args, p);
+end;
 function tokType: integer; inline;
 begin
   Result := lexAsm.GetTokenKind;
@@ -43,59 +90,42 @@ begin
     lexAsm.Next;
   //después de un comentario no se espera nada.
 end;
-function CaptureComma: boolean;
-{Captura una coma. Si no encuentra devuelve error}
+function GetFaddress(addr: integer): byte;
+{Obtiene una dirección de registro para una isntrucción ASM, truncando, si es necesario,
+los bits adicionales.}
 begin
-  skipWhites;
-  if lexAsm.GetToken = ',' then begin
-    lexAsm.Next;   //toma la coma
-    Result := true;
-    exit;
-  end else begin
-    Result := false;
-    cpx.GenError('Expected ",".');
-    exit;
+  if addr>255 then begin
+    addr := addr and $7F;
+    //Indica con advertencia
+    cpx.GenWarn(WA_ADDR_TRUNC);
   end;
+  Result := addr;
 end;
-function CaptureRegister(var f: byte): boolean;
-{Captura la referencia a un registro y devuelve en "f". Si no encuentra devuelve error}
+procedure AddLabel(name: string; addr: integer);
+{Agrega una etiqueta a la lista}
 var
-  n: LongInt;
+  lbl: TPicLabel;
 begin
-  skipWhites;
-  if tokType = lexAsm.tnNumber then begin
-    //es una dirección numérica
-    n := StrToInt(lexAsm.GetToken);  //Puede reconcoer hexadecimales con $, binario con %
-    if n>255 then begin
-      n := n and $7F;
-      cpx.GenWarn('Address truncated to fit instruction.');
-    end;
-    f := n;   { TODO : Falta verrificación de rango. }
-    lexAsm.Next;
-    Result := true;
-    exit;
-  end else begin
-    cpx.GenError('Expected address or variable name.');
-    //asmErrLin := asmRow;
-    Result := false;
-    exit;
-  end;
+  lbl := TPicLabel.Create;
+  lbl.txt:= UpCase(name);
+  lbl.add := addr;
+  labels.Add(lbl);
 end;
-function CaptureAddress(var a: word): boolean;
-{Captura una dirección a una instrucción y devuelve en "a". Si no encuentra devuelve error}
+function IsLabel(txt: string; out dir: integer): boolean;
+{Indica si un nombre es una etiqueta. Si lo es, devuelve TRUE, y la dirección la retorna
+en "dir".}
+var
+  lbl: TPicLabel;
 begin
-  skipWhites;
-  if tokType = lexAsm.tnNumber then begin
-    //es una dirección numérica
-    a := StrToInt(lexAsm.GetToken);
-    lexAsm.Next;
-    Result := true;
-    exit;
-  end else begin
-    cpx.GenError('Expected address.');
-    Result := false;
-    exit;
+  //No se espera procesar muchsa etiquetas
+  for lbl in labels do begin
+    if lbl.txt = upcase(txt) then begin
+      dir := lbl.add;
+      exit(true);
+    end;
   end;
+  //No encontró
+  exit(false);
 end;
 function CaptureByte(var k: byte): boolean;
 {Captura un byte y devuelve en "k". Si no encuentra devuelve error}
@@ -107,14 +137,14 @@ begin
     //es una dirección numérica
     n := StrToInt(lexAsm.GetToken);
     if (n>255) then begin
-      cpx.GenError('Expected byte.');
+      GenError(ER_EXPECT_BYTE);
       exit(false);
     end;
     k:=n;
     lexAsm.Next;
     exit(true);
   end else begin
-    cpx.GenError('Expected byte.');
+    GenError(ER_EXPECT_BYTE);
     exit(false);
   end;
 end;
@@ -134,7 +164,7 @@ begin
     lexAsm.Next;
     exit(true);
   end else begin
-    cpx.GenError('Expected "w" or "f".');
+    GenError(ER_EXPECT_W_F);
     exit(false);
   end;
 end;
@@ -146,7 +176,7 @@ begin
     //es una dirección numérica
     b := StrToInt(lexAsm.GetToken);
     if (b>7) then begin
-      cpx.GenError('Expected number of bit: 0..7.');
+      GenError(ER_EXPE_NUMBIT);
       Result := false;
       exit;
     end;
@@ -154,7 +184,152 @@ begin
     Result := true;
     exit;
   end else begin
-    cpx.GenError('Expected number of bit: 0..7.');
+    GenError(ER_EXPE_NUMBIT);
+    Result := false;
+    exit;
+  end;
+end;
+function CaptureComma: boolean;
+{Captura una coma. Si no encuentra devuelve error}
+begin
+  skipWhites;
+  if lexAsm.GetToken = ',' then begin
+    lexAsm.Next;   //toma la coma
+    Result := true;
+    exit;
+  end else begin
+    Result := false;
+    GenError(ER_EXPEC_COMMA);
+    exit;
+  end;
+end;
+function CaptureBitVar(var f, b: byte): boolean;
+{Captura una variable de tipo Bit. Si no encuentra, devuelve FALSE (no genera error).}
+var
+  ele: TxpElement;
+  xvar: TxpEleVar;
+begin
+  skipWhites;
+  if tokType <> lexAsm.tnIdentif then exit(false);  //no es identificador
+  //Hay un identificador
+  ele := cpx.TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
+  if ele = nil then exit(false);  //nos e identifica
+  //Se identificó elemento
+  if not (ele is TxpEleVar) then exit(false);
+  //Es variable
+  if (ele.typ <> typBit) and (ele.typ <> typBool) then exit(false);
+  //Es variable bit o boolean
+  lexAsm.Next;   //toma identificador
+  xvar := TxpEleVar(ele);
+  if cpx.FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
+  f := GetFaddress(xvar.adrBit.offs);
+  b := xvar.adrBit.bit;
+  exit(true);
+end;
+function CaptureRegister(var f: byte): boolean;
+{Captura la referencia a un registro y devuelve en "f". Si no encuentra devuelve error}
+var
+  n: integer;
+  ele: TxpElement;
+  xvar: TxpEleVar;
+begin
+  skipWhites;
+  if tokType = lexAsm.tnNumber then begin
+    //es una dirección numérica
+    n := StrToInt(lexAsm.GetToken);  //Puede reconcoer hexadecimales con $, binario con %
+    f := GetFaddress(n);
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else if tokType = lexAsm.tnIdentif then begin
+    //Es un identificador, puede ser referencia a una variable
+    ele := cpx.TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
+    if ele = nil then begin
+      //No identifica a este elemento
+      GenError(ER_EXP_ADR_VAR);
+      exit;
+    end;
+    if ele is TxpEleVar then begin
+      xvar := TxpEleVar(ele);
+      if cpx.FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
+      if (xvar.typ = typByte) or (xvar.typ = typChar) then begin
+        n := xvar.AbsAddr;
+        f := GetFaddress(n);
+        lexAsm.Next;
+        Result := true;
+        exit;
+      end else begin
+        GenError(ER_NOTYPVAR_AL);
+        Result := false;
+        exit;
+      end;
+    end else begin
+      //No es variable
+      GenError(ER_EXP_ADR_VAR);
+      Result := false;
+      exit;
+    end;
+  end else begin
+    GenError(ER_EXP_ADR_VAR);
+    //asmErrLin := asmRow;
+    Result := false;
+    exit;
+  end;
+end;
+function CaptureAddress(var a: word): boolean;
+{Captura una dirección a una instrucción y devuelve en "a". Si no encuentra geenra
+error y devuelve FALSE.}
+var
+  dir: integer;
+  offset: byte;
+begin
+  skipWhites;
+  if lexAsm.GetToken = '$' then begin
+    //Es una dirección relativa
+    lexAsm.Next;
+    skipWhites;
+    //Puede tener + o -
+    if (lexAsm.GetToken= '') or (lexAsm.GetToken = ';') then begin
+      //Termina la instrucción sin o con es comentario
+      a := pic.iFlash;
+      Result := true;
+      exit;
+    end else if lexAsm.GetToken = '+' then begin
+      //Es dirección sumada
+      lexAsm.Next;
+      skipWhites;
+      CaptureByte(offset);  //captura desplazamiento
+      if cpx.HayError then exit(false);
+      Result := true;
+      a := pic.iFlash + offset;
+      exit;
+    end else if lexAsm.GetToken = '-' then begin
+      //Es dirección restada
+      lexAsm.Next;
+      skipWhites;
+      CaptureByte(offset);  //captura desplazamiento
+      if cpx.HayError then exit(false);
+      Result := true;
+      a := pic.iFlash - offset;
+      exit;
+    end else begin
+      //Sigue otra cosa
+      GenError(ER_SYNTAX_ERR_, [lexAsm.GetToken]);
+    end;
+  end else if tokType = lexAsm.tnNumber then begin
+    //es una dirección numérica
+    a := StrToInt(lexAsm.GetToken);
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else if (tokType = lexAsm.tnIdentif) and IsLabel(lexAsm.GetToken, dir) then begin
+    //Es un identificador
+    a := dir;
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else begin
+    GenError(ER_EXPECT_ADDR);
     Result := false;
     exit;
   end;
@@ -164,11 +339,13 @@ procedure StartASM; //Inicia el procesamiento de código ASM
 begin
   InAsm := true;  //para indicar que estamos en medio de código ASM
   asmRow := 1;    //inicia línea
+  labels.Clear;   //limpia etiquetas
 end;
 procedure EndASM;  //Termina el procesamiento de código ASM
 begin
   InAsm := false;
 end;
+
 procedure ProcInstrASM;
 //Procesa una instrucción ASM
 var
@@ -185,7 +362,7 @@ begin
   //debería ser una instrucción
   idInst := pic.FindOpcode(tok, stx);
   if idInst = _Inval then begin
-    cpx.GenError('Invalid ASM Opcode: %s', [tok]);
+    GenError(ER_INV_ASMCODE, [tok]);
     exit;
   end;
   //es un código válido
@@ -201,10 +378,14 @@ begin
     if not CaptureRegister(f) then exit;
     pic.codAsmF(idInst, f);
   end;
-  'fb':begin
-    if not CaptureRegister(f) then exit;
-    if not CaptureComma then exit;
-    if not CaptureNbit(b) then exit;
+  'fb':begin  //para instrucciones de tipo bit
+    if CaptureBitVar(f, b) then begin
+      //Es una referencia a variable bit.
+    end else begin
+      if not CaptureRegister(f) then exit;
+      if not CaptureComma then exit;
+      if not CaptureNbit(b) then exit;
+    end;
     pic.codAsmFB(idInst, f, b);
   end;
   'a': begin
@@ -222,13 +403,15 @@ begin
   //no debe quedar más que espacios o comentarios
   skipWhites;
   if tokType <> lexAsm.tnEol then begin
-    cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
+    GenError(ER_SYNTAX_ERR_, [lexAsm.GetToken]);
     exit;
   end;
 
 end;
 procedure ProcASM(const AsmLin: string);
-{Procesa una línea en ensamblador}
+{Procesa una línea en ensamblador.}
+var
+  lbl: String;
 begin
   inc(asmRow);   //cuenta destíneas
   if Trim(AsmLin) = '' then exit;
@@ -238,11 +421,12 @@ begin
     ProcInstrASM;
     if cpx.HayError then exit;
   end else if tokType = lexAsm.tnIdentif then begin
-    //puede ser una etiqueta
-    //lbl := lexAsm.GetToken;   //guarda posible etiqueta
+    //Puede ser una etiqueta
+    lbl := lexAsm.GetToken;   //guarda posible etiqueta
     lexAsm.Next;
     if lexAsm.GetToken = ':' then begin
       //definitivamente es una etiqueta
+      AddLabel(lbl, pic.iFlash);
       lexAsm.Next;
       skipwhites;
       if tokType <> lexAsm.tnEol then begin
@@ -252,6 +436,7 @@ begin
       end;
     end else begin
       //puede ser una etiqueta
+      AddLabel(lbl, pic.iFlash);
       skipwhites;
       if tokType <> lexAsm.tnEol then begin
         //Hay algo más. Solo puede ser una instrucción
@@ -262,7 +447,7 @@ begin
   end else if tokType = lexAsm.tnComment then begin
     skipWhites;
     if tokType <> lexAsm.tnEol then begin
-      cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
+      GenError(ER_SYNTAX_ERR_, [lexAsm.GetToken]);
       exit;
     end;
   end else if tokType = lexAsm.tnSpace then begin
@@ -273,7 +458,7 @@ begin
       if cpx.HayError then exit;
     end;
   end else begin
-    cpx.GenError('Syntax error: "%s"', [lexAsm.GetToken]);
+    GenError(ER_SYNTAX_ERR_, [lexAsm.GetToken]);
     exit;
   end;
   skipWhites;  //quita espacios
@@ -346,28 +531,9 @@ begin
   end;
 end;
 
-procedure SetLanguage(lang: string);
-begin
-  case lang of
-  'en': begin
-    dicClear;  //it's yet in English
-  end;
-  'es': begin
-    //Update messages
-    dicSet('Expected ",".', 'Se esperaba ","');
-    dicSet('Expected address or variable name.','Se esperaba dirección o variable.');
-    dicSet('Invalid ASM Opcode: %s', 'Instrucción inválida: %s');
-    dicSet('Expected "w" or "f".','Se esperaba "w" or "f".');
-    dicSet('Syntax error: "%s"', 'Error de sintaxis: "%s"');
-    dicSet('Expected number of bit: 0..7.', 'Se esperaba número de bit: 0..7');
-    dicSet('Expected address.', 'Se esperaba dirección');
-    dicSet('Expected byte.', 'Se esperaba byte');
-  end;
-  end;
-end;
-
 initialization
   InAsm := false;
+  labels := TPicLabel_list.Create(true);
   {Define la sintaxis del lexer que se usará para analizar el código en ensamblador.}
   lexAsm := TSynFacilSyn.Create(nil);  //crea lexer para analzar ensamblador
   lexAsm.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
@@ -383,5 +549,6 @@ initialization
   lexAsm.Rebuild;
 finalization
   lexAsm.Destroy;
+  labels.Destroy;
 end.
 

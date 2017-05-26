@@ -214,19 +214,30 @@ begin
   fcEditor.SetLanguage(idLang);
   curLang := idLang;
 //  TIT_OTHER:= trans('Others','Otros','');
-
-  Caption := 'Configuración';
-  tabGeneral.Caption   := Trans('Settings'              , 'General', '');
-  tabEditor.Caption    := Trans('General'               , 'Editor', '');
-  tabEnsamb.Caption    := Trans('Editor'                , 'Ensamblador', '');
-  tabOutput.Caption    := Trans('Assembler'             , 'Salida', '');
-  grpOptimLev.Caption  := Trans('Output'                , 'Nivel de optimización:', '');
-  grpOptimLev.Items[0] := Trans('Optimization Level:'   , 'Tonto', '');
-  grpOptimLev.Items[1] := Trans('Fool'                  , 'Inteligente', '');
-  chkIncHeadMpu.Caption:= Trans('Smart'                 , 'Incluir &Encabezado de MPU', '');
-  chkIncDecVar.Caption := Trans('Include MPU &Header'   , 'Incluir Declaración de variables', '');
-  chkIncAddress.Caption:= Trans('Include &Variables declaration','Incluir &Dirección de memoria', '');
-  chkIncComment.Caption:= Trans('Include &Memory Address', 'Incluir &Comentarios', '');
+  Caption              := Trans('Settings'             , 'Configuración', '');
+  //Configuraciones generales
+  tabGeneral.Caption   := Trans('General'              , 'General', '');
+  RadioGroup1.Caption  := Trans('Toolbar'              , 'Barra de herramientas', '');
+  RadioGroup1.Items[0] := Trans('Small Icons'          , 'Íconos pequeños', '');
+  RadioGroup1.Items[1] := Trans('Big Icons'            , 'Íconos grandes', '');
+  label1.Caption       := Trans('Units Path:'          , 'Ruta de unidades', '');
+  chkLoadLast.Caption  := Trans('Load last file edited', 'Cargar último archivo editado', '');
+  Label2.Caption       := Trans('Language'             , 'Lenguaje', '');
+  //Configuraciones del Editor
+  tabEditor.Caption    := Trans('Editor'               , 'Editor', '');
+  //Configuraciones de ensamblador
+  tabEnsamb.Caption    := Trans('Assembler'            , 'Ensamblador', '');
+  chkIncHeadMpu.Caption:= Trans('Include MPU &Header'  , 'Incluir &Encabezado de MPU', '');
+  chkIncDecVar.Caption := Trans('Include &Variables declaration', 'Incluir Declaración de variables', '');
+  RadioGroup2.Caption  := Trans('Style'                , 'Estilo', '');
+  chkExcUnus.Caption   := Trans('Exclude unused'       , 'Excluir no usadas', '');
+  chkIncAddress.Caption:= Trans('Include &Memory Address','Incluir &Dirección de memoria', '');
+  chkIncComment.Caption:= Trans('Include &Comments'    , 'Incluir &Comentarios', '');
+  //Configuraciones de salida
+  tabOutput.Caption    := Trans('Output'               , 'Salida', '');
+  grpOptimLev.Caption  := Trans('Optimization Level:'  , 'Nivel de optimización:', '');
+  grpOptimLev.Items[0] := Trans('Fool'                 , 'Tonto', '');
+  grpOptimLev.Items[1] := Trans('Smart'                , 'Inteligente', '');
 end;
 
 end.

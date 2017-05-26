@@ -11,14 +11,17 @@
 
   <Completion>
 	<List Name="PlantillaIF" IconIndex='5'>
-  "if ... then ...;|if \_ then\n\nend;"
+  "if ... then ...;|if \_ then\n\n\uend;"
   "if ... then ... else ...;|if \_ then\n\n\uelse\n\n\uend;"
+  "if ... then ... elsif ...;|if \_ then\n\n\uelsif  then\n\n\uelse\n\n\uend;"
 	</List>
 	<List Name="Plantillas" IconIndex='5'>
   "absolute \_$00;"
   "begin ... end; |begin\n  \_\n\uend;"
-  "while ... |while \_ do begin\n\n\uend;"
-  "repeat ... |repeat \n\t\_\n\uend;"
+  "while ... |while \_ do\n\n\uend;"
+  "repeat ... |repeat \n\t\_\n\uuntil;"
+  "for i:=0 to ... |for i:=0 to \_ do\n\n\uend;"
+  "asm ... end |asm \n\t\_\n\uend"
   "program ... begin ... end.|{Description of the program.}\nprogram nombre;\nbegin\n  \_\nend."
   "unit ... end.|{Description of the unit.}\nunit unitName;\ninterface\n  \_\nimplementation\n\nend."
   "procedure ... begin ... end;|procedure proc1;\n\u\ubegin\n\u  \_\n\uend;"
@@ -72,6 +75,8 @@
       "{$FREQUENCY \_10Mhz}"
 	  "{$CONFIG }"
 	  "{$DEFINE \_}"
+	  "{$MODE PASCAL}"
+	  "{$MODE PICPAS}"
 	</OpenOn>	
 	<OpenOn AfterPattern="Directive" FilterBy="LastIdentPart">
    PIC12F629
@@ -170,10 +175,12 @@
     <Block Name="FuncBody"  Start="Begin" End= "End" CloseParent="true" BackCol="transparent"></Block>
   </Block>
   <Block Name="BeginEnd"  Start="Begin" End= "End"></Block><!--Al final para dar prioridad al Begin-End de PROCEDURE-->
-  <!-- Bloque específico para la nueva sintaxis de PicPas -->
+  <!-- Bloques específico para la nueva sintaxis de PicPas -->
   <Block Start="IF" End="END" Folding="False">
 	<Section Start="THEN"> </Section>
 	<Section Start="ELSIF"> </Section>
 	<Section Start="ELSE"> </Section>
   </Block>
+  <Block Start="WHILE" End="END" Folding="True"/>
+  <Block Start="FOR" End="END" Folding="True"/>
 </Language>

@@ -56,9 +56,9 @@ object Config: TConfig
     Height = 277
     Top = 0
     Width = 371
-    ActivePage = tabGeneral
+    ActivePage = tabOutput
     Align = alClient
-    TabIndex = 0
+    TabIndex = 3
     TabOrder = 1
     object tabGeneral: TTabSheet
       Caption = 'General'
@@ -68,7 +68,7 @@ object Config: TConfig
         Left = 10
         Height = 49
         Top = 24
-        Width = 222
+        Width = 270
         AutoFill = True
         Caption = 'Toolbar'
         ChildSizing.LeftRightSpacing = 6
@@ -79,7 +79,7 @@ object Config: TConfig
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
         ChildSizing.ControlsPerLine = 3
         ClientHeight = 29
-        ClientWidth = 218
+        ClientWidth = 266
         Columns = 3
         Items.Strings = (
           'Small Icons'

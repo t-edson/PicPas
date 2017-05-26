@@ -124,7 +124,7 @@ type
     procedure _DECFSZ(const f: byte; d: TPIC16destin);
     procedure _GOTO(const a: word);
     procedure _GOTO_PEND(var igot: integer);
-    procedure _LBL(igot: integer);
+    procedure _LABEL(igot: integer);
     procedure _INCF(const f: byte; d: TPIC16destin);
     procedure _INCFSZ(const f: byte; d: TPIC16destin);
     procedure _IORLW(const k: word);
@@ -1156,7 +1156,7 @@ begin
   igot := pic.iFlash;  //guarda posición de instrucción de salto
   pic.codAsmA(GOTO_, 0);  //pone salto indefinido
 end;
-procedure TGenCodPic._LBL(igot: integer);
+procedure TGenCodPic._LABEL(igot: integer);
 {Termina de codiricar el GOTO_PEND}
 begin
   pic.codGotoAt(igot, _PC);

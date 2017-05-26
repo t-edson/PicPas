@@ -1,5 +1,5 @@
-{Rutina de verificación para operaciones básicas con datos de 
-tipo BYTE. 
+{Rutina de verificación para operaciones aritméticas con datos 
+de tipo BYTE. 
 Se debe simular el programa en el circuito "Test1.DSN". Se debe 
 escuchar, una serie de pitidos cortos. Si se escucha un pitido 
 largo, es que hubo algún error en el resultado de alguna operación.}
@@ -28,189 +28,119 @@ begin
   SetAsOutput(pinLed);
   pinLed := 0;
 
-	//Pruebas con IF
-	if true then bien else mal end;
-	if false then mal else bien end;
-
   //////////////////////////////////////////////////////////
-	//////////////  Operación Igualdad ///////////////////
+	////////////////////////  Suma  /////////////////////////
   //////////////////////////////////////////////////////////
 
 	//Constante
-  if 0 = 0 then bien else mal end;
-  if 0 = 1 then mal else bien end;
-  if 255 = 255 then bien else mal end;
-  if 1 = 0 then mal else bien end;
-
-  if 0 <> 0 then mal else bien end;
-  if 255 <> 0 then bien else mal end;
-  if 255 <> 255 then mal else bien end;
+  if 0 + 0 = 0 then bien else mal end;
+  if 0 + 1  = 0 then mal else bien end;
+  if 255 + 0 = 255 then bien else mal end;
 
 	//Variables
   a := 0;
   b := 255;
-  if a = a then bien else mal end;
-  if a = b then mal else bien end;
-  if a <> a then mal else bien end;
-  if a <> b then bien else mal end;
+  if a + a = 0 then bien else mal end;
+  if a + b = 255 then bien else mal end;
+  if b + a = 255 then bien else mal end;
+  if a + b = b then bien else mal end;
 
+  a := 1;
+  b := 254;
+  if a + b = 255 then bien else mal end;
+
+	//Variables - constantes
+  a := 0;
+  if a + 0 = 0 then bien else mal end;
+  if 0 + a = 0 then bien else mal end;
+  if a + 1 = 1 then bien else mal end;
+  if 1 + a = 1 then bien else mal end;
+  if a + 255 = 255 then bien else mal end;
+  if 255 + a = 255 then bien else mal end;
+
+  a := 1;
+  if a + 0 = 1 then bien else mal end;
+  if 0 + a = 1 then bien else mal end;
+  if a + 1 = 2 then bien else mal end;
+  if 1 + a = 2 then bien else mal end;
+  if a + 254 = 255 then bien else mal end;
+  if 254 + a = 255 then bien else mal end;
+
+	//Expresiones
+  a := 10; b := 5;
+  if a = b+5 then bien else mal end;
+  if a + b = 15 then bien else mal end;
+  if (a + b) + 1 = 16 then bien else mal end;
+  if b + a = 15 then bien else mal end;
+  if 15 = b + a then bien else mal end;
+  if a + b = a + 5 then bien else mal end;
+  if a + (b+a) = a + (a + 5) then bien else mal end;
+  if a + (b+ (a+b)) = a + (a + a) then bien else mal end;
+
+  //////////////////////////////////////////////////////////
+	////////////////////////  Resta  /////////////////////////
+  //////////////////////////////////////////////////////////
+
+	//Constante
+  if 0 - 0 = 0 then bien else mal end;
+  if 1 - 0  = 0 then mal else bien end;
+  if 255 - 0 = 255 then bien else mal end;
+
+	//Variables
+  a := 255; b := 0;
+  if a - a = 0 then bien else mal end;
+  if a - a = b then bien else mal end;
+  if b - b = b then bien else mal end;
+  if a - b = 255 then bien else mal end;
+  if a - b = a then bien else mal end;
+
+  a := 255; b := 1;
+  if b - b = 0 then bien else mal end;
+  if a - b = 254 then bien else mal end;
+
+  a := 1; b := 0;
+  if a - b = 1 then bien else mal end;
+  if a - b = a then bien else mal end;
+
+  a := 10; b := 5;
+  if a - b = b then bien else mal end;
+  if a - b = 5 then bien else mal end;
+
+	//Variables - constantes
+  a := 0;
+  if a - 0 = 0 then bien else mal end;
+  if 0 - a = 0 then bien else mal end;
+  if a - 0 = a then bien else mal end;
+  a := 1;
+  if a - 1 = 0 then bien else mal end;
+  if 1 - a = 0 then bien else mal end;
+  if 255 - a = 254 then bien else mal end;
+  if 10 - a = 9 then bien else mal end;
   a := 255;
-  b := 255;
-  if a = a then bien else mal end;
-  if a = b then bien else mal end;
-  if b = a then bien else mal end;
-  if a <> a then mal else bien end;
-  if a <> b then mal else bien end;
-
-	//Variables - constantes
-  a := 10;
-  if a = 10 then bien else mal end;
-  if 10 = a then bien else mal end;
-  if a = 0 then mal else bien end;
-  if 0 = a then mal else bien end;
-  if a <> 10 then mal else bien end;
-  if 10 <> a then mal else bien end;
-  if a <> 255 then bien else mal end;
-  if 255 <> a then bien else mal end;
+  if a - 1 = 254 then bien else mal end;
+  if 255 - a = 0 then bien else mal end;
+  if a - 10 = 245 then bien else mal end;
 
 	//Expresiones
-  a := 10;
-  if a = 5+5 then bien else mal end;
-  if 11 = a+1 then bien else mal end;
-  if a+1 = a+1 then bien else mal end;
-  if a+1 = a+2 then mal else bien end;
+  a := 10; b := 5;
+  if 10 - (b+1) = 4 then bien else mal end;  //constante - expresión  
+  if a - (b+1) = 4 then bien else mal end;   //variable - expresión  
+  if (a+1) - 1 = 10 then bien else mal end;   //expresión - constante 
+  if (a+1) - 0 = 11 then bien else mal end;   //expresión - constante 
+  if (a+1) - a = 1 then bien else mal end;   //expresión - variable
+  if (a+1) - (b+1) = 5 then bien else mal end;   //expresión - expresión
+  if a - b = a - b then bien else mal end;
+  if a - b - 1 = 4 then bien else mal end;
+  if a - b - 1 = b - 1 then bien else mal end;
+  if 5 = a - b then bien else mal end;
+  if a - 5 = a - b then bien else mal end;
+  if b + (a-b) = a  then bien else mal end;
+  if a = b + (a-b) then bien else mal end;
+  if a + (b+ (a-b)) = a + (a - b + 5) then bien else mal end;
 
   //////////////////////////////////////////////////////////
-	//////////////////  Operación Mayor /////////////////////
+	////////////////////////  AND  /////////////////////////
   //////////////////////////////////////////////////////////
 
-	//Constante
-  if 0 > 0 then mal else bien end;
-  if 0 > 1 then mal else bien end;
-  if 255 > 0 then bien else mal end;
-  if 255 > 15 then bien else mal end;
-  if 255 > 255 then mal else bien end;
-
-	//Variables
-  a := 1;  b := 255;
-  if a > a then mal else bien end;
-  if a > b then mal else bien end;
-  if b > b then mal else bien end;
-  if b > a then bien else mal end;
-
-  a := 0;  b := 255;
-  if a > a then mal else bien end;
-  if a > b then mal else bien end;
-  if b > b then mal else bien end;
-  if b > a then bien else mal end;
-
-  a := 0;  b := 1;
-  if a > a then mal else bien end;
-  if a > b then mal else bien end;
-  if b > b then mal else bien end;
-  if b > a then bien else mal end;
-
-  a := 0;  b := 0;
-  if a > a then mal else bien end;
-  if a > b then mal else bien end;
-  if b > b then mal else bien end;
-  if b > a then mal else bien end;
-
-  a := 255;  b := 255;
-  if a > a then mal else bien end;
-  if a > b then mal else bien end;
-  if b > b then mal else bien end;
-  if b > a then mal else bien end;
-
-	//Variables - constantes
-  a := 1;
-  if a > 0 then bien else mal end;
-  if a > 1 then mal else bien end;
-  if a > 255 then mal else bien end;
-  if 0 > a then mal else bien end;
-  if 1 > a then mal else bien end;
-  if 2 > a then bien else mal end;
-  if 255 > a then bien else mal end;
-
-	//Expresiones
-  a := 10;
-  if 0 > a-10 then mal else bien end;
-  if 0 > a+1 then mal else bien end;
-  if 11 > a+1 then mal else bien end;
-  if 12 > a+1 then bien else mal end;
-  if 255 > a+1 then bien else mal end;
-
-  a := 10;
-  if a+1 > 0 then bien else mal end;
-  if a+1 > 10 then bien else mal end;
-  if a+1 > 11 then mal else bien end;
-  if a+1 > 12 then mal else bien end;
-  if a+1 > 255 then mal else bien end;
-
-  if a > a+1 then mal else bien end;
-  if a+1 > a then bien else mal end;
-
-  if a+1 > a+2 then mal else bien end;
-  if a+1 > a+1 then mal else bien end;
-  if a+2 > a+1 then bien else mal end;
-
-  //////////////////////////////////////////////////////////
-	//////////////////  Operación Menor /////////////////////
-  //////////////////////////////////////////////////////////
-	{Las pruebas para las operaciones "menor que", no son tan exigentes porque 
-   se generan a partir de "mayor que"}
-
-	//Constante
-  if 0 < 0 then mal else bien end;
-  if 0 < 1 then bien else mal end;
-  if 255 < 0 then mal else bien end;
-
-	//Variables
-  a := 0;  b := 0;
-  if a < a then mal else bien end;
-  if a < b then mal else bien end;
-  if b < a then mal else bien end;
-
-  a := 255;  b := 255;
-  if a < a then mal else bien end;
-  if a < b then mal else bien end;
-  if b < a then mal else bien end;
-
-	//Variables - constantes
-  a := 1;
-  if a < 0 then mal else bien end;
-  if a < 1 then mal else bien end;
-  if a < 255 then bien else mal end;
-  if 0 < a then bien else mal end;
-  if 255 < a then mal else bien end;
-
-	//Expresiones
-  a := 10;
-  if a < a+1 then bien else mal end;
-  if a+1 < a then mal else bien end;
-
-  if a+1 < a+2 then bien else mal end;
-  if a+1 < a+1 then mal else bien end;
-  if a+2 < a+1 then mal else bien end;
-
-  //////////////////////////////////////////////////////////
-	///////////////  Operación Mayor/Menor o igual ///////////
-  //////////////////////////////////////////////////////////
-	{Estas operaciones, son aún menos exigentes, porque son negaciones 
-  de las operaciones base}
-
-	if 5>=4 then bien else mal end;
-	if 5>=5 then bien else mal end;
-	if 5>=6 then mal else bien end;
-
-  a := 5;  b := 6;
-  if a >= a then bien else mal end;
-  if a >= b then mal else bien end;
-  if b >= a then bien else mal end;
-
-	if a <= a then bien else mal end;
-	if a <= 6 then bien else mal end;
-	if a <= 4 then mal else bien end;
 
 end.
-

@@ -91,7 +91,6 @@ protected  //Eventos del compilador
                                              el terminar de evaluar una expresión}
   pic        : TPIC16;           //Objeto PIC de la serie 16.
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
-  FirstPass  : boolean;   //Indica que está en la primera pasada.
   function CaptureDelExpres: boolean;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;
   procedure TipDefecString(var Op: TOperand; tokcad: string); virtual; abstract;
@@ -124,9 +123,10 @@ protected  //Eventos del compilador
   function GetOperator(const Op: Toperand): Txpoperator;
   procedure GetExpressionE(const prec: Integer; posExpres: TPosExpres = pexINDEP);
 public
+  FirstPass  : boolean;   //Indica que está en la primera pasada.
   TreeElems: TXpTreeElements; //tablas de elementos del lenguaje
   listFunSys: TxpEleFuns;   //lista de funciones del sistema
-private
+protected
   typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
   function GetExpression(const prec: Integer): TOperand;
   //LLamadas a las rutinas de operación
@@ -510,7 +510,8 @@ begin
     Result.typ := typChar;
     cIn.Next;    //Pasa al siguiente
   end else if (cIn.tokType = tnSysFunct) or //función del sistema
-              (cIn.tokL = 'bit') then begin  //"bit" es de tipo "tnType"
+              (cIn.tokL = 'bit') or   //"bit" es de tipo "tnType"
+              (cIn.tokL = 'word') then begin  //"word" es de tipo "tnType"
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
      versiones, sobrecargadas de la misma función.}
     tmp := UpCase(cIn.tok);  //guarda nombre de función
@@ -545,7 +546,7 @@ begin
         Result.catOp:=coExpres;
         Result.typ:=xvar.typ;
         //Faltaría asegurarse de que los registros estén disponibles
-        Result.typ.OperationPop(@Result);   //OperationPop,Realmente llamrse "DefineRegister"
+        Result.typ.OperationPop(@Result);   //OperationPop, Realmente debe llamarse "DefineRegister"
       end else begin
         Result.catOp:=coVariab;    //variable
         Result.typ:=xvar.typ;
@@ -651,7 +652,7 @@ begin
     if opr = nullOper then begin
       {Este tipo no permite este operador Unario (a lo mejor ni es unario)}
       cIn.PosAct := posAct;
-      GenError('No se puede aplicar el operador "%s" al tip "%s"', [oprTxt, Op.typ.name]);
+      GenError('Cannot apply the operator "%s" to type "%s"', [oprTxt, Op.typ.name]);
       exit;
     end;
     //Sí corresponde. Así que apliquémoslo
@@ -1015,11 +1016,11 @@ begin
   Result := rVar.name;
 end;
 function TOperand.offs: TVarOffs;
-{Dirección de memoria, cuando es de tipo Byte, Bit o Boolean.}
+{Dirección de memoria, cuando es de tipo Char, Byte, Bit o Boolean.}
 begin
   if (typ = typBit) or (typ = typBool) then begin
     Result := rVar.adrBit.offs;
-  end else begin
+  end else begin  //Char o byte
     Result := rVar.adrByte0.offs;
   end;
 end;
@@ -1169,6 +1170,7 @@ begin
     dicSet('Illegal Operation: %s', 'Operación no válida: %s');
     dicSet('Undefined operator: %s for type: %s','No está definido el operador: %s para tipo: %s');
     dicSet('Duplicated function: %s','Función duplicada: %s');
+    dicSet('Cannot apply the operator "%s" to type "%s"', 'No se puede aplicar el operador "%s" al tipo "%s"');
   end;
   end;
 end;
