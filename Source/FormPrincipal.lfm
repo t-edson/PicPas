@@ -1,12 +1,12 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 356
+  Left = 0
   Height = 625
-  Top = 106
-  Width = 918
+  Top = 107
+  Width = 884
   AllowDropFiles = True
   Caption = 'frmPrincipal'
   ClientHeight = 605
-  ClientWidth = 918
+  ClientWidth = 884
   KeyPreview = True
   Menu = MainMenu1
   OnClose = FormClose
@@ -21,7 +21,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 23
     Top = 582
-    Width = 918
+    Width = 884
     Panels = <    
       item
         Width = 70
@@ -47,7 +47,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 26
     Top = 0
-    Width = 918
+    Width = 884
     Caption = 'ToolBar1'
     Images = ImgActions16
     ParentShowHint = False
@@ -651,7 +651,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 82
     Top = 500
-    Width = 918
+    Width = 884
     Align = alBottom
     TabOrder = 4
   end
@@ -660,7 +660,7 @@ object frmPrincipal: TfrmPrincipal
     Left = 0
     Height = 6
     Top = 494
-    Width = 918
+    Width = 884
     Align = alBottom
     ResizeAnchor = akBottom
   end

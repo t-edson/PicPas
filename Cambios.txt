@@ -1,3 +1,42 @@
+PicPas 0.6.6
+============
+Se corrige el dimensionamiento de Flash, en la rutina GetHardwareInfo(), de la unidad
+Pic16Devices.
+Se traducen más mensajes al español, en la unidad Parser.
+Se crea TCompiler.GetExpressionBool() y se usa en las estructuras condicionales.
+Se crea la variable TGenCodPic.varStkWord, para trabajar con word en la pila.
+Se implementan las operaciones Oper_word_equal_word() y Oper_word_difer_word().
+Se elimina la variable LastCatOp, y se crea RTstate.
+Se crea la unidad XpresTypesPIC.pas, y se deja de usar la de Xpres.
+Se modifica SetResultExpres_bit(), para que incluya como parámetro, al tipo de operación.
+Se modifica SetResultExpres_bool(), para que incluya como parámetro, al tipo de operación.
+Se eliminan TGenCodPic.OperandsUseZ y TGenCodPic.OperandUseZ.
+Se eliminan TGenCodPic.RequireResult_Z, TGenCodPic.RequireResult_HW, 
+TGenCodPic.RequireResult_W, TGenCodPic.RequireH, TGenCodPic.SaveZ, TGenCodPic.SaveW,
+TGenCodPic.RestoreW.
+Se elimina el parámetro de TGenCodPic.FreeStkRegisterBit().
+Se cambia de nombre a los eventos de TType, apra adpatarlos mejor a PicPas.
+Se cambia de nombre a TOperand.Push(), por TOperand.LoadToReg().
+Se crean los métodos TGenCod.bit_LoadToReg y bool_LoadToReg;
+Se crea el método TOperand.catOpStr().
+Se crea TCompilerBase.LogExpLevel() y se mejoran considerablemente los mensajes de registro.
+Se definen los eventos OnSaveToStk, para todos los tipos de datos creados.
+Se completa la documentación técnica, fundamentando la técnica de respaldo de los registros 
+de trabajo, que se usará en PicPas.
+
+PENDIENTES
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la reutilización de variables usadas como parámetros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
+Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
+
+
 PicPas 0.6.5
 ============
 Se corrige la traducción al español, en la unidad FormConfig.
@@ -21,29 +60,7 @@ dirección actual.
 Se crean rutinas de geenración de error en la unidad ProcAsm, para precisar la columna de 
 la generación del error.
 Se habilita el acceso a variables bytes, desde bloques ASM.
-Se crea procedimiento de conversión de idioma en la unidad Globales.
-
-PENDIENTES
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la traducción de idiomas, en la unidad Parser.
-Implementar la reutilización de variables usadas como parámetros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
-Revisar el posible problema de pérdida de resultado en el generador de código, cuando se
-hace:   
-SetResultExpres_bit(false);  //Fija resultado
-SaveW(reg); 
-...  // se actualiza Z.
-RestoreW(reg); //<-Se pierde Z, si se restaura W.
-Las funciones no usadas, en las unidades, aún se compilan, cuando la usa una función 
-no usada.
-¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
-Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
-
+Se cambia idioma a inglés en la unidad Globales.
 
 PicPas 0.6.4
 ============

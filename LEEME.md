@@ -46,10 +46,6 @@ Si se requiere versiones para otra plataforma, se necesitará compilar  el proye
 
 Al iniciar, puede que PicPas, genere mensajes de advertencia, si no encuentra las carpetas requeridas.
 
-## Sintaxis
-
-Para información sobre el lenguaje revisar el Manual de Usuario.
-
 ## Código Fuente
 
 El código fuente se encuentra en la carpeta /Source.

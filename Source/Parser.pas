@@ -5,7 +5,7 @@ unit Parser;
 interface
 uses
   Classes, SysUtils, lclProc, SynEditHighlighter, types, SynFacilHighlighter,
-  MisUtils, XpresBas, XpresTypes, XpresElementsPIC, XpresParserPIC, Pic16Utils,
+  MisUtils, XpresBas, XpresTypesPIC, XpresElementsPIC, XpresParserPIC, Pic16Utils,
   Pic16Devices, Globales, ProcAsm, GenCod, GenCodPic, FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
 type
 
@@ -22,6 +22,7 @@ type
     procedure CompileFOR;
     procedure CompileLastEnd;
     procedure CompileProcHeader(var fun: TxpEleFun; ValidateDup: boolean = true);
+    function GetExpressionBool: boolean;
     function IsUnit: boolean;
     function StartOfSection: boolean;
     procedure ResetFlashAndRAM;
@@ -78,6 +79,9 @@ var
   ER_ERR_IN_NUMB, ER_NOTYPDEFNUM, ER_UNDEF_TYPE_: string;
   ER_INV_MAD_DEV, ER_EXP_VAR_IDE, ER_INV_MEMADDR, ER_UNKNOWN_ID_: string;
   ER_IDE_CON_EXP, ER_NUM_ADD_EXP, ER_IDE_TYP_EXP, ER_SEM_COM_EXP: String;
+  ER_EQU_COM_EXP, ER_END_EXPECTE, ER_EOF_END_EXP, ER_BOOL_EXPECT: String;
+  ER_UNKN_STRUCT, ER_PROG_NAM_EX, ER_COMPIL_PROC, ER_CON_EXP_EXP: String;
+  ER_ERROR_DIREC, ER_UNKNO_DIREC, ER_UNKNO_DEVIC, ER_NOT_AFT_END: String;
 
 //Funciones básicas
 procedure SetLanguage(idLang: string);
@@ -100,28 +104,24 @@ begin
   ER_IDE_TYP_EXP := trans('Identifier of type expected.', 'Se esperaba identificador de tipo.','','');
   ER_SEM_COM_EXP := trans('":" or "," expected.', 'Se esperaba ":" o ",".','','');
 
-//  ER_NOT_IMPLEM_ := trans('"=", ":" or "," expected.', 'Se esperaba "=", ":" o ",".','','');
+  ER_EQU_COM_EXP := trans('"=" or "," expected.', 'Se esperaba "=" o ","','','');
+  ER_END_EXPECTE := trans('"end" expected.', 'Se esperaba "end".','','');
+  ER_EOF_END_EXP := trans('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".','','');
+  ER_BOOL_EXPECT := trans('Boolean expression expected.', 'Se esperaba expresión booleana.','','');
+
+  ER_UNKN_STRUCT := trans('Unknown structure.', 'Estructura desconocida.','','');
+  ER_PROG_NAM_EX := trans('Program name expected.', 'Se esperaba nombre de programa.','','');
+  ER_COMPIL_PROC := trans('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.','','');
+  ER_CON_EXP_EXP := trans('Constant expression expected.', 'Se esperaba una expresión constante','','');
+  ER_ERROR_DIREC := trans('Error in directive.', 'Error en directiva','','');
+  ER_UNKNO_DIREC := trans('Unknown directive: %s', 'Directiva desconocida: %s','','');
+  ER_UNKNO_DEVIC := trans('Unknown device: %s', 'Dispositivo desconocido: %s','','');
+  ER_NOT_AFT_END := trans('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."','','');
 //  ER_NOT_IMPLEM_ := trans('"begin" expected.', 'Se esperaba "begin".','','');
-//  ER_NOT_IMPLEM_ := trans('"end" expected.', 'Se esperaba "end".','','');
-//  ER_NOT_IMPLEM_ := trans('Boolean expression expected.', 'Se esperaba expresión booleana.','','');
 //  ER_NOT_IMPLEM_ := trans('"do" expected.', 'Se esperaba "do".','','');
 //  ER_NOT_IMPLEM_ := trans('"then" expected.', 'Se esperaba "then"','','');
 //  ER_NOT_IMPLEM_ := trans('"until" expected.', 'Se esperaba "until"','','');
-//  ER_NOT_IMPLEM_ := trans('Unknown structure.', 'Estructura desconocida.','','');
-//  ER_NOT_IMPLEM_ := trans('Name of program expected.', 'Se esperaba nombre de programa.','','');
 //  ER_NOT_IMPLEM_ := trans('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".','','');
-//  ER_NOT_IMPLEM_ := trans('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".','','');
-//  ER_NOT_IMPLEM_ := trans('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.','','');
-//  ER_NOT_IMPLEM_ := trans('Constant expression expected.', 'Se esperaba una expresión constante','','');
-//  ER_NOT_IMPLEM_ := trans('Clock frequency not supported.', 'Frecuencia de reloj no soportada.','','');
-//  ER_NOT_IMPLEM_ := trans('Error in directive.', 'Error en directiva','','');
-//  ER_NOT_IMPLEM_ := trans('Unknown directive: %s', 'Directiva desconocida: %s','','');
-//  ER_NOT_IMPLEM_ := trans('Cannot increase a constant.', 'No se puede incrementar una constante.','','');
-//  ER_NOT_IMPLEM_ := trans('Cannot increase an expression.','No se puede incrementar una expresión.','','');
-//  ER_NOT_IMPLEM_ := trans('Cannot decrease a constant.', 'No se puede disminuir una constante.','','');
-//  ER_NOT_IMPLEM_ := trans('Cannot decrease an expression.','No se puede disminuir una expresión.','','');
-//  ER_NOT_IMPLEM_ := trans('Unknown device: %s', 'Dispositivo desconocido: %s','','');
-//  ER_NOT_IMPLEM_ := trans('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."','','');
 end;
 procedure TCompiler.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
@@ -203,7 +203,7 @@ begin
       lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
       if tokType = lexDir.tnSpace then lexDir.Next;  //quita espacios
       if tokType <> lexDir.tnIdentif then begin
-        GenError('Error in directive.');
+        GenError(ER_ERROR_DIREC);
         exit;
       end;
       //sigue identificador
@@ -212,7 +212,7 @@ begin
         lexDir.Next;  //pasa al siguiente
         skipWhites;
         if not GetHardwareInfo(pic, lexDir.GetToken) then begin
-          GenError('Unknown device: %s', [lexDir.GetToken]);
+          GenError(ER_UNKNO_DEVIC, [lexDir.GetToken]);
           exit;
         end;
       end;
@@ -220,11 +220,11 @@ begin
         lexDir.Next;  //pasa al siguiente
         skipWhites;
         if tokType <> lexDir.tnNumber then begin
-          GenError('Error in directive.');
+          GenError(ER_ERROR_DIREC);
           exit;
         end;
         if not TryStrToInt(lexDir.GetToken, f) then begin
-          GenError('Error in frecuencia.');
+          GenError('Error in frequency.');
           exit;
         end;
         lexDir.Next;  //pasa al siguiente
@@ -233,7 +233,7 @@ begin
         'KHZ': f := f * 1000;
         'MHZ': f := f * 1000000;
         else
-          GenError('Error in directive.');
+          GenError(ER_ERROR_DIREC);
           exit;
         end;
         pic.frequen:=f; //asigna freecuencia
@@ -266,7 +266,7 @@ begin
         end;
       end;
       else
-        GenError('Unknown directive: %s', [lexDir.GetToken]);
+        GenError(ER_UNKNO_DIREC, [lexDir.GetToken]);
         exit;
       end;
     end;
@@ -279,7 +279,7 @@ procedure TCompiler.CompileLastEnd;
 {Compila la parte de final de un programa o una unidad}
 begin
   if cIn.Eof then begin
-    GenError('Unexpected end of file. "end" expected.');
+    GenError(ER_EOF_END_EXP);
     exit;       //sale
   end;
   if cIn.tokL <> 'end' then begin  //verifica si termina el programa
@@ -288,7 +288,7 @@ begin
       GenError('"else" unexpected.');
       exit;       //sale
     end else begin
-      GenError('"end" expected.');
+      GenError(ER_END_EXPECTE);
       exit;       //sale
     end;
   end;
@@ -298,7 +298,7 @@ begin
   //no debe haber más instrucciones
   ProcComments;
   if not cIn.Eof then begin
-    GenError('Syntax error. Nothing should be after "END."');
+    GenError(ER_NOT_AFT_END);
     exit;       //sale
   end;
 end;
@@ -457,18 +457,24 @@ begin
     cIn.Next;
   end;
 end;
+function TCompiler.GetExpressionBool: boolean;
+{Lee una expresión booleana. Si hay algún error devuelve FALSE.}
+begin
+  GetExpressionE(0);
+  if HayError then exit(false);
+  if res.typ<>typBool then begin
+    GenError(ER_BOOL_EXPECT);
+    exit(false);
+  end;
+  cIn.SkipWhites;
+  exit(true);  //No hay error
+end;
 procedure TCompiler.CompileIF;
 {Compila una extructura IF}
 var
   jFALSE, jEND_TRUE: integer;
 begin
-  GetExpressionE(0);
-  if HayError then exit;
-  if res.typ<>typBool then begin
-    GenError('Boolean expression expected.');
-    exit;
-  end;
-  cIn.SkipWhites;
+  if not GetExpressionBool then exit;
   if cIn.tokL<>'then' then begin
     GenError('"then" expected.');
     exit;
@@ -482,13 +488,7 @@ begin
       if not CompileBody then exit;
       while cIn.tokL = 'elsif' do begin
         cIn.Next;   //toma "elsif"
-        GetExpressionE(0);
-        if HayError then exit;
-        if res.typ<>typBool then begin
-          GenError('Boolean expression expected.');
-          exit;
-        end;
-        cIn.SkipWhites;
+        if not GetExpressionBool then exit;
         if cIn.tokL<>'then' then begin
           GenError('"then" expected.');
           exit;
@@ -600,12 +600,7 @@ begin
     exit;
   end;
   cIn.Next;   //toma "until"
-  GetExpressionE(0);
-  if HayError then exit;
-  if res.typ<>typBool then begin
-    GenError('Boolean expression expected.');
-    exit;
-  end;
+  if not GetExpressionBool then exit;
   case res.catOp of
   coConst: begin  //la condición es fija
     if res.valBool then begin
@@ -629,13 +624,7 @@ var
   dg: Integer;
 begin
   l1 := _PC;        //guarda dirección de inicio
-  GetExpressionE(0);
-  if HayError then exit;
-  if res.typ<>typBool then begin
-    GenError('Boolean expression expected.');
-    exit;
-  end;
-  cIn.SkipWhites;
+  if not GetExpressionBool then exit;
   if cIn.tokL<>'do' then begin
     GenError('"do" expected.');
     exit;
@@ -861,7 +850,7 @@ begin
     GetExpressionE(0);
     if HayError then exit;
     if res.catOp <> coConst then begin
-      GenError('Constant expression expected.');
+      GenError(ER_CON_EXP_EXP);
     end;
     //Hasta aquí todo bien, crea la(s) constante(s).
     for i:= 0 to high(consNames) do begin
@@ -877,7 +866,7 @@ begin
     end;
 //  end else if cIn.tok = ':' then begin
   end else begin
-    GenError('"=" or "," expected.');
+    GenError(ER_EQU_COM_EXP);
     exit;
   end;
   if not CaptureDelExpres then exit;
@@ -1201,7 +1190,7 @@ begin
     CompileCurBlock;   //llamada recursiva
     if HayError then exit;
     if cIn.tokL<>'end' then begin
-      GenError('"end" expected.');
+      GenError(ER_END_EXPECTE);
       exit;
     end;
     cIn.Next;  //toma "end"
@@ -1223,7 +1212,7 @@ begin
         cIn.Next;         //pasa "until"
         CompileFOR;
       end else begin
-        GenError('Unknown structure.');
+        GenError(ER_UNKN_STRUCT);
         exit;
       end;
     end else begin
@@ -1511,7 +1500,7 @@ begin
     ProcComments;
     if HayError then exit;   //puede dar error por código assembler o directivas
     if cIn.Eof then begin
-      GenError('Name of program expected.');
+      GenError(ER_PROG_NAM_EX);
       exit;
     end;
     cIn.Next;  //Toma el nombre y pasa al siguiente
@@ -1698,7 +1687,7 @@ begin
   //se pone en un "try" para capturar errores y para tener un punto salida de salida
   //único
   if ejecProg then begin
-    GenError('There is a compilation in progress.');
+    GenError(ER_COMPIL_PROC);
     exit;  //sale directamente
   end;
   try
@@ -1916,4 +1905,4 @@ initialization
 finalization
   cxp.Destroy;
 end.
-//1952
+

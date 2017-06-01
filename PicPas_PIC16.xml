@@ -21,6 +21,7 @@
   "while ... |while \_ do\n\n\uend;"
   "repeat ... |repeat \n\t\_\n\uuntil;"
   "for i:=0 to ... |for i:=0 to \_ do\n\n\uend;"
+  "asm"
   "asm ... end |asm \n\t\_\n\uend"
   "program ... begin ... end.|{Description of the program.}\nprogram nombre;\nbegin\n  \_\nend."
   "unit ... end.|{Description of the unit.}\nunit unitName;\ninterface\n  \_\nimplementation\n\nend."

@@ -4,7 +4,7 @@ unit GenCodPic;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, XPresParserPIC, XpresElementsPIC, Pic16Utils, XpresTypes,
+  Classes, SysUtils, XPresParserPIC, XpresElementsPIC, Pic16Utils, XpresTypesPIC,
   MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 8;  //tamaño de pila para subrutinas en el PIC
@@ -21,7 +21,7 @@ type
   private
     linRep : string;   //línea para generar de reporte
     function OperandsUseHW: boolean;
-    function OperandsUseZ: boolean;
+    function OperandsUseRT(opType: TOperType): boolean;
     function OperandsUseW: boolean;
     procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
   protected
@@ -46,8 +46,9 @@ type
   protected  //Variables de expresión.
     {Estas variables, se inician al inicio de cada expresión y su valor es válido
     hasta el final de la expresión.}
-    LastCatOp  : TCatOperan;  //Categoría de operando, de la subexpresión anterior.
-    CurrBank   : Byte;        //Banco RAM actual
+    CurrBank  : Byte;    //Banco RAM actual
+    RTstate   : TType;   {Estado de los RT. Si es NIL, indica que los RT, no tienen
+                         ningún dato cargado, sino indican el tipo cargado en los RT.}
     //Variables de estado de las expresiones booleanas
     InvertedFromC: boolean; {Indica que el resultado de una expresión Booleana o Bit, se
                              ha obtenido, en la última subexpresion, copaindo el bit C al
@@ -59,25 +60,20 @@ type
     function CreateRegisterByte(RegType: TPicRegType): TPicRegister;
     function CreateRegisterBit(RegType: TPicRegType): TPicRegisterBit;
   protected  //Rutinas de gestión de memoria para registros
-    varStkBit: TxpEleVar;    //variable bit. Usada para trabajar con la pila
+    varStkBit : TxpEleVar;    //variable bit. Usada para trabajar con la pila
     varStkByte: TxpEleVar;   //variable byte. Usada para trabajar con la pila
-    procedure RequireH(preserve: boolean = true);
-    function RequireResult_W: TPicRegister;
-    function RequireResult_Z: TPicRegisterBit;
-    procedure RequireResult_HW;
-    procedure SaveW(out reg: TPicRegister);
-    procedure SaveZ(out reg: TPicRegisterBit);
-    procedure RestoreW(reg: TPicRegister);
-    procedure RestoreZ(reg: TPicRegisterBit);
+    varStkWord: TxpEleVar;   //variable word. Usada para trabajar con la pila
     function GetAuxRegisterByte: TPicRegister;
     function GetAuxRegisterBit: TPicRegisterBit;
     //Gestión de la pila
     function GetStkRegisterByte: TPicRegister;
     function GetStkRegisterBit: TPicRegisterBit;
-    function GetVarByteFromStk: TxpEleVar;
     function GetVarBitFromStk: TxpEleVar;
+    function GetVarByteFromStk: TxpEleVar;
+    function GetVarWordFromStk: TxpEleVar;
     function FreeStkRegisterByte(var reg: TPicRegister): boolean;
-    function FreeStkRegisterBit(var reg: TPicRegisterBit): boolean;
+    function FreeStkRegisterWord: boolean;
+    function FreeStkRegisterBit: boolean;
   protected  //Rutinas de gestión de memoria para variables
     {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
     objeto "pic", se colocan mejor aquí.}
@@ -96,11 +92,11 @@ type
     procedure SetResultVariab_byte(rVar: TxpEleVar);
     procedure SetResultVariab_char(rVar: TxpEleVar);
 
-    procedure SetResultExpres_bit(Inverted: boolean);
-    procedure SetResultExpres_bool(Inverted: boolean);
-    procedure SetResultExpres_byte;
-    procedure SetResultExpres_char;
-    procedure SetResultExpres_word;
+    procedure SetResultExpres_bit(opType: TOperType; Inverted: boolean);
+    procedure SetResultExpres_bool(opType: TOperType; Inverted: boolean);
+    procedure SetResultExpres_byte(opType: TOperType);
+    procedure SetResultExpres_char(opType: TOperType);
+    procedure SetResultExpres_word(opType: TOperType);
   protected  //Instrucciones
     procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin
       );
@@ -230,15 +226,6 @@ begin
   catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
 end;
 //Funciones auxiliares privadas
-function OperandUseZ(Oper: TOperand): boolean;
-{Indica si el operando está usando el registro Z}
-begin
-  if (Oper.catOp = coExpres) and
-     ((Oper.typ = typBit) or (Oper.typ = typBool)) then
-    exit(true)
-  else
-    exit(false);
-end;
 function OperandUseW(Oper: TOperand): boolean;
 {Indica si el operando está usando el registro W}
 begin
@@ -266,14 +253,13 @@ begin
   else
     exit(false);
 end;
-function TGenCodPic.OperandsUseZ: boolean;
-{Indica si alguno de los operandos, está usando el registro Z, para devolver su
-resultado.}
+function TGenCodPic.OperandsUseRT(opType: TOperType): boolean;
+{Indica si alguno de los operandos, está usando algún registro de trabajo.}
 begin
   if (
-     (operType = operUnary) and OperandUseZ(p1^)
+     (operType = operUnary) and (p1^.catOp = coExpres)
      ) or (
-     (operType = operBinary) and (OperandUseZ(p1^) or OperandUseZ(p2^))
+     (operType = operBinary) and ((p1^.catOp = coExpres) or (p2^.catOp = coExpres))
      )
   then exit(true)
   else exit(false);
@@ -365,121 +351,6 @@ begin
   Result := reg;   //devuelve referencia
 end;
 //Rutinas de Gestión de memoria
-procedure TGenCodPic.RequireH(preserve: boolean = true);
-{Indica que va a usar el registro H.}
-var
-  tmpReg: TPicRegister;
-begin
-  if not H.assigned then begin
-    //Ni siquiera tiene dirección asignada. Primero hay que ubicarlo en memoria.
-    AssignRAM(H, '_H');
-  end else begin
-    //Ya existe.
-    if preserve and H.used then begin
-      //Ya lo usó la subexpresión anterior (seguro que fue una expresión de algún tipo)
-      tmpReg := GetStkRegisterByte;   //pide una posición de memoria
-      //guarda H
-      _BANKSEL(h.bank);
-      _MOVF(H.offs, toW);PutComm(';save H');
-      _BANKSEL(tmpReg.bank);
-      _MOVWF(tmpReg.offs);
-      tmpReg.used := true;   //marca
-    end;
-  end;
-  H.used := true;  //lo marca como que lo va a usar
-end;
-function TGenCodPic.RequireResult_W: TPicRegister;
-{Indica que se va a utilizar al acumulador W, para devolver un resultado de tipo Byte.
-De encontrarse ocupado, se pone en la pila y devuelve la referencia al registro de pila
-usado. Si no hay espacio, genera error.}
-begin
-  if W.used then begin
-    //Ya lo usó la subexpresión anterior (seguro que fue una expresión byte o word)
-    Result := GetStkRegisterByte;  //pide memoria
-    //guarda W
-    _BANKSEL(Result.bank);
-    _MOVWF(Result.offs);PutComm(';save W');
-    Result.used := true;
-  end else begin
-    Result := nil;
-  end;
-  W.used := true;   //Lo marca como indicando que se va a ocupar
-end;
-function TGenCodPic.RequireResult_Z: TPicRegisterBit;
-{Indica que se va a utilizar Z, para devolver un resultado de tipo Bit o Boolean.
-De encontrarse ocupado, se pone en la pila y devuelve la referencia al registro de pila
-usado. Si no hay espacio, genera error.}
-begin
-  if Z.used then begin
-    //Ya lo usó la subexpresión anterior (seguro que fue una expresión bit o boolean)
-    Result := GetStkRegisterBit;  //pide memoria
-    //guarda Z
-    _BANKSEL(Result.bank);
-    _BCF(Result.offs, Result.bit); PutComm(';save Z');
-    _BTFSC(Z.offs, Z.bit);
-    _BSF(Result.offs, Result.bit);
-    Result.used := true;
-  end else begin
-    Result := nil;
-  end;
-  Z.used := true;   //Lo marca como indicando que se va a ocupar
-end;
-procedure TGenCodPic.RequireResult_HW;
-{Indica que se va a utilizar los registros (H,W), para devolver un resultado de tipo Word.
-Debe llamarse siempre, antes de generar código para la subexpresión.}
-begin
-  RequireResult_W;
-  RequireH;
-end;
-procedure TGenCodPic.SaveW(out reg: TPicRegister);
-{Verifica si el registro W, está siendo usado y de ser así genera la instrucción para
-guardarlo en un registro auxiliar. Esta función trabaja normalmente con RestoreW().
-Puede generar error.}
-begin
-  if W.used then begin
-    reg := GetAuxRegisterByte;
-    if reg = nil then exit;
-    _BANKSEL(reg.bank);
-    _MOVWF(reg.offs);PutComm(';save W');
-  end else begin
-    reg := nil;
-  end;
-end;
-procedure TGenCodPic.SaveZ(out reg: TPicRegisterBit);
-{Verifica si el registro Z, está siendo usado y de ser así genera la instrucción para
-guardarlo en un registro auxiliar.}
-begin
-  if Z.used then begin
-    reg := GetAuxRegisterBit;
-    if reg = nil then exit;
-    _BANKSEL(reg.bank);
-    _BCF(reg.offs, reg.bit); PutComm(';save Z');
-    _BTFSC(Z.offs, Z.bit);
-    _BSF(reg.offs, reg.bit);
-  end else begin
-    reg := nil;
-  end;
-end;
-procedure TGenCodPic.RestoreW(reg: TPicRegister);
-{Devuelve a W, el valor guardado previamente con RequireW}
-begin
-  if reg<>nil then begin
-    reg.used := false;  //libera registro auxiliar
-    _BANKSEL(reg.bank);
-    _MOVF(reg.offs, toW);PutComm(';restore W');
-  end;
-end;
-procedure TGenCodPic.RestoreZ(reg: TPicRegisterBit);
-{Devuelve a Z, el valor guardado previamente con RequireZ}
-begin
-  if reg<>nil then begin
-    reg.used := false;  //libera registro auxiliar
-    _BANKSEL(reg.bank);
-    _BCF(Z.offs, Z.bit); PutComm(';restore Z');
-    _BTFSC(reg.offs, reg.bit);
-    _BSF(Z.offs, Z.bit);
-  end;
-end;
 function TGenCodPic.GetAuxRegisterByte: TPicRegister;
 {Devuelve la dirección de un registro de trabajo libre. Si no encuentra alguno, lo crea.
  Si hay algún error, llama a GenError() y devuelve NIL}
@@ -586,24 +457,6 @@ begin
   Result.used := true;   //lo marca
   inc(stackTopBit);  //actualiza
 end;
-function TGenCodPic.GetVarByteFromStk: TxpEleVar;
-{Devuelve la referencia a una variable byte, que representa al último byte agregado en
-la pila. Se usa como un medio de trabajar con los datos de la pila.}
-var
-  topreg: TPicRegister;
-begin
-  topreg := listRegStk[stackTop-1];  //toma referecnia de registro de la pila
-  //Usamos la variable "varStkByte" que existe siempre, para devolver la referencia.
-  //Primero la hacemos apuntar a la dirección física de la pila
-  varStkByte.adrByte0.offs    := topreg.offs;
-  varStkByte.adrByte0.bank    := topreg.bank;
-  //Estos campos no son, realmente, muy importantes.
-  varStkByte.adrByte0.assigned:= topreg.assigned;
-  varStkByte.adrByte0.used    := topreg.used;
-  varStkByte.adrByte0.typ     := topreg.typ;
-  //Ahora que tenemos ya la variable configurada, devolvemos la referecnia
-  Result := varStkByte;
-end;
 function TGenCodPic.GetVarBitFromStk: TxpEleVar;
 {Devuelve la referencia a una variable bit, que representa al último bit agregado en
 la pila. Se usa como un medio de trabajar con los datos de la pila.}
@@ -613,15 +466,48 @@ begin
   topreg := listRegStkBit[stackTopBit-1];  //toma referecnia de registro de la pila
   //Usamos la variable "varStkBit" que existe siempre, para devolver la referencia.
   //Primero la hacemos apuntar a la dirección física de la pila
-  varStkBit.adrBit.offs    := topreg.offs;
-  varStkBit.adrBit.bank    := topreg.bank;
-  varStkBit.adrBit.bit     := topreg.bit;
-  //Estos campos no son, realmente, muy importantes.
-  varStkBit.adrBit.assigned:= topreg.assigned;
-  varStkBit.adrBit.used    := topreg.used;
-  varStkBit.adrBit.typ     := topreg.typ;
+  varStkBit.adrBit.Assign(topreg);
   //Ahora que tenemos ya la variable configurada, devolvemos la referecnia
   Result := varStkBit;
+end;
+function TGenCodPic.GetVarByteFromStk: TxpEleVar;
+{Devuelve la referencia a una variable byte, que representa al último byte agregado en
+la pila. Se usa como un medio de trabajar con los datos de la pila.}
+var
+  topreg: TPicRegister;
+begin
+  topreg := listRegStk[stackTop-1];  //toma referecnia de registro de la pila
+  //Usamos la variable "varStkByte" que existe siempre, para devolver la referencia.
+  //Primero la hacemos apuntar a la dirección física de la pila
+  varStkByte.adrByte0.Assign(topReg);
+  //Ahora que tenemos ya la variable configurada, devolvemos la referecnia
+  Result := varStkByte;
+end;
+function TGenCodPic.GetVarWordFromStk: TxpEleVar;
+{Devuelve la referencia a una variable word, que representa al último word agregado en
+la pila. Se usa como un medio de trabajar con los datos de la pila.}
+var
+  topreg: TPicRegister;
+begin
+  //Usamos la variable "varStkWord" que existe siempre, para devolver la referencia.
+  //Primero la hacemos apuntar a la dirección física de la pila
+  topreg := listRegStk[stackTop-1];  //toma referecnia de registro de la pila
+  varStkWord.adrByte1.Assign(topreg);
+  topreg := listRegStk[stackTop-2];  //toma referecnia de registro de la pila
+  varStkWord.adrByte0.Assign(topreg);
+  //Ahora que tenemos ya la variable configurada, devolvemos la referecnia
+  Result := varStkWord;
+end;
+function TGenCodPic.FreeStkRegisterBit: boolean;
+{Libera el último bit, que se pidió a la RAM. Devuelve en "reg", la dirección del último
+ byte pedido. Si hubo error, devuelve FALSE.
+ Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
+begin
+   if stackTopBit=0 then begin  //Ya está abajo
+     GenError('Stack Overflow');
+     exit(false);
+   end;
+   dec(stackTopBit);   //Baja puntero
 end;
 function TGenCodPic.FreeStkRegisterByte(var reg: TPicRegister): boolean;
 {Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
@@ -638,20 +524,13 @@ begin
    {Notar que, aunque se devuelve la referencia, el registro está libre, para otra
    operación con GetStkRegisterByte(). Tenerlo en cuenta. }
 end;
-function TGenCodPic.FreeStkRegisterBit(var reg: TPicRegisterBit): boolean;
-{Libera el último bit, que se pidió a la RAM. Devuelve en "reg", la dirección del último
- byte pedido. Si hubo error, devuelve FALSE.
- Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
+function TGenCodPic.FreeStkRegisterWord: boolean;
 begin
-   if stackTopBit=0 then begin  //Ya está abajo
+   if stackTop<=1 then begin  //Ya está abajo
      GenError('Stack Overflow');
      exit(false);
    end;
-   dec(stackTopBit);   //Baja puntero
-   reg := listRegStkBit[stackTopBit];  //devuelve referencia
-   reg.used := false;   //marca como no usado
-   {Notar que, aunque se devuelve la referencia, el registro está libre, para otra
-   operación con GetStkRegisterByte(). Tenerlo en cuenta. }
+   dec(stackTop, 2);   //Baja puntero
 end;
 ////Rutinas de gestión de memoria para variables
 procedure TGenCodPic.AssignRAMinBit(absAdd, absBit: integer;
@@ -734,9 +613,11 @@ siempre antes de evaluar cada subexpresión, así que es una especie de evento
 begin
   res.typ := typ;
   res.catOp := CatOp;
-  LastCatOp := CatOp;  {Guarda la categoría, para que la siguiente instrucción sepa
-                       cuál fue la categoría de la última expresión}
   InvertedFromC:=false;   //para limpiar el estado
+  if CatOp = coExpres then begin
+    //Actualiza el estado de los registros de trabajo
+    RTstate := typ;
+  end;
 end;
 procedure TGenCodPic.SetResultConst_bool(valBool: boolean);
 begin
@@ -786,92 +667,112 @@ begin
   SetResult(typChar, coVariab);
   res.rVar := rVar;
 end;
-procedure TGenCodPic.SetResultExpres_bit(Inverted: boolean);
+procedure TGenCodPic.SetResultExpres_bit(opType: TOperType; Inverted: boolean);
 {Define el resultado como una expresión de tipo Bit, y se asegura de reservar el registro
 Z, para devolver la salida. Debe llamarse cuando se tienen los operandos de
-la oepración en p1^y p2^, porque toma infiormación de allí.}
+la oepración en p1^ y p2^, porque toma infiormación de allí.}
 begin
-  SetResult(typBit, coExpres);
-  res.Inverted := Inverted;
-  //Verifica si el registro Z, está ocupado
-  if OperandsUseZ then begin
-    //Se está usando Z, como resultado de una expresión en p1 o p2
-    //No es necesario solicitar el registro
+  //Se van a usar los RT. Verificar si los RT están ocupadoa
+  if OperandsUseRT(opType) then begin
+    //Alguno de los operandos de la operación actual, está usando algún RT
   end else begin
-    //No se está usando Z, al menos en alguno de los operandos
-    //Hay que pedir el registro formalmente
-    RequireResult_Z;  //Vamos a devolver en Z
+    {Los RT no están siendo usados, por la operación actual.
+     Pero pueden estar ocupados por la operación anterior (Ver doc. técnica).}
+    if RTstate<>nil then begin
+      //Si se usan RT en la operación anterior. Hay que salvar en pila
+      RTstate.SaveToStk;  //Se guardan por tipo
+    end else begin
+      //No se usan. Están libres
+    end;
   end;
+  //Fija el resultado
+  SetResult(typBit, coExpres);  //actualiza "RTstate"
+  res.Inverted := Inverted;
 end;
-procedure TGenCodPic.SetResultExpres_bool(Inverted: boolean);
+procedure TGenCodPic.SetResultExpres_bool(opType: TOperType; Inverted: boolean);
 {Define el resultado como una expresión de tipo Boolean, y se asegura de reservar el
 registro Z, para devolver la salida. Debe llamarse cuando se tienen los operandos de
 la oepración en p1^y p2^, porque toma infiormación de allí.}
 begin
-  SetResult(typBool, coExpres);
-  res.Inverted := Inverted;
-  //Verifica si el registro Z, está ocupado
-  if OperandsUseZ then begin
-    //Se está usando Z, como resultado de una expresión en p1 o p2
-    //No es necesario solicitar el registro
+  //Se van a usar los RT. Verificar si los RT están ocupadoa
+  if OperandsUseRT(opType) then begin
+    //Alguno de los operandos de la operación actual, está usando algún RT
   end else begin
-    //No se está usando Z, al menos en alguno de los operandos
-    //Hay que pedir el registro formalmente
-    RequireResult_Z;  //Vamos a devolver en Z
+    {Los RT no están siendo usados, por la operación actual.
+     Pero pueden estar ocupados por la operación anterior (Ver doc. técnica).}
+    if RTstate<>nil then begin
+      //Si se usan RT en la operación anterior. Hay que salvar en pila
+      RTstate.SaveToStk;  //Se guardan por tipo
+    end else begin
+      //No se usan. Están libres
+    end;
   end;
+  //Fija el resultado
+  SetResult(typBool, coExpres);  //actualiza "RTstate"
+  res.Inverted := Inverted;
 end;
-procedure TGenCodPic.SetResultExpres_byte;
+procedure TGenCodPic.SetResultExpres_byte(opType: TOperType);
 {Define el resultado como una expresión de tipo Byte, y se asegura de reservar el
 registro W, para devolver la salida. Debe llamarse cuando se tienen los operandos de
 la oepración en p1^y p2^, porque toma información de allí.}
 begin
-  SetResult(typByte, coExpres);
-  //Verifica si el registro W, está ocupado
-  if OperandsUseW then begin
-    //Se está usando W, como resultado de una expresión en p1 o p2
-    //No es necesario solicitar el registro
+  //Se van a usar los RT. Verificar si los RT están ocupadoa
+  if OperandsUseRT(opType) then begin
+    //Alguno de los operandos de la operación actual, está usando algún RT
   end else begin
-    //No se está usando W, al menos en alguno de los operandos
-    //Hay que pedir el registro formalmente
-    RequireResult_W;  //Vamos a devolver en W
+    {Los RT no están siendo usados, por la operación actual.
+     Pero pueden estar ocupados por la operación anterior (Ver doc. técnica).}
+    if RTstate<>nil then begin
+      //Si se usan RT en la operación anterior. Hay que salvar en pila
+      RTstate.SaveToStk;  //Se guardan por tipo
+    end else begin
+      //No se usan. Están libres
+    end;
   end;
+  //Fija el resultado
+  SetResult(typByte, coExpres);  //actualiza "RTstate"
 end;
-procedure TGenCodPic.SetResultExpres_char;
+procedure TGenCodPic.SetResultExpres_char(opType: TOperType);
 {Define el resultado como una expresión de tipo Char, y se asegura de reservar el
 registro W, para devolver la salida. Debe llamarse cuando se tienen los operandos de
 la oepración en p1^y p2^, porque toma infiormación de allí.}
 begin
-  SetResult(typChar, coExpres);
-  //Verifica si el registro W, está ocupado
-  if OperandsUseW then begin
-    //Se está usando W, como resultado de una expresión en p1 o p2
-    //No es necesario solicitar el registro
+  //Se van a usar los RT. Verificar si los RT están ocupadoa
+  if OperandsUseRT(opType) then begin
+    //Alguno de los operandos de la operación actual, está usando algún RT
   end else begin
-    //No se está usando W, al menos en alguno de los operandos
-    //Hay que pedir el registro formalmente
-    RequireResult_W;  //Vamos a devolver en W
+    {Los RT no están siendo usados, por la operación actual.
+     Pero pueden estar ocupados por la operación anterior (Ver doc. técnica).}
+    if RTstate<>nil then begin
+      //Si se usan RT en la operación anterior. Hay que salvar en pila
+      RTstate.SaveToStk;  //Se guardan por tipo
+    end else begin
+      //No se usan. Están libres
+    end;
   end;
+  //Fija el resultado
+  SetResult(typChar, coExpres);  //actualiza "RTstate"
 end;
-procedure TGenCodPic.SetResultExpres_word;
+procedure TGenCodPic.SetResultExpres_word(opType: TOperType);
 {Define el resultado como una expresión de tipo Word, y se asegura de reservar los
 registros H,W, para devolver la salida.}
 begin
-  SetResult(typWord, coExpres);
-  //Verifica si el registro W, está ocupado
-  if OperandsUseHW then begin
-    //Se está usando H,W, como resultado de una expresión en p1 o p2
-    //No es necesario solicitar el registro
+  //Se van a usar los RT. Verificar si los RT están ocupadoa
+  if OperandsUseRT(opType) then begin
+    //Alguno de los operandos de la operación actual, está usando algún RT
+    typWord.DefineRegister;   //Se asegura que exista H
   end else begin
-    //No se está usando (H,W), al menos en alguno de los operandos
-    //Puede que se esté usando solo W.
-    if OperandsUseW then begin
-      //Hay una expresión que usa W en alguno de los operandos
-      RequireH;  //solo solicitamos H
+    {Los RT no están siendo usados, por la operación actual.
+     Pero pueden estar ocupados por la operación anterior (Ver doc. técnica).}
+    if RTstate<>nil then begin
+      //Si se usan RT en la operación anterior. Hay que salvar en pila
+      RTstate.SaveToStk;  //Se guardan por tipo
     end else begin
-      //Hay que pedir el registro formalmente
-      RequireResult_HW;  //Vamos a devolver en H,W
+      //No se usan. Están libres
     end;
   end;
+  //Fija el resultado
+  SetResult(typWord, coExpres);
 end;
 //Rutinas generales para la codificación
 procedure TGenCodPic.CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
@@ -1197,8 +1098,10 @@ begin
   //Crea variables de trabajo
   varStkBit := TxpEleVar.Create;
   varStkBit.typ := typBit;
-  varStkByte:= TxpEleVar.Create;
+  varStkByte := TxpEleVar.Create;
   varStkByte.typ := typByte;
+  varStkWord := TxpEleVar.Create;
+  varStkWord.typ := typWord;
   //Inicializa contenedores
   listRegAux := TPicRegister_list.Create(true);
   listRegStk := TPicRegister_list.Create(true);
@@ -1234,6 +1137,7 @@ begin
   listRegAux.Destroy;
   varStkBit.Destroy;
   varStkByte.Destroy;
+  varStkWord.Destroy;
   pic.Destroy;
   inherited Destroy;
 end;

@@ -49,15 +49,18 @@ unit GenCod;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, SynEditHighlighter, Graphics, LCLType, SynFacilBasic,
-  XpresTypes, XPresParserPIC, XpresElementsPIC, GenCodPic, Pic16Utils, MisUtils;
+  Classes, SysUtils, SynEditHighlighter, Graphics, LCLType, LCLProc,
+  SynFacilBasic, XpresTypesPIC, XPresParserPIC, XpresElementsPIC, GenCodPic,
+  Pic16Utils, MisUtils;
 type
     { TGenCod }
     TGenCod = class(TGenCodPic)
     protected
       procedure callFunct(fun: TxpEleFun);
     private  //Operaciones con Bit
-      procedure bit_DefineRegisters(const OpPtr: pointer);
+      procedure bit_LoadToReg(const OpPtr: pointer);
+      procedure bit_DefineRegisters;
+      procedure bit_SaveToStk;
       procedure Oper_bit_asig_bit;
       procedure Oper_bit_asig_byte;
       procedure Oper_bit_and_bit;
@@ -72,7 +75,6 @@ type
       procedure Oper_bit_dif_byte;
       procedure Oper_not_bit;
     private  //Operaciones con boolean
-      procedure bool_DefineRegisters(const OpPtr: pointer);
       procedure Oper_bool_asig_bool;
       procedure Oper_not_bool;
       procedure Oper_bool_and_bool;
@@ -81,8 +83,9 @@ type
       procedure Oper_bool_equ_bool;
       procedure Oper_bool_dif_bool;
     private  //Operaciones con byte
-      procedure byte_OnPush(const OpPtr: pointer);
-      procedure byte_DefineRegisters(const OpPtr: pointer);
+      procedure byte_LoadToReg(const OpPtr: pointer);
+      procedure byte_DefineRegisters;
+      procedure byte_SaveToStk;
       procedure byte_oper_byte(const InstLW, InstWF: TPIC16Inst);
       procedure Oper_byte_asig_byte;
       procedure Oper_byte_sub_byte;
@@ -105,15 +108,16 @@ type
       procedure Oper_byte_shr_byte;
       procedure Oper_byte_shl_byte;
     private  //Operaciones con Word
-      procedure word_OnPush(const OpPtr: pointer);
-      procedure word_DefineRegisters(const OpPtr: pointer);
+      procedure word_LoadToReg(const OpPtr: pointer);
+      procedure word_DefineRegisters;
+      procedure word_SaveToStk;
       procedure Oper_word_asig_word;
       procedure Oper_word_asig_byte;
+      procedure Oper_word_equal_word;
+      procedure Oper_word_difer_word;
       procedure Oper_word_add_word;
       procedure Oper_word_add_byte;
     private  //Operaciones con Char
-      procedure char_OnPush(const OpPtr: pointer);
-      procedure char_DefineRegisters(const OpPtr: pointer);
       procedure Oper_char_asig_char;
       procedure Oper_char_equal_char;
       procedure Oper_char_difer_char;
@@ -191,15 +195,14 @@ begin
   //Code('END');   //inicia la sección de código
 end;
 procedure TGenCod.expr_start;
-//Se ejecuta siempre al StartSyntax el procesamiento de una expresión
+//Se ejecuta siempre al iniciar el procesamiento de una expresión.
 begin
   //Inicia banderas de estado para empezar a calcular una expresión
-  LastCatOp := coConst;     //Al iniciar, asume ocnstante (no es exacto, pero sirve).
-  W.used := false;          //su ciclo de vida es de instrucción
-  Z.used := false;          //su ciclo de vida es de instrucción
+  W.used := false;        //Su ciclo de vida es de instrucción
+  Z.used := false;        //Su ciclo de vida es de instrucción
   if H<>nil then
-    H.used := false;        //su ciclo de vida es de instrucción
-  res.typ := typByte;   //le pone un tipo por defecto
+    H.used := false;      //Su ciclo de vida es de instrucción
+  RTstate := nil;         //Inicia con los RT libres.
 end;
 procedure TGenCod.expr_end(posExpres: TPosExpres);
 //Se ejecuta al final de una expresión, si es que no ha habido error.
@@ -216,13 +219,67 @@ begin
   end;
 end;
 ////////////operaciones con Bit
-procedure TGenCod.bit_DefineRegisters(const OpPtr: pointer);
+procedure TGenCod.bit_LoadToReg(const OpPtr: pointer);
+{Carga operando a registros Z.}
+var
+  Op: ^TOperand;
+begin
+  Op := OpPtr;
+  case Op^.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    if Op^.valBool then
+      _BSF(Z.offs, Z.bit)
+    else
+      _BCF(Z.offs, Z.bit);
+  end;
+  coVariab: begin
+    //La lógica en Z, dene ser normal, proque no hay forma de leerla.
+    //Como Z, está en todos los bancos, no hay mucho problema.
+    if Op^.Inverted then begin
+      //No se usa el registro W
+      _BANKSEL(Op^.bank);
+      _BCF(Z.offs, Z.bit);
+      _BTFSS(Op^.offs, Op^.bit);
+      _BSF(Z.offs, Z.bit);
+    end else begin
+      //No se usa el registro W
+      _BANKSEL(Op^.bank);
+      _BCF(Z.offs, Z.bit);
+      _BTFSC(Op^.offs, Op^.bit);
+      _BSF(Z.offs, Z.bit);
+    end;
+  end;
+  coExpres: begin  //ya está en w
+    if Op^.Inverted then begin
+      //Aquí hay un problema, porque hay que corregir la lógica
+      _MOVLW($1 << Z.bit);
+      _ANDWF(Z.offs, toW);  //invierte Z
+    end else begin
+      //No hay mada que hacer
+    end;
+  end;
+  end;
+end;
+procedure TGenCod.bit_DefineRegisters;
 begin
   //No es encesario, definir registros adicionales a W
 end;
+procedure TGenCod.bit_SaveToStk;
+{Guarda el valor bit, cargado actualmente en Z, a pila.}
+var
+  stk: TPicRegisterBit;
+begin
+  stk := GetStkRegisterBit;  //pide memoria
+  if stk= nil then exit;   //error
+  //Guarda Z
+  _BANKSEL(stk.bank);
+  _BCF(stk.offs, stk.bit); PutComm(';save Z');
+  _BTFSC(Z.offs, Z.bit); PutComm(';save Z');
+  _BSF(stk.offs, stk.bit); PutComm(';save Z');
+  stk.used := true;
+end;
 procedure TGenCod.Oper_bit_asig_bit;
 var
-  OLD_W: TPicRegister;
   dg: integer;
 begin
   if p1^.catOp <> coVariab then begin  //validación
@@ -230,7 +287,7 @@ begin
   end;
   case p2^.catOp of
   coConst : begin
-    SetResultExpres_bit(false);  //Realmente, el resultado no es importante
+    SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     {Actualmente no existen constantes de tipo "Bit", ya que el número menor que se
     reconoce es de typo byte. Por eso se define Oper_bit_asig_byte(). }
     if p2^.valBool then begin
@@ -242,16 +299,14 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_bit(false);  //Realmente, el resultado no es importante
+    SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     if p1^.rVar = p2^.rVar then begin
       //Es asignación de la misma variable.
       if p2^.Inverted then begin  //Es a := not a
-        SaveW(OLD_W); if HayError then exit;  //Va a usar W
           //verifica error.
         _MOVLW(p1^.rVar.BitMask);  //carga máscara
         _BANKSEL(p1^.bank);
         _XORWF(p1^.offs, toF);
-        RestoreW(OLD_W); //Restaura W, si estaba ocupado
       end else begin  //Es a := a
         PutTopComm('No code, by optimizing.');
       end;
@@ -299,7 +354,7 @@ begin
     end;
   end;
   coExpres: begin  //ya está en STATUS.Z
-    SetResultExpres_bit(false);  //Realmente, el resultado no es importante
+    SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     if p2^.Inverted then begin  //está invertido
       //No se usa el registro W
       _BANKSEL(p1^.bank);
@@ -325,7 +380,7 @@ begin
   end;
   case p2^.catOp of
   coConst : begin
-    SetResultExpres_bit(false);  //Realmente, el resultado no es importante
+    SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     {Esta es la única opción válida, pero solo para los valores 0 y 1}
     if p2^.valInt = 0 then begin
       //No se usa el registro W
@@ -348,9 +403,6 @@ begin
   end;
 end;
 procedure TGenCod.Oper_bit_and_bit;
-var
-  reg: TPicRegister;
-  r: TPicRegisterBit;
 begin
     case catOperation of
     coConst_Const: begin  //AND de dos constantes. Caso especial
@@ -372,7 +424,7 @@ begin
       if p1^.valBool then begin  //p1 = 1
         //No usa ningún registro
         //Optimiza devolviendo la misma expresión en Z
-        SetResultExpres_bit(p2^.Inverted);  //mantiene la lógica
+        SetResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
       end else begin   //p1 = 0
         //No usa ningún registro
         //Optimiza devolviendo constante = 0
@@ -410,8 +462,7 @@ begin
           Oper_bit_and_bit;  //procesa como OR
           exit;
         end else if p2^.Inverted then begin
-          SetResultExpres_bit(false);  //Fija resultado
-          SaveW(reg); if HayError then exit;  //Va a usar W
+          SetResultExpres_bit(operType, false);  //Fija resultado
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -420,10 +471,8 @@ begin
           _BANKSEL(p1^.bank);
           _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
           _BCF(Z.offs, Z.bit);     //Si es 0, devuelve cero
-          RestoreW(reg);
         end else begin  //Caso normal
-          SetResultExpres_bit(true);  //Fija resultado, con lógica invertida
-          SaveW(reg); if HayError then exit;  //Va a usar W
+          SetResultExpres_bit(operType, true);  //Fija resultado, con lógica invertida
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -432,7 +481,6 @@ begin
           _BANKSEL(p1^.bank);
           _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual (pero sigue con lógica invertida)
           _BSF(Z.offs, Z.bit);       //Si es 0, devuelve cero (1 porque debe quedar con lógica invertida)
-          RestoreW(reg);
         end;
       end;
     end;
@@ -444,19 +492,19 @@ begin
         Oper_bit_or_bit;  //procesa como OR
         exit;
       end else if p1^.Inverted then begin  //lógica invertida en p1
-        SetResultExpres_bit(false); //Fija resultado
+        SetResultExpres_bit(operType, false); //Fija resultado
         //Aplica un AND entre p1' y Z.
         _BANKSEL(p1^.bank);
         _BTFSC(p1^.offs, p1^.bit); //Si es 0, deja tal cual
         _BCF(Z.offs, Z.bit);      //Si es 1, devuelve cero
       end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetResultExpres_bit(true); //Deja la lógica invertida por optimización
+        SetResultExpres_bit(operType, true); //Deja la lógica invertida por optimización
         //Aplica un AND entre p1 y Z'.
         _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual
         _BSF(Z.offs, Z.bit);       //Si es 0, devuelve cero (1, porque es lógica es invertida)
       end else begin  //lógica normal
-        SetResultExpres_bit(false); //Fija resultado
+        SetResultExpres_bit(operType, false); //Fija resultado
         //Aplica un AND entre p1 y Z.
         _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual
@@ -480,7 +528,7 @@ begin
       catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
       //Luego el caso es similar a variable-expresión
       Oper_bit_and_bit;
-      FreeStkRegisterBit(r);   //Libera pila. Ya se usó el dato.
+      FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
     end;
     else
       GenError('Not implemented.'); exit;
@@ -505,9 +553,6 @@ begin
   end;
 end;
 procedure TGenCod.Oper_bit_or_bit;
-var
-  reg: TPicRegister;
-  r: TPicRegisterBit;
 begin
     case catOperation of
     coConst_Const: begin  //AND de dos constantes. Caso especial
@@ -534,7 +579,7 @@ begin
       end else begin   //p1 = 0
         //No usa ningún registro
         //Optimiza devolviendo la misma expresión en Z
-        SetResultExpres_bit(p2^.Inverted);  //mantiene la lógica
+        SetResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
       end;
     end;
     coVariab_Const: begin
@@ -567,8 +612,7 @@ begin
           Oper_bit_or_bit;  //procesa como OR
           exit;
         end else if p2^.Inverted then begin
-          SetResultExpres_bit(false);  //Fija resultado
-          SaveW(reg); if HayError then exit;  //Va a usar W
+          SetResultExpres_bit(operType, false);  //Fija resultado
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -577,10 +621,8 @@ begin
           _BANKSEL(p1^.bank);
           _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
           _BSF(Z.offs, Z.bit);     //Si es 1, devuelve uno
-          RestoreW(reg);
         end else begin  //Caso normal
-          SetResultExpres_bit(true);  //Fija resultado, con lógica invertida
-          SaveW(reg); if HayError then exit;  //Va a usar W
+          SetResultExpres_bit(operType, true);  //Fija resultado, con lógica invertida
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -589,7 +631,6 @@ begin
           _BANKSEL(p1^.bank);
           _BTFSC(p1^.offs, p1^.bit); //Si es 0, deja tal cual (pero sigue con lógica invertida)
           _BCF(Z.offs, Z.bit);       //Si es 1, devuelve 1 (0 porque debe quedar con lógica invertida)
-          RestoreW(reg);
         end;
       end;
     end;
@@ -601,19 +642,19 @@ begin
         Oper_bit_and_bit;  //procesa como OR
         exit;
       end else if p1^.Inverted then begin  //lógica invertida
-        SetResultExpres_bit(false);  //Fija resultado
+        SetResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un OR entre p1' y Z.
         _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
         _BSF(Z.offs, Z.bit);     //Si es 0, devuelve uno
       end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetResultExpres_bit(true); //Deja la lógica invertida por optimización
+        SetResultExpres_bit(operType, true); //Deja la lógica invertida por optimización
         //Aplica un OR entre p1 y Z.
         _BANKSEL(p1^.bank);
         _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
         _BCF(Z.offs, Z.bit);     //Si es 1, devuelve uno (0 porque es lógica invertida)
       end else begin   //lógica normal
-        SetResultExpres_bit(false);  //Fija resultado
+        SetResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un OR entre p1 y Z.
         _BANKSEL(p1^.bank);
         _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
@@ -637,7 +678,7 @@ begin
       catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
       //Luego el caso es similar a variable-expresión
       Oper_bit_or_bit;
-      FreeStkRegisterBit(r);   //Libera pila. Ya se usó el dato.
+      FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
     end;
     else
       GenError('Not implemented.'); exit;
@@ -662,9 +703,6 @@ begin
   end;
 end;
 procedure TGenCod.Oper_bit_xor_bit;
-var
-  reg: TPicRegister;
-  r: TPicRegisterBit;
 begin
     case catOperation of
     coConst_Const: begin  //XOR de dos constantes. Caso especial
@@ -683,10 +721,10 @@ begin
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
       if p1^.valBool then begin  //p1 = 1
         //Optimiza devolviendo la expresión invertida
-        SetResultExpres_bit(not p2^.Inverted);  //mantiene la lógica
+        SetResultExpres_bit(operType, not p2^.Inverted);  //mantiene la lógica
       end else begin   //p1 = 0
         //Optimiza devolviendo la misma expresión en Z
-        SetResultExpres_bit(p2^.Inverted);  //mantiene la lógica
+        SetResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
       end;
     end;
     coVariab_Const: begin
@@ -722,48 +760,39 @@ begin
           de bits.}
           if p1^.bit = p2^.bit then begin
             //Están en el mismo bit, se puede optimizar
-            SetResultExpres_bit(true);  //Fija resultado
-            SaveW(reg); if HayError then exit;  //Va a usar W
+            SetResultExpres_bit(operType, true);  //Fija resultado
             _BANKSEL(p2^.bank);
             _MOVF(p2^.offs, toW);  //mueve a W
             _BANKSEL(p1^.bank);
             _XORWF(p1^.offs, toW);      //APlica XOR,
             _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
-            RestoreW(reg);
           end else if p1^.bit = p2^.bit +1 then begin
             //p1 está a un bit a la izquierda, se puede optimizar
-            SetResultExpres_bit(true);  //Fija resultado
-            SaveW(reg); if HayError then exit;  //Va a usar W
+            SetResultExpres_bit(operType, true);  //Fija resultado
             _BANKSEL(p2^.bank);
             _RLF(p2^.offs, toW);  //alinea y mueve a W
             _BANKSEL(p1^.bank);
             _XORWF(p1^.offs, toW);      //APlica XOR,
             _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
-            RestoreW(reg);
           end else if p1^.bit = p2^.bit-1 then begin
             //p1 está a un bit a la derecha, se puede optimizar
-            SetResultExpres_bit(true);  //Fija resultado
-            SaveW(reg); if HayError then exit;  //Va a usar W
+            SetResultExpres_bit(operType, true);  //Fija resultado
             _BANKSEL(p2^.bank);
             _RRF(p2^.offs, toW);  //alinea y mueve a W
             _BANKSEL(p1^.bank);
             _XORWF(p1^.offs, toW);      //APlica XOR,
             _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
-            RestoreW(reg);
           end else if abs(p1^.bit - p2^.bit) = 4 then begin
             //p1 está a un nibble de distancia, se puede optimizar
-            SetResultExpres_bit(true);  //Fija resultado
-            SaveW(reg); if HayError then exit;  //Va a usar W
+            SetResultExpres_bit(operType, true);  //Fija resultado
             _BANKSEL(p2^.bank);
             _SWAPF(p2^.offs, toW);  //alinea y mueve a W
             _BANKSEL(p1^.bank);
             _XORWF(p1^.offs, toW);      //APlica XOR,
             _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
-            RestoreW(reg);
           end else begin
             //La forma larga
-            SetResultExpres_bit(false);  //Fija resultado,
-            SaveW(reg); if HayError then exit;  //Va a usar W
+            SetResultExpres_bit(operType, false);  //Fija resultado,
             //Mueve p2 a Z
             _BANKSEL(p2^.bank);
             _MOVLW(p2^.rVar.BitMask);
@@ -773,7 +802,6 @@ begin
             _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es que se necesita
             _BTFSS(p1^.offs, p1^.bit);  //Si es 1, invierte, pero ya esta invertido, así que lo deja
             _ANDWF(Z.offs, toW);  //Si es 0, deja tal cual, pero como está invertido, hay que corregir
-            RestoreW(reg);
           end;
         end;
       end;
@@ -785,21 +813,21 @@ begin
         Oper_bit_xor_bit;   //es lo mismo
         exit;
       end else if p1^.Inverted then begin  //lógica invertida
-        SetResultExpres_bit(false);  //Fija resultado
+        SetResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un XOR entre p1' y Z.
         _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1(0), deja tal cual
         _ANDWF(Z.offs, toW);     //Si es 0(1), invierte
       end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetResultExpres_bit(false);  //Fija resultado
+        SetResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un XOR entre p1 y Z'.
         _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1, invierte (deja igual porque ya está invertido)
         _ANDWF(Z.offs, toW);     //Si es 0, deja tal cual (realmente debe invertir)
       end else begin   //lógica normal
-        SetResultExpres_bit(false);  //Fija resultado
+        SetResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un XOR entre p1 y Z.
         _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
@@ -824,7 +852,7 @@ begin
       catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
       //Luego el caso es similar a coVariab_Expres
       Oper_bit_xor_bit;
-      FreeStkRegisterBit(r);   //Libera pila. Ya se usó el dato.
+      FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
     end;
     else
       GenError('Not implemented.'); exit;
@@ -888,17 +916,13 @@ begin
   end;
   coExpres: begin  //ya está en STATUS.Z
     //No cambiamos su valor, sino su significado.
-    SetResultExpres_bit(not p1^.Inverted);
+    SetResultExpres_bit(operType, not p1^.Inverted);
   end;
   else
     GenError('Not implemented.'); exit;
   end;
 end;
 ////////////operaciones con Boolean
-procedure TGenCod.bool_DefineRegisters(const OpPtr: pointer);
-begin
-  //No es encesario, definir registros adicionales a W
-end;
 procedure TGenCod.Oper_bool_asig_bool;
 begin
   Oper_bit_asig_bit;  //A bajo nivel es lo mismo
@@ -931,10 +955,9 @@ procedure TGenCod.Oper_bool_dif_bool;
 begin
   Oper_bit_dif_bit;
 end;
-
 ////////////operaciones con Byte
-procedure TGenCod.byte_OnPush(const OpPtr: pointer);
-{Pone un byte en la pila. Se usa para pasar parámetros a función.}
+procedure TGenCod.byte_LoadToReg(const OpPtr: pointer);
+{Carga operando a registros de trabajo.}
 var
   Op: ^TOperand;
 begin
@@ -951,9 +974,19 @@ begin
   end;
   end;
 end;
-procedure TGenCod.byte_DefineRegisters(const OpPtr: pointer);
+procedure TGenCod.byte_DefineRegisters;
 begin
   //No es encesario, definir registros adicionales a W
+end;
+procedure TGenCod.byte_SaveToStk;
+var
+  stk: TPicRegister;
+begin
+  stk := GetStkRegisterByte;  //pide memoria
+  //guarda W
+  _BANKSEL(stk.bank);
+  _MOVWF(stk.offs);PutComm(';save W');
+  stk.used := true;
 end;
 procedure TGenCod.Oper_byte_asig_byte;
 begin
@@ -962,7 +995,7 @@ begin
   end;
   case p2^.catOp of
   coConst : begin
-    SetResultExpres_byte;  //Realmente, el resultado no es importante
+    SetResultExpres_byte(operType);  //Realmente, el resultado no es importante
     if p2^.valInt=0 then begin
       //caso especial
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -974,14 +1007,14 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_byte;  //Realmente, el resultado no es importante
+    SetResultExpres_byte(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p2^.bank);  //verifica banco destino
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);
   end;
   coExpres: begin  //ya está en w
-    SetResultExpres_byte;  //Realmente, el resultado no es importante
+    SetResultExpres_byte(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);
   end;
@@ -993,68 +1026,51 @@ procedure TGenCod.byte_oper_byte(const InstLW, InstWF:TPIC16Inst);
 {Rutina general en operaciones con bytes}
 var
   r: TPicRegister;
-  reg: TPicRegisterBit;
 begin
   case catOperation of
   coConst_Variab: begin
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     CodAsmK(InstLW, p1^.valInt);  //deja en W
-    RestoreZ(reg);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     CodAsmK(InstLW, p1^.valInt);  //deja en W
-    RestoreZ(reg);
   end;
   coVariab_Const: begin
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _MOVLW(p2^.valInt);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-    RestoreZ(reg);
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-    RestoreZ(reg);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-    RestoreZ(reg);
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     CodAsmK(InstLW, p2^.valInt);  //deja en W
-    RestoreZ(reg);
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
-    RestoreZ(reg);
   end;
   coExpres_Expres:begin
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
     FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
     _BANKSEL(r.bank);
     CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
-    RestoreZ(reg);
   end;
   end;
 end;
@@ -1082,66 +1098,50 @@ begin
     exit;  //sale aquí, porque es un caso particular
   end;
   coConst_Variab: begin
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _SUBLW(p1^.valInt);   //K - W -> W
-    RestoreZ(reg);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _SUBLW(p1^.valInt);   //K - W -> W
-    RestoreZ(reg);
   end;
   coVariab_Const: begin
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _MOVLW(p2^.valInt);
     _BANKSEL(p1^.bank);
     _SUBWF(p1^.offs, toW);  //F - W -> W
-    RestoreZ(reg);
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);
     _SUBWF(p1^.offs, toW);  //F - W -> W
-    RestoreZ(reg);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _SUBWF(p1^.offs, toW);  //F - W -> W
-    RestoreZ(reg);
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _SUBLW(p2^.valInt);  //K - W -> W
     _SUBLW(0);  //K - W -> W   //invierte W
-    RestoreZ(reg);
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _SUBWF(p2^.offs, toW);  //F - W -> W
     _SUBLW(0);  //K - W -> W   //invierte W
-    RestoreZ(reg);
   end;
   coExpres_Expres:begin
-    SetResultExpres_byte;
-    SaveZ(reg);  //va a alterar Z
+    SetResultExpres_byte(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
     FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
     _BANKSEL(r.bank);
     _SUBWF(r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
-    RestoreZ(reg);
   end;
   else  //caso general
     byte_oper_byte(SUBLW, SUBWF);
@@ -1188,61 +1188,54 @@ begin
 end;
 procedure TGenCod.Oper_byte_equal_byte;
 var
-  r, OLD_W: TPicRegister;
+  r: TPicRegister;
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
     SetResultConst_bool(p1^.valInt = p2^.valInt);
   end;
   coConst_Variab: begin
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
-    SaveW(OLD_W); if HayError then exit;  //Va a usar W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _MOVLW(p1^.valInt);
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.offs, toW);  //si iguales _Z=1
-    RestoreW(OLD_W);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _SUBLW(p1^.valInt);  //si iguales _Z=1
   end;
   coVariab_Const: begin
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
-    SaveW(OLD_W); if HayError then exit;  //Va a usar W
-    if HayError then exit;   //verifica error.
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _MOVLW(p2^.valInt);
     _BANKSEL(p1^.bank);  //verifica banco destino
     _SUBWF(p1^.offs, toW);  //si iguales _Z=1
-    RestoreW(OLD_W);
   end;
   coVariab_Variab:begin
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
-    SaveW(OLD_W); if HayError then exit;  //Va a usar W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVF(p1^.offs, toW);
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.offs, toW);  //si iguales _Z=1
-    RestoreW(OLD_W);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //ReserveW; if HayError then exit;
     _BANKSEL(p1^.bank);  //verifica banco destino
     _SUBWF(p1^.offs, toW);  //si iguales _Z=1
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //ReserveW; if HayError then exit;
     _SUBLW(p2^.valInt);  //si iguales _Z=1
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //ReserveW; if HayError then exit;
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.offs, toW);  //si iguales _Z=1
   end;
   coExpres_Expres:begin
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //la expresión p1 debe estar salvada y p2 en el acumulador
     FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
     _BANKSEL(r.bank);  //verifica banco destino
@@ -1271,7 +1264,7 @@ procedure TGenCod.Oper_byte_great_byte;
     InvertedFromC := true;  //Indica que se ha hecho Z = 'C.
   end;
 var
-  OLD_W, r, tmp: TPicRegister;
+  r, tmp: TPicRegister;
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
@@ -1283,7 +1276,7 @@ begin
       SetResultConst_bool(false);
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
     end else begin
-      SetResultExpres_bool(false);   //Se pide Z para el resultado
+      SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
       _MOVLW(p1^.valInt);
       _BANKSEL(p2^.bank);  //verifica banco destino
       _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
@@ -1298,7 +1291,7 @@ begin
     end else begin
       //Optimiza rutina, usando: A>B  equiv. NOT (B<=A-1)
       //Se necesita asegurar que p1, es mayo que cero.
-      SetResultExpres_bool(true);  //invierte la lógica
+      SetResultExpres_bool(operType, true);  //invierte la lógica
       //p2, ya está en W
       _SUBLW(p1^.valInt-1);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
@@ -1310,7 +1303,7 @@ begin
       SetResultConst_bool(false);
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
     end else begin
-      SetResultExpres_bool(false);   //Se pide Z para el resultado
+      SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.offs, toW);
       _SUBLW(p2^.valInt);  //Si p1 > p2: C=0.
@@ -1318,17 +1311,15 @@ begin
     end;
   end;
   coVariab_Variab:begin
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
-    SaveW(OLD_W); if HayError then exit;  //Va a usar W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVF(p1^.offs, toW);
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
-    RestoreW(OLD_W);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     tmp := GetAuxRegisterByte;  //Se pide registro auxiliar
     _MOVWF(tmp.offs);    //guarda resultado de expresión
     //Ahora es como coVariab_Variab
@@ -1345,14 +1336,14 @@ begin
       SetResultConst_bool(false);
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
     end else begin
-      SetResultExpres_bool(false);   //Se pide Z para el resultado
+      SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
   //    p1, ya está en W
       _SUBLW(p2^.valInt);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     end;
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_bool(false);   //Se pide Z para el resultado
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
@@ -1441,7 +1432,7 @@ begin
 //  coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
 //  end;
   coVariab_Const: begin
-    SetResultExpres_byte;   //Se pide Z para el resultado
+    SetResultExpres_byte(operType);   //Se pide Z para el resultado
     //Verifica casos simples
     if p2^.valInt = 0 then begin
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1504,7 +1495,7 @@ begin
     end;
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte;   //Se pide Z para el resultado
+    SetResultExpres_byte(operType);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;
     //copia p1 a "aux"
     _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1543,7 +1534,7 @@ begin
 //  coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
 //  end;
   coVariab_Const: begin
-    SetResultExpres_byte;   //Se pide Z para el resultado
+    SetResultExpres_byte(operType);   //Se pide Z para el resultado
     //Verifica casos simples
     if p2^.valInt = 0 then begin
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1606,7 +1597,7 @@ begin
     end;
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte;   //Se pide Z para el resultado
+    SetResultExpres_byte(operType);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;
     //copia p1 a "aux"
     _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1633,23 +1624,20 @@ begin
   end;
 end;
 //////////// Operaciones con Word
-procedure TGenCod.word_OnPush(const OpPtr: pointer);
-{Carga el valor de una expresión a los registros de trabajo. Notar que no tiene que ver
-con el nombre "OnPush". Solo se usa porque ya existe este evento predeclarado.}
+procedure TGenCod.word_LoadToReg(const OpPtr: pointer);
+{Carga el valor de una expresión a los registros de trabajo.}
 var
   Op: ^TOperand;
 begin
   Op := OpPtr;
   case Op^.catOp of  //el parámetro debe estar en "Op^"
   coConst : begin
-    RequireResult_HW;   //indica que va a usar H,W
     _MOVLW(Op^.HByte);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
     _MOVLW(Op^.LByte);
   end;
   coVariab: begin
-    RequireResult_HW;   //indica que va a usar H,W
     _BANKSEL(Op^.bank);
     _MOVF(Op^.offs, toW);
     _BANKSEL(H.bank);
@@ -1660,12 +1648,29 @@ begin
   end;
   end;
 end;
-procedure TGenCod.word_DefineRegisters(const OpPtr: pointer);
+procedure TGenCod.word_DefineRegisters;
 begin
-  //A parte de W, solo se requiere H
+  //Aparte de W, solo se requiere H
   if not H.assigned then begin
     AssignRAM(H, '_H');
   end;
+end;
+procedure TGenCod.word_SaveToStk;
+var
+  stk: TPicRegister;
+begin
+  //guarda W
+  stk := GetStkRegisterByte;  //pide memoria
+  _BANKSEL(stk.bank);
+  _MOVWF(stk.offs);PutComm(';save W');
+  stk.used := true;
+  //guarda H
+  stk := GetStkRegisterByte;   //pide memoria
+  _BANKSEL(H.bank);
+  _MOVF(H.offs, toW);PutComm(';save H');
+  _BANKSEL(stk.bank);
+  _MOVWF(stk.offs);
+  stk.used := true;   //marca
 end;
 procedure TGenCod.Oper_word_asig_word;
 begin
@@ -1674,7 +1679,7 @@ begin
   end;
   case p2^.catOp of
   coConst : begin
-    SetResultExpres_word;  //Realmente, el resultado no es importante
+    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);
     _MOVLW(p2^.LByte);
     _MOVWF(p1^.Loffs);
@@ -1682,14 +1687,14 @@ begin
     _MOVWF(p1^.Hoffs);
   end;
   coVariab: begin
-    SetResultExpres_word;  //Realmente, el resultado no es importante
+    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     _MOVF(p2^.Loffs, toW);
     _MOVWF(p1^.Loffs);
     _MOVF(p2^.Hoffs, toW);
     _MOVWF(p1^.Hoffs);
   end;
   coExpres: begin   //se asume que se tiene en (H,w)
-    SetResultExpres_word;  //Realmente, el resultado no es importante
+    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     _MOVWF(p1^.Loffs);
     _MOVF(H.offs, toW);
     _MOVWF(p1^.Hoffs);
@@ -1705,7 +1710,7 @@ begin
   end;
   case p2^.catOp of
   coConst : begin
-    SetResultExpres_word;  //Realmente, el resultado no es importante
+    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
       //caso especial
       _CLRF(p1^.Loffs);
@@ -1717,19 +1722,125 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_word;  //Realmente, el resultado no es importante
+    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     _CLRF(p1^.Hoffs);
     _MOVF(p2^.Loffs, toW);
     _MOVWF(p1^.Loffs);
   end;
   coExpres: begin   //se asume que está en w
-    SetResultExpres_word;  //Realmente, el resultado no es importante
+    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     _CLRF(p1^.Hoffs);
     _MOVWF(p1^.offs);
   end;
   else
     GenError('No soportado'); exit;
   end;
+end;
+procedure TGenCod.Oper_word_equal_word;
+var
+  r, tmp: TPicRegister;
+  sale: integer;
+begin
+  case catOperation of
+  coConst_Const: begin  //compara constantes. Caso especial
+    SetResultConst_bool(p1^.valInt = p2^.valInt);
+  end;
+  coConst_Variab: begin
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    //Compara byte alto
+    _MOVLW(p1^.HByte);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Hoffs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _MOVLW(p1^.LByte);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Loffs,toW);	//p2-p1
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+  end;
+  coConst_Expres: begin  //la expresión p2 se evaluó p2 esta en W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    tmp := GetAuxRegisterByte;
+    _BANKSEL(tmp.bank);
+    _MOVWF(tmp.offs);   //salva byte bajo de Expresión
+    //Compara byte alto
+    _MOVLW(p1^.HByte);
+    _BANKSEL(H.bank);  //verifica banco destino
+    _SUBWF(H.offs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _MOVLW(p1^.LByte);
+    _BANKSEL(tmp.bank);  //verifica banco destino
+    _SUBWF(tmp.offs,toW);	//p2-p1
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+  end;
+  coVariab_Const: begin
+    ExchangeP1_P2;  //Convierte a coConst_Variab
+    Oper_word_equal_word;
+  end;
+  coVariab_Variab:begin
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    //Compara byte alto
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Hoffs, toW);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Hoffs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Loffs, toW);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Loffs,toW);	//p2-p1
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+  end;
+  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    tmp := GetAuxRegisterByte;
+    _BANKSEL(tmp.bank);
+    _MOVWF(tmp.offs);   //salva byte bajo de Expresión
+    //Compara byte alto
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Hoffs, toW);
+    _BANKSEL(H.bank);  //verifica banco destino
+    _SUBWF(H.offs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Loffs, toW);
+    _BANKSEL(tmp.bank);  //verifica banco destino
+    _SUBWF(tmp.offs,toW);	//p2-p1
+    tmp.used := false;
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+  end;
+  coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    ExchangeP1_P2;  //Convierte a coConst_Expres;
+    Oper_word_equal_word;
+  end;
+  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+    ExchangeP1_P2;  //Convierte a coVariab_Expres;
+    Oper_word_equal_word;
+  end;
+  coExpres_Expres:begin
+    //La expresión p1, debe estar salvada y p2 en (H,W)
+    p1^.catOp := coVariab;
+    p1^.rVar  := GetVarWordFromStk;
+    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    //Luego el caso es similar a variable-expresión
+    Oper_word_equal_word;
+    FreeStkRegisterWord;
+  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+end;
+procedure TGenCod.Oper_word_difer_word;
+begin
+  Oper_word_equal_word;
+  res.Invert;
 end;
 procedure TGenCod.Oper_word_add_word;
 var
@@ -1750,7 +1861,7 @@ begin
     if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      SetResultExpres_word;
+      SetResultExpres_word(operType);
 {     aux := GetUnusedByteRegister;  //Pide un registro libre
       _movlw(p1^.LByte);      //Carga menos peso del dato 1
       _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
@@ -1764,7 +1875,6 @@ begin
       aux.Used := false;
 }
       //versión más corta que solo usa H, por validar
-      SaveZ(reg);  //vamos a alterar Z
       _movlw(p1^.HByte);      //Carga más peso del dato 1
       _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
       _movwf(H.offs);         //Guarda el resultado
@@ -1772,11 +1882,9 @@ begin
       _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
       _incf(H.offs, toF);
-      RestoreZ(reg);
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
       _movlw(p1^.HByte);      //Carga más peso del dato 1
@@ -1786,11 +1894,9 @@ begin
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
       aux.used := false;
-      RestoreZ(reg);
     end;
     coVariab_Const: begin
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       _MOVLW(p2^.HByte);      //Carga más peso del dato 1
       _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
       _MOVWF(H.offs);         //Guarda el resultado
@@ -1798,11 +1904,9 @@ begin
       _ADDWF(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
       _INCF(H.offs, toF);
-      RestoreZ(reg);
     end;
     coVariab_Variab:begin
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
       _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
       _MOVWF(H.offs);         //Guarda mayor peso del resultado
@@ -1810,11 +1914,9 @@ begin
       _ADDWF(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
       _INCF(H.offs, toF);
-      RestoreZ(reg);
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
       _movlw(p1^.Hoffs);      //Carga más peso del dato 1
@@ -1824,11 +1926,9 @@ begin
       _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
       _incf(H.offs, toF);
       aux.used := false;
-      RestoreZ(reg);
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
       _movlw(p2^.HByte);      //Carga más peso del dato 1
@@ -1838,11 +1938,9 @@ begin
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
       aux.used := false;
-      RestoreZ(reg);
     end;
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);             //guarda byte bajo
       _movlw(p2^.Hoffs);      //Carga más peso del dato 1
@@ -1852,11 +1950,9 @@ begin
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
       aux.used := false;
-      RestoreZ(reg);
     end;
     coExpres_Expres:begin
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       //p1 está salvado en pila y p2 en (_H,W)
       FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
       FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
@@ -1869,7 +1965,6 @@ begin
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
       aux.used := false;
-      RestoreZ(reg);
     end;
     else
       genError('Not implemented: "%s"', [CatOperationToStr]);
@@ -1881,7 +1976,6 @@ var
   spH: TPicRegister;
   spL: TPicRegister;
   aux: TPicRegister;
-  reg: TPicRegisterBit;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     if p1^.valInt+p2^.valInt <256 then begin
@@ -1895,8 +1989,7 @@ begin
     if HayError then exit;
     case catOperation of
     coConst_Variab: begin
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       //versión más corta que solo usa _H, por validar
       _movlw(p1^.HByte);      //Carga más peso del dato 1
       _movwf(H.offs);
@@ -1904,11 +1997,9 @@ begin
       _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
-      RestoreZ(reg);
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       aux := GetAuxRegisterByte;  //Pide un registro libre
       _movwf(aux.offs);      //guarda byte bajo
       _movlw(p1^.HByte);     //Carga más peso del dato 1
@@ -1917,60 +2008,48 @@ begin
       _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
-      RestoreZ(reg);
       aux.used := false;
     end;
     coVariab_Const: begin
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       _MOVF(p1^.Hoffs, toW); //Carga más peso del dato 1
       _MOVWF(H.offs);        //Guarda el resultado
       _MOVLW(p2^.LByte);
       _ADDWF(p1^.Loffs,toW); //Suma menos peso del dato 2, deja en W
       _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
       _INCF(H.offs, toF);
-      RestoreZ(reg);
     end;
     coVariab_Variab:begin
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       _movlw(p1^.Hoffs);     //Carga más peso del dato 1
       _movwf(H.offs);
       _movlw(p1^.Loffs);     //Carga menos peso del dato 1
       _addwf(p2^.Loffs,toW); //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
-      RestoreZ(reg);
     end;
     coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       _movlw(p1^.Hoffs);      //Carga más peso del dato 1
       _movwf(H.offs);
       _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
-      RestoreZ(reg);
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       _addwf(p2^.LByte,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
-      RestoreZ(reg);
     end;
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       _addwf(p2^.Loffs,toW);         //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
-      RestoreZ(reg);
     end;
     coExpres_Expres:begin
-      SetResultExpres_word;
-      SaveZ(reg);  //vamos a alterar Z
+      SetResultExpres_word(operType);
       //la expresión p1 debe estar salvada y p2 en el acumulador
       FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
       FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
@@ -1979,7 +2058,6 @@ begin
       _addwf(spL.offs,toW);  //Suma menos peso del dato 2, deja en W
       _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
       _incf(H.offs, toF);
-      RestoreZ(reg);
     end;
     else
       genError('Not implemented: "%s"', [CatOperationToStr] );
@@ -1987,15 +2065,6 @@ begin
   end;
 end;
 //////////// Operaciones con Char
-procedure TGenCod.char_OnPush(const OpPtr: pointer);
-{Pone un char en la pila. Se usa para pasar parámetros a función.}
-begin
-  byte_OnPush(OpPtr);  //es lo mismo
-end;
-procedure TGenCod.char_DefineRegisters(const OpPtr: pointer);
-begin
-  //No es encesario, definir registros adicionales a W
-end;
 procedure TGenCod.Oper_char_asig_char;
 begin
   if p1^.catOp <> coVariab then begin  //validación
@@ -2003,7 +2072,7 @@ begin
   end;
   case p2^.catOp of
   coConst : begin
-    SetResultExpres_char;  //Realmente, el resultado no es importante
+    SetResultExpres_char(operType);  //Realmente, el resultado no es importante
     if p2^.valInt=0 then begin
       //caso especial
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -2015,14 +2084,14 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_byte;  //Realmente, el resultado no es importante
+    SetResultExpres_char(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p2^.bank);  //verifica banco destino
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);
   end;
   coExpres: begin  //ya está en w
-    SetResultExpres_byte;  //Realmente, el resultado no es importante
+    SetResultExpres_char(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);
   end;
@@ -2096,7 +2165,7 @@ begin
   StartCodeSub(fun);  //inicia codificación
 //  PutLabel('__delay_ms');
   PutTopComm('    ;delay routine.');
-  RequireH(false);   //Se asegura de que se exista y lo marca como "usado".
+  typWord.DefineRegister;   //Se asegura de que se exista y lo marca como "usado".
   aux := GetAuxRegisterByte;  //Pide un registro libre
   {Esta rutina recibe los milisegundos en los registros en (H,w) o en (w)
   En cualquier caso, siempre usa el registros H , el acumulador "w" y un reg. auxiliar.
@@ -2125,7 +2194,7 @@ begin
   GetExpressionE(0, pexPARSY);  //captura parámetro
   if HayError then exit;   //aborta
   //Se terminó de evaluar un parámetro
-  res.Push;   //Carga en registro de trabajo
+  res.LoadToReg;   //Carga en registro de trabajo
   if HayError then exit;
   if res.typ = typByte then begin
     //El parámetro byte, debe estar en W
@@ -2263,8 +2332,6 @@ begin
 end;
 procedure TGenCod.fun_Bit(fun: TxpEleFun);
 {Convierte byte a bit}
-var
-  OLD_W: TPicRegister;
 begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
@@ -2283,9 +2350,7 @@ begin
       //Se asumirá que cualuier valor diferente de cero, devuelve 1
       res.typ := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
       res.catOp := coExpres;
-      SaveW(OLD_W); if HayError then exit;  //Va a usar W
       _MOVF(res.offs, toW);   //el resultado aparecerá en Z, invertido
-      RestoreW(OLD_W);   ///ERROR, modifica Z otra vez
     end else begin
       GenError('Cannot convert to bit.'); exit;
     end;
@@ -2503,7 +2568,10 @@ begin
   2)    :=                  (menor precedencia)
   }
   //////// Operaciones con Bit ////////////
-  typBit.OperationPop:=@bit_DefineRegisters;
+  typBit.OnLoadToReg := @bit_LoadToReg;
+  typBit.OnDefineRegister:=@bit_DefineRegisters;
+  typBit.OnSaveToStk := @bit_SaveToStk;
+
   opr:=typBit.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typBit, @Oper_bit_asig_bit);
   opr.CreateOperation(typByte, @Oper_bit_asig_byte);
@@ -2531,7 +2599,9 @@ begin
   opr.CreateOperation(typByte,@Oper_bit_dif_byte);
 
   //////// Operaciones con Boolean ////////////
-  typBool.OperationPop:=@bool_DefineRegisters;
+  typBool.OnLoadToReg:=@bit_LoadToReg;  //es lo mismo
+  typBool.OnDefineRegister:=@bit_DefineRegisters;  //es lo mismo
+  typBool.OnSaveToStk := @bit_SaveToStk;  //es lo mismo
   opr:=typBool.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typBool,@Oper_bool_asig_bool);
 
@@ -2554,8 +2624,10 @@ begin
 
   //////// Operaciones con Byte ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  typByte.OperationPop:=@byte_DefineRegisters;
-  typByte.OperationPush:=@byte_OnPush;
+  typByte.OnLoadToReg:=@byte_LoadToReg;
+  typByte.OnDefineRegister:=@byte_DefineRegisters;
+  typByte.OnSaveToStk := @byte_SaveToStk;
+
   opr:=typByte.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typByte,@Oper_byte_asig_byte);
   opr:=typByte.CreateBinaryOperator('+',4,'suma');  //suma
@@ -2593,27 +2665,39 @@ begin
   opr.CreateOperation(typByte,@Oper_byte_shr_byte);
   opr:=typByte.CreateBinaryOperator('<<',3,'shl');
   opr.CreateOperation(typByte,@Oper_byte_shl_byte);
-  //////// Operaciones con Word ////////////
-  {Los operadores deben crearse con su precedencia correcta}
-  typWord.OperationPush:=@word_OnPush;
-  typWord.OperationPop:=@word_DefineRegisters;
-  opr:=typWord.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(typWord,@Oper_word_asig_word);
-  opr.CreateOperation(typByte,@Oper_word_asig_byte);
-  opr:=typWord.CreateBinaryOperator('+',4,'suma');  //suma
-  opr.CreateOperation(typWord,@Oper_word_add_word);
-  opr.CreateOperation(typByte,@Oper_word_add_byte);
 
   //////// Operaciones con Char ////////////
   {Los operadores deben crearse con su precedencia correcta}
-  typChar.OperationPush:=@char_OnPush;
-  typChar.OperationPop:=@char_DefineRegisters;
+  typChar.OnLoadToReg:=@byte_LoadToReg;  //es lo mismo
+  typChar.OnDefineRegister:=@byte_DefineRegisters;  //es lo mismo
+  typChar.OnSaveToStk := @byte_SaveToStk;  //es lo mismo
+
   opr:=typChar.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typChar,@Oper_char_asig_char);
   opr:=typChar.CreateBinaryOperator('=',3,'equal');  //asignación
   opr.CreateOperation(typChar,@Oper_char_equal_char);
   opr:=typChar.CreateBinaryOperator('<>',3,'difer');  //asignación
   opr.CreateOperation(typChar,@Oper_char_difer_char);
+
+  //////// Operaciones con Word ////////////
+  {Los operadores deben crearse con su precedencia correcta}
+  typWord.OnLoadToReg:=@word_LoadToReg;
+  typWord.OnDefineRegister:=@word_DefineRegisters;
+  typWord.OnSaveToStk := @word_SaveToStk;
+
+  opr:=typWord.CreateBinaryOperator(':=',2,'asig');  //asignación
+  opr.CreateOperation(typWord,@Oper_word_asig_word);
+  opr.CreateOperation(typByte,@Oper_word_asig_byte);
+
+  opr:=typWord.CreateBinaryOperator('=',3,'equal');  //asignación
+  opr.CreateOperation(typWord,@Oper_word_equal_word);
+  opr:=typWord.CreateBinaryOperator('<>',3,'difer');
+  opr.CreateOperation(typWord,@Oper_word_difer_word);
+
+  opr:=typWord.CreateBinaryOperator('+',4,'suma');  //suma
+  opr.CreateOperation(typWord,@Oper_word_add_word);
+  opr.CreateOperation(typByte,@Oper_word_add_byte);
+
 end;
 procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}
@@ -2647,7 +2731,10 @@ begin
     dicSet('")" expected.', 'Se esperaba ")"');
     dicSet('Invalid parameter type: %s','Tipo de parámetro inválido: %s');
   end;
+  //  ER_NOT_IMPLEM_ := trans('Cannot increase a constant.', 'No se puede incrementar una constante.','','');
+  //  ER_NOT_IMPLEM_ := trans('Cannot increase an expression.','No se puede incrementar una expresión.','','');
+  //  ER_NOT_IMPLEM_ := trans('Cannot decrease a constant.', 'No se puede disminuir una constante.','','');
+  //  ER_NOT_IMPLEM_ := trans('Cannot decrease an expression.','No se puede disminuir una expresión.','','');
   end;
 end;
 end.
-

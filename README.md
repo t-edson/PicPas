@@ -1,4 +1,4 @@
-PicPas 0.6.5
+PicPas 0.6.6
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
@@ -16,7 +16,7 @@ It includes a very complete IDE to facilitate the development of programs.
 
 The compiler includes optimization options so the code obtained is fairly compact, as that could generate any commercial compiler.
 
-As an example the following code, is to blink an LED on port B:
+As an example the following code, is to blink a LED on port B:
 
 ```
 {Sample program to blink a Led on PORTB.7}
@@ -83,7 +83,6 @@ FOR  <variable> := <start-value> TO <end-value> DO
   <block of code>
 END;
 ```
-
 
 ## Source Code
 

@@ -15,7 +15,7 @@ var
     pinLed := 1;
     delay_ms(30);
     pinLed := 0;
-    delay_ms(70);
+    delay_ms(30);
   end;
   procedure Mal;
   begin

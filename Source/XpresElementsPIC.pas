@@ -10,7 +10,7 @@ unit XpresElementsPIC;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, fgl, XpresTypes, XpresBas, LCLProc;
+  Classes, SysUtils, fgl, XpresTypesPIC, XpresBas, LCLProc;
 const
   ADRR_ERROR = $FFFF;
 type
@@ -29,12 +29,13 @@ type
    para un fin particular)}
   TPicRegister = class
   public
-    assigned: boolean;  //indica si tiene una dirección física asignada
-    used   : boolean;   //Indica si está usado.
     offs   : byte;      //Desplazamiento en memoria
     bank   : byte;      //Banco del registro
+    assigned: boolean;  //indica si tiene una dirección física asignada
+    used   : boolean;   //Indica si está usado.
     typ    : TPicRegType; //Tipo de registro
     function AbsAdrr: word;  //Diección absoluta
+    procedure Assign(srcReg: TPicRegister);
   end;
   TPicRegister_list = specialize TFPGObjectList<TPicRegister>; //lista de registros
 
@@ -43,13 +44,14 @@ type
    para un fin particular)}
   TPicRegisterBit = class
   public
-    assigned: boolean;  //indica si tiene una dirección física asignada
-    used   : boolean;   //Indica si está usado.
     offs   : byte;      //Desplazamiento en memoria
     bank   : byte;      //Banco del registro
     bit    : byte;      //bit del registro
+    assigned: boolean;  //indica si tiene una dirección física asignada
+    used   : boolean;   //Indica si está usado.
     typ    : TPicRegType; //Tipo de registro
     function AbsAdrr: word;  //Diección absoluta
+    procedure Assign(srcReg: TPicRegisterBit);
   end;
   TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros
 
@@ -122,7 +124,7 @@ type
 
   { TxpEleType }
   //Clase para modelar a los tipos definidos por el usuario
-  { Es diferente a XpresTypes: TType, aunque no se ha hecho un anaálisis profundo }
+  { Es diferente a XpresTypesPIC.TType, aunque no se ha hecho un análisis profundo }
   TxpEleType= class(TxpElement)
     //valores de la constante
     constructor Create; override;
@@ -275,11 +277,27 @@ function TPicRegister.AbsAdrr: word;
 begin
   Result := bank * $80 + offs;
 end;
-
+procedure TPicRegister.Assign(srcReg: TPicRegister);
+begin
+  offs    := srcReg.offs;
+  bank    := srcReg.bank;
+  assigned:= srcReg.assigned;
+  used    := srcReg.used;
+  typ     := srcReg.typ;
+end;
 { TPicRegisterBit }
 function TPicRegisterBit.AbsAdrr: word;
 begin
   Result := bank * $80 + offs;
+end;
+procedure TPicRegisterBit.Assign(srcReg: TPicRegisterBit);
+begin
+  offs    := srcReg.offs;
+  bank    := srcReg.bank;
+  bit     := srcReg.bit;
+  assigned:= srcReg.assigned;
+  used    := srcReg.used;
+  typ     := srcReg.typ;
 end;
 
 { TxpElement }

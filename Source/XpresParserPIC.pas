@@ -16,7 +16,7 @@ unit XpresParserPIC;
 interface
 uses
   Classes, SysUtils, Forms, LCLType, lclProc, SynEditHighlighter,
-  SynFacilHighlighter, XpresBas, XpresTypes, XpresElementsPIC, MisUtils,
+  SynFacilHighlighter, XpresBas, XpresTypesPIC, XpresElementsPIC, MisUtils,
   Pic16Utils;
 const
   TIT_BODY_ELE = 'Body';
@@ -37,15 +37,17 @@ TOperType = (operUnary,  //Operación Unaria
 TOperand = object
 public
   catOp: TCatOperan; //Categoría de operando
-  typ  : TType;     //Referencia al tipo de dato
-  txt  : string;    //Texto del operando o expresión, tal como aparece en la fuente
-//  fun  : Tfunc;     //referencia a función en caso de que sea una función
-  rVar : TxpEleVar;    //referencia a la variable, en caso de que sea variable
+  typ  : TType;      //Referencia al tipo de dato
+  txt  : string;     //Texto del operando o expresión, tal como aparece en la fuente
+//  fun  : Tfunc;    //referencia a función en caso de que sea una función
+  rVar : TxpEleVar;  //referencia a la variable, en caso de que sea variable
   Inverted: boolean; {Este campo se usa para cuando el operando es de tipo Bit o Boolean.
                       Indica que la lógica debe leerse de forma invertida.}
   {---------------------------------------------------------}
-  procedure Push; inline;  //pone el operador en la pila
-  procedure Pop; inline;   //saca el operador en la pila
+  function catOpStr: string;
+  function catOpChr: char;
+  procedure LoadToReg; inline;  //Pone el operador en registros de Trabajo
+  procedure DefineRegister; inline;
   function FindOperator(const oper: string): TxpOperator; //devuelve el objeto operador
   //Funciones para facilitar el acceso a campos de la variable, cuando sea variable
   function VarName: string; inline; //nombre de la variable, cuando sea de categ. coVariab
@@ -84,6 +86,8 @@ end;
 { TCompilerBase }
 {Clase base para crear al objeto compilador}
 TCompilerBase = class
+private
+  procedure LogExpLevel(txt: string);
 protected  //Eventos del compilador
   OnExprStart: procedure of object;  {Se genera al iniciar la
                                              evaluación de una expresión.}
@@ -441,7 +445,7 @@ begin
     if par.pvar.IsRegister then begin
       {Cuando es parámetro registro, no se asigna, se deja en el registro(s) de
        trabajo.}
-      res.Push;
+      res.LoadToReg;
     end else begin
       Op1.catOp := coVariab;  //configura el operando como variable
       Op1.rVar  := par.pvar;
@@ -492,7 +496,7 @@ begin
   Result.Inverted := false;   //inicia campo
   if cIn.tokType = tnNumber then begin  //constantes numéricas
     Result.catOp:=coConst;       //constante es Mono Operando
-    Result.txt:= cIn.tok;     //toma el texto
+    {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
@@ -505,7 +509,7 @@ begin
       GenError('Too long string for a Char.');
       exit;
     end;
-    Result.txt:= cIn.tok;     //toma el texto
+    {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     Result.valInt := ord(cIn.tok[2]);
     Result.typ := typChar;
     cIn.Next;    //Pasa al siguiente
@@ -525,7 +529,7 @@ begin
         xfun.procCall(xfun);  //Para que devuelva el tipo y codifique el _CALL o lo implemente
         //Puede devolver typNull, si no es una función.
         Result := res;  //copia tipo y categoría y otros campso relevantes
-        Result.txt:= tmp;     //toma el texto
+        {$IFDEF LogExpres} Result.txt:= tmp; {$ENDIF}    //toma el texto
         exit;
       end;
     end;
@@ -546,13 +550,13 @@ begin
         Result.catOp:=coExpres;
         Result.typ:=xvar.typ;
         //Faltaría asegurarse de que los registros estén disponibles
-        Result.typ.OperationPop(@Result);   //OperationPop, Realmente debe llamarse "DefineRegister"
+        Result.DefineRegister;
       end else begin
         Result.catOp:=coVariab;    //variable
         Result.typ:=xvar.typ;
         Result.rVar:=xvar;   //guarda referencia a la variable
       end;
-      Result.txt:= cIn.tok;     //toma el texto
+      {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
       cIn.Next;    //Pasa al siguiente
     end else if ele.elemType = eltCons then begin  //es constante
       //es una constante
@@ -561,7 +565,7 @@ begin
       Result.catOp:=coConst;    //constante
       Result.typ:=xcon.typ;
       Result.GetConsValFrom(xcon);  //lee valor
-      Result.txt:= cIn.tok;     //toma el texto
+      {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
       cIn.Next;    //Pasa al siguiente
     end else if ele.elemType = eltFunc then begin  //es función
       {Se sabe que es función, pero no se tiene la función exacta porque puede haber
@@ -589,7 +593,7 @@ begin
       if Found then begin
         //Ya se identificó a la función que cuadra con los parámetros
         Result.catOp :=coExpres; //expresión
-        Result.txt:= cIn.tok;    //toma el texto
+        {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
         Result.typ:=xfun.typ;
         if FirstPass then Inc(xfun.nCalled);  //lleva la cuenta
         {Ahora que ya sabe cúal es la función referenciada, captura de nuevo los
@@ -610,7 +614,7 @@ begin
     end;
   end else if cIn.tokType = tnBoolean then begin  //true o false
     Result.catOp:=coConst;       //constante es Mono Operando
-    Result.txt:= cIn.tok;     //toma el texto
+    {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     TipDefecBoolean(Result, cIn.tok); //encuentra tipo y valor
     if HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
@@ -663,6 +667,11 @@ begin
     GenError('Operand expected.');
   end;
 end;
+procedure TCompilerBase.LogExpLevel(txt: string);
+{Genera una cadena de registro , considerando el valor de "ExprLevel"}
+begin
+  debugln(space(3*ExprLevel)+ txt );
+end;
 procedure TCompilerBase.Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
 {Ejecuta una operación con dos operandos y un operador. "opr" es el operador de Op1.
 El resultado debe devolverse en "res". En el caso de intérpretes, importa el
@@ -674,7 +683,9 @@ var
   Operation: TxpOperation;
   tmp: String;
 begin
-   {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Oper('+Op1.txt + opr.txt + Op2.txt+')');{$ENDIF}
+   {$IFDEF LogExpres}
+   LogExpLevel('-- Op1='+Op1.txt+', Op2='+Op2.txt+' --');
+   {$ENDIF}
    ClearError;
    //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
    Operation := opr.FindOperation(Op2.typ);
@@ -695,7 +706,11 @@ begin
    Los parámetros de entrada se dejan en p1 y p2. El resultado debe dejarse en "res"}
    Operation.proc;
    //Completa campos de "res", si es necesario
-//   res.txt := Op1.txt + opr.txt + Op2.txt;   //texto de la expresión
+   {$IFDEF LogExpres}
+   LogExpLevel('Oper('+Op1.catOpChr + ' ' + opr.txt + ' ' + Op2.catOpChr+') -> ' +
+                res.catOpChr);
+   res.txt := Op1.txt + ' ' + opr.txt + ' ' + Op2.txt;   //texto de la expresión
+   {$ENDIF}
 //   res.uop := opr;   //última operación ejecutada
 End;
 procedure TCompilerBase.OperPre(var Op1: TOperand; opr: TxpOperator);
@@ -703,7 +718,9 @@ procedure TCompilerBase.OperPre(var Op1: TOperand; opr: TxpOperator);
 operador de Op1.
 El resultado debe devolverse en "res".}
 begin
-  {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Eval('+ opr.txt + Op1.txt + ')'); {$ENDIF}
+  {$IFDEF LogExpres}
+  LogExpLevel('-- Op1='+Op1.txt+' --');
+  {$ENDIF}
    ClearError;
    if opr.OperationPre = nil then begin
       GenError('Illegal Operation: %s',
@@ -716,14 +733,19 @@ begin
    {Ejecuta la operación. El resultado debe dejarse en "res"}
    opr.OperationPre;
    //Completa campos de "res", si es necesario
-   {$IFDEF LogExpres} res.txt := '%';{$ENDIF}   //indica que es expresión
+   {$IFDEF LogExpres}
+   LogExpLevel('Oper('+ opr.txt + ' ' + Op1.catOpChr+ ') -> ' + res.catOpChr);
+   res.txt := opr.txt + Op1.txt;
+   {$ENDIF}
 end;
 procedure TCompilerBase.OperPost(var Op1: TOperand; opr: TxpOperator);
 {Ejecuta una operación con un operando y un operador unario de tipo Post. "opr" es el
 operador de Op1.
 El resultado debe devolverse en "res".}
 begin
-  {$IFDEF LogExpres} debugln(space(2*ExprLevel)+' Eval('+Op1.txt + opr.txt +')'); {$ENDIF}
+  {$IFDEF LogExpres}
+  LogExpLevel('-- Op1='+Op1.txt+' --');
+  {$ENDIF}
    ClearError;
    if opr.OperationPost = nil then begin
       GenError('Illegal Operation: %s',
@@ -736,7 +758,10 @@ begin
    {Ejecuta la operación. El resultado debe dejarse en "res"}
    opr.OperationPost;
    //Completa campos de "res", si es necesario
-   {$IFDEF LogExpres} res.txt := '%';{$ENDIF}   //indica que es expresión
+   {$IFDEF LogExpres}
+   LogExpLevel('Oper('+Op1.catOpChr+ ' ' +opr.txt +') -> ' + res.catOpChr);
+   res.txt := Op1.txt + opr.txt;   //indica que es expresión
+   {$ENDIF}
 end;
 //procedure TCompilerBase.Oper(var Op1: TOperand);
 //{Ejecuta una operación con un solo operando, que puede ser una constante, una variable
@@ -747,7 +772,7 @@ end;
 //}
 //begin
 //  {$IFDEF LogExpres}
-//  debugln(space(2*ExprLevel)+' Eval('+Op1.txt+')');
+//  LogExpLevel('Eval('+Op1.catOpChr+')');
 //  {$ENDIF}
 //  ClearError;
 //  {Llama al evento asociado con p1 como operando. }
@@ -755,7 +780,7 @@ end;
 //  {Ejecuta la operación. El resultado debe dejarse en "res"}
 //  if Op1.typ.OperationLoad <> nil then Op1.typ.OperationLoad();
 //  //Completa campos de "res", si es necesario
-////   res.txt := Op1.txt + opr.txt + Op2.txt;   //texto de la expresión
+////   res.txt := Op1.catOpChr + opr.txt + Op2.txt;   //texto de la expresión
 ////   res.uop := opr;   //última operación ejecutada
 //end;
 function TCompilerBase.GetOperandPrec(pre: integer): TOperand;
@@ -768,7 +793,7 @@ var
   pos: TPosCont;
 begin
   {$IFDEF LogExpres}
-  debugln(space(ExprLevel)+' GetOperandP('+IntToStr(pre)+')');
+//  LogExpLevel('GetOperandP('+IntToStr(pre)+')');
   {$ENDIF}
   Op1 :=  GetOperand;  //toma el operador
   if HayError then exit;
@@ -804,8 +829,7 @@ Si no encuentra un operador en el contexto, devuelve NIL, pero no lo toma.
 Si el operador encontrado no se aplica al operando, devuelve nullOper.}
 begin
   if cIn.tokType <> tnOperator then exit(nil);
-  //hay un operador
-//debugln(Op.typ.name);
+  //Hay un operador
   Result := Op.typ.FindBinaryOperator(cIn.tok);
   cIn.Next;   //toma el token
 end;
@@ -822,7 +846,6 @@ begin
   //----------------coger primer operando------------------
   Op1 := GetOperand;
   if HayError then exit;
-  {$IFDEF LogExpres} debugln(space(ExprLevel)+' Op1='+Op1.txt); {$ENDIF}
   //verifica si termina la expresion
   SkipWhites;
   opr1 := GetOperator(Op1);
@@ -855,7 +878,6 @@ begin
     end;
     //--------------------coger segundo operando--------------------
     Op2 := GetOperandPrec(Opr1.prec);   //toma operando con precedencia
-    {$IFDEF LogExpres} debugln(space(ExprLevel)+' Op2='+Op2.txt); {$ENDIF}
     if HayError then exit;
     //prepara siguiente operación
     Oper(Op1, opr1, Op2);    //evalua resultado en "res"
@@ -876,16 +898,12 @@ Toma una expresión del contexto de entrada y devuelve el resultado em "res".
 "isParam" indica que la expresión evaluada es el parámetro de una función.}
 begin
   Inc(ExprLevel);  //cuenta el anidamiento
-  {$IFDEF LogExpres}
-  debugln(space(ExprLevel)+'>Inic.expr');
-  {$ENDIF}
+  {$IFDEF LogExpres} LogExpLevel('>Inic.expr'); {$ENDIF}
   if OnExprStart<>nil then OnExprStart;  //llama a evento
   res := GetExpression(prec);
   if HayError then exit;
   if OnExprEnd<>nil then OnExprEnd(posExpres);    //llama al evento de salida
-  {$IFDEF LogExpres}
-  debugln(space(ExprLevel)+'>Fin.expr');
-  {$ENDIF}
+  {$IFDEF LogExpres} LogExpLevel('>Fin.expr'); {$ENDIF}
   Dec(ExprLevel);
   {$IFDEF LogExpres}
   if ExprLevel = 0 then debugln('');
@@ -1131,18 +1149,33 @@ begin
 //  if FvalInt=AValue then Exit;
   val.ValInt:=AValue;
 end;
-
-procedure TOperand.Push;
+function TOperand.catOpStr: string;
+{Categoría en cadena.}
+begin
+  case catOp of
+  coConst : exit('Constant');
+  coVariab: exit('Variable');
+  coExpres: exit('Expression');
+  end;
+end;
+function TOperand.catOpChr: char;
+{Categoría en caracter.}
+begin
+  case catOp of
+  coConst : exit('k');
+  coVariab: exit('v');
+  coExpres: exit('X');
+  end;
+end;
+procedure TOperand.LoadToReg;
+begin
+  if typ.OnLoadToReg<> nil then typ.OnLoadToReg(@self);
+end;
+procedure TOperand.DefineRegister;
 begin
   //llama al evento de pila
-  if typ.OperationPush<> nil then typ.OperationPush(@self);
+  if typ.OnDefineRegister<> nil then typ.OnDefineRegister;
 end;
-procedure TOperand.Pop;
-begin
-  //llama al evento de pila
-  if typ.OperationPop<> nil then typ.OperationPop(@self);
-end;
-
 function TOperand.FindOperator(const oper: string): TxpOperator;
 //Recibe la cadena de un operador y devuelve una referencia a un objeto Toperator, del
 //operando. Si no está definido el operador para este operando, devuelve nullOper.
