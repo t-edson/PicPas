@@ -23,7 +23,7 @@ object Config: TConfig
       Height = 30
       Top = 10
       Width = 75
-      Caption = '&Aplicar'
+      Caption = '&Apply'
       Default = True
       Kind = bkYes
       OnClick = BitAplicarClick
@@ -34,7 +34,7 @@ object Config: TConfig
       Height = 30
       Top = 10
       Width = 75
-      DefaultCaption = True
+      Caption = '&OK'
       Kind = bkOK
       OnClick = BitAceptarClick
       TabOrder = 1
@@ -45,7 +45,7 @@ object Config: TConfig
       Top = 10
       Width = 75
       Cancel = True
-      DefaultCaption = True
+      Caption = 'Cancel'
       Kind = bkCancel
       ModalResult = 2
       TabOrder = 2

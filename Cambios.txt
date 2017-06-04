@@ -20,7 +20,22 @@ Se incluye verifiación de duplicidad en etiquetas en los bloques ASM.
 Se incluye la declaración de etiquetas, después de llamarse.
 Se crea una lista para almacenar los saltos no definidos en la unidad ProcAsm.
 Se crea código de prueba para declaración de variables.
+Se mejora la traducción de la unidad "Parser".
+
 Se completa el Manual de usuario con las nuevas caracetrísticas del PicPas.
+
+PENDIENTES
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la reutilización de variables usadas como parámetros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
+Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
+
 
 PicPas 0.6.6
 ============
@@ -47,18 +62,6 @@ Se crea TCompilerBase.LogExpLevel() y se mejoran considerablemente los mensajes 
 Se definen los eventos OnSaveToStk, para todos los tipos de datos creados.
 Se completa la documentación técnica, fundamentando la técnica de respaldo de los registros 
 de trabajo, que se usará en PicPas.
-
-PENDIENTES
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la reutilización de variables usadas como parámetros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
-¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
-Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
 
 
 PicPas 0.6.5
