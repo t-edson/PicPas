@@ -65,6 +65,8 @@ const
 var
   //Variables declarations
 
+//<Procedures declaration>
+
 begin
   //Main program body
 end.
@@ -75,18 +77,25 @@ end.
 ```
 unit <name>;
 interface
+uses
+  //<units declaration>
+const
+  //<Constant declaration>
+var
+  //<Variable declaration>
 
-//<units declaration>
-//<Constant declaration>
-//<Variable declaration>
 //<Procedures declaration>
 
 implementation
 
-//<uses declaration>
-//<Constant declaration>
-//<Variable declaration>
-//<Procedures declaration>
+uses
+  //<units declaration>
+const
+  //<Constant declaration>
+var
+  //<Variable declaration>
+
+//<Procedures implementation>
 
 end.
 ```
