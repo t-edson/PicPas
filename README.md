@@ -327,9 +327,9 @@ $MODE
 -----
 Specify the syntax mode, used by the compiler. The allowed values are:
 
-{$MODE PICPAS} -> Default mode. Use the new syntax for the control structs. 
+{$MODE PICPAS} -> Default mode. Use the new syntax for the control structures.
 
-{$MODE PASCAL} -> Clasic Pascal mode. Use the common Pascal syntax for the control structs.
+{$MODE PASCAL} -> Clasic Pascal mode. Use the common Pascal syntax for the control structures.
 
 
 ## Limitations
