@@ -144,6 +144,20 @@ end;
 
 REGISTER parameters are fast, because they use the W register, so only one REGISTER parameter can be used.
 
+Bit access can be performed too, using fields:
+
+```
+  var_byte.bit0 := 1;
+  var_byte.bit7 := 0;
+```
+
+Specific byte of a word, can be access using fields:
+
+```
+  word_var.Low := $ff;
+  word_var.High := $ff;
+```
+
 ### Control structures
 
 PicPas doens't follow the common Pascal syntax. Instead, a new Modula-2, style syntax is implemented.
