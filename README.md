@@ -134,11 +134,13 @@ var
 
 When using in procedures parameters, a REGISTER parameter can be included:
 
+```
 procedure QuickParameterProc(register regvar: byte);
 begin
   //Be carefull if put some code here
   PORTB = regvar;
 end;
+```
 
 REGISTER parameters are fast, because they use the W register, so only one REGISTER parameter can be used.
 
@@ -184,8 +186,9 @@ END;
 
 System functions are always available in code. They don't need to be defined or included in a unit.
 
-FUNCTION         DESCRIPTION
-================ =================================================
+```
+FUNCTION       DESCRIPTION
+============== =================================================
 delay_ms()	   Generate a time delay in miliseconds, from 0 to 65536.
 Inc()          Increase a variable.
 Dec()          Decrease a varaible.
@@ -195,6 +198,7 @@ Bit()          Convert a byte to a bit.
 Word()         Convert a byte to a word.
 SetAsInput()   Set a 8-bits port or a pin as an input.
 SetAsOutput()  Set a 8-bits port or a pin as an output.
+```
 
 
 ## Limitations
