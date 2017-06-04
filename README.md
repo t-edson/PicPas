@@ -10,11 +10,23 @@ No additional libraries or software required to compile. PicPas generates the *.
 
 PicPas works with a simplified version of the Pascal language, that has been adapted to work with limited resources small devices.
 
-Currently, it only supports the follwing types bit, byte, char, boolean and word (limited support).
+Currently, it only supports basic types. 
 
-It includes a very complete IDE to facilitate the development of programs.
+It includes a very complete IDE to facilitate the development.
 
 The compiler includes optimization options so the code obtained is fairly compact, as that could generate any commercial compiler.
+
+## Installation
+
+PicPas doesn't need installation, and have not dependencies, except the commons of the operative system, where it's runnig.
+
+To run, it's only needed to download the folder from GitHub. There is a compiled  Windows-32 version (PicPas-win32.exe) and a Ubuntu version (PicPas-linux).
+
+If it's required other platform, it need to be compiled from the source code.
+
+When starting, PicPas could generate warning messsages, if not needed folders exist.
+
+## Hello World
 
 As an example the following code, is to blink a LED on port B:
 
@@ -33,20 +45,53 @@ begin
     delay_ms(1000);
     pin := not pin;
   end;
-end.```
+end.
 ```
 
-## Installation
+PicPas has not special libraries yet, so the special register names, must be defined in the program, or a unit containing this definitions can be created.
 
-PicPas doesn't need installation, and have not dependencies, except the commons of the operative system, where it's runnig.
+## Language Reference
 
-To run, it's only needed to download the folder from GitHub. There is ac ompiled  Windows-32 version (PicPas-win32.exe) and a Ubuntu version (PicPas-linux).
+### Program structure
 
-If it's required other platform, it need to be compiled from the source code.
+```
+program <Name>;  //optional
+uses
+  //Units declarations
 
-When starting, PicPas could generate warning messsages, if not needed folders exist.
+const
+  //Constants declarations
 
-## Syntax
+var
+  //Variables declarations
+
+begin
+  //Main program body
+end.
+```
+
+### Unit structure
+
+```
+unit <name>;
+interface
+
+//<units declaration>
+//<Constant declaration>
+//<Variable declaration>
+//<Procedures declaration>
+
+implementation
+
+//<uses declaration>
+//<Constant declaration>
+//<Variable declaration>
+//<Procedures declaration>
+
+end.
+```
+
+### Control structures
 
 PicPas doens't follow the common Pascal syntax. Instead, a new Modula-2, style syntax is implemented.
 
@@ -83,6 +128,16 @@ FOR  <variable> := <start-value> TO <end-value> DO
   <block of code>
 END;
 ```
+
+## Limitations
+
+•	Only basic types are implemented: bit, byte, char, boolean and word (limited support).
+•	Cannot declare arrays or records.
+•	No recursion implemented, Because of the limited hardware resources, available in PIC devices.
+•	No float point implemented.
+•	No interruption support.
+
+Some of these limitations must be solved in next versions.
 
 ## Source Code
 
