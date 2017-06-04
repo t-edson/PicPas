@@ -214,6 +214,64 @@ SetAsInput()   Set a 8-bits port or a pin as an input.
 SetAsOutput()  Set a 8-bits port or a pin as an output.
 ```
 
+### ASM blocks
+
+PicPas support complet ASM code inside the Pascal source. 
+
+ASM blocks must be included between the delimiters ASM and END:
+
+```
+procedure DoSomething;
+begin
+  x := 10;
+  asm
+    ;Add 2 to the address $20 
+    MOVLW 2
+    ADDWF $20, F
+  end
+end;
+```
+
+ASM blocks are not instructions, that's why they are not finished with ";". It lets the ASM block, to be included in almost any place of the source code, like a comment.
+
+Absolute and relative Labels can be used too:
+
+```
+asm 
+  GOTO $+1   ;jump one position forward
+end
+```
+
+```
+asm 
+  ;infinite loop
+label:
+  NOP
+  GOTO label
+end
+```
+
+Program variables can be accessed, using his common name:
+
+var 
+ byte1: byte; 
+ car1: char; 
+ bit1: bit;
+ bol1: boolean; 
+ word1: word;
+begin
+  //Low level clear
+  asm 
+    CLRF byte1
+    CLRF car1
+    BCF bit1
+    BCF bol1
+    BCF word1.Low
+    BCF word1.high
+  end
+end.
+
+
 
 ## Limitations
 
