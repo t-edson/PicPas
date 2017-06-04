@@ -216,7 +216,7 @@ SetAsOutput()  Set a 8-bits port or a pin as an output.
 
 ### ASM blocks
 
-PicPas support complet ASM code inside the Pascal source. 
+PicPas have a complete support for inserting ASM code inside the Pascal source. 
 
 ASM blocks must be included between the delimiters ASM and END:
 
