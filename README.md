@@ -253,6 +253,7 @@ end
 
 Program variables can be accessed, using his common name:
 
+```
 var 
  byte1: byte; 
  car1: char; 
@@ -270,6 +271,7 @@ begin
     BCF word1.high
   end
 end.
+```
 
 
 
