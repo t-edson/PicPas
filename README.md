@@ -277,8 +277,8 @@ end.
 
 The next directives are supported by PicPas:
 
-$PROCESSOR
-----------
+#### $PROCESSOR
+
 Specify the target device model of the microcontroller. Example:
 
 ```
@@ -310,8 +310,8 @@ PIC16F627A
 PIC16F628A
 PIC16F648A
 
-$FREQUENCY
-----------
+#### $FREQUENCY
+
 Specify the clock frequency, in MHz or KHz. It's used for the delay routines Example:
 
 ```
@@ -323,8 +323,8 @@ The frequencies supported by now are:
 1MHz, 2Mhz, 4Mhz, 8MHz, 10MHz o 12MHz.
 
 
-$MODE
------
+#### $MODE
+
 Specify the syntax mode, used by the compiler. The allowed values are:
 
 {$MODE PICPAS} -> Default mode. Use the new syntax for the control structures.
