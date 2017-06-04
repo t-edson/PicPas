@@ -138,7 +138,7 @@ When using in procedures parameters, a REGISTER parameter can be included:
 procedure QuickParameterProc(register regvar: byte);
 begin
   //Be carefull if put some code here
-  PORTB = regvar;
+  PORTB := regvar;
 end;
 ```
 
