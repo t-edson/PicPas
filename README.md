@@ -78,26 +78,58 @@ end.
 unit <name>;
 interface
 uses
-  //<units declaration>
+  //units declaration
 const
-  //<Constant declaration>
+  //Constant declaration
 var
-  //<Variable declaration>
+  //Variable declaration
 
-//<Procedures declaration>
+//Procedures declaration
 
 implementation
 
 uses
-  //<units declaration>
+  //units declaration
 const
-  //<Constant declaration>
+  //Constant declaration
 var
-  //<Variable declaration>
+  //Variable declaration
 
-//<Procedures implementation>
+//Procedures implementation
 
 end.
+```
+
+### Operators
+
+```
+Operator           Precedence
+================== ==========
+NOT, sign “-“	      6
+*, DIV, MOD, AND      5
++, -, OR, XOR         4
+=, <>, <, <=, >, >=	  3
+:=	                  2
+```
+
+### Variables
+
+Variables are defined with the VAR keyword:
+
+```
+var
+  var1 : byte;
+  var2 : bit;
+  large_name_variable: boolean;
+```
+
+Variables can be defined too, at an absolute memory address:
+
+```
+var
+  PORTB: BYTE absolute $06;
+  pin0: bit; absolute $06.0;
+  pin1: boolean; absolute PORTB.bit1;
 ```
 
 ### Control structures
