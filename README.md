@@ -103,14 +103,14 @@ end.
 ### Operators
 
 ```
-Operator           Precedence
-================== ==========
-NOT, sign “-“	      6
-*, DIV, MOD, AND      5
-+, -, OR, XOR         4
-=, <>, <, <=, >, >=	  3
-:=	                  2
-```
+Operator            Precedence
+=================== ==========
+ NOT, sign “-“         6
+ *, DIV, MOD, AND      5
+ +, -, OR, XOR         4
+ =, <>, <, <=, >, >=   3
+ :=                    2
+ ```
 
 ### Variables
 
@@ -131,6 +131,16 @@ var
   pin0: bit; absolute $06.0;
   pin1: boolean; absolute PORTB.bit1;
 ```
+
+When using in procedures parameters, a REGISTER parameter can be included:
+
+procedure QuickParameterProc(register regvar: byte);
+begin
+  //Be carefull if put some code here
+  PORTB = regvar;
+end;
+
+REGISTER parameters are fast, because they use the W register, so only one REGISTER parameter can be used.
 
 ### Control structures
 
@@ -170,6 +180,23 @@ FOR  <variable> := <start-value> TO <end-value> DO
 END;
 ```
 
+### System Functions
+
+System functions are always available in code. They don't need to be defined or included in a unit.
+
+FUNCTION         DESCRIPTION
+================ =================================================
+delay_ms()	   Generate a time delay in miliseconds, from 0 to 65536.
+Inc()          Increase a variable.
+Dec()          Decrease a varaible.
+Ord()          Convert a char to a byte.
+Chr()          Convert a byte to a char.
+Bit()          Convert a byte to a bit.
+Word()         Convert a byte to a word.
+SetAsInput()   Set a 8-bits port or a pin as an input.
+SetAsOutput()  Set a 8-bits port or a pin as an output.
+
+
 ## Limitations
 
 •	Only basic types are implemented: bit, byte, char, boolean and word (limited support).
@@ -177,6 +204,7 @@ END;
 •	No recursion implemented, Because of the limited hardware resources, available in PIC devices.
 •	No float point implemented.
 •	No interruption support.
+•	No custom functions support.
 
 Some of these limitations must be solved in next versions.
 
