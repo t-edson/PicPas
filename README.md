@@ -273,6 +273,63 @@ begin
 end.
 ```
 
+## Directives
+
+The next directives are supported by PicPas:
+
+$PROCESSOR
+----------
+Specify the target device model of the microcontroller. Example:
+
+```
+{$PROCESSOR PIC16F628A}
+```
+
+The devices supported by now are: 
+
+PIC12F629
+PIC12F675
+PIC16F83
+PIC16CR83
+PIC16F84
+PIC16CR84
+PIC16F84A
+PIC16F870
+PIC16F871
+PIC16F872
+PIC16F873
+PIC16F873A
+PIC16F874
+PIC16F874A
+PIC16F876
+PIC16F876A
+PIC16F877
+PIC16F877A
+PIC16F887
+PIC16F627A
+PIC16F628A
+PIC16F648A
+
+$FREQUENCY
+----------
+Specify the clock frequency, in MHz or KHz. It's used for the delay routines Example:
+
+```
+{$FREQUENCY 1000Mhz}
+```
+
+The frequencies supported by now are:
+
+1MHz, 2Mhz, 4Mhz, 8MHz, 10MHz o 12MHz.
+
+
+$MODE
+-----
+Specify the syntax mode, used by the compiler. The allowed values are:
+
+{$MODE PICPAS} -> Default mode. Use the new syntax for the control structs. 
+
+{$MODE PASCAL} -> Clasic Pascal mode. Use the common Pascal syntax for the control structs.
 
 
 ## Limitations
