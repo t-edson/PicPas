@@ -39,7 +39,7 @@ type
   private
     cxp: TCompiler;
     UtilGrilla: TUtilGrillaFil2;
-    timeCnt: DWORD;
+    timeCnt: QWORD;
     nVis, nWar, nErr: Integer;
     usedRAM, usedROM, usedSTK: single;
     procedure FilterGrid;

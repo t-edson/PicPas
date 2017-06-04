@@ -24,11 +24,11 @@
           <Version Value="11"/>
           <PathDelim Value="\"/>
           <Target>
-            <Filename Value="project1"/>
+            <Filename Value="..\PicPas-$(TargetOS)"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils 0.4;..\..\_Librerias\MisUtils 0.3b;..\..\_Librerias\ConfigFrame 0.6b;..\..\_Librerias\PicUtils 0.3b;..\..\_Librerias\Xpres 0.6.8b;frames"/>
+            <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.2;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.8;..\..\_Librerias\Xpres-1.3;..\..\_Librerias\UtilsGrilla 0.8"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <CodeGeneration>
