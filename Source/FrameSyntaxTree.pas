@@ -355,6 +355,7 @@ begin
 end;
 procedure TfraSyntaxTree.ComboBoxEx1Change(Sender: TObject);
 begin
+  if Config = nil then exit;
   case ComboBoxEx1.ItemIndex of
   0: Config.viewMode := vmGroups;
   1: Config.viewMode := vmDeclar;
