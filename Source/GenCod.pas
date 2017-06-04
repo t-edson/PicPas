@@ -107,6 +107,15 @@ type
       procedure CodifShift_by_W(aux: TPicRegister; toRight: boolean);
       procedure Oper_byte_shr_byte;
       procedure Oper_byte_shl_byte;
+      procedure byte_bit(const OpPtr: pointer; nbit: byte);
+      procedure byte_bit0(const OpPtr: pointer);
+      procedure byte_bit1(const OpPtr: pointer);
+      procedure byte_bit2(const OpPtr: pointer);
+      procedure byte_bit3(const OpPtr: pointer);
+      procedure byte_bit4(const OpPtr: pointer);
+      procedure byte_bit5(const OpPtr: pointer);
+      procedure byte_bit6(const OpPtr: pointer);
+      procedure byte_bit7(const OpPtr: pointer);
     private  //Operaciones con Word
       procedure word_LoadToReg(const OpPtr: pointer);
       procedure word_DefineRegisters;
@@ -117,12 +126,13 @@ type
       procedure Oper_word_difer_word;
       procedure Oper_word_add_word;
       procedure Oper_word_add_byte;
+      procedure word_Low(const OpPtr: pointer);
+      procedure word_High(const OpPtr: pointer);
     private  //Operaciones con Char
       procedure Oper_char_asig_char;
       procedure Oper_char_equal_char;
       procedure Oper_char_difer_char;
     private  //Funciones internas.
-      //Rutinas adicionales
       procedure codif_1mseg;
       procedure codif_delay_ms(fun: TxpEleFun);
       procedure expr_end(posExpres: TPosExpres);
@@ -203,20 +213,16 @@ begin
   if H<>nil then
     H.used := false;      //Su ciclo de vida es de instrucción
   RTstate := nil;         //Inicia con los RT libres.
+  //Limpia tabla de variables temporales
+  varFields.Clear;
 end;
 procedure TGenCod.expr_end(posExpres: TPosExpres);
 //Se ejecuta al final de una expresión, si es que no ha habido error.
 begin
-//  case posExpres of
-//  pexPARAM: begin
-//    //Se terminó de evaluar un parámetro
-//    res.Push;   //pone parámetro en pila
-//    if HayError then exit;
-//  end;
-//  end;
   if exprLevel = 1 then begin  //el último nivel
 //    Code('  ;fin expres');
   end;
+  //Muestra informa
 end;
 ////////////operaciones con Bit
 procedure TGenCod.bit_LoadToReg(const OpPtr: pointer);
@@ -1089,7 +1095,6 @@ begin
 end;
 procedure TGenCod.Oper_byte_sub_byte;
 var
-  reg: TPicRegisterBit;
   r: TPicRegister;
 begin
   case catOperation of
@@ -1623,6 +1628,72 @@ begin
     GenError('Not implemented.'); exit;
   end;
 end;
+procedure TGenCod.byte_bit(const OpPtr: pointer; nbit: byte);
+//Implementa la operación del campo <tipo>.bit#
+var
+  xvar, tmpVar: TxpEleVar;
+  msk: byte;
+  Op: ^TOperand;
+begin
+  Op := OpPtr;
+  case Op^.catOp of
+  coVariab: begin
+    xvar := Op^.rVar;
+    //Se devuelve una variable, byte
+    res.catOp := coVariab;
+    res.typ   := typBit;
+    //Crea una variable temporal que representará al campo
+    tmpVar := CreateTmpVar(xvar.name+'.bit' + IntToStr(nbit), typBit);   //crea variable temporal
+    tmpVar.adrBit.offs := xvar.adrByte0.offs;
+    tmpVar.adrBit.bank := xvar.adrByte0.bank;
+    tmpVar.adrBit.bit  := nbit;
+    tmpVar.adrBit.assigned := xvar.adrByte0.assigned;
+    tmpVar.adrBit.used     := xvar.adrByte0.used;
+    res.rVar := tmpVar;   //actualiza la referencia
+  end;
+  coConst: begin
+    //Se devuelve una constante bit
+    res.catOp := coConst;
+    res.typ   := typBit;
+    msk := Op^.valInt and ($01 << nbit);
+    res.valBool := msk <> 0;
+  end;
+  else
+    GenError('Syntax error.');
+  end;
+end;
+procedure TGenCod.byte_bit0(const OpPtr: pointer);
+begin
+  byte_bit(OpPtr, 0);
+end;
+procedure TGenCod.byte_bit1(const OpPtr: pointer);
+begin
+  byte_bit(OpPtr, 1);
+end;
+procedure TGenCod.byte_bit2(const OpPtr: pointer);
+begin
+  byte_bit(OpPtr, 2);
+end;
+procedure TGenCod.byte_bit3(const OpPtr: pointer);
+begin
+  byte_bit(OpPtr, 3);
+end;
+procedure TGenCod.byte_bit4(const OpPtr: pointer);
+begin
+  byte_bit(OpPtr, 4);
+end;
+procedure TGenCod.byte_bit5(const OpPtr: pointer);
+begin
+  byte_bit(OpPtr, 5);
+end;
+procedure TGenCod.byte_bit6(const OpPtr: pointer);
+begin
+  byte_bit(OpPtr, 6);
+end;
+procedure TGenCod.byte_bit7(const OpPtr: pointer);
+begin
+  byte_bit(OpPtr, 7);
+end;
 //////////// Operaciones con Word
 procedure TGenCod.word_LoadToReg(const OpPtr: pointer);
 {Carga el valor de una expresión a los registros de trabajo.}
@@ -1738,7 +1809,7 @@ begin
 end;
 procedure TGenCod.Oper_word_equal_word;
 var
-  r, tmp: TPicRegister;
+  tmp: TPicRegister;
   sale: integer;
 begin
   case catOperation of
@@ -1847,7 +1918,6 @@ var
   spH: TPicRegister;
   spL: TPicRegister;
   aux: TPicRegister;
-  reg: TPicRegisterBit;
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     if p1^.valInt+p2^.valInt <256 then begin
@@ -2062,6 +2132,62 @@ begin
     else
       genError('Not implemented: "%s"', [CatOperationToStr] );
     end;
+  end;
+end;
+procedure TGenCod.word_Low(const OpPtr: pointer);
+{Acceso al byte de menor peso de un word.}
+var
+  xvar, tmpVar: TxpEleVar;
+  Op: ^TOperand;
+begin
+  Op := OpPtr;
+  case Op^.catOp of
+  coVariab: begin
+    xvar := Op^.rVar;
+    //Se devuelve una variable, byte
+    res.catOp := coVariab;
+    res.typ   := typByte;
+    //Crea una variable temporal que representará al campo
+    tmpVar := CreateTmpVar(xvar.name+'.Low', typByte);   //crea variable temporal
+    tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
+    res.rVar := tmpVar;   //actualiza la referencia
+  end;
+  coConst: begin
+    //Se devuelve una constante bit
+    res.catOp := coConst;
+    res.typ   := typByte;
+    res.valInt := Op^.ValInt and $ff;
+  end;
+  else
+    GenError('Syntax error.');
+  end;
+end;
+procedure TGenCod.word_High(const OpPtr: pointer);
+{Acceso al byte de mayor peso de un word.}
+var
+  xvar, tmpVar: TxpEleVar;
+  Op: ^TOperand;
+begin
+  Op := OpPtr;
+  case Op^.catOp of
+  coVariab: begin
+    xvar := Op^.rVar;
+    //Se devuelve una variable, byte
+    res.catOp := coVariab;
+    res.typ   := typByte;
+    //Crea una variable temporal que representará al campo
+    tmpVar := CreateTmpVar(xvar.name+'.High', typByte);
+    tmpVar.adrByte0.Assign(xvar.adrByte1);  //byte alto
+    res.rVar := tmpVar;   //actualiza la referencia
+  end;
+  coConst: begin
+    //Se devuelve una constante bit
+    res.catOp := coConst;
+    res.typ   := typByte;
+    res.valInt := (Op^.ValInt and $ff00)>>8;
+  end;
+  else
+    GenError('Syntax error.');
   end;
 end;
 //////////// Operaciones con Char
@@ -2474,6 +2600,7 @@ begin
   tnStruct   := xLex.NewTokType('Struct');   //personalizado
   tnDirective:= xLex.NewTokType('Directive'); //personalizado
   tnAsm      := xLex.NewTokType('Asm');      //personalizado
+  tnChar     := xLex.NewTokType('Char');     //personalizado
   tnOthers   := xLex.NewTokType('Others');   //personalizado
   //Configura atributos
   tkKeyword.Style := [fsBold];     //en negrita
@@ -2527,7 +2654,9 @@ begin
   xLex.AddSymbSpec(',',  tnOthers);
   //crea tokens delimitados
   xLex.DefTokDelim('''','''', tnString);
-  xLex.DefTokDelim('"','"', tnString);
+  xLex.DefTokContent('[#]','[0-9]*', tnChar);
+//  xLex.DefTokDelim('"','"', tnString);
+
   xLex.DefTokDelim('//','', xLex.tnComment);
   xLex.DefTokDelim('{','}', xLex.tnComment, tdMulLin);
   xLex.DefTokDelim('(\*','\*)', xLex.tnComment, tdMulLin);
@@ -2665,7 +2794,24 @@ begin
   opr.CreateOperation(typByte,@Oper_byte_shr_byte);
   opr:=typByte.CreateBinaryOperator('<<',3,'shl');
   opr.CreateOperation(typByte,@Oper_byte_shl_byte);
-
+  //Campos de bit
+  typByte.CreateField('bit0', @byte_bit0);
+  typByte.CreateField('bit1', @byte_bit1);
+  typByte.CreateField('bit2', @byte_bit2);
+  typByte.CreateField('bit3', @byte_bit3);
+  typByte.CreateField('bit4', @byte_bit4);
+  typByte.CreateField('bit5', @byte_bit5);
+  typByte.CreateField('bit6', @byte_bit6);
+  typByte.CreateField('bit7', @byte_bit7);
+  //Campos de bit (se mantienen por compatibilidad)
+  typByte.CreateField('0', @byte_bit0);
+  typByte.CreateField('1', @byte_bit1);
+  typByte.CreateField('2', @byte_bit2);
+  typByte.CreateField('3', @byte_bit3);
+  typByte.CreateField('4', @byte_bit4);
+  typByte.CreateField('5', @byte_bit5);
+  typByte.CreateField('6', @byte_bit6);
+  typByte.CreateField('7', @byte_bit7);
   //////// Operaciones con Char ////////////
   {Los operadores deben crearse con su precedencia correcta}
   typChar.OnLoadToReg:=@byte_LoadToReg;  //es lo mismo
@@ -2698,7 +2844,10 @@ begin
   opr.CreateOperation(typWord,@Oper_word_add_word);
   opr.CreateOperation(typByte,@Oper_word_add_byte);
 
+  typWord.CreateField('Low', @word_Low);
+  typWord.CreateField('High', @word_High);
 end;
+
 procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}
 var

@@ -213,7 +213,7 @@ procedure TConfig.SetLanguage(idLang: string);
 begin
   fcEditor.SetLanguage(idLang);
   curLang := idLang;
-  {$I ..\tra_FormConfig.pas}
+  {$I ..\language\tra_FormConfig.pas}
 end;
 
 end.

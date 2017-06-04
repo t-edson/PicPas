@@ -9,7 +9,7 @@ unit ProcAsm;
 interface
 uses
   Classes, SysUtils, fgl, strutils, MisUtils, SynFacilHighlighter,
-  SynEditHighlighter, LCLProc, Pic16Utils, XpresBas, XpresParserPIC, Globales,
+  LCLProc, Pic16Utils, XpresBas, XpresParserPIC, Globales,
   XpresElementsPIC;
 var
   asmRow: integer;     //número de fila explorada
@@ -33,16 +33,25 @@ type
   end;
   TPicLabel_list = specialize TFPGObjectList<TPicLabel>;
 
+  //Datos de una instrucción de salto, indefinido.
+  TPicUJump = class
+    txt: string;   //nombre de la etiqueta
+    add: integer;  //dirección
+    idInst: TPIC16Inst;
+  end;
+  TPicUJump_list = specialize TFPGObjectList<TPicUJump>;
+
 var
-  InAsm : boolean;
   lexAsm: TSynFacilSyn;   //lexer para analizar ASM
   pic   : TPIC16;         //referencia al PIC
   labels: TPicLabel_list; //Lista de etiquetas
+  uJumps: TPicUJump_list; //Lista de instrucciones GOTO o CALL, indefinidas
   cpx   : TCompilerBase;
+
 var  //Mensajes
   ER_EXPEC_COMMA, ER_EXP_ADR_VAR, ER_NOTYPVAR_AL, ER_INV_ASMCODE: String;
-  ER_EXPECT_W_F, ER_SYNTAX_ERR_, ER_EXPE_NUMBIT, ER_EXPECT_ADDR: String;
-  ER_EXPECT_BYTE, WA_ADDR_TRUNC: String;
+  ER_EXPECT_W_F, ER_SYNTAX_ERR_, ER_DUPLIC_LBL_, ER_EXPE_NUMBIT: String;
+  ER_EXPECT_ADDR, ER_EXPECT_BYTE, WA_ADDR_TRUNC, ER_UNDEF_LABEL_: String;
 
 procedure SetLanguage(idLang: string);
 begin
@@ -54,9 +63,11 @@ begin
   ER_INV_ASMCODE := trans('Invalid ASM Opcode: %s', 'Instrucción inválida: %s','','');
   ER_EXPECT_W_F  := trans('Expected "w" or "f".','Se esperaba "w" or "f".','','');
   ER_SYNTAX_ERR_ := trans('Syntax error: "%s"', 'Error de sintaxis: "%s"','','');
+  ER_DUPLIC_LBL_ := trans('Duplicated label: "%s"', 'Etiqueta duplicada: "%s"','','');
   ER_EXPE_NUMBIT := trans('Expected number of bit: 0..7.', 'Se esperaba número de bit: 0..7','','');
   ER_EXPECT_ADDR := trans('Expected address.', 'Se esperaba dirección','','');
   ER_EXPECT_BYTE := trans('Expected byte.', 'Se esperaba byte','','');
+  ER_UNDEF_LABEL_:= trans('Undefined ASM Label: %s', 'Etiqueta ASM indefinida: %s','','');
   WA_ADDR_TRUNC  := trans('Address truncated to fit instruction.', 'Dirección truncada, al tamaño de la instrucción', '','');
 end;
 procedure GenError(msg: string);
@@ -110,6 +121,17 @@ begin
   lbl.txt:= UpCase(name);
   lbl.add := addr;
   labels.Add(lbl);
+end;
+procedure AddUJump(name: string; addr: integer; idInst: TPIC16Inst);
+{Agrega un salto indefinido a la lista}
+var
+  jmp: TPicUJump;
+begin
+  jmp := TPicUJump.Create;
+  jmp.txt:= UpCase(name);
+  jmp.add := addr;
+  jmp.idInst := idInst;
+  uJumps.Add(jmp);
 end;
 function IsLabel(txt: string; out dir: integer): boolean;
 {Indica si un nombre es una etiqueta. Si lo es, devuelve TRUE, y la dirección la retorna
@@ -228,10 +250,35 @@ begin
 end;
 function CaptureRegister(var f: byte): boolean;
 {Captura la referencia a un registro y devuelve en "f". Si no encuentra devuelve error}
+
+  function HaveByteInformation(var bytePos: byte): boolean;
+  begin
+//    state0 := lexAsm.State;  //gaurda posición
+    if lexasm.GetToken = '.' then begin
+      //Hay precisión de campo
+      lexAsm.Next;
+      if UpCase(lexasm.GetToken) = 'LOW' then begin
+        bytePos := 0;
+        lexAsm.Next;
+        exit(true);
+      end else if UpCase(lexasm.GetToken) = 'HIGH' then begin
+        bytePos := 1;
+        lexAsm.Next;
+        exit(true);
+      end else begin
+        //No es ninguno
+        exit(false);
+      end;
+    end else begin
+      //No tiene indicación de campo
+      exit(false);
+    end;
+  end;
 var
   n: integer;
   ele: TxpElement;
   xvar: TxpEleVar;
+  bytePos: byte;
 begin
   skipWhites;
   if tokType = lexAsm.tnNumber then begin
@@ -258,6 +305,23 @@ begin
         lexAsm.Next;
         Result := true;
         exit;
+      end else if xvar.typ = typWord then begin
+        lexAsm.Next;
+        if HaveByteInformation(bytePos) then begin
+          //Hay precisión de byte
+          if bytePos = 0 then begin  //Byte bajo
+            n := xvar.adrByte0.offs;
+            f := GetFaddress(n);
+          end else begin        //Byte alto
+             n := xvar.adrByte1.offs;
+             f := GetFaddress(n);
+          end;
+        end else begin
+           n := xvar.AbsAddr;
+           f := GetFaddress(n);
+        end;
+        Result := true;
+        exit;
       end else begin
         GenError(ER_NOTYPVAR_AL);
         Result := false;
@@ -276,7 +340,7 @@ begin
     exit;
   end;
 end;
-function CaptureAddress(var a: word): boolean;
+function CaptureAddress(const idInst: TPIC16Inst; var a: word): boolean;
 {Captura una dirección a una instrucción y devuelve en "a". Si no encuentra geenra
 error y devuelve FALSE.}
 var
@@ -323,8 +387,16 @@ begin
     Result := true;
     exit;
   end else if (tokType = lexAsm.tnIdentif) and IsLabel(lexAsm.GetToken, dir) then begin
-    //Es un identificador
+    //Es un identificador de etiqueta
     a := dir;
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else if tokType = lexAsm.tnIdentif  then begin
+    //Es un identificador, no definido. Puede definirse luego.
+    a := $00;
+    //Los saltos indefinidos, se guardan en la lista "uJumps"
+    AddUJump(lexAsm.GetToken, pic.iFlash, idInst);
     lexAsm.Next;
     Result := true;
     exit;
@@ -334,18 +406,34 @@ begin
     exit;
   end;
 end;
-
 procedure StartASM; //Inicia el procesamiento de código ASM
 begin
-  InAsm := true;  //para indicar que estamos en medio de código ASM
   asmRow := 1;    //inicia línea
   labels.Clear;   //limpia etiquetas
+  uJumps.Clear;
 end;
 procedure EndASM;  //Termina el procesamiento de código ASM
+var
+  jmp : TPicUJump;
+  loc: integer;
 begin
-  InAsm := false;
+  //Completa los saltos indefinidos
+  if uJumps.Count>0 then begin
+    for jmp in uJumps do begin
+      if IsLabel(jmp.txt, loc) then begin
+        //Si existe la etiqueta
+        if jmp.idInst = GOTO_ then
+          pic.codGotoAt(jmp.add, loc)
+        else  //Solo puede ser CALL
+          pic.codCallAt(jmp.add, loc);
+      end else begin
+        //No se enuentra
+        GenError(ER_UNDEF_LABEL_, [jmp.txt]);
+        exit;
+      end;
+    end;
+  end;
 end;
-
 procedure ProcInstrASM;
 //Procesa una instrucción ASM
 var
@@ -388,8 +476,8 @@ begin
     end;
     pic.codAsmFB(idInst, f, b);
   end;
-  'a': begin
-    if not CaptureAddress(a) then exit;
+  'a': begin  //CALL y GOTO
+    if not CaptureAddress(idInst, a) then exit;
     pic.codAsmA(idInst, a);
   end;
   'k': begin
@@ -410,8 +498,42 @@ begin
 end;
 procedure ProcASM(const AsmLin: string);
 {Procesa una línea en ensamblador.}
-var
-  lbl: String;
+  function ExtractLabel: boolean;
+  {Extrae una etiqueta en la posición actual del lexer. Si no identifica
+  a una etiqueta, devuelve FALSE.}
+  var
+    lbl: String;
+    state0: TFaLexerState;
+    d: integer;
+  begin
+    if tokType <> lexAsm.tnIdentif then
+      exit(false);  //No es
+    //Guarda posición por si acaso
+    state0 := lexAsm.State;
+    //Evalúa asumiendo que es etiqueta
+    lbl := lexAsm.GetToken;   //guarda posible etiqueta
+    lexAsm.Next;
+    if lexAsm.GetToken = ':' then begin
+      //Definitivamente es una etiqueta
+      if IsLabel(lbl, d) then begin
+        GenError(ER_DUPLIC_LBL_, [lbl]);
+        exit;
+      end;
+      AddLabel(lbl, pic.iFlash);
+      lexAsm.Next;
+      skipwhites;
+      if tokType <> lexAsm.tnEol then begin
+        //Hay algo más. Solo puede ser una instrucción
+        ProcInstrASM;
+        if cpx.HayError then exit(false);
+      end;
+      exit(true);
+    end else begin
+      //No es etiqueta
+      lexAsm.State := state0;  //recupera posición
+      exit(false)
+    end;
+  end;
 begin
   inc(asmRow);   //cuenta destíneas
   if Trim(AsmLin) = '' then exit;
@@ -420,30 +542,8 @@ begin
   if tokType = lexAsm.tnKeyword then begin
     ProcInstrASM;
     if cpx.HayError then exit;
-  end else if tokType = lexAsm.tnIdentif then begin
-    //Puede ser una etiqueta
-    lbl := lexAsm.GetToken;   //guarda posible etiqueta
-    lexAsm.Next;
-    if lexAsm.GetToken = ':' then begin
-      //definitivamente es una etiqueta
-      AddLabel(lbl, pic.iFlash);
-      lexAsm.Next;
-      skipwhites;
-      if tokType <> lexAsm.tnEol then begin
-        //Hay algo más. Solo puede ser una instrucción
-        ProcInstrASM;
-        if cpx.HayError then exit;
-      end;
-    end else begin
-      //puede ser una etiqueta
-      AddLabel(lbl, pic.iFlash);
-      skipwhites;
-      if tokType <> lexAsm.tnEol then begin
-        //Hay algo más. Solo puede ser una instrucción
-        ProcInstrASM;
-        if cpx.HayError then exit;
-      end;
-    end;
+  end else if Extractlabel then begin
+      //Era una etiqueta
   end else if tokType = lexAsm.tnComment then begin
     skipWhites;
     if tokType <> lexAsm.tnEol then begin
@@ -453,9 +553,18 @@ begin
   end else if tokType = lexAsm.tnSpace then begin
     skipWhites;
     if tokType <> lexAsm.tnEol then begin
-      //Hay algo más. Solo puede ser una instrucción
-      ProcInstrASM;
-      if cpx.HayError then exit;
+      //Hay algo más. Solo puede ser una instrucción o etiqueta
+      if tokType = lexAsm.tnKeyword then begin
+        //Es instrucción
+        ProcInstrASM;
+        if cpx.HayError then exit;
+      end else if Extractlabel then begin
+        //Era una etiqueta
+      end else begin
+        //Es otra cosa
+        GenError(ER_SYNTAX_ERR_, [lexAsm.GetToken]);
+        exit;
+      end;
     end;
   end else begin
     GenError(ER_SYNTAX_ERR_, [lexAsm.GetToken]);
@@ -498,7 +607,6 @@ begin
   lin := copy(Lin, 1, length(Lin)-3);  //quita "end"
   exit(true);
 end;
-
 procedure InitAsm(pic0: TPIC16; cpx0: TCompilerBase);
 {Inicia el procesamiento del código en ensamblador}
 begin
@@ -532,8 +640,8 @@ begin
 end;
 
 initialization
-  InAsm := false;
   labels := TPicLabel_list.Create(true);
+  uJumps := TPicUJump_list.Create(true);
   {Define la sintaxis del lexer que se usará para analizar el código en ensamblador.}
   lexAsm := TSynFacilSyn.Create(nil);  //crea lexer para analzar ensamblador
   lexAsm.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
@@ -549,6 +657,8 @@ initialization
   lexAsm.Rebuild;
 finalization
   lexAsm.Destroy;
+  uJumps.Destroy;
   labels.Destroy;
 end.
+
 

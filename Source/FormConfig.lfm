@@ -56,9 +56,9 @@ object Config: TConfig
     Height = 277
     Top = 0
     Width = 371
-    ActivePage = tabOutput
+    ActivePage = tabGeneral
     Align = alClient
-    TabIndex = 3
+    TabIndex = 0
     TabOrder = 1
     object tabGeneral: TTabSheet
       Caption = 'General'
@@ -121,6 +121,8 @@ object Config: TConfig
         Items.Strings = (
           'en - English'
           'es - Español'
+          'qu - Quechua'
+          'de - German'
         )
         TabOrder = 2
         Text = 'ComboBox1'

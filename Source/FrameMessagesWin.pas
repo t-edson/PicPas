@@ -138,7 +138,7 @@ end;
 procedure TfraMessagesWin.SetLanguage(idLang: string);
 begin
   curLang := idLang;
- {$I ..\tra_FrameMessagesWin.pas}
+ {$I ..\language\tra_FrameMessagesWin.pas}
 end;
 procedure TfraMessagesWin.AddInformation(infTxt: string);
 var

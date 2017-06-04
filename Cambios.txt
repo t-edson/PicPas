@@ -1,3 +1,27 @@
+PicPas 0.6.7
+============
+Se crea el campo TType.fieldMethods, para almacenar a los campos de los tipos básicos.
+Se crea TCompilerBase.IdentifyField(), y se modifica a TCompilerBase.GetOperand(), para
+que permita campos en las variables.
+Se crea la lista TGenCodPic.varFields y el método TGenCodPic.CreateTmpVar(), para 
+crear variables temporales. 
+Se implementan los campos Low y High, para los tipos Word y bit0, bit1, ... bit7, para 
+los tipos byte.
+Se habilita el acceso a campos de variables e identificadores de constantes, mediante
+el operador ".".
+Se elimina la definición de cadena "..." de la sintaxis, del compilador.
+Se crea el tipo de token tnChar, para caracteres.
+Se crea la definición de caracter #<código ascii> y se habilita el reconocimiento como 
+operando char.
+Se modifica TCompiler.CompileVarDeclar() y se implementa la resolución de campos de 
+variables para las declaraciones, en la sección VAR.
+Se elimina la variable InAsm, de la unidad ProcAsm.
+Se incluye verifiación de duplicidad en etiquetas en los bloques ASM.
+Se incluye la declaración de etiquetas, después de llamarse.
+Se crea una lista para almacenar los saltos no definidos en la unidad ProcAsm.
+Se crea código de prueba para declaración de variables.
+Se completa el Manual de usuario con las nuevas caracetrísticas del PicPas.
+
 PicPas 0.6.6
 ============
 Se corrige el dimensionamiento de Flash, en la rutina GetHardwareInfo(), de la unidad
@@ -51,7 +75,7 @@ Se actualiza el código de REPEAT, para que considere la optimzación de la bander
 Se crea el patrón de pruebas para las estructuras IF, WHILE y REPEAT.
 Se modifica la configuración del autocompletado, para incluir la nueva sintaxis del WHILE.
 Se hace una implementación básica del lazo FOR.
-Se implementa la función del sistema word(), para covnertir constantes byte.
+Se implementa la función del sistema word(), para convertir constantes byte.
 Se avanza en la traducción de la unidad Parser, al español.
 Se reemplazan algunas rutinas de identificación de tokens, por CaptureTok() en Parser.pas
 Se actualiza la traducción de la unidad ProcAsm.

@@ -164,7 +164,7 @@ begin
   Parser.SetLanguage(idLang);
   ProcAsm.SetLanguage(idLang);
   curLang := idLang;
-  {$I ..\tra_FormPrincipal.pas}
+  {$I ..\language\tra_FormPrincipal.pas}
 end;
 procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
 begin

@@ -59,8 +59,11 @@ type
     procedure AssignRAMbit(reg: TPicRegisterBit; regName: string);  //Asigna a una dirección física
     function CreateRegisterByte(RegType: TPicRegType): TPicRegister;
     function CreateRegisterBit(RegType: TPicRegType): TPicRegisterBit;
+  protected  //Variables temporales para acceso a campos de variables
+    varFields: TxpEleVars;  //lista de variables
+    function CreateTmpVar(nam: string; typ: TType): TxpEleVar;
   protected  //Rutinas de gestión de memoria para registros
-    varStkBit : TxpEleVar;    //variable bit. Usada para trabajar con la pila
+    varStkBit : TxpEleVar;   //variable bit. Usada para trabajar con la pila
     varStkByte: TxpEleVar;   //variable byte. Usada para trabajar con la pila
     varStkWord: TxpEleVar;   //variable word. Usada para trabajar con la pila
     function GetAuxRegisterByte: TPicRegister;
@@ -349,6 +352,18 @@ begin
     exit(nil);
   end;
   Result := reg;   //devuelve referencia
+end;
+function TGenCodPic.CreateTmpVar(nam: string; typ: TType): TxpEleVar;
+var
+  tmpVar: TxpEleVar;
+begin
+  tmpVar:= TxpEleVar.Create;
+  tmpVar.name := nam;
+  tmpVar.typ := typ;
+  tmpVar.solAdr := -1;
+  tmpVar.solBit := -1;
+  varFields.Add(tmpVar);  //agrega
+  Result := tmpVar;
 end;
 //Rutinas de Gestión de memoria
 function TGenCodPic.GetAuxRegisterByte: TPicRegister;
@@ -1102,6 +1117,8 @@ begin
   varStkByte.typ := typByte;
   varStkWord := TxpEleVar.Create;
   varStkWord.typ := typWord;
+  //Crea lista de variables temporales
+  varFields:= TxpEleVars.Create(true);
   //Inicializa contenedores
   listRegAux := TPicRegister_list.Create(true);
   listRegStk := TPicRegister_list.Create(true);
@@ -1135,6 +1152,7 @@ begin
   listRegStkBit.Destroy;
   listRegStk.Destroy;
   listRegAux.Destroy;
+  varFields.Destroy;
   varStkBit.Destroy;
   varStkByte.Destroy;
   varStkWord.Destroy;

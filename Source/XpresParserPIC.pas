@@ -86,7 +86,8 @@ end;
 { TCompilerBase }
 {Clase base para crear al objeto compilador}
 TCompilerBase = class
-private
+protected
+  procedure IdentifyField(xOperand: TOperand);
   procedure LogExpLevel(txt: string);
 protected  //Eventos del compilador
   OnExprStart: procedure of object;  {Se genera al iniciar la
@@ -116,6 +117,7 @@ protected  //Eventos del compilador
   function CreateSysFunction(funName: string; proc: TProcExecFunction): TxpEleFun;
   procedure CaptureParamsFinal(fun: TxpEleFun);
   function CaptureTok(tok: string): boolean;
+  function CaptureStr(str: string): boolean;
   procedure CaptureParams;
   //Manejo del cuerpo del programa
   function CreateBody: TxpEleBody;
@@ -171,6 +173,7 @@ public //Tipos adicionales de tokens
   tnAsm      : integer;
   tnExpDelim : integer;
   tnBlkDelim : integer;
+  tnChar     : integer;
   tnOthers   : integer;
 public
   xLex   : TSynFacilSyn; //resaltador - lexer
@@ -365,21 +368,6 @@ begin
   listFunSys.Add(fun);  //Las funciones de sistema son accesibles siempre
   Result := fun;
 end;
-//procedure TCompilerBase.CreateParam(fun: TxpEleFun; parName: string;
-//  typStr: string);
-////Crea un parámetro para una función
-//var
-//  typ : TType;
-//begin
-//  //busca tipo
-//  typ := FindType(typStr);
-//  if typ = nil then begin
-//    GenError('Undefined type "%s"', [typStr]);
-//    exit;
-//  end;
-//  //agrega
-//  fun.CreateParam(parName, typ);
-//end;
 function TCompilerBase.CaptureTok(tok: string): boolean;
 {Toma el token indicado del contexto de entrada. Si no lo encuentra, genera error y
 devuelve FALSE.}
@@ -387,6 +375,17 @@ begin
   //Debe haber parámetros
   if cIn.tok<>tok then begin
     GenError('"%s" expected.', [tok]);
+    exit(false);
+  end;
+  cin.Next;
+  exit(true);
+end;
+function TCompilerBase.CaptureStr(str: string): boolean;
+//Similar a CaptureTok(), pero para cadenas. Se debe dar el texto en minúscula.
+begin
+  //Debe haber parámetros
+  if cIn.tokL<>str then begin
+    GenError('"%s" expected.', [str]);
     exit(false);
   end;
   cin.Next;
@@ -473,12 +472,43 @@ begin
   uni.name := uniName;
   Result := uni;
 end;
-
 //Manejo de expresiones
+procedure TCompilerBase.IdentifyField(xOperand: TOperand);
+{Identifica el campo de una variable. Si encuentra algún problema genera error.
+Notar que el parámetro es por valor, es decir, se crea una copia, por seguridad.
+Puede generar código de evaluación. Devuelve el resultado en "res". }
+var
+  field: TTypField;
+  identif: String;
+begin
+  cIn.Next;    //TOma el "."
+  if (cIn.tokType<>tnIdentif) and (cIn.tokType<>tnNumber) then begin
+    GenError('Identifier expected.');
+    exit;
+  end;
+  //Hay un identificador
+  identif :=  cIn.tokL;
+  //Prueba con campos del tipo
+  for field in xOperand.typ.fields do begin
+    if LowerCase(field.Name) = identif then begin
+      //Encontró el campo
+      field.proc(@xOperand);  //Devuelve resultado en "res"
+      cIn.Next;    //Coge identificador
+      if cIn.tok = '.' then begin
+        //Aún hay más campos, seguimos procesando
+        //Como "IdentifyField", crea una copia del parámetro, no hay cruce con el resultado
+        IdentifyField(res);
+      end;
+      exit;
+    end;
+  end;
+  //No encontró
+  GenError('Unknown identifier: %s', [identif]);
+end;
 function TCompilerBase.GetOperand: TOperand;
 {Parte de la funcion analizadora de expresiones que genera codigo para leer un operando.
-Debe devolver el tipo del operando y también el valor (obligatorio para el caso
-de intérpretes y opcional para compiladores)}
+Debe devolver el tipo del operando y también el valor. En algunos casos, puede modificar
+"res".}
 var
   xcon: TxpEleCon;
   xvar: TxpEleVar;
@@ -490,6 +520,7 @@ var
   opr: TxpOperator;
   Found: Boolean;
   posFlash: Integer;
+  cod: Longint;
 begin
   ClearError;
   SkipWhites;
@@ -499,6 +530,20 @@ begin
     {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if HayError then exit;  //verifica
+    cIn.Next;    //Pasa al siguiente
+  end else if cIn.tokType = tnChar then begin  //constante caracter
+    Result.catOp:=coConst;       //constante es Mono Operando
+    {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
+    if not TryStrToInt(copy(cIn.tok, 2), cod) then begin
+      GenError('Error in character.');   //tal vez, sea muy grande
+      exit;
+    end;
+    if (cod<0) or (cod>255) then begin
+      GenError('Invalid code for char.');
+      exit;
+    end;
+    Result.valInt := cod;
+    Result.typ := typChar;
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tokType = tnString then begin  //constante cadena
     Result.catOp:=coConst;       //constante es Mono Operando
@@ -545,6 +590,7 @@ begin
       //es una variable
       xvar := TxpEleVar(ele);
       if FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
+      cIn.Next;    //Pasa al siguiente
       if xvar.IsRegister then begin
         //Es una variables REGISTER
         Result.catOp:=coExpres;
@@ -552,21 +598,33 @@ begin
         //Faltaría asegurarse de que los registros estén disponibles
         Result.DefineRegister;
       end else begin
+        //Es una variable común
         Result.catOp:=coVariab;    //variable
         Result.typ:=xvar.typ;
         Result.rVar:=xvar;   //guarda referencia a la variable
+        {$IFDEF LogExpres} Result.txt:= xvar.name; {$ENDIF}   //toma el texto
+        //Verifica si tiene referencia a campos con "."
+        if cIn.tok = '.' then begin
+          IdentifyField(Result);
+          Result := res;  //notar que se usa "res".
+          if HayError then exit;;
+        end;
       end;
-      {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
-      cIn.Next;    //Pasa al siguiente
     end else if ele.elemType = eltCons then begin  //es constante
       //es una constante
       xcon := TxpEleCon(ele);
       if FirstPass then Inc(xcon.nCalled);  //lleva la cuenta
+      cIn.Next;    //Pasa al siguiente
       Result.catOp:=coConst;    //constante
       Result.typ:=xcon.typ;
       Result.GetConsValFrom(xcon);  //lee valor
-      {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
-      cIn.Next;    //Pasa al siguiente
+      {$IFDEF LogExpres} Result.txt:= xcon.name; {$ENDIF}   //toma el texto
+      //Verifica si tiene referencia a campos con "."
+      if cIn.tok = '.' then begin
+        IdentifyField(Result);
+        Result := res;  //notar que se usa "res".
+        if HayError then exit;;
+      end;
     end else if ele.elemType = eltFunc then begin  //es función
       {Se sabe que es función, pero no se tiene la función exacta porque puede haber
        versiones, sobrecargadas de la misma función.}

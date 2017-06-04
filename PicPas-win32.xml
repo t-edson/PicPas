@@ -24,14 +24,14 @@
     <cTxtPan Val="0"/>
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.6\temp\NewFile1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.6\TestCode\Operations\TestBit.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.6\TestCode\Operations\TestWord1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.6\TestCode\Operations\TestStructs2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.6\TestCode\Operations\TestStructs1.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test4_Asm.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test2_Byte2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test2_Byte1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test2_Bit.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test1_Vars.pas
 "/>
   </Edit>
-  <viewMode Val="2"/>
+  <viewMode Val="0"/>
   <IncHeadMpu Val="False"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>

@@ -100,15 +100,25 @@ type  //tipos enumerados
   end;
 
   TxpOperators = specialize TFPGObjectList<TxpOperator>; //lista de operadores
+  {Evento para llamar al código de procesamiento de un campo.
+  "OpPtr" debería ser "TOperand", pero aún no se define "TOperand".}
+  TTypFieldProc = procedure(const OpPtr: pointer) of object;
+
+  TTypField = class
+    Name : string;  //Nombre del campo
+    proc : TTypFieldProc;  //rutina de procesamiento
+  end;
+  TTypFields = specialize TFPGObjectList<TTypField>;
 
   { TType }
-  //"Tipos de datos"
+  {Tipos de datos básicos. Notar que esta calse define a los tipos básicos del lenguaje,
+   no a los tipos predefinidos.}
   TType = class
   public
     name : string;      //nombre del tipo ("int8", "int16", ...)
     cat  : TCatType;    //categoría del tipo (numérico, cadena, etc)
     size : smallint;    //tamaño en bytes del tipo
-    function SaveToStk: boolean;
+    procedure SaveToStk;
     procedure DefineRegister;
   public   //Eventos
     {Este evento es llamado automáticamente por el Analizador de expresiones,
@@ -139,6 +149,10 @@ type  //tipos enumerados
     function FindBinaryOperator(const OprTxt: string): TxpOperator;
     function FindUnaryPreOperator(const OprTxt: string): TxpOperator;
     function FindUnaryPostOperator(const OprTxt: string): TxpOperator;
+  public  //Manejo de campos
+    fields: TTypFields;   {lista de métodos del tipo. Se define como lista dinámica,
+                                 para permitir agregar nuevos métodos a los tipos básicos.}
+    procedure CreateField(metName: string; proc: TTypFieldProc);
   public   //Inicialización
     constructor Create;
     destructor Destroy; override;
@@ -202,7 +216,7 @@ begin
   inherited Destroy;
 end;
 { TxpType }
-function TType.SaveToStk: boolean;
+procedure TType.SaveToStk;
 begin
   if OnSaveToStk<>nil then OnSaveToStk;
 end;
@@ -314,12 +328,27 @@ begin
   Result.txt := OprTxt;    //para que sepa el operador leído
 end;
 
+procedure TType.CreateField(metName: string; proc: TTypFieldProc);
+{Crea una función del sistema. A diferencia de las funciones definidas por el usuario,
+una función del sistema se crea, sin crear espacios de nombre. La idea es poder
+crearlas rápidamente.}
+var
+  fun : TTypField;
+begin
+  fun := TTypField.Create;  //Se crea como una función normal
+  fun.Name := metName;
+  fun.proc := proc;
+//no verifica duplicidad
+  fields.Add(fun);
+end;
 constructor TType.Create;
 begin
   Operators := TxpOperators.Create(true);  //crea contenedor de Contextos, con control de objetos.
+  fields:= TTypFields.Create(true);
 end;
 destructor TType.Destroy;
 begin
+  fields.Destroy;
   Operators.Free;
   inherited Destroy;
 end;

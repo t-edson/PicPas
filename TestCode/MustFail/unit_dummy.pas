@@ -1,5 +1,5 @@
 {Description of the unit.}
-unit other_name;
+unit unit_dummy;
 interface
   
 implementation

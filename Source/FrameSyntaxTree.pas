@@ -84,7 +84,7 @@ procedure TfraSyntaxTree.SetLanguage(idLang: string);
 {Fija el lenguaje de acuerdo al valor de Globales.curLang}
 begin
   curLang := idLang;
-  {$I ..\tra_FrameSyntaxTree.pas}
+  {$I ..\language\tra_FrameSyntaxTree.pas}
   Refresh;
 end;
 procedure TfraSyntaxTree.frmArcExplor1DoubleClickFile(nod: TExplorNode);
@@ -408,4 +408,5 @@ begin
 end;
 
 end.
+
 

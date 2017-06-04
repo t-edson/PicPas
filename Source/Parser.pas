@@ -77,11 +77,15 @@ implementation
 var
   ER_NOT_IMPLEM_, ER_IDEN_EXPECT, ER_DUPLIC_IDEN, ER_INVAL_FLOAT: string;
   ER_ERR_IN_NUMB, ER_NOTYPDEFNUM, ER_UNDEF_TYPE_: string;
-  ER_INV_MAD_DEV, ER_EXP_VAR_IDE, ER_INV_MEMADDR, ER_UNKNOWN_ID_: string;
+  ER_INV_MAD_DEV, ER_EXP_VAR_IDE, ER_INV_MEMADDR, ER_BIT_VAR_REF: String;
+  ER_UNKNOWN_ID_: string;
   ER_IDE_CON_EXP, ER_NUM_ADD_EXP, ER_IDE_TYP_EXP, ER_SEM_COM_EXP: String;
   ER_EQU_COM_EXP, ER_END_EXPECTE, ER_EOF_END_EXP, ER_BOOL_EXPECT: String;
   ER_UNKN_STRUCT, ER_PROG_NAM_EX, ER_COMPIL_PROC, ER_CON_EXP_EXP: String;
-  ER_ERROR_DIREC, ER_UNKNO_DIREC, ER_UNKNO_DEVIC, ER_NOT_AFT_END: String;
+  ER_ERROR_DIREC, ER_UNKNO_DIREC, ER_UNKNO_DEVIC, ER_NOT_AFT_END,
+  ER_ELS_UNEXPEC : String;
+  ER_INST_NEV_EXE, ER_MODE_UNKNOWN, ER_ONLY_ONE_REG: String;
+  ER_VARIAB_EXPEC, ER_ONL_BYT_WORD, ER_ASIG_EXPECT: String;
 
 //Funciones básicas
 procedure SetLanguage(idLang: string);
@@ -96,6 +100,7 @@ begin
   ER_NOTYPDEFNUM := trans('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.','','');
   ER_UNDEF_TYPE_ := trans('Undefined type "%s"', 'Tipo "%s" no definido.','','');
   ER_INV_MEMADDR := trans('Invalid memory address.', 'Dirección de memoria inválida.','','');
+  ER_BIT_VAR_REF := trans('A bit variable reference expected.', 'Se esreraba referencia a una variable bit.','','');
   ER_INV_MAD_DEV := trans('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.','','');
   ER_EXP_VAR_IDE := trans('Identifier of variable expected.', 'Se esperaba identificador de variable.','','');
   ER_UNKNOWN_ID_ := trans('Unknown identifier: %s', 'Identificador desconocido: %s','','');
@@ -117,6 +122,14 @@ begin
   ER_UNKNO_DIREC := trans('Unknown directive: %s', 'Directiva desconocida: %s','','');
   ER_UNKNO_DEVIC := trans('Unknown device: %s', 'Dispositivo desconocido: %s','','');
   ER_NOT_AFT_END := trans('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."','','');
+  ER_ELS_UNEXPEC := trans('"else" unexpected.', '"else" inesperado', '', '');
+  ER_INST_NEV_EXE:= trans('Instruction will never execute.', 'Esta instrucción no se ejecutará', '', '');
+  ER_MODE_UNKNOWN:= trans('Mode unknown: %s', 'Modo inválido', '', '');
+  ER_ONLY_ONE_REG:= trans('Only one REGISTER parameter is allowed.', 'Solo se permite un parámetro REGISTER.', '', '');
+  ER_VARIAB_EXPEC:= trans('Variable expected.', 'Se esperaba Variable', '', '');
+  ER_ONL_BYT_WORD:= trans('Only BYTE or WORD index is allowed in FOR.',
+                          'Solo variables Byte o Word son permitidas.', '', '');
+  ER_ASIG_EXPECT := trans('":=" expected.', 'Se esperaba ":="', '', '');
 //  ER_NOT_IMPLEM_ := trans('"begin" expected.', 'Se esperaba "begin".','','');
 //  ER_NOT_IMPLEM_ := trans('"do" expected.', 'Se esperaba "do".','','');
 //  ER_NOT_IMPLEM_ := trans('"then" expected.', 'Se esperaba "then"','','');
@@ -135,7 +148,7 @@ begin
 end;
 procedure TCompiler.ResetFlashAndRAM;
 {Reinicia el dispositivo, para empezar a escribir en la posición $000 de la FLASH, y
-en laposición inicial de la RAM.}
+en la posición inicial de la RAM.}
 begin
   pic.iFlash := 0;  //Ubica puntero al inicio.
   pic.ClearMemRAM;  //Pone las celdas como no usadas y elimina nombres.
@@ -261,7 +274,7 @@ begin
         end else if txtMode = 'PASCAL' then begin
           self.mode := modPascal;
         end else begin
-          GenError('Mode unknown: %s', [txtMode]);
+          GenError(ER_MODE_UNKNOWN, [txtMode]);
           exit;
         end;
       end;
@@ -285,7 +298,7 @@ begin
   if cIn.tokL <> 'end' then begin  //verifica si termina el programa
     if cIn.tokL = 'else' then begin
       //Precisa un poco más en el error
-      GenError('"else" unexpected.');
+      GenError(ER_ELS_UNEXPEC);
       exit;       //sale
     end else begin
       GenError(ER_END_EXPECTE);
@@ -318,7 +331,7 @@ begin
     exit;
   end;
   if not TreeElems.AddElement(xvar) then begin
-    GenErrorPos('Duplicated identifier: "%s"', [xvar.name], xvar.srcDec);
+    GenErrorPos(ER_DUPLIC_IDEN, [xvar.name], xvar.srcDec);
     xvar.Destroy;   //Hay una variable creada
     exit;
   end;
@@ -365,7 +378,7 @@ begin
       //Valida el tipo
       typ := FindType(parType);
       if typ = nil then begin
-        GenError('Undefined type "%s"', [parType]);
+        GenError(ER_UNDEF_TYPE_, [parType]);
         exit;
       end;
       //Ya tiene los nombres y el tipo
@@ -375,7 +388,7 @@ begin
         if IsRegister then begin
           //Parámetro REGISTER. Solo puede haber uno
           if high(itemList)>0 then begin
-            GenErrorPos('Only one register parameter is allowed.', [], srcPosArray[1]);
+            GenErrorPos(ER_ONLY_ONE_REG, [], srcPosArray[1]);
             exit;
           end;
           {Crea como variable absoluta a una posición cualquiera porque esta variable,
@@ -407,10 +420,7 @@ begin
       end;
     until false;
     //busca paréntesis final
-    if cIn.tok<>')' then begin
-      GenError('")" expected.'); exit;
-    end;
-    cin.Next;
+    if not CaptureTok(')') then exit;
   end;
 end;
 function TCompiler.CompileBody(GenCode: boolean = true): boolean;
@@ -431,7 +441,7 @@ begin
   end else begin
     //Este modo no generará instrucciones
     cIn.SkipWhites;
-    GenWarn('Instruction will never execute.');
+    GenWarn(ER_INST_NEV_EXE);
     if mode = modPascal then begin
       //En modo Pascal se espera una instrucción
       CompileInstructionDummy //solo para mantener la sintaxis
@@ -450,11 +460,7 @@ begin
   Result := true;   //por defecto
   if mode = modPicPas then begin
     //En modo PicPas, debe haber un delimitador de bloque
-    if cIn.tokL <> 'end' then begin
-      GenError('END expected.');
-      exit(false);
-    end;
-    cIn.Next;
+    if not CaptureStr('end') then exit(false);
   end;
 end;
 function TCompiler.GetExpressionBool: boolean;
@@ -475,11 +481,7 @@ var
   jFALSE, jEND_TRUE: integer;
 begin
   if not GetExpressionBool then exit;
-  if cIn.tokL<>'then' then begin
-    GenError('"then" expected.');
-    exit;
-  end;
-  cIn.Next;   //toma "then"
+  if not CaptureStr('then') then exit; //toma "then"
   //Aquí debe estar el cuerpo del "if"
   case res.catOp of
   coConst: begin  //la condición es fija
@@ -489,11 +491,7 @@ begin
       while cIn.tokL = 'elsif' do begin
         cIn.Next;   //toma "elsif"
         if not GetExpressionBool then exit;
-        if cIn.tokL<>'then' then begin
-          GenError('"then" expected.');
-          exit;
-        end;
-        cIn.Next;   //toma "then"
+        if CaptureStr('then') then exit;  //toma "then"
         //Compila el cuerpo pero sin cósigo
         if not CompileBody(false) then exit;
       end;
@@ -595,11 +593,7 @@ begin
   CompileCurBlock;
   if HayError then exit;
   cIn.SkipWhites;
-  if cIn.tokL<>'until' then begin
-    GenError('"until" expected.');
-    exit;
-  end;
-  cIn.Next;   //toma "until"
+  if not CaptureStr('until') then exit; //toma "until"
   if not GetExpressionBool then exit;
   case res.catOp of
   coConst: begin  //la condición es fija
@@ -625,11 +619,7 @@ var
 begin
   l1 := _PC;        //guarda dirección de inicio
   if not GetExpressionBool then exit;
-  if cIn.tokL<>'do' then begin
-    GenError('"do" expected.');
-    exit;
-  end;
-  cIn.Next;   //toma "do"
+  if not CaptureStr('do') then exit;  //toma "do"
   //aquí debe estar el cuerpo del "while"
   case res.catOp of
   coConst: begin  //la condición es fija
@@ -666,18 +656,18 @@ var
 begin
   Op1 :=  GetOperand;
   if Op1.catOp <> coVariab then begin
-    GenError('Variable expected.');
+    GenError(ER_VARIAB_EXPEC);
     exit;
   end;
   if HayError then exit;
   if (Op1.typ<>typByte) and (Op1.typ<>typWord) then begin
-    GenError('Only BYTE or WORD index is allowed in FOR.');
+    GenError(ER_ONL_BYT_WORD);
     exit;
   end;
   SkipWhites;
   opr1 := GetOperator(Op1);   //debe ser ":="
   if opr1.txt <> ':=' then begin
-    GenError('":=" expected.');
+    GenError(ER_ASIG_EXPECT);
     exit;
   end;
   GetExpressionE(0);
@@ -685,20 +675,12 @@ begin
   //Ya se tiene la asignación inicial
   Oper(Op1, opr1, res);   //codifica asignación
   if HayError then exit;
-  if cIn.tokL <> 'to' then begin
-    GenError('"to" expected.');
-    exit;
-  end;
-  cIn.Next;
+  if not CaptureStr('to') then exit;
   //Toma expresión Final
   GetExpressionE(0);
   if HayError then exit;
   cIn.SkipWhites;
-  if cIn.tokL<>'do' then begin
-    GenError('"do" expected.');
-    exit;
-  end;
-  cIn.Next;   //toma "do"
+  if not CaptureStr('do') then exit;  //toma "do"
   //Aquí debe estar el cuerpo del "for"
   if (res.catOp = coConst) or (res.catOp = coVariab) then begin
     //Es un for con valor final de tipo constante
@@ -858,7 +840,7 @@ begin
       cons := CreateCons(consNames[i], res.typ);
       cons.srcDec := srcPosArray[i];  //guarda punto de declaración
       if not TreeElems.AddElement(cons) then begin
-        GenErrorPos('Duplicated identifier: "%s"', [cons.name], cons.srcDec);
+        GenErrorPos(ER_DUPLIC_IDEN, [cons.name], cons.srcDec);
         cons.Destroy;   //hay una constante creada
         exit;
       end;
@@ -881,7 +863,7 @@ var
   absBit: integer;
   Number: TOperand;  //para ser es usado por las subrutinas
 
-  procedure CheckAbsoluteBit;
+  procedure CheckVarField;
   {Extrae la parte del bit de una dirección absoluta. Actualiza "absBit"}
   begin
     if not CaptureTok('.') then exit;
@@ -969,7 +951,7 @@ var
         end;
         cIn.Next;    //Pasa al siguiente
         if IsBit then begin
-          CheckAbsoluteBit;  //es un boolean, debe especificarse el bit
+          CheckVarField;  //es un boolean, debe especificarse el bit
           if HayError then exit;  //verifica
         end;
       end;
@@ -983,19 +965,45 @@ var
       if elem is TxpEleVar then begin
         //Es variable
         xvar := TxpEleVar(elem);
-        absAddr := xvar.AbsAddr;  //debe ser absoluta
-        if absAddr = ADRR_ERROR then begin
-          GenError('Internal Error: TxpEleVar.AbsAddr.');
-          exit;
-        end;
       end else begin
         GenError(ER_EXP_VAR_IDE);
         exit;
       end;
       cIn.Next;    //Pasa al siguiente
+      //Ya se tiene la variable en "xvar". Pero podría haber campos.
+      if cIn.tok = '.' then begin
+        //Hay identificador de campo
+        //Lo pone como operando, para usar IdentifyField()
+        res.catOp:=coVariab;    //variable
+        res.typ:=xvar.typ;
+        res.rVar:=xvar;   //guarda referencia a la variable
+        IdentifyField(res);  //Puede estar creado variables temporales
+        if HayError then exit;
+        //El resultado se devuelve en "res"
+        if res.catOp <> coVariab then begin
+          GenError(ER_EXP_VAR_IDE);
+          exit;
+        end;
+        xvar := res.rVar;  //actualiza referencia
+      end;
+      //Ya tiene la variable en "res".
       if IsBit then begin
-        CheckAbsoluteBit;  //es un boolean o bit, debe especificarse el bit
-        if HayError then exit;  //verifica
+        //Se pide una dirección de bit
+        if (xvar.typ <> typBit) and (xvar.typ <> typBool) then begin
+          //Se esperaba una variable BIT
+          GenError(ER_BIT_VAR_REF);
+          exit;
+        end;
+        absAddr := xvar.AbsAddr;  //debe ser absoluta
+        absBit := xvar.adrBit.bit;
+      end else begin
+        //Se pide una dirección normal
+        absAddr := xvar.AbsAddr;  //debe ser absoluta
+      end;
+      if absAddr = ADRR_ERROR then begin
+        //No se implemento el tipo. No debería pasar.
+        GenError('Internal Error: TxpEleVar.AbsAddr.');
+        exit;
       end;
     end else begin   //error
       GenError(ER_NUM_ADD_EXP);
@@ -1033,7 +1041,7 @@ begin
     //Valida el tipo
     typ := FindType(varType);
     if typ = nil then begin
-      GenError('Undefined type "%s"', [varType]);
+      GenError(ER_UNDEF_TYPE_, [varType]);
       exit;
     end;
     //verifica si tiene dirección absoluta
@@ -1189,11 +1197,7 @@ begin
     cIn.Next;  //toma "begin"
     CompileCurBlock;   //llamada recursiva
     if HayError then exit;
-    if cIn.tokL<>'end' then begin
-      GenError(ER_END_EXPECTE);
-      exit;
-    end;
-    cIn.Next;  //toma "end"
+    if not CaptureStr('end') then exit;
     ProcComments;
     //puede salir con error
   end else begin

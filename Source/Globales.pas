@@ -50,10 +50,21 @@ const
 function Trans(const strEn, strEs, strQu, strDe: string): string;
 begin
   case curLang of
-  'en': Result := strEn;
-  'es': Result := strEs;
-  'qu': Result := strQu;
-  'de': Result := strDe;
+  'en': begin
+     Result := strEn;
+  end;
+  'es': begin
+     Result := strEs;
+     if Result = '' then Result := strEn;
+  end;
+  'qu': begin
+     Result := strQu;
+     if Result = '' then Result := strEs;
+  end;  //por defecto
+  'de': begin
+     Result := strDe;
+     if Result = '' then Result := strEn;
+  end;  //por defecto
   else
     Result := strEn;
   end;

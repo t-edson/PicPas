@@ -173,7 +173,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.2;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.7;..\..\_Librerias\Xpres-1.3;..\..\_Librerias\UtilsGrilla 0.8"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.2;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.8;..\..\_Librerias\Xpres-1.3;..\..\_Librerias\UtilsGrilla 0.8"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

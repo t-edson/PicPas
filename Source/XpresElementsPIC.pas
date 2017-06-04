@@ -18,7 +18,7 @@ type
   en otra unidad. Pero se ponen aquí porque son pocos.
   La idea es que sean simples contenedores de direcciones físicas. En un inicio se pensó
   declararlos como RECORD por velocidad (para no usar memoria dinámica), pero dado que no
-  se tienen requerimientos altos de velocidad en PicPas, se delcaran como clases. }
+  se tienen requerimientos altos de velocidad en PicPas, se declaran como clases. }
   //Tipo de registro
   TPicRegType = (prtWorkReg,   //de trabajo
                  prtAuxReg,    //auxiliar

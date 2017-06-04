@@ -269,7 +269,7 @@ procedure TfraEditView.SetLanguage(idLang: string);
 begin
   lang := idLang;
   curLang := idLang;
-  {$I ..\tra_FrameEditView.pas}
+  {$I ..\language\tra_FrameEditView.pas}
 end;
 procedure TfraEditView.RefreshTabs;
 begin
