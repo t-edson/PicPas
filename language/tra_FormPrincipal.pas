@@ -1,25 +1,25 @@
 //Main menu
- mnFile.Caption :=Trans('&File'  , '&Archivo'     , '', '&Datei');
- mnEdit.Caption :=Trans('&Edit'  , '&Edición'     , '', '&Bearbeiten');
- mnFind.Caption :=Trans('&Search', '&Buscar'      , '', '&Suchen');
- mnView.Caption :=Trans('&View'  , '&Ver'         , '', '&Ansicht');
- mnTools.Caption:=Trans('&Tools' , '&Herramientas', '','&Werkzeuge');
+ mnFile.Caption :=Trans('&File'  , '&Archivo'     , '&Khipu'       , '&Datei');
+ mnEdit.Caption :=Trans('&Edit'  , '&Edición'     , '&Allichay'    , '&Bearbeiten');
+ mnFind.Caption :=Trans('&Search', '&Buscar'      , '&Maskhay'     , '&Suchen');
+ mnView.Caption :=Trans('&View'  , '&Ver'         , '&Qhaway'      , '&Ansicht');
+ mnTools.Caption:=Trans('&Tools' , '&Herramientas', '&Llamkanakuna','&Werkzeuge');
  //File Actions
- acArcNewFile.Caption := Trans('New &File'   , 'Nuevo &Archivo'   , 'Musuq &Khipu','&Neu');
- acArcNewFile.Hint    := Trans('New File'    , 'Nuevo Archivo'    , 'Musuq Khipu' ,'Neue Datei');
- acArcNewProj.Caption := Trans('New &Project', 'Nuevo &Proyecto'  , ''            ,'');
- acArcNewProj.Hint    := Trans('New &Project', 'Nuevo Proyecto'   , ''            ,'');
- acArcOpen.Caption    := Trans('&Open...'    , '&Abrir...'        , '&Kichay'     ,'&Öffnen...');
- acArcOpen.Hint       := Trans('Open file'   , 'Abrir archivo'    , ''            , 'Datei öffnen');
- acArcSave.Caption    := Trans('&Save'       , '&Guardar'         , ''            , '&Speichern');
- acArcSave.Hint       := Trans('Save file'   , 'Guardar archivo'  , ''            , 'Datei speichern');
- acArcSaveAs.Caption  := Trans('Sa&ve As...' , 'G&uardar Como...' , ''            , 'Speichern &unter ...');
- acArcSaveAs.Hint     := Trans('Save file as...', 'Guardar como...',''            ,'Datei mit unter neuem Namen speichern ...');
- acArcCloseFile.Caption:=Trans('&Close File' , '&Cerrar archivo'  , ''            , '');
- acArcCloseProj.Caption:=Trans('Close Project', 'Cerrar Proyecto' , ''            , '');
- mnSamples.Caption    := Trans('Samples'     , 'Ejemplos'         , ''            , '');
- acArcQuit.Caption    := Trans('&Quit'       , '&Salir'           , ''            , '&Beenden');
- acArcQuit.Hint       := Trans('Close the program','Cerrar el programa', ''       , 'Programm beenden'); 
+ acArcNewFile.Caption := Trans('New &File'   , 'Nuevo &Archivo'   , 'Musuq &Khipu'   ,'&Neu');
+ acArcNewFile.Hint    := Trans('New File'    , 'Nuevo Archivo'    , 'Musuq Khipu'    , 'Neue Datei');
+ acArcNewProj.Caption := Trans('New &Project', 'Nuevo &Proyecto'  , 'Musuq &Proyecto'            ,'');
+ acArcNewProj.Hint    := Trans('New &Project', 'Nuevo Proyecto'   , 'Musuq Proyecto'            ,'');
+ acArcOpen.Caption    := Trans('&Open...'    , '&Abrir...'        , 'K&ichay'        ,'&Öffnen...');
+ acArcOpen.Hint       := Trans('Open file'   , 'Abrir archivo'    , 'Khiputa kichay' , 'Datei öffnen');
+ acArcSave.Caption    := Trans('&Save'       , '&Guardar'         , '&Waqaychay'     , '&Speichern');
+ acArcSave.Hint       := Trans('Save file'   , 'Guardar archivo'  , 'Khiputa waqaychay', 'Datei speichern');
+ acArcSaveAs.Caption  := Trans('Sa&ve As...' , 'G&uardar Como...' , 'Kay hinata &waqaychay'            , 'Speichern &unter ...');
+ acArcSaveAs.Hint     := Trans('Save file as...', 'Guardar como...','Kay hinata waqaychay'            ,'Datei mit unter neuem Namen speichern ...');
+ acArcCloseFile.Caption:=Trans('&Close File' , '&Cerrar archivo'  , 'Khiputa wi&sqay'            , '');
+ acArcCloseProj.Caption:=Trans('Close Project', 'Cerrar Proyecto' , 'Proyectota wisqay'            , '');
+ mnSamples.Caption    := Trans('Samples'     , 'Ejemplos'         , 'Qhawarinakuna'            , '');
+ acArcQuit.Caption    := Trans('&Quit'       , '&Salir'           , 'Ll&uqsiy'            , '&Beenden');
+ acArcQuit.Hint       := Trans('Close the program','Cerrar el programa', 'Programata wi&sqay'       , 'Programm beenden'); 
  //Edit Actions
  acEdUndo.Caption     := Trans('&Undo'       , '&Deshacer'        , '', '&Zurück');
  acEdUndo.Hint        := Trans('Undo'        , 'Deshacer'         , '', 'Änderung zurücknehmen');
