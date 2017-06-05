@@ -547,7 +547,7 @@ begin
   //Configura múltiples cursores
   fMultiCaret := TSynPluginMultiCaret.Create(self);
   with fMultiCaret do begin
-    Editor := ed.SynEdit;//Here what's you missed It's worked for me great.
+    Editor := ed.SynEdit;
     with KeyStrokes do begin
       with Add do begin
         Command    := ecPluginMultiCaretSetCaret;
