@@ -24,19 +24,21 @@
     <cTxtPan Val="0"/>
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test4_Asm.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test2_Byte2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test2_Byte1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test2_Bit.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.6.7\TestCode\Operations\Test1_Vars.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.8\TestCode\Operations\Test4_Asm.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.8\TestCode\Operations\Test2_Word2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.8\samples\LCD_test\LCD_test.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.8\samples\Multiplicación_ASM.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.8\TestCode\Operations\Test2_Word1.pas
 "/>
   </Edit>
-  <viewMode Val="0"/>
-  <IncHeadMpu Val="False"/>
+  <viewMode Val="2"/>
+  <IncHeadMpu Val="True"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>
   <IncAddress Val="True"/>
   <IncComment Val="True"/>
+  <IncComment2 Val="False"/>
   <ExcUnused Val="True"/>
+  <ShowErMsg Val="False"/>
   <OptimLev Val="1"/>
 </CONFIG>

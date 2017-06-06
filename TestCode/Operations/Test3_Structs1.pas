@@ -360,7 +360,7 @@ begin
   repeat
     bien;
     inc(a);
-  until a>1
+  until a>1;
   if a<>2 then mal; end;
 
   //////////////////////////////////////////////////////////

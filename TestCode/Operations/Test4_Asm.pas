@@ -10,6 +10,8 @@ var
   vbit: bit;
 var
   abyte: byte absolute $20;
+const
+	CBYTE = 3; 
 
   procedure bien;
   begin
@@ -103,6 +105,20 @@ end
   end
   if vbit=0 then bien else mal; 
 	
+	//constant access
+  vbyte := 0;
+  asm 
+    MOVLW CBYTE 
+    MOVWF vbyte
+  end
+  if vbyte = CBYTE then bien else mal; 
+
+  vbyte := 0;
+  asm 
+    BSF vbyte, CBYTE
+  end
+  if vbyte = 8 then bien else mal; 
+
 	//jumps
   asm 
     GOTO $+2
@@ -112,7 +128,7 @@ end
 	vbyte := 10;
   asm 
     DECFSZ vbyte, f
-    GOTO $-2
+    GOTO $-1
   end
   if vbit=0 then bien else mal; 
 
@@ -123,5 +139,6 @@ end
     GOTO label1
   end
   if vbit=0 then bien else mal; 
-
+  asm org $ end
+  vbit := 1;
 end.

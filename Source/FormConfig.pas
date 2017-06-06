@@ -29,6 +29,8 @@ type
     BitAplicar: TBitBtn;
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
+    chkShowErrMsg: TCheckBox;
+    chkIncComment2: TCheckBox;
     chkLoadLast: TCheckBox;
     chkExcUnus: TCheckBox;
     chkIncDecVar: TCheckBox;
@@ -75,7 +77,7 @@ type
     property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
     property ViewSynTree: boolean read FViewSynTree write SetViewSynTree;
   public
-    //Configuración de vista
+    //Configuración generales
     viewMode  : TTreeViewMode;
     //Configuraciones para ensamblador
     IncHeadMpu: boolean;  //Incluye encabezado con información del MPU
@@ -83,8 +85,10 @@ type
     VarDecType: TVarDecType;  //tipo de declaración de variables
     IncAddress: boolean;  //Incluye dirección física en el código desensamblado
     IncComment: boolean;  //Incluye comentarios en el código desensamblado
+    IncComment2: boolean;  //Incluye comentarios detallados en el código desensamblado
     ExcUnused : boolean;
-    //Configuracions para Salida
+    //Configuracions del compilador
+    ShowErMsg: boolean;
     OptimLev : TOptimLev;
     procedure ConfigEditor(ed: TSynEdit);
   public
@@ -147,8 +151,10 @@ begin
   cfgFile.Asoc_Enum('VarDecType',@VarDecType, Sizeof(TVarDecType), RadioGroup2, 1);
   cfgFile.Asoc_Bol('IncAddress', @IncAddress, chkIncAddress, true);
   cfgFile.Asoc_Bol('IncComment', @IncComment, chkIncComment, false);
+  cfgFile.Asoc_Bol('IncComment2',@IncComment2,chkIncComment2, false);
   cfgFile.Asoc_Bol('ExcUnused' , @ExcUnused , chkExcUnus, false);
-  //Configuraciones de salida
+  //Configuraciones del compilador
+  cfgFile.Asoc_Bol('ShowErMsg', @ShowErMsg, chkShowErrMsg, true);
   cfgFile.Asoc_Enum('OptimLev',@OptimLev, Sizeof(TOptimLev), grpOptimLev, 1);
   //////////////////////////////////////////////////
   cfgFile.OnPropertiesChanges := @cfgFilePropertiesChanges;

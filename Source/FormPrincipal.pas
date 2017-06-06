@@ -20,9 +20,9 @@ type
     acArcSave: TAction;
     acArcNewFile: TAction;
     acArcQuit: TAction;
-    acBusBuscar: TAction;
-    acBusBusSig: TAction;
-    acBusReemp: TAction;
+    acBusFind: TAction;
+    acBusFindNxt: TAction;
+    acBusReplac: TAction;
     acEdCopy: TEditCopy;
     acEdCut: TEditCut;
     acEdPaste: TEditPaste;
@@ -485,6 +485,7 @@ begin
     fraEditView1.SaveAll;   //puede que se esté editando archivos que usa el programa
   end;
   fraMessages.InitCompilation(cxp);  //Limpia mensajes
+  cxp.incDetComm := Config.IncComment2;   //Visualización de mensajes
   cxp.Compile(filName, fraEditView1.ActiveEditor.SynEdit.Lines);
   if cxp.HayError then begin
     fraMessages.EndCompilation;
@@ -498,8 +499,8 @@ begin
   edAsm.Lines.Clear;
   if Config.IncHeadMpu then begin
     //Incluye encabezado
-     edAsm.Lines.Add('    list     p='+ cxp.PicName);
-     edAsm.Lines.Add('    #include <' + cxp.PicName + '.inc>');
+     edAsm.Lines.Add('    list     p='+ cxp.PicNameShort);
+     edAsm.Lines.Add('    #include <p' + cxp.PicNameShort + '.inc>');
 //     edAsm.Lines.Add('    __CONFIG        _CP_OFF & _PWRTE_ON & _WDT_OFF & _XT_OSC');
   end;
   if Config.IncVarDec then begin
@@ -508,6 +509,8 @@ begin
   end;
   edAsm.Lines.Add(';===Blocks of Code===');
   cxp.DumpCode(edAsm.Lines, Config.IncAddress, Config.IncComment);
+  edAsm.Lines.Add(';--------------------');
+  edAsm.Lines.Add('    END');
   edAsm.EndUpdate;
   //Actualiz panel de árbol de sintaxis
   fraSynTree.Refresh;
@@ -537,17 +540,17 @@ begin
         If row <> -1 Then begin
            MarcarError(fraEditView1.ActiveEditor, row, col);
         end;
-        {If MostrarError Then }MsgErr(msg);
+        if Config.ShowErMsg Then MsgErr(msg);
     end else begin   //no hay archivo de error
-      {If MostrarError Then } MsgErr(msg);
+      if Config.ShowErMsg Then MsgErr(msg);
     end;
 End;
 procedure TfrmPrincipal.MarcarError(ed: TSynEditor; nLin, nCol: integer);
 begin
   fraEditView1.SetFocus;
   //posiciona curosr
+  ed.SynEdit.CaretY := nLin; //primero la fila
   ed.SynEdit.CaretX := nCol;
-  ed.SynEdit.CaretY := nLin;
   //Define línea con error
   ed.linErr := nLin;
   ed.SynEdit.Invalidate;  //refresca

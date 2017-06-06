@@ -3,10 +3,10 @@ unit FrameEditView;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, FileUtil, LazUTF8, LazFileUtils, SynEdit, Forms, Controls,
-  Graphics, Dialogs, ExtCtrls, LCLProc, Menus, LCLType, Globales, SynFacilUtils,
-  SynFacilCompletion, MisUtils, XpresBas, strutils, fgl, SynEditMiscClasses,
-  SynEditKeyCmds, SynPluginMultiCaret;
+  Classes, windows, SysUtils, FileUtil, LazUTF8, LazFileUtils, SynEdit, Forms,
+  Controls, Graphics, Dialogs, ExtCtrls, LCLProc, Menus, LCLType, Globales,
+  SynFacilUtils, SynFacilCompletion, SynFacilHighlighter, MisUtils, XpresBas,
+  strutils, fgl, SynEditMiscClasses, SynEditKeyCmds, SynPluginMultiCaret;
 type
   {Clase derivada de "TSynFacilEditor". Se usa para asociar un SynEdit a un
   TSynFacilEditor}
@@ -22,11 +22,21 @@ type
   { TSynEditor }
   {VErsión personalizada de TSynFacilEditor, que usa TSynFacilComplet2, como resaltador}
   TSynEditor = class(TSynFacilEditor)
+  private  //Manejo de edición síncrona
+    cursorPos: array of TPOINT;  //guarda posiciones de cursor
+    firstTok : boolean;  //bandera para identificar al primer token
+    tokFind  : String;   //token a buscar
+    procedure AddCursorPos(x,y: integer);
+    procedure ExploreLine(lin: string; x1, x2, y: integer);
+    procedure ExploreForSyncro;
+    procedure SetCursors;
   private
-    FCaption: string;
+    FCaption : string;
     procedure edSpecialLineMarkup(Sender: TObject; Line: integer;
       var Special: boolean; Markup: TSynSelectedColor);
     procedure SetCaption(AValue: string);
+  protected
+    procedure edKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   public  //Inicialización
     SynEdit: TSynEdit;  //Editor SynEdit
     tabWidth: integer;  //ancho de l engueta
@@ -153,6 +163,108 @@ begin
   end;
 end;
 { TSynEditor }
+procedure TSynEditor.AddCursorPos(x, y: integer);
+{Agrega una posición de cursor al areglo CursorPos[]}
+var
+  n: Integer;
+begin
+  n := high(CursorPos) + 1;
+  setlength(CursorPos, n + 1);
+  CursorPos[n].x := x;
+  CursorPos[n].y := y;
+end;
+procedure TSynEditor.ExploreLine(lin: string; x1, x2, y: integer);
+var
+  xtok: Integer;
+  tok: String;
+begin
+  if x2<x1 then exit;  //no es válido
+  //Hay una línea que debe ser explorada
+//  linAfec := system.Copy(lin, x1, x2-x1+1);  //La parte afectada
+//  DebugLn('--Lin=%s x1=%d,x2=%d', [lin, x1, x2]);
+  hl.SetLine(lin, 0);
+  while not hl.GetEol do begin
+    tok := hl.GetToken; //lee el token
+    //TokenAtt := hl.GetTokenAttribute;  //lee atributo
+    xtok := hl.GetX;
+    if (xtok>=x1) and (xtok<x2) then begin
+      if firstTok then begin
+        //El primer token es la palabra a buscar
+        tokFind := tok;   //guarda palabra
+        firstTok := false;
+        AddCursorPos(xtok, y);   //guarda coordenadas
+      end else begin
+        //Es una búsqueda normal
+        if tok = tokFind then begin
+          //Guarda solo si coincide con el primer token
+         AddCursorPos(xtok, y);   //guarda coordenadas
+        end;
+      end;
+    end;
+    //pasa al siguiente
+    hl.Next;
+  end;
+//    MsgBox(lin);
+end;
+procedure TSynEditor.ExploreForSyncro;
+{Explora el texto seleccionado, para habilitar la edición sincronizada, con múltiples
+cursores.}
+var
+  row: LONG;
+  x1, x2: integer;
+  lin: String;
+begin
+  setlength(cursorPos,0);   //limpia para guardar posiciones
+  firstTok := true;   //Para la búsqeuda correcta
+  for row := ed.BlockBegin.y to ed.BlockEnd.y do begin
+    lin := ed.Lines[row-1];  //linea en la selección
+    //Calcula coordenadas de la línea afectada
+    if row=ed.BlockBegin.y then begin
+      //Línea inicial
+      if row = ed.BlockEnd.y then begin
+        //Es también la línea final
+        x1 := ed.BlockBegin.x;
+        x2 := ed.BlockEnd.x-1;
+      end else begin
+        //Es solo línea inicial
+        x1 := ed.BlockBegin.x;
+        x2 := length(lin);
+      end;
+    end else if row=ed.BlockEnd.y then begin
+      //Línea final
+      x1 := 1;
+      x2 := ed.BlockEnd.x-1;
+    end else begin
+      //Línea interior
+      x1 := 1;
+      x2 := length(lin);
+    end;
+    //Explora
+    ExploreLine(lin, x1, x2, row);
+  end;
+end;
+procedure TSynEditor.SetCursors;
+var
+  i: Integer;
+begin
+  if high(cursorPos)<0 then exit;
+//  ed.CommandProcessor(ecPluginMultiCaretClearAll, '', nil);
+  for i:= high(cursorPos) downto 0 do begin
+    //Explora la revés para dejar el último cursor al inicio del texto
+    if i = 0 then begin
+      //El último
+      ed.CaretY := cursorPos[i].y;   //primero la fila
+      ed.CaretX := cursorPos[i].x;
+      ed.ExecuteCommand(ecPluginMultiCaretSetCaret, '', nil);
+//    ed.CommandProcessor(ecPluginMultiCaretSetCaret, '', nil);
+    end else begin
+      ed.CaretY := cursorPos[i].y;   //primero la fila
+      ed.CaretX := cursorPos[i].x;
+//    ed.ExecuteCommand(ecPluginMultiCaretSetCaret, '', nil);
+      ed.CommandProcessor(ecPluginMultiCaretSetCaret, '', nil);
+    end;
+  end;
+end;
 procedure TSynEditor.edSpecialLineMarkup(Sender: TObject; Line: integer;
   var Special: boolean; Markup: TSynSelectedColor);
 begin
@@ -174,6 +286,26 @@ begin
   if w < MIN_WIDTH_TAB then w := MIN_WIDTH_TAB;
   tabWidth := w;
   panTabs.Invalidate;   //Para refrescar el dibujo
+end;
+procedure TSynEditor.edKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+var
+  lexState: TFaLexerState;
+begin
+  if (Shift = [ssCtrl]) and (Key = VK_J) then begin
+    //Exploramos el texto usando el resaltador
+    //Uitlizaremos el mismo resaltador
+    lexState := hl.State;   //Guarda, por si acaso, el estado del elxer
+    ExploreForSyncro;   //Explora selección
+    hl.State := lexState;  //recupera estado
+    SetCursors;   //Coloca los cursores
+  end;
+  if Key = VK_ESCAPE then begin
+    //Cancela una posible edición de múltiples cursores
+    ed.CommandProcessor(ecPluginMultiCaretClearAll, '', nil);
+  end;
+  //Pasa el evento
+  if OnKeyDown <> nil then OnKeyDown(Sender, Key, Shift);
 end;
 function TSynEditor.SaveAsDialog(SaveDialog1: TSaveDialog): boolean;
 begin
@@ -563,6 +695,7 @@ begin
       end;
     end;
   end;
+
   ed.Caption := NewName + ext;   //Pone nombre diferente
   ed.NomArc := '';  //Pone sin nombre para saber que no se ha guardado
   editors.Add(ed);   //agrega a la lista

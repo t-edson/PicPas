@@ -222,7 +222,7 @@ begin
   coConst_Expres : exit('Constant'+ Op +'Expression');
   coVariab_Const : exit('Variable'+ Op +'Constant');
   coVariab_Variab: exit('Variable'+ Op +'Variable');
-  coVariab_Expres: exit('Variable'+ Op +'Constant');
+  coVariab_Expres: exit('Variable'+ Op +'Expression');
   coExpres_Const : exit('Expression'+ Op +'Constant');
   coExpres_Variab: exit('Expression'+ Op +'Variable');
   coExpres_Expres: exit('Expression'+ Op +'Expression');
@@ -371,10 +371,58 @@ end;
 function TCompilerBase.CaptureTok(tok: string): boolean;
 {Toma el token indicado del contexto de entrada. Si no lo encuentra, genera error y
 devuelve FALSE.}
+  procedure GenErrorInLastLine(var p: TSrcPos);
+  {Genera error posicionando el punto del error, en una línea anterios, que no esté
+  vacía.}
+  var
+    lin: String;
+  begin
+    if p.row>1 then begin
+      //Hay línea anterior
+      repeat
+        p.row := p.row - 1;
+        lin := cIn.curCon.curLines[p.row - 1];
+      until (p.row<=1) or (trim(lin)<>'');
+      //Encontró línea anterior no nula o llegó a la primera línea.
+      p.col := length(lin) + 1;   //mueve al final
+      GenErrorPos('"%s" expected.', [tok], p);  //Genera error
+    end else begin
+      //No hay línea anterior
+      p.col := 1;   //mueve al inicio
+      GenErrorPos('"%s" expected.', [tok], p);  //Genera error
+    end;
+  end;
+
+var
+  x: integer;
+  lin: String;
+  p: TSrcPos;
 begin
   //Debe haber parámetros
   if cIn.tok<>tok then begin
-    GenError('"%s" expected.', [tok]);
+    //No se encontró el token. Muestra mensaje de error.
+    {Pero el error, debe estar antes, así que hacemos la magia de explorar hacia atrás,
+    hasta encontrar el token involucrado.}
+    p := cIn.ReadSrcPos;   //posición actual
+    x := p.col;   //lee posición actual
+    if x>1 then begin
+      //Hay algo antes del token
+      lin := cIn.curCon.CurLine;
+      repeat
+        dec(x);
+      until (x<=1) or (lin[x] <> ' ');
+      if x<=1 then begin
+        //Está lleno de espacios, hasta el inicio.
+        //Es muy probable que el error esté en la línea anterior.
+        GenErrorInLastLine(p);
+      end else begin
+        //Encontró, en la misma línea un caracter diferente de espacio
+        GenErrorPos('"%s" expected.', [tok], p);  //Genera error ahí mismo
+      end;
+    end else begin
+      //Está al inicio de la línea. El error debe estar antes
+      GenErrorInLastLine(p);
+    end;
     exit(false);
   end;
   cin.Next;

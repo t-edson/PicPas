@@ -1,3 +1,49 @@
+PicPas 0.6.8
+============
+Se crea el evento TSynEditor.edKeyDown(), para procesar eventos de teclado del editor.
+Se crean las propiedades cursorPos, firstTok y tokFind, en TSynEditor, y diversos 
+métodos para soportar la edición sincronizada, con varios cursores.
+Se activa la edición sincronizada en los editores, con el atajo Ctrl + J.
+Se corrije TfrmPrincipal.acToolCompilExecute(), para que genere el encabezado de 
+ensamblador, en el formato que maneja el MPLAB.
+Se corrigen errores en la operación Oper_word_add_word().
+Se modifica TGenCodPic.PutTopComm(), para que acepte agregar comentarios sin sobreescribir.
+Se crea el campo TGenCodPic.incDetComm, para permitir comentarios detallados, y se incluye 
+la opción en la ventaan de configuración.
+Se incluye la opción de mostrar mensajes de error en la ventana de configuración.
+Se revisan y corrigen las operacionesOper_word_add_byte() y Oper_word_add_word().
+Se modifica TCompilerBase.CaptureTok(), para tener mayor precisión, sobre la posición 
+del error.
+Se corrige el error de ubicación del cursor sobre el editor, cuando se produce un error.
+Se corrige algunos nombres de acciones en el formulario principal, para que se adpaten a
+la terminología inglesa.
+Se corrige un error en TCompiler.CompileIF(), cuando compilaba sentencias ELSIF con 
+expresiones constantes.
+Se mejora la detección de errores de sintaxis en bloques de código.
+Se actualiza la librería PIC16F84A.pas, en la carpeta de unidades, y se incluye la 
+librería PIC16F877A.pas.
+Se corrige un error de identifiación en TCompilerBase.CatOperationToStr().
+Se habilita el acceso a constantes desde dentro del bloque ASM.
+Se incluye el procesamiento de la directiva ORG, dentro de los blqoues ASM.
+
+PENDIENTES
+Implementar las operaciones pendientes en los Word.
+Implementar las funciones.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la reutilización de variables usadas como parámetros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir arreglos y registros.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+
 PicPas 0.6.7
 ============
 Se crea el campo TType.fieldMethods, para almacenar a los campos de los tipos básicos.
@@ -21,20 +67,8 @@ Se incluye la declaración de etiquetas, después de llamarse.
 Se crea una lista para almacenar los saltos no definidos en la unidad ProcAsm.
 Se crea código de prueba para declaración de variables.
 Se mejora la traducción de la unidad "Parser".
-
 Se completa el Manual de usuario con las nuevas caracetrísticas del PicPas.
 
-PENDIENTES
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la reutilización de variables usadas como parámetros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
-¿Será posible crear una variable ANSWER de tipo REGISTER, para acceder al último resultado?
-Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
 
 
 PicPas 0.6.6

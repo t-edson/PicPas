@@ -386,14 +386,14 @@ begin
   end;
 end;
 function TCompiler.CompileBody(GenCode: boolean = true): boolean;
-{Compila el cuerpo de un THEN o de su parte ELSE, considerando el modo del compilador.
+{Compila el cuerpo de un THEN, ELSE, WHILE, ... considerando el modo del compilador.
 Si se genera error, devuelve FALSE.}
 begin
   if GenCode then begin
     //Este es el modo normal. Genera código.
     if mode = modPascal then begin
       //En modo Pascal se espera una instrucción
-      CompileInstruction
+      CompileInstruction;
     end else begin
       //En modo normal
       CompileCurBlock;
@@ -453,7 +453,7 @@ begin
       while cIn.tokL = 'elsif' do begin
         cIn.Next;   //toma "elsif"
         if not GetExpressionBool then exit;
-        if CaptureStr('then') then exit;  //toma "then"
+        if not CaptureStr('then') then exit;  //toma "then"
         //Compila el cuerpo pero sin cósigo
         if not CompileBody(false) then exit;
       end;
@@ -1150,7 +1150,13 @@ begin
   ProcComments;  //Quita espacios. Puede salir con error
 end;
 procedure TCompiler.CompileInstruction;
-{Compila una única instrucción o un bloque BEGIN ... END. Puede generara Error.}
+{Compila una única instrucción o un bloque BEGIN ... END. Puede generar Error.
+ Una instrucción se define como:
+ 1. Un bloque BEGIN ... END
+ 2. Una estrutura
+ 3. Una expresión
+ La instrucción, no incluye al delimitador.
+ }
 begin
   ProcComments;
   if HayError then exit;   //puede dar error por código assembler o directivas
@@ -1185,7 +1191,7 @@ begin
       //debe ser es una expresión
       GetExpressionE(0);
     end;
-    if HayError then exit;;
+    if HayError then exit;
     if pic.MsjError<>'' then begin
       //El pic también puede dar error
       GenError(pic.MsjError);
@@ -1218,13 +1224,11 @@ begin
     //busca delimitador
     ProcComments;
     if HayError then exit;   //puede dar error por código assembler o directivas
-    //LO común es que haya un delimitador de expresión
-    if cIn.tokType=tnExpDelim then begin //encontró delimitador de expresión
-      cIn.Next;      //Lo toma
-      ProcComments;  //Quita espacios
-      if HayError then exit; //Puede dar error por código assembler o directivas
-      //Queda listo para la siguiente instrucción
-    end;
+    //Puede terminar con un delimitador de bloque
+    if cIn.tokType=tnBlkDelim then break;
+    //Pero lo común es que haya un delimitador de expresión
+    if not CaptureTok(';') then exit;
+    ProcComments;  //Puede haber Directivas o ASM también
   end;
 end;
 procedure TCompiler.CompileCurBlockDummy;

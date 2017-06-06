@@ -49,7 +49,8 @@ var
   cpx   : TCompilerBase;
 
 var  //Mensajes
-  ER_EXPEC_COMMA, ER_EXP_ADR_VAR, ER_NOTYPVAR_AL, ER_INV_ASMCODE: String;
+  ER_EXPEC_COMMA, ER_EXP_ADR_VAR, ER_EXP_CON_VAL, ER_NOGETADD_VAR,
+  ER_NOGETVAL_CON,  ER_INV_ASMCODE: String;
   ER_EXPECT_W_F, ER_SYNTAX_ERR_, ER_DUPLIC_LBL_, ER_EXPE_NUMBIT: String;
   ER_EXPECT_ADDR, ER_EXPECT_BYTE, WA_ADDR_TRUNC, ER_UNDEF_LABEL_: String;
 
@@ -57,17 +58,19 @@ procedure SetLanguage(idLang: string);
 begin
   curLang := idLang;
   //Update messages
-  ER_EXPEC_COMMA := trans('Expected ",".', 'Se esperaba ","','','');
+  ER_EXPEC_COMMA := trans('Expected ",".'                 , 'Se esperaba ","'                ,'', '');
   ER_EXP_ADR_VAR := trans('Expected address or variable name.','Se esperaba dirección o variable.','','');
-  ER_NOTYPVAR_AL := trans('Cannot get address of this Variable', 'No se puede obtener la dirección de esta variable.', '','');
-  ER_INV_ASMCODE := trans('Invalid ASM Opcode: %s', 'Instrucción inválida: %s','','');
-  ER_EXPECT_W_F  := trans('Expected "w" or "f".','Se esperaba "w" or "f".','','');
-  ER_SYNTAX_ERR_ := trans('Syntax error: "%s"', 'Error de sintaxis: "%s"','','');
-  ER_DUPLIC_LBL_ := trans('Duplicated label: "%s"', 'Etiqueta duplicada: "%s"','','');
-  ER_EXPE_NUMBIT := trans('Expected number of bit: 0..7.', 'Se esperaba número de bit: 0..7','','');
-  ER_EXPECT_ADDR := trans('Expected address.', 'Se esperaba dirección','','');
-  ER_EXPECT_BYTE := trans('Expected byte.', 'Se esperaba byte','','');
-  ER_UNDEF_LABEL_:= trans('Undefined ASM Label: %s', 'Etiqueta ASM indefinida: %s','','');
+  ER_EXP_CON_VAL := trans('Expected constant or value.'   ,'Se esperaba constante o variable.','','');
+  ER_NOGETADD_VAR:= trans('Cannot get address of this Variable', 'No se puede obtener la dirección de esta variable.', '','');
+  ER_NOGETVAL_CON:= trans('Cannot get value of this costant', 'No se puede obtener el valor de esta constante.', '','');
+  ER_INV_ASMCODE := trans('Invalid ASM Opcode: %s'        , 'Instrucción inválida: %s'       ,'', '');
+  ER_EXPECT_W_F  := trans('Expected "w" or "f".'          ,'Se esperaba "w" or "f".'         ,'', '');
+  ER_SYNTAX_ERR_ := trans('Syntax error: "%s"'            , 'Error de sintaxis: "%s"'        ,'', '');
+  ER_DUPLIC_LBL_ := trans('Duplicated label: "%s"'        , 'Etiqueta duplicada: "%s"'       ,'', '');
+  ER_EXPE_NUMBIT := trans('Expected number of bit: 0..7.' , 'Se esperaba número de bit: 0..7','', '');
+  ER_EXPECT_ADDR := trans('Expected address.'             , 'Se esperaba dirección'          ,'', '');
+  ER_EXPECT_BYTE := trans('Expected byte.'                , 'Se esperaba byte'               ,'', '');
+  ER_UNDEF_LABEL_:= trans('Undefined ASM Label: %s'       , 'Etiqueta ASM indefinida: %s'    ,'', '');
   WA_ADDR_TRUNC  := trans('Address truncated to fit instruction.', 'Dirección truncada, al tamaño de la instrucción', '','');
 end;
 procedure GenError(msg: string);
@@ -149,10 +152,36 @@ begin
   //No encontró
   exit(false);
 end;
+function HaveByteInformation(var bytePos: byte): boolean;
+begin
+//    state0 := lexAsm.State;  //gaurda posición
+  if lexasm.GetToken = '.' then begin
+    //Hay precisión de campo
+    lexAsm.Next;
+    if UpCase(lexasm.GetToken) = 'LOW' then begin
+      bytePos := 0;
+      lexAsm.Next;
+      exit(true);
+    end else if UpCase(lexasm.GetToken) = 'HIGH' then begin
+      bytePos := 1;
+      lexAsm.Next;
+      exit(true);
+    end else begin
+      //No es ninguno
+      exit(false);
+    end;
+  end else begin
+    //No tiene indicación de campo
+    exit(false);
+  end;
+end;
 function CaptureByte(var k: byte): boolean;
 {Captura un byte y devuelve en "k". Si no encuentra devuelve error}
 var
   n: Integer;
+  xcon: TxpEleCon;
+  ele: TxpElement;
+  bytePos: byte;
 begin
   skipWhites;
   if tokType = lexAsm.tnNumber then begin
@@ -165,6 +194,43 @@ begin
     k:=n;
     lexAsm.Next;
     exit(true);
+  end else if tokType = lexAsm.tnIdentif then begin
+    //Es un identificador, puede ser referencia a una constante o variable
+    ele := cpx.TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
+    if ele = nil then begin
+      //No identifica a este elemento
+      GenError(ER_EXP_CON_VAL);
+      exit;
+    end;
+    if ele is TxpEleCon then begin
+      xcon := TxpEleCon(ele);
+      if cpx.FirstPass then Inc(xcon.nCalled);  //lleva la cuenta
+      if (xcon.typ = typByte) or (xcon.typ = typChar) then begin
+        k := xcon.val.ValInt;
+        lexAsm.Next;
+        exit(true);
+      end else if xcon.typ = typWord then begin
+        lexAsm.Next;
+        if HaveByteInformation(bytePos) then begin
+          //Hay precisión de byte
+          if bytePos = 0 then begin  //Byte bajo
+            k := (xcon.val.ValInt and $FF);
+          end else begin        //Byte alto
+            k := (xcon.val.ValInt and $FF00) >> 8;
+          end;
+        end else begin  //No se indica byte
+          k := (xcon.val.ValInt and $FF);
+        end;
+        exit(true);
+      end else begin
+        GenError(ER_NOGETVAL_CON);
+        exit(false);
+      end;
+    end else begin
+      //No es constante
+      GenError(ER_EXP_CON_VAL);
+      exit(false);
+    end;
   end else begin
     GenError(ER_EXPECT_BYTE);
     exit(false);
@@ -199,16 +265,22 @@ begin
     b := StrToInt(lexAsm.GetToken);
     if (b>7) then begin
       GenError(ER_EXPE_NUMBIT);
-      Result := false;
-      exit;
+      exit(false);
     end;
     lexAsm.Next;
-    Result := true;
-    exit;
+    exit(true);
+  end else if tokType = lexAsm.tnIdentif then begin
+    //puede ser una constante
+    CaptureByte(b);  //captura desplazamiento
+    if cpx.HayError then exit(false);
+    if (b>7) then begin
+      GenError(ER_EXPE_NUMBIT);
+      exit(false);
+    end;
+    exit(true);
   end else begin
     GenError(ER_EXPE_NUMBIT);
-    Result := false;
-    exit;
+    exit(false);
   end;
 end;
 function CaptureComma: boolean;
@@ -250,30 +322,6 @@ begin
 end;
 function CaptureRegister(var f: byte): boolean;
 {Captura la referencia a un registro y devuelve en "f". Si no encuentra devuelve error}
-
-  function HaveByteInformation(var bytePos: byte): boolean;
-  begin
-//    state0 := lexAsm.State;  //gaurda posición
-    if lexasm.GetToken = '.' then begin
-      //Hay precisión de campo
-      lexAsm.Next;
-      if UpCase(lexasm.GetToken) = 'LOW' then begin
-        bytePos := 0;
-        lexAsm.Next;
-        exit(true);
-      end else if UpCase(lexasm.GetToken) = 'HIGH' then begin
-        bytePos := 1;
-        lexAsm.Next;
-        exit(true);
-      end else begin
-        //No es ninguno
-        exit(false);
-      end;
-    end else begin
-      //No tiene indicación de campo
-      exit(false);
-    end;
-  end;
 var
   n: integer;
   ele: TxpElement;
@@ -323,7 +371,7 @@ begin
         Result := true;
         exit;
       end else begin
-        GenError(ER_NOTYPVAR_AL);
+        GenError(ER_NOGETADD_VAR);
         Result := false;
         exit;
       end;
@@ -447,6 +495,14 @@ var
   k: byte;
 begin
   tok := lexAsm.GetToken;
+  //verifica directiva ORG
+  if upcase(tok) = 'ORG' then begin
+    lexAsm.Next;
+    idInst := GOTO_;  //no debería ser necesario
+    if not CaptureAddress(idInst, a) then exit;
+    pic.iFlash := a;   //¡CUIDADO! cambia PC
+    exit;
+  end;
   //debería ser una instrucción
   idInst := pic.FindOpcode(tok, stx);
   if idInst = _Inval then begin
@@ -653,6 +709,7 @@ initialization
   lexAsm.AddIdentSpecList('BCF BSF BTFSC BTFSS', lexAsm.tnKeyword);
   lexAsm.AddIdentSpecList('ADDLW ANDLW CALL CLRWDT GOTO IORLW MOVLW RETFIE', lexAsm.tnKeyword);
   lexAsm.AddIdentSpecList('RETLW RETURN SLEEP SUBLW XORLW', lexAsm.tnKeyword);
+  lexAsm.AddIdentSpecList('ORG', lexAsm.tnKeyword);
   lexAsm.DefTokDelim(';','', lexAsm.tnComment);
   lexAsm.Rebuild;
 finalization

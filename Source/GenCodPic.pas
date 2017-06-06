@@ -36,7 +36,7 @@ type
     stackTop: integer;   //índice al límite superior de la pila
     stackTopBit: integer;   //índice al límite superior de la pila
     procedure PutLabel(lbl: string); inline;
-    procedure PutTopComm(cmt: string); inline;
+    procedure PutTopComm(cmt: string; replace: boolean = true); inline;
     procedure PutComm(cmt: string); inline;
     procedure PutFwdComm(cmt: string); inline;
     function ReportRAMusage: string;
@@ -145,8 +145,11 @@ type
     procedure _XORWF(const f: byte; d: TPIC16destin);
     function _PC: word;
     function _CLOCK: integer;
+  public  //Opciones de compilación
+    incDetComm: boolean;   //Incluir Comentarios detallados.
   public  //Inicialización
     function PicName: string;
+    function PicNameShort: string;
     procedure StartRegs;
     constructor Create; override;
     destructor Destroy; override;
@@ -174,10 +177,10 @@ la etiqueta, sin ":", ni comentarios, porque este campo se usará para desensamb
 begin
   pic.addTopLabel(lbl);  //agrega línea al código ensmblador
 end;
-procedure TGenCodPic.PutTopComm(cmt: string);
+procedure TGenCodPic.PutTopComm(cmt: string; replace: boolean = true);
 //Agrega comentario al inicio de la posición de memoria
 begin
-  pic.addTopComm(cmt);  //agrega línea al código ensmblador
+  pic.addTopComm(cmt, replace);  //agrega línea al código ensmblador
 end;
 procedure TGenCodPic.PutComm(cmt: string);
 //Agrega comentario lateral al código. Se llama después de poner la instrucción.
@@ -433,8 +436,8 @@ begin
     //Apunta a una posición vacía. hay qie agregar
     //Agrega un nuevo objeto TPicRegister a la lista;
     reg0 := TPicRegister.Create;  //Crea objeto
-    reg0.typ := prtStkReg;    //asigna tipo
-    listRegStk.Add(reg0);   //agrega a lista
+    reg0.typ := prtStkReg;   //asigna tipo
+    listRegStk.Add(reg0);    //agrega a lista
     regName := 'stk'+IntToSTr(listRegStk.Count);
     AssignRAM(reg0, regName);   //Asigna memoria. Puede generar error.
     if HayError then exit;
@@ -463,7 +466,7 @@ begin
     //Agrega un nuevo objeto TPicRegister a la lista;
     reg0 := TPicRegisterBit.Create;  //Crea objeto
     reg0.typ := prtStkReg;    //asigna tipo
-    listRegStkBit.Add(reg0);   //agrega a lista
+    listRegStkBit.Add(reg0);  //agrega a lista
     regName := 'stk'+IntToSTr(listRegStkBit.Count);
     AssignRAMbit(reg0, regName);   //Asigna memoria. Puede generar error.
     if HayError then exit;
@@ -626,6 +629,14 @@ procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
 siempre antes de evaluar cada subexpresión, así que es una especie de evento
 "OnSubExpresionStart".}
 begin
+  if incDetComm then begin
+    if operType = operBinary then begin
+      PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.typ.name + ',' +
+                                  p2^.catOpChr + ':' + p2^.typ.name + ')', false);
+    end else begin  //Debe ser unario
+      PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.typ.name + ')', false);
+    end;
+  end;
   res.typ := typ;
   res.catOp := CatOp;
   InvertedFromC:=false;   //para limpiar el estado
@@ -1090,6 +1101,11 @@ end;
 function TGenCodPic.PicName: string;
 begin
   Result := pic.Model;
+end;
+function TGenCodPic.PicNameShort: string;
+{Genera el nombre del PIC, quitándole la parte inicial "PIC".}
+begin
+  Result := copy(pic.Model, 4, length(pic.Model));
 end;
 //Inicialización
 procedure TGenCodPic.StartRegs;

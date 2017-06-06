@@ -1,7 +1,7 @@
 object frmPrincipal: TfrmPrincipal
   Left = 0
   Height = 625
-  Top = 107
+  Top = 108
   Width = 884
   AllowDropFiles = True
   Caption = 'frmPrincipal'
@@ -1761,20 +1761,20 @@ object frmPrincipal: TfrmPrincipal
       ImageIndex = 13
       ShortCut = 16453
     end
-    object acBusBuscar: TAction
-      Category = 'Search'
+    object acBusFind: TAction
+      Category = 'Sear'
       Caption = 'Buscar...'
       ImageIndex = 15
       ShortCut = 16450
     end
-    object acBusBusSig: TAction
-      Category = 'Search'
+    object acBusFindNxt: TAction
+      Category = 'Sear'
       Caption = 'Buscar &Siguiente'
       ImageIndex = 16
       ShortCut = 114
     end
-    object acBusReemp: TAction
-      Category = 'Search'
+    object acBusReplac: TAction
+      Category = 'Sear'
       Caption = '&Remplazar...'
       ImageIndex = 17
       ShortCut = 16466
@@ -2458,7 +2458,7 @@ object frmPrincipal: TfrmPrincipal
     object mnFind: TMenuItem
       Caption = '&Buscar'
       object MenuItem1: TMenuItem
-        Action = acBusBuscar
+        Action = acBusFind
         Bitmap.Data = {
           36040000424D3604000000000000360000002800000010000000100000000100
           2000000000000004000064000000640000000000000000000000000000000000
@@ -2497,7 +2497,7 @@ object frmPrincipal: TfrmPrincipal
         }
       end
       object MenuItem2: TMenuItem
-        Action = acBusBusSig
+        Action = acBusFindNxt
         Bitmap.Data = {
           36040000424D3604000000000000360000002800000010000000100000000100
           2000000000000004000064000000640000000000000000000000000000000000
@@ -2536,7 +2536,7 @@ object frmPrincipal: TfrmPrincipal
         }
       end
       object MenuItem17: TMenuItem
-        Action = acBusReemp
+        Action = acBusReplac
         Bitmap.Data = {
           36040000424D3604000000000000360000002800000010000000100000000100
           2000000000000004000064000000640000000000000000000000000000000000

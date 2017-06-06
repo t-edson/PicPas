@@ -126,6 +126,7 @@ type
       procedure Oper_word_difer_word;
       procedure Oper_word_add_word;
       procedure Oper_word_add_byte;
+      procedure Oper_word_sub_word;
       procedure word_Low(const OpPtr: pointer);
       procedure word_High(const OpPtr: pointer);
     private  //Operaciones con Char
@@ -1919,126 +1920,130 @@ var
   spL: TPicRegister;
   aux: TPicRegister;
 begin
-  if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
+  case catOperation of
+  coConst_Const: begin
     if p1^.valInt+p2^.valInt <256 then begin
       //Optimiza
       SetResultConst_byte(p1^.valInt+p2^.valInt);
     end else begin
       SetResultConst_word(p1^.valInt+p2^.valInt);
     end;
-    exit;  //Puede salir con error
-  end else begin //caso general
-    if HayError then exit;
-    case catOperation of
-    coConst_Variab: begin
-      SetResultExpres_word(operType);
+  end;
+  coConst_Variab: begin
+    SetResultExpres_word(operType);
 {     aux := GetUnusedByteRegister;  //Pide un registro libre
-      _movlw(p1^.LByte);      //Carga menos peso del dato 1
-      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
-      _movwf(aux);             //Almacena el resultado
-      _movlw(p1^.HByte);      //Carga más peso del dato 1
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _addlw(1);             //Si, suma 1 al acumulador
-      _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H);             //Guarda el resultado
-      _movf(aux,toW);          //deja byte bajo en W
-      aux.Used := false;
+    _movlw(p1^.LByte);      //Carga menos peso del dato 1
+    _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
+    _movwf(aux);             //Almacena el resultado
+    _movlw(p1^.HByte);      //Carga más peso del dato 1
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _addlw(1);             //Si, suma 1 al acumulador
+    _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
+    _movwf(H);             //Guarda el resultado
+    _movf(aux,toW);          //deja byte bajo en W
+    aux.Used := false;
 }
-      //versión más corta que solo usa H, por validar
-      _movlw(p1^.HByte);      //Carga más peso del dato 1
-      _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
-      _movwf(H.offs);         //Guarda el resultado
-      _movlw(p1^.LByte);      //Carga menos peso del dato 1
-      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-    end;
-    coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
-      SetResultExpres_word(operType);
-      aux := GetAuxRegisterByte;  //Pide un registro libre
-      _movwf(aux.offs);             //guarda byte bajo
-      _movlw(p1^.HByte);      //Carga más peso del dato 1
-      _addwf(H.offs,toF);         //Suma y guarda
-      _movlw(p1^.LByte);      //Carga menos peso del dato 1
-      _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-      aux.used := false;
-    end;
-    coVariab_Const: begin
-      SetResultExpres_word(operType);
-      _MOVLW(p2^.HByte);      //Carga más peso del dato 1
-      _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
-      _MOVWF(H.offs);         //Guarda el resultado
-      _MOVLW(p2^.LByte);      //Carga menos peso del dato 1
-      _ADDWF(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
-      _INCF(H.offs, toF);
-    end;
-    coVariab_Variab:begin
-      SetResultExpres_word(operType);
-      _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
-      _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
-      _MOVWF(H.offs);         //Guarda mayor peso del resultado
-      _MOVF(p1^.Loffs, toW);  //Carga menos peso del dato 1
-      _ADDWF(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
-      _INCF(H.offs, toF);
-    end;
-    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
-      SetResultExpres_word(operType);
-      aux := GetAuxRegisterByte;  //Pide un registro libre
-      _movwf(aux.offs);             //guarda byte bajo
-      _movlw(p1^.Hoffs);      //Carga más peso del dato 1
-      _addwf(H.offs,toF);         //Suma y guarda
-      _movlw(p1^.Loffs);      //Carga menos peso del dato 1
-      _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-      aux.used := false;
-    end;
-    coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word(operType);
-      aux := GetAuxRegisterByte;  //Pide un registro libre
-      _movwf(aux.offs);             //guarda byte bajo
-      _movlw(p2^.HByte);      //Carga más peso del dato 1
-      _addwf(H.offs,toF);         //Suma y guarda
-      _movlw(p2^.LByte);      //Carga menos peso del dato 1
-      _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-      aux.used := false;
-    end;
-    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word(operType);
-      aux := GetAuxRegisterByte;  //Pide un registro libre
-      _movwf(aux.offs);             //guarda byte bajo
-      _movlw(p2^.Hoffs);      //Carga más peso del dato 1
-      _addwf(H.offs,toF);         //Suma y guarda
-      _movlw(p2^.Loffs);      //Carga menos peso del dato 1
-      _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-      aux.used := false;
-    end;
-    coExpres_Expres:begin
-      SetResultExpres_word(operType);
-      //p1 está salvado en pila y p2 en (_H,W)
-      FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
-      FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
-      aux := GetAuxRegisterByte;  //Pide un registro libre
-      _movwf(aux.offs);             //guarda byte bajo
-      _movf(spH.offs, toW);      //Carga más peso del dato 1
-      _addwf(H.offs,toF);         //Suma y guarda
-      _movf(spL.offs, toW);      //Carga menos peso del dato 1
-      _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-      aux.used := false;
-    end;
-    else
-      genError('Not implemented: "%s"', [CatOperationToStr]);
-    end;
+    //versión más corta que solo usa H, por validar
+    _movlw(p1^.HByte);      //Carga más peso del dato 1
+    _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
+    _movwf(H.offs);         //Guarda el resultado
+    _movlw(p1^.LByte);      //Carga menos peso del dato 1
+    _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+  end;
+  coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
+    SetResultExpres_word(operType);
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    _movwf(aux.offs);             //guarda byte bajo
+    _movlw(p1^.HByte);      //Carga más peso del dato 1
+    _addwf(H.offs,toF);         //Suma y guarda
+    _movlw(p1^.LByte);      //Carga menos peso del dato 1
+    _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+    aux.used := false;
+  end;
+  coVariab_Const: begin
+    SetResultExpres_word(operType);
+    _MOVLW(p2^.HByte);      //Carga más peso del dato 1
+    _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
+    _MOVWF(H.offs);         //Guarda el resultado
+    _MOVLW(p2^.LByte);      //Carga menos peso del dato 1
+    _ADDWF(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
+    _INCF(H.offs, toF);
+  end;
+  coVariab_Variab:begin
+    SetResultExpres_word(operType);
+    _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
+    _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
+    _MOVWF(H.offs);         //Guarda mayor peso del resultado
+    _MOVF(p1^.Loffs, toW);  //Carga menos peso del dato 1
+    _ADDWF(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
+    _INCF(H.offs, toF);
+  end;
+  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
+    SetResultExpres_word(operType);
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    _BANKSEL(aux.bank);
+    _movwf(aux.offs);        //guarda byte bajo
+    _BANKSEL(p1^.bank);
+    _MOVF(p1^.Hoffs, toW);   //Carga más peso del dato 1
+    _BANKSEL(H.bank);
+    _addwf(H.offs,toF);      //Suma y guarda
+    //Siguiente byte
+    _BANKSEL(p1^.bank);
+    _MOVF(p1^.Loffs, toW);       //Carga menos peso del dato 1
+    _BANKSEL(aux.bank);
+    _addwf(aux.offs,toW);    //Suma menos peso del dato 2, deja en W
+    _btfsc(_STATUS,_C);      //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+    aux.used := false;
+  end;
+  coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
+    SetResultExpres_word(operType);
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    _movwf(aux.offs);             //guarda byte bajo
+    _movlw(p2^.HByte);      //Carga más peso del dato 1
+    _addwf(H.offs,toF);         //Suma y guarda
+    _movlw(p2^.LByte);      //Carga menos peso del dato 1
+    _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+    aux.used := false;
+  end;
+  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
+    SetResultExpres_word(operType);
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    _movwf(aux.offs);      //guarda byte bajo
+    _BANKSEL(p2^.bank);
+    _MOVF(p2^.Hoffs, toW);     //Carga más peso del dato 1
+    _BANKSEL(H.bank);
+    _addwf(H.offs,toF);    //Suma y guarda
+    _BANKSEL(p2^.bank);
+    _MOVF(p2^.Loffs, toW);     //Carga menos peso del dato 1
+    _BANKSEL(aux.bank);
+    _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
+    _BANKSEL(H.bank);
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+    aux.used := false;
+  end;
+  coExpres_Expres:begin
+    SetResultExpres_word(operType);
+    //p1 está salvado en pila y p2 en (_H,W)
+    p1^.catOp := coVariab;  //Convierte a variable
+    p1^.rVar := GetVarWordFromStk;
+    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    //Luego el caso es similar a coVariab_Expres
+    Oper_word_add_word;
+    FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
+    FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
+  end;
+  else
+    genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
 procedure TGenCod.Oper_word_add_byte;
@@ -2047,92 +2052,120 @@ var
   spL: TPicRegister;
   aux: TPicRegister;
 begin
-  if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
+  case catOperation of
+  coConst_Const: begin
     if p1^.valInt+p2^.valInt <256 then begin
       //Optimiza
       SetResultConst_byte(p1^.valInt+p2^.valInt);
     end else begin
       SetResultConst_word(p1^.valInt+p2^.valInt);
     end;
-    exit;  //puede salir con error
-  end else begin //caso general
-    if HayError then exit;
-    case catOperation of
-    coConst_Variab: begin
-      SetResultExpres_word(operType);
-      //versión más corta que solo usa _H, por validar
-      _movlw(p1^.HByte);      //Carga más peso del dato 1
-      _movwf(H.offs);
-      _movlw(p1^.LByte);      //Carga menos peso del dato 1
-      _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-    end;
-    coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
-      SetResultExpres_word(operType);
-      aux := GetAuxRegisterByte;  //Pide un registro libre
-      _movwf(aux.offs);      //guarda byte bajo
-      _movlw(p1^.HByte);     //Carga más peso del dato 1
-      _movwf(H.offs);
-      _movlw(p1^.LByte);     //Carga menos peso del dato 1
-      _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-      aux.used := false;
-    end;
-    coVariab_Const: begin
-      SetResultExpres_word(operType);
-      _MOVF(p1^.Hoffs, toW); //Carga más peso del dato 1
-      _MOVWF(H.offs);        //Guarda el resultado
-      _MOVLW(p2^.LByte);
-      _ADDWF(p1^.Loffs,toW); //Suma menos peso del dato 2, deja en W
-      _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
-      _INCF(H.offs, toF);
-    end;
-    coVariab_Variab:begin
-      SetResultExpres_word(operType);
-      _movlw(p1^.Hoffs);     //Carga más peso del dato 1
-      _movwf(H.offs);
-      _movlw(p1^.Loffs);     //Carga menos peso del dato 1
-      _addwf(p2^.Loffs,toW); //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-    end;
-    coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
-      SetResultExpres_word(operType);
-      _movlw(p1^.Hoffs);      //Carga más peso del dato 1
-      _movwf(H.offs);
-      _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-    end;
-    coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word(operType);
-      _addwf(p2^.LByte,toW);         //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-    end;
-    coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-      SetResultExpres_word(operType);
-      _addwf(p2^.Loffs,toW);         //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-    end;
-    coExpres_Expres:begin
-      SetResultExpres_word(operType);
-      //la expresión p1 debe estar salvada y p2 en el acumulador
-      FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
-      FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
-      _movf(spH.offs, toW);      //Carga más peso del dato 1
-      _movwf(H.offs);
-      _addwf(spL.offs,toW);  //Suma menos peso del dato 2, deja en W
-      _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
-      _incf(H.offs, toF);
-    end;
-    else
-      genError('Not implemented: "%s"', [CatOperationToStr] );
-    end;
   end;
+  coConst_Variab: begin
+    SetResultExpres_word(operType);
+    //versión más corta que solo usa _H, por validar
+    _movlw(p1^.HByte);      //Carga más peso del dato 1
+    _BANKSEL(H.bank);
+    _movwf(H.offs);
+    _movlw(p1^.LByte);      //Carga menos peso del dato 1
+    _BANKSEL(p2^.bank);
+    _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+  end;
+  coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
+    SetResultExpres_word(operType);
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    _BANKSEL(aux.bank);
+    _movwf(aux.offs);      //guarda byte bajo
+    _movlw(p1^.HByte);     //Carga más peso del dato 1
+    _BANKSEL(H.bank);
+    _movwf(H.offs);
+    _movlw(p1^.LByte);     //Carga menos peso del dato 1
+    _BANKSEL(aux.bank);
+    _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
+    _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+    aux.used := false;
+  end;
+  coVariab_Const: begin
+    SetResultExpres_word(operType);
+    _BANKSEL(p1^.bank);      //se cambia primero el banco por si acaso
+    _MOVF(p1^.Hoffs, toW); //Carga más peso del dato 1
+    _BANKSEL(H.bank);      //se cambia primero el banco por si acaso
+    _MOVWF(H.offs);        //Guarda el resultado
+    _MOVLW(p2^.LByte);
+    _BANKSEL(p1^.bank);      //se cambia primero el banco por si acaso
+    _ADDWF(p1^.Loffs,toW); //Suma menos peso del dato 2, deja en W
+    _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
+    _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
+    _INCF(H.offs, toF);
+  end;
+  coVariab_Variab:begin
+    SetResultExpres_word(operType);
+    _BANKSEL(p1^.bank);
+    _MOVF(p1^.Hoffs, toW);     //Carga más peso del dato 1
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);
+    _BANKSEL(p1^.bank);
+    _MOVF(p1^.Loffs, toW);     //Carga menos peso del dato 1
+    _BANKSEL(p2^.bank);
+    _ADDWF(p2^.Loffs,toW); //Suma menos peso del dato 2, deja en W
+    _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
+    _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
+    _INCF(H.offs, toF);
+  end;
+  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
+    SetResultExpres_word(operType);
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    _BANKSEL(aux.bank);
+    _movwf(aux.offs);        //guarda byte de expresión
+    _BANKSEL(p1^.bank);
+    _movf(p1^.Hoffs, toW);  //Carga Hbyte del dato 1
+    _BANKSEL(H.bank);
+    _movwf(H.offs);        //Lo deja para devolver en H
+    _BANKSEL(aux.bank);
+    _MOVF(aux.offs,toW);   //recupera byte de expresión
+    _BANKSEL(p1^.bank);
+    _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+    aux.used := false;
+  end;
+  coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
+    SetResultExpres_word(operType);
+    _addlw(p2^.LByte);     //Suma menos peso del dato 2, deja en W
+    _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+  end;
+  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
+    SetResultExpres_word(operType);
+    _BANKSEL(p2^.bank);
+    _addwf(p2^.Loffs,toW);         //Suma menos peso del dato 2, deja en W
+    _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
+    _incf(H.offs, toF);
+  end;
+  coExpres_Expres:begin
+    SetResultExpres_word(operType);
+    //p1 está salvado en pila y p2 en (_H,W)
+    p1^.catOp := coVariab;  //Convierte a variable
+    p1^.rVar := GetVarWordFromStk;
+    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    //Luego el caso es similar a coVariab_Expres
+    Oper_word_add_byte;
+    FreeStkRegisterByte(spH);   //libera pila
+    FreeStkRegisterByte(spL);   //libera pila
+  end;
+  else
+    genError('Not implemented: "%s"', [CatOperationToStr] );
+  end;
+end;
+procedure TGenCod.Oper_word_sub_word;
+begin
 end;
 procedure TGenCod.word_Low(const OpPtr: pointer);
 {Acceso al byte de menor peso de un word.}
@@ -2844,10 +2877,12 @@ begin
   opr.CreateOperation(typWord,@Oper_word_add_word);
   opr.CreateOperation(typByte,@Oper_word_add_byte);
 
+  opr:=typWord.CreateBinaryOperator('-',4,'subs');  //suma
+  opr.CreateOperation(typWord,@Oper_word_sub_word);
+
   typWord.CreateField('Low', @word_Low);
   typWord.CreateField('High', @word_High);
 end;
-
 procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}
 var
