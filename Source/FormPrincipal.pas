@@ -192,7 +192,7 @@ begin
   //carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
-  hlAssem.LoadFromFile('PicPas_AsmPic.xml');
+  hlAssem.LoadFromFile(rutApp + 'PicPas_AsmPic.xml');
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var

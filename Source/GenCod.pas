@@ -124,6 +124,7 @@ type
       procedure Oper_word_asig_byte;
       procedure Oper_word_equal_word;
       procedure Oper_word_difer_word;
+      procedure Oper_word_great_word;
       procedure Oper_word_add_word;
       procedure Oper_word_add_byte;
       procedure Oper_word_sub_word;
@@ -1914,6 +1915,107 @@ begin
   Oper_word_equal_word;
   res.Invert;
 end;
+procedure TGenCod.Oper_word_great_word;
+var
+  tmp: TPicRegister;
+  sale: integer;
+begin
+  case catOperation of
+  coConst_Const: begin  //compara constantes. Caso especial
+    SetResultConst_bool(p1^.valInt > p2^.valInt);
+  end;
+  coConst_Variab: begin
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    //Compara byte alto
+    _MOVLW(p1^.HByte);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Hoffs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _MOVLW(p1^.LByte);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Loffs,toW);	//p2-p1
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+  end;
+  coConst_Expres: begin  //la expresión p2 se evaluó p2 esta en W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    tmp := GetAuxRegisterByte;
+    _BANKSEL(tmp.bank);
+    _MOVWF(tmp.offs);   //salva byte bajo de Expresión
+    //Compara byte alto
+    _MOVLW(p1^.HByte);
+    _BANKSEL(H.bank);  //verifica banco destino
+    _SUBWF(H.offs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _MOVLW(p1^.LByte);
+    _BANKSEL(tmp.bank);  //verifica banco destino
+    _SUBWF(tmp.offs,toW);	//p2-p1
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+  end;
+  coVariab_Const: begin
+    ExchangeP1_P2;  //Convierte a coConst_Variab
+    Oper_word_equal_word;
+  end;
+  coVariab_Variab:begin
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    //Compara byte alto
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Hoffs, toW);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Hoffs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Loffs, toW);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Loffs,toW);	//p2-p1
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+  end;
+  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    tmp := GetAuxRegisterByte;
+    _BANKSEL(tmp.bank);
+    _MOVWF(tmp.offs);   //salva byte bajo de Expresión
+    //Compara byte alto
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Hoffs, toW);
+    _BANKSEL(H.bank);  //verifica banco destino
+    _SUBWF(H.offs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Loffs, toW);
+    _BANKSEL(tmp.bank);  //verifica banco destino
+    _SUBWF(tmp.offs,toW);	//p2-p1
+    tmp.used := false;
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+  end;
+  coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    ExchangeP1_P2;  //Convierte a coConst_Expres;
+    Oper_word_equal_word;
+  end;
+  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+    ExchangeP1_P2;  //Convierte a coVariab_Expres;
+    Oper_word_equal_word;
+  end;
+  coExpres_Expres:begin
+    //La expresión p1, debe estar salvada y p2 en (H,W)
+    p1^.catOp := coVariab;
+    p1^.rVar  := GetVarWordFromStk;
+    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    //Luego el caso es similar a variable-expresión
+    Oper_word_equal_word;
+    FreeStkRegisterWord;
+  end;
+  else
+    GenError('Not implemented.'); exit;
+  end;
+end;
 procedure TGenCod.Oper_word_add_word;
 var
   spH: TPicRegister;
@@ -2872,6 +2974,8 @@ begin
   opr.CreateOperation(typWord,@Oper_word_equal_word);
   opr:=typWord.CreateBinaryOperator('<>',3,'difer');
   opr.CreateOperation(typWord,@Oper_word_difer_word);
+  opr:=typWord.CreateBinaryOperator('>',3,'difer');
+  opr.CreateOperation(typWord,@Oper_word_great_word);
 
   opr:=typWord.CreateBinaryOperator('+',4,'suma');  //suma
   opr.CreateOperation(typWord,@Oper_word_add_word);

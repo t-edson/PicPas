@@ -828,7 +828,7 @@ var
 begin
   ed := AddEdit('.pas');
   ed.NomArc := tmpPath + DirectorySeparator + ed.Caption;
-  ed.LoadSyntaxFromFile('PicPas_PIC16.xml');
+  ed.LoadSyntaxFromFile(rutApp + 'PicPas_PIC16.xml');
 end;
 function TfraEditView.LoadFile(fileName: string): boolean;
 //Carga un archivo en el editor. Si encuentra algún error. Devuelve FALSE.

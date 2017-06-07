@@ -2,8 +2,8 @@
 *  UNIT para compilador PicPas
 *  SFR del microcontrolador PIC 16F84A
 *
-*  (C) AguHDz 05-MAY-2017
-*  Ultima Actualizacion: 05-MAY-2017
+*  (C) AguHDz 05-JUN-2017
+*  Ultima Actualizacion: 06-JUN-2017
 }
 unit PIC16F84A;
  
@@ -25,5 +25,57 @@ var
   TRISB            : byte absolute $0086;
   EECON1           : byte absolute $0088;
   EECON2           : byte absolute $0089;
+ 
+const
+// Bits del registro STATUS
+  STATUS_IRP  = 7;
+  STATUS_RP1  = 6;
+  STATUS_RP0  = 5;
+  STATUS_TO   = 4;
+  STATUS_PD   = 3;
+  STATUS_Z    = 2;
+  STATUS_DC   = 1;
+  STATUS_C    = 0;
+// Bits del registro PORTA
+  PORTA_T0CKI = 4;
+  PORTA_RBA4  = 4;
+  PORTA_RBA3  = 3;
+  PORTA_RBA2  = 2;
+  PORTA_RBA1  = 1;
+  PORTA_RBA0  = 0;
+// Bits del registro PORTB
+  PORTB_RBB7  = 7;
+  PORTB_RBB6  = 6;
+  PORTB_RBB5  = 5;
+  PORTB_RBB4  = 4;
+  PORTB_RBB3  = 3;
+  PORTB_RBB2  = 2;
+  PORTB_RBB1  = 1;
+  PORTB_RBB0  = 0;
+  PORTB_INT   = 0;
+// Bits del registro INTCON
+  INTCON_GI1  = 7;
+  INTCON_EEIE = 6;
+  INTCON_T0IE = 5;
+  INTCON_INTE = 4;
+  INTCON_RBIE = 3;
+  INTCON_T0IF = 2;
+  INTCON_INTF = 1;
+  INTCON_RBIF = 0;
+// Bits del registro OPTION
+  OPTION_RBPU = 7;
+  OPTION_INTE = 6;
+  OPTION_TOCS = 5;
+  OPTION_T0SE = 4;
+  OPTION_PSA  = 3;
+  OPTION_PS2  = 2;
+  OPTION_PS1  = 1;
+  OPTION_PS0  = 0;
+// Bits del registro ECON1
+  ECON1_EEIF  = 4;
+  ECON1_WRR   = 3;
+  ECON1_WEN   = 2;
+  ECON1_WR    = 1;
+  ECON1_RD    = 0;
 implementation
 end.
