@@ -61,6 +61,7 @@ type
       procedure bit_LoadToReg(const OpPtr: pointer);
       procedure bit_DefineRegisters;
       procedure bit_SaveToStk;
+      procedure CopyInvert_C_to_Z;
       procedure Oper_bit_asig_bit;
       procedure Oper_bit_asig_byte;
       procedure Oper_bit_and_bit;
@@ -178,6 +179,13 @@ procedure TGenCod.callFunct(fun: TxpEleFun);
 begin
   //Por ahora no se implementa apginación, pero despuñes habrái que considerarlo.
   _CALL(fun.adrr);
+end;
+procedure TGenCod.CopyInvert_C_to_Z;
+begin
+  //El resultado está en C (invertido), hay que pasarlo a Z
+  _MOVLW($01 << _C);     //carga máscara de C
+  _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
+  InvertedFromC := true;  //Indica que se ha hecho Z = 'C. para que se pueda optimizar
 end;
 {procedure PushW;
 //Guarda valor del acumulador en memoria temporal. Así lo deja libre.
@@ -1263,13 +1271,6 @@ begin
   Oper_bit_dif_byte;
 end;
 procedure TGenCod.Oper_byte_great_byte;
-  procedure CopyInvert_C_to_Z;
-  begin
-    //El resultado está en C (invertido), hay que pasarlo a Z
-    _MOVLW($01 << _C);     //carga máscara de C
-    _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
-    InvertedFromC := true;  //Indica que se ha hecho Z = 'C.
-  end;
 var
   r, tmp: TPicRegister;
 begin
@@ -1925,18 +1926,25 @@ begin
     SetResultConst_bool(p1^.valInt > p2^.valInt);
   end;
   coConst_Variab: begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
-    //Compara byte alto
-    _MOVLW(p1^.HByte);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Hoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale);  //no son iguales
-    //Son iguales, comparar el byte bajo
-    _MOVLW(p1^.LByte);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Loffs,toW);	//p2-p1
-_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    if p1^.valInt = 0 then begin
+      //0 es mayor que nada
+      SetResultConst_bool(false);
+//      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
+    end else begin
+      SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+      //Compara byte alto
+      _MOVLW(p1^.HByte);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.Hoffs, toW); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale);  //no son iguales
+      //Son iguales, comparar el byte bajo
+      _MOVLW(p1^.LByte);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.Loffs,toW);	//p2-p1
+  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+      CopyInvert_C_to_Z;  //Pasa a Z
+    end;
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó p2 esta en W
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
@@ -1954,11 +1962,12 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     _BANKSEL(tmp.bank);  //verifica banco destino
     _SUBWF(tmp.offs,toW);	//p2-p1
 _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    CopyInvert_C_to_Z;  //Pasa a Z
   end;
-  coVariab_Const: begin
-    ExchangeP1_P2;  //Convierte a coConst_Variab
-    Oper_word_equal_word;
-  end;
+//  coVariab_Const: begin
+//    ExchangeP1_P2;  //Convierte a coConst_Variab
+//    Oper_word_equal_word;
+//  end;
   coVariab_Variab:begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //Compara byte alto
@@ -1974,6 +1983,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.Loffs,toW);	//p2-p1
 _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    CopyInvert_C_to_Z;  //Pasa a Z
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
@@ -1994,22 +2004,23 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     _SUBWF(tmp.offs,toW);	//p2-p1
     tmp.used := false;
 _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    CopyInvert_C_to_Z;  //Pasa a Z
   end;
-  coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    ExchangeP1_P2;  //Convierte a coConst_Expres;
-    Oper_word_equal_word;
-  end;
-  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    ExchangeP1_P2;  //Convierte a coVariab_Expres;
-    Oper_word_equal_word;
-  end;
+//  coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+//    ExchangeP1_P2;  //Convierte a coConst_Expres;
+//    Oper_word_equal_word;
+//  end;
+//  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+//    ExchangeP1_P2;  //Convierte a coVariab_Expres;
+//    Oper_word_equal_word;
+//  end;
   coExpres_Expres:begin
     //La expresión p1, debe estar salvada y p2 en (H,W)
     p1^.catOp := coVariab;
     p1^.rVar  := GetVarWordFromStk;
     catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
     //Luego el caso es similar a variable-expresión
-    Oper_word_equal_word;
+    Oper_word_great_word;
     FreeStkRegisterWord;
   end;
   else

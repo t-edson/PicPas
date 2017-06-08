@@ -69,21 +69,22 @@
       <Unit5>
         <Filename Value="GenCod.pas"/>
         <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
-        <TopLine Value="1920"/>
-        <CursorPos X="14" Y="1927"/>
-        <FoldState Value=" T4i703 T8iE41314 T3kY057 piXjL032 pjLjR0S1 pk2kW0H[96L[94TMkb011D1H7D7 T0m8O2C]nVj1W96].cVFJD[84iaQ38]9bYY36]Y3fi5G]GYj5F4[H48Nk6A]HZiTK8D]HUiJY34[p4LHn8[Q5Ma6K[94lbI511I T6mG012 p2y6015 THmK2X1]z0kO2M[94gl44{l1 pkNp72F212D"/>
+        <TopLine Value="1994"/>
+        <CursorPos X="25" Y="2023"/>
+        <FoldState Value=" TL00A4 piA$0411 p2wP0B2 T4i703 T7iDE{N T8iE416 pj0j8451 T3kZ058]vdjS032]QLjR0S],k2kW0H[96L[96Ql20HD]jejU033]j7jE075]Ibj704515]cSp20{KA[L4lL063]9Zj]JJ11[)5p50{a01[+41le03[X4cj30K3[{/5O0V[946jf0c2 pn2o00I1 TMkc011E1H7D7H p0uQ810a]9tV610E2A2A1*]F$e08]f21A1G]t0mGO2C pjVj1W96 picVFJD[84iaQ38 pibYY3]Pj3fi5G]GYj5F4[H48Nk6A piZiTK8D]HUiJY34[p4LHn8[Q5Ma6K[94lbI5I[94k4e3B6B]BcmeH2[k4YSaC5]+IifR27[~J5OB6G[t57IG68[$4anOIB9]c2jSIHC[t4k4C4I[R4kTU1M[u54U2H]9XiXD29 T6mO012 p2y601L THmS2X1]=0kO2M[94gl44{l]AkNp72F3 pidlE2r112]UQqd2{F4]A4nO2{D01[q4cp62{T]Mif]AK[V4BkT2L2t"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <IsVisibleTab Value="True"/>
           <EditorIndex Value="1"/>
           <WindowIndex Value="1"/>
-          <TopLine Value="1365"/>
-          <CursorPos X="23" Y="1383"/>
+          <TopLine Value="1366"/>
+          <CursorPos X="25" Y="1384"/>
         </ExtraEditor1>
         <UsageCount Value="202"/>
         <Bookmarks Count="1">
-          <Item0 X="37" Y="2791" ID="2"/>
+          <Item0 X="37" Y="2802" ID="2"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit5>
@@ -180,13 +181,13 @@
         <ComponentName Value="fraEditView"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="799"/>
-        <CursorPos X="34" Y="831"/>
+        <TopLine Value="798"/>
+        <CursorPos X="54" Y="831"/>
         <FoldState Value=" TLA21111 TMoJ020115]C7HM20[L48W248 T5kA0[O43kM0C[l4213 THkR26]M6kc0102[K50lPU30912HJ"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit13>
       <Unit14>
         <Filename Value="FrameMessagesWin.pas"/>
@@ -391,125 +392,125 @@
         <UsageCount Value="9"/>
       </Unit37>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="28">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="591" Column="17" TopLine="549"/>
+        <Caret Line="607" Column="21" TopLine="563"/>
       </Position1>
       <Position2>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="607" Column="21" TopLine="563"/>
+        <Caret Line="391" Column="34" TopLine="286"/>
       </Position2>
       <Position3>
         <Filename Value="ProcAsm.pas"/>
-        <Caret Line="391" Column="34" TopLine="286"/>
+        <Caret Line="447" Column="49" TopLine="404"/>
       </Position3>
       <Position4>
-        <Filename Value="ProcAsm.pas"/>
-        <Caret Line="447" Column="49" TopLine="404"/>
+        <Filename Value="GenCod.pas"/>
+        <Caret Line="2049" Column="29" TopLine="2041"/>
       </Position4>
       <Position5>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="2049" Column="29" TopLine="2041"/>
+        <Caret Line="2159" Column="23" TopLine="2128"/>
       </Position5>
       <Position6>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="2159" Column="23" TopLine="2128"/>
+        <Caret Line="2872" Column="45" TopLine="2847"/>
       </Position6>
       <Position7>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="2872" Column="45" TopLine="2847"/>
+        <Caret Line="125" Column="37" TopLine="85"/>
       </Position7>
       <Position8>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="125" Column="37" TopLine="85"/>
+        <Caret Line="1811" Column="39" TopLine="1779"/>
       </Position8>
       <Position9>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1811" Column="39" TopLine="1779"/>
+        <Caret Line="1853" Column="25" TopLine="1822"/>
       </Position9>
       <Position10>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1853" Column="25" TopLine="1822"/>
+        <Caret Line="1893" Column="25" TopLine="1862"/>
       </Position10>
       <Position11>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1893" Column="25" TopLine="1862"/>
+        <Caret Line="1897" Column="25" TopLine="1866"/>
       </Position11>
       <Position12>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1897" Column="25" TopLine="1866"/>
+        <Caret Line="1905" Column="25" TopLine="1874"/>
       </Position12>
       <Position13>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1905" Column="25" TopLine="1874"/>
+        <Caret Line="1914" Column="23" TopLine="1882"/>
       </Position13>
       <Position14>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1914" Column="23" TopLine="1882"/>
+        <Caret Line="2874" TopLine="2841"/>
       </Position14>
       <Position15>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="2874" TopLine="2841"/>
+        <Caret Line="2872" Column="32" TopLine="2841"/>
       </Position15>
       <Position16>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="2872" Column="32" TopLine="2841"/>
+        <Caret Line="1914" Column="3" TopLine="1895"/>
       </Position16>
       <Position17>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1914" Column="3" TopLine="1895"/>
+        <Caret Line="1905" Column="5" TopLine="1896"/>
       </Position17>
       <Position18>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1905" Column="5" TopLine="1896"/>
+        <Caret Line="1897" Column="5" TopLine="1878"/>
       </Position18>
       <Position19>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1897" Column="5" TopLine="1878"/>
+        <Caret Line="1905" Column="25" TopLine="1878"/>
       </Position19>
       <Position20>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1905" Column="25" TopLine="1878"/>
+        <Caret Line="1914" Column="23" TopLine="1882"/>
       </Position20>
       <Position21>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1914" Column="23" TopLine="1882"/>
+        <Caret Line="2874" Column="50" TopLine="2841"/>
       </Position21>
       <Position22>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="2874" Column="50" TopLine="2841"/>
+        <Caret Line="127" Column="38" TopLine="85"/>
       </Position22>
       <Position23>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="127" Column="38" TopLine="85"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="457" Column="39" TopLine="432"/>
       </Position23>
       <Position24>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="457" Column="39" TopLine="432"/>
       </Position24>
       <Position25>
         <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="195" Column="29" TopLine="163"/>
       </Position25>
       <Position26>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="195" Column="29" TopLine="163"/>
-      </Position26>
-      <Position27>
         <Filename Value="Globales.pas"/>
         <Caret Line="18" Column="10"/>
+      </Position26>
+      <Position27>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Column="3"/>
       </Position27>
       <Position28>
         <Filename Value="FrameEditView.pas"/>
-        <Caret Column="3"/>
+        <Caret Line="831" Column="25" TopLine="799"/>
       </Position28>
       <Position29>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="831" Column="25" TopLine="799"/>
+        <Filename Value="GenCod.pas"/>
+        <Caret Line="1940" Column="28" TopLine="1812"/>
       </Position29>
       <Position30>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="7" Column="73"/>
+        <Filename Value="GenCod.pas"/>
+        <Caret Line="182" Column="19" TopLine="163"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
