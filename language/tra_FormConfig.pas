@@ -5,7 +5,7 @@ RadioGroup1.Caption  := Trans('Toolbar'                , 'Barra de herramientas'
 RadioGroup1.Items[0] := Trans('Small Icons'            , 'Íconos pequeños'          , '', 'Kleine Bilder');
 RadioGroup1.Items[1] := Trans('Big Icons'              , 'Íconos grandes'           , '', 'Große Bilder');
 label1.Caption       := Trans('Units Path:'            , 'Ruta de unidades'         , '', 'Unitpfad:');
-chkLoadLast.Caption  := Trans('Load last file edited'  , 'Cargar último archivo editado','','Letz editierte Datei laden');
+chkLoadLast.Caption  := Trans('Load last file edited', 'Cargar último archivo editado', '','Letzte editierte Datei laden');
 Label2.Caption       := Trans('Language'               , 'Lenguaje'                 , '', 'Sprache');
 //Editor Settings
 tabEditor.Caption    := Trans('Editor'                 , 'Editor'                   , '', 'Editor');
@@ -19,10 +19,10 @@ chkExcUnus.Caption   := Trans('Exclude unused'         , 'Excluir no usadas'    
 chkIncAddress.Caption:= Trans('Include &Memory Address','Incluir &Dirección de memoria','','Speicheradressen zufügen');
 chkIncComment.Caption:= Trans('Include &Comments'      , 'Incluir &Comentarios'     , '','Kommentare hinzufügen');
 chkIncComment2.Caption:=Trans('Include &Detailed comments', 'Incluir Comentarios &detallados' , '',
-                              '');
+                              '&Detaillierte Kommentare hinzufügen');
 //Output Settings
-tabOutput.Caption    := Trans('Compiler'               , 'Compilador'               , '', '');
-chkShowErrMsg.Caption:= Trans('&Show Error Messages'   , '&Mostrar mensajes de error', '', '');
+tabOutput.Caption    := Trans('Compiler'               , 'Compilador'               , '', 'Compiler');
+chkShowErrMsg.Caption:= Trans('&Show Error Messages'   , '&Mostrar mensajes de error', '', '&Zeige Fehlermeldungen');
 grpOptimLev.Caption  := Trans('Optimization Level:'    , 'Nivel de optimización:'   , '', 'Optimierungsstufe');
 grpOptimLev.Items[0] := Trans('Fool'                   , 'Tonto'                    , '', 'Dumm');
 grpOptimLev.Items[1] := Trans('Smart'                  , 'Inteligente'              , '', 'Schlau');
