@@ -3,7 +3,7 @@
  mnEdit.Caption  := Trans('&Edit'    , '&Edición'       , '&Allichay'     , '&Bearbeiten');
  mnFind.Caption  := Trans('&Search'  , '&Buscar'        , '&Maskhay'      , '&Suchen');
  mnView.Caption  := Trans('&View'    , '&Ver'           , '&Qhaway'       , '&Ansicht');
- mnTools.Caption := Trans('&Tools'   , '&Herramientas'  , '&Llamkanakuna' , '&Werkzeuge');
+ mnTools.Caption := Trans('&Tools'   , '&Herramientas'  , '&Llamk''anakuna' , '&Werkzeuge');
  //File Actions
  acArcNewProj.Caption := Trans('New &Project', 'Nuevo &Proyecto'  , ''            ,'Neues &Projekt');
  acArcNewFile.Caption := Trans('New &File'      , 'Nuevo &Archivo'   , 'Musuq &Khipu'        ,'&Neu');
@@ -26,21 +26,21 @@
  acEdUndo.Hint        := Trans('Undo'        , 'Deshacer'         , '', 'Änderung zurücknehmen');
  acEdRedo.Caption     := Trans('&Redo'       , '&Rehacer'         , '', '&Wiederholen');
  acEdRedo.Hint        := Trans('Redo'        , 'Reahacer'         , '', 'Änderung wiederholen');
- acEdCut.Caption      := Trans('C&ut'        , 'Cor&tar'          , '', 'A&usschneiden');
- acEdCut.Hint         := Trans('Cut'         , 'Cortar'           , '', 'Ausschneiden');
- acEdCopy.Caption     := Trans('&Copy'       , '&Copiar'          , '', '&Kopieren');
- acEdCopy.Hint        := Trans('Copy'        , 'Copiar'           , '', 'Kopieren');
- acEdPaste.Caption    := Trans('&Paste'      , '&Pegar'           , '', '&Einfügen');
- acEdPaste.Hint       := Trans('Paste'       , 'Pegar'            , '', 'Einfügen');
- acEdSelecAll.Caption := Trans('Select &All'    , 'Seleccionar &Todo'  , '', 'Alles &Auswählen');
- acEdSelecAll.Hint    := Trans('Select all'  , 'Seleccionar todo' , '', 'Alles auswählen');
+ acEdCut.Caption      := Trans('C&ut'        , 'Cor&tar'          , 'Ku&chuy', 'A&usschneiden');
+ acEdCut.Hint         := Trans('Cut'         , 'Cortar'           , 'Kuchuy', 'Ausschneiden');
+ acEdCopy.Caption     := Trans('&Copy'       , '&Copiar'          , 'Kiki&nchay', '&Kopieren');
+ acEdCopy.Hint        := Trans('Copy'        , 'Copiar'           , 'Kikinchay', 'Kopieren');
+ acEdPaste.Caption    := Trans('&Paste'      , '&Pegar'           , 'k''ask&ay', '&Einfügen');
+ acEdPaste.Hint       := Trans('Paste'       , 'Pegar'            , 'K''askay', 'Einfügen');
+ acEdSelecAll.Caption := Trans('Select &All'    , 'Seleccionar &Todo'  , 'Lla&panta Akllay', 'Alles &Auswählen');
+ acEdSelecAll.Hint    := Trans('Select all'  , 'Seleccionar todo' , 'Llapanta Akllay', 'Alles auswählen');
  //Search Actions
- acBusFind.Caption    := Trans('Search...'      , 'Buscar...'          , '', 'Suchen...');
- acBusFind.Hint       := Trans('Search text'    , 'Buscar texto'       , '', 'Text suchen');
- acBusFindNxt.Caption := Trans('Search &Next'   , 'Buscar &Siguiente'  , '', 'Weitersuche&n');
- acBusFindNxt.Hint    := Trans('Search Next'    , 'Buscar Siguiente'   , '', 'Nächste Stelle suchen');
- acBusReplac.Caption  := Trans('&Replace...'    , '&Reemplazar...'     , '', '&Ersetzen...');
- acBusReplac.Hint     := Trans('Replace text'   , 'Reemplazar texto'   , '', 'Text ersetzen');
+ acBusFind.Caption    := Trans('Search...'      , 'Buscar...'          , 'Maskhay', 'Suchen...');
+ acBusFind.Hint       := Trans('Search text'    , 'Buscar texto'       , 'Qillqata maskhay', 'Text suchen');
+ acBusFindNxt.Caption := Trans('Search &Next'   , 'Buscar &Siguiente'  , '&Hamuqta Maskhay', 'Weitersuche&n');
+ acBusFindNxt.Hint    := Trans('Search Next'    , 'Buscar Siguiente'   , 'Hamuqta Maskhay', 'Nächste Stelle suchen');
+ acBusReplac.Caption  := Trans('&Replace...'    , '&Reemplazar...'     , '&Yankiy', '&Ersetzen...');
+ acBusReplac.Hint     := Trans('Replace text'   , 'Reemplazar texto'   , 'Qillqata yankiy', 'Text ersetzen');
  //View actions
  acViewMsgPan.Caption := Trans('&Messages Panel'         , 'Panel de &Mensajes'           , '','&Nachrichten Panel');
  acViewMsgPan.Hint    := Trans('Show/hide Messages Panel' , 'Mostrar/Ocultar el Panel de Mensajes', '', 'Nachrichten Panel zeigen oder verbergen');
@@ -56,5 +56,5 @@
  acToolComEjec.Hint  := Trans('Compile and Execute'      , 'Compilar y Ejecutar'          , '', 'Compilieren und Ausführen');
  acToolPICExpl.Caption:= Trans('PIC E&xplorer'            , 'E&xplorador de PIC'           , '', 'PIC E&xplorer');
  acToolPICExpl.Hint   := Trans('Open the PIC devices explorer','Abrir el explorador de dispos. PIC', '','Öffne den PIC Geräte explorer');
- acToolConfig.Caption := Trans('&Settings'                , 'Configuración'                , '', '&Einstellungen');
- acToolConfig.Hint   := Trans('Settings dialog'             , 'Ver configuración'            , '', 'Einstellungs-Dialog');
+ acToolConfig.Caption := Trans('&Settings'                , 'Configuración'                , 'Kamachina', '&Einstellungen');
+ acToolConfig.Hint   := Trans('Settings dialog'             , 'Ver configuración'            , 'Kamachinata qhaway', 'Einstellungs-Dialog');
