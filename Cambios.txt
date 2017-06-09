@@ -27,7 +27,8 @@ Se habilita el acceso a constantes desde dentro del bloque ASM.
 Se incluye el procesamiento de la directiva ORG, dentro de los bloques ASM.
 Se cambian las rutas de los archivos de sintaxis (XML), de relativas a absolutas.
 Se implementan varios casos de la operación Oper_word_great_word().
-Se corrige un error en TOperand.bank(), cuando trabajaba con tipso bit.
+Se corrige un error en TOperand.bank(), cuando trabajaba con tipos bit.
+Se agrega la función del sistema SetBank(), para forzar el cambio de banco.
 
 PENDIENTES
 Implementar las operaciones pendientes en los Word.

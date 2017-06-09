@@ -108,7 +108,7 @@ type
     procedure _ADDWF(const f: byte; d: TPIC16destin);
     procedure _ANDLW(const k: word);
     procedure _ANDWF(const f: byte; d: TPIC16destin);
-    function _BANKSEL(targetBank: byte): byte;
+    function  _BANKSEL(targetBank: byte): byte;
     procedure _BANKRESET;
     procedure _BCF(const f, b: byte);
     procedure _BSF(const f, b: byte);
@@ -822,126 +822,101 @@ procedure TGenCodPic._ANDWF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.codAsmFD(ANDWF, f,d);
 end;
-function TGenCodPic._BANKSEL(targetBank: byte): byte;
-{Verifica si se está en el banco deseado, de no ser así geenra las instrucciones
- para el cambio de banco.
- Devuelve el número de instrucciones generado.}
-begin
-  if targetBank = CurrBank then
-    exit;
-  //se está en un banco diferente
-  case CurrBank of
-  0: case targetBank of
-       1: begin
-         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=1;
-         exit(1);
-       end;
-       2: begin
-         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
-         CurrBank:=2;
-         exit(1);
-       end;
-       3: begin
-         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
-         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
-         CurrBank:=3;
-         exit(2);
-       end;
-     end;
-  1: case targetBank of
-       0: begin
-         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=0;
-         exit(1);
-       end;
-       2: begin
-         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
-         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=2;
-         exit(2);
-       end;
-       3: begin
-         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
-         CurrBank:=3;
-         exit(1);
-       end;
-     end;
-  2: case targetBank of
-       0: begin
-         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
-         CurrBank:=0;
-         exit(1);
-       end;
-       1: begin
-         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
-         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=1;
-         exit(2);
-       end;
-       3: begin
-         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=3;
-         exit(1);
-       end;
-     end;
-  3: case targetBank of
-       0: begin
-         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
-         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=0;
-         exit(2);
-       end;
-       1: begin
-         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
-         CurrBank:=1;
-         exit(1);
-       end;
-       2: begin
-         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=2;
-         exit(1);
-       end;
-     end;
-  // Este caso es equivalentea decir "no sé en qué banco estoy"
-  255: case targetBank of
-       0: begin
-         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
-         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=0;
-         exit(2);
-       end;
-       1: begin
-         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
-         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=1;
-         exit(2);
-       end;
-       2: begin
-         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
-         _BCF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=2;
-         exit(2);
-       end;
-       3: begin
-         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
-         _BSF(_STATUS, _RP0); PutComm(';Bank set.');
-         CurrBank:=3;
-         exit(2);
-       end;
-     end;
-  end;
-  //No generó instrucciones
-  exit(0);
-end;
 procedure TGenCodPic._BANKRESET;
 {Reinicia el banco al banco 0, independientemente de donde se pueda encontrar antes.
 Siempre genera dos instrucciones. Se usa cuando no se puede predecir exactamente, en que
 banco se encontrará el compilador.}
 begin
-  _BCF(_STATUS, _RP1); PutComm(';Bank reset.');
-  _BCF(_STATUS, _RP0); PutComm(';Bank reset.');
+  if pic.NumBanks > 1 then begin
+    _BCF(_STATUS, _RP0); PutComm(';Bank reset.');
+  end;
+  if pic.NumBanks > 2 then begin
+    _BCF(_STATUS, _RP1); PutComm(';Bank reset.');
+  end;
   CurrBank:=0;
+end;
+function TGenCodPic._BANKSEL(targetBank: byte): byte;
+{Verifica si se está en el banco deseado, de no ser así geenra las instrucciones
+ para el cambio de banco.
+ Devuelve el número de instrucciones generado.}
+var
+  curRP0: Byte;
+  nInst, newRP0, curRP1, newRP1: byte;
+begin
+  nInst := 0;  //Número de instrucciones usadas pro defecto
+  if pic.NumBanks = 1 then
+    exit(nInst);  //Caso especial. ¿Hay un PIC de esta serie con un banco?
+  if targetBank = CurrBank then
+    exit(nInst);  //Ya estamos en el banco pedido
+  //Se está en un banco diferente
+  if CurrBank = 255 then begin
+    //Este caso es equivalente a decir "no sé en qué banco estoy"
+    case targetBank of
+    0: begin
+       _BCF(_STATUS, _RP0); PutComm(';Bank set.');
+       inc(nInst);
+       if pic.NumBanks > 2 then begin
+         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+         inc(nInst);
+       end;
+     end;
+    1: begin
+       _BSF(_STATUS, _RP0); PutComm(';Bank set.');
+       inc(nInst);
+       if pic.NumBanks > 2 then begin
+         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+         inc(nInst);
+       end;
+     end;
+    2: begin
+       _BCF(_STATUS, _RP0); PutComm(';Bank set.');
+       inc(nInst);
+       if pic.NumBanks > 2 then begin
+         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+         inc(nInst);
+       end;
+     end;
+    3: begin
+       _BSF(_STATUS, _RP0); PutComm(';Bank set.');
+       inc(nInst);
+       if pic.NumBanks > 2 then begin
+         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+         inc(nInst);
+       end;
+     end;
+    end;
+    CurrBank:=targetBank;  //Fija banco actual
+    exit(nInst);
+  end else begin
+    //Se debe cambiar al banco solicitado
+    ////////// Verifica RP0 ////////////
+    curRP0 := CurrBank and $01;
+    newRP0 := targetBank and $01;
+    if curRP0 <> newRP0 then begin
+      //Debe haber cambio
+      inc(nInst);
+      if curRP0 = 0 then begin
+        _BSF(_STATUS, _RP0); PutComm(';Bank set.');
+      end else begin
+        _BCF(_STATUS, _RP0); PutComm(';Bank set.');
+      end;
+    end;
+    ////////// Verifica RP1 ////////////
+    curRP1 := CurrBank and $02;
+    newRP1 := targetBank and $02;
+    if (pic.NumBanks > 2) and (curRP1 <> newRP1) then begin
+      //Debe haber cambio
+      inc(nInst);
+      if curRP1 = 0 then begin
+        _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+      end else begin
+        _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+      end;
+    end;
+    //////////////////////////////////////
+    CurrBank:=targetBank;
+    exit(nInst);
+  end;
 end;
 procedure TGenCodPic._CLRF(const f: byte); inline;
 begin

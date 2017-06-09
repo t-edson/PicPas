@@ -38,6 +38,7 @@
   "ord('A');"
   "SetAsInput(\_);"
   "SetAsOutput(\_);"
+  "SetBank(\_);"
     </List>
 	<OpenOn AfterPattern="':'" FilterBy="none" Action="RepLastTok" Block="BeginEnd">
 	  ":= "

@@ -149,6 +149,7 @@ type
       procedure fun_SetAsInput(fun: TxpEleFun);
       procedure fun_SetAsOutput(fun: TxpEleFun);
       procedure fun_Word(fun: TxpEleFun);
+      procedure fun_SetBank(fun: TxpEleFun);
     protected
       procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
@@ -2736,6 +2737,29 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
+procedure TGenCod.fun_SetBank(fun: TxpEleFun);
+{Define el banco actual}
+begin
+  if not CaptureTok('(') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if HayError then exit;   //aborta
+  case res.catOp of  //el parámetro debe estar en "res"
+  coConst : begin
+    if (res.typ = typByte) or (res.typ = typWord) then begin
+      //ya es Word
+      CurrBank := 255;   //para forzar el cambio
+      _BANKSEL(res.valInt);
+    end else begin
+      GenError('Number expected.'); exit;
+    end;
+  end;
+  coVariab, coExpres: begin  //se asume que ya está en (w)
+    GenError('A constant expected.'); exit;
+  end;
+  end;
+  if not CaptureTok(')') then exit;
+end;
+
 procedure TGenCod.StartSyntax;
 //Se ejecuta solo una vez al inicio
 begin
@@ -2774,7 +2798,7 @@ begin
   xLex.AddIdentSpecList('bit boolean byte word char', tnType);
   //funciones del sistema
   xLex.AddIdentSpecList('delay_ms Inc Dec Ord Chr', tnSysFunct);
-  xLex.AddIdentSpecList('SetAsInput SetAsOutput MapVarTo', tnSysFunct);
+  xLex.AddIdentSpecList('SetAsInput SetAsOutput SetBank', tnSysFunct);
   //símbolos especiales
   xLex.AddSymbSpec('+',  tnOperator);
   xLex.AddSymbSpec('-',  tnOperator);
@@ -3016,6 +3040,7 @@ begin
   f := CreateSysFunction('SetAsInput', @fun_SetAsInput);
   f := CreateSysFunction('SetAsOutput', @fun_SetAsOutput);
   f := CreateSysFunction('Word', @fun_Word);
+  f := CreateSysFunction('SetBank', @fun_SetBank);
 end;
 procedure SetLanguage(lang: string);
 begin
