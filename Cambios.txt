@@ -9,9 +9,9 @@ ensamblador, en el formato que maneja el MPLAB.
 Se corrigen errores en la operación Oper_word_add_word().
 Se modifica TGenCodPic.PutTopComm(), para que acepte agregar comentarios sin sobreescribir.
 Se crea el campo TGenCodPic.incDetComm, para permitir comentarios detallados, y se incluye 
-la opción en la ventaan de configuración.
+la opción en la ventana de configuración.
 Se incluye la opción de mostrar mensajes de error en la ventana de configuración.
-Se revisan y corrigen las operacionesOper_word_add_byte() y Oper_word_add_word().
+Se revisan y corrigen las operaciones Oper_word_add_byte() y Oper_word_add_word().
 Se modifica TCompilerBase.CaptureTok(), para tener mayor precisión, sobre la posición 
 del error.
 Se corrige el error de ubicación del cursor sobre el editor, cuando se produce un error.
@@ -22,13 +22,17 @@ expresiones constantes.
 Se mejora la detección de errores de sintaxis en bloques de código.
 Se actualiza la librería PIC16F84A.pas, en la carpeta de unidades, y se incluye la 
 librería PIC16F877A.pas.
-Se corrige un error de identifiación en TCompilerBase.CatOperationToStr().
+Se corrige un error de identificación en TCompilerBase.CatOperationToStr().
 Se habilita el acceso a constantes desde dentro del bloque ASM.
-Se incluye el procesamiento de la directiva ORG, dentro de los blqoues ASM.
+Se incluye el procesamiento de la directiva ORG, dentro de los bloques ASM.
+Se cambian las rutas de los archivos de sintaxis (XML), de relativas a absolutas.
+Se implementan varios casos de la operación Oper_word_great_word().
+Se corrige un error en TOperand.bank(), cuando trabajaba con tipso bit.
 
 PENDIENTES
 Implementar las operaciones pendientes en los Word.
 Implementar las funciones.
+Terminar de implementar las funcionalidades completas de una unidad.
 Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
 Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
 editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
@@ -36,11 +40,11 @@ las acciones.
 Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
 TPICregister.
 Implementar la reutilización de variables usadas como parámetros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
 Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
 Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
 Incluir el tipo integer con signo.
 Incluir arreglos y registros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
 Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
 y más de una página de ROM.
 
@@ -217,7 +221,7 @@ Se crea el formulario frmElemProperty, para mostrar las propiedades de un elemen
 árbol de sintaxis.
 Se crea TCompiler.CompileProcDeclarHeader() y se activa el procesamiento de declaraciones
 de funciones en la INTERFAZ de las unidades.
-Se mejora la ventana del árbol de sintaxis, que ahora tiene el títutlo "Explorador de 
+Se mejora la ventana del árbol de sintaxis, que ahora tiene el título "Explorador de 
 Código", incuye un cuadro de búsqueda y maneja dos modos de visualización.
 Se crea la clase TxpEleBody y se define que se cree el nodo Body, como un nodo 
 independiente, dentro del árbol de sintaxis, para las funciones y el programa principal.
@@ -335,7 +339,7 @@ Se incluye la opción de contar las veces en que una variable o función es llamad
 Se revisa y modifican FindFirst y FindNext de TXpTreeElements.
 Se crea la función TXpTreeElements.FindNextFunc().
 Se elimina TXpTreeElements.FindFuncWithParams().
-Se modifica TCompilerBase.GetOperand() para hacerla m´s eficiente y confiable en el 
+Se modifica TCompilerBase.GetOperand() para hacerla más eficiente y confiable en el 
 reconocimiento de funciones.
 
 PicPas 0.5.5
@@ -438,7 +442,7 @@ PicPas 0.4.9
 ============
 Se mueven los campos de atributos de la clase TGenCod a TGenCodPic.
 Se mueve el método TPicRegister.AssignRAM() a TGenCodPic. 
-Se simplifica la clase TPicRegister, ya que no reuqiere ahora refernecia al PIC.
+Se simplifica la clase TPicRegister, ya que no requiere ahora referencia al PIC.
 Se crea la clase TPicRegisterBit.
 Se cambia de nombre a registerList por listRegAux
 Se cambia de nombre a registerStack por listRegStk.
@@ -561,12 +565,38 @@ Se cambia de nombre a los elementos del enumerado TxpElemType
 
 PicPas 0.3.5
 ============
-* Se cambia la declaración TProcLoadOperand, usando un puntero como parámetro, para permitir el paso de
-un objeto TOperand, cuya definición se hará en otras unidades.
-* Se quita eL parámetro "amb" de TTypes, de modo que se quita la dependencia de "SynFacilSyn", a la unidad
-XPresTypes y se deja a XPresTypes como una unidad sin dependencias.
-* Se sinccroniza el código de la unidad XPresTypes, con la misma unidad XPresTypes, usada en la librería 
-Xpres 0.6.9. Así se maneja un archivo menos.
+* Se cambia la declaración TProcLoadOperand, usando un puntero como parámetro, para permitir 
+el paso de un objeto TOperand, cuya definición se hará en otras unidades.
+* Se quita el parámetro "amb" de TTypes, de modo que se quita la dependencia de "SynFacilSyn", 
+a la unidad XPresTypes y se deja a XPresTypes como una unidad sin dependencias.
+* Se sinccroniza el código de la unidad XPresTypes, con la misma unidad XPresTypes, usada en 
+la librería Xpres 0.6.9. Así se maneja un archivo menos.
 * Se corrige un error de duplicidad de codificación de la rutina delay_ms().
-* Se agrega el manejo de bancos para las variables (aún incompleta, falta implementar para operaciones WORD y en llamada
-a funciones). 
+* Se agrega el manejo de bancos para las variables (aún incompleta, falta implementar para 
+operaciones WORD y en llamada a funciones). 
+
+Versión 0.3.4
+=============
+* Se fusiona la estructura de arbol de nombres con las listas de almacenamiento de variables, 
+constantes y funciones. Ahora se maneja una estructura única que es contenedor y espacio de 
+nombres. Para ello se cambian y actualizan varias rutinas.
+* Se eliminan las tablas vars[]. funcs[], cons[].
+* Como producto del cambio de contenedor de elementos, se suprimen varias rutinas de la unidad 
+XpresParserPic.
+* Se elimina el tipo de token "tkSysFunct", ya que las funciones del sistema pueden ser 
+redefinidas y no ayuda identificar a los tokens que puedan ser funciones del sistema.
+* Se agrega la ventana de explorador de código.
+* Se implementa la definición de variables locales dentro de los procedimientos.
+
+Versión 0.3.3
+=============
+* Se divide a la unidad xpresparserpic.pas en tres unidades:
+
+xprestypes.pas
+xpreselements.pas
+xpresparserpic.pas
+
+De esta forma se tiene un diseño más modular para poder implementar más funcionalidades en 
+las clases sin tener que manejar un archivo muy grande.
+
+* Se crea la estructura de un arbol de nombres para manejar la duplicidad de nombres.

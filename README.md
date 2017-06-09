@@ -234,6 +234,8 @@ end;
 
 ASM blocks are not instructions, that's why they are not finished with ";". It lets the ASM block, to be included in almost any place of the source code, like a comment.
 
+WARNING: Changing the RAM banck, inside an ASM block, can generate errors in compilation or in the code compiled. PicPas know always the current RAM bank, when compiling, but is not aware of the changes can be made inside ASM blocks.
+
 Absolute and relative Labels can be used too:
 
 ```
@@ -272,6 +274,22 @@ begin
   end
 end.
 ```
+
+Constant can be accessed too, using the same way. 
+
+It's possible to use the directive ORG inside a ASM block, too:
+
+```
+  asm 
+    org $-2
+  end
+  vbit := 1;
+```
+
+The address in ORG, can be absolute or relative. 
+
+WARNING: Changing the PC pointer with ORG, can generate errors in the compilation or in the code compiled.
+
 
 ## Directives
 

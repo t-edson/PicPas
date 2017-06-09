@@ -1160,7 +1160,11 @@ end;
 function TOperand.bank: TVarBank;
 {Banco, cuando es de tipo Byte.}
 begin
-  Result := rVar.adrByte0.bank;
+  if (typ = typBit) or (typ = typBool) then begin
+    Result := rVar.adrBit.bank;
+  end else begin  //Char o byte
+    Result := rVar.adrByte0.bank;
+  end;
 end;
 function TOperand.Lbank: TVarBank;
 {Banco del byte bajo, cuando es de tipo Word.}
