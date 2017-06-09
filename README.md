@@ -206,6 +206,7 @@ FUNCTION       DESCRIPTION
 delay_ms()	   Generate a time delay in miliseconds, from 0 to 65536.
 Inc()          Increase a variable.
 Dec()          Decrease a varaible.
+SetBank()      Set the current RAM bank.
 Ord()          Convert a char to a byte.
 Chr()          Convert a byte to a char.
 Bit()          Convert a byte to a bit.
