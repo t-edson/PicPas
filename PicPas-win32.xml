@@ -7,7 +7,7 @@
   <ViewSynTree Val="True"/>
   <SynTreeWidth Val="225"/>
   <chkLoadLast Val="True"/>
-  <language Val="en - English"/>
+  <language Val="qu - Quechua"/>
   <Edit>
     <cTxtNor Val="12632256"/>
     <cFonEdi Val="0"/>
@@ -31,7 +31,7 @@ D:\Proyectos_Software\Lazarus\PicPas-0.6.8\TestCode\Operations\Test4_Asm.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.6.8\TestCode\Operations\Test2_Word2.pas
 "/>
   </Edit>
-  <viewMode Val="2"/>
+  <viewMode Val="1"/>
   <IncHeadMpu Val="True"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>

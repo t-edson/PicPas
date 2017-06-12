@@ -1,3 +1,24 @@
+PicPas 0.6.9
+============
+Se crea el campo "TxpEleFun.procParam", para implementar la rutina a ejecutar, antes 
+de leer parámetros.
+Se crea la lista TxpElement.lstCallers para almacenar información sobre las funciones
+"llamadoras" de otra función, y se crean diversas rutinas para el manejo de llamadas.
+Se modifica TGenCod.callFunct(), para que incluya el llenado de la lista de funciones
+llamadoras. 
+Se modifica TCompilerBase.GetOperand(), para que use el nuevo método de procesamiento 
+de llamadas a las funciones.
+Se cambia de nombre al método TXpTreeElements.OnChangElement por OnAddElement y se
+cambia su implementación, así como su uso, dentro de la unidad "Parser".
+Se modifica TCompilerBase.CaptureParamsFinal(), para que limpie el valor de RTState,
+antes de realizar las asignaciones.
+Se agrega el botón "Detail..." en FormElemProperty, para mostrar el detalle de llamadas
+a un elemento.
+Se optimiza la operación Oper_word_asig_word(), cuando se asignan constantes.
+Se modifica TCompiler.CompileLinkProgram(), para mejorar su rutina de detección de 
+funciones no utilizadas.
+
+
 PicPas 0.6.8
 ============
 Se crea el evento TSynEditor.edKeyDown(), para procesar eventos de teclado del editor.

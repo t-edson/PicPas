@@ -33,7 +33,7 @@ type
     procedure CompileIF;
     procedure CompileREPEAT;
     procedure CompileWHILE;
-    procedure TreeElemsTreeChange;
+    procedure Tree_AddElement(elem: TxpElement);
     function VerifyEND: boolean;
   protected   //Métodos OVERRIDE
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
@@ -676,9 +676,15 @@ begin
     exit;
   end;
 end;
-procedure TCompiler.TreeElemsTreeChange;
+procedure TCompiler.Tree_AddElement(elem: TxpElement);
 begin
-  GenError('Internal Error: Syntax Tree modified on linking.');
+  if FirstPass then begin
+    //Configura evento
+    elem.OnAddCaller := @AddCaller;
+  end else begin
+    //Solo se permiet agregar elementos en la primera pasada
+    GenError('Internal Error: Syntax Tree modified on linking.');
+  end;
 end;
 //Métodos OVERRIDE
 procedure TCompiler.TipDefecNumber(var Op: TOperand; toknum: string);
@@ -1030,7 +1036,8 @@ Conviene separar el procesamiento del enzabezado, para poder usar esta rutina, t
 en el procesamiento de unidades.}
 var
   srcPos: TSrcPos;
-  procName: String;
+  procName, parType: String;
+  typ: TType;
 begin
   //Toma información de ubicación, al inicio del procedimiento
   cIn.SkipWhites;
@@ -1044,7 +1051,7 @@ begin
   procName := cIn.tok;
   cIn.Next;  //lo toma
   {Ya tiene los datos mínimos para crear la función. }
-  fun := CreateFunction(procName, typNull, @callFunct);
+  fun := CreateFunction(procName, typNull, @callParam, @callFunct);
   fun.srcDec := srcPos;   //Toma ubicación en el código
   TreeElems.AddElementAndOpen(fun);  //Se abre un nuevo espacio de nombres
 
@@ -1055,6 +1062,21 @@ begin
     if not ValidateFunction then exit;
   end;
   cIn.SkipWhites;
+  if cIn.tok = ':' then begin
+    cIn.Next;
+    cIn.SkipWhites;
+    //Es función
+    parType := cIn.tok;   //lee tipo de parámetro
+    cIn.Next;
+    //Valida el tipo
+    typ := FindType(parType);
+    if typ = nil then begin
+      GenError(ER_UNDEF_TYPE_, [parType]);
+      exit;
+    end;
+    //Fija el tipo de la función
+    fun.typ := typ;
+  end;
   if not CaptureTok(';') then exit;
   ProcComments;  //Quita espacios. Puede salir con error
 end;
@@ -1540,14 +1562,30 @@ procedure TCompiler.CompileLinkProgram;
 ubicar a los diversos elementos que deben compilarse.
 Se debe llamar después de compilar con CompileProgram.
 Esto es lo más cercano a un enlazador, que hay en PicPas.}
+  procedure RemoveUnusedFunctions;
+  var
+    fun, fun2: TxpEleFun;
+    n: Integer;
+  begin
+    for fun in TreeElems.AllFuncs do begin
+      if fun.nCalled = 0 then begin
+        //Si no se usa la función, tampoco sus elementos locales
+        fun.SetElementsUnused;
+        //También se quita las llamadas que hace a otras funciones
+        for fun2 in TreeElems.AllFuncs do begin
+          n := fun2.RemoveCallsFrom(fun.BodyNode);
+//          debugln('Eliminando %d llamadas desde: %s', [n, fun.name]);
+        end;
+      end;
+    end;
+  end;
 var
-  elem : TxpElement;
-  bod: TxpEleBody;
-  xvar : TxpEleVar;
-  fun  : TxpEleFun;
+  elem   : TxpElement;
+  bod    : TxpEleBody;
+  xvar   : TxpEleVar;
+  fun    : TxpEleFun;
   iniMain: integer;
 begin
-  TreeElems.OnTreeChange := @TreeElemsTreeChange;  //Protege las modificaciones
   ExprLevel := 0;
   pic.ClearMemFlash;
   ResetFlashAndRAM;
@@ -1560,14 +1598,10 @@ begin
       end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
-  //Explora funciones, para marcar sus elementos locales como no usados
+  //Explora las funciones, para identifcar a las no usadas
   TreeElems.RefreshAllFuncs;
-  for fun in TreeElems.AllFuncs do begin
-    if fun.nCalled = 0 then begin
-      //Si no se usa la función, tampoco sus elementos
-      fun.SetElementsUnused;
-    end;
-  end;
+  RemoveUnusedFunctions;
+
   //Reserva espacio para las variables usadas
   TreeElems.RefreshAllVars;
   for xvar in TreeElems.AllVars do begin
@@ -1624,7 +1658,7 @@ begin
     exit;
   end;
   bod.adrr := pic.iFlash;  //guarda la dirección de codificación
-  bod.nCalled := 1;        //actualiza
+//  bod.nCalled := 1;        //actualiza
   cIn.PosAct := bod.posCtx;   //ubica escaner
   PutLabel('__main_program__');
   TreeElems.OpenElement(bod);
@@ -1670,7 +1704,7 @@ begin
     if HayError then exit;
     {-------------------------------------------------}
     TreeElems.Clear;
-    TreeElems.OnTreeChange := nil;   //Se va a modificar el árbol
+    TreeElems.OnAddElement := @Tree_AddElement;   //Se va a modificar el árbol
     listFunSys.Clear;
     CreateSystemElements;  //Crea los elementos del sistema
     //Inicia PIC
@@ -1686,6 +1720,7 @@ begin
       TreeElems.main.name := ExtractFileName(mainFile);
       p := pos('.',TreeElems.main.name);
       if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
+      FirstPass := true;
       CompileUnit(TreeElems.main);
       consoleTickCount('** First Pass.');
     end else begin

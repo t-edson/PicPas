@@ -1,10 +1,10 @@
-PicPas 0.6.8
+PicPas 0.6.9
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "Título de la imagen")
 
-PicPas is a simple compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
+PicPas is a Pascal compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
 
 No additional libraries or software required to compile. PicPas generates the *.hex file directly.
 
@@ -358,7 +358,6 @@ Specify the syntax mode, used by the compiler. The allowed values are:
 •	No recursion implemented, Because of the limited hardware resources, available in PIC devices.
 •	No float point implemented.
 •	No interruption support.
-•	No custom functions support.
 
 Some of these limitations must be solved in next versions.
 

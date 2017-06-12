@@ -204,7 +204,7 @@ begin
     end;
     if ele is TxpEleCon then begin
       xcon := TxpEleCon(ele);
-      if cpx.FirstPass then Inc(xcon.nCalled);  //lleva la cuenta
+      if cpx.FirstPass then xcon.AddCaller;  //lleva la cuenta
       if (xcon.typ = typByte) or (xcon.typ = typChar) then begin
         k := xcon.val.ValInt;
         lexAsm.Next;
@@ -315,7 +315,7 @@ begin
   //Es variable bit o boolean
   lexAsm.Next;   //toma identificador
   xvar := TxpEleVar(ele);
-  if cpx.FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
+  if cpx.FirstPass then xvar.AddCaller;  //lleva la cuenta
   f := GetFaddress(xvar.adrBit.offs);
   b := xvar.adrBit.bit;
   exit(true);
@@ -346,7 +346,7 @@ begin
     end;
     if ele is TxpEleVar then begin
       xvar := TxpEleVar(ele);
-      if cpx.FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
+      if cpx.FirstPass then xvar.AddCaller;  //lleva la cuenta
       if (xvar.typ = typByte) or (xvar.typ = typChar) then begin
         n := xvar.AbsAddr;
         f := GetFaddress(n);

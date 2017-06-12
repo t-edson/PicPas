@@ -163,4 +163,3 @@ begin
   if (a+2) > (b+1) then bien else mal end;
 
 end.
-

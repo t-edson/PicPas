@@ -56,6 +56,7 @@ type
     { TGenCod }
     TGenCod = class(TGenCodPic)
     protected
+      procedure callParam(fun: TxpEleFun);
       procedure callFunct(fun: TxpEleFun);
     private  //Operaciones con Bit
       procedure bit_LoadToReg(const OpPtr: pointer);
@@ -175,11 +176,23 @@ begin
 //  curBloSub := pic.iFlash;  //indica siguiente posición libre
 //  pic.iFlash := iFlashTmp;  //retorna puntero
 end;
-procedure TGenCod.callFunct(fun: TxpEleFun);
-{Rutina que debe llamara a uan función definida por el usuario}
+procedure TGenCod.callParam(fun: TxpEleFun);
+{Rutina genérica, que se usa antes de leer los parámetros de }
 begin
-  //Por ahora no se implementa apginación, pero despuñes habrái que considerarlo.
-  _CALL(fun.adrr);
+  {Haya o no, parámetros se debe proceder como en cualquier expresión, asumiendo que
+  vamos a devolver una expresión.}
+  if RTstate<>nil then begin
+    //Si se usan RT en la operación anterior. Hay que salvar en pila
+    RTstate.SaveToStk;  //Se guardan por tipo
+  end;
+  SetResult(fun.typ, coExpres);  //actualiza "RTstate"
+end;
+procedure TGenCod.callFunct(fun: TxpEleFun);
+{Rutina genérica para llamara a una función definida por el usuario}
+begin
+  fun.iniBnk := CurrBank;   //fija el banco inicial
+  //Por ahora, no se implementa paginación, pero despuñes habría que considerarlo.
+  _CALL(fun.adrr);  //codifica el salto
 end;
 procedure TGenCod.CopyInvert_C_to_Z;
 begin
@@ -1756,10 +1769,18 @@ begin
   coConst : begin
     SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);
-    _MOVLW(p2^.LByte);
-    _MOVWF(p1^.Loffs);
-    _MOVLW(p2^.HByte);
-    _MOVWF(p1^.Hoffs);
+    if p2^.LByte = 0 then begin  //optimiza
+      _CLRF(p1^.Loffs);
+    end else begin
+      _MOVLW(p2^.LByte);
+      _MOVWF(p1^.Loffs);
+    end;
+    if p2^.HByte = 0 then begin  //optimiza
+      _CLRF(p1^.Hoffs);
+    end else begin
+      _MOVLW(p2^.HByte);
+      _MOVWF(p1^.Hoffs);
+    end;
   end;
   coVariab: begin
     SetResultExpres_word(operType);  //Realmente, el resultado no es importante
@@ -2471,10 +2492,10 @@ begin
   if HayError then exit;
   if res.typ = typByte then begin
     //El parámetro byte, debe estar en W
-    _call(fun.adrr);
+    _CALL(fun.adrr);
   end else if res.typ = typWord then begin
     //El parámetro word, debe estar en (H, W)
-    _call(fun.adrr+1);
+    _CALL(fun.adrr+1);
   end else begin
     GenError('Invalid parameter type: %s', [res.typ.name]);
     exit;
