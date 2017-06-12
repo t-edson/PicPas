@@ -23,7 +23,7 @@ chkIncComment2.Caption:=Trans('Include &Detailed comments', 'Incluir Comentarios
 //Output Settings
 tabOutput.Caption    := Trans('Compiler'               , 'Compilador'               , '', 'Compiler');
 chkShowErrMsg.Caption:= Trans('&Show Error Messages'   , '&Mostrar mensajes de error', '', '&Zeige Fehlermeldungen');
-grpOptimLev.Caption  := Trans('Optimization Level:'    , 'Nivel de optimización:'   , '', 'Optimierungsstufe');
+grpOptimLev.Caption  := Trans('Optimization Level:'    , 'Nivel de optimización:'   , '', 'Optimierungsstufe:');
 grpOptimLev.Items[0] := Trans('Fool'                   , 'Tonto'                    , '', 'Dumm');
 grpOptimLev.Items[1] := Trans('Smart'                  , 'Inteligente'              , '', 'Schlau');
 
