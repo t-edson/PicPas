@@ -113,7 +113,8 @@ protected  //Eventos del compilador
   function CreateFunction(funName: string; typ: ttype; procParam,
     procCall: TProcExecFunction): TxpEleFun;
   function ValidateFunction: boolean;
-  function CreateSysFunction(funName: string; proc: TProcExecFunction): TxpEleFun;
+  function CreateSysFunction(funName: string; procParam,
+    procCall: TProcExecFunction): TxpEleFun;
   procedure CaptureParamsFinal(fun: TxpEleFun);
   function CaptureTok(tok: string): boolean;
   function CaptureStr(str: string): boolean;
@@ -352,17 +353,20 @@ begin
   end;
   exit(true);  //validación sin error
 end;
-function TCompilerBase.CreateSysFunction(funName: string; proc: TProcExecFunction): TxpEleFun;
+function TCompilerBase.CreateSysFunction(funName: string;
+  procParam, procCall: TProcExecFunction): TxpEleFun;
 {Crea una función del sistema. A diferencia de las funciones definidas por el usuario,
 una función del sistema se crea, sin crear espacios de nombre. La idea es poder
-crearlas rápidamente.}
+crearlas rápidamente. "procParam", solo es necesario, cuando la función del sistema
+debe devolver valores (No es procedimiento).}
 var
   fun : TxpEleFun;
 begin
   fun := TxpEleFun.Create;  //Se crea como una función normal
   fun.name:= funName;
   fun.typ := typNull;
-  fun.procCall:= proc;
+  fun.procParam := procParam;
+  fun.procCall:= procCall;
   fun.ClearParams;
 //  TreeElems.AddElement(fun, false);  //no verifica duplicidad
   listFunSys.Add(fun);  //Las funciones de sistema son accesibles siempre
@@ -625,9 +629,11 @@ begin
       if (Upcase(xfun.name) = tmp) then begin
         {Encontró. Llama a la función de procesamiento, quien se encargará de
         extraer los parámetros y analizar la sintaxis.}
-        if FirstPass and (xfun.compile<>nil) then xfun.AddCaller;  {LLeva la cuenta de
-                                  llamadas, solo cuando hay subrutinas. Para funciones
-                                  INLINE, no vale la pena, gastar recursos.}
+        if FirstPass and (xfun.compile<>nil) then begin
+          {LLeva la cuenta de llamadas, solo cuando hay subrutinas. Para funciones
+           INLINE, no vale la pena, gastar recursos.}
+          xfun.AddCaller;
+        end;
         xfun.procCall(xfun);  //Para que devuelva el tipo y codifique el _CALL o lo implemente
         //Puede devolver typNull, si no es una función.
         Result := res;  //copia tipo y categoría y otros campso relevantes

@@ -3050,18 +3050,19 @@ var
 begin
   //////// Funciones del sistema ////////////
   {Notar que las funciones del sistema no crean espacios de nombres.}
-  f := CreateSysFunction('delay_ms', @fun_delay_ms);
+  f := CreateSysFunction('delay_ms', nil, @fun_delay_ms);
   f.adrr:=$0;
   f.compile := @codif_delay_ms;  //rutina de compilación
-  f := CreateSysFunction('Inc', @fun_Inc);
-  f := CreateSysFunction('Dec', @fun_Dec);
-  f := CreateSysFunction('Ord', @fun_Ord);
-  f := CreateSysFunction('Chr', @fun_Chr);
-  f := CreateSysFunction('Bit', @fun_Bit);
-  f := CreateSysFunction('SetAsInput', @fun_SetAsInput);
-  f := CreateSysFunction('SetAsOutput', @fun_SetAsOutput);
-  f := CreateSysFunction('Word', @fun_Word);
-  f := CreateSysFunction('SetBank', @fun_SetBank);
+  f.OnAddCaller := @AddCaller;  //Para que lleve la cuenta de las llamadas a subrutinas
+  f := CreateSysFunction('Inc'      , nil, @fun_Inc);
+  f := CreateSysFunction('Dec'      , nil, @fun_Dec);
+  f := CreateSysFunction('Ord'      , @callParam, @fun_Ord);
+  f := CreateSysFunction('Chr'      , @callParam, @fun_Chr);
+  f := CreateSysFunction('Bit'      , @callParam, @fun_Bit);
+  f := CreateSysFunction('SetAsInput' ,nil, @fun_SetAsInput);
+  f := CreateSysFunction('SetAsOutput',nil, @fun_SetAsOutput);
+  f := CreateSysFunction('Word'     , @callParam, @fun_Word);
+  f := CreateSysFunction('SetBank'  , nil, @fun_SetBank);
 end;
 procedure SetLanguage(lang: string);
 begin

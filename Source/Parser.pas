@@ -1573,7 +1573,7 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
         fun.SetElementsUnused;
         //También se quita las llamadas que hace a otras funciones
         for fun2 in TreeElems.AllFuncs do begin
-          n := fun2.RemoveCallsFrom(fun.BodyNode);
+//          n := fun2.RemoveCallsFrom(fun.BodyNode);
 //          debugln('Eliminando %d llamadas desde: %s', [n, fun.name]);
         end;
       end;

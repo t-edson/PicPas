@@ -12,11 +12,32 @@ Se cambia de nombre al método TXpTreeElements.OnChangElement por OnAddElement y 
 cambia su implementación, así como su uso, dentro de la unidad "Parser".
 Se modifica TCompilerBase.CaptureParamsFinal(), para que limpie el valor de RTState,
 antes de realizar las asignaciones.
+Se modifican TCompilerBase.CreateFunction() y TCompilerBase.CreateSysFunction(), para
+que configuren el campo "fun.procParam".
 Se agrega el botón "Detail..." en FormElemProperty, para mostrar el detalle de llamadas
 a un elemento.
 Se optimiza la operación Oper_word_asig_word(), cuando se asignan constantes.
 Se modifica TCompiler.CompileLinkProgram(), para mejorar su rutina de detección de 
 funciones no utilizadas.
+
+PENDIENTES
+Implementar las operaciones pendientes en los Word.
+Implementar las funciones.
+Terminar de implementar las funcionalidades completas de una unidad.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
+las acciones.
+Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
+TPICregister.
+Implementar la reutilización de variables usadas como parámetros.
+Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir arreglos y registros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
 
 
 PicPas 0.6.8
@@ -51,24 +72,6 @@ Se implementan varios casos de la operación Oper_word_great_word().
 Se corrige un error en TOperand.bank(), cuando trabajaba con tipos bit.
 Se agrega la función del sistema SetBank(), para forzar el cambio de banco.
 
-PENDIENTES
-Implementar las operaciones pendientes en los Word.
-Implementar las funciones.
-Terminar de implementar las funcionalidades completas de una unidad.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la reutilización de variables usadas como parámetros.
-Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir arreglos y registros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
 
 PicPas 0.6.7
 ============
