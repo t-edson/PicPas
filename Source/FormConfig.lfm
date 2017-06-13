@@ -2,10 +2,10 @@ object Config: TConfig
   Left = 325
   Height = 327
   Top = 151
-  Width = 371
+  Width = 387
   Caption = 'Configuración'
   ClientHeight = 327
-  ClientWidth = 371
+  ClientWidth = 387
   OnCreate = FormCreate
   OnShow = FormShow
   LCLVersion = '1.6.2.0'
@@ -13,10 +13,10 @@ object Config: TConfig
     Left = 0
     Height = 50
     Top = 277
-    Width = 371
+    Width = 387
     Align = alBottom
     ClientHeight = 50
-    ClientWidth = 371
+    ClientWidth = 387
     TabOrder = 0
     object BitAplicar: TBitBtn
       Left = 144
@@ -55,7 +55,7 @@ object Config: TConfig
     Left = 0
     Height = 277
     Top = 0
-    Width = 371
+    Width = 387
     ActivePage = tabOutput
     Align = alClient
     TabIndex = 3
@@ -63,7 +63,7 @@ object Config: TConfig
     object tabGeneral: TTabSheet
       Caption = 'General'
       ClientHeight = 249
-      ClientWidth = 363
+      ClientWidth = 379
       object RadioGroup1: TRadioGroup
         Left = 10
         Height = 49
@@ -139,7 +139,7 @@ object Config: TConfig
     object tabEditor: TTabSheet
       Caption = 'Editor'
       ClientHeight = 249
-      ClientWidth = 363
+      ClientWidth = 379
       inline fcEditor: TfraCfgSynEdit
         Left = 32
       end
@@ -147,7 +147,7 @@ object Config: TConfig
     object tabEnsamb: TTabSheet
       Caption = 'Assembler'
       ClientHeight = 249
-      ClientWidth = 363
+      ClientWidth = 379
       object chkIncAddress: TCheckBox
         Left = 16
         Height = 19
@@ -204,7 +204,7 @@ object Config: TConfig
         )
         TabOrder = 4
       end
-      object chkExcUnus: TCheckBox
+      object chkExcUnused: TCheckBox
         Left = 64
         Height = 19
         Top = 120
@@ -213,49 +213,72 @@ object Config: TConfig
         TabOrder = 5
       end
       object chkIncComment2: TCheckBox
-        Left = 168
+        Left = 192
         Height = 19
         Top = 184
         Width = 165
         Caption = 'Include &Detailed comments'
         TabOrder = 6
       end
+      object chkIncVarName: TCheckBox
+        Left = 192
+        Height = 19
+        Top = 152
+        Width = 142
+        Caption = 'Include &Variable names'
+        TabOrder = 7
+      end
     end
     object tabOutput: TTabSheet
       Caption = 'Compiler'
       ClientHeight = 249
-      ClientWidth = 363
+      ClientWidth = 379
       object grpOptimLev: TRadioGroup
-        Left = 16
-        Height = 48
-        Top = 104
-        Width = 234
+        Left = 8
+        Height = 120
+        Top = 80
+        Width = 133
         AutoFill = True
-        Caption = 'Nivel de Optimización: '
+        Caption = 'Optimizacion Level: '
         ChildSizing.LeftRightSpacing = 6
         ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
         ChildSizing.EnlargeVertical = crsHomogenousChildResize
         ChildSizing.ShrinkHorizontal = crsScaleChilds
         ChildSizing.ShrinkVertical = crsScaleChilds
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
-        ChildSizing.ControlsPerLine = 2
-        ClientHeight = 28
-        ClientWidth = 230
-        Columns = 2
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 100
+        ClientWidth = 129
         Enabled = False
         Items.Strings = (
-          'Tonto'
-          'Inteligente'
+          'Fool'
+          'Smart'
         )
         TabOrder = 0
       end
       object chkShowErrMsg: TCheckBox
-        Left = 16
+        Left = 8
         Height = 19
         Top = 40
         Width = 131
         Caption = 'Show Error Messages'
         TabOrder = 1
+      end
+      object chkSetProIniBnk: TCheckBox
+        Left = 160
+        Height = 19
+        Top = 80
+        Width = 192
+        Caption = 'Set always Procedure initial bank'
+        TabOrder = 2
+      end
+      object chkSetProEndBnk: TCheckBox
+        Left = 160
+        Height = 19
+        Top = 112
+        Width = 183
+        Caption = 'Set always Procedure end bank'
+        TabOrder = 3
       end
     end
   end

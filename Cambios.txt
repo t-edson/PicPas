@@ -20,18 +20,26 @@ Se optimiza la operación Oper_word_asig_word(), cuando se asignan constantes.
 Se modifica TCompiler.CompileLinkProgram(), para mejorar su rutina de detección de 
 funciones no utilizadas.
 Se crea el campo TxpEleFun.adrrEnd, para almacenar el final de una función.
+Se crea la opción de configuración "SetProcBnk".
+Se crea el procedimiento SetInitialBank(), en TCompiler.CompileLinkProgram(), para 
+resolver el banco inicial con que debe empezar una función.
+Se activa el uso de nombres de variable, como opcional en la salida en ensamblador.
 Se implementa la función del sistema exit().
+Se crea la bandera TGenCodPIC.BankChanged, para detectar cambios de banco, y se crea
+el campo TxpEleFun.BankChanged para el mismo fin.
+Se incluye traducción para los botones de la ventana de configuración.
 
 PENDIENTES
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para fuciones del sistema.
 Implementar las operaciones pendientes en los Word.
-Implementar las funciones.
-Terminar de implementar las funcionalidades completas de una unidad.
 Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
 Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear 
+dinámicamente las acciones.
 Implementar la reutilización de variables usadas como parámetros.
 Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
 Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.

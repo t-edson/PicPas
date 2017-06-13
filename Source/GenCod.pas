@@ -194,6 +194,18 @@ begin
   fun.iniBnk := CurrBank;   //fija el banco inicial
   //Por ahora, no se implementa paginación, pero despuñes habría que considerarlo.
   _CALL(fun.adrr);  //codifica el salto
+  //Verifica las opciones de cambio de banco
+  if SetProEndBnk then begin
+    //Se debe incluir siempre instrucciones de cambio de banco
+    _BANKRESET;
+  end else begin
+    //Se incluye solo, si el banco pudo haber cambiado
+    if fun.BankChanged then begin
+      //Ha habido cambios de banco dentro del procedimiento
+      _BANKRESET;   //Por seguridad restauramos
+      {Un análisis más fino podría determinar si se puede predecir el banco de salida.}
+    end;
+  end;
 end;
 procedure TGenCod.CopyInvert_C_to_Z;
 begin
@@ -2506,36 +2518,49 @@ begin
 end;
 procedure TGenCod.fun_Exit(fun: TxpEleFun);
 {Se debe dejar en los registros de trabajo, el valro del parámetro indicado.}
+  procedure CodifRETURN(curBlk: TxpElement);
+  begin
+    //Codifica el salto de salida
+    if curBlk is TxpEleFun then begin
+      //En la primera pasada, no está definido "adrrEnd".
+  //    adrReturn := abs(TxpEleFun(curBlk).adrReturn);  //protege
+  //    if pic.iFlash = adrReturn then begin
+  //      //No es necesario incluir salto, proque ya está al final
+  //    end else begin
+        _RETURN;
+  //    end;
+    end else begin
+      GenError('Internal: No implemented.');
+    end;
+  end;
 var
   curFunTyp: TType;
   curBlk: TxpElement;
-  adrReturn: word;
+//  adrReturn: word;
 begin
+  curBlk := TreeElems.curNode.Parent;  //El curNode, debe ser de tipo "Body".
+  if curBlk is TxpEleMain then begin  //En el programa principal
+    _SLEEP;   //Así se termina un programa en PicPas
+    exit;
+  end;
+  curFunTyp := curBlk.typ;
+  if curFunTyp = typNull then begin
+    //No lleva parámetros,
+    CodifRETURN(curBlk);
+    exit;  //No hay nada, más que hacer
+  end;
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
   if HayError then exit;   //aborta
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
   //El resultado de la expresión está en "res".
-  curBlk := TreeElems.curNode.Parent;  //El curNode, debe ser de tipo "Body".
-  curFunTyp := curBlk.typ;
   if curFunTyp <> res.typ then begin
     GenError('Expected a "%s" expression.', [curFunTyp.name]);
   end;
   res.LoadToReg;
   res.typ := typNull;  //No es función
-  //Codifica el salto de salida
-  if curBlk is TxpEleFun then begin
-    //En la primera pasada, no está definido "adrrEnd".
-    adrReturn := abs(TxpEleFun(curBlk).adrReturn);  //protege
-    if pic.iFlash = adrReturn then begin
-      //No es necesario incluir salto, proque ya está al final
-    end else begin
-      _RETURN;
-    end;
-  end else begin
-    GenError('Internal: No implemented.');
-  end;
+  CodifRETURN(curBlk);  //Codifica salto
 end;
 procedure TGenCod.fun_Inc(fun: TxpEleFun);
 begin

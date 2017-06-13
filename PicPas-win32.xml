@@ -31,7 +31,7 @@ D:\Proyectos_Software\Lazarus\PicPas-0.6.9\TestCode\Operations\Test1_HelloWorld.
 D:\Proyectos_Software\Lazarus\PicPas-0.6.9\TestCode\Operations\Test4_Asm.pas
 "/>
   </Edit>
-  <viewMode Val="2"/>
+  <viewMode Val="1"/>
   <IncHeadMpu Val="True"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>
@@ -39,6 +39,9 @@ D:\Proyectos_Software\Lazarus\PicPas-0.6.9\TestCode\Operations\Test4_Asm.pas
   <IncComment Val="True"/>
   <IncComment2 Val="False"/>
   <ExcUnused Val="True"/>
+  <IncVarName Val="False"/>
   <ShowErMsg Val="False"/>
   <OptimLev Val="1"/>
+  <SetProIniBnk Val="False"/>
+  <SetProEndBnk Val="False"/>
 </CONFIG>

@@ -92,7 +92,7 @@ protected  //Eventos del compilador
                                              el terminar de evaluar una expresión}
   pic        : TPIC16;           //Objeto PIC de la serie 16.
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
-  RTstate    : TType;   {Estado de los RT. Si es NIL, indica que los RT, no tienen
+  RTstate    : TType;    {Estado de los RT. Si es NIL, indica que los RT, no tienen
                          ningún dato cargado, sino indican el tipo cargado en los RT.}
   function CaptureDelExpres: boolean;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;

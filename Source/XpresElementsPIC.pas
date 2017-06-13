@@ -206,6 +206,9 @@ type
                         porque el tamaño puede variar al reubicarse.}
     //Banco de RAM, al iniciar la eejcución de la subrutina.
     iniBnk: byte;
+    {Bsndera que indica si se produce cambio de banco desde dentro del código de la
+    función.}
+    BankChanged: boolean;
     {Referencia a la función que implemanta, la rutina de porcesamiento que se debe
     hacer, antes de empezar a leer los parámetros de la función.}
     procParam: TProcExecFunction;

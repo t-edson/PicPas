@@ -486,6 +486,8 @@ begin
   end;
   fraMessages.InitCompilation(cxp);  //Limpia mensajes
   cxp.incDetComm := Config.IncComment2;   //Visualización de mensajes
+  cxp.SetProIniBnk := Config.SetProIniBnk;
+  cxp.SetProEndBnk := Config.SetProEndBnk;
   cxp.Compile(filName, fraEditView1.ActiveEditor.SynEdit.Lines);
   if cxp.HayError then begin
     fraMessages.EndCompilation;
@@ -508,7 +510,7 @@ begin
      cxp.RAMusage(edAsm.Lines, Config.VarDecType, Config.ExcUnused);
   end;
   edAsm.Lines.Add(';===Blocks of Code===');
-  cxp.DumpCode(edAsm.Lines, Config.IncAddress, Config.IncComment);
+  cxp.DumpCode(edAsm.Lines, Config.IncAddress, Config.IncComment, COnfig.IncVarName );
   edAsm.Lines.Add(';--------------------');
   edAsm.Lines.Add('    END');
   edAsm.EndUpdate;

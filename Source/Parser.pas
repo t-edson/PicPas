@@ -59,7 +59,7 @@ type
   public
     procedure Compile(NombArc: string; LinArc: Tstrings);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
-    procedure DumpCode(lins: TSTrings; incAdrr, incCom: boolean);  //uso de la memoria Flash
+    procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);  //uso de la memoria Flash
     function RAMusedStr: string;
     function FLASHusedStr: string;
     procedure GetResourcesUsed(out ramUse, romUse, stkUse: single);
@@ -772,11 +772,13 @@ end;
 procedure TCompiler.CompileProcBody(fun: TxpEleFun);
 {Compila la declaración de un procedimiento}
 begin
+  BankChanged := false;  //Inicia bandera
   StartCodeSub(fun);  //inicia codificación de subrutina
   CompileInstruction;
   if HayError then exit;
   _RETURN();  //instrucción de salida
   EndCodeSub;  //termina codificación
+  fun.BankChanged := BankChanged;
   fun.srcSize := pic.iFlash - fun.adrr;   //calcula tamaño
 end;
 //Compilación de secciones
@@ -1584,6 +1586,37 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
       end;
     end;
   end;
+  procedure SetInitialBank(fun: TxpEleFun);
+  {Define el banco de trabajo para compilar correctamente}
+  var
+    cal : TxpEleCaller;
+  begin
+    if SetProIniBnk then begin
+      _BANKRESET; //Se debe forzar a iniciar en el banco O
+      fun.iniBnk := 0;   //graba
+    end else begin
+      //Se debe deducir el banco inicial de la función
+      //Explora los bancos desde donde se llama
+      if fun.lstCallers.Count = 1 then begin
+        //Solo es llamado una vez
+        fun.iniBnk := fun.lstCallers[0].curBnk;
+        CurrBank := fun.iniBnk;  //configura al compilador
+      end else begin
+        fun.iniBnk := fun.lstCallers[0].curBnk;  //banco de la primera llamada
+        //Hay varias llamadas
+        for cal in fun.lstCallers do begin
+          if fun.iniBnk <> cal.curBnk then begin
+            //Hay llamadas desde varios bancos.
+            _BANKRESET; //Se debe forzar a iniciar en el banco O
+            fun.iniBnk := 0;   //graba
+            exit;
+          end;
+        end;
+        //Todas las llamadas son del mismo banco
+        CurrBank := fun.iniBnk;  //configura al compilador
+      end;
+    end;
+  end;
 var
   elem   : TxpElement;
   bod    : TxpEleBody;
@@ -1650,6 +1683,7 @@ begin
         cIn.PosAct := fun.posCtx;  //Posiciona escáner
         PutLabel('__'+fun.name);
         TreeElems.OpenElement(fun.BodyNode); //Ubica el espacio de nombres, de forma similar a la pre-compilación
+        SetInitialBank(fun);   //Configura manejo de bancos RAM
         CompileProcBody(fun);
         TreeElems.CloseElement;  //cierra el body
         TreeElems.CloseElement;  //cierra la función
@@ -1671,6 +1705,7 @@ begin
   cIn.PosAct := bod.posCtx;   //ubica escaner
   PutLabel('__main_program__');
   TreeElems.OpenElement(bod);
+  CurrBank := 0;  //Se limpia, porque pudo haber cambiado con la compilación de procedimientos
   CompileCurBlock;
   TreeElems.CloseElement;   //cierra el cuerpo principal
   PutLabel('__end_program__');
@@ -1839,10 +1874,10 @@ begin
   end;
 //  lins.Add(';-------------------------');
 end;
-procedure TCompiler.DumpCode(lins: TSTrings; incAdrr, incCom: boolean);
+procedure TCompiler.DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);
 begin
 //  AsmList := TStringList.Create;  //crea lista para almacenar ensamblador
-  pic.DumpCode(lins, incAdrr, incCom);
+  pic.DumpCode(lins, incAdrr, incCom, incVarNam);
 end;
 function TCompiler.RAMusedStr: string;
 var
