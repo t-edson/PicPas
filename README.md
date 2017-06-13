@@ -354,9 +354,13 @@ Specify the syntax mode, used by the compiler. The allowed values are:
 ## Limitations
 
 •	Only basic types are implemented: bit, byte, char, boolean and word (limited support).
+
 •	Cannot declare arrays or records.
+
 •	No recursion implemented, Because of the limited hardware resources, available in PIC devices.
+
 •	No float point implemented.
+
 •	No interruption support.
 
 Some of these limitations must be solved in next versions.
