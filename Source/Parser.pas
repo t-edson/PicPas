@@ -1168,6 +1168,7 @@ begin
   CompileProcBody(fun);
   TreeElems.CloseElement;  //Cierra Nodo Body
   TreeElems.CloseElement; //cierra espacio de nombres de la función
+  fun.adrReturn := pic.iFlash-1;  //Guarda dirección del RETURN
   if not CaptureTok(';') then exit;
   ProcComments;  //Quita espacios. Puede salir con error
 end;
@@ -1562,18 +1563,22 @@ procedure TCompiler.CompileLinkProgram;
 ubicar a los diversos elementos que deben compilarse.
 Se debe llamar después de compilar con CompileProgram.
 Esto es lo más cercano a un enlazador, que hay en PicPas.}
-  procedure RemoveUnusedFunctions;
+  function RemoveUnusedFunctions: integer;
+  {Explora las funciones, para quitar las referencias de llamadas inexistentes.
+  Devuelve la cantidad de funciones no usadas.}
   var
     fun, fun2: TxpEleFun;
     n: Integer;
   begin
+    Result := 0;
     for fun in TreeElems.AllFuncs do begin
       if fun.nCalled = 0 then begin
+        inc(Result);   //Lleva la cuenta
         //Si no se usa la función, tampoco sus elementos locales
         fun.SetElementsUnused;
         //También se quita las llamadas que hace a otras funciones
         for fun2 in TreeElems.AllFuncs do begin
-//          n := fun2.RemoveCallsFrom(fun.BodyNode);
+          n := fun2.RemoveCallsFrom(fun.BodyNode);
 //          debugln('Eliminando %d llamadas desde: %s', [n, fun.name]);
         end;
       end;
@@ -1584,7 +1589,7 @@ var
   bod    : TxpEleBody;
   xvar   : TxpEleVar;
   fun    : TxpEleFun;
-  iniMain: integer;
+  iniMain, noUsed, noUsedPrev: integer;
 begin
   ExprLevel := 0;
   pic.ClearMemFlash;
@@ -1600,8 +1605,12 @@ begin
   pic.iFlash:= 0;  //inicia puntero a Flash
   //Explora las funciones, para identifcar a las no usadas
   TreeElems.RefreshAllFuncs;
-  RemoveUnusedFunctions;
-
+  noUsed := 0;
+  repeat
+    noUsedPrev := noUsed;   //valro anterior
+    noUsed := RemoveUnusedFunctions;
+    debugln('Funciones no usadas %d', [noUsed]);
+  until noUsed = noUsedPrev;
   //Reserva espacio para las variables usadas
   TreeElems.RefreshAllVars;
   for xvar in TreeElems.AllVars do begin

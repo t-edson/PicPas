@@ -724,9 +724,10 @@ begin
         CaptureParamsFinal(xfun);  //evalúa y asigna
 //if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
         if FirstPass then xfun.AddCaller;  //se hace después de leer parámetros
-        xfun.procCall(xfun); //Actualiza "res", codifica el "CALL"
-        RTstate := res.typ;  //para indicar que los RT están ocupados
-        Result := res;
+        xfun.procCall(xfun); //codifica el "CALL"
+        RTstate := xfun.typ;  //para indicar que los RT están ocupados
+        Result.catOp := coExpres;
+        Result.typ := xfun.typ;
         exit;
       end else begin
         //Encontró la función, pero no coincidió con los parámetros

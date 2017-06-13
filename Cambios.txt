@@ -19,6 +19,8 @@ a un elemento.
 Se optimiza la operación Oper_word_asig_word(), cuando se asignan constantes.
 Se modifica TCompiler.CompileLinkProgram(), para mejorar su rutina de detección de 
 funciones no utilizadas.
+Se crea el campo TxpEleFun.adrrEnd, para almacenar el final de una función.
+Se implementa la función del sistema exit().
 
 PENDIENTES
 Implementar las operaciones pendientes en los Word.

@@ -142,6 +142,7 @@ type
       procedure expr_end(posExpres: TPosExpres);
       procedure expr_start;
       procedure fun_delay_ms(fun: TxpEleFun);
+      procedure fun_Exit(fun: TxpEleFun);
       procedure fun_Inc(fun: TxpEleFun);
       procedure fun_Dec(fun: TxpEleFun);
       procedure fun_Ord(fun: TxpEleFun);
@@ -2503,6 +2504,39 @@ begin
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
 end;
+procedure TGenCod.fun_Exit(fun: TxpEleFun);
+{Se debe dejar en los registros de trabajo, el valro del parámetro indicado.}
+var
+  curFunTyp: TType;
+  curBlk: TxpElement;
+  adrReturn: word;
+begin
+  if not CaptureTok('(') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if HayError then exit;   //aborta
+  //Verifica fin de parámetros
+  if not CaptureTok(')') then exit;
+  //El resultado de la expresión está en "res".
+  curBlk := TreeElems.curNode.Parent;  //El curNode, debe ser de tipo "Body".
+  curFunTyp := curBlk.typ;
+  if curFunTyp <> res.typ then begin
+    GenError('Expected a "%s" expression.', [curFunTyp.name]);
+  end;
+  res.LoadToReg;
+  res.typ := typNull;  //No es función
+  //Codifica el salto de salida
+  if curBlk is TxpEleFun then begin
+    //En la primera pasada, no está definido "adrrEnd".
+    adrReturn := abs(TxpEleFun(curBlk).adrReturn);  //protege
+    if pic.iFlash = adrReturn then begin
+      //No es necesario incluir salto, proque ya está al final
+    end else begin
+      _RETURN;
+    end;
+  end else begin
+    GenError('Internal: No implemented.');
+  end;
+end;
 procedure TGenCod.fun_Inc(fun: TxpEleFun);
 begin
   if not CaptureTok('(') then exit;
@@ -2818,7 +2852,7 @@ begin
   //tipos predefinidos
   xLex.AddIdentSpecList('bit boolean byte word char', tnType);
   //funciones del sistema
-  xLex.AddIdentSpecList('delay_ms Inc Dec Ord Chr', tnSysFunct);
+  xLex.AddIdentSpecList('exit delay_ms Inc Dec Ord Chr', tnSysFunct);
   xLex.AddIdentSpecList('SetAsInput SetAsOutput SetBank', tnSysFunct);
   //símbolos especiales
   xLex.AddSymbSpec('+',  tnOperator);
@@ -3054,6 +3088,7 @@ begin
   f.adrr:=$0;
   f.compile := @codif_delay_ms;  //rutina de compilación
   f.OnAddCaller := @AddCaller;  //Para que lleve la cuenta de las llamadas a subrutinas
+  f := CreateSysFunction('exit'     , nil, @fun_Exit);
   f := CreateSysFunction('Inc'      , nil, @fun_Inc);
   f := CreateSysFunction('Dec'      , nil, @fun_Dec);
   f := CreateSysFunction('Ord'      , @callParam, @fun_Ord);

@@ -201,6 +201,7 @@ type
   public
     pars: array of TxpParFunc;  //parámetros de entrada
     adrr: integer;     //Dirección física, en donde se compila
+    adrReturn: integer;  //Dirección física del RETURN final de la función.
     srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
                         porque el tamaño puede variar al reubicarse.}
     //Banco de RAM, al iniciar la eejcución de la subrutina.
