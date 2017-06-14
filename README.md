@@ -210,6 +210,7 @@ PicPas use de Modula-2 syntax for procedure and fucntions:
 
 Proedures are declared in the common Pascal syntax:
 
+```
   procedure proc2(par1: byte);
   begin
     if par1 = 0 then 
@@ -218,13 +219,16 @@ Proedures are declared in the common Pascal syntax:
       par1 := 5;
     end;  
   end;
+```
 
 Functions are declared the same, but indicating the type to return:
 
+```
 procedure TheNext(par1: byte): byte;
 begin
   exit(par1 + 1);
 end;
+```
 
 The return value is indicated with the exit() instruction.
 
