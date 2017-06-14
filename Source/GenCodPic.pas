@@ -152,6 +152,8 @@ type
     incDetComm: boolean;   //Incluir Comentarios detallados.
     SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
     SetProEndBnk: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
+  public  //Acceso a registro de trabajo
+    property H_register: TPicRegister read H;
   public  //Inicialización
     function PicName: string;
     function PicNameShort: string;

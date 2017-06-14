@@ -9,7 +9,7 @@ unit ProcAsm;
 interface
 uses
   Classes, SysUtils, fgl, strutils, MisUtils, SynFacilHighlighter,
-  LCLProc, Pic16Utils, XpresBas, XpresParserPIC, Globales,
+  LCLProc, Pic16Utils, XpresBas, GenCodPic, Globales,
   XpresElementsPIC;
 var
   asmRow: integer;     //número de fila explorada
@@ -21,7 +21,7 @@ type
   TerrRoutine2 = procedure(msg: string; const Args: array of const);
 
 procedure SetLanguage(idLang: string);
-procedure InitAsm(pic0: TPIC16; cpx0: TCompilerBase);
+procedure InitAsm(pic0: TPIC16; cpx0: TGenCodPic);
 procedure ProcASMlime(const AsmLin: string);  //Procesa una línea de código ASM
 
 implementation
@@ -46,7 +46,7 @@ var
   pic   : TPIC16;         //referencia al PIC
   labels: TPicLabel_list; //Lista de etiquetas
   uJumps: TPicUJump_list; //Lista de instrucciones GOTO o CALL, indefinidas
-  cpx   : TCompilerBase;
+  cpx   : TGenCodPic;
 
 var  //Mensajes
   ER_EXPEC_COMMA, ER_EXP_ADR_VAR, ER_EXP_CON_VAL, ER_NOGETADD_VAR,
@@ -322,6 +322,12 @@ begin
     lexAsm.Next;
     Result := true;
     exit;
+  end else if lexAsm.GetToken = '_H' then begin
+    //Es el registro  de trabajo _H
+    f := cpx.H_register.offs;
+    lexAsm.Next;
+    Result := true;
+    exit;
   end else if tokType = lexAsm.tnIdentif then begin
     //Es un identificador, puede ser referencia a una variable
     ele := cpx.TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
@@ -415,7 +421,7 @@ begin
       GenError(ER_SYNTAX_ERR_, [lexAsm.GetToken]);
     end;
   end else if tokType = lexAsm.tnNumber then begin
-    //es una dirección numérica
+    //Es una dirección numérica
     a := StrToInt(lexAsm.GetToken);
     lexAsm.Next;
     Result := true;
@@ -649,7 +655,7 @@ begin
   lin := copy(Lin, 1, length(Lin)-3);  //quita "end"
   exit(true);
 end;
-procedure InitAsm(pic0: TPIC16; cpx0: TCompilerBase);
+procedure InitAsm(pic0: TPIC16; cpx0: TGenCodPic);
 {Inicia el procesamiento del código en ensamblador}
 begin
   pic := pic0;     //para poder codificarf instrucciones

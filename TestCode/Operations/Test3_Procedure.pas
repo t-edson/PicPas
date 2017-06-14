@@ -56,6 +56,12 @@ var
     exit(par1+2);
   end;
 
+  //Prueba de devolución de variable
+  procedure func2c(par1: word): word;
+  begin
+    exit(par1);
+  end;
+
 	//Función con varios parámetros word, byte
   procedure func3(par1: word; par2: byte): bit;
   begin
@@ -140,6 +146,11 @@ begin
   xword := 10;
   xword :=  func2b(xword);
   if xword = word(12) then bien else mal end;
+
+  //Prueba de devolución de variable
+  xword := 10;
+  xword :=  func2c(xword);
+  if xword = word(10) then bien else mal end;
 
 	//Función con varios parámetros word, byte
   xbit := 0;

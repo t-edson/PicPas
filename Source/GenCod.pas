@@ -1765,10 +1765,10 @@ begin
   end;
   coVariab: begin
     _BANKSEL(Op^.bank);
-    _MOVF(Op^.offs, toW);
+    _MOVF(Op^.Hoffs, toW);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
-    _MOVF(Op^.offs+1, toW);
+    _MOVF(Op^.Loffs, toW);
   end;
   coExpres: begin  //se asume que ya está en (H,w)
   end;
