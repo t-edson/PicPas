@@ -1570,7 +1570,6 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
   Devuelve la cantidad de funciones no usadas.}
   var
     fun, fun2: TxpEleFun;
-    n: Integer;
   begin
     Result := 0;
     for fun in TreeElems.AllFuncs do begin
@@ -1580,8 +1579,12 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
         fun.SetElementsUnused;
         //También se quita las llamadas que hace a otras funciones
         for fun2 in TreeElems.AllFuncs do begin
-          n := fun2.RemoveCallsFrom(fun.BodyNode);
+          fun2.RemoveCallsFrom(fun.BodyNode);
 //          debugln('Eliminando %d llamadas desde: %s', [n, fun.name]);
+        end;
+        //Incluyendo a funciones del sistema
+        for fun2 in listFunSys do begin
+          fun2.RemoveCallsFrom(fun.BodyNode);
         end;
       end;
     end;
@@ -1650,6 +1653,7 @@ begin
     if xvar.nCalled>0 then begin
       //Asigna una dirección válida para esta variable
       CreateVarInRAM(xVar);  //Crea la variable
+      xvar.typ.DefineRegister;  //Asegura que se dispondrá de los RT necesarios
       if HayError then exit;
     end else begin
       xvar.ResetAddress;
