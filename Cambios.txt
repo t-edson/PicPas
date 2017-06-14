@@ -33,6 +33,8 @@ Se corrije el problema de ExchangeP1_P2 en Oper_byte_add_word().
 Se crea el patrón de pruebas para procedimientos y funciones.
 Se corrige un error en la compilación de bloques ASM, cuando los registros tienen 
 dirección de banco mayores al 0.
+Se configura al compilador para que defina los RT, de aucerdo a los tipos de las 
+variables y funciones que se van a usar, anets de enlazar el programa.
 
 PENDIENTES
 Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
