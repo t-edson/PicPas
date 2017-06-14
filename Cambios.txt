@@ -28,8 +28,14 @@ Se implementa la función del sistema exit().
 Se crea la bandera TGenCodPIC.BankChanged, para detectar cambios de banco, y se crea
 el campo TxpEleFun.BankChanged para el mismo fin.
 Se incluye traducción para los botones de la ventana de configuración.
+Se mejora la edición sícnrona, ignorando la caja.
+Se corrije el problema de ExchangeP1_P2 en Oper_byte_add_word().
+Se crea el patrón de pruebas para procedimientos y funciones.
+Se corrige un error en la compilación de bloques ASM, cuando los registros tienen 
+dirección de banco mayores al 0.
 
 PENDIENTES
+Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
 Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
 (tal vez se podría detectar siempre la última instrucción compilada).
 Permitir compilar las funciones, como INLINE.
@@ -37,17 +43,18 @@ Revisar el uso de bancos, para fuciones del sistema.
 Implementar las operaciones pendientes en los Word.
 Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
 Terminar de implementar las funcionalidades completas de una unidad.
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
+Controlar las acciones de edición (rehacer, deshacer, grabar, ..) para que respondan al
 editor seleccionado. También se podría usar la técnica de Ciberplex, de crear 
 dinámicamente las acciones.
 Implementar la reutilización de variables usadas como parámetros.
-Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
 Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
 Incluir el tipo integer con signo.
 Incluir arreglos y registros.
 Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
 Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
 y más de una página de ROM.
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
 
 
 PicPas 0.6.8

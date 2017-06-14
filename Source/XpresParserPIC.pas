@@ -451,7 +451,11 @@ begin
     //no tiene parámetros
   end else begin
     //Debe haber parámetros
-    if not CaptureTok('(') then exit;
+    if cIn.tok <> '(' then begin
+      //Si no sigue '(', significa que no hay parámetros.
+      exit;
+    end;
+    cIn.Next;  //Toma paréntesis
     repeat
       GetExpressionE(0, pexPARAM);  //captura parámetro
       if HayError then exit;   //aborta
@@ -721,7 +725,8 @@ begin
         pic.iFlash := posFlash;
         RTstate := RTstate0;
         xfun.procParam(xfun);  //antes de leer los parámetros
-        CaptureParamsFinal(xfun);  //evalúa y asigna
+        if high(func0.pars)+1>0 then
+          CaptureParamsFinal(xfun);  //evalúa y asigna
 //if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
         if FirstPass then xfun.AddCaller;  //se hace después de leer parámetros
         xfun.procCall(xfun); //codifica el "CALL"

@@ -132,18 +132,6 @@ var
   pin1: boolean; absolute PORTB.bit1;
 ```
 
-When using in procedures parameters, a REGISTER parameter can be included:
-
-```
-procedure QuickParameterProc(register regvar: byte);
-begin
-  //Be carefull if put some code here
-  PORTB := regvar;
-end;
-```
-
-REGISTER parameters are fast, because they use the W register, so only one REGISTER parameter can be used.
-
 Bit access can be performed too, using fields:
 
 ```
@@ -207,6 +195,7 @@ delay_ms()	   Generate a time delay in miliseconds, from 0 to 65536.
 Inc()          Increase a variable.
 Dec()          Decrease a varaible.
 SetBank()      Set the current RAM bank.
+Exit()         Exit from a procedure or end the program.
 Ord()          Convert a char to a byte.
 Chr()          Convert a byte to a char.
 Bit()          Convert a byte to a bit.
@@ -214,6 +203,44 @@ Word()         Convert a byte to a word.
 SetAsInput()   Set a 8-bits port or a pin as an input.
 SetAsOutput()  Set a 8-bits port or a pin as an output.
 ```
+
+### Procedure and Functions
+
+PicPas use de Modula-2 syntax for procedure and fucntions:
+
+Proedures are declared in the common Pascal syntax:
+
+  procedure proc2(par1: byte);
+  begin
+    if par1 = 0 then 
+      exit;
+    else
+      par1 := 5;
+    end;  
+  end;
+
+Functions are declared the same, but indicating the type to return:
+
+procedure TheNext(par1: byte): byte;
+begin
+  exit(par1 + 1);
+end;
+
+The return value is indicated with the exit() instruction.
+
+When using in procedures parameters, a REGISTER parameter can be included:
+
+```
+procedure QuickParameterProc(register regvar: byte);
+begin
+  //Be carefull if put some code here
+  PORTB := regvar;
+end;
+```
+
+REGISTER parameters are fast, because they use the W register, so only one REGISTER parameter can be used. 
+As REGISTER parameter is stored in W register, any operation using the W register, could lose its value, so the first operation in a procedure, using a REGISTER parameter must be read this parameter.
+
 
 ### ASM blocks
 
@@ -235,7 +262,7 @@ end;
 
 ASM blocks are not instructions, that's why they are not finished with ";". It lets the ASM block, to be included in almost any place of the source code, like a comment.
 
-WARNING: Changing the RAM banck, inside an ASM block, can generate errors in compilation or in the code compiled. PicPas know always the current RAM bank, when compiling, but is not aware of the changes can be made inside ASM blocks.
+WARNING: Changing the RAM bank, inside an ASM block, can generate errors in compilation or in the code compiled. PicPas know always the current RAM bank, when compiling, but is not aware of the changes can be made inside ASM blocks.
 
 Absolute and relative Labels can be used too:
 
@@ -387,4 +414,4 @@ To have more information about the compiler, check the Technical Documentation (
 
 PicPas is a free software (GPL license) and it's opened for the collaboration of anyone who is interested. 
 
-There is still, much work for development or documentation, so any help will be ap	preciated.
+There is still, much work for development or documentation, so any help will be appreciated.

@@ -310,7 +310,7 @@ var
   i: Integer;
 begin
   SkipWhites;
-  if EOBlock or EOExpres then begin
+  if EOBlock or EOExpres or (cIn.tok = ':') then begin
     //no tiene parámetros
   end else begin
     //Debe haber parámetros

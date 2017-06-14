@@ -1126,9 +1126,26 @@ begin
     byte_oper_byte(ADDLW, ADDWF);
 end;
 procedure TGenCod.Oper_byte_add_word;
+var
+  r: TPicRegister;
 begin
-  ExchangeP1_P2;   //Invierte los operandos
-  Oper_word_add_byte; //Y llama a la función opuesta
+  case catOperation of
+  coExpres_Expres:begin
+    {Este es el único caso que no se puede invertir, por la posición de los operandos en
+     la pila.}
+    //la expresión p1 debe estar salvada y p2 en el acumulador
+    p1^.catOp := coVariab;  //Convierte a variable
+    p1^.rVar := GetVarByteFromStk;
+    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    //Luego el caso es similar a coVariab_Expres
+    Oper_byte_add_word;
+    FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
+  end;
+  else
+    //Para los otros casos, funciona
+    ExchangeP1_P2;   //Invierte los operandos
+    Oper_word_add_byte; //Y llama a la función opuesta
+  end;
 end;
 procedure TGenCod.Oper_byte_sub_byte;
 var
@@ -1199,6 +1216,8 @@ begin
 end;
 procedure TGenCod.Oper_byte_and_bit;
 begin
+  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
+  no se implementa Oper_bit_and_byte.}
   ExchangeP1_P2;   //Invierte los operandos
   Oper_bit_and_byte;
 end;
@@ -1212,6 +1231,8 @@ begin
 end;
 procedure TGenCod.Oper_byte_or_bit;
 begin
+  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
+  no se implementa Oper_bit_or_byte.}
   ExchangeP1_P2;   //Invierte los operandos
   Oper_bit_or_byte;
 end;
@@ -1225,6 +1246,8 @@ begin
 end;
 procedure TGenCod.Oper_byte_xor_bit;
 begin
+  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
+  no se implementa Oper_bit_xor_byte.}
   ExchangeP1_P2;   //Invierte los operandos
   Oper_bit_xor_byte;
 end;
@@ -1294,6 +1317,8 @@ begin
 end;
 procedure TGenCod.Oper_byte_difer_bit;
 begin
+  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
+  no se implementa Oper_bit_dif_byte.}
   ExchangeP1_P2;
   Oper_bit_dif_byte;
 end;
@@ -1412,7 +1437,7 @@ begin
     FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
   end;
   else
-    //Para los otors casos, funciona
+    //Para los otros casos, funciona
     ExchangeP1_P2;
     Oper_byte_great_byte;
   end;
