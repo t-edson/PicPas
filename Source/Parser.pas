@@ -21,7 +21,7 @@ type
     function CompileBody(GenCode: boolean = true): boolean;
     procedure CompileFOR;
     procedure CompileLastEnd;
-    procedure CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
+    procedure CompileProcHeader(var fun: TxpEleFun; ValidateDup: boolean = true);
     function GetExpressionBool: boolean;
     function IsUnit: boolean;
     function StartOfSection: boolean;
@@ -852,7 +852,7 @@ var
     end;
     cIn.Next;    //Pasa al siguiente
   end;
-  procedure CheckAbsolute(out IsAbs: boolean; const IsBit: boolean);
+  procedure CheckAbsolute(var IsAbs: boolean; const IsBit: boolean);
   {Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
   pone "IsAbs" en TRUE y actualiza los valores "absAddr" y "absBit". }
   var
@@ -1031,8 +1031,8 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler.CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
-{Hace el procesamiento del encabezado de la declaración de una función/procedimiento.
+procedure TCompiler.CompileProcHeader(var fun: TxpEleFun; ValidateDup: boolean = true);
+{Hace el propcesamiento del encabezado de la declaración de una función/procedimiento.
 Devuelve la referencia al objeto TxpEleFun creado, en "fun".
 Conviene separar el procesamiento del enzabezado, para poder usar esta rutina, también,
 en el procesamiento de unidades.}
@@ -1684,7 +1684,6 @@ begin
       if fun.nCalled>0 then begin
         //Compila la función en la dirección actual
         fun.adrr := pic.iFlash;    //Actualiza la dirección final
-        fun.typ.DefineRegister;    //Asegura que se dispondrá de los RT necesarios
         cIn.PosAct := fun.posCtx;  //Posiciona escáner
         PutLabel('__'+fun.name);
         TreeElems.OpenElement(fun.BodyNode); //Ubica el espacio de nombres, de forma similar a la pre-compilación
@@ -1721,7 +1720,7 @@ function TCompiler.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}
 begin
   ProcComments;
-  if HayError then exit(false);
+  if HayError then exit;
   //Busca UNIT
   if cIn.tokL = 'unit' then begin
     cIn.curCon.SetStartPos;   //retorna al inicio

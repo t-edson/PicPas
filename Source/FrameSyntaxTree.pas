@@ -3,9 +3,8 @@ unit FrameSyntaxTree;
 interface
 uses
   Classes, SysUtils, FileUtil, TreeFilterEdit, Forms, Controls, StdCtrls,
-  ComCtrls, Menus, ActnList, ExtCtrls, ComboEx, LCLProc, Graphics,
-  XpresElementsPIC, Globales, FormElemProperty, XpresParserPIC, FormConfig,
-  FrameArcExplor, MisUtils;
+  ComCtrls, Menus, ActnList, ExtCtrls, ComboEx, XpresElementsPIC, Globales,
+  FormElemProperty, XpresParserPIC, FormConfig, FrameArcExplor, MisUtils;
 type
   { TfraSyntaxTree }
   TfraSyntaxTree = class(TFrame)
@@ -50,8 +49,6 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure TreeView1SelectionChanged(Sender: TObject);
   private
-    FBackColor: TColor;
-    FTextColor: TColor;
     syntaxTree: TXpTreeElements;
     function AddNodeTo(nodParent: TTreeNode; elem: TxpElement): TTreeNode;
     procedure frmArcExplor1DoubleClickFile(nod: TExplorNode);
@@ -62,19 +59,11 @@ type
     function SelectedIsMain: boolean;
     function SelectedIsGroup: boolean;
     function SelectedIsElement: boolean;
-    procedure SetBackColor(AValue: TColor);
-    procedure SetTextColor(AValue: TColor);
-    procedure TreeView1AdvancedCustomDrawItem(Sender: TCustomTreeView;
-      Node: TTreeNode; State: TCustomDrawState; Stage: TCustomDrawStage;
-      var PaintImages, DefaultDraw: Boolean);
   public
     OnSelectElemen: procedure(var elem: TxpElement) of object;
     OnOpenFile: procedure(filname: string) of object;
-    OnSelecFileExplorer: procedure of object;
-    //Se requiere información del archivo actual
-//    OnReqCurFile: procedure(var filname: string) of object;
-    property BackColor: TColor read FBackColor write SetBackColor;
-    property TextColor: TColor read FTextColor write SetTextColor;
+    //Se requeire información del archivo actual
+    OnReqCurFile: procedure(var filname: string) of object;
     procedure LocateFile(filname: string);
     procedure Init(syntaxTree0: TXpTreeElements);
     procedure Refresh;
@@ -110,8 +99,6 @@ procedure TfraSyntaxTree.Init(syntaxTree0: TXpTreeElements);
 begin
   syntaxTree := syntaxTree0;
   TreeView1.ReadOnly := true;
-  TreeView1.OnAdvancedCustomDrawItem := @TreeView1AdvancedCustomDrawItem;
-  TreeView1.Options := TreeView1.Options - [tvoThemedDraw];
   frmElemProperty.OnExplore := @frmElemPropertyExplore;
   SetLanguage('en');   //Inicia idioma
   //Configura filtros del explorador de archivos
@@ -322,37 +309,9 @@ begin
   end;
   exit(false);
 end;
-procedure TfraSyntaxTree.SetBackColor(AValue: TColor);
-{Configura el color de fondo}
-begin
-//  if FBackColor = AValue then Exit;
-  FBackColor := AValue;
-  TreeView1.BackgroundColor := AValue;
-  frmArcExplor1.TreeView1.BackgroundColor := AValue;
-end;
-procedure TfraSyntaxTree.SetTextColor(AValue: TColor);
-begin
-//  if FTextColor = AValue then Exit;
-  FTextColor := AValue;
-end;
-procedure TfraSyntaxTree.TreeView1AdvancedCustomDrawItem(
-  Sender: TCustomTreeView; Node: TTreeNode; State: TCustomDrawState;
-  Stage: TCustomDrawStage; var PaintImages, DefaultDraw: Boolean);
-begin
-  with TreeView1.Canvas do begin
-     if Node.Level = 0 then  begin
-       Font.Style := [fsBold, fsItalic];
-     end else begin
-       Font.Style := [];
-     end;
-     font.Color:= FTextColor;
-     DefaultDraw := true;   //Para que siga ejecutando la rutina de dibujo
-  end;
-end;
-
 procedure TfraSyntaxTree.LocateFile(filname: string);
 begin
-  //Ubica el archivo actual en el explorador de archivo
+  //Ubica el archvio actual en el explorador de archivo
   if not self.Visible then exit;
   if frmArcExplor1.Visible then begin
     frmArcExplor1.LocateFileOnTree(filname);
@@ -403,10 +362,6 @@ begin
   2: Config.viewMode := vmFileExp;
   end;
   Refresh;
-  if ComboBoxEx1.ItemIndex=2 then begin
-    //Se seleeciona el modo de explorador de archivo
-    if OnSelecFileExplorer<>nil then OnSelecFileExplorer;
-  end;
 end;
 //////////////////////// Acciones /////////////////////
 procedure TfraSyntaxTree.acGenRefresExecute(Sender: TObject);

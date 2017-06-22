@@ -7,8 +7,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
-  Buttons, StdCtrls, ExtCtrls, ComCtrls, ColorBox, FrameCfgSynEdit, Globales,
-  FrameCfgSyntax, MiConfigXML, MisUtils;
+  Buttons, StdCtrls, ExtCtrls, ComCtrls, FrameCfgSynEdit, Globales, MiConfigXML,
+  MisUtils;
 type
   //Tipo de Barra de herramientas
   TStyleToolbar = (stb_SmallIcon, stb_BigIcon);
@@ -29,39 +29,22 @@ type
     BitAplicar: TBitBtn;
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
-    butDefval: TButton;
     chkIncVarName: TCheckBox;
-    chkLoadLast: TCheckBox;
     chkSetProIniBnk: TCheckBox;
     chkSetProEndBnk: TCheckBox;
     chkShowErrMsg: TCheckBox;
     chkIncComment2: TCheckBox;
+    chkLoadLast: TCheckBox;
     chkExcUnused: TCheckBox;
     chkIncDecVar: TCheckBox;
     chkIncAddress: TCheckBox;
     chkIncComment: TCheckBox;
     chkIncHeadMpu: TCheckBox;
-    colCodExplBack: TColorBox;
-    colMessPanPan: TColorBox;
-    colSplitterCol: TColorBox;
-    colMessPanSel: TColorBox;
-    colMessPanText: TColorBox;
-    colMessPanBack: TColorBox;
-    colCodExplText: TColorBox;
-    colMessPanErr: TColorBox;
     ComboBox1: TComboBox;
     Edit1: TEdit;
-    grpTabEdiState: TRadioGroup;
+    fcEditor: TfraCfgSynEdit;
     Label1: TLabel;
     Label2: TLabel;
-    lblCodExplCol1: TLabel;
-    lblCodExplCol2: TLabel;
-    lblMessPan1: TLabel;
-    lblMessPan2: TLabel;
-    lblMessPan3: TLabel;
-    lblMessPan4: TLabel;
-    lblPanelCol: TLabel;
-    lblSplitterCol: TLabel;
     PageControl1: TPageControl;
     Panel1: TPanel;
     RadioGroup1: TRadioGroup;
@@ -71,11 +54,8 @@ type
     tabEditor: TTabSheet;
     tabEnsamb: TTabSheet;
     tabOutput: TTabSheet;
-    tabEnviron: TTabSheet;
-    tabSyntax: TTabSheet;
     procedure BitAceptarClick(Sender: TObject);
     procedure BitAplicarClick(Sender: TObject);
-    procedure butDefvalClick(Sender: TObject);
     procedure chkIncDecVarChange(Sender: TObject);
     procedure SetLanguage(idLang: string);
     procedure FormCreate(Sender: TObject);
@@ -90,27 +70,19 @@ type
     procedure SetViewStatusbar(AValue: Boolean);
     procedure SetViewSynTree(AValue: boolean);
     procedure SetViewToolbar(AValue: boolean);
-  public  //Configuraciones generales
+  public  //Propiedades generales
     StateToolbar: TStyleToolbar;
-    SynTreeWidth: integer;   //Ancho del panel del árbol ed sintaxis
-    viewMode  : TTreeViewMode;
     language : string;
-    TabEdiMode: integer;  //Estado de pestañas del editor
+    SynTreeWidth: integer;   //Ancho del panel del árbol ed sintaxis
+    LoadLast : boolean;  //Cargar el último archivo editado
     property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
     property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
     property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
     property ViewSynTree: boolean read FViewSynTree write SetViewSynTree;
-  public  //Configuraciones de entorno
-    CodExplBack: TColor;
-    CodExplText: TColor;
-    MessPanBack: TColor;  //Color de fondo del panel de mensajes
-    MessPanText: TColor;  //Color del texto del panel de mensajes
-    MessPanErr : TColor;  //Color del texto de error del panel de mensajes
-    MessPanSel : TColor;  //Color del fonde de la selección del panel de mensajes
-    PanelsCol : TColor;  //Color de los panels del Panel de Mensages
-    SplitterCol: TColor;  //Color de separadores
-    LoadLast   : boolean;  //Cargar el último archivo editado
-  public  //Configuraciones para ensamblador
+  public
+    //Configuración generales
+    viewMode  : TTreeViewMode;
+    //Configuraciones para ensamblador
     IncHeadMpu: boolean;  //Incluye encabezado con información del MPU
     IncVarDec : boolean;  //Incluye declaración de varaibles
     VarDecType: TVarDecType;  //tipo de declaración de variables
@@ -126,8 +98,6 @@ type
     SetProEndBnk: Boolean;
     procedure ConfigEditor(ed: TSynEdit);
   public
-    fraCfgSynEdit: TfraCfgSynEdit;
-    fraCfgSyntax : TfraCfgSyntax;
     OnPropertiesChanges: procedure of object;
     procedure Iniciar;
     procedure Mostrar;
@@ -142,16 +112,6 @@ implementation
 { TConfig }
 procedure TConfig.FormCreate(Sender: TObject);
 begin
-  fraCfgSynEdit := TfraCfgSynEdit.Create(self);
-  fraCfgSynEdit.Parent := tabEditor;
-  fraCfgSynEdit.Left := 20;
-  fraCfgSynEdit.Top := 5;
-
-  fraCfgSyntax := TfraCfgSyntax.Create(self);
-  fraCfgSyntax.Parent := tabSyntax;
-  fraCfgSyntax.Left := 10;
-  fraCfgSyntax.Top := 5;
-
   cfgFile.VerifyFile;
 end;
 procedure TConfig.BitAceptarClick(Sender: TObject);
@@ -162,9 +122,6 @@ begin
 end;
 procedure TConfig.BitAplicarClick(Sender: TObject);
 begin
-  //Guarda primero, para tener actualziado los archivos de sintaxis, cuando se dispare "OnPropertiesChanges"
-  fraCfgSyntax.SaveChanges;
-  //Proceso normal
   cfgFile.WindowToProperties;
   if cfgFile.MsjErr<>'' then begin
     MsgErr(cfgFile.MsjErr);
@@ -172,23 +129,6 @@ begin
   end;
   SaveToFile;
 end;
-
-procedure TConfig.butDefvalClick(Sender: TObject);
-begin
-  CodExplBack := clWindow;
-  CodExplText := clDefault;
-  MessPanBack := clWindow;
-
-  MessPanText :=clDefault;
-  MessPanErr  :=clRed;
-  MessPanSel  :=clBtnFace;
-  PanelsCol   :=clDefault;
-
-  SplitterCol := clDefault;
-  LoadLast    := true;
-  cfgFile.PropertiesToWindow;
-end;
-
 procedure TConfig.chkIncDecVarChange(Sender: TObject);
 begin
   RadioGroup2.Enabled := chkIncDecVar.Checked;
@@ -205,24 +145,10 @@ begin
   cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);
   cfgFile.Asoc_Bol('ViewSynTree',  @FViewSynTree, true);
   cfgFile.Asoc_Int('SynTreeWidth', @SynTreeWidth, 130);
+  cfgFile.Asoc_Bol('chkLoadLast', @LoadLast, chkLoadLast, false);
   cfgFile.Asoc_Str('language'   , @language, ComboBox1, 'en - English');
-  cfgFile.Asoc_Int('TabEdiState', @TabEdiMode, grpTabEdiState, 0);
-  //Configuraciones de entorno
-  cfgFile.Asoc_TCol('CodExplBack',@CodExplBack, colCodExplBack, clWindow);
-  cfgFile.Asoc_TCol('CodExplText',@CodExplText, colCodExplText, clDefault);
-
-  cfgFile.Asoc_TCol('MessPanBack',@MessPanBack, colMessPanBack, clWindow);
-  cfgFile.Asoc_TCol('MessPanText',@MessPanText, colMessPanText, clDefault);
-  cfgFile.Asoc_TCol('MessPanErr', @MessPanErr , colMessPanErr , clRed);
-  cfgFile.Asoc_TCol('MessPanSel', @MessPanSel , colMessPanSel , clBtnFace);
-  cfgFile.Asoc_TCol('MessPanPan', @PanelsCol , colMessPanPan , clDefault);
-
-  cfgFile.Asoc_TCol('SplitterCol',@SplitterCol, colSplitterCol, clDefault);
-  cfgFile.Asoc_Bol ('chkLoadLast',@LoadLast   , chkLoadLast   , true);
   //Configuraciones del Editor
-  fraCfgSynEdit.Iniciar('Edit', cfgFile);
-  //COnfigruación de sintaxis
-  fraCfgSyntax.Init(rutSyntax);
+  fcEditor.Iniciar('Edit', cfgFile);
   //COnfiguración de Vista
   cfgFile.Asoc_Enum('viewMode',  @viewMode   , SizeOf(TTreeViewMode), 0);
   //Configuraciones de Ensamblador
@@ -255,7 +181,7 @@ end;
 procedure TConfig.ConfigEditor(ed: TSynEdit);
 //Configura un editor con las opciones definidas aquí
 begin
-  fraCfgSynEdit.ConfigEditor(ed);
+  fcEditor.ConfigEditor(ed);
 end;
 procedure TConfig.cfgFilePropertiesChanges;
 begin
@@ -300,7 +226,7 @@ begin
 end;
 procedure TConfig.SetLanguage(idLang: string);
 begin
-  fraCfgSynEdit.SetLanguage(idLang);
+  fcEditor.SetLanguage(idLang);
   curLang := idLang;
   {$I ..\language\tra_FormConfig.pas}
 end;

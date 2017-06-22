@@ -87,10 +87,10 @@ protected
   procedure LogExpLevel(txt: string);
 protected  //Eventos del compilador
   OnExprStart: procedure of object;  {Se genera al iniciar la
-                                      evaluación de una expresión.}
-  OnExprEnd  : procedure(posExpres: TPosExpres) of object;  {Se genera al terminar de
-                                                             evaluar una expresión.}
-  pic        : TPIC16;   //Objeto PIC de la serie 16.
+                                             evaluación de una expresión.}
+  OnExprEnd  : procedure(posExpres: TPosExpres) of object;  {Se genera
+                                             el terminar de evaluar una expresión}
+  pic        : TPIC16;           //Objeto PIC de la serie 16.
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
   RTstate    : TType;    {Estado de los RT. Si es NIL, indica que los RT, no tienen
                          ningún dato cargado, sino indican el tipo cargado en los RT.}

@@ -125,7 +125,7 @@ type
     procedure _DECF(const f: byte; d: TPIC16destin);
     procedure _DECFSZ(const f: byte; d: TPIC16destin);
     procedure _GOTO(const a: word);
-    procedure _GOTO_PEND(out igot: integer);
+    procedure _GOTO_PEND(var igot: integer);
     procedure _LABEL(igot: integer);
     procedure _INCF(const f: byte; d: TPIC16destin);
     procedure _INCFSZ(const f: byte; d: TPIC16destin);
@@ -1070,7 +1070,7 @@ procedure TGenCodPic._XORLW(const k: word); inline;
 begin
   pic.codAsmK(XORLW, k);
 end;
-procedure TGenCodPic._GOTO_PEND(out igot: integer);
+procedure TGenCodPic._GOTO_PEND(var  igot: integer);
 {Escribe una instrucción GOTO, pero sin precisar el destino aún. Devuelve la dirección
  donde se escribe el GOTO, para poder completarla posteriormente.
 }

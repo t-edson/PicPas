@@ -1,7 +1,7 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 431
+  Left = 0
   Height = 625
-  Top = 158
+  Top = 108
   Width = 884
   AllowDropFiles = True
   Caption = 'frmPrincipal'
@@ -37,6 +37,9 @@ object frmPrincipal: TfrmPrincipal
       end    
       item
         Width = 80
+      end    
+      item
+        Width = 50
       end>
     SimplePanel = False
   end
@@ -47,7 +50,6 @@ object frmPrincipal: TfrmPrincipal
     Width = 884
     Caption = 'ToolBar1'
     Images = ImgActions16
-    ParentColor = False
     ParentShowHint = False
     ShowHint = True
     TabOrder = 1
@@ -123,8 +125,13 @@ object frmPrincipal: TfrmPrincipal
       Top = 2
       Action = acToolComEjec
     end
-    object ToolButton15: TToolButton
+    object ToolButton14: TToolButton
       Left = 274
+      Top = 2
+      Caption = 'ToolButton14'
+    end
+    object ToolButton15: TToolButton
+      Left = 297
       Height = 22
       Top = 2
       Width = 10
@@ -132,7 +139,7 @@ object frmPrincipal: TfrmPrincipal
       Style = tbsSeparator
     end
     object ToolButton16: TToolButton
-      Left = 284
+      Left = 307
       Top = 2
       Action = acToolConfig
     end
@@ -143,7 +150,6 @@ object frmPrincipal: TfrmPrincipal
     Top = 64
     Width = 5
     Align = alNone
-    ParentColor = False
   end
   inline edAsm: TSynEdit
     Left = 504
@@ -665,9 +671,14 @@ object frmPrincipal: TfrmPrincipal
     Width = 5
     Align = alNone
   end
+  inline fraEditView1: TfraEditView
+    Left = 200
+    Top = 128
+    TabOrder = 7
+  end
   object ImgActions16: TImageList
-    left = 216
-    top = 464
+    left = 200
+    top = 152
     Bitmap = {
       4C69200000001000000010000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -1698,8 +1709,8 @@ object frmPrincipal: TfrmPrincipal
   end
   object ActionList: TActionList
     Images = ImgActions16
-    left = 216
-    top = 400
+    left = 288
+    top = 88
     object acArcNewFile: TAction
       Category = 'Arc'
       Caption = 'New &File'
@@ -1713,7 +1724,6 @@ object frmPrincipal: TfrmPrincipal
       Caption = '&Deshacer'
       Hint = 'Deshacer'
       ImageIndex = 8
-      OnExecute = acEdUndoExecute
       ShortCut = 16474
     end
     object acEdRedo: TAction
@@ -1721,7 +1731,6 @@ object frmPrincipal: TfrmPrincipal
       Caption = '&Rehacer'
       Hint = 'Rehacer'
       ImageIndex = 9
-      OnExecute = acEdRedoExecute
       ShortCut = 24666
     end
     object acEdCut: TEditCut
@@ -1750,7 +1759,7 @@ object frmPrincipal: TfrmPrincipal
       Caption = 'Seleccionar &Todo'
       Hint = 'Selecciona todo el texto'
       ImageIndex = 13
-      OnExecute = acEdSelecAllExecute
+      ShortCut = 16453
     end
     object acBusFind: TAction
       Category = 'Sear'
@@ -2744,8 +2753,8 @@ object frmPrincipal: TfrmPrincipal
   object ImgActions32: TImageList
     Height = 32
     Width = 32
-    left = 336
-    top = 464
+    left = 288
+    top = 152
     Bitmap = {
       4C69200000002000000020000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -6845,37 +6854,5 @@ object frmPrincipal: TfrmPrincipal
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000
     }
-  end
-  object PopupEdit: TPopupMenu
-    Images = ImgActions16
-    left = 336
-    top = 400
-    object MenuItem8: TMenuItem
-      Action = acEdUndo
-    end
-    object MenuItem30: TMenuItem
-      Action = acEdRedo
-    end
-    object MenuItem31: TMenuItem
-      Caption = '-'
-    end
-    object MenuItem32: TMenuItem
-      Action = acEdCut
-    end
-    object MenuItem33: TMenuItem
-      Action = acEdCopy
-    end
-    object MenuItem34: TMenuItem
-      Action = acEdPaste
-    end
-    object MenuItem35: TMenuItem
-      Action = acEdSelecAll
-    end
-  end
-  object Timer1: TTimer
-    Interval = 500
-    OnTimer = Timer1Timer
-    left = 208
-    top = 88
   end
 end

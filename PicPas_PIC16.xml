@@ -1,41 +1,19 @@
 <?xml version="1.0"?>
-<Language name="PicPas Pascal" ext="pas">
+<Language name="Object Pascal" ext="pas" ColorBlock="Block">
   <!-- Atributos a usar-->
-  <Attribute Name="Keyword"   ForeCol="#00A4F2" Bold="True"  Italic="False" Underline="False"/>
-  <Attribute Name="Boolean"   ForeCol="#FFFF00" Bold="False" Italic="False" Underline="False"/>
-  <Attribute Name="Comment"   ForeCol="#8D8D8D" Bold="False" Italic="False" Underline="False"/>
-  <Attribute Name="Number"    ForeCol="#FF00FF" Bold="False" Italic="False" Underline="False"/>
-  <Attribute Name="String"    ForeCol="#00FF00" Bold="False" Italic="False" Underline="False"/>
-  <Attribute Name="Directive" ForeCol="#FE2EF7" Bold="False" Italic="False" Underline="False"/>
-  <Attribute Name="Asm"       ForeCol="#60C060" Bold="False" Italic="False" Underline="False"/>
-  <Attribute Name="Types"     ForeCol="#FFFF00" Bold="False" Italic="False" Underline="False"/>
-  <Attribute Name="Symbol"    ForeCol="#008000" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Keyword" Style="b"> </Attribute>
+  <Attribute Name="Boolean" > </Attribute>
+  <Attribute Name="Directive" ForeCol="#FE2EF7"> </Attribute>
+  <Attribute Name="Asm" ForeCol="#60C060"> </Attribute>
+  <Attribute Name="Types"> </Attribute>
+  <Attribute Name="Symbol" ForeCol="Red"> </Attribute>
+  <Attribute Name="Number" ForeCol="Blue"> </Attribute>
 
-  <Completion OpenOnKeyUp="True">
+  <Completion>
 	<List Name="PlantillaIF" IconIndex='5'>
   "if ... then ...;|if \_ then\n\n\uend;"
   "if ... then ... else ...;|if \_ then\n\n\uelse\n\n\uend;"
   "if ... then ... elsif ...;|if \_ then\n\n\uelsif  then\n\n\uelse\n\n\uend;"
-	</List>
-	<List Name="KeywordSec" IconIndex='2'>
-  program
-  unit
-  uses
-  var 
-  const 
-  procedure
-  begin
-  interface
-	</List>
-	<List Name="PlantillasSec" IconIndex='5'>
-  "program ... begin ... end.|{Description of the program.}\nprogram nombre;\nbegin\n  \_\nend."
-  "unit ... end.|{Description of the unit.}\nunit unitName;\ninterface\n  \_\nimplementation\n\nend."
-  "uses PIC16F84A;|uses PIC16F84A;\n"
-  "var ... varName ... |var\n\u  \_varName: byte;"
-  "const ... |const\n\u  \_consName = 0;"
-  "procedure ... begin ... end;|procedure proc1;\n\u\ubegin\n\u  \_\n\uend;"
-  "begin ... end. |begin\n  \_\n\uend."
-  "interface ... implementation|interface\n\nimplementation\n\nend."
 	</List>
 	<List Name="Plantillas" IconIndex='5'>
   "absolute \_$00;"
@@ -45,6 +23,11 @@
   "for i:=0 to ... |for i:=0 to \_ do\n\n\uend;"
   "asm"
   "asm ... end |asm \n\t\_\n\uend"
+  "program ... begin ... end.|{Description of the program.}\nprogram nombre;\nbegin\n  \_\nend."
+  "unit ... end.|{Description of the unit.}\nunit unitName;\ninterface\n  \_\nimplementation\n\nend."
+  "procedure ... begin ... end;|procedure proc1;\n\u\ubegin\n\u  \_\n\uend;"
+  "const ... |const\n\u  \_consName = 0;"
+  "var ... |var\n\u  \_varName: byte;"
   delay_ms
   delay_ms(100);
   "inc(\_);"
@@ -57,20 +40,11 @@
   "SetAsOutput(\_);"
   "SetBank(\_);"
     </List>
-	<!-- Completado en el bloque principal-->
-	<OpenOn Name="SecMain" Block="Main" AfterPattern="AllIdentifiers" FilterBy="LastTokPart">
-      <Include List="KeywordSec"/>
-      <Include List="PlantillasSec"/>
+	<OpenOn AfterPattern="':'" FilterBy="none" Action="RepLastTok" Block="BeginEnd">
+	  ":= "
 	</OpenOn>	
-	<!-- Completado de unidades-->
-	<OpenOn Name='unit1' AfterPattern='"uses",space' FilterBy="none" Action="Insert" Block="Uses">
-      "unit1"
-	</OpenOn>	
-	<OpenOn Name='unit2' AfterPattern='",",space' FilterBy="none" Action="Insert" Block="Uses">
-      "unit1"
-	</OpenOn>	
-	<OpenOn Name='unit3' AfterPattern='"uses",space, identifier' Block="Uses">
-      "unit1"
+	<OpenOn AfterPattern="space,identifier,space" FilterBy="none" Action="Insert">
+	  ":= "
 	</OpenOn>	
 	<!-- Completado para tipos -->
     <List Name='types' IconIndex='1'>  bit; byte; word; boolean; char; </List>
@@ -86,42 +60,19 @@
 	<OpenOn AfterPattern="':',space,identifier" Block="ProcParam">
 	  <Include List="types"/>
 	</OpenOn>	
-	<!-- Completado dentro del bloque VAR. -->
-	<OpenOn Block="var">
-	  var1 var2 var3
-	  <!-- patrones que pueden seguir después de un var -->
-	 "var" "const" "begin"
-	 <Include List="PlantillasSec"/>
-	</OpenOn>	
-	<!-- Completado dentro del bloque CONST. -->
-	<OpenOn Block="const">
-	  cons1 cons2 cons3
-	  <!-- patrones que pueden seguir después de un const -->
-	 "var" "const" "begin"
-	 <Include List="PlantillasSec"/>
-	</OpenOn>	
-	<!-- Completado en bloques Begin End -->
-	<OpenOn Name="BE1" AfterPattern="'if'" Block='BeginEnd'>
-      <Include List="PlantillaIF"></Include>
-	</OpenOn>	
-	<OpenOn Name="BE2" AfterPattern="':'" FilterBy="none" Action="RepLastTok" Block="BeginEnd">
-	  ":= "
-	</OpenOn>	
-	<OpenOn Name="BE3" AfterPattern="space,identifier,space" FilterBy="none" Action="Insert" Block="BeginEnd">
-	  ":= "
-	</OpenOn>	
-	<OpenOn Name="BE4" AfterPattern="AllIdentifiers" Block='BeginEnd'>
+	<!-- Completado normal -->
+	<OpenOn AfterPattern="identifier">
       <Include List="Plantillas"></Include>
       <Include List="PlantillaIF"></Include>
       <Include Attribute="Keyword" IconIndex='2'></Include>
 	  <Include Attribute="Boolean" IconIndex='4'></Include>
 	</OpenOn>	
-	<!-- Completado en bloques If -->
-	<OpenOn Name="If1" AfterPattern="'if'" Block='If'>
+	<!-- Completados especiales-->
+	<OpenOn AfterPattern="'if'">
       <Include List="PlantillaIF"></Include>
 	</OpenOn>	
 	<!-- Completado de directivas-->
-	<OpenOn AfterPattern="Directive" Iconindex='3'>
+	<OpenOn AfterPattern="Directive" BeforePattern='Eol' Iconindex='3'>
       "{$PROCESSOR \_PIC16F84}"
       "{$FREQUENCY \_10Mhz}"
 	  "{$CONFIG }"
@@ -164,7 +115,6 @@
     RETLW    RETURN    SLEEP    SUBLW    XORLW
 	</OpenOn>	
   </Completion>
-  
   <Identifiers CharsStart= "A..Za..z_" Content = "A..Za..z0..9_"> 
     <token attribute="Keyword"> 
     absolute array asm as 
@@ -212,38 +162,12 @@
   <Token Start="{$" End="}" Multiline="false" Folding="false" Attribute="Directive"></Token>
   <Token Start="asm" End="END" Multiline="true" Folding="true" Attribute="Asm"></Token>
 
-  <!--***********************************************************************
-                                 Bloques en Main 
-  *************************************************************************-->
-  <Section Name="interface" Start="interface" BackCol="transparent" Parent='Main'> 
-    <Section Name="interf_var" Start="var" BackCol="transparent"> 
-    </Section>
-    <Section Name="interf_const" Start="const" BackCol="transparent"> 
-    </Section>
-  </Section>
-  <Section Name="implementation" Start="implementation" BackCol="transparent" Parent='Main'> 
-    <Section Name="interf_var" Start="var" BackCol="transparent"> 
-    </Section>
-    <Section Name="interf_const" Start="const" BackCol="transparent"> 
-    </Section>
-  </Section>
-  <!--Legalmente, se debería separar las sintaxis para programas y unidades, pero
-  aquí se está definiendo una sintaxis que sea válida tanto para programas como para
-  unidades, por eso, se pone la definición de estas secciones, después de INTERFACE
-  e IMPLEMENTATION, para que se reconozcan primero las secciones VAR y CONST, como 
-  anidadas, de otra forma, se reconocerían como secciones adicionales a INTERFACE
-  e IMPLEMENTATION--> 
-  <Section Name="var" Start="var" BackCol="transparent" Parent='Main'> 
-  </Section>
-  <Section Name="const" Start="const" BackCol="transparent" Parent='Main'> 
-  </Section>
-  <!--***********************************************************************
-                                 Bloques Recrusivos
-  *************************************************************************-->
+  <!--Bloques rescursivos--> 
   <Block Start="Repeat" End="Until"> </Block>
   <Block Start="Case" End= "End" ></Block>
   <Block Name="Record" Start="Record" End="End" BackCol="Transparent"></Block>
-  
+  <Section Name="var" Start="var" BackCol="transparent"> </Section>
+  <Section Name="const" Start="const" BackCol="transparent"> </Section>
   <Block Name="Proc" Start="procedure" End="end" BackCol="#E0F5FF">
     <Block Name="ProcParam" Start="(" End=")" Folding="false"></Block>
     <Block Name="ProcBody"  Start="Begin" End= "End" CloseParent="true" BackCol="transparent"></Block>
@@ -254,13 +178,11 @@
   </Block>
   <Block Name="BeginEnd"  Start="Begin" End= "End"></Block><!--Al final para dar prioridad al Begin-End de PROCEDURE-->
   <!-- Bloques específico para la nueva sintaxis de PicPas -->
-  <Block Name="If" Start="IF" End="END" Folding="False">
+  <Block Start="IF" End="END" Folding="False">
 	<Section Start="THEN"> </Section>
 	<Section Start="ELSIF"> </Section>
 	<Section Start="ELSE"> </Section>
   </Block>
-  <Block Name="While" Start="WHILE" End="END" Folding="True"/>
-  <Block Name="For"   Start="FOR"   End="END" Folding="True"/>
-  <Block Name="Uses"  Start="USES"  End=";"   Folding="True"/>
-  
+  <Block Start="WHILE" End="END" Folding="True"/>
+  <Block Start="FOR" End="END" Folding="True"/>
 </Language>

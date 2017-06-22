@@ -1,69 +1,144 @@
-{
-*  (C) AguHDz 05-JUN-2017
-*  Ultima Actualizacion: 14-JUN-2017
-*
-*  Compilador PicPas v.0.6.9 (https://github.com/t-edson/PicPas)
-*
-*  ESCRITURA DE DATOS EN EEPROM INTERNA DEL MICROCONTROLADOR
-*  Ejemplo de uso de nombrea de variables y constantes definindas en nueva
-*  UNIT 16F84A.pas, ahora mas coherente en el uso de los nombre de bytes y
-*  bits de la zona SFR de memoria y sus registros.
-}
- 
-{$FREQUENCY 8 MHZ }
-{$PROCESSOR PIC16F84A}
-program EEPROMInterna;
- 
-uses
-  PIC16F84A;  
- 
+{Rutina de verificación de las rutinas en ensamblador.}
+{$PROCESSOR PIC16F84}
+{$FREQUENCY 8Mhz}
+{$Mode Pascal}
+uses PIC16F84A;
 var
-  Contador :byte;
- 
-procedure WriteEEPROMASM(direccion , valor: byte);
-begin
-ASM
-ESCRITURA:               ; Establecer EEADR y EEDATA
-  MOVF  direccion,w      ; Direccion de esctritura
-  MOVWF EEADR                ; Escribe la dirección en EEADR
-  MOVF  valor,w          ; Dato a escribir en EEPROM
-  MOVWF EEDATA             ; Se escribe el dato en EEDATA
-  BSF   STATUS,bit_RP0     ; Selecciona el banco 1
-  BSF   EECON1,bit_WREN    ; Permiso de escritura activado
-;Comienzo de la secuencia de escritura
-  MOVLW $55
-  MOVWF EECON2             ; Se escribe el dato 55 h en EECON2
-  MOVLW $AA
-  MOVWF EECON2             ; Se escribe AA h en EECON2
-  BSF   EECON1,bit_WR        ; Comienza la escritura
-  BCF   EECON1,bit_WREN    ; Permiso de escritura desactivado
-ESPERA:
-  BTFSC EECON1,bit_WR    ; Espera a que termine la escritura
-  GOTO  ESPERA
-  BCF   STATUS,bit_RP0     ; Selecciona el banco 0
-END
-end;
- 
-procedure WriteEEPROM(direccion , valor: byte);
-begin
-  EEADR       := direccion;
-  EEDATA      := valor;
-  EECON1_WREN := 1;
-  EECON2      := $55;
-  EECON2      := $AA;
-  EECON1_WR   := 1;
-  EECON1_WREN := 0;
-  repeat until (EECON1_WR = 0);
-end;
- 
-begin
-  repeat
-  for contador:=$00 to $10 do  
-    WriteEEPROMASM(contador,$00);
+  pinLed: bit absolute PORTB.0;
+  vbyte: byte;
+	vbool: boolean;
+  vbit: bit;
+var
+  abyte: byte absolute $20;
+const
+	CBYTE = 3; 
+
+  procedure bien;
+  begin
+    pinLed := 1;
+    delay_ms(30);
+    pinLed := 0;
+    delay_ms(70);
   end;
- 
-  for contador:=$00 to $10 do  
-    WriteEEPROM(contador,$FF);
+  procedure Mal;
+  begin
+    pinLed := 1;
+    delay_ms(1500);
+    pinLed := 0;
+    asm SLEEP end
   end;
-  until false;
+begin
+  SetAsOutput(pinLed);
+  pinLed := 0;
+
+asm
+  ;Opcode test
+  ADDWF vbyte, w
+  ANDWF vbyte, w
+  CLRF vbyte
+  CLRW 
+  COMF vbyte, f
+  DECF vbyte, f
+  INCF vbyte, w
+
+  ;test jumps
+  DECFSZ vbyte, w
+	NOP
+  INCFSZ vbyte, w
+	NOP
+ 
+  IORWF vbyte, w
+  MOVF vbyte, w
+  MOVWF vbyte
+  RLF vbyte, w
+  RRF vbyte, w
+  SUBWF vbyte, w
+  SWAPF vbyte, w
+  XORWF vbyte, w
+  BCF vbyte, 0
+  BSF vbyte, 0
+  BTFSC vbyte, 0
+	NOP
+  BTFSS vbyte, 0
+  NOP
+  ADDLW 0
+  ANDLW 0
+  ;CALL 
+  CLRWDT 
+  GOTO $+1
+  IORLW 0
+  MOVLW 0
+  ;RETFIE
+  ;RETLW 
+	;RETURN 
+  ;SLEEP 
+	SUBLW 0
+	XORLW 0
+end
+  //variable asigment
+	abyte := 66;
+	asm
+    MOVLW 65
+    MOVWF $20  ;absolute address
+  end
+  if abyte = 65 then bien else mal; 
+
+  vbyte := 0;
+  asm
+    MOVLW 5
+	  MOVWF vbyte
+	end
+  if vbyte = 5 then bien else mal; 
+
+  vbool := false;
+  asm BSF vbool end
+  if vbool then bien else mal; 
+
+  vbit := 1;
+  asm BCF vbit end
+  if vbit=0 then bien else mal; 
+
+  vbit := 1;
+  asm 
+    BTFSC vbit
+    BCF vbit 
+  end
+  if vbit=0 then bien else mal; 
+	
+	//constant access
+  vbyte := 0;
+  asm 
+    MOVLW CBYTE 
+    MOVWF vbyte
+  end
+  if vbyte = CBYTE then bien else mal; 
+
+  vbyte := 0;
+  asm 
+    BSF vbyte, CBYTE
+  end
+  if vbyte = 8 then bien else mal; 
+
+	//jumps
+  asm 
+    GOTO $+2
+    SLEEP  ;stop if not jump
+  end
+
+	vbyte := 10;
+  asm 
+    DECFSZ vbyte, f
+    GOTO $-1
+  end
+  if vbit=0 then bien else mal; 
+
+	vbyte := 10;
+  asm 
+  label1:
+    DECFSZ vbyte, f
+    GOTO label1
+  end
+  if vbit=0 then bien else mal; 
+  asm org $ end
+  vbit := 1;
 end.

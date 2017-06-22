@@ -8,8 +8,8 @@ unit FrameCfgSynEdit;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, Forms, StdCtrls, Dialogs, Spin, SynEdit, Graphics,
-  Globales, MiConfigXML, SynEditMarkupHighAll, SynEditMarkup;
+  Classes, SysUtils, Forms, StdCtrls, Dialogs,
+  Spin, SynEdit, Graphics, MiConfigXML, SynEditMarkupHighAll, SynEditMarkup;
 type
 
   { TfraCfgSynEdit }
@@ -17,18 +17,17 @@ type
     cbutFonPan: TColorButton;
     cbutResPal: TColorButton;
     cbutTxtPan: TColorButton;
-    chkHighCurWord: TCheckBox;
-    chkViewHScroll: TCheckBox;
-    chkAutoindent: TCheckBox;
+    chkResPalCur: TCheckBox;
+    chkVerBarDesH: TCheckBox;
     chkVerPanVer: TCheckBox;
-    chkHighCurLin: TCheckBox;
+    chkMarLinAct: TCheckBox;
     cbutLinAct: TColorButton;
-    chkViewVScroll: TCheckBox;
+    chkVerBarDesV: TCheckBox;
     chkVerNumLin: TCheckBox;
     chkVerMarPle: TCheckBox;
-    cmbFontName: TComboBox;
-    cbutBackCol: TColorButton;
-    cbutTextCol: TColorButton;
+    cmbTipoLetra: TComboBox;
+    cbutFondo: TColorButton;
+    cbutTexto: TColorButton;
     GroupBox1: TGroupBox;
     Label1: TLabel;
     Label10: TLabel;
@@ -38,25 +37,24 @@ type
     Label7: TLabel;
     Label8: TLabel;
     Label9: TLabel;
-    spFontSize: TSpinEdit;
-    procedure chkHighCurLinChange(Sender: TObject);
-    procedure chkHighCurWordChange(Sender: TObject);
+    spTam: TSpinEdit;
+    procedure chkMarLinActChange(Sender: TObject);
+    procedure chkResPalCurChange(Sender: TObject);
     procedure chkVerPanVerChange(Sender: TObject);
   public
     //configuración del editor
-    TipLet     : string;    //tipo de letra
-    TamLet     : integer;   //tamaño de letra
-    MarLinAct  : boolean;   //marcar línea actual
-    VerBarDesV : boolean;   //ver barras de desplazamiento
-    VerBarDesH : boolean;   //ver barras de desplazamiento
-    Autoindent : boolean;   //Autotabulación
-    ResPalCur  : boolean;   //resaltar palabra bajo el cursor
-    cTxtNor    : TColor;    //color de texto normal
-    cFonEdi    : TColor;    //Color de fondo del control de edición
-    cFonSel    : TColor;    //color del fondo de la selección
-    cTxtSel    : TColor;    //color del texto de la selección
-    cLinAct    : TColor;    //color de la línea actual
-    cResPal    : TColor;    //color de la palabra actual
+    TipLet     : string;     //tipo de letra
+    TamLet     : integer;     //tamaño de letra
+    MarLinAct : boolean;    //marcar línea actual
+    VerBarDesV  : boolean;    //ver barras de desplazamiento
+    VerBarDesH  : boolean;    //ver barras de desplazamiento
+    ResPalCur  : boolean;    //resaltar palabra bajo el cursor
+    cTxtNor     : TColor;    //color de texto normal
+    cFonEdi     : TColor;    //Color de fondo del control de edición
+    cFonSel     : TColor;    //color del fondo de la selección
+    cTxtSel     : TColor;    //color del texto de la selección
+    cLinAct     : TColor;    //color de la línea actual
+    cResPal     : TColor;    //color de la palabra actual
     //panel vertical
     VerPanVer  : boolean;    //ver pánel vertical
     VerNumLin  : boolean;    //ver número de línea
@@ -68,7 +66,7 @@ type
     procedure PropToWindow;
     procedure Iniciar(section: string; cfgFile: TMiConfigXML); //Inicia el frame
     procedure ConfigEditor(ed: TSynEdit);
-    procedure SetLanguage(idLang: string);
+    procedure SetLanguage(lang: string);
   public
     //genera constructor y destructor
     constructor Create(AOwner: TComponent) ; override;
@@ -85,17 +83,15 @@ procedure TfraCfgSynEdit.Iniciar(section: string; cfgFile: TMiConfigXML);
 begin
   //asigna referencia necesarias
   //crea las relaciones variable-control
-  cfgFile.Asoc_TCol(section+ '/cTxtNor', @cTxtNor, cbutTextCol, clBlack);
-  cfgFile.Asoc_TCol(section+ '/cFonEdi', @cFonEdi, cbutBackCol,  clWhite);
+  cfgFile.Asoc_TCol(section+ '/cTxtNor', @cTxtNor, cbutTexto, clBlack);
+  cfgFile.Asoc_TCol(section+ '/cFonEdi', @cFonEdi, cbutFondo,  clWhite);
   cfgFile.Asoc_TCol(section+ '/cLinAct', @cLinAct, cbutLinAct, clYellow);
   cfgFile.Asoc_TCol(section+ '/cResPal', @cResPal, cbutResPal, clSkyBlue);
 
-  cfgFile.Asoc_Bol(section+ '/VerBarDesV', @VerBarDesV, chkViewVScroll, true);
-  cfgFile.Asoc_Bol(section+ '/VerBarDesH', @VerBarDesH, chkViewHScroll, false);
-  cfgFile.Asoc_Bol(section+ '/Autoindent', @Autoindent, chkAutoindent, true);
-
-  cfgFile.Asoc_Bol(section+ '/ResPalCur' , @ResPalCur , chkHighCurWord , true);
-  cfgFile.Asoc_Bol(section+ '/MarLinAct' , @MarLinAct , chkHighCurLin , false);
+  cfgFile.Asoc_Bol(section+ '/VerBarDesV', @VerBarDesV, chkVerBarDesV, true);
+  cfgFile.Asoc_Bol(section+ '/VerBarDesH', @VerBarDesH, chkVerBarDesH, false);
+  cfgFile.Asoc_Bol(section+ '/ResPalCur' , @ResPalCur , chkResPalCur , true);
+  cfgFile.Asoc_Bol(section+ '/MarLinAct' , @MarLinAct , chkMarLinAct , false);
 
   cfgFile.Asoc_Bol(section+ '/VerPanVer', @VerPanVer, chkVerPanVer, true);
   cfgFile.Asoc_Bol(section+ '/VerNumLin', @VerNumLin, chkVerNumLin, false);
@@ -103,15 +99,15 @@ begin
   cfgFile.Asoc_TCol(section+ '/cFonPan'  , @cFonPan  , cbutFonPan  , clWhite);
   cfgFile.Asoc_TCol(section+ '/cTxtPan'  , @cTxtPan  , cbutTxtPan  , clBlack);
 
-  cfgFile.Asoc_Int(section+ '/TamLet', @TamLet, spFontSize, 10);
+  cfgFile.Asoc_Int(section+ '/TamLet', @TamLet, spTam, 10);
 
-  cmbFontName.Items.Clear;
-  cmbFontName.Items.Add('Courier New');
-  cmbFontName.Items.Add('Fixedsys');
-  cmbFontName.Items.Add('Lucida Console');
-  cmbFontName.Items.Add('Consolas');
-  cmbFontName.Items.Add('Cambria');
-  cfgFile.Asoc_Str(section+ '/TipLet', @TipLet, cmbFontName, 'Courier New');
+  cmbTipoLetra.Items.Clear;
+  cmbTipoLetra.Items.Add('Courier New');
+  cmbTipoLetra.Items.Add('Fixedsys');
+  cmbTipoLetra.Items.Add('Lucida Console');
+  cmbTipoLetra.Items.Add('Consolas');
+  cmbTipoLetra.Items.Add('Cambria');
+  cfgFile.Asoc_Str(section+ '/TipLet', @TipLet, cmbTipoLetra, 'Courier New');
 
   cfgFile.Asoc_StrList(section+ '/recient', @ArcRecientes);
 end;
@@ -125,22 +121,22 @@ begin
   label2.Enabled:=chkVerPanVer.Checked;
   label3.Enabled:=chkVerPanVer.Checked;
 end;
-procedure TfraCfgSynEdit.chkHighCurLinChange(Sender: TObject);
+procedure TfraCfgSynEdit.chkMarLinActChange(Sender: TObject);
 begin
-  label1.Enabled:=chkHighCurLin.Checked;
-  cbutLinAct.Enabled:=chkHighCurLin.Checked;
+  label1.Enabled:=chkMarLinAct.Checked;
+  cbutLinAct.Enabled:=chkMarLinAct.Checked;
 end;
 
-procedure TfraCfgSynEdit.chkHighCurWordChange(Sender: TObject);
+procedure TfraCfgSynEdit.chkResPalCurChange(Sender: TObject);
 begin
-  label10.Enabled:=chkHighCurWord.Checked;
-  cbutResPal.Enabled:=chkHighCurWord.Checked;
+  label10.Enabled:=chkResPalCur.Checked;
+  cbutResPal.Enabled:=chkResPalCur.Checked;
 end;
 
 procedure TfraCfgSynEdit.PropToWindow;
 begin
    inherited;
-   chkHighCurLinChange(self);  //para actualizar
+   chkMarLinActChange(self);  //para actualizar
    chkVerPanVerChange(self);  //para actualizar
 end;
 constructor TfraCfgSynEdit.Create(AOwner: TComponent);
@@ -194,18 +190,42 @@ begin
    end;
    ///////fija color de delimitadores () {} [] ///////////
    ed.BracketMatchColor.Foreground := clRed;
-   //Opciones
-   if Autoindent then begin
-     ed.Options := ed.Options + [eoAutoIndent];
-   end else begin
-     ed.Options := ed.Options - [eoAutoIndent];
-   end;
 end;
-procedure TfraCfgSynEdit.SetLanguage(idLang: string);
+procedure TfraCfgSynEdit.SetLanguage(lang: string);
 //Rutina de traducción
 begin
-   curLang := idLang;
-   {$I ..\language\tra_CfgSynEdit.pas}
+  case lowerCase(lang) of
+  'es': begin
+      Label6.Caption:='&Letra:';
+      Label7.Caption:='&Tamaño:';
+      Label8.Caption:='Color de fondo:';
+      Label9.Caption:='Color texto:';
+      chkVerBarDesV.Caption:='Barra de desplaz &Vert.';
+      chkVerBarDesH.Caption:='Barra de desplaz &Horiz.';
+      chkResPalCur.Caption:='Resaltar palabra bajo cursor';
+      chkMarLinAct.Caption:='Marcar línea actual';
+      chkVerPanVer.Caption:='Panel Vertical';
+      chkVerNumLin.Caption:='Ver Núm.de línea';
+      label2.Caption:='Color Fondo:';
+      chkVerMarPle.Caption:='Ver Marc.de plegado';
+      label3.Caption:='Color de texto:';
+    end;
+  'en': begin
+      Label6.Caption:='&Font:';
+      Label7.Caption:='&Size:';
+      Label8.Caption:='Back color:';
+      Label9.Caption:='Font Color:';
+      chkVerBarDesV.Caption:='&Vertical Scrollbar';
+      chkVerBarDesH.Caption:='&Horizontal Scrollbar';
+      chkResPalCur.Caption:='Highlight current word';
+      chkMarLinAct.Caption:='Hightlight current line';
+      chkVerPanVer.Caption:='Gutter';
+      chkVerNumLin.Caption:='Show line number';
+      label2.Caption:='Back color:';
+      chkVerMarPle.Caption:='Show folding marks';
+      label3.Caption:='Text color:';
+    end;
+  end;
 end;
 
 end.

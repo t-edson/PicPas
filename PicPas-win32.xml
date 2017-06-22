@@ -2,54 +2,46 @@
 <CONFIG>
   <StateStatusbar Val="1"/>
   <VerPanMensaj Val="True"/>
-  <VerStatusbar Val="False"/>
+  <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="141"/>
-  <language Val="es - Español"/>
-  <TabEdiState Val="0"/>
-  <CodExplBack Val="2434341"/>
-  <CodExplText Val="12632256"/>
-  <MessPanBack Val="2368548"/>
-  <MessPanText Val="16777215"/>
-  <MessPanErr Val="255"/>
-  <MessPanSel Val="-2147483631"/>
-  <MessPanPan Val="2368548"/>
-  <SplitterCol Val="2368548"/>
+  <SynTreeWidth Val="225"/>
   <chkLoadLast Val="True"/>
+  <language Val="en - English"/>
   <Edit>
-    <cTxtNor Val="16777215"/>
-    <cFonEdi Val="2368548"/>
+    <cTxtNor Val="12632256"/>
+    <cFonEdi Val="0"/>
     <cLinAct Val="65535"/>
-    <cResPal Val="10443292"/>
+    <cResPal Val="15780518"/>
     <VerBarDesV Val="True"/>
     <VerBarDesH Val="False"/>
-    <Autoindent Val="True"/>
     <ResPalCur Val="True"/>
     <MarLinAct Val="False"/>
     <VerPanVer Val="True"/>
-    <VerNumLin Val="True"/>
+    <VerNumLin Val="False"/>
     <VerMarPle Val="True"/>
-    <cFonPan Val="2105376"/>
-    <cTxtPan Val="12632256"/>
+    <cFonPan Val="16777215"/>
+    <cTxtPan Val="0"/>
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.7.0\samples\EEPROM.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.0\temp\NewFile1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.0\samples\Multiplicacion_ASM.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.6.9\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.9\TestCode\Operations\Test4_Asm.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.9\TestCode\Operations\Test2_Word3.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.9\TestCode\Operations\Test2_Word2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.6.9\TestCode\Operations\Test2_Word1.pas
 "/>
   </Edit>
-  <viewMode Val="0"/>
-  <IncHeadMpu Val="False"/>
+  <viewMode Val="2"/>
+  <IncHeadMpu Val="True"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>
   <IncAddress Val="True"/>
-  <IncComment Val="False"/>
+  <IncComment Val="True"/>
   <IncComment2 Val="False"/>
   <ExcUnused Val="True"/>
   <IncVarName Val="True"/>
   <ShowErMsg Val="False"/>
   <OptimLev Val="1"/>
-  <SetProIniBnk Val="True"/>
-  <SetProEndBnk Val="True"/>
+  <SetProIniBnk Val="False"/>
+  <SetProEndBnk Val="False"/>
 </CONFIG>
