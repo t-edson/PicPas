@@ -15,10 +15,11 @@ var
    //Variables globales
    MsjError    : String;    //Bandera - Mensaje de error
 
-   rutApp     : string;      //ruta de la aplicación
-   rutSamples : string;      //ruta de la carpeta de scripts
+   rutApp     : string;     //ruta de la aplicación
+   rutSamples : string;     //ruta de la carpeta de scripts
    rutUnits   : string;     //ruta para guardar las sintaxis
    rutTemp    : string;     //ruta para los archivos temporales
+   rutSyntax  : string;     //ruta de los archivos de sintaxis
 
    archivoEnt  : string;    //archivo de entrada
    MostrarError: Boolean;   //Bandera para mostrar mensajesde error.
@@ -148,6 +149,7 @@ initialization
   rutSamples := rutApp + 'samples';
   rutUnits   := rutApp + 'units';
   rutTemp    := rutApp + 'temp';
+  rutSyntax  := rutApp + 'syntax';
   archivoEnt := '';    //archivo de entrada
   //verifica existencia de carpetas de trabajo
   try
@@ -162,7 +164,11 @@ initialization
     if not DirectoryExists(rutTemp) then begin
        msgexc(WA_DIR_NOEXIST, [rutTemp]);
        CreateDir(rutTemp);
-     end;
+    end;
+    if not DirectoryExists(rutSyntax) then begin
+       msgexc(WA_DIR_NOEXIST, [rutSyntax]);
+       CreateDir(rutSyntax);
+    end;
   except
     msgErr(ER_CANN_READDI);
   end;
@@ -174,5 +180,6 @@ finalization
   rutSamples := '';
   rutUnits := '';
   rutTemp := '';
+  rutSyntax := '';
 end.
 

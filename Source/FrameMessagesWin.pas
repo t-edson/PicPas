@@ -11,8 +11,11 @@ type
   { TUtilGrillaFil2 }
 
   TUtilGrillaFil2 = class(TUtilGrillaFil)
+    BackSelColor: TColor;   //Color de fondo de la selección
     procedure grillaDrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState); override;
+  public //Inicialización
+    constructor Create(grilla0: TStringGrid); override;
   end;
 
   { TfraMessagesWin }
@@ -21,9 +24,12 @@ type
     chkWarns: TCheckBox;
     chkErrors: TCheckBox;
     ImgMessages: TImageList;
+    lblInform: TLabel;
+    lblWarns: TLabel;
     lblRAM: TLabel;
     lblROM: TLabel;
     lblSTACK: TLabel;
+    lblErrors: TLabel;
     panStatis: TPanel;
     Panel2: TPanel;
     grilla: TStringGrid;
@@ -38,14 +44,29 @@ type
     procedure panStatisPaint(Sender: TObject);
   private
     cxp: TCompiler;
+    FBackColor: TColor;
+    FBackSelColor: Tcolor;
+    FPanelColor: TColor;
+    FTextColor: TColor;
+    FTextErrColor: TColor;
     UtilGrilla: TUtilGrillaFil2;
     timeCnt: QWORD;
     nVis, nWar, nErr: Integer;
     usedRAM, usedROM, usedSTK: single;
     procedure FilterGrid;
     procedure CountMessages;
+    procedure SetBackColor(AValue: TColor);
+    procedure SetBackSelColor(AValue: Tcolor);
+    procedure SetPanelColor(AValue: TColor);
+    procedure SetTextColor(AValue: TColor);
+    procedure SetTextErrColor(AValue: TColor);
   public
     OnDblClickMessage: procedure(const srcPos: TSrcPos) of object;
+    property BackColor: TColor read FBackColor write SetBackColor ;
+    property TextColor: TColor read FTextColor write SetTextColor ;
+    property TextErrColor: TColor read FTextErrColor write SetTextErrColor;
+    property BackSelColor: Tcolor read FBackSelColor write SetBackSelColor;
+    property PanelColor: TColor read FPanelColor write SetPanelColor;
     procedure GetFirstError(out msg: string; out filname: string; out row,
       col: integer);
     procedure InitCompilation(cxp0: TCompiler);
@@ -113,7 +134,7 @@ begin
     end;
     if OpResaltFilaSelec and EsFilaSeleccionada(aRow) then begin
       //Fila seleccionada. (Debe estar activada la opción "goRowHighligh", para que esto funcione bien.)
-      cv.Brush.Color := clBtnFace;
+      cv.Brush.Color := BackSelColor;
     end else begin
       cv.Brush.Color := TColor(PtrUInt(grilla.Objects[0, aRow]));
     end;
@@ -133,7 +154,11 @@ begin
     end;
   end;
 end;
-
+constructor TUtilGrillaFil2.Create(grilla0: TStringGrid);
+begin
+  inherited Create(grilla0);
+  BackSelColor := clBtnFace;
+end;
 { TfraMessagesWin }
 procedure TfraMessagesWin.SetLanguage(idLang: string);
 begin
@@ -153,7 +178,8 @@ begin
   grilla.Cells[GCOL_COL, f] := '-1';
   grilla.Cells[GCOL_MSG, f] := infTxt;
   grilla.RowHeights[f] := ROW_HEIGH;
-  UtilGrilla.FijColorFondo(f, clWhite);  //Color de fondo de la fila
+  UtilGrilla.FijColorFondo(f, FBackColor);  //Color de fondo de la fila
+  UtilGrilla.FijColorTexto(f, FTextColor);
 end;
 procedure TfraMessagesWin.AddWarning(warTxt: string; fileName: string; row,
   col: integer);
@@ -170,8 +196,8 @@ begin
   grilla.Cells[GCOL_COL, f] := IntToStr(col);
   grilla.Cells[GCOL_MSG, f] := warTxt;   //El texto tal cual
   grilla.RowHeights[f] := ROW_HEIGH;
-  UtilGrilla.FijColorFondo(f, clWhite);  //Color de fondo de la fila
-//  FijColorTexto(f, );  //Color del texto de la fila
+  UtilGrilla.FijColorFondo(f, FBackColor);  //Color de fondo de la fila
+  UtilGrilla.FijColorTexto(f, FTextColor);
 end;
 procedure TfraMessagesWin.AddError(errTxt: string; fileName: string; row,
   col: integer);
@@ -188,8 +214,8 @@ begin
   grilla.Cells[GCOL_COL, f] := IntToStr(col);
   grilla.Cells[GCOL_MSG, f] := errTxt;   //El texto tal cual
   grilla.RowHeights[f] := ROW_HEIGH;
-  UtilGrilla.FijColorFondo(f, clWhite);  //Color de fondo de la fila
-  UtilGrilla.FijColorTexto(f, clRed);  //Color del texto de la fila
+  UtilGrilla.FijColorFondo(f, FBackColor);  //Color de fondo de la fila
+  UtilGrilla.FijColorTexto(f, FTextErrColor);  //Color del texto de la fila
 end;
 procedure TfraMessagesWin.chkInformChange(Sender: TObject);
 begin
@@ -238,6 +264,50 @@ begin
     if grilla.RowHeights[f] > 0 then inc(nVis);
   end;
 end;
+procedure TfraMessagesWin.SetBackColor(AValue: TColor);
+begin
+  FBackColor := AValue;
+  grilla.Color := AValue;
+end;
+procedure TfraMessagesWin.SetBackSelColor(AValue: Tcolor);
+begin
+  FBackSelColor := AValue;
+  UtilGrilla.BackSelColor := AValue;
+end;
+procedure TfraMessagesWin.SetPanelColor(AValue: TColor);
+begin
+  FPanelColor := AValue;
+  //Paneles
+  panStatis.Color := AValue;
+  panel2.Color := AValue;
+  PanGrilla.Color := AValue;
+  Splitter1.Color := AValue;
+  Splitter2.Color := AValue;
+end;
+
+procedure TfraMessagesWin.SetTextColor(AValue: TColor);
+begin
+  if FTextColor = AValue then Exit;
+  FTextColor := AValue;
+  //Paneles
+//  chkInform.Font.Color := Avalue;  No se pude cambiar direcatmente a los CheckBox
+//  chkWarns.Font.Color := Avalue;
+//  chkErrors.Font.Color := Avalue;
+  lblInform.Font.Color := AVAlue;
+  lblWarns.Font.Color := AVAlue;
+  lblErrors.Font.Color := AVAlue;
+  Pangrilla.Font.Color := AVAlue;
+
+  lblRAM.Font.Color := Avalue;
+  lblROM.Font.Color := Avalue;
+  lblSTACK.Font.Color := Avalue;
+end;
+procedure TfraMessagesWin.SetTextErrColor(AValue: TColor);
+begin
+  if FTextErrColor = AValue then Exit;
+  FTextErrColor := AValue;
+end;
+
 procedure TfraMessagesWin.GetFirstError(out msg: string; out filname: string;
                                         out row, col: integer);
 {Devuelve información sobre el primer error de la lista de errores.
@@ -348,9 +418,11 @@ var
     if alt>120 then alt := 100;
     //Dibuja fondo
     {$ifdef UNIX}
-    cv.Brush.Color := clForm;
+//    cv.Brush.Color := clForm;
+    cv.Brush.Color := FBackColor;
     {$else}
-    cv.Brush.Color := clMenu;
+//    cv.Brush.Color := clMenu;
+    cv.Brush.Color := FBackColor;
     {$endif}
     cv.FillRect(x0, y0, x0 + 20, y0 +alt);
     //Dibuja barra
@@ -373,6 +445,7 @@ var
     //Texto
     cv.Brush.Style := bsClear;
     cv.Font.Bold := true;
+    cv.Font.Color := FTextColor;
     if n<10 then begin
       cv.TextOut(x0+2, y0 + alt div 2 - 10, IntToStr(n)+'%');
     end else if n < 100 then begin

@@ -1,3 +1,71 @@
+PicPas 0.7.0
+============
+Se cambian algunos parámetros de tipo VAR en OUT, para evitar mensajes de advertencia
+en la compilación.
+Se mejora el completado, configurando <OpenOn AfterPattern="AllIdentifiers"> en el 
+XML, para evitar que se cierre el cuadro, cuando se escribe una palabra clave. 
+Se crea el evento TfraEditView.OnRequireSynEditConfig y el método 
+TfraEditView.UpdateSynEditConfig, para actualizar la configruación de los SynEdit.
+Se quita le ícono, y se agrega un texto con el mensaje "No files" en el frame
+FrameEditView.
+Se crea el menú "Cerrar Todos", en las pestañas del Editor.
+Se crea el control fraEditView1, de forma dinámica.
+Se corrige el problema, del nombre duplicado para cuando se agregaba un nuevo archivo.
+Se crea el campo TabViewMode en TfraEditView, para configurar cómo se muestran las 
+pestañas del editor.
+Se agregan botones en la barra de pestañas del editor para seleccionar las pestañas.
+Se implementa el traslado de pestañas del editor.
+Se incluye el autocompletado especial de unidades disponibles en /units, en la 
+sección "Uses".
+Se redefinen los bloques en el archivo de sintaxis, para adaptarse al trabajo con
+unidades.
+Se mejora el completado en el archivo de sintaxis, para mejorar las listas mostradas
+de acuerdo al contexto del código.
+Se cambia la versión de la librería SynFacilSyn, a la versión 1.20
+Se crea el campo TfraSyntaxTree.SetBackColor() para cambiar el color de fondo del
+explorador de código.
+Se activa la configuración de colores en el explorador de código.
+Se activa la configuración de colores en el panel de mensajes.
+Se crea la carpeta /Syntax para el manejo de los archivos de sintaxis.
+Se crea un frame para la configuración de los atributos de SynFacilSYn, y se integra
+en la ventana de configuración.
+Se corrige el posicionamiento del cursor en el editor, cuando la línea tiene 
+tabulaciones.
+Se activa la opción "Autoindent" y "TabsToSpaces" en los editores.
+Se crea el archivo tra_CfgSynEdit.pas, para permitir la traducción de la configruación
+del editor.
+Se crea el campo "Autoindent", en la configuración del editor.
+Se cambian algunos nombres de controles en el frame FrameCfgSynEdit, a la terminología
+inglesa.
+Se implementan las acciones de Deshacer, Rehacer, desde el menú principal, y se 
+corrige la actualziación del estado de las acciones, cuando se cambia de pestaña.
+Se crea el menú conetxtual para los editores.
+Se incluye información útil en la barra de estado.
+
+
+
+PENDIENTES
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para fuciones del sistema.
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Controlar las acciones de edición (rehacer, deshacer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear 
+dinámicamente las acciones.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir arreglos y registros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+
+
 PicPas 0.6.9
 ============
 Se crea el campo "TxpEleFun.procParam", para implementar la rutina a ejecutar, antes 
@@ -36,27 +104,6 @@ dirección de banco mayores al 0.
 Se configura al compilador para que defina los RT, de aucerdo a los tipos de las 
 variables y funciones que se van a usar, anets de enlazar el programa.
 
-PENDIENTES
-Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para fuciones del sistema.
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Controlar las acciones de edición (rehacer, deshacer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear 
-dinámicamente las acciones.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir arreglos y registros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
 
 
 PicPas 0.6.8

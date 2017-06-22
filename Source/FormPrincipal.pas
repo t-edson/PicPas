@@ -43,7 +43,6 @@ type
     acViewStatbar: TAction;
     acViewSynTree: TAction;
     edAsm: TSynEdit;
-    fraEditView1: TfraEditView;
     ImgActions32: TImageList;
     ImgActions16: TImageList;
     MainMenu1: TMainMenu;
@@ -67,6 +66,13 @@ type
     MenuItem27: TMenuItem;
     MenuItem28: TMenuItem;
     MenuItem29: TMenuItem;
+    MenuItem30: TMenuItem;
+    MenuItem31: TMenuItem;
+    MenuItem32: TMenuItem;
+    MenuItem33: TMenuItem;
+    MenuItem34: TMenuItem;
+    MenuItem35: TMenuItem;
+    MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
     MenuItem2: TMenuItem;
@@ -84,17 +90,18 @@ type
     mnTools: TMenuItem;
     mnRecents: TMenuItem;
     panMessages: TPanel;
+    PopupEdit: TPopupMenu;
     splSynTree: TSplitter;
     Splitter2: TSplitter;
     splEdPas: TSplitter;
     StatusBar1: TStatusBar;
+    Timer1: TTimer;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     ToolButton10: TToolButton;
     ToolButton11: TToolButton;
     ToolButton12: TToolButton;
     ToolButton13: TToolButton;
-    ToolButton14: TToolButton;
     ToolButton15: TToolButton;
     ToolButton16: TToolButton;
     ToolButton2: TToolButton;
@@ -116,6 +123,9 @@ type
     procedure acEdiRedoExecute(Sender: TObject);
     procedure acEdiSelecAllExecute(Sender: TObject);
     procedure acEdiUndoExecute(Sender: TObject);
+    procedure acEdRedoExecute(Sender: TObject);
+    procedure acEdSelecAllExecute(Sender: TObject);
+    procedure acEdUndoExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
@@ -123,7 +133,7 @@ type
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
     procedure acViewMsgPanExecute(Sender: TObject);
-    procedure ChangeEditorState(ed: TSynEditor);
+    procedure fraEdit_ChangeEditorState(ed: TSynEditor);
     procedure DoSelectSample(Sender: TObject);
     procedure editChangeFileInform;
     procedure FormClose(Sender: TObject; var {%H-}CloseAction: TCloseAction);
@@ -133,13 +143,17 @@ type
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
   private
-    curProj: TPicPasProject;  //Proyecto actual
-    hlAssem : TSynFacilSyn;   //resaltador para ensamblador
-    fraSynTree : TfraSyntaxTree;  //árbol de sintaxis
-    fraMessages: TfraMessagesWin;
+    curProj     : TPicPasProject; //Proyecto actual
+    hlAssem     : TSynFacilSyn;   //resaltador para ensamblador
+    fraEditView1: TfraEditView;   //Panel de editores
+    fraSynTree  : TfraSyntaxTree; //Árbol de sintaxis
+    fraMessages : TfraMessagesWin;
+    procedure fraSynTreeSelecFileExplorer;
+    procedure fraEdit_RequireSynEditConfig(ed: TsynEdit);
     procedure ChangeAppearance;
-    procedure fraEditView1SelectEditor;
+    procedure fraEdit_SelectEditor;
     procedure fraMessagesDblClickMessage(const srcPos: TSrcPos);
     procedure fraSynTreeOpenFile(filname: string);
     procedure fraSynTreeSelectElemen(var elem: TxpElement);
@@ -175,24 +189,46 @@ procedure TfrmPrincipal.fraSynTreeOpenFile(filname: string);
 begin
   fraEditView1.LoadFile(filname);
 end;
-procedure TfrmPrincipal.FormCreate(Sender: TObject);
+procedure TfrmPrincipal.fraSynTreeSelecFileExplorer;
+{Se ha seleccionado el modo de explorador de archivo,}
+var
+  ed: TSynEditor;
 begin
+  //Ubica el archivo actual en el explorador.
+  ed := fraEditView1.ActiveEditor;
+  if (ed<>nil) and (ed.NomArc<>'') then begin
+     fraSynTree.LocateFile(ed.NomArc);
+  end;
+end;
+procedure TfrmPrincipal.FormCreate(Sender: TObject);
+var
+  synFile: String;
+begin
+
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
+  //configura panel de mensajes
   fraMessages := TfraMessagesWin.Create(self);
   fraMessages.Parent := panMessages;  //Ubica
   fraMessages.Align := alClient;
   fraMessages.OnDblClickMessage := @fraMessagesDblClickMessage;
-  //configura panel de mensajes
-  fraEditView1.OnChangeEditorState := @ChangeEditorState;
-  fraEditView1.OnSelectEditor := @fraEditView1SelectEditor;
+  //configura panel de edición
+  fraEditView1 := TfraEditView.Create(self);
+  fraEditView1.Parent := self;
+  fraEditView1.OnChangeEditorState := @fraEdit_ChangeEditorState;
+  fraEditView1.OnSelectEditor := @fraEdit_SelectEditor;
+  fraEditView1.OnRequireSynEditConfig := @fraEdit_RequireSynEditConfig;
   //COnfigura Árbol de sintaxis
   fraSynTree.OnSelectElemen := @fraSynTreeSelectElemen;
   fraSynTree.OnOpenFile := @fraSynTreeOpenFile;
+  fraSynTree.OnSelecFileExplorer := @fraSynTreeSelecFileExplorer;
   //carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
-  hlAssem.LoadFromFile(rutApp + 'PicPas_AsmPic.xml');
+  synFile := rutSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
+  if FileExists(synFile) then begin
+    hlAssem.LoadFromFile(synFile);
+  end;
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
@@ -211,7 +247,7 @@ begin
   fraEditView1.tmpPath := rutTemp;   //fija ruta de trabajo
   Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
-  fraEditView1.InitMenuRecents(mnRecents, Config.fcEditor.ArcRecientes);  //inicia el menú "Recientes"
+  fraEditView1.InitMenuRecents(mnRecents, Config.fraCfgSynEdit.ArcRecientes);  //inicia el menú "Recientes"
   ChangeAppearance;   //primera actualización
   //carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
@@ -257,6 +293,26 @@ procedure TfrmPrincipal.FormDestroy(Sender: TObject);
 begin
   hlAssem.Free;
 end;
+procedure TfrmPrincipal.Timer1Timer(Sender: TObject);
+var
+  ed: TSynEditor;
+begin
+  if fraEditView1.Count = 0 then begin
+    //No hay editores
+     StatusBar1.Panels[0].Text := ''
+  end else begin
+    //Hay archivos abiertos
+    ed := fraEditView1.ActiveEditor;
+    //Actualiza Barra de estado
+    if ed.Modified then
+      StatusBar1.Panels[0].Text := '(*)Modified'
+    else
+      StatusBar1.Panels[0].Text := 'Saved';
+    //Actualiza cursor
+    StatusBar1.Panels[1].Text := Format('%d,%d', [ed.SynEdit.CaretX, ed.SynEdit.CaretY]);
+  end;
+end;
+
 procedure TfrmPrincipal.FormDropFiles(Sender: TObject; const FileNames: array of String);
 var
   i: Integer;
@@ -270,7 +326,16 @@ procedure TfrmPrincipal.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   if (Shift = [ssCtrl]) and (Key = VK_TAB) then begin
-    if fraEditView1.HasFocus then fraEditView1.SelectNextEditor;
+    if fraEditView1.HasFocus then begin
+      if fraEditView1.Count>1 then begin
+        fraEditView1.SelectNextEditor;
+      end else begin
+        //Debe haber solo una ventana
+        edAsm.SetFocus;
+      end;
+    end else if edAsm.Focused then begin
+      fraEditView1.SetFocus;
+    end;
   end;
   if (Shift = [ssShift, ssCtrl]) and (Key = VK_TAB) then begin
     if fraEditView1.HasFocus then fraEditView1.SelectPrevEditor;
@@ -280,38 +345,60 @@ begin
     Shift := []; Key := 0;  //para qie no pase
   end;
 end;
-procedure TfrmPrincipal.ChangeEditorState(ed: TSynEditor);
+procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
 begin
-  acArcSave.Enabled:=ed.Modified;
-  acEdUndo.Enabled:=ed.CanUndo;
-  acEdRedo.Enabled:=ed.CanRedo;
+  acArcSave.Enabled := ed.Modified;
+  acEdUndo.Enabled  := ed.CanUndo;
+  acEdRedo.Enabled  := ed.CanRedo;
   //Para estas acciones no es necesario controlarlas, porque son acciones pre-determinadas
-//  acEdiCortar.Enabled  := edit.canCopy;
+//  acEdiCortar.Enabled := edit.canCopy;
 //  acEdiCopiar.Enabled := edit.canCopy;
-//  acEdiPegar.Enabled:= edit.CanPaste;
+//  acEdiPegar.Enabled  := edit.CanPaste;
 end;
-procedure TfrmPrincipal.fraEditView1SelectEditor;
-{Se ha cambiado el estado de los editores: Se ha cambaido al selección, se ha
+procedure TfrmPrincipal.fraEdit_SelectEditor;
+{Se ha cambiado el estado de los editores: Se ha cambaido la selección, se ha
 agregado o eliminado alguno.}
+var
+  ed: TSynEditor;
 begin
-  //Se trata de realizar solo las tareas necesarias. PAra no cargar el proceso.
+  //Se trata de realizar solo las tareas necesarias. Para no cargar el proceso.
   if fraEditView1.Count = 0 then begin
     //No hay ventanas de edición abiertas
-    fraEditView1.Visible := false;
+//    fraEditView1.Visible := false;
     acArcSaveAs.Enabled := false;
+    acEdSelecAll.Enabled := false;
+
+    acArcSave.Enabled := false;
+    acEdUndo.Enabled  := false;
+    acEdRedo.Enabled  := false;
+
+    StatusBar1.Panels[3].Text := '';
+    StatusBar1.Panels[4].Text := '';
   end else begin
     //Hay ventanas de edición abiertas
-    fraEditView1.Visible := true;
+    ed := fraEditView1.ActiveEditor;
     acArcSaveAs.Enabled := true;
+    acEdSelecAll.Enabled := true;
+
+    fraEdit_ChangeEditorState(ed);  //Actualiza botones
+
+    StatusBar1.Panels[3].Text := ed.CodArc;  //Codificación
+    StatusBar1.Panels[4].Text := ed.NomArc;  //Nombre de archivo
   end;
   editChangeFileInform;
+end;
+procedure TfrmPrincipal.fraEdit_RequireSynEditConfig(ed: TsynEdit);
+{Se pide actualizar la configuración de un editor.}
+begin
+  ed.PopupMenu := PopupEdit;
+  Config.ConfigEditor(ed);
 end;
 procedure TfrmPrincipal.fraMessagesDblClickMessage(const srcPos: TSrcPos);
 begin
   fraEditView1.SelectOrLoad(srcPos, false);
 end;
 procedure TfrmPrincipal.ChangeAppearance;
-//Se han cambiado las opciones de configruación.
+//Se han cambiado las opciones de configuración.
   procedure SetStateActionsProject(state: boolean);
   begin
     acArcSave.Enabled := state;
@@ -321,7 +408,6 @@ procedure TfrmPrincipal.ChangeAppearance;
     acEdCut.Enabled := state;
     acEdCopy.Enabled := state;
     acEdPaste.Enabled := state;
-    acEdSelecAll.Enabled := state;
   end;
 begin
   SetLanguage(copy(Config.language, 1, 2));
@@ -360,6 +446,28 @@ begin
     ToolBar1.Images:=ImgActions32;
   end;
   end;
+  //Configura Explorador de código
+  fraSynTree.BackColor := Config.CodExplBack;;
+  fraSynTree.TextColor := Config.CodExplText;  //No funciona
+  //Configura Visor de Mensajes
+  fraMessages.BackColor := Config.MessPanBack;
+  fraMessages.TextColor := Config.MessPanText;
+  fraMessages.TextErrColor := Config.MessPanErr;
+  fraMessages.BackSelColor := Config.MessPanSel;
+
+  fraMessages.PanelColor := Config.PanelsCol;
+  ToolBar1.Color := Config.PanelsCol;
+  fraEditView1.Panel1.Color := Config.PanelsCol;
+  //fraEditView1.Color :=  Config.PanelsCol;
+  //Color de separadores
+  Splitter2.Color := Config.SplitterCol;
+  splSynTree.Color := Config.SplitterCol;
+  splEdPas.Color := Config.SplitterCol;
+  //Configura editor ASM
+  Config.ConfigEditor(edAsm);
+  //Solicita configura los editores activos
+  fraEditView1.UpdateSynEditConfig;
+  fraEditView1.TabViewMode := Config.TabEdiMode;
 end;
 procedure TfrmPrincipal.editChangeFileInform;
 {Actualiza la barra de título, de acuerdo al estado}
@@ -436,6 +544,18 @@ procedure TfrmPrincipal.acEdiUndoExecute(Sender: TObject);
 begin
   if fraEditView1.ActiveEditor= nil then exit;
   fraEditView1.ActiveEditor.Undo;
+end;
+procedure TfrmPrincipal.acEdRedoExecute(Sender: TObject);
+begin
+  fraEditView1.Redo;
+end;
+procedure TfrmPrincipal.acEdSelecAllExecute(Sender: TObject);
+begin
+  fraEditView1.SelectAll;
+end;
+procedure TfrmPrincipal.acEdUndoExecute(Sender: TObject);
+begin
+  fraEditView1.Undo;
 end;
 procedure TfrmPrincipal.acEdiRedoExecute(Sender: TObject);
 begin
@@ -551,8 +671,9 @@ procedure TfrmPrincipal.MarcarError(ed: TSynEditor; nLin, nCol: integer);
 begin
   fraEditView1.SetFocus;
   //posiciona curosr
-  ed.SynEdit.CaretY := nLin; //primero la fila
-  ed.SynEdit.CaretX := nCol;
+//  ed.SynEdit.CaretY := nLin; //primero la fila
+//  ed.SynEdit.CaretX := nCol;
+  ed.SynEdit.LogicalCaretXY := Point(nCol, nLin);
   //Define línea con error
   ed.linErr := nLin;
   ed.SynEdit.Invalidate;  //refresca

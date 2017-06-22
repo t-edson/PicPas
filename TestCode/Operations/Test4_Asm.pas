@@ -29,7 +29,7 @@ const
     asm SLEEP end
   end;
 
-  //Funcióm para prueba de lectura y devolución de valores
+  //Función para prueba de lectura y devolución de valores
   procedure SetTo8040: word;  //Devuelve $8040
   begin
     asm
