@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <StateStatusbar Val="1"/>
+  <VerPanMensaj Val="True"/>
+  <VerStatusbar Val="True"/>
+  <VerBarHerram Val="True"/>
+  <ViewSynTree Val="True"/>
+  <SynTreeWidth Val="130"/>
+  <language Val="en - English"/>
+  <TabEdiState Val="0"/>
+  <CodExplBack Val="0"/>
+  <CodExplText Val="12632256"/>
+  <MessPanBack Val="0"/>
+  <MessPanText Val="12632256"/>
+  <MessPanErr Val="255"/>
+  <MessPanSel Val="-2147483630"/>
+  <MessPanPan Val="0"/>
+  <SplitterCol Val="0"/>
+  <chkLoadLast Val="True"/>
+  <Edit>
+    <cTxtNor Val="16777215"/>
+    <cFonEdi Val="0"/>
+    <cLinAct Val="65535"/>
+    <cResPal Val="15780518"/>
+    <VerBarDesV Val="True"/>
+    <VerBarDesH Val="False"/>
+    <Autoindent Val="True"/>
+    <ResPalCur Val="True"/>
+    <MarLinAct Val="False"/>
+    <VerPanVer Val="True"/>
+    <VerNumLin Val="True"/>
+    <VerMarPle Val="True"/>
+    <cFonPan Val="0"/>
+    <cTxtPan Val="16777215"/>
+    <TamLet Val="10"/>
+    <TipLet Val="Courier New"/>
+    <recient Val="/media/sf_D_DRIVE/Proyectos_Software/Lazarus/PicPas-0.7.0/samples/EEPROM.pas
+/media/sf_D_DRIVE/Proyectos_Software/Lazarus/PicPas-0.7.0/temp/NewFile1.pas
+"/>
+  </Edit>
+  <viewMode Val="0"/>
+  <IncHeadMpu Val="False"/>
+  <IncDecVar Val="True"/>
+  <VarDecType Val="1"/>
+  <IncAddress Val="True"/>
+  <IncComment Val="False"/>
+  <IncComment2 Val="False"/>
+  <ExcUnused Val="True"/>
+  <IncVarName Val="True"/>
+  <ShowErMsg Val="True"/>
+  <OptimLev Val="1"/>
+  <SetProIniBnk Val="True"/>
+  <SetProEndBnk Val="True"/>
+</CONFIG>

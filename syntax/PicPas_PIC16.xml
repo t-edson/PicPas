@@ -1,0 +1,266 @@
+<?xml version="1.0"?>
+<Language name="PicPas Pascal" ext="pas">
+  <!-- Atributos a usar-->
+  <Attribute Name="Keyword"   ForeCol="#00A4F2" Bold="True"  Italic="False" Underline="False"/>
+  <Attribute Name="Boolean"   ForeCol="#FFFF00" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Comment"   ForeCol="#8D8D8D" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Number"    ForeCol="#FF00FF" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="String"    ForeCol="#00FF00" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Directive" ForeCol="#FE2EF7" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Asm"       ForeCol="#60C060" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Types"     ForeCol="#FFFF00" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Symbol"    ForeCol="#008000" Bold="False" Italic="False" Underline="False"/>
+
+  <Completion OpenOnKeyUp="True">
+	<List Name="PlantillaIF" IconIndex='5'>
+  "if ... then ...;|if \_ then\n\n\uend;"
+  "if ... then ... else ...;|if \_ then\n\n\uelse\n\n\uend;"
+  "if ... then ... elsif ...;|if \_ then\n\n\uelsif  then\n\n\uelse\n\n\uend;"
+	</List>
+	<List Name="KeywordSec" IconIndex='2'>
+  program
+  unit
+  uses
+  var 
+  const 
+  procedure
+  begin
+  interface
+	</List>
+	<List Name="PlantillasSec" IconIndex='5'>
+  "program ... begin ... end.|{Description of the program.}\nprogram nombre;\nbegin\n  \_\nend."
+  "unit ... end.|{Description of the unit.}\nunit unitName;\ninterface\n  \_\nimplementation\n\nend."
+  "uses PIC16F84A;|uses PIC16F84A;\n"
+  "var ... varName ... |var\n\u  \_varName: byte;"
+  "const ... |const\n\u  \_consName = 0;"
+  "procedure ... begin ... end;|procedure proc1;\n\u\ubegin\n\u  \_\n\uend;"
+  "begin ... end. |begin\n  \_\n\uend."
+  "interface ... implementation|interface\n\nimplementation\n\nend."
+	</List>
+	<List Name="Plantillas" IconIndex='5'>
+  "absolute \_$00;"
+  "begin ... end; |begin\n  \_\n\uend;"
+  "while ... |while \_ do\n\n\uend;"
+  "repeat ... |repeat \n\t\_\n\uuntil;"
+  "for i:=0 to ... |for i:=0 to \_ do\n\n\uend;"
+  "asm"
+  "asm ... end |asm \n\t\_\n\uend"
+  delay_ms
+  delay_ms(100);
+  "inc(\_);"
+  "dec(\_);"
+  "chr(\_);"
+  "chr(65);"
+  "ord(\_);"
+  "ord('A');"
+  "SetAsInput(\_);"
+  "SetAsOutput(\_);"
+  "SetBank(\_);"
+    </List>
+	<!-- Completado en el bloque principal-->
+	<OpenOn Name="SecMain" Block="Main" AfterPattern="AllIdentifiers" FilterBy="LastTokPart">
+      <Include List="KeywordSec"/>
+      <Include List="PlantillasSec"/>
+	</OpenOn>	
+	<!-- Completado de unidades-->
+	<OpenOn Name='unit1' AfterPattern='"uses",space' FilterBy="none" Action="Insert" Block="Uses">
+      "unit1"
+	</OpenOn>	
+	<OpenOn Name='unit2' AfterPattern='",",space' FilterBy="none" Action="Insert" Block="Uses">
+      "unit1"
+	</OpenOn>	
+	<OpenOn Name='unit3' AfterPattern='"uses",space, identifier' Block="Uses">
+      "unit1"
+	</OpenOn>	
+	<!-- Completado para tipos -->
+    <List Name='types' IconIndex='1'>  bit; byte; word; boolean; char; </List>
+	<OpenOn AfterPattern="':',space" FilterBy="none" Action="Insert" Block="var">
+	  <Include List="types"/>
+	</OpenOn>	
+	<OpenOn AfterPattern="':',space,identifier" Block="var">
+	  <Include List="types"/>
+	</OpenOn>	
+	<OpenOn AfterPattern="':',space" FilterBy="none" Action="Insert" Block="ProcParam">
+	  <Include List="types"/>
+	</OpenOn>	
+	<OpenOn AfterPattern="':',space,identifier" Block="ProcParam">
+	  <Include List="types"/>
+	</OpenOn>	
+	<!-- Completado dentro del bloque VAR. -->
+	<OpenOn Block="var">
+	  var1 var2 var3
+	  <!-- patrones que pueden seguir después de un var -->
+	 "var" "const" "begin"
+	 <Include List="PlantillasSec"/>
+	</OpenOn>	
+	<!-- Completado dentro del bloque CONST. -->
+	<OpenOn Block="const">
+	  cons1 cons2 cons3
+	  <!-- patrones que pueden seguir después de un const -->
+	 "var" "const" "begin"
+	 <Include List="PlantillasSec"/>
+	</OpenOn>	
+	<!-- Completado en bloques Begin End -->
+	<OpenOn Name="BE1" AfterPattern="'if'" Block='BeginEnd'>
+      <Include List="PlantillaIF"></Include>
+	</OpenOn>	
+	<OpenOn Name="BE2" AfterPattern="':'" FilterBy="none" Action="RepLastTok" Block="BeginEnd">
+	  ":= "
+	</OpenOn>	
+	<OpenOn Name="BE3" AfterPattern="space,identifier,space" FilterBy="none" Action="Insert" Block="BeginEnd">
+	  ":= "
+	</OpenOn>	
+	<OpenOn Name="BE4" AfterPattern="AllIdentifiers" Block='BeginEnd'>
+      <Include List="Plantillas"></Include>
+      <Include List="PlantillaIF"></Include>
+      <Include Attribute="Keyword" IconIndex='2'></Include>
+	  <Include Attribute="Boolean" IconIndex='4'></Include>
+	</OpenOn>	
+	<!-- Completado en bloques If -->
+	<OpenOn Name="If1" AfterPattern="'if'" Block='If'>
+      <Include List="PlantillaIF"></Include>
+	</OpenOn>	
+	<!-- Completado de directivas-->
+	<OpenOn AfterPattern="Directive" Iconindex='3'>
+      "{$PROCESSOR \_PIC16F84}"
+      "{$FREQUENCY \_10Mhz}"
+	  "{$CONFIG }"
+	  "{$DEFINE \_}"
+	  "{$MODE PASCAL}"
+	  "{$MODE PICPAS}"
+	</OpenOn>	
+	<OpenOn AfterPattern="Directive" FilterBy="LastIdentPart">
+   PIC12F629
+   PIC12F675
+   PIC16F83
+   PIC16CR83
+   PIC16F84
+   PIC16CR84
+   PIC16F84A
+   PIC16F870
+   PIC16F871
+   PIC16F872
+   PIC16F873
+   PIC16F873A
+   PIC16F874
+   PIC16F874A
+   PIC16F876
+   PIC16F876A
+   PIC16F877
+   PIC16F877A
+   PIC16F887
+   PIC16F627A
+   PIC16F628A
+   PIC16F648A
+	</OpenOn>	
+	<!-- Completado en ASM-->
+	<OpenOn AfterPattern="Asm" FilterBy="LastIdentPart">
+    ADDWF    ANDWF    CLRF    CLRW    COMF
+    DECF    DECFSZ    INCF    INCFSZ    IORWF
+    MOVF    MOVWF    NOP    RLF    RRF
+    SUBWF    SWAPF    XORWF    BCF    BSF
+    BTFSC    BTFSS    ADDLW    ANDLW    CALL
+    CLRWDT    GOTO    IORLW    MOVLW    RETFIE
+    RETLW    RETURN    SLEEP    SUBLW    XORLW
+	</OpenOn>	
+  </Completion>
+  
+  <Identifiers CharsStart= "A..Za..z_" Content = "A..Za..z0..9_"> 
+    <token attribute="Keyword"> 
+    absolute array asm as 
+    begin 
+    case  const  constructor class 
+    destructor do  downto dispose  
+    else elsif end exit except  exports 
+    for function file finalization finally
+    goto
+    if  implementation  inherited  inline  interface initialization  is 
+    library label
+    nil new
+    object  of  on  operator out 
+    procedure packed program 
+    repeat record register
+    string self  set  shl  shr  
+    then to try type threadvar 
+    unit  until  uses 
+    var 
+    while  with 
+    </token>
+    <!--operadores--> 
+    <token attribute="Keyword"> 
+	and or xor not div mod in
+    </token>
+    <!--enumerado boolean--> 
+    <token attribute="Boolean"> 
+	true false
+    </token>
+    <!--tipos de datos--> 
+    <token attribute="Types"> 
+	bit byte word boolean char
+    </token>
+  </Identifiers>
+  
+  <!--Definición de tokens--> 
+  <Token CharsStart="#" Content = '0..9' Attribute='STRING'> </Token>
+  <Token CharsStart="0..9" Content = '0..9.' Attribute='NUMBER'> </Token>
+  <Token CharsStart="$" Content = '0..9ABCDEFabcdef' Attribute='NUMBER'> </Token>
+  <Token CharsStart="%" Content = '0..1' Attribute='NUMBER'> </Token>
+  <String Start="'" End="'"></String>
+  <Comment Start="//" ></Comment>
+  <Comment Start="(*" End="*)" Multiline="true"></Comment>
+  <Token Start="{" End="}" Multiline="true" Folding="true" Attribute="Comment"></Token>
+  <Token Start="{$" End="}" Multiline="false" Folding="false" Attribute="Directive"></Token>
+  <Token Start="asm" End="END" Multiline="true" Folding="true" Attribute="Asm"></Token>
+
+  <!--***********************************************************************
+                                 Bloques en Main 
+  *************************************************************************-->
+  <Section Name="interface" Start="interface" BackCol="transparent" Parent='Main'> 
+    <Section Name="interf_var" Start="var" BackCol="transparent"> 
+    </Section>
+    <Section Name="interf_const" Start="const" BackCol="transparent"> 
+    </Section>
+  </Section>
+  <Section Name="implementation" Start="implementation" BackCol="transparent" Parent='Main'> 
+    <Section Name="interf_var" Start="var" BackCol="transparent"> 
+    </Section>
+    <Section Name="interf_const" Start="const" BackCol="transparent"> 
+    </Section>
+  </Section>
+  <!--Legalmente, se debería separar las sintaxis para programas y unidades, pero
+  aquí se está definiendo una sintaxis que sea válida tanto para programas como para
+  unidades, por eso, se pone la definición de estas secciones, después de INTERFACE
+  e IMPLEMENTATION, para que se reconozcan primero las secciones VAR y CONST, como 
+  anidadas, de otra forma, se reconocerían como secciones adicionales a INTERFACE
+  e IMPLEMENTATION--> 
+  <Section Name="var" Start="var" BackCol="transparent" Parent='Main'> 
+  </Section>
+  <Section Name="const" Start="const" BackCol="transparent" Parent='Main'> 
+  </Section>
+  <!--***********************************************************************
+                                 Bloques Recrusivos
+  *************************************************************************-->
+  <Block Start="Repeat" End="Until"> </Block>
+  <Block Start="Case" End= "End" ></Block>
+  <Block Name="Record" Start="Record" End="End" BackCol="Transparent"></Block>
+  
+  <Block Name="Proc" Start="procedure" End="end" BackCol="#E0F5FF">
+    <Block Name="ProcParam" Start="(" End=")" Folding="false"></Block>
+    <Block Name="ProcBody"  Start="Begin" End= "End" CloseParent="true" BackCol="transparent"></Block>
+  </Block>
+  <Block Name="Func" Start="function" End="end" BackCol="#E0F5FF">
+    <Block Name="FuncParam" Start="(" End=")" Folding="false"></Block>
+    <Block Name="FuncBody"  Start="Begin" End= "End" CloseParent="true" BackCol="transparent"></Block>
+  </Block>
+  <Block Name="BeginEnd"  Start="Begin" End= "End"></Block><!--Al final para dar prioridad al Begin-End de PROCEDURE-->
+  <!-- Bloques específico para la nueva sintaxis de PicPas -->
+  <Block Name="If" Start="IF" End="END" Folding="False">
+	<Section Start="THEN"> </Section>
+	<Section Start="ELSIF"> </Section>
+	<Section Start="ELSE"> </Section>
+  </Block>
+  <Block Name="While" Start="WHILE" End="END" Folding="True"/>
+  <Block Name="For"   Start="FOR"   End="END" Folding="True"/>
+  <Block Name="Uses"  Start="USES"  End=";"   Folding="True"/>
+  
+</Language>

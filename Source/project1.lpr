@@ -10,7 +10,7 @@ uses
   Forms, lazcontrols, FormPrincipal, Parser, ProcAsm, FormPICExplorer,
   GenCod, GenCodPic, XpresParserPIC, FrameSyntaxTree,
   XpresElementsPIC, Globales, FormConfig, PicPasProject, FrameEditView,
-  FrameMessagesWin, FormElemProperty;
+  FrameMessagesWin, FormElemProperty, FrameCfgSyntax, FrameCfgSynEdit;
 
 {$R *.res}
 

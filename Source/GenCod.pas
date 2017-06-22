@@ -1758,9 +1758,16 @@ begin
   Op := OpPtr;
   case Op^.catOp of  //el parámetro debe estar en "Op^"
   coConst : begin
-    _MOVLW(Op^.HByte);
-    _BANKSEL(H.bank);
-    _MOVWF(H.offs);
+    //byte alto
+    if Op^.HByte = 0 then begin
+      _BANKSEL(H.bank);
+      _CLRF(H.offs);
+    end else begin
+      _MOVLW(Op^.HByte);
+      _BANKSEL(H.bank);
+      _MOVWF(H.offs);
+    end;
+    //byte bajo
     _MOVLW(Op^.LByte);
   end;
   coVariab: begin
