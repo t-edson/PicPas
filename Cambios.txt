@@ -1,3 +1,64 @@
+PicPas 0.6.9
+============
+Se crea el campo "TxpEleFun.procParam", para implementar la rutina a ejecutar, antes 
+de leer parámetros.
+Se crea la lista TxpElement.lstCallers para almacenar información sobre las funciones
+"llamadoras" de otra función, y se crean diversas rutinas para el manejo de llamadas.
+Se modifica TGenCod.callFunct(), para que incluya el llenado de la lista de funciones
+llamadoras. 
+Se modifica TCompilerBase.GetOperand(), para que use el nuevo método de procesamiento 
+de llamadas a las funciones.
+Se cambia de nombre al método TXpTreeElements.OnChangElement por OnAddElement y se
+cambia su implementación, así como su uso, dentro de la unidad "Parser".
+Se modifica TCompilerBase.CaptureParamsFinal(), para que limpie el valor de RTState,
+antes de realizar las asignaciones.
+Se modifican TCompilerBase.CreateFunction() y TCompilerBase.CreateSysFunction(), para
+que configuren el campo "fun.procParam".
+Se agrega el botón "Detail..." en FormElemProperty, para mostrar el detalle de llamadas
+a un elemento.
+Se optimiza la operación Oper_word_asig_word(), cuando se asignan constantes.
+Se modifica TCompiler.CompileLinkProgram(), para mejorar su rutina de detección de 
+funciones no utilizadas.
+Se crea el campo TxpEleFun.adrrEnd, para almacenar el final de una función.
+Se crea la opción de configuración "SetProcBnk".
+Se crea el procedimiento SetInitialBank(), en TCompiler.CompileLinkProgram(), para 
+resolver el banco inicial con que debe empezar una función.
+Se activa el uso de nombres de variable, como opcional en la salida en ensamblador.
+Se implementa la función del sistema exit().
+Se crea la bandera TGenCodPIC.BankChanged, para detectar cambios de banco, y se crea
+el campo TxpEleFun.BankChanged para el mismo fin.
+Se incluye traducción para los botones de la ventana de configuración.
+Se mejora la edición sícnrona, ignorando la caja.
+Se corrije el problema de ExchangeP1_P2 en Oper_byte_add_word().
+Se crea el patrón de pruebas para procedimientos y funciones.
+Se corrige un error en la compilación de bloques ASM, cuando los registros tienen 
+dirección de banco mayores al 0.
+Se configura al compilador para que defina los RT, de aucerdo a los tipos de las 
+variables y funciones que se van a usar, anets de enlazar el programa.
+
+PENDIENTES
+Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para fuciones del sistema.
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Controlar las acciones de edición (rehacer, deshacer, grabar, ..) para que respondan al
+editor seleccionado. También se podría usar la técnica de Ciberplex, de crear 
+dinámicamente las acciones.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir arreglos y registros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+
+
 PicPas 0.6.8
 ============
 Se crea el evento TSynEditor.edKeyDown(), para procesar eventos de teclado del editor.
@@ -30,24 +91,6 @@ Se implementan varios casos de la operación Oper_word_great_word().
 Se corrige un error en TOperand.bank(), cuando trabajaba con tipos bit.
 Se agrega la función del sistema SetBank(), para forzar el cambio de banco.
 
-PENDIENTES
-Implementar las operaciones pendientes en los Word.
-Implementar las funciones.
-Terminar de implementar las funcionalidades completas de una unidad.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Controlar las acciones de edición (rehacer, deshcaer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear dinámicamente 
-las acciones.
-Cambiar a las funciones de tipo TGenCodPic._ADDWF(), para que acepten parámetros de tipo
-TPICregister.
-Implementar la reutilización de variables usadas como parámetros.
-Revisar el uso de ExchangeP1_P2, porque no debe usarse para el caso Expresion-Expresion.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir arreglos y registros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
 
 PicPas 0.6.7
 ============

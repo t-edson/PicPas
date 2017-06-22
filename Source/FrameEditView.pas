@@ -190,12 +190,12 @@ begin
     if (xtok>=x1) and (xtok<x2) then begin
       if firstTok then begin
         //El primer token es la palabra a buscar
-        tokFind := tok;   //guarda palabra
+        tokFind := UpCase(tok);   //guarda palabra
         firstTok := false;
         AddCursorPos(xtok, y);   //guarda coordenadas
       end else begin
         //Es una búsqueda normal
-        if tok = tokFind then begin
+        if UpCase(tok) = tokFind then begin
           //Guarda solo si coincide con el primer token
          AddCursorPos(xtok, y);   //guarda coordenadas
         end;
@@ -294,11 +294,12 @@ var
 begin
   if (Shift = [ssCtrl]) and (Key = VK_J) then begin
     //Exploramos el texto usando el resaltador
-    //Uitlizaremos el mismo resaltador
-    lexState := hl.State;   //Guarda, por si acaso, el estado del elxer
-    ExploreForSyncro;   //Explora selección
-    hl.State := lexState;  //recupera estado
-    SetCursors;   //Coloca los cursores
+    //Utilizaremos el mismo resaltador
+    lexState := hl.State; //Guarda, por si acaso, el estado del elxer
+    ExploreForSyncro;     //Explora selección
+    hl.State := lexState; //recupera estado
+    SetCursors;           //Coloca los cursores
+//    ed.CommandProcessor(ecSelWordRight, '', nil);
   end;
   if Key = VK_ESCAPE then begin
     //Cancela una posible edición de múltiples cursores

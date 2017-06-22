@@ -85,8 +85,8 @@ object frmElemProperty: TfrmElemProperty
     Left = 16
     Height = 17
     Top = 200
-    Width = 43
-    Caption = 'Estado:'
+    Width = 38
+    Caption = 'Status:'
     Font.Height = -13
     ParentColor = False
     ParentFont = False
@@ -169,6 +169,15 @@ object frmElemProperty: TfrmElemProperty
     }
     OnClick = BitBtn2Click
     TabOrder = 6
+  end
+  object butDetails: TButton
+    Left = 216
+    Height = 25
+    Top = 200
+    Width = 75
+    Caption = '&Details ...'
+    OnClick = butDetailsClick
+    TabOrder = 7
   end
   object ImageList1: TImageList
     left = 240

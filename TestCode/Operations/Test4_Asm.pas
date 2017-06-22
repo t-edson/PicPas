@@ -6,6 +6,7 @@ uses PIC16F84A;
 var
   pinLed: bit absolute PORTB.0;
   vbyte: byte;
+  vword: word;
 	vbool: boolean;
   vbit: bit;
 var
@@ -27,6 +28,46 @@ const
     pinLed := 0;
     asm SLEEP end
   end;
+
+  //Funcióm para prueba de lectura y devolución de valores
+  procedure SetTo8040: word;  //Devuelve $8040
+  begin
+    asm
+      ;El resultado de un word, se devuelve en _H (parte alta) y W (parte baja)
+      MOVLW $80
+      MOVWF _H
+      MOVLW $40
+    end
+  end; 
+
+  procedure Multiplicar (multiplicando, multiplicador : byte) : word;
+  var
+    resultado: word;
+  begin
+   ASM
+   ;Inicializacion de Registros
+     BCF STATUS,bit_RP0        ; RP0=0 / Trabajamos en el Banco de memoria 0.
+     CLRF resultado.LOW        ; Limpia el byte bajo de la variable global resultado.
+     CLRF resultado.HIGH       ; Limpia el byte alto de la variable global resultado.
+	   CLRF _H
+   ;Comprueba multiplicacion por cero.
+     MOVLW $00
+     SUBWF multiplicador,W
+     BTFSC STATUS,bit_Z
+     GOTO MULT_FIN             ; Si multiplicador = 0 entonces acabar.
+   ;LOOP de multiplicacion
+   MULT_LOOP:
+     MOVF multiplicando,W      ; Carga el multiplicador en el registro W.
+     ADDWF resultado.LOW,F     ; Suma el valor de multiplicando al byte bajo de la variable global resultado
+     BTFSC STATUS,bit_C        ; Comprueba el bit CARRY del registro STATUS.
+     INCF resultado.HIGH,F     ; Si CARRY es 0 resultado.LOW se ha desbordado se incrementa resultado.HIGH
+     DECFSZ multiplicador,F    ; Decrementa multiplicador y comprueba si ha llegado a cero.
+     GOTO MULT_LOOP            ; nuevo paso del bucle de multiplicacion.
+   MULT_FIN:
+   END
+   exit(resultado);
+  end;
+
 begin
   SetAsOutput(pinLed);
   pinLed := 0;
@@ -141,4 +182,10 @@ end
   if vbit=0 then bien else mal; 
   asm org $ end
   vbit := 1;
+
+	vword := SetTo8040;
+	if vword = $8040 then bien else mal;
+
+	vword := multiplicar(5,10);
+	if vword = word(50) then bien else mal;
 end.

@@ -29,10 +29,13 @@ type
     BitAplicar: TBitBtn;
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
+    chkIncVarName: TCheckBox;
+    chkSetProIniBnk: TCheckBox;
+    chkSetProEndBnk: TCheckBox;
     chkShowErrMsg: TCheckBox;
     chkIncComment2: TCheckBox;
     chkLoadLast: TCheckBox;
-    chkExcUnus: TCheckBox;
+    chkExcUnused: TCheckBox;
     chkIncDecVar: TCheckBox;
     chkIncAddress: TCheckBox;
     chkIncComment: TCheckBox;
@@ -85,11 +88,14 @@ type
     VarDecType: TVarDecType;  //tipo de declaración de variables
     IncAddress: boolean;  //Incluye dirección física en el código desensamblado
     IncComment: boolean;  //Incluye comentarios en el código desensamblado
-    IncComment2: boolean;  //Incluye comentarios detallados en el código desensamblado
-    ExcUnused : boolean;
+    IncComment2: boolean; //Incluye comentarios detallados en el código desensamblado
+    ExcUnused : boolean;  //Excluye declaración de variables no usadas
+    IncVarName: boolean;  //Reemplaza dirección con etiqueta de variables
     //Configuracions del compilador
-    ShowErMsg: boolean;
-    OptimLev : TOptimLev;
+    ShowErMsg : boolean;
+    OptimLev  : TOptimLev;
+    SetProIniBnk: Boolean;
+    SetProEndBnk: Boolean;
     procedure ConfigEditor(ed: TSynEdit);
   public
     OnPropertiesChanges: procedure of object;
@@ -126,7 +132,7 @@ end;
 procedure TConfig.chkIncDecVarChange(Sender: TObject);
 begin
   RadioGroup2.Enabled := chkIncDecVar.Checked;
-  chkExcUnus.Enabled := chkIncDecVar.Checked;
+  chkExcUnused.Enabled := chkIncDecVar.Checked;
 end;
 procedure TConfig.Iniciar;
 //Inicia el formulario de configuración. Debe llamarse antes de usar el formulario y
@@ -143,19 +149,22 @@ begin
   cfgFile.Asoc_Str('language'   , @language, ComboBox1, 'en - English');
   //Configuraciones del Editor
   fcEditor.Iniciar('Edit', cfgFile);
-  //COnfiguracuón de Vista
-  cfgFile.Asoc_Enum('viewMode',  @viewMode  , SizeOf(TTreeViewMode), 0);
+  //COnfiguración de Vista
+  cfgFile.Asoc_Enum('viewMode',  @viewMode   , SizeOf(TTreeViewMode), 0);
   //Configuraciones de Ensamblador
-  cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu, chkIncHeadMpu, false);
-  cfgFile.Asoc_Bol('IncDecVar' , @IncVarDec , chkIncDecVar , true);
-  cfgFile.Asoc_Enum('VarDecType',@VarDecType, Sizeof(TVarDecType), RadioGroup2, 1);
-  cfgFile.Asoc_Bol('IncAddress', @IncAddress, chkIncAddress, true);
-  cfgFile.Asoc_Bol('IncComment', @IncComment, chkIncComment, false);
-  cfgFile.Asoc_Bol('IncComment2',@IncComment2,chkIncComment2, false);
-  cfgFile.Asoc_Bol('ExcUnused' , @ExcUnused , chkExcUnus, false);
+  cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu , chkIncHeadMpu , false);
+  cfgFile.Asoc_Bol('IncDecVar' , @IncVarDec  , chkIncDecVar  , true);
+  cfgFile.Asoc_Enum('VarDecType',@VarDecType , Sizeof(TVarDecType), RadioGroup2, 1);
+  cfgFile.Asoc_Bol('IncAddress', @IncAddress , chkIncAddress , true);
+  cfgFile.Asoc_Bol('IncComment', @IncComment , chkIncComment , false);
+  cfgFile.Asoc_Bol('IncComment2',@IncComment2, chkIncComment2, false);
+  cfgFile.Asoc_Bol('ExcUnused' , @ExcUnused  , chkExcUnused  , false);
+  cfgFile.Asoc_Bol('IncVarName', @IncVarName , chkIncVarName , true);
   //Configuraciones del compilador
-  cfgFile.Asoc_Bol('ShowErMsg', @ShowErMsg, chkShowErrMsg, true);
-  cfgFile.Asoc_Enum('OptimLev',@OptimLev, Sizeof(TOptimLev), grpOptimLev, 1);
+  cfgFile.Asoc_Bol('ShowErMsg' , @ShowErMsg, chkShowErrMsg, true);
+  cfgFile.Asoc_Enum('OptimLev' , @OptimLev, Sizeof(TOptimLev), grpOptimLev, 1);
+  cfgFile.Asoc_Bol('SetProIniBnk', @SetProIniBnk, chkSetProIniBnk, true);
+  cfgFile.Asoc_Bol('SetProEndBnk', @SetProEndBnk, chkSetProEndBnk, true);
   //////////////////////////////////////////////////
   cfgFile.OnPropertiesChanges := @cfgFilePropertiesChanges;
   if not cfgFile.FileToProperties then begin

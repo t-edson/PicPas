@@ -20,10 +20,10 @@ type
   TGenCodPic = class(TCompilerBase)
   private
     linRep : string;   //línea para generar de reporte
+    procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
     function OperandsUseHW: boolean;
     function OperandsUseRT(opType: TOperType): boolean;
     function OperandsUseW: boolean;
-    procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
   protected
     W      : TPicRegister;     //Registro Interno.
     Z      : TPicRegisterBit;  //Registro Interno.
@@ -39,6 +39,7 @@ type
     procedure PutTopComm(cmt: string; replace: boolean = true); inline;
     procedure PutComm(cmt: string); inline;
     procedure PutFwdComm(cmt: string); inline;
+    procedure AddCaller(elem: TxpElement);
     function ReportRAMusage: string;
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
@@ -47,13 +48,15 @@ type
     {Estas variables, se inician al inicio de cada expresión y su valor es válido
     hasta el final de la expresión.}
     CurrBank  : Byte;    //Banco RAM actual
-    RTstate   : TType;   {Estado de los RT. Si es NIL, indica que los RT, no tienen
-                         ningún dato cargado, sino indican el tipo cargado en los RT.}
     //Variables de estado de las expresiones booleanas
     InvertedFromC: boolean; {Indica que el resultado de una expresión Booleana o Bit, se
                              ha obtenido, en la última subexpresion, copaindo el bit C al
                              bit Z, con inversión lógica. Se usa para opciones de
                              optimziación de código.}
+  protected
+    {Campo usado para detectar cambios en los bancos de RAM, usando las instrucciones
+    _BANKRESET o _BANKSEL}
+    BankChanged: boolean;
   protected  //Rutinas de gestión de memoria de bajo nivel
     procedure AssignRAM(reg: TPicRegister; regName: string);  //Asigna a una dirección física
     procedure AssignRAMbit(reg: TPicRegisterBit; regName: string);  //Asigna a una dirección física
@@ -147,6 +150,10 @@ type
     function _CLOCK: integer;
   public  //Opciones de compilación
     incDetComm: boolean;   //Incluir Comentarios detallados.
+    SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
+    SetProEndBnk: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
+  public  //Acceso a registro de trabajo
+    property H_register: TPicRegister read H;
   public  //Inicialización
     function PicName: string;
     function PicNameShort: string;
@@ -164,8 +171,18 @@ const
 //  _IRP = 7;
 
 implementation
-
-{ TPicRegister }
+procedure TGenCodPic.AddCaller(elem: TxpElement);
+{Agrega una llamada a un elemento de la sintaxis.}
+var
+  fc: TxpEleCaller;
+begin
+  fc:= TxpEleCaller.Create;
+  //Carga información del estado actual del parser
+  fc.caller := TreeElems.curNode;
+  fc.curBnk := CurrBank;
+  elem.lstCallers.Add(fc);
+end;
+{ TGenCodPic }
 procedure TGenCodPic.ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);
 begin
   linRep := linRep + regPtr^.name +
@@ -629,7 +646,7 @@ procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
 siempre antes de evaluar cada subexpresión, así que es una especie de evento
 "OnSubExpresionStart".}
 begin
-  if incDetComm then begin
+  if incDetComm then begin  //Incluir comentario detallado
     if operType = operBinary then begin
       PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.typ.name + ',' +
                                   p2^.catOpChr + ':' + p2^.typ.name + ')', false);
@@ -834,6 +851,7 @@ begin
     _BCF(_STATUS, _RP1); PutComm(';Bank reset.');
   end;
   CurrBank:=0;
+  BankChanged := true;   //Se asume que hubo cambio
 end;
 function TGenCodPic._BANKSEL(targetBank: byte): byte;
 {Verifica si se está en el banco deseado, de no ser así geenra las instrucciones
@@ -885,7 +903,8 @@ begin
        end;
      end;
     end;
-    CurrBank:=targetBank;  //Fija banco actual
+    CurrBank := targetBank;  //Fija banco actual
+    BankChanged := true;
     exit(nInst);
   end else begin
     //Se debe cambiar al banco solicitado
@@ -914,7 +933,8 @@ begin
       end;
     end;
     //////////////////////////////////////
-    CurrBank:=targetBank;
+    CurrBank := targetBank;
+    BankChanged := true;
     exit(nInst);
   end;
 end;

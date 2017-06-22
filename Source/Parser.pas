@@ -33,7 +33,7 @@ type
     procedure CompileIF;
     procedure CompileREPEAT;
     procedure CompileWHILE;
-    procedure TreeElemsTreeChange;
+    procedure Tree_AddElement(elem: TxpElement);
     function VerifyEND: boolean;
   protected   //Métodos OVERRIDE
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
@@ -59,7 +59,7 @@ type
   public
     procedure Compile(NombArc: string; LinArc: Tstrings);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
-    procedure DumpCode(lins: TSTrings; incAdrr, incCom: boolean);  //uso de la memoria Flash
+    procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);  //uso de la memoria Flash
     function RAMusedStr: string;
     function FLASHusedStr: string;
     procedure GetResourcesUsed(out ramUse, romUse, stkUse: single);
@@ -310,7 +310,7 @@ var
   i: Integer;
 begin
   SkipWhites;
-  if EOBlock or EOExpres then begin
+  if EOBlock or EOExpres or (cIn.tok = ':') then begin
     //no tiene parámetros
   end else begin
     //Debe haber parámetros
@@ -676,9 +676,15 @@ begin
     exit;
   end;
 end;
-procedure TCompiler.TreeElemsTreeChange;
+procedure TCompiler.Tree_AddElement(elem: TxpElement);
 begin
-  GenError('Internal Error: Syntax Tree modified on linking.');
+  if FirstPass then begin
+    //Configura evento
+    elem.OnAddCaller := @AddCaller;
+  end else begin
+    //Solo se permiet agregar elementos en la primera pasada
+    GenError('Internal Error: Syntax Tree modified on linking.');
+  end;
 end;
 //Métodos OVERRIDE
 procedure TCompiler.TipDefecNumber(var Op: TOperand; toknum: string);
@@ -766,11 +772,13 @@ end;
 procedure TCompiler.CompileProcBody(fun: TxpEleFun);
 {Compila la declaración de un procedimiento}
 begin
+  BankChanged := false;  //Inicia bandera
   StartCodeSub(fun);  //inicia codificación de subrutina
   CompileInstruction;
   if HayError then exit;
   _RETURN();  //instrucción de salida
   EndCodeSub;  //termina codificación
+  fun.BankChanged := BankChanged;
   fun.srcSize := pic.iFlash - fun.adrr;   //calcula tamaño
 end;
 //Compilación de secciones
@@ -1030,7 +1038,8 @@ Conviene separar el procesamiento del enzabezado, para poder usar esta rutina, t
 en el procesamiento de unidades.}
 var
   srcPos: TSrcPos;
-  procName: String;
+  procName, parType: String;
+  typ: TType;
 begin
   //Toma información de ubicación, al inicio del procedimiento
   cIn.SkipWhites;
@@ -1044,7 +1053,7 @@ begin
   procName := cIn.tok;
   cIn.Next;  //lo toma
   {Ya tiene los datos mínimos para crear la función. }
-  fun := CreateFunction(procName, typNull, @callFunct);
+  fun := CreateFunction(procName, typNull, @callParam, @callFunct);
   fun.srcDec := srcPos;   //Toma ubicación en el código
   TreeElems.AddElementAndOpen(fun);  //Se abre un nuevo espacio de nombres
 
@@ -1055,6 +1064,21 @@ begin
     if not ValidateFunction then exit;
   end;
   cIn.SkipWhites;
+  if cIn.tok = ':' then begin
+    cIn.Next;
+    cIn.SkipWhites;
+    //Es función
+    parType := cIn.tok;   //lee tipo de parámetro
+    cIn.Next;
+    //Valida el tipo
+    typ := FindType(parType);
+    if typ = nil then begin
+      GenError(ER_UNDEF_TYPE_, [parType]);
+      exit;
+    end;
+    //Fija el tipo de la función
+    fun.typ := typ;
+  end;
   if not CaptureTok(';') then exit;
   ProcComments;  //Quita espacios. Puede salir con error
 end;
@@ -1146,6 +1170,7 @@ begin
   CompileProcBody(fun);
   TreeElems.CloseElement;  //Cierra Nodo Body
   TreeElems.CloseElement; //cierra espacio de nombres de la función
+  fun.adrReturn := pic.iFlash-1;  //Guarda dirección del RETURN
   if not CaptureTok(';') then exit;
   ProcComments;  //Quita espacios. Puede salir con error
 end;
@@ -1540,14 +1565,68 @@ procedure TCompiler.CompileLinkProgram;
 ubicar a los diversos elementos que deben compilarse.
 Se debe llamar después de compilar con CompileProgram.
 Esto es lo más cercano a un enlazador, que hay en PicPas.}
+  function RemoveUnusedFunctions: integer;
+  {Explora las funciones, para quitar las referencias de llamadas inexistentes.
+  Devuelve la cantidad de funciones no usadas.}
+  var
+    fun, fun2: TxpEleFun;
+  begin
+    Result := 0;
+    for fun in TreeElems.AllFuncs do begin
+      if fun.nCalled = 0 then begin
+        inc(Result);   //Lleva la cuenta
+        //Si no se usa la función, tampoco sus elementos locales
+        fun.SetElementsUnused;
+        //También se quita las llamadas que hace a otras funciones
+        for fun2 in TreeElems.AllFuncs do begin
+          fun2.RemoveCallsFrom(fun.BodyNode);
+//          debugln('Eliminando %d llamadas desde: %s', [n, fun.name]);
+        end;
+        //Incluyendo a funciones del sistema
+        for fun2 in listFunSys do begin
+          fun2.RemoveCallsFrom(fun.BodyNode);
+        end;
+      end;
+    end;
+  end;
+  procedure SetInitialBank(fun: TxpEleFun);
+  {Define el banco de trabajo para compilar correctamente}
+  var
+    cal : TxpEleCaller;
+  begin
+    if SetProIniBnk then begin
+      _BANKRESET; //Se debe forzar a iniciar en el banco O
+      fun.iniBnk := 0;   //graba
+    end else begin
+      //Se debe deducir el banco inicial de la función
+      //Explora los bancos desde donde se llama
+      if fun.lstCallers.Count = 1 then begin
+        //Solo es llamado una vez
+        fun.iniBnk := fun.lstCallers[0].curBnk;
+        CurrBank := fun.iniBnk;  //configura al compilador
+      end else begin
+        fun.iniBnk := fun.lstCallers[0].curBnk;  //banco de la primera llamada
+        //Hay varias llamadas
+        for cal in fun.lstCallers do begin
+          if fun.iniBnk <> cal.curBnk then begin
+            //Hay llamadas desde varios bancos.
+            _BANKRESET; //Se debe forzar a iniciar en el banco O
+            fun.iniBnk := 0;   //graba
+            exit;
+          end;
+        end;
+        //Todas las llamadas son del mismo banco
+        CurrBank := fun.iniBnk;  //configura al compilador
+      end;
+    end;
+  end;
 var
-  elem : TxpElement;
-  bod: TxpEleBody;
-  xvar : TxpEleVar;
-  fun  : TxpEleFun;
-  iniMain: integer;
+  elem   : TxpElement;
+  bod    : TxpEleBody;
+  xvar   : TxpEleVar;
+  fun    : TxpEleFun;
+  iniMain, noUsed, noUsedPrev: integer;
 begin
-  TreeElems.OnTreeChange := @TreeElemsTreeChange;  //Protege las modificaciones
   ExprLevel := 0;
   pic.ClearMemFlash;
   ResetFlashAndRAM;
@@ -1560,20 +1639,21 @@ begin
       end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
-  //Explora funciones, para marcar sus elementos locales como no usados
+  //Explora las funciones, para identifcar a las no usadas
   TreeElems.RefreshAllFuncs;
-  for fun in TreeElems.AllFuncs do begin
-    if fun.nCalled = 0 then begin
-      //Si no se usa la función, tampoco sus elementos
-      fun.SetElementsUnused;
-    end;
-  end;
+  noUsed := 0;
+  repeat
+    noUsedPrev := noUsed;   //valro anterior
+    noUsed := RemoveUnusedFunctions;
+    debugln('Funciones no usadas %d', [noUsed]);
+  until noUsed = noUsedPrev;
   //Reserva espacio para las variables usadas
   TreeElems.RefreshAllVars;
   for xvar in TreeElems.AllVars do begin
     if xvar.nCalled>0 then begin
       //Asigna una dirección válida para esta variable
       CreateVarInRAM(xVar);  //Crea la variable
+      xvar.typ.DefineRegister;  //Asegura que se dispondrá de los RT necesarios
       if HayError then exit;
     end else begin
       xvar.ResetAddress;
@@ -1607,6 +1687,7 @@ begin
         cIn.PosAct := fun.posCtx;  //Posiciona escáner
         PutLabel('__'+fun.name);
         TreeElems.OpenElement(fun.BodyNode); //Ubica el espacio de nombres, de forma similar a la pre-compilación
+        SetInitialBank(fun);   //Configura manejo de bancos RAM
         CompileProcBody(fun);
         TreeElems.CloseElement;  //cierra el body
         TreeElems.CloseElement;  //cierra la función
@@ -1624,10 +1705,11 @@ begin
     exit;
   end;
   bod.adrr := pic.iFlash;  //guarda la dirección de codificación
-  bod.nCalled := 1;        //actualiza
+//  bod.nCalled := 1;        //actualiza
   cIn.PosAct := bod.posCtx;   //ubica escaner
   PutLabel('__main_program__');
   TreeElems.OpenElement(bod);
+  CurrBank := 0;  //Se limpia, porque pudo haber cambiado con la compilación de procedimientos
   CompileCurBlock;
   TreeElems.CloseElement;   //cierra el cuerpo principal
   PutLabel('__end_program__');
@@ -1670,7 +1752,7 @@ begin
     if HayError then exit;
     {-------------------------------------------------}
     TreeElems.Clear;
-    TreeElems.OnTreeChange := nil;   //Se va a modificar el árbol
+    TreeElems.OnAddElement := @Tree_AddElement;   //Se va a modificar el árbol
     listFunSys.Clear;
     CreateSystemElements;  //Crea los elementos del sistema
     //Inicia PIC
@@ -1686,6 +1768,7 @@ begin
       TreeElems.main.name := ExtractFileName(mainFile);
       p := pos('.',TreeElems.main.name);
       if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
+      FirstPass := true;
       CompileUnit(TreeElems.main);
       consoleTickCount('** First Pass.');
     end else begin
@@ -1795,10 +1878,10 @@ begin
   end;
 //  lins.Add(';-------------------------');
 end;
-procedure TCompiler.DumpCode(lins: TSTrings; incAdrr, incCom: boolean);
+procedure TCompiler.DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);
 begin
 //  AsmList := TStringList.Create;  //crea lista para almacenar ensamblador
-  pic.DumpCode(lins, incAdrr, incCom);
+  pic.DumpCode(lins, incAdrr, incCom, incVarNam);
 end;
 function TCompiler.RAMusedStr: string;
 var

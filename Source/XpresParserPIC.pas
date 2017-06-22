@@ -4,10 +4,6 @@ Versión de XpresParser, orientada a trabajar con microcontroladores PIC.
 La idea es tener aquí todas las rutinas que en lo posible sean independientes del
 lenguaje y del modelo de PIC.
 
-Las variables públicas más importantes de este módulo son:
-
- typs[]  -> almacena a los tipos declarados
-
 Para mayor información sobre el uso del framework Xpres, consultar la documentación
 técnica.
 }
@@ -96,6 +92,8 @@ protected  //Eventos del compilador
                                              el terminar de evaluar una expresión}
   pic        : TPIC16;           //Objeto PIC de la serie 16.
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
+  RTstate    : TType;    {Estado de los RT. Si es NIL, indica que los RT, no tienen
+                         ningún dato cargado, sino indican el tipo cargado en los RT.}
   function CaptureDelExpres: boolean;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;
   procedure TipDefecString(var Op: TOperand; tokcad: string); virtual; abstract;
@@ -112,9 +110,11 @@ protected  //Eventos del compilador
   //Manejo de variables
   function CreateVar(varName: string; typ: ttype; absAddr, absBit: integer): TxpEleVar;
   //Manejo de funciones
-  function CreateFunction(funName: string; typ: ttype; proc: TProcExecFunction): TxpEleFun;
+  function CreateFunction(funName: string; typ: ttype; procParam,
+    procCall: TProcExecFunction): TxpEleFun;
   function ValidateFunction: boolean;
-  function CreateSysFunction(funName: string; proc: TProcExecFunction): TxpEleFun;
+  function CreateSysFunction(funName: string; procParam,
+    procCall: TProcExecFunction): TxpEleFun;
   procedure CaptureParamsFinal(fun: TxpEleFun);
   function CaptureTok(tok: string): boolean;
   function CaptureStr(str: string): boolean;
@@ -329,7 +329,7 @@ begin
 end;
 //Manejo de funciones
 function TCompilerBase.CreateFunction(funName: string; typ: ttype;
-  proc: TProcExecFunction): TxpEleFun;
+  procParam, procCall: TProcExecFunction): TxpEleFun;
 {Crea una nueva función y devuelve la referecnia a la función.}
 var
   fun : TxpEleFun;
@@ -337,7 +337,8 @@ begin
   fun := TxpEleFun.Create;
   fun.name:= funName;
   fun.typ := typ;
-  fun.procCall:= proc;
+  fun.procParam := procParam;
+  fun.procCall:= procCall;
   fun.ClearParams;
   Result := fun;
 end;
@@ -352,17 +353,20 @@ begin
   end;
   exit(true);  //validación sin error
 end;
-function TCompilerBase.CreateSysFunction(funName: string; proc: TProcExecFunction): TxpEleFun;
+function TCompilerBase.CreateSysFunction(funName: string;
+  procParam, procCall: TProcExecFunction): TxpEleFun;
 {Crea una función del sistema. A diferencia de las funciones definidas por el usuario,
 una función del sistema se crea, sin crear espacios de nombre. La idea es poder
-crearlas rápidamente.}
+crearlas rápidamente. "procParam", solo es necesario, cuando la función del sistema
+debe devolver valores (No es procedimiento).}
 var
   fun : TxpEleFun;
 begin
   fun := TxpEleFun.Create;  //Se crea como una función normal
   fun.name:= funName;
   fun.typ := typNull;
-  fun.procCall:= proc;
+  fun.procParam := procParam;
+  fun.procCall:= procCall;
   fun.ClearParams;
 //  TreeElems.AddElement(fun, false);  //no verifica duplicidad
   listFunSys.Add(fun);  //Las funciones de sistema son accesibles siempre
@@ -447,7 +451,11 @@ begin
     //no tiene parámetros
   end else begin
     //Debe haber parámetros
-    if not CaptureTok('(') then exit;
+    if cIn.tok <> '(' then begin
+      //Si no sigue '(', significa que no hay parámetros.
+      exit;
+    end;
+    cIn.Next;  //Toma paréntesis
     repeat
       GetExpressionE(0, pexPARAM);  //captura parámetro
       if HayError then exit;   //aborta
@@ -481,8 +489,14 @@ begin
   CaptureTok('(');   //No debe dar error porque ya se verificó
   for i := 0 to high(fun.pars) do begin
     par := fun.pars[i];
+    {Ya sirvió "RTstate", ahora lo limpiamos, no vaya a pasar que las rutinas de
+    asignación, piensen que los RT están ocupados, cuando la verdad es que han sido
+    liberados, precisamente para ellas.}
+    RTstate := nil;
     //Evalúa parámetro
-    GetExpressionE(0, pexPARAM);
+    Inc(ExprLevel);    //cuenta el anidamiento
+    res := GetExpression(0);  //llama como sub-expresión
+    Dec(ExprLevel);
     if HayError then exit;   //aborta
     if cIn.tok = ',' then begin
       cIn.Next;
@@ -496,7 +510,7 @@ begin
     end else begin
       Op1.catOp := coVariab;  //configura el operando como variable
       Op1.rVar  := par.pvar;
-      if FirstPass then Inc(par.pvar.nCalled);   //se está usando
+      if FirstPass then par.pvar.AddCaller;   //se está usando
       Op1.typ   := par.pvar.typ;  //necesario para "FindOperator"
       op := Op1.FindOperator(':=');  //busca la operación
       Oper(Op1, op, res);   //Codifica la asignación
@@ -569,6 +583,7 @@ var
   Found: Boolean;
   posFlash: Integer;
   cod: Longint;
+  RTstate0: TType;
 begin
   ClearError;
   SkipWhites;
@@ -618,7 +633,11 @@ begin
       if (Upcase(xfun.name) = tmp) then begin
         {Encontró. Llama a la función de procesamiento, quien se encargará de
         extraer los parámetros y analizar la sintaxis.}
-        if FirstPass then Inc(xfun.nCalled);  //lleva la cuenta
+        if FirstPass and (xfun.compile<>nil) then begin
+          {LLeva la cuenta de llamadas, solo cuando hay subrutinas. Para funciones
+           INLINE, no vale la pena, gastar recursos.}
+          xfun.AddCaller;
+        end;
         xfun.procCall(xfun);  //Para que devuelva el tipo y codifique el _CALL o lo implemente
         //Puede devolver typNull, si no es una función.
         Result := res;  //copia tipo y categoría y otros campso relevantes
@@ -637,7 +656,7 @@ begin
     if ele.elemType = eltVar then begin
       //es una variable
       xvar := TxpEleVar(ele);
-      if FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
+      if FirstPass then xvar.AddCaller;   //lleva la cuenta
       cIn.Next;    //Pasa al siguiente
       if xvar.IsRegister then begin
         //Es una variables REGISTER
@@ -661,7 +680,7 @@ begin
     end else if ele.elemType = eltCons then begin  //es constante
       //es una constante
       xcon := TxpEleCon(ele);
-      if FirstPass then Inc(xcon.nCalled);  //lleva la cuenta
+      if FirstPass then xcon.AddCaller;//lleva la cuenta
       cIn.Next;    //Pasa al siguiente
       Result.catOp:=coConst;    //constante
       Result.typ:=xcon.typ;
@@ -677,9 +696,10 @@ begin
       {Se sabe que es función, pero no se tiene la función exacta porque puede haber
        versiones, sobrecargadas de la misma función.}
       cIn.Next;    //Toma identificador
-      SkipWhites;  //QUita posibles blancos
-      posPar := cIn.PosAct;  //guarda porque va a pasar otra vez por aquí
-      posFlash := pic.iFlash;  //guarda posición, antes del c´doigo de evaluación
+      SkipWhites;  //Quita posibles blancos
+      posPar := cIn.PosAct;   //guarda porque va a pasar otra vez por aquí
+      posFlash := pic.iFlash; //guarda posición, antes del código de evaluación.
+      RTstate0 := RTstate;    //guarda porque se va a alterar con CaptureParams().
       CaptureParams;  //primero lee parámetros
       if HayError then exit;
       //Aquí se identifica la función exacta, que coincida con sus parámetros
@@ -698,16 +718,21 @@ begin
       end;
       if Found then begin
         //Ya se identificó a la función que cuadra con los parámetros
-        Result.catOp :=coExpres; //expresión
         {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
-        Result.typ:=xfun.typ;
-        if FirstPass then Inc(xfun.nCalled);  //lleva la cuenta
         {Ahora que ya sabe cúal es la función referenciada, captura de nuevo los
         parámetros, pero asignándola al parámetro que corresponde.}
         cIn.PosAct := posPar;
         pic.iFlash := posFlash;
-        CaptureParamsFinal(xfun);  //evalúa y asigna
-        xfun.procCall(xfun);  //para que codifique el _CALL
+        RTstate := RTstate0;
+        xfun.procParam(xfun);  //antes de leer los parámetros
+        if high(func0.pars)+1>0 then
+          CaptureParamsFinal(xfun);  //evalúa y asigna
+//if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
+        if FirstPass then xfun.AddCaller;  //se hace después de leer parámetros
+        xfun.procCall(xfun); //codifica el "CALL"
+        RTstate := xfun.typ;  //para indicar que los RT están ocupados
+        Result.catOp := coExpres;
+        Result.typ := xfun.typ;
         exit;
       end else begin
         //Encontró la función, pero no coincidió con los parámetros
@@ -727,9 +752,8 @@ begin
   end else if cIn.tok = '(' then begin  //"("
     cIn.Next;
     Inc(ExprLevel);  //cuenta el anidamiento
-    GetExpression(0);
+    Result := GetExpression(0);
     Dec(ExprLevel);
-    Result := res;
     if HayError then exit;
     If cIn.tok = ')' Then begin
        cIn.Next;  //lo toma
@@ -1210,7 +1234,6 @@ function TOperand.CanBeByte: boolean;
 begin
   Result := (valInt>=0) and (valInt<=$ff);
 end;
-
 procedure TOperand.CopyConsValTo(var c: TxpEleCon);
 begin
   //hace una copia selectiva por velocidad, de acuerdo a la categoría
@@ -1227,7 +1250,6 @@ begin
     solo puede ser que faltó implementar.}
   end;
 end;
-
 procedure TOperand.GetConsValFrom(const c: TxpEleCon);
 {Copia valores constante desde una constante. Primero TOperand, debería tener inicializado
  correctamente su campo "catTyp". }
@@ -1243,7 +1265,6 @@ begin
     //faltó implementar.
   end;
 end;
-
 procedure TOperand.SetvalBool(AValue: boolean);
 begin
   val.ValBool:=AValue;
@@ -1253,7 +1274,6 @@ begin
 //  if FvalFloat=AValue then Exit;
   val.ValFloat:=AValue;
 end;
-
 procedure TOperand.SetvalInt(AValue: Int64);
 begin
 //  if FvalInt=AValue then Exit;

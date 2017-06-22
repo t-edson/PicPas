@@ -9,7 +9,7 @@ unit ProcAsm;
 interface
 uses
   Classes, SysUtils, fgl, strutils, MisUtils, SynFacilHighlighter,
-  LCLProc, Pic16Utils, XpresBas, XpresParserPIC, Globales,
+  LCLProc, Pic16Utils, XpresBas, GenCodPic, Globales,
   XpresElementsPIC;
 var
   asmRow: integer;     //número de fila explorada
@@ -21,7 +21,7 @@ type
   TerrRoutine2 = procedure(msg: string; const Args: array of const);
 
 procedure SetLanguage(idLang: string);
-procedure InitAsm(pic0: TPIC16; cpx0: TCompilerBase);
+procedure InitAsm(pic0: TPIC16; cpx0: TGenCodPic);
 procedure ProcASMlime(const AsmLin: string);  //Procesa una línea de código ASM
 
 implementation
@@ -46,7 +46,7 @@ var
   pic   : TPIC16;         //referencia al PIC
   labels: TPicLabel_list; //Lista de etiquetas
   uJumps: TPicUJump_list; //Lista de instrucciones GOTO o CALL, indefinidas
-  cpx   : TCompilerBase;
+  cpx   : TGenCodPic;
 
 var  //Mensajes
   ER_EXPEC_COMMA, ER_EXP_ADR_VAR, ER_EXP_CON_VAL, ER_NOGETADD_VAR,
@@ -57,21 +57,7 @@ var  //Mensajes
 procedure SetLanguage(idLang: string);
 begin
   curLang := idLang;
-  //Update messages
-  ER_EXPEC_COMMA := trans('Expected ",".'                 , 'Se esperaba ","'                ,'', '');
-  ER_EXP_ADR_VAR := trans('Expected address or variable name.','Se esperaba dirección o variable.','','');
-  ER_EXP_CON_VAL := trans('Expected constant or value.'   ,'Se esperaba constante o variable.','','');
-  ER_NOGETADD_VAR:= trans('Cannot get address of this Variable', 'No se puede obtener la dirección de esta variable.', '','');
-  ER_NOGETVAL_CON:= trans('Cannot get value of this costant', 'No se puede obtener el valor de esta constante.', '','');
-  ER_INV_ASMCODE := trans('Invalid ASM Opcode: %s'        , 'Instrucción inválida: %s'       ,'', '');
-  ER_EXPECT_W_F  := trans('Expected "w" or "f".'          ,'Se esperaba "w" or "f".'         ,'', '');
-  ER_SYNTAX_ERR_ := trans('Syntax error: "%s"'            , 'Error de sintaxis: "%s"'        ,'', '');
-  ER_DUPLIC_LBL_ := trans('Duplicated label: "%s"'        , 'Etiqueta duplicada: "%s"'       ,'', '');
-  ER_EXPE_NUMBIT := trans('Expected number of bit: 0..7.' , 'Se esperaba número de bit: 0..7','', '');
-  ER_EXPECT_ADDR := trans('Expected address.'             , 'Se esperaba dirección'          ,'', '');
-  ER_EXPECT_BYTE := trans('Expected byte.'                , 'Se esperaba byte'               ,'', '');
-  ER_UNDEF_LABEL_:= trans('Undefined ASM Label: %s'       , 'Etiqueta ASM indefinida: %s'    ,'', '');
-  WA_ADDR_TRUNC  := trans('Address truncated to fit instruction.', 'Dirección truncada, al tamaño de la instrucción', '','');
+  {$I ..\language\tra_ProcAsm.pas}
 end;
 procedure GenError(msg: string);
 {Genera un error corrigiendo la posición horizontal}
@@ -204,7 +190,7 @@ begin
     end;
     if ele is TxpEleCon then begin
       xcon := TxpEleCon(ele);
-      if cpx.FirstPass then Inc(xcon.nCalled);  //lleva la cuenta
+      if cpx.FirstPass then xcon.AddCaller;  //lleva la cuenta
       if (xcon.typ = typByte) or (xcon.typ = typChar) then begin
         k := xcon.val.ValInt;
         lexAsm.Next;
@@ -315,7 +301,7 @@ begin
   //Es variable bit o boolean
   lexAsm.Next;   //toma identificador
   xvar := TxpEleVar(ele);
-  if cpx.FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
+  if cpx.FirstPass then xvar.AddCaller;  //lleva la cuenta
   f := GetFaddress(xvar.adrBit.offs);
   b := xvar.adrBit.bit;
   exit(true);
@@ -336,6 +322,12 @@ begin
     lexAsm.Next;
     Result := true;
     exit;
+  end else if lexAsm.GetToken = '_H' then begin
+    //Es el registro  de trabajo _H
+    f := cpx.H_register.offs;
+    lexAsm.Next;
+    Result := true;
+    exit;
   end else if tokType = lexAsm.tnIdentif then begin
     //Es un identificador, puede ser referencia a una variable
     ele := cpx.TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
@@ -346,7 +338,7 @@ begin
     end;
     if ele is TxpEleVar then begin
       xvar := TxpEleVar(ele);
-      if cpx.FirstPass then Inc(xvar.nCalled);  //lleva la cuenta
+      if cpx.FirstPass then xvar.AddCaller;  //lleva la cuenta
       if (xvar.typ = typByte) or (xvar.typ = typChar) then begin
         n := xvar.AbsAddr;
         f := GetFaddress(n);
@@ -429,7 +421,7 @@ begin
       GenError(ER_SYNTAX_ERR_, [lexAsm.GetToken]);
     end;
   end else if tokType = lexAsm.tnNumber then begin
-    //es una dirección numérica
+    //Es una dirección numérica
     a := StrToInt(lexAsm.GetToken);
     lexAsm.Next;
     Result := true;
@@ -663,7 +655,7 @@ begin
   lin := copy(Lin, 1, length(Lin)-3);  //quita "end"
   exit(true);
 end;
-procedure InitAsm(pic0: TPIC16; cpx0: TCompilerBase);
+procedure InitAsm(pic0: TPIC16; cpx0: TGenCodPic);
 {Inicia el procesamiento del código en ensamblador}
 begin
   pic := pic0;     //para poder codificarf instrucciones
@@ -717,5 +709,4 @@ finalization
   uJumps.Destroy;
   labels.Destroy;
 end.
-
 

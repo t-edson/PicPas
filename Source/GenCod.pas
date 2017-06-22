@@ -56,6 +56,7 @@ type
     { TGenCod }
     TGenCod = class(TGenCodPic)
     protected
+      procedure callParam(fun: TxpEleFun);
       procedure callFunct(fun: TxpEleFun);
     private  //Operaciones con Bit
       procedure bit_LoadToReg(const OpPtr: pointer);
@@ -141,6 +142,7 @@ type
       procedure expr_end(posExpres: TPosExpres);
       procedure expr_start;
       procedure fun_delay_ms(fun: TxpEleFun);
+      procedure fun_Exit(fun: TxpEleFun);
       procedure fun_Inc(fun: TxpEleFun);
       procedure fun_Dec(fun: TxpEleFun);
       procedure fun_Ord(fun: TxpEleFun);
@@ -175,11 +177,35 @@ begin
 //  curBloSub := pic.iFlash;  //indica siguiente posición libre
 //  pic.iFlash := iFlashTmp;  //retorna puntero
 end;
-procedure TGenCod.callFunct(fun: TxpEleFun);
-{Rutina que debe llamara a uan función definida por el usuario}
+procedure TGenCod.callParam(fun: TxpEleFun);
+{Rutina genérica, que se usa antes de leer los parámetros de }
 begin
-  //Por ahora no se implementa apginación, pero despuñes habrái que considerarlo.
-  _CALL(fun.adrr);
+  {Haya o no, parámetros se debe proceder como en cualquier expresión, asumiendo que
+  vamos a devolver una expresión.}
+  if RTstate<>nil then begin
+    //Si se usan RT en la operación anterior. Hay que salvar en pila
+    RTstate.SaveToStk;  //Se guardan por tipo
+  end;
+  SetResult(fun.typ, coExpres);  //actualiza "RTstate"
+end;
+procedure TGenCod.callFunct(fun: TxpEleFun);
+{Rutina genérica para llamara a una función definida por el usuario}
+begin
+  fun.iniBnk := CurrBank;   //fija el banco inicial
+  //Por ahora, no se implementa paginación, pero despuñes habría que considerarlo.
+  _CALL(fun.adrr);  //codifica el salto
+  //Verifica las opciones de cambio de banco
+  if SetProEndBnk then begin
+    //Se debe incluir siempre instrucciones de cambio de banco
+    _BANKRESET;
+  end else begin
+    //Se incluye solo, si el banco pudo haber cambiado
+    if fun.BankChanged then begin
+      //Ha habido cambios de banco dentro del procedimiento
+      _BANKRESET;   //Por seguridad restauramos
+      {Un análisis más fino podría determinar si se puede predecir el banco de salida.}
+    end;
+  end;
 end;
 procedure TGenCod.CopyInvert_C_to_Z;
 begin
@@ -1100,9 +1126,26 @@ begin
     byte_oper_byte(ADDLW, ADDWF);
 end;
 procedure TGenCod.Oper_byte_add_word;
+var
+  r: TPicRegister;
 begin
-  ExchangeP1_P2;   //Invierte los operandos
-  Oper_word_add_byte; //Y llama a la función opuesta
+  case catOperation of
+  coExpres_Expres:begin
+    {Este es el único caso que no se puede invertir, por la posición de los operandos en
+     la pila.}
+    //la expresión p1 debe estar salvada y p2 en el acumulador
+    p1^.catOp := coVariab;  //Convierte a variable
+    p1^.rVar := GetVarByteFromStk;
+    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    //Luego el caso es similar a coVariab_Expres
+    Oper_byte_add_word;
+    FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
+  end;
+  else
+    //Para los otros casos, funciona
+    ExchangeP1_P2;   //Invierte los operandos
+    Oper_word_add_byte; //Y llama a la función opuesta
+  end;
 end;
 procedure TGenCod.Oper_byte_sub_byte;
 var
@@ -1173,6 +1216,8 @@ begin
 end;
 procedure TGenCod.Oper_byte_and_bit;
 begin
+  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
+  no se implementa Oper_bit_and_byte.}
   ExchangeP1_P2;   //Invierte los operandos
   Oper_bit_and_byte;
 end;
@@ -1186,6 +1231,8 @@ begin
 end;
 procedure TGenCod.Oper_byte_or_bit;
 begin
+  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
+  no se implementa Oper_bit_or_byte.}
   ExchangeP1_P2;   //Invierte los operandos
   Oper_bit_or_byte;
 end;
@@ -1199,6 +1246,8 @@ begin
 end;
 procedure TGenCod.Oper_byte_xor_bit;
 begin
+  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
+  no se implementa Oper_bit_xor_byte.}
   ExchangeP1_P2;   //Invierte los operandos
   Oper_bit_xor_byte;
 end;
@@ -1268,6 +1317,8 @@ begin
 end;
 procedure TGenCod.Oper_byte_difer_bit;
 begin
+  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
+  no se implementa Oper_bit_dif_byte.}
   ExchangeP1_P2;
   Oper_bit_dif_byte;
 end;
@@ -1386,7 +1437,7 @@ begin
     FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
   end;
   else
-    //Para los otors casos, funciona
+    //Para los otros casos, funciona
     ExchangeP1_P2;
     Oper_byte_great_byte;
   end;
@@ -1714,10 +1765,10 @@ begin
   end;
   coVariab: begin
     _BANKSEL(Op^.bank);
-    _MOVF(Op^.offs, toW);
+    _MOVF(Op^.Hoffs, toW);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
-    _MOVF(Op^.offs+1, toW);
+    _MOVF(Op^.Loffs, toW);
   end;
   coExpres: begin  //se asume que ya está en (H,w)
   end;
@@ -1756,10 +1807,18 @@ begin
   coConst : begin
     SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);
-    _MOVLW(p2^.LByte);
-    _MOVWF(p1^.Loffs);
-    _MOVLW(p2^.HByte);
-    _MOVWF(p1^.Hoffs);
+    if p2^.LByte = 0 then begin  //optimiza
+      _CLRF(p1^.Loffs);
+    end else begin
+      _MOVLW(p2^.LByte);
+      _MOVWF(p1^.Loffs);
+    end;
+    if p2^.HByte = 0 then begin  //optimiza
+      _CLRF(p1^.Hoffs);
+    end else begin
+      _MOVLW(p2^.HByte);
+      _MOVWF(p1^.Hoffs);
+    end;
   end;
   coVariab: begin
     SetResultExpres_word(operType);  //Realmente, el resultado no es importante
@@ -2471,16 +2530,62 @@ begin
   if HayError then exit;
   if res.typ = typByte then begin
     //El parámetro byte, debe estar en W
-    _call(fun.adrr);
+    _CALL(fun.adrr);
   end else if res.typ = typWord then begin
     //El parámetro word, debe estar en (H, W)
-    _call(fun.adrr+1);
+    _CALL(fun.adrr+1);
   end else begin
     GenError('Invalid parameter type: %s', [res.typ.name]);
     exit;
   end;
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
+end;
+procedure TGenCod.fun_Exit(fun: TxpEleFun);
+{Se debe dejar en los registros de trabajo, el valro del parámetro indicado.}
+  procedure CodifRETURN(curBlk: TxpElement);
+  begin
+    //Codifica el salto de salida
+    if curBlk is TxpEleFun then begin
+      //En la primera pasada, no está definido "adrrEnd".
+  //    adrReturn := abs(TxpEleFun(curBlk).adrReturn);  //protege
+  //    if pic.iFlash = adrReturn then begin
+  //      //No es necesario incluir salto, proque ya está al final
+  //    end else begin
+        _RETURN;
+  //    end;
+    end else begin
+      GenError('Internal: No implemented.');
+    end;
+  end;
+var
+  curFunTyp: TType;
+  curBlk: TxpElement;
+//  adrReturn: word;
+begin
+  curBlk := TreeElems.curNode.Parent;  //El curNode, debe ser de tipo "Body".
+  if curBlk is TxpEleMain then begin  //En el programa principal
+    _SLEEP;   //Así se termina un programa en PicPas
+    exit;
+  end;
+  curFunTyp := curBlk.typ;
+  if curFunTyp = typNull then begin
+    //No lleva parámetros,
+    CodifRETURN(curBlk);
+    exit;  //No hay nada, más que hacer
+  end;
+  if not CaptureTok('(') then exit;
+  GetExpressionE(0, pexPARSY);  //captura parámetro
+  if HayError then exit;   //aborta
+  //Verifica fin de parámetros
+  if not CaptureTok(')') then exit;
+  //El resultado de la expresión está en "res".
+  if curFunTyp <> res.typ then begin
+    GenError('Expected a "%s" expression.', [curFunTyp.name]);
+  end;
+  res.LoadToReg;
+  res.typ := typNull;  //No es función
+  CodifRETURN(curBlk);  //Codifica salto
 end;
 procedure TGenCod.fun_Inc(fun: TxpEleFun);
 begin
@@ -2797,7 +2902,7 @@ begin
   //tipos predefinidos
   xLex.AddIdentSpecList('bit boolean byte word char', tnType);
   //funciones del sistema
-  xLex.AddIdentSpecList('delay_ms Inc Dec Ord Chr', tnSysFunct);
+  xLex.AddIdentSpecList('exit delay_ms Inc Dec Ord Chr', tnSysFunct);
   xLex.AddIdentSpecList('SetAsInput SetAsOutput SetBank', tnSysFunct);
   //símbolos especiales
   xLex.AddSymbSpec('+',  tnOperator);
@@ -3029,18 +3134,20 @@ var
 begin
   //////// Funciones del sistema ////////////
   {Notar que las funciones del sistema no crean espacios de nombres.}
-  f := CreateSysFunction('delay_ms', @fun_delay_ms);
+  f := CreateSysFunction('delay_ms', nil, @fun_delay_ms);
   f.adrr:=$0;
   f.compile := @codif_delay_ms;  //rutina de compilación
-  f := CreateSysFunction('Inc', @fun_Inc);
-  f := CreateSysFunction('Dec', @fun_Dec);
-  f := CreateSysFunction('Ord', @fun_Ord);
-  f := CreateSysFunction('Chr', @fun_Chr);
-  f := CreateSysFunction('Bit', @fun_Bit);
-  f := CreateSysFunction('SetAsInput', @fun_SetAsInput);
-  f := CreateSysFunction('SetAsOutput', @fun_SetAsOutput);
-  f := CreateSysFunction('Word', @fun_Word);
-  f := CreateSysFunction('SetBank', @fun_SetBank);
+  f.OnAddCaller := @AddCaller;  //Para que lleve la cuenta de las llamadas a subrutinas
+  f := CreateSysFunction('exit'     , nil, @fun_Exit);
+  f := CreateSysFunction('Inc'      , nil, @fun_Inc);
+  f := CreateSysFunction('Dec'      , nil, @fun_Dec);
+  f := CreateSysFunction('Ord'      , @callParam, @fun_Ord);
+  f := CreateSysFunction('Chr'      , @callParam, @fun_Chr);
+  f := CreateSysFunction('Bit'      , @callParam, @fun_Bit);
+  f := CreateSysFunction('SetAsInput' ,nil, @fun_SetAsInput);
+  f := CreateSysFunction('SetAsOutput',nil, @fun_SetAsOutput);
+  f := CreateSysFunction('Word'     , @callParam, @fun_Word);
+  f := CreateSysFunction('SetBank'  , nil, @fun_SetBank);
 end;
 procedure SetLanguage(lang: string);
 begin

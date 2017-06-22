@@ -83,19 +83,34 @@ type
 
   TxpEleBody = class;
 
+  //Datos sobre la llamada a un elemento desde otro elemento
+  TxpEleCaller = class
+    curBnk: byte;       //banco RAM, desde donde se llama
+    caller: TxpElement; //función que llama a esta función
+  end;
+  TxpListCallers = specialize TFPGObjectList<TxpEleCaller>;
+
   { TxpElement }
   //Clase base para todos los elementos
   TxpElement = class
   private
     function AddElement(elem: TxpElement): TxpElement;
+  public  //Gestion de llamadas al elemento
+    lstCallers: TxpListCallers;  //Lista de funciones que llaman a esta función.
+    OnAddCaller: procedure(elem: TxpElement) of object;
+    procedure AddCaller;
+    function nCalled: integer;  //número de llamadas
+    function IsCalledBy(callElem: TxpElement): boolean; //Identifica a un llamador
+    function FindCalling(callElem: TxpElement): TxpEleCaller; //Identifica a un llamada
+    function RemoveCallsFrom(callElem: TxpElement): integer; //Elimina llamadas
+    procedure ClearCallers;  //limpia lista de llamantes
+    function DuplicateIn(list: TxpElements): boolean; virtual;
   public
     name : string;        //nombre de la variable
     typ  : TType;         //tipo del elemento, si aplica
     Parent: TxpElement;   //referencia al padre
     elemType: TxpElemType; //no debería ser necesario
-    nCalled : integer;    //Número de veces que es llamada la función
     elements: TxpElements; //referencia a nombres anidados, cuando sea función
-    function DuplicateIn(list: TxpElements): boolean; virtual;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
     function LastNode: TxpElement;
     function BodyNode: TxpEleBody;
@@ -177,18 +192,27 @@ type
     typ : TType;     //tipo del parñametro
     pvar: TxpEleVar; //referecnia a la variable que se usa para el parámetro
   end;
+
+  TxpEleFun = class;
   { TxpEleFun }
   //Clase para almacenar información de las funciones
-  TxpEleFun = class;
   TProcExecFunction = procedure(fun: TxpEleFun) of object;  //con índice de función
   TxpEleFun = class(TxpElement)
   public
     pars: array of TxpParFunc;  //parámetros de entrada
-    //Direción física.
     adrr: integer;     //Dirección física, en donde se compila
+    adrReturn: integer;  //Dirección física del RETURN final de la función.
     srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
                         porque el tamaño puede variar al reubicarse.}
-    {Referencia a la función que implementa, la llamada a la función en ensambaldor.
+    //Banco de RAM, al iniciar la eejcución de la subrutina.
+    iniBnk: byte;
+    {Bsndera que indica si se produce cambio de banco desde dentro del código de la
+    función.}
+    BankChanged: boolean;
+    {Referencia a la función que implemanta, la rutina de porcesamiento que se debe
+    hacer, antes de empezar a leer los parámetros de la función.}
+    procParam: TProcExecFunction;
+    {Referencia a la función que implementa, la llamada a la función en ensamblador.
     En funciones del sistema, puede que se implemente INLINE, sin llamada a subrutinas,
     pero en las funciones comunes, siempre usa CALL ... }
     procCall: TProcExecFunction;
@@ -246,7 +270,7 @@ type
     curNode : TxpElement;  //referencia al nodo actual
     AllVars    : TxpEleVars;
     AllFuncs   : TxpEleFuns;
-    OnTreeChange: procedure of object;
+    OnAddElement: procedure(xpElem: TxpElement) of object;  //Evento
     procedure Clear;
     procedure RefreshAllVars;
     procedure RefreshAllFuncs;
@@ -308,20 +332,6 @@ begin
   elements.Add(elem);   //agrega a la lista de nombres
   Result := elem;       //no tiene mucho sentido
 end;
-function TxpElement.DuplicateIn(list: TxpElements): boolean;
-{Debe indicar si el elemento está duplicado en la lista de elementos proporcionada.}
-var
-  uName: String;
-  ele: TxpElement;
-begin
-  uName := upcase(name);
-  for ele in list do begin
-    if upcase(ele.name) = uName then begin
-      exit(true);
-    end;
-  end;
-  exit(false);
-end;
 function TxpElement.FindIdxElemName(const eName: string; var idx0: integer): boolean;
 {Busca un nombre en su lista de elementos. Inicia buscando desde idx0, hasta el inicio.
  Si encuentra, devuelve TRUE y deja en idx0, la posición en donde se encuentra.}
@@ -365,24 +375,99 @@ function TxpElement.Index: integer;
 begin
   Result := Parent.elements.IndexOf(self);  //No es muy rápido
 end;
+//Gestion de llamadas al elemento
+procedure TxpElement.AddCaller;
+{Agrega información sobre el elemento "llamador", es decir, la función/cuerpo que hace
+referencia a este elemento.}
+begin
+  {Lo maneja a través de evento, para poder acceder a información, del elemento actual
+  y datos adicionales, a los que no se tiene acceso desde el contexto de esta clase.}
+  if OnAddCaller<>nil then OnAddCaller(self);
+end;
+function TxpElement.nCalled: integer;
+begin
+  Result := lstCallers.Count;
+end;
+function TxpElement.IsCalledBy(callElem: TxpElement): boolean;
+{Indica si el elemento es llamado por "callElem". Puede haber varias llamadas desde
+"callElem", pero basta que haya una para devolver TRUE.}
+var
+  cal : TxpEleCaller;
+begin
+  for cal in lstCallers do begin
+    if cal.caller = callElem then exit(true);
+  end;
+  exit(false);
+end;
+function TxpElement.FindCalling(callElem: TxpElement): TxpEleCaller;
+{Busca la llamada de un elemento. Si no lo encuentra devuelve NIL.}
+var
+  cal : TxpEleCaller;
+begin
+  for cal in lstCallers do begin
+    if cal.caller = callElem then exit(cal);
+  end;
+  exit(nil);
+end;
+function TxpElement.RemoveCallsFrom(callElem: TxpElement): integer;
+{Elimina las referencias de llamadas desde un elemento en particular.
+Devuelve el número de referencias eliminadas.}
+var
+  cal : TxpEleCaller;
+  n, i: integer;
+begin
+  {La búsqueda debe hacerse al revés para evitar el problema de borrar múltiples
+  elementos}
+  n := 0;
+  for i := lstCallers.Count-1 downto 0 do begin
+    cal := lstCallers[i];
+    if cal.caller = callElem then begin
+      lstCallers.Delete(i);
+      inc(n);
+    end;
+  end;
+  Result := n;
+end;
+procedure TxpElement.ClearCallers;
+begin
+  lstCallers.Clear;
+end;
+function TxpElement.DuplicateIn(list: TxpElements): boolean;
+{Debe indicar si el elemento está duplicado en la lista de elementos proporcionada.}
+var
+  uName: String;
+  ele: TxpElement;
+begin
+  uName := upcase(name);
+  for ele in list do begin
+    if upcase(ele.name) = uName then begin
+      exit(true);
+    end;
+  end;
+  exit(false);
+end;
 constructor TxpElement.Create;
 begin
   elemType := eltNone;
+  lstCallers:= TxpListCallers.Create(true);
 end;
 destructor TxpElement.Destroy;
 begin
+  lstCallers.Destroy;
   elements.Free;  //por si contenía una lista
   inherited Destroy;
 end;
 { TxpEleMain }
 constructor TxpEleMain.Create;
 begin
+  inherited;
   elemType:=eltMain;
   Parent := nil;  //la raiz no tiene padre
 end;
 { TxpEleCon }
 constructor TxpEleCon.Create;
 begin
+  inherited;
   elemType:=eltCons;
 end;
 function TxpEleVar.AbsAddr: word;
@@ -460,6 +545,7 @@ end;
 { TxpEleVar }
 constructor TxpEleVar.Create;
 begin
+  inherited;
   elemType:=eltVar;
   adrBit:= TPicRegisterBit.Create;  //
   adrByte0:= TPicRegister.Create;
@@ -475,6 +561,7 @@ end;
 { TxpEleType }
 constructor TxpEleType.Create;
 begin
+  inherited;
   elemType:=eltType;
 end;
 { TxpEleFun }
@@ -557,8 +644,9 @@ var
   elem: TxpElement;
 begin
   if elements = nil then exit;  //No tiene
+  //Marca sus elementos, como no llamados
   for elem in elements do begin
-    elem.nCalled := 0;
+    elem.ClearCallers;
     if elem is TxpEleVar then begin
       TxpEleVar(elem).ResetAddress;
     end;
@@ -566,16 +654,20 @@ begin
 end;
 constructor TxpEleFun.Create;
 begin
+  inherited;
   elemType:=eltFunc;
 end;
+
 { TxpEleUnit }
 constructor TxpEleUnit.Create;
 begin
+  inherited;
   elemType:=eltUnit;
 end;
 { TxpEleBody }
 constructor TxpEleBody.Create;
 begin
+  inherited;
   elemType := elBody;
 end;
 { TXpTreeElements }
@@ -657,9 +749,8 @@ begin
     exit(false);  //ya existe
   end;
   //Agrega el nodo
-//  elem.idx := curNode.elements.Count;  //actualiza su índice
   curNode.AddElement(elem);
-  if OnTreeChange<>nil then exit;
+  if OnAddElement<>nil then OnAddElement(elem);
 end;
 procedure TXpTreeElements.AddElementAndOpen(elem: TxpElement);
 {Agrega un elemento y cambia el nodo actual al espacio de este elemento nuevo. Este
