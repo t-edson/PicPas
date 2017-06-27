@@ -53,7 +53,6 @@ type
     timeCnt: QWORD;
     nVis, nWar, nErr: Integer;
     usedRAM, usedROM, usedSTK: single;
-    procedure FilterGrid;
     procedure CountMessages;
     procedure SetBackColor(AValue: TColor);
     procedure SetBackSelColor(AValue: Tcolor);
@@ -67,9 +66,10 @@ type
     property TextErrColor: TColor read FTextErrColor write SetTextErrColor;
     property BackSelColor: Tcolor read FBackSelColor write SetBackSelColor;
     property PanelColor: TColor read FPanelColor write SetPanelColor;
+    procedure FilterGrid;
     procedure GetFirstError(out msg: string; out filname: string; out row,
       col: integer);
-    procedure InitCompilation(cxp0: TCompiler);
+    procedure InitCompilation(cxp0: TCompiler; InitMsg: boolean);
     procedure EndCompilation;
     procedure AddError(errTxt: string; fileName: string; row, col: integer);
     procedure AddInformation(infTxt: string);
@@ -360,14 +360,14 @@ begin
   end;
   grilla.EndUpdate;
 end;
-procedure TfraMessagesWin.InitCompilation(cxp0: TCompiler);
+procedure TfraMessagesWin.InitCompilation(cxp0: TCompiler; InitMsg: boolean);
 begin
   cxp := cxp0;   //Guarda referencia
   grilla.RowCount := 1;   //Limpia Grilla
   cxp.OnWarning := @AddWarning;  //Inicia evento
   cxp.OnError := @AddError;
   timeCnt:=GetTickCount64;
-  AddInformation(MSG_INICOMP);
+  if InitMsg then AddInformation(MSG_INICOMP);
 end;
 procedure TfraMessagesWin.EndCompilation;
 var

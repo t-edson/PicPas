@@ -95,7 +95,6 @@ type
     procedure InitTabs;
   private
     FTabIndex  : integer;
-    editors    : TEditorList;
     FTabViewMode: integer;
     lang       : string;
     fMultiCaret: TSynPluginMultiCaret;
@@ -110,6 +109,7 @@ type
     procedure DeleteEdit;
     procedure SetTabViewMode(AValue: integer);
   public  //Manejo de pestañas
+    editors    : TEditorList;
     property TabViewMode: integer read FTabViewMode write SetTabViewMode;  //Modo de visualización
     property TabIndex: integer read FTabIndex write SetTabIndex;   //panel actualmente activo
     function Count: integer;

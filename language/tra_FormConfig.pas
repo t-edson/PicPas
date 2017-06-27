@@ -6,25 +6,75 @@ BitAplicar.Caption   := Trans('&Apply'                 , 'Aplicar'              
                               '');
 BitCancel.Caption    := Trans('&Cancel'                , 'Cancelar'                  , '',
                               '');
-//General settings
-tabGeneral.Caption   := Trans('General'                , 'General'                  , '',
+
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////  General settings ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+tabGeneral.Caption   := Trans('General'                 , 'General'                  , '',
                               'Allgemein');
-RadioGroup1.Caption  := Trans('Toolbar'                , 'Barra de herramientas'    , '',
+RadioGroup1.Caption  := Trans('Toolbar'                 , 'Barra de herramientas'    , '',
                               'Werkzeugleiste');
-RadioGroup1.Items[0] := Trans('Small Icons'            , 'Íconos pequeños'          , '',
+RadioGroup1.Items[0] := Trans('Small Icons'             , 'Íconos pequeños'          , '',
                               'Kleine Bilder');
-RadioGroup1.Items[1] := Trans('Big Icons'              , 'Íconos grandes'           , '',
+RadioGroup1.Items[1] := Trans('Big Icons'               , 'Íconos grandes'           , '',
                               'Große Bilder');
-label1.Caption       := Trans('Units Path:'            , 'Ruta de unidades'         , '',
+label1.Caption       := Trans('Units Path:'             , 'Ruta de unidades'         , '',
                               'Unitpfad:');
-chkLoadLast.Caption  := Trans('Load last file edited', 'Cargar último archivo editado', '',
-                              'Letzte editierte Datei laden');
+chkAutSynChk.Caption := Trans('Automatic Syntax checking', 'Verificac. Automática de sintaxis', '',
+                              '');
+
+grpTabEdiState.Caption :=Trans('Tab Editor State'  , 'Estado de pestañas del editor', '',
+                              '');;
+grpTabEdiState.Items[0]:=Trans('&Show always'      , 'Mostrar &Siempre'         , '',
+                              '');
+grpTabEdiState.Items[1]:=Trans('Hide for &One file', '&Ocultar si hay un archivo', '',
+                              '');
+grpTabEdiState.Items[2]:=Trans('&Hide always'      , 'Ocultar &Siempre'          , '',
+                              '');
+
 Label2.Caption       := Trans('Language'               , 'Lenguaje'                 , '',
                               'Sprache');
-//Editor Settings
+
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////  Environment Settings //////////////////////////
+////////////////////////////////////////////////////////////////////////////
+tabEnviron.Caption    := Trans('Environment', 'Entorno', '',
+                               '');
+chkLoadLast.Caption   := Trans('Load last file edited'     , 'Cargar último archivo editado', '',
+                               'Letzte editierte Datei laden');
+lblMessPan1.Caption   := Trans('Message Panel Back color'  , 'Fondo del panel de mensajes', '',
+                               '');
+lblMessPan2.Caption   := Trans('Message Panel Text color:' , 'Texto del panel de mensajes', '',
+                               '');
+lblMessPan3.Caption   := Trans('Message Panel Error color:', 'Error del panel de mensajes', '',
+                               '');
+lblMessPan4.Caption   := Trans('Message Panel Selec. color:', 'Selec. del panel de mensajes', '',
+                               '');
+
+lblPanelCol.Caption   := Trans('Panels Color:'             , 'Color de los paneles:', '',
+                               '');
+lblSplitterCol.Caption:= Trans('Splitters color:'          , 'Color de los separadores:', '',
+                               '');
+lblCodExplCol1.Caption:= Trans('Code Explorer Back color:' , 'Fondo del explor. de código:', '',
+                               '');
+lblCodExplCol2.Caption:= Trans('Code Explorer Text Color:' , 'Texto del explor. de código:', '',
+                               '');
+butDefval.Caption     := Trans('Set &Default Values'        , 'Valores por &Defecto', '',
+                               '');
+
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////// Editor Settings ////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 tabEditor.Caption    := Trans('Editor'                 , 'Editor'                   , '',
                               'Editor');
-//Assembler settings
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////// Syntax Settings ////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+tabSyntax.Caption    := Trans('Syntax'                 , 'Sintaxis'                 , '',
+                              '');
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////// Assembler settings ////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 tabEnsamb.Caption    := Trans('Assembler'              , 'Ensamblador'              , '',
                               'Assembler');
 chkIncHeadMpu.Caption:= Trans('Include MPU &Header'    , 'Incluir &Encabezado de MPU','',
@@ -43,7 +93,9 @@ chkIncComment2.Caption:=Trans('Include &Detailed comments', 'Incluir Comentarios
                               '&Detaillierte Kommentare hinzufügen');
 chkIncVarName.Caption:= Trans('Include &Variable Names','Incluir Nombre de &Variables','',
                               '');
-//Output Settings
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////// Output Settings ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 tabOutput.Caption    := Trans('Compiler'               , 'Compilador'               , '',
                               'Compiler');
 chkShowErrMsg.Caption:= Trans('&Show Error Messages'   , '&Mostrar mensajes de error', '',

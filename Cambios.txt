@@ -1,3 +1,44 @@
+PicPas 0.7.1
+============
+Se crea la unidad CodeTools, para implementar herramientas de navegación del código.
+Se cambia la rutina de temporización para trabajar a 100mseg y se crea el contador
+ticSynCheck, para controlar la detección automática de errores de sintaxis.
+Se hace editors[], campo público en TfraEditView.
+Se crea el evento TCompiler.OnRequireFileString.
+Se crea TCompiler.OpenContextFrom(), para centralizar los accesos a contextos.
+Se crea la bandera TfrmPrincipal.Compiling para indicar que se está en compilación.
+Se activa la verifiación automática de sintaxis.
+Se cambia de nombre a TCompiler.CompileBody por TCompiler.CompileStructBody
+Se crea el evento TCompiler.OnAfterCompile, para detectar el fin de la compilación.
+Se crea el campo TxpEleCaller.curPos.
+Se convierte TGenCodPic.AddCaller() en función.
+Se incluye la herramienta "Ver declaración", con las combinaciones <ALt>+<Arriba> y
+mediante el menú contextual.
+Se habilita el uso de caracteres como valores Byte en CaptureByte(), de la unidad 
+ProcAsm.
+Se incluye la palabra reservada INTERRUPT. 
+Se crea el campo TxpEleFun.IsInterrupt, y se habiita la identificación de la rutina
+INTERRUPT.
+
+
+PENDIENTES
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para fuciones del sistema.
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir arreglos y registros.
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+
 PicPas 0.7.0
 ============
 Se cambian algunos parámetros de tipo VAR en OUT, para evitar mensajes de advertencia
@@ -41,29 +82,6 @@ Se implementan las acciones de Deshacer, Rehacer, desde el menú principal, y se
 corrige la actualziación del estado de las acciones, cuando se cambia de pestaña.
 Se crea el menú conetxtual para los editores.
 Se incluye información útil en la barra de estado.
-
-
-
-PENDIENTES
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para fuciones del sistema.
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Controlar las acciones de edición (rehacer, deshacer, grabar, ..) para que respondan al
-editor seleccionado. También se podría usar la técnica de Ciberplex, de crear 
-dinámicamente las acciones.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir arreglos y registros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
 
 
 PicPas 0.6.9

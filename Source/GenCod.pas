@@ -2899,7 +2899,7 @@ begin
   xLex.DefTokContent('[$]','[0-9A-Fa-f]*', tnNumber);
   xLex.DefTokContent('[%]','[01]*', tnNumber);
   //define palabras claves
-  xLex.AddIdentSpecList('THEN var type absolute', tnKeyword);
+  xLex.AddIdentSpecList('THEN var type absolute interrupt', tnKeyword);
   xLex.AddIdentSpecList('program public private method const', tnKeyword);
   xLex.AddIdentSpecList('class create destroy sub do begin', tnKeyword);
   xLex.AddIdentSpecList('END ELSE ELSIF UNTIL', tnBlkDelim);

@@ -30,6 +30,7 @@ type
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
     butDefval: TButton;
+    chkAutSynChk: TCheckBox;
     chkIncVarName: TCheckBox;
     chkLoadLast: TCheckBox;
     chkSetProIniBnk: TCheckBox;
@@ -94,7 +95,8 @@ type
     StateToolbar: TStyleToolbar;
     SynTreeWidth: integer;   //Ancho del panel del árbol ed sintaxis
     viewMode  : TTreeViewMode;
-    language : string;
+    AutSynChk : boolean;  //Verificación automática de sintaxis
+    language  : string;   //Lenguaje
     TabEdiMode: integer;  //Estado de pestañas del editor
     property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
     property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
@@ -225,6 +227,7 @@ begin
   fraCfgSyntax.Init(rutSyntax);
   //COnfiguración de Vista
   cfgFile.Asoc_Enum('viewMode',  @viewMode   , SizeOf(TTreeViewMode), 0);
+  cfgFile.Asoc_Bol('AutSynChk',  @AutSynChk  , chkAutSynChk , false);
   //Configuraciones de Ensamblador
   cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu , chkIncHeadMpu , false);
   cfgFile.Asoc_Bol('IncDecVar' , @IncVarDec  , chkIncDecVar  , true);

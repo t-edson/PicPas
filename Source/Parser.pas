@@ -18,7 +18,7 @@ type
       srcPos: TSrcPos): TxpEleVar;
     procedure cInNewLine(lin: string);
     procedure Cod_JumpIfTrue;
-    function CompileBody(GenCode: boolean = true): boolean;
+    function CompileStructBody(GenCode: boolean = true): boolean;
     procedure CompileFOR;
     procedure CompileLastEnd;
     procedure CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
@@ -48,6 +48,7 @@ type
     procedure CompileInstruction;
     procedure CompileInstructionDummy;
     procedure DefLexDirectiv;
+    function OpenContextFrom(filePath: string): boolean;
     procedure CompileCurBlock;
     procedure CompileCurBlockDummy;
     procedure CompileUnit(uni: TxpElement);
@@ -57,7 +58,12 @@ type
   private  //Variables internas del compilador
     mode : (modPascal, modPicPas);
   public
-    procedure Compile(NombArc: string; LinArc: Tstrings);
+    OnAfterCompile: procedure of object;   //Al finalizar la compilación.
+    {Indica que TCompiler, va a acceder a un archivo, peor está pregunatndo para ver
+     si se tiene un Stringlist, con los datos ya caragdos del archivo, para evitar
+     tener que abrir nuevamente al archivo.}
+    OnRequireFileString: procedure(FilePath: string; var strList: TStrings) of object;
+    procedure Compile(NombArc: string; Link: boolean = true);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
     procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);  //uso de la memoria Flash
     function RAMusedStr: string;
@@ -385,7 +391,7 @@ begin
     if not CaptureTok(')') then exit;
   end;
 end;
-function TCompiler.CompileBody(GenCode: boolean = true): boolean;
+function TCompiler.CompileStructBody(GenCode: boolean = true): boolean;
 {Compila el cuerpo de un THEN, ELSE, WHILE, ... considerando el modo del compilador.
 Si se genera error, devuelve FALSE.}
 begin
@@ -449,29 +455,29 @@ begin
   coConst: begin  //la condición es fija
     if res.valBool then begin
       //Es verdadero, siempre se ejecuta
-      if not CompileBody then exit;
+      if not CompileStructBody then exit;
       while cIn.tokL = 'elsif' do begin
         cIn.Next;   //toma "elsif"
         if not GetExpressionBool then exit;
         if not CaptureStr('then') then exit;  //toma "then"
         //Compila el cuerpo pero sin cósigo
-        if not CompileBody(false) then exit;
+        if not CompileStructBody(false) then exit;
       end;
       if cIn.tokL = 'else' then begin
         //Hay bloque ELSE, pero no se ejecutará nunca
         cIn.Next;   //toma "else"
-        if not CompileBody(false) then exit;
+        if not CompileStructBody(false) then exit;
         if not VerifyEND then exit;
       end else begin
         VerifyEND;
       end;
     end else begin
       //Es falso, nunca se ejecuta
-      if not CompileBody(false) then exit;
+      if not CompileStructBody(false) then exit;
       if cIn.tokL = 'else' then begin
         //hay bloque ELSE, que sí se ejecutará
         cIn.Next;   //toma "else"
-        if not CompileBody then exit;
+        if not CompileStructBody then exit;
         VerifyEND;
       end else if cIn.tokL = 'elsif' then begin
         cIn.Next;
@@ -487,14 +493,14 @@ begin
     Cod_JumpIfTrue;
     _GOTO_PEND(jFALSE);  //salto pendiente
     //Compila la parte TRUE
-    if not CompileBody then exit;
+    if not CompileStructBody then exit;
     //Verifica si sigue el ELSE
     if cIn.tokL = 'else' then begin
       //hay bloque ELSE
       cIn.Next;   //toma "else"
       _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
       _LABEL(jFALSE);   //termina de codificar el salto
-      if not CompileBody then exit;
+      if not CompileStructBody then exit;
       _LABEL(jEND_TRUE);   //termina de codificar el salto
       VerifyEND;   //puede salir con error
     end else if cIn.tokL = 'elsif' then begin
@@ -587,20 +593,20 @@ begin
   coConst: begin  //la condición es fija
     if res.valBool then begin
       //Lazo infinito
-      if not CompileBody then exit;
+      if not CompileStructBody then exit;
       if not VerifyEND then exit;
       _GOTO(l1);
     end else begin
       //lazo nulo
       //Compila la parte TRUE
-      if not CompileBody(false) then exit;
+      if not CompileStructBody(false) then exit;
       if not VerifyEND then exit;
     end;
   end;
   coVariab, coExpres: begin
     Cod_JumpIfTrue;
     _GOTO_PEND(dg);  //salto pendiente
-    if not CompileBody then exit;
+    if not CompileStructBody then exit;
     if not VerifyEND then exit;
     _GOTO(l1);
     //ya se tiene el destino del salto
@@ -658,7 +664,7 @@ begin
     Oper(Op1, opr1, Op2);   //"res" mantiene la constante o variable
     Cod_JumpIfTrue;
     _GOTO_PEND(dg);  //salto pendiente
-    if not CompileBody then exit;
+    if not CompileStructBody then exit;
     if not VerifyEND then exit;
     //Incrementa variable cursor
     if Op1.typ = typByte then begin
@@ -776,10 +782,39 @@ begin
   StartCodeSub(fun);  //inicia codificación de subrutina
   CompileInstruction;
   if HayError then exit;
-  _RETURN();  //instrucción de salida
+  if fun.IsInterrupt then _RETFIE else _RETURN();  //instrucción de salida
   EndCodeSub;  //termina codificación
   fun.BankChanged := BankChanged;
   fun.srcSize := pic.iFlash - fun.adrr;   //calcula tamaño
+end;
+function TCompiler.OpenContextFrom(filePath: string): boolean;
+{Abre un contexto con el archivo indicado. Si lo logra abrir, devuelve TRUE.}
+var
+  strList: TStrings;
+begin
+  //Primero ve si puede obteenr acceso directo al contenido del archivo
+  if OnRequireFileString<>nil then begin
+    //Hace la consulta a través del evento
+    strList := nil;
+    OnRequireFileString(filePath, strList);
+    if strList=nil then begin
+      //No hay acceso directo al contenido. Carga de disco
+      //debugln('>disco:'+filePath);
+      cIn.MsjError := '';
+      cIn.NewContextFromFile(filePath);
+      Result := cIn.MsjError='';  //El único error es cuando no se encuentra el archivo.
+    end else begin
+      //Nos están dando el acceso al contenido. Usamos "strList"
+      cIn.NewContextFromFile(filePath, strList);
+      Result := true;
+    end;
+  end else begin
+    //No se ha establecido el evento. Carga de disco
+    //debugln('>disco:'+filePath);
+    cIn.MsjError := '';
+    cIn.NewContextFromFile(filePath);
+    Result := cIn.MsjError='';  //El único error es cuando no se encuentra el archivo.
+  end;
 end;
 //Compilación de secciones
 procedure TCompiler.CompileGlobalConstDeclar;
@@ -1063,6 +1098,7 @@ begin
   if ValidateDup then begin   //Se pide validar la posible duplicidad de la función
     if not ValidateFunction then exit;
   end;
+  //Verifica si es función
   cIn.SkipWhites;
   if cIn.tok = ':' then begin
     cIn.Next;
@@ -1080,6 +1116,13 @@ begin
     fun.typ := typ;
   end;
   if not CaptureTok(';') then exit;
+  //Verifica si es INTERRUPT
+  cIn.SkipWhites;
+  if cIn.tokL = 'interrupt' then begin
+    cIn.Next;
+    fun.IsInterrupt := true;
+    if not CaptureTok(';') then exit;
+  end;
   ProcComments;  //Quita espacios. Puede salir con error
 end;
 procedure TCompiler.CompileProcDeclar(IsImplementation: boolean);
@@ -1170,6 +1213,7 @@ begin
   CompileProcBody(fun);
   TreeElems.CloseElement;  //Cierra Nodo Body
   TreeElems.CloseElement; //cierra espacio de nombres de la función
+  bod.srcEnd := cIn.ReadSrcPos;  //Fin de cuerpo
   fun.adrReturn := pic.iFlash-1;  //Guarda dirección del RETURN
   if not CaptureTok(';') then exit;
   ProcComments;  //Quita espacios. Puede salir con error
@@ -1436,35 +1480,26 @@ begin
         exit;
       end;
       uni.srcDec := cIn.ReadSrcPos;   //guarda posición de declaración
-      //Ubica al archivo de la unidad
       uName := uName + '.pas';  //nombre de archivo
+{----}TreeElems.AddElementAndOpen(uni);
+      //Ubica al archivo de la unidad
+      p := cIn.PosAct;   //Se debe gaurdar la posición antes de abrir otro contexto
       //Primero busca en la misma ubicación del archivo fuente
       uPath := ExtractFileDir(mainFile) + DirectorySeparator + uName;
-      if FileExists(uPath) then begin
-        //Lo encontró. Deja en "uPath"
-      end else begin
+      if not OpenContextFrom(uPath) then begin
         //No lo encontró, busca en la carpeta de librerías
         uPath := rutUnits + DirectorySeparator + uName;
-        if FileExists(uPath) then begin
-          //Lo encontró. Deja en "uPath"
-        end else begin
+        if not OpenContextFrom(uPath) then begin
           //No lo encuentra
-          uPath := '';
+          GenError('File not found: %s', [uName]);
+          exit;
         end;
       end;
-      if uPath = '' then begin
-        GenError('File not found: %s', [uName]);
-        uni.Destroy;
-        exit;
-      end;
-{----}TreeElems.AddElementAndOpen(uni);
-      p := cIn.PosAct;
-      cIn.NewContextFromFile(uPath);
       //Aquí ya se puede realizar otra exploración, como si fuera el archivo principal
       CompileUnit(uni);
 //      cIn.CloseContext;  //cierra el contexto
       cIn.PosAct := p;
-      if HayError then exit;  //EL error debe haber guardado la ubicaicón del error
+      if HayError then exit;  //El error debe haber guardado la ubicaicón del error
 {----}TreeElems.CloseElement; //cierra espacio de nombres de la función
       cIn.Next;  //toma nombre
       cIn.SkipWhites;
@@ -1554,6 +1589,7 @@ begin
   //codifica el contenido
   CompileCurBlock;   //compila el cuerpo
   TreeElems.CloseElement;   //No debería ser tan necesario.
+  bod.srcEnd := cIn.ReadSrcPos;
   if HayError then exit;
   CompileLastEnd;  //Compila el "END." final
   if HayError then exit;
@@ -1645,7 +1681,7 @@ begin
   repeat
     noUsedPrev := noUsed;   //valro anterior
     noUsed := RemoveUnusedFunctions;
-    debugln('Funciones no usadas %d', [noUsed]);
+//    debugln('Funciones no usadas %d', [noUsed]);
   until noUsed = noUsedPrev;
   //Reserva espacio para las variables usadas
   TreeElems.RefreshAllVars;
@@ -1665,6 +1701,23 @@ begin
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
   _GOTO_PEND(iniMain);       //instrucción de salto inicial
+  //Codifica la función INTERRUPT, si existe
+  for fun in TreeElems.AllFuncs do begin
+      if fun.IsInterrupt then begin
+        //Compila la función en la dirección 0x04
+        pic.iFlash := $04;
+        fun.adrr := pic.iFlash;    //Actualiza la dirección final
+        fun.typ.DefineRegister;    //Asegura que se dispondrá de los RT necesarios
+        cIn.PosAct := fun.posCtx;  //Posiciona escáner
+        PutLabel('__'+fun.name);
+        TreeElems.OpenElement(fun.BodyNode); //Ubica el espacio de nombres, de forma similar a la pre-compilación
+        SetInitialBank(fun);   //Configura manejo de bancos RAM
+        CompileProcBody(fun);
+        TreeElems.CloseElement;  //cierra el body
+        TreeElems.CloseElement;  //cierra la función
+        if HayError then exit;     //Puede haber error
+      end;
+  end;
   //Codifica las funciones del sistema usadas
   for fun in listFunSys do begin
     if (fun.nCalled > 0) and (fun.compile<>nil) then begin
@@ -1681,7 +1734,7 @@ begin
   end;
   //Codifica las subrutinas usadas
   for fun in TreeElems.AllFuncs do begin
-      if fun.nCalled>0 then begin
+      if (fun.nCalled>0) and not fun.IsInterrupt then begin
         //Compila la función en la dirección actual
         fun.adrr := pic.iFlash;    //Actualiza la dirección final
         fun.typ.DefineRegister;    //Asegura que se dispondrá de los RT necesarios
@@ -1730,7 +1783,7 @@ begin
   cIn.curCon.SetStartPos;   //retorna al inicio
   exit(false);
 end;
-procedure TCompiler.Compile(NombArc: string; LinArc: Tstrings);
+procedure TCompiler.Compile(NombArc: string; Link: boolean = true);
 //Compila el contenido de un archivo.
 var
   p: SizeInt;
@@ -1748,9 +1801,12 @@ begin
     ClearError;
     //Genera instrucciones de inicio
     cIn.ClearAll;       //elimina todos los Contextos de entrada
-    //compila el texto indicado
-    cIn.NewContextFromFile(NombArc, LinArc);   //Crea nuevo contenido
-    if HayError then exit;
+    //Compila el texto indicado
+    if not OpenContextFrom(NombArc) then begin
+      //No lo encuentra
+      GenError('File not found: %s', [NombArc]);
+      exit;
+    end;
     {-------------------------------------------------}
     TreeElems.Clear;
     TreeElems.OnAddElement := @Tree_AddElement;   //Se va a modificar el árbol
@@ -1765,7 +1821,7 @@ begin
     if IsUnit then begin
       //Hay que compilar una unidad
       consoleTickStart;
-      debugln('*** Compiling unit: Pass 1.');
+//      debugln('*** Compiling unit: Pass 1.');
       TreeElems.main.name := ExtractFileName(mainFile);
       p := pos('.',TreeElems.main.name);
       if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
@@ -1778,19 +1834,20 @@ begin
       procedimientos, y varaibles son realmente usados, de modo que solo estos, serán
       codificados en la segunda pasada. Así evitamos incluir, código innecesario.}
       consoleTickStart;
-      debugln('*** Compiling program: Pass 1.');
+//      debugln('*** Compiling program: Pass 1.');
       pic.iFlash := 0;     //dirección de inicio del código principal
       FirstPass := true;
       CompileProgram;  //puede dar error
       if HayError then exit;
       consoleTickCount('** First Pass.');
-
-      debugln('*** Compiling/Linking: Pass 2.');
-      {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,
-      que debe haber sido actualizado en la primera pasada.}
-      FirstPass := false;
-      CompileLinkProgram;
-      consoleTickCount('** Second Pass.');
+      if Link then begin
+//        debugln('*** Compiling/Linking: Pass 2.');
+        {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,
+        que debe haber sido actualizado en la primera pasada.}
+        FirstPass := false;
+        CompileLinkProgram;
+        consoleTickCount('** Second Pass.');
+      end;
     end;
     {-------------------------------------------------}
     cIn.ClearAll;//es necesario por dejar limpio
@@ -1798,8 +1855,8 @@ begin
     pic.GenHex(ExtractFileDir(mainFile) + DirectorySeparator + 'output.hex');
   finally
     ejecProg := false;
-    //tareas de finalización
-    //como actualizar estado
+    //Tareas de finalización
+    if OnAfterCompile<>nil then OnAfterCompile;
   end;
 end;
 function AdrStr(absAdr: word): string;

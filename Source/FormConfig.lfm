@@ -57,14 +57,14 @@ object Config: TConfig
     Height = 307
     Top = 0
     Width = 402
-    ActivePage = tabEnviron
+    ActivePage = tabGeneral
     Align = alClient
-    TabIndex = 1
+    TabIndex = 0
     TabOrder = 1
     object tabGeneral: TTabSheet
       Caption = 'General'
-      ClientHeight = 253
-      ClientWidth = 393
+      ClientHeight = 279
+      ClientWidth = 394
       object RadioGroup1: TRadioGroup
         Left = 16
         Height = 49
@@ -150,6 +150,14 @@ object Config: TConfig
           'Hide always'
         )
         TabOrder = 3
+      end
+      object chkAutSynChk: TCheckBox
+        Left = 16
+        Height = 19
+        Top = 144
+        Width = 164
+        Caption = 'Automatic Syntax checking'
+        TabOrder = 4
       end
     end
     object tabEnviron: TTabSheet
