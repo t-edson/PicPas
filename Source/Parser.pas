@@ -92,7 +92,8 @@ var
   ER_ELS_UNEXPEC : String;
   ER_INST_NEV_EXE, ER_MODE_UNKNOWN, ER_ONLY_ONE_REG: String;
   ER_VARIAB_EXPEC, ER_ONL_BYT_WORD, ER_ASIG_EXPECT: String;
-
+  ER_FIL_NOFOUND, WA_UNUSED_CON_, WA_UNUSED_VAR_,WA_UNUSED_PRO_: String;
+  MSG_RAM_USED, MSG_FLS_USED: String;
 //Funciones básicas
 procedure SetLanguage(idLang: string);
 begin
@@ -1054,7 +1055,7 @@ begin
     if HayError then exit;
     //reserva espacio para las variables
     for i := 0 to high(varNames) do begin
-      xvar := AddVariable(varNames[i], typ, absAddr, absBit, srcPosArray[i]);
+      xvar := AddVariable(varNames[i], typ, absAddr{%H-}, absBit{%H-}, srcPosArray[i]);
       xvar.InInterface := IsInterface;   //actualiza bandera
       if HayError then exit;
     end;
@@ -1486,12 +1487,16 @@ begin
       p := cIn.PosAct;   //Se debe gaurdar la posición antes de abrir otro contexto
       //Primero busca en la misma ubicación del archivo fuente
       uPath := ExtractFileDir(mainFile) + DirectorySeparator + uName;
-      if not OpenContextFrom(uPath) then begin
+      if OpenContextFrom(uPath) then begin
+        uni.srcFile := uPath;   //Gaurda el archivo fuente
+      end else begin
         //No lo encontró, busca en la carpeta de librerías
         uPath := rutUnits + DirectorySeparator + uName;
-        if not OpenContextFrom(uPath) then begin
+        if OpenContextFrom(uPath) then begin
+          uni.srcFile := uPath;   //Gaurda el archivo fuente
+        end else begin
           //No lo encuentra
-          GenError('File not found: %s', [uName]);
+          GenError(ER_FIL_NOFOUND, [uName]);
           exit;
         end;
       end;
@@ -1609,7 +1614,7 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
   begin
     Result := 0;
     for fun in TreeElems.AllFuncs do begin
-      if fun.nCalled = 0 then begin
+      if (fun.nCalled = 0) and not fun.IsInterrupt then begin
         inc(Result);   //Lleva la cuenta
         //Si no se usa la función, tampoco sus elementos locales
         fun.SetElementsUnused;
@@ -1630,6 +1635,12 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
   var
     cal : TxpEleCaller;
   begin
+    if fun.IsInterrupt then begin
+      //Para ISR, no se genera código de manejo de bancos
+      fun.iniBnk := 0;         //asume siempre 0
+      CurrBank := fun.iniBnk;  //configura al compilador
+      exit;
+    end;
     if SetProIniBnk then begin
       _BANKRESET; //Se debe forzar a iniciar en el banco O
       fun.iniBnk := 0;   //graba
@@ -1671,7 +1682,7 @@ begin
   //Verifica las constantes usadas
   for elem in TreeElems.main.elements do if elem is TxpEleCon then begin
       if elem.nCalled = 0 then begin
-        GenWarnPos('Unused constant: %s', [elem.name], elem.srcDec);
+        GenWarnPos(WA_UNUSED_CON_, [elem.name], elem.srcDec);
       end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
@@ -1679,7 +1690,7 @@ begin
   TreeElems.RefreshAllFuncs;
   noUsed := 0;
   repeat
-    noUsedPrev := noUsed;   //valro anterior
+    noUsedPrev := noUsed;   //valor anterior
     noUsed := RemoveUnusedFunctions;
 //    debugln('Funciones no usadas %d', [noUsed]);
   until noUsed = noUsedPrev;
@@ -1695,7 +1706,7 @@ begin
       xvar.ResetAddress;
       if xvar.Parent = TreeElems.main then begin
         //Genera mensaje solo para variables del programa principal.
-        GenWarnPos('Unused variable: %s', [xVar.name], xvar.srcDec);
+        GenWarnPos(WA_UNUSED_VAR_, [xVar.name], xvar.srcDec);
       end;
     end;
   end;
@@ -1734,22 +1745,23 @@ begin
   end;
   //Codifica las subrutinas usadas
   for fun in TreeElems.AllFuncs do begin
-      if (fun.nCalled>0) and not fun.IsInterrupt then begin
-        //Compila la función en la dirección actual
-        fun.adrr := pic.iFlash;    //Actualiza la dirección final
-        fun.typ.DefineRegister;    //Asegura que se dispondrá de los RT necesarios
-        cIn.PosAct := fun.posCtx;  //Posiciona escáner
-        PutLabel('__'+fun.name);
-        TreeElems.OpenElement(fun.BodyNode); //Ubica el espacio de nombres, de forma similar a la pre-compilación
-        SetInitialBank(fun);   //Configura manejo de bancos RAM
-        CompileProcBody(fun);
-        TreeElems.CloseElement;  //cierra el body
-        TreeElems.CloseElement;  //cierra la función
-        if HayError then exit;     //Puede haber error
-      end else begin
-        //Esta función no se usa
-        GenWarnPos('Unused procedure: %s', [fun.name], fun.srcDec);
-      end;
+    if fun.IsInterrupt then continue;
+    if fun.nCalled>0 then begin
+      //Compila la función en la dirección actual
+      fun.adrr := pic.iFlash;    //Actualiza la dirección final
+      fun.typ.DefineRegister;    //Asegura que se dispondrá de los RT necesarios
+      cIn.PosAct := fun.posCtx;  //Posiciona escáner
+      PutLabel('__'+fun.name);
+      TreeElems.OpenElement(fun.BodyNode); //Ubica el espacio de nombres, de forma similar a la pre-compilación
+      SetInitialBank(fun);   //Configura manejo de bancos RAM
+      CompileProcBody(fun);
+      TreeElems.CloseElement;  //cierra el body
+      TreeElems.CloseElement;  //cierra la función
+      if HayError then exit;     //Puede haber error
+    end else begin
+      //Esta función no se usa.
+      GenWarnPos(WA_UNUSED_PRO_, [fun.name], fun.srcDec);
+    end;
   end;
   //Compila cuerpo del programa principal
   pic.codGotoAt(iniMain, _PC);   //termina de codificar el salto
@@ -1804,7 +1816,7 @@ begin
     //Compila el texto indicado
     if not OpenContextFrom(NombArc) then begin
       //No lo encuentra
-      GenError('File not found: %s', [NombArc]);
+      GenError(ER_FIL_NOFOUND, [NombArc]);
       exit;
     end;
     {-------------------------------------------------}
@@ -1948,7 +1960,7 @@ begin
   totRAM := pic.TotalMemRAM;
   if totRAM=0 then exit;  //protección
   usedRAM := pic.UsedMemRAM;
-  Result := 'RAM Used   = ' + IntToStr(usedRAM) +'/'+ IntToStr(totRAM) + 'B (' +
+  Result := MSG_RAM_USED + IntToStr(usedRAM) +'/'+ IntToStr(totRAM) + 'B (' +
         FloatToStrF(100*usedRAM/totRAM, ffGeneral, 1, 3) + '%)';
 end;
 function TCompiler.FLASHusedStr: string;
@@ -1958,7 +1970,7 @@ var
 begin
   totROM := pic.MaxFlash;
   usedROM := pic.UsedMemFlash;
-  Result := 'Flash Used = ' + IntToStr(usedROM) +'/'+ IntToStr(totROM) + ' (' +
+  Result := MSG_FLS_USED + IntToStr(usedROM) +'/'+ IntToStr(totROM) + ' (' +
         FloatToStrF(100*usedROM/totROM, ffGeneral, 1, 3) + '%)';
 end;
 procedure TCompiler.GetResourcesUsed(out ramUse, romUse, stkUse: single);

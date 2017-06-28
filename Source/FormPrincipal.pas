@@ -331,6 +331,8 @@ end;
 procedure TfrmPrincipal.Timer1Timer(Sender: TObject);
 var
   ed: TSynEditor;
+  filname, msg: string;
+  row, col: integer;
 begin
   inc(tic);
   inc(ticSynCheck);
@@ -356,9 +358,18 @@ begin
     debugln('--Verif. Syntax.' + TimeToStr(now));
     if fraEditView1.Count>0 then begin
       //Hay archivo abiertos
+      ed := fraEditView1.ActiveEditor;
       fraMessages.InitCompilation(cxp, false);  //Limpia mensajes
-      cxp.Compile(fraEditView1.ActiveEditor.NomArc, false);
+      cxp.Compile(ed.NomArc, false);
       //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
+      if cxp.HayError then begin
+        //Obtiene las coordenadas del primer error
+         fraMessages.GetFirstError(msg, filname, row, col);
+         if (msg<>'') and (filname = ed.NomArc) then begin
+           //Hay error en el archivo actual
+           ed.MarkError(Point(col, row));
+         end;
+      end;
       fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
     end;
   end;
@@ -409,6 +420,7 @@ begin
 //  acEdiCortar.Enabled := edit.canCopy;
 //  acEdiCopiar.Enabled := edit.canCopy;
 //  acEdiPegar.Enabled  := edit.CanPaste;
+  ed.ClearMarkErr;  //Quita la marca de error que pudiera haber
 end;
 procedure TfrmPrincipal.fraEdit_SelectEditor;
 {Se ha cambiado el estado de los editores: Se ha cambaido la selección, se ha

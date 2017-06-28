@@ -30,7 +30,7 @@ implementation
 
 procedure TCodeTool.ReadCurIdentif(out tok: string; out tokType: integer;
                                    out lex: TSynFacilComplet; out curX: integer);
-{DA infomación sobre el token actual. Si no encuentar información, devuelve cadena
+{Da infomación sobre el token actual. Si no encuentra información, devuelve cadena
 nula en "tok".}
 var
   sed: TSynEdit;
@@ -93,12 +93,22 @@ begin
   ele := cxp.TreeElems.GetElementCalledAt(callPos);
   if ele = nil then begin
     //No lo ubica, puede ser que esté en la sección de declaración
-    curBody := cxp.TreeElems.GetElementBodyAt(ed.SynEdit.CaretXY);
-    if curBody=nil then begin
-
-
+    ele := cxp.TreeElems.GetELementDeclaredAt(callPos);
+    if ele <> nil then begin
+      //Es el punto donde se declara
+      if ele is TxpEleUnit then begin
+        fraEdit.SelectOrLoad(TxpEleUnit(ele).srcFile);
+//        MsgBox(ele.name);
+      end else begin
+        //Es otra declaración
+      end;
+    end else begin
+      MsgExc('Unknown identifier: %s', [tok]);
     end;
-    MsgExc('Unknown identifier: %s', [tok]);
+//    curBody := cxp.TreeElems.GetElementBodyAt(ed.SynEdit.CaretXY);
+//    if curBody=nil then begin
+//
+//    end;
   end else begin
 //      MsgBox('%s', [ele.name]);
     //Ubica la declaración del elemento

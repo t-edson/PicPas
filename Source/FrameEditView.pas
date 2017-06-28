@@ -4,11 +4,20 @@ unit FrameEditView;
 interface
 uses
   Classes, SysUtils, FileUtil, LazUTF8, Forms, Controls, Dialogs, ComCtrls, ExtCtrls,
-  SynEdit, Graphics, LCLProc, Menus, LCLType, StdCtrls, strutils, fgl,
-  SynEditMiscClasses, SynEditKeyCmds, SynPluginMultiCaret,
+  Graphics, LCLProc, Menus, LCLType, StdCtrls, strutils, fgl,
+  SynEdit, SynEditMiscClasses, SynEditKeyCmds, SynPluginMultiCaret,
+  SynEditMarkupHighAll, SynEditTypes,
   Globales, SynFacilUtils, SynFacilCompletion, SynFacilHighlighter,
   MisUtils, XpresBas;
 type
+  {Marcador para resltar errores de sintaxis en SynEdit}
+
+  { TMarkup }
+
+  TMarkup = class(TSynEditMarkupHighlightMatches)
+    public
+      procedure SetMark(p1, p2: TPoint);
+  end;
 
   { TSynFacilComplet2 }
   //Versión personalizada de  TSynFacilComplet
@@ -33,6 +42,7 @@ type
       var Special: boolean; Markup: TSynSelectedColor);
     procedure SetCaption(AValue: string);
   protected
+    MarkErr: TMarkup;
     procedure edKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   public  //Inicialización
     SynEdit: TSynEdit;  //Editor SynEdit
@@ -42,6 +52,8 @@ type
     property Caption: string read FCaption write SetCaption;  //etiqueta de la pestaña
     function SaveAsDialog(SaveDialog1: TSaveDialog): boolean; override;
     function SaveQuery(SaveDialog1: TSaveDialog): boolean; reintroduce;
+    procedure ClearMarkErr;
+    procedure MarkError(p1: TPoint);
     constructor Create(AOwner: TComponent; nomDef0, extDef0: string; panTabs0: TPanel); reintroduce;
     destructor Destroy; override;
   end;
@@ -50,6 +62,7 @@ type
   TSynEditorEvent = procedure(ed: TSynEditor) of object;
   { TfraEditView }
   TfraEditView = class(TFrame)
+    imgBookMarks: TImageList;
     ImgCompletion: TImageList;
     lblBackground: TLabel;
     mnCloseAll: TMenuItem;
@@ -144,6 +157,7 @@ type
     function CloseEditor: boolean;
     function CloseAll: boolean;
     procedure LoadLastFileEdited;
+    procedure HighlightToken;
   private  //Manejo de menús recientes
     mnRecents   : TMenuItem;  //Menú de archivos recientes
     RecentFiles : TStringList;  //Lista de archivos recientes
@@ -174,6 +188,14 @@ var
   MSG_PASFILES: string;
   MSG_ALLFILES: string;
   MSG_NOSYNFIL: string;
+
+{ TMarkup }
+procedure TMarkup.SetMark(p1, p2: TPoint);
+begin
+  Matches.StartPoint[0] := p1;
+  Matches.EndPoint[0]   := p2;
+  InvalidateSynLines(p1.y, p2.y);
+end;
 
 function TSynFacilComplet2.IsKeyword(const AKeyword: string): boolean;
 {Esta rutina es llamada por el Markup, que resalta palabras iguales. Se implementa
@@ -369,6 +391,27 @@ begin
     end;
   end;
 end;
+procedure TSynEditor.ClearMarkErr;
+{Limpia el marcador de error.}
+begin
+  MarkErr.Enabled := false;
+  SynEdit.Invalidate;
+end;
+procedure TSynEditor.MarkError(p1: TPoint);
+{Marca el token que se encuentra en la coordenada indicada.}
+var
+  toks: TATokInfo;
+  tokIdx: integer;
+  curTok: TFaTokInfo;
+begin
+  hl.ExploreLine(p1, toks, tokIdx);  //Explora la línea aludida
+  MarkErr.Enabled := true;
+  //Marca en los límites del token actual
+  curTok := toks[tokIdx];
+  MarkErr.SetMark(Point(curTok.posIni+1, p1.y),
+                  Point(curTok.posIni+1+curTok.length, p1.y));
+//  MarkErr.SetMark(p1, Point(p1.x+3,p1.y));
+end;
 constructor TSynEditor.Create(AOwner: TComponent; nomDef0, extDef0: string;
   panTabs0: TPanel);
 begin
@@ -378,7 +421,7 @@ begin
   ed := SynEdit;
   hl := TSynFacilComplet2.Create(ed.Owner);  //crea resaltador
   hl.SelectEditor(ed);  //inicia
-  //intercepta eventos
+  //Intercepta eventos
   ed.OnChange:=@edChange;   //necesita interceptar los cambios
   ed.OnStatusChange:=@edStatusChange;
   ed.OnMouseDown:=@edMouseDown;
@@ -409,14 +452,16 @@ begin
   InicEditorC1(SynEdit);
   SynEdit.Options := SynEdit.Options + [eoTabsToSpaces];  //permite indentar con <Tab>
 
-  //define paneles
-//  self.PanFileSaved := StatusBar1.Panels[0]; //panel para mensaje "Guardado"
-//  self.PanCursorPos := StatusBar1.Panels[1];  //panel para la posición del cursor
-//
-//  self.PanForEndLin := StatusBar1.Panels[2];  //panel para el tipo de delimitador de línea
-//  self.PanCodifFile := StatusBar1.Panels[3];  //panel para la codificación del archivo
-//  self.PanLangName  := StatusBar1.Panels[4];  //panel para el lenguaje
-//  self.PanFileName  := StatusBar1.Panels[5];  //panel para el nombre del archivo
+  //Crea marcador "MarkErr", para erroes de sintaxis
+  MarkErr := TMarkup.Create(SynEdit);
+  MarkErr.MarkupInfo.Background := clNone;
+  MarkErr.MarkupInfo.Foreground := clNone;
+  MarkErr.MarkupInfo.FrameColor := clRed;
+  MarkErr.MarkupInfo.FrameEdges := sfeBottom;
+  MarkErr.MarkupInfo.FrameStyle := slsWaved;
+  SynEdit.MarkupManager.AddMarkUp(MarkErr);   //agrega marcador
+
+  MarkErr.SetMark(Point(3,2), Point(6,2));
 
   NewFile;        //para actualizar estado
 end;
@@ -802,6 +847,9 @@ begin
   //Configura PageControl
   ed.SynEdit.Parent := self;
   ed.SynEdit.Align := alClient;
+  //Fija imágenes para marcadores
+  ed.SynEdit.BookMarkOptions.BookmarkImages := imgBookMarks;
+
   //Configura el borrado de la palabra actual
   n := 46;
   ed.SynEdit.Keystrokes.BeginUpdate;
@@ -1221,6 +1269,10 @@ begin
   if mnRecents.Count = 0 then exit;
   ActualMenusReciente(self);
   mnRecents.Items[0].Click;
+end;
+procedure TfraEditView.HighlightToken;
+begin
+
 end;
 procedure TfraEditView.RecentClick(Sender: TObject);
 //Se selecciona un archivo de la lista de recientes

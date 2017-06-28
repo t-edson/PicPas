@@ -2,7 +2,7 @@
 <CONFIG>
   <StateStatusbar Val="1"/>
   <VerPanMensaj Val="True"/>
-  <VerStatusbar Val="False"/>
+  <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
   <SynTreeWidth Val="225"/>
@@ -41,7 +41,7 @@ D:\Proyectos_Software\Lazarus\PicPas-0.7.0\TestCode\Operations\Test4_Asm.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.7.0\TestCode\Operations\Test3_Structs2.pas
 "/>
   </Edit>
-  <viewMode Val="1"/>
+  <viewMode Val="2"/>
   <AutSynChk Val="True"/>
   <IncHeadMpu Val="False"/>
   <IncDecVar Val="True"/>

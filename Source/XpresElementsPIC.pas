@@ -75,7 +75,7 @@ type
                  eltCons,  //constante
                  eltType,  //tipo
                  eltUnit,  //unidad
-                 elBody    //cuerpo del programa
+                 eltBody    //cuerpo del programa
                 );
 
   TxpElement = class;
@@ -85,6 +85,7 @@ type
 
   //Datos sobre la llamada a un elemento desde otro elemento
   TxpEleCaller = class
+    curPos: TSrcPos;    //Posición desde donde es llamado
     curBnk: byte;       //banco RAM, desde donde se llama
     caller: TxpElement; //función que llama a esta función
   end;
@@ -97,10 +98,12 @@ type
     function AddElement(elem: TxpElement): TxpElement;
   public  //Gestion de llamadas al elemento
     lstCallers: TxpListCallers;  //Lista de funciones que llaman a esta función.
-    OnAddCaller: procedure(elem: TxpElement) of object;
-    procedure AddCaller;
+    OnAddCaller: function(elem: TxpElement): TxpEleCaller of object;
+    function AddCaller: TxpEleCaller;
     function nCalled: integer;  //número de llamadas
     function IsCalledBy(callElem: TxpElement): boolean; //Identifica a un llamador
+    function IsCAlledAt(callPos: TSrcPos): boolean;
+    function IsDeclaredAt(decPos: TSrcPos): boolean;
     function FindCalling(callElem: TxpElement): TxpEleCaller; //Identifica a un llamada
     function RemoveCallsFrom(callElem: TxpElement): integer; //Elimina llamadas
     procedure ClearCallers;  //limpia lista de llamantes
@@ -123,6 +126,10 @@ type
     parte de la información de posCtx, pero se mantiene, aún después de cerrar los
     contextos de entrada.}
     srcDec: TSrcPos;
+    {Posición final de la declaración. Esto es útil en los elementos que TxpEleBody,
+    para delimitar el bloque de código.}
+    srcEnd: TSrcPos;
+    function posXYin(const posXY: TPoint): boolean;
   end;
 
   TVarOffs = word;
@@ -225,6 +232,8 @@ type
     {Bandera para indicar si la función, ha sido declarada en la sección INTERFACE. Este
     campo es úitl para cuando se procesan unidades.}
     InInterface: boolean;
+    {Indica si la función es una ISR. Se espera que solo exista una.}
+    IsInterrupt : boolean;
     ///////////////
     procedure ClearParams;
     procedure CreateParam(parName: string; typ0: ttype; pvar: TxpEleVar);
@@ -239,6 +248,8 @@ type
   { TxpEleUnit }
   //Clase para modelar a las constantes
   TxpEleUnit = class(TxpElement)
+  public
+    srcFile: string;   //El archivo en donde está físicamente la unidad.
     constructor Create; override;
   end;
   TxpEleUnits = specialize TFPGObjectList<TxpEleUnit>; //lista de constantes
@@ -288,6 +299,9 @@ type
     function FindFirst(const name: string): TxpElement;
     function FindNextFunc: TxpEleFun;
     function FindVar(varName: string): TxpEleVar;
+    function GetElementBodyAt(posXY: TPoint): TxpEleBody;
+    function GetElementCalledAt(const srcPos: TSrcPos): TxpElement;
+    function GetELementDeclaredAt(const srcPos: TSrcPos): TxpElement;
   public  //constructor y destructror
     constructor Create; virtual;
     destructor Destroy; override;
@@ -376,13 +390,17 @@ begin
   Result := Parent.elements.IndexOf(self);  //No es muy rápido
 end;
 //Gestion de llamadas al elemento
-procedure TxpElement.AddCaller;
+function TxpElement.AddCaller: TxpEleCaller;
 {Agrega información sobre el elemento "llamador", es decir, la función/cuerpo que hace
 referencia a este elemento.}
 begin
   {Lo maneja a través de evento, para poder acceder a información, del elemento actual
   y datos adicionales, a los que no se tiene acceso desde el contexto de esta clase.}
-  if OnAddCaller<>nil then OnAddCaller(self);
+  if OnAddCaller<>nil then begin
+    Result := OnAddCaller(self);
+  end else begin
+    Result := nil;
+  end;
 end;
 function TxpElement.nCalled: integer;
 begin
@@ -398,6 +416,20 @@ begin
     if cal.caller = callElem then exit(true);
   end;
   exit(false);
+end;
+function TxpElement.IsCAlledAt(callPos: TSrcPos): boolean;
+{Indica si el elemento es llamado, desde la posición indicada.}
+var
+  cal : TxpEleCaller;
+begin
+  for cal in lstCallers do begin
+    if cal.curPos.EqualTo(callPos) then exit(true);
+  end;
+  exit(false);
+end;
+function TxpElement.IsDeclaredAt(decPos: TSrcPos): boolean;
+begin
+  Result := srcDec.EqualTo(decPos);
 end;
 function TxpElement.FindCalling(callElem: TxpElement): TxpEleCaller;
 {Busca la llamada de un elemento. Si no lo encuentra devuelve NIL.}
@@ -456,6 +488,47 @@ begin
   lstCallers.Destroy;
   elements.Free;  //por si contenía una lista
   inherited Destroy;
+end;
+function TxpElement.posXYin(const posXY: TPoint): boolean;
+{Indica si la coordeda del cursor, se encuentra dentro de las coordenadas del elemento.}
+var
+  y1, y2: integer;
+begin
+  y1 := srcDec.row;
+  y2 := srcEnd.row;
+  //Primero verifica la fila
+  if (posXY.y >= y1) and (posXY.y<=y2) then begin
+    //Está entre las filas. Pero hay que ver también las columnas, si posXY, está
+    //en los bordes.
+    if y1 = y2 then begin
+      //Es rango es de una sola fila
+      if (posXY.X > srcDec.col) and (posXY.X < srcEnd.col) then begin
+        exit(true)
+      end else begin
+        exit(false);
+      end;
+    end else if posXY.y = y1 then begin
+      //Está en el límite superior
+      if posXY.X > srcDec.col then begin
+        exit(true)
+      end else begin
+        exit(false);
+      end;
+    end else if posXY.y = y2 then begin
+      //Está en el límite inferior
+      if posXY.X < srcEnd.col then begin
+        exit(true)
+      end else begin
+        exit(false);
+      end;
+    end else begin
+      //Está entre los límites
+      exit(true);
+    end;
+  end else begin
+    //Esta fuera del rango
+    exit(false);
+  end;
 end;
 { TxpEleMain }
 constructor TxpEleMain.Create;
@@ -668,7 +741,7 @@ end;
 constructor TxpEleBody.Create;
 begin
   inherited;
-  elemType := elBody;
+  elemType := eltBody;
 end;
 { TXpTreeElements }
 procedure TXpTreeElements.Clear;
@@ -840,9 +913,9 @@ begin
 end;
 function TXpTreeElements.FindFirst(const name: string): TxpElement;
 {Rutina que permite resolver un identificador dentro del árbol de sintaxis, siguiendo las
-reglas de alcance de identifiacdores (primero en el espacio actual y luego en los
+reglas de alcance de identificacdores (primero en el espacio actual y luego en los
 espacios padres).
- Si encuentra devuelve la referencia. Si no encuentra, devuelve NIL}
+Si encuentra devuelve la referencia. Si no encuentra, devuelve NIL}
 begin
   //Busca recursivamente, a partir del espacio actual
   curFindName := name;     //Este valor no cambiará en toda la búsqueda
@@ -897,6 +970,100 @@ begin
   end;
   exit(nil);
 end;
+function TXpTreeElements.GetElementBodyAt(posXY: TPoint): TxpEleBody;
+{Busca el elemento del arbol, dentro del nodo principal, y sus nodos hijos, en que
+cuerpo (nodo Body) se encuentra la coordenada del cursor "posXY".
+Si no encuentra, devuelve NIL.}
+var
+  res: TxpEleBody;
+
+  procedure ExploreForBody(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      //Explora a todos sus elementos
+      for ele in nod.elements do begin
+        if ele.elemType = eltBody then begin
+          //Encontró un Body, verifica
+          if ele.posXYin(posXY) then begin
+            res := TxpEleBody(ele);   //guarda referencia
+            exit;
+          end;
+        end else begin
+          //No es un body, puede ser un eleemnto con nodos hijos
+          if ele.elements<>nil then
+            ExploreForBody(ele);  //recursivo
+        end;
+      end;
+    end;
+  end;
+begin
+  //Realiza una búsqueda recursiva.
+  res := nil;   //Por defecto
+  ExploreForBody(main);
+  Result := res;
+end;
+function TXpTreeElements.GetElementCalledAt(const srcPos: TSrcPos): TxpElement;
+{Explora los elementos, para ver si alguno es llamado desde la posición indicada.
+Si no lo encuentra, devueleve NIL.}
+var
+  res: TxpElement;
+
+  procedure ExploreForCall(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      //Explora a todos sus elementos
+      for ele in nod.elements do begin
+        if ele.IsCAlledAt(srcPos) then begin
+            res := ele;   //guarda referencia
+            exit;
+        end else begin
+          //No es un body, puede ser un eleemnto con nodos hijos
+          if ele.elements<>nil then
+            ExploreForCall(ele);  //recursivo
+        end;
+      end;
+    end;
+  end;
+begin
+  //Realiza una búsqueda recursiva.
+  res := nil;   //Por defecto
+  ExploreForCall(main);
+  Result := res;
+end;
+function TXpTreeElements.GetELementDeclaredAt(const srcPos: TSrcPos): TxpElement;
+{Explora los elementos, para ver si alguno es declarado en la posición indicada.}
+var
+  res: TxpElement;
+
+  procedure ExploreForDec(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      //Explora a todos sus elementos
+      for ele in nod.elements do begin
+        if ele.IsDeclaredAt(srcPos) then begin
+            res := ele;   //guarda referencia
+            exit;
+        end else begin
+          //No es un body, puede ser un eleemnto con nodos hijos
+          if ele.elements<>nil then
+            ExploreForDec(ele);  //recursivo
+        end;
+      end;
+    end;
+  end;
+begin
+  //Realiza una búsqueda recursiva.
+  res := nil;   //Por defecto
+  ExploreForDec(main);
+  Result := res;
+end;
+
 //constructor y destructror
 constructor TXpTreeElements.Create;
 begin

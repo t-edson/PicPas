@@ -53,15 +53,11 @@ var
 //  direccion $0004, a partir de la que código de programa debe decidir
 //  que hacer.
 //***********************************************************************
-procedure _ISR_;
+procedure _ISR_; interrupt;
 var
   Reg_W, Reg_STATUS : byte;  // Para guardar valores previos a interrupcion y restablecerlos antes de salir.
 begin
 ASM
-;------------------------------------------------------------------------------------
-; Posiciona la primera instruccion de interrupcion en la direccion $0004.
-;------------------------------------------------------------------------------------
-  org $0004
 ;------------------------------------------------------------------------------------
 ; Inicio de instrucciones que se ejecutan cuando se produce una interrupcion.
 ;------------------------------------------------------------------------------------
@@ -187,12 +183,4 @@ begin
   until false;
   // --------------------------------------------------------------------------------
  
-  // --------------------------------------------------------------------------------
-  // Llamada a la funcion de interrupcion para que PicPas la compile.
-  // En realidad nunca se va a ejecutar por estar despues del LOOP
-  // infinito repeat.. until anterior.
-  // Pero eso el compilador no lo sabe y "le engañamos" para que compile
-  // la funcion que interrupciones.
-  _ISR_;
-  // --------------------------------------------------------------------------------
 end.

@@ -19,13 +19,18 @@ ProcAsm.
 Se incluye la palabra reservada INTERRUPT. 
 Se crea el campo TxpEleFun.IsInterrupt, y se habiita la identificación de la rutina
 INTERRUPT.
+Se activa la definición de marcadores de texto con Shift+Ctrl+<0..9>
+Se crea el marcador TSynEditor.MarkErr, para resaltar errores de sintaxis.
+Se activa el remarcado automático de errores de sinatxis, en el editor.
+Se crean los métodos TxpElement.IsCAlledAt() y TxpElement.IsDeclaredAt().
 
 
 PENDIENTES
+Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
 Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
 (tal vez se podría detectar siempre la última instrucción compilada).
 Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para fuciones del sistema.
+Revisar el uso de bancos, para funciones del sistema.
 Implementar las operaciones pendientes en los Word.
 Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
 Terminar de implementar las funcionalidades completas de una unidad.
@@ -33,7 +38,6 @@ Implementar la reutilización de variables usadas como parámetros.
 Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
 Incluir el tipo integer con signo.
 Incluir arreglos y registros.
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
 Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
 y más de una página de ROM.
 Activar la optimización de variables y constantes no llamadas, de la misma forma a como 

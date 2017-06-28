@@ -1,15 +1,9 @@
 {Description of the program.}
 program nombre;
+uses PIC16F84A;
 var 
   aa: byte;
-  procedure proc0; interrupt;
-  begin
-    
-  end; 
-  
+  x : bit absolute aa.1;
 begin 
-  asm 
-  RETLW '0'
-  end
   aa := 1; 
 end.
