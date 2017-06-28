@@ -206,7 +206,7 @@ SetAsOutput()  Set a 8-bits port or a pin as an output.
 
 ### Procedure and Functions
 
-PicPas use de Modula-2 syntax for procedure and fucntions:
+PicPas use the Modula-2 syntax for procedures and functions:
 
 Proedures are declared in the common Pascal syntax:
 
@@ -244,6 +244,31 @@ end;
 
 REGISTER parameters are fast, because they use the W register, so only one REGISTER parameter can be used. 
 As REGISTER parameter is stored in W register, any operation using the W register, could lose its value, so the first operation in a procedure, using a REGISTER parameter must be read this parameter.
+
+### Interrupts
+
+To manage interrupts, PicPas let us to define a special kind of Procedure:
+
+```
+  procedure My_ISR; interrupt;
+  begin
+
+    //ISR code
+
+  end;
+```
+
+The name of the procedure is not important, but the declaration must be followed but the reserved word INTERRUPT.
+
+Only one INTERRUPT procedure is allowed in a program.
+
+When PicPas compile an INTERRUPT procedure, some special criterias are considered:
+
+1. Are always compiled starting in the address 0x0004.
+2. A RETFIE instruction is added to the end of the routine.
+3. No additional bank switching instructions are generated at the beginning of the procedure. It is the responsibility of the programmer to properly handle the banks within the routine.
+
+INTERRUPT procedures don't save the value of registers or the control flags. This should be done manually.
 
 
 ### ASM blocks
@@ -391,8 +416,6 @@ Specify the syntax mode, used by the compiler. The allowed values are:
 •	No recursion implemented, Because of the limited hardware resources, available in PIC devices.
 
 •	No float point implemented.
-
-•	No interruption support.
 
 Some of these limitations must be solved in next versions.
 
