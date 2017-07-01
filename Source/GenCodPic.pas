@@ -152,6 +152,7 @@ type
     incDetComm: boolean;   //Incluir Comentarios detallados.
     SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
     SetProEndBnk: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
+    OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
   public  //Acceso a registro de trabajo
     property H_register: TPicRegister read H;
   public  //Inicialización

@@ -74,7 +74,7 @@ var
   callPos: TSrcPos;
   ed: TSynEditor;
   ele: TxpElement;
-  curBody: TxpEleBody;
+//  curBody: TxpEleBody;
 begin
   ed := fraEdit.ActiveEditor;
   //Primero ubica el token
@@ -84,8 +84,9 @@ begin
   //Asegurarse que "synTree" está actualizado.
   cxp.Compile(fraEdit.ActiveEditor.NomArc, false);  //Solo primera pasada
   if cxp.HayError then begin
-    MsgErr('Compilation error.');  //tal vez debería dar más información sobre el error
-    exit;
+    //Basta que haya compilado hasta donde se encuentra el identifiacdor, para que funciones.
+//    MsgErr('Compilation error.');  //tal vez debería dar más información sobre el error
+//    exit;
   end;
   callPos.col := curX;
   callPos.row := ed.SynEdit.CaretY;

@@ -18,7 +18,9 @@ type
       srcPos: TSrcPos): TxpEleVar;
     procedure cInNewLine(lin: string);
     procedure Cod_JumpIfTrue;
-    function CompileStructBody(GenCode: boolean = true): boolean;
+    function CompileStructBody(GenCode: boolean): boolean;
+    function CompileConditionalBody(out FinalBank: byte): boolean;
+    function CompileNoConditionBody(GenCode: boolean): boolean;
     procedure CompileFOR;
     procedure CompileLastEnd;
     procedure CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
@@ -58,11 +60,13 @@ type
   private  //Variables internas del compilador
     mode : (modPascal, modPicPas);
   public
+    Compiling   : boolean;  //Bandera para el compilado
     OnAfterCompile: procedure of object;   //Al finalizar la compilación.
     {Indica que TCompiler, va a acceder a un archivo, peor está pregunatndo para ver
      si se tiene un Stringlist, con los datos ya caragdos del archivo, para evitar
      tener que abrir nuevamente al archivo.}
     OnRequireFileString: procedure(FilePath: string; var strList: TStrings) of object;
+    function modeStr: string;
     procedure Compile(NombArc: string; Link: boolean = true);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
     procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);  //uso de la memoria Flash
@@ -171,7 +175,7 @@ darle mayor poder, en el futuro.}
   end;
 var
   f: Integer;
-  txtMode: String;
+  txtMode, txtMsg, tmp: String;
 begin
   cIn.SkipWhites;
   while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
@@ -246,6 +250,33 @@ begin
           GenError(ER_MODE_UNKNOWN, [txtMode]);
           exit;
         end;
+      end;
+      'MSGBOX': begin
+        lexDir.Next;  //pasa al siguiente
+        skipWhites;
+        //Captura tokens para mostrarlos
+        txtMsg := '';
+        while not lexDir.GetEol do begin
+          tmp :=  lexDir.GetToken;  //lee token
+          if lexDir.GetTokenKind = lexDir.tnString then begin
+            tmp := copy(tmp, 2, length(tmp)-2);
+          end else if lexDir.GetToken = '}' then begin
+            break;  //sale
+          end else begin
+            //Verifica si es variable de sistema
+            if UpCase(tmp) = '$FREQUENCY' then tmp := IntToStr(pic.frequen);
+            if UpCase(tmp) = '$PROCESSOR' then tmp := pic.Model;
+            if UpCase(tmp) = '$MODE' then tmp := modeStr;
+            if UpCase(tmp) = '$CURRBANK' then tmp := IntToStr(CurrBank);
+            if UpCase(tmp) = '$IFLASH' then tmp := IntToStr(pic.iFlash);
+          end;
+          //Concatena
+          txtMsg := txtMsg + tmp;
+          lexDir.Next;  //pasa al siguiente
+          skipWhites;
+        end;
+        //Solo muestra en compilación y en la primera pasada
+        if Compiling and FirstPass then msgbox(txtMsg);
       end;
       else
         GenError(ER_UNKNO_DIREC, [lexDir.GetToken]);
@@ -392,9 +423,9 @@ begin
     if not CaptureTok(')') then exit;
   end;
 end;
-function TCompiler.CompileStructBody(GenCode: boolean = true): boolean;
+function TCompiler.CompileStructBody(GenCode: boolean): boolean;
 {Compila el cuerpo de un THEN, ELSE, WHILE, ... considerando el modo del compilador.
-Si se genera error, devuelve FALSE.}
+Si se genera error, devuelve FALSE. }
 begin
   if GenCode then begin
     //Este es el modo normal. Genera código.
@@ -406,7 +437,6 @@ begin
       CompileCurBlock;
     end;
     if HayError then exit(false);
-    exit(true);
   end else begin
     //Este modo no generará instrucciones
     cIn.SkipWhites;
@@ -419,8 +449,43 @@ begin
       CompileCurBlockDummy;  //solo para mantener la sintaxis
     end;
     if HayError then exit(false);
-    exit(true);
   end;
+  //Salió sin errores
+  exit(true);
+end;
+function TCompiler.CompileConditionalBody(out FinalBank: byte): boolean;
+{Versión de CompileStructBody(), para bloques condicionales.
+Se usa para bloque que se ejecutarán de forma condicional, es decir, que no se
+garantiza que se ejecute siempre. "FinalBank" indica el banco en el que debería
+terminar el bloque.}
+//var
+//  BankChanged0: Boolean;
+begin
+//  BankChanged0 := BankChanged;  //Guarda
+//  BankChanged := false;         //Inicia para detectar cambios
+  Result := CompileStructBody(true);  //siempre genera código
+  FinalBank := CurrBank;  //Devuelve banco
+//  //Puede haber generado error.
+//  if BankChanged then begin
+//    {Hubo cambio de banco en este bloque. Deja "BankChanged" en TRUE, como indicación
+//    del cambio.}
+//    {Como es bloque condicional, no se sabe si se ejecutará. Fija el banco actual
+//    como indefinido, para forzar al compilador a fijar el banco en la siguiente
+//    instrucción.}
+//    CurrBank := 255;
+//  end else begin
+//    //No hubo cambio de banco, al menos en este bloque (tal vez no generó código.)
+//    BankChanged := BankChanged0;  //Deja con el valor anterior.
+//  end;
+end;
+function TCompiler.CompileNoConditionBody(GenCode: boolean): boolean;
+{Versión de CompileStructBody(), para bloques no condicionales.
+Se usa para bloques no condicionales, es decir que se ejecutará siempre (Si GenCode
+es TRUE) o nunca (Si GenCode es FALSE);
+}
+begin
+  //"BankChanged" sigue su curso normal
+  Result := CompileStructBody(GenCode);
 end;
 function TCompiler.VerifyEND: boolean;
 {Compila la parte final de la estructura, que en el modo PicPas, debe ser el
@@ -448,37 +513,39 @@ procedure TCompiler.CompileIF;
 {Compila una extructura IF}
 var
   jFALSE, jEND_TRUE: integer;
+  bnkExp, bnkTHEN, bnkELSE: Byte;
 begin
   if not GetExpressionBool then exit;
+  bnkExp := CurrBank;   //Guarda el banco inicial
   if not CaptureStr('then') then exit; //toma "then"
   //Aquí debe estar el cuerpo del "if"
   case res.catOp of
   coConst: begin  //la condición es fija
     if res.valBool then begin
       //Es verdadero, siempre se ejecuta
-      if not CompileStructBody then exit;
+      if not CompileNoConditionBody(true) then exit;
       while cIn.tokL = 'elsif' do begin
         cIn.Next;   //toma "elsif"
         if not GetExpressionBool then exit;
         if not CaptureStr('then') then exit;  //toma "then"
-        //Compila el cuerpo pero sin cósigo
-        if not CompileStructBody(false) then exit;
+        //Compila el cuerpo pero sin código
+        if not CompileNoConditionBody(false) then exit;
       end;
       if cIn.tokL = 'else' then begin
         //Hay bloque ELSE, pero no se ejecutará nunca
         cIn.Next;   //toma "else"
-        if not CompileStructBody(false) then exit;
+        if not CompileNoConditionBody(false) then exit;
         if not VerifyEND then exit;
       end else begin
         VerifyEND;
       end;
     end else begin
       //Es falso, nunca se ejecuta
-      if not CompileStructBody(false) then exit;
+      if not CompileNoConditionBody(false) then exit;
       if cIn.tokL = 'else' then begin
         //hay bloque ELSE, que sí se ejecutará
         cIn.Next;   //toma "else"
-        if not CompileStructBody then exit;
+        if not CompileNoConditionBody(true) then exit;
         VerifyEND;
       end else if cIn.tokL = 'elsif' then begin
         cIn.Next;
@@ -493,16 +560,29 @@ begin
   coVariab, coExpres:begin
     Cod_JumpIfTrue;
     _GOTO_PEND(jFALSE);  //salto pendiente
-    //Compila la parte TRUE
-    if not CompileStructBody then exit;
+    //Compila la parte THEN
+    if not CompileConditionalBody(bnkTHEN) then exit;
     //Verifica si sigue el ELSE
     if cIn.tokL = 'else' then begin
-      //hay bloque ELSE
+      //Es: IF ... THEN ... ELSE ... END
       cIn.Next;   //toma "else"
       _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
       _LABEL(jFALSE);   //termina de codificar el salto
-      if not CompileStructBody then exit;
+      CurrBank := bnkExp;  //Fija el banco inicial antes de compilar
+      if not CompileConditionalBody(bnkELSE) then exit;
       _LABEL(jEND_TRUE);   //termina de codificar el salto
+      //Manejo de bancos
+      if OptBnkAftIF then begin
+        //Optimizar banking
+        if bnkTHEN = bnkELSE then begin
+          //Es el mismo banco (aunque sea 255). Lo deja allí.
+        end else begin
+          CurrBank := 255;  //Indefinido
+        end;
+      end else begin
+        //Sin optimización
+        _BANKRESET;
+      end;
       VerifyEND;   //puede salir con error
     end else if cIn.tokL = 'elsif' then begin
       cIn.Next;
@@ -513,7 +593,20 @@ begin
       _LABEL(jEND_TRUE);   //termina de codificar el salto
       //No es necesario verificar el END final.
     end else begin
+      //Es: IF ... THEN ... END. (Puede ser recursivo)
       _LABEL(jFALSE);   //termina de codificar el salto
+      //Manejo de bancos
+      if OptBnkAftIF then begin
+        //Optimizar banking
+        if bnkExp = bnkTHEN then begin
+          //Es el mismo banco. Lo deja allí.
+        end else begin
+          CurrBank := 255;  //Indefinido
+        end;
+      end else begin
+        //Sin optimización
+        _BANKRESET;
+      end;
       VerifyEND;  //puede salir con error
     end;
   end;
@@ -585,6 +678,7 @@ procedure TCompiler.CompileWHILE;
 var
   l1: Word;
   dg: Integer;
+  bnkEND: byte;
 begin
   l1 := _PC;        //guarda dirección de inicio
   if not GetExpressionBool then exit;
@@ -594,20 +688,20 @@ begin
   coConst: begin  //la condición es fija
     if res.valBool then begin
       //Lazo infinito
-      if not CompileStructBody then exit;
+      if not CompileNoConditionBody(true) then exit;
       if not VerifyEND then exit;
       _GOTO(l1);
     end else begin
       //lazo nulo
       //Compila la parte TRUE
-      if not CompileStructBody(false) then exit;
+      if not CompileNoConditionBody(false) then exit;
       if not VerifyEND then exit;
     end;
   end;
   coVariab, coExpres: begin
     Cod_JumpIfTrue;
     _GOTO_PEND(dg);  //salto pendiente
-    if not CompileStructBody then exit;
+    if not CompileConditionalBody(bnkEND) then exit;
     if not VerifyEND then exit;
     _GOTO(l1);
     //ya se tiene el destino del salto
@@ -622,6 +716,7 @@ var
   dg: Integer;
   Op1, Op2: TOperand;
   opr1: TxpOperator;
+  bnkFOR: byte;
 begin
   Op1 :=  GetOperand;
   if Op1.catOp <> coVariab then begin
@@ -665,7 +760,7 @@ begin
     Oper(Op1, opr1, Op2);   //"res" mantiene la constante o variable
     Cod_JumpIfTrue;
     _GOTO_PEND(dg);  //salto pendiente
-    if not CompileStructBody then exit;
+    if not CompileConditionalBody(bnkFOR) then exit;
     if not VerifyEND then exit;
     //Incrementa variable cursor
     if Op1.typ = typByte then begin
@@ -971,6 +1066,7 @@ var
       if elem is TxpEleVar then begin
         //Es variable
         xvar := TxpEleVar(elem);
+        if FirstPass then xvar.AddCaller;   //Considera que se usa la variable, auqnue no se llame desde código.
       end else begin
         GenError(ER_EXP_VAR_IDE);
         exit;
@@ -1272,10 +1368,20 @@ procedure TCompiler.CompileInstructionDummy;
 {Compila una instrucción pero sin generar código. }
 var
   p: Integer;
+  BankChanged0, InvertedFromC0: Boolean;
+  CurrBank0: Byte;
 begin
   p := pic.iFlash;
-  CompileInstruction;  //compila solo para mantener la sintaxis
-  pic.iFlash := p;     //elimina lo compilado
+  CurrBank0      := CurrBank;      //Guarda estado
+  BankChanged0   := BankChanged;   //Guarda estado
+  InvertedFromC0 := InvertedFromC; //Guarda estado
+
+  CompileInstruction;  //Compila solo para mantener la sintaxis
+
+  InvertedFromC := InvertedFromC0; //Restaura
+  BankChanged   := BankChanged0;   //Restaura
+  CurrBank      := CurrBank0;      //Restaura
+  pic.iFlash := p;     //Elimina lo compilado
   //puede salir con error
   { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
 end;
@@ -1305,10 +1411,20 @@ procedure TCompiler.CompileCurBlockDummy;
 {Compila un bloque pero sin geenrar código.}
 var
   p: Integer;
+  BankChanged0, InvertedFromC0: Boolean;
+  CurrBank0: Byte;
 begin
   p := pic.iFlash;
-  CompileCurBlock;  //compila solo para mantener la sintaxis
-  pic.iFlash := p;     //elimina lo compilado
+  CurrBank0      := CurrBank;      //Guarda estado
+  BankChanged0   := BankChanged;   //Guarda estado
+  InvertedFromC0 := InvertedFromC; //Guarda estado
+
+  CompileCurBlock;  //Compila solo para mantener la sintaxis
+
+  InvertedFromC := InvertedFromC0; //Restaura
+  BankChanged   := BankChanged0;   //Restaura
+  CurrBank      := CurrBank0;      //Restaura
+  pic.iFlash := p;     //Elimina lo compilado
   //puede salir con error
   { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
 end;
@@ -1679,7 +1795,7 @@ begin
   ResetFlashAndRAM;
   ClearError;
   pic.MsjError := '';
-  //Verifica las constantes usadas
+  //Verifica las constantes usadas. Solo en el nodo principal, para no sobrecargar emnsajes.
   for elem in TreeElems.main.elements do if elem is TxpEleCon then begin
       if elem.nCalled = 0 then begin
         GenWarnPos(WA_UNUSED_CON_, [elem.name], elem.srcDec);
@@ -1692,15 +1808,16 @@ begin
   repeat
     noUsedPrev := noUsed;   //valor anterior
     noUsed := RemoveUnusedFunctions;
-//    debugln('Funciones no usadas %d', [noUsed]);
   until noUsed = noUsedPrev;
   //Reserva espacio para las variables usadas
   TreeElems.RefreshAllVars;
   for xvar in TreeElems.AllVars do begin
+//debugln('xvar=%s', [xvar.name]);
     if xvar.nCalled>0 then begin
       //Asigna una dirección válida para esta variable
       CreateVarInRAM(xVar);  //Crea la variable
       xvar.typ.DefineRegister;  //Asegura que se dispondrá de los RT necesarios
+//debugln('  Defined in %s', [xvar.AddrString]);
       if HayError then exit;
     end else begin
       xvar.ResetAddress;
@@ -1781,6 +1898,15 @@ begin
   PutLabel('__end_program__');
   {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
   _SLEEP();   //agrega instrucción final
+end;
+function TCompiler.modeStr: string;
+begin
+  case mode of
+  modPascal: Result := 'modPascal';
+  modPicPas: Result := 'modPicPas';
+  else
+    Result := 'Unknown';
+  end;
 end;
 function TCompiler.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}
@@ -1864,7 +1990,9 @@ begin
     {-------------------------------------------------}
     cIn.ClearAll;//es necesario por dejar limpio
     //Genera archivo hexa, en la misma ruta del programa
-    pic.GenHex(ExtractFileDir(mainFile) + DirectorySeparator + 'output.hex');
+    if Link then begin
+       pic.GenHex(ExtractFileDir(mainFile) + DirectorySeparator + 'output.hex');
+    end;
   finally
     ejecProg := false;
     //Tareas de finalización
@@ -2002,6 +2130,7 @@ begin
   //solo se requiere identificadores y números
   lexDir.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
   lexDir.DefTokContent('[0-9]', '[0-9.]*', lexDir.tnNumber);
+  lexDir.DefTokDelim('''', '''', lexDir.tnString);  //cadenas
   lexDir.Rebuild;
 end;
 constructor TCompiler.Create;

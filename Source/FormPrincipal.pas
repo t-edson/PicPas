@@ -150,7 +150,6 @@ type
   private
     tic         : integer;  //Contador para temporización
     ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
-    Compiling   : boolean;  //Bandera para el compilado
     curProj     : TPicPasProject; //Proyecto actual
     hlAssem     : TSynFacilSyn;   //resaltador para ensamblador
     fraEditView1: TfraEditView;   //Panel de editores
@@ -220,7 +219,7 @@ begin
   if i <> -1 then begin
     //Tiene el archivo abierto. Pasa la referencia.
     ed := fraEditView1.editors[i];
-    if Compiling then ed.SaveFile;   //En compilación gurada siempre los archivos afectados
+    if cxp.Compiling then ed.SaveFile;   //En compilación gurada siempre los archivos afectados
     strList := ed.SynEdit.Lines;
   end;
 end;
@@ -412,7 +411,10 @@ end;
 procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
 {Se produjo una modificación en el editor "ed"}
 begin
-  ticSynCheck := 0;  //reinicia cuenta
+  if not cxp.Compiling then begin
+    //En compilación no se activa la verificación automática de sintaxis
+    ticSynCheck := 0;  //reinicia cuenta
+  end;
   acArcSave.Enabled := ed.Modified;
   acEdUndo.Enabled  := ed.CanUndo;
   acEdRedo.Enabled  := ed.CanRedo;
@@ -668,13 +670,14 @@ begin
     end;
   end;
   fraMessages.InitCompilation(cxp, true);  //Limpia mensajes
-  cxp.incDetComm := Config.IncComment2;   //Visualización de mensajes
-  cxp.SetProIniBnk := Config.SetProIniBnk;
-  cxp.SetProEndBnk := Config.SetProEndBnk;
-  Compiling := true;   //activa bandera
+  cxp.incDetComm   := Config.IncComment2;   //Visualización de mensajes
+  cxp.SetProIniBnk := not Config.OptBnkBefPro;
+  cxp.SetProEndBnk := not Config.OptBnkAftPro;
+  cxp.OptBnkAftIF  := Config.OptBnkAftIF;
+  ticSynCheck := 1000; //Desactiva alguna Verif. de sintaxis, en camino.
+  cxp.Compiling := true;   //Activa bandera
   cxp.Compile(filName);
-  Compiling := false;
-  ticSynCheck := 1000; //Desactiva la verif. de sintaxis, despues de compilar
+  cxp.Compiling := false;
   if cxp.HayError then begin
     fraMessages.EndCompilation;
     VerificarError;

@@ -1,9 +1,16 @@
-{Description of the program.}
-program nombre;
-uses PIC16F84A;
-var 
-  aa: byte;
-  x : bit absolute aa.1;
-begin 
-  aa := 1; 
+{$PROCESSOR PIC16F84}
+{$FREQUENCY 8Mhz}
+var  //simple type declarations
+	vbyte: byte;
+  vword: word;
+  aword: word absolute vword;
+  procedure proc1;
+  begin
+    
+  end; 
+begin
+  aword := $2010;
+//  vword.low.bit0 := 1;
+  proc1;
 end.
+

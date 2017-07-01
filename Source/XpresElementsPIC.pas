@@ -754,7 +754,8 @@ begin
 end;
 procedure TXpTreeElements.RefreshAllVars;
 {Devuelve una lista de todas las variables del árbol de sintaxis, incluyendo las de las
-funciones y procedimientos.}
+funciones y procedimientos. La lista se obtiene ordenada de acuerdo a como se haría en
+una exploración sintáctica normal.}
   procedure AddVars(nod: TxpElement);
   var
     ele : TxpElement;

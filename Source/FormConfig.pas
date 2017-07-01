@@ -30,11 +30,12 @@ type
     BitCancel: TBitBtn;
     BitAceptar: TBitBtn;
     butDefval: TButton;
+    chkOptBnkAftIF: TCheckBox;
     chkAutSynChk: TCheckBox;
     chkIncVarName: TCheckBox;
     chkLoadLast: TCheckBox;
-    chkSetProIniBnk: TCheckBox;
-    chkSetProEndBnk: TCheckBox;
+    chkOptBnkBefPro: TCheckBox;
+    chkOptBnkAftPro: TCheckBox;
     chkShowErrMsg: TCheckBox;
     chkIncComment2: TCheckBox;
     chkExcUnused: TCheckBox;
@@ -52,6 +53,7 @@ type
     colMessPanErr: TColorBox;
     ComboBox1: TComboBox;
     Edit1: TEdit;
+    GroupBox1: TGroupBox;
     grpTabEdiState: TRadioGroup;
     Label1: TLabel;
     Label2: TLabel;
@@ -124,8 +126,9 @@ type
     //Configuracions del compilador
     ShowErMsg : boolean;
     OptimLev  : TOptimLev;
-    SetProIniBnk: Boolean;
-    SetProEndBnk: Boolean;
+    OptBnkAftIF : boolean;
+    OptBnkBefPro: boolean;
+    OptBnkAftPro: boolean;
     procedure ConfigEditor(ed: TSynEdit);
   public
     fraCfgSynEdit: TfraCfgSynEdit;
@@ -240,8 +243,9 @@ begin
   //Configuraciones del compilador
   cfgFile.Asoc_Bol('ShowErMsg' , @ShowErMsg, chkShowErrMsg, true);
   cfgFile.Asoc_Enum('OptimLev' , @OptimLev, Sizeof(TOptimLev), grpOptimLev, 1);
-  cfgFile.Asoc_Bol('SetProIniBnk', @SetProIniBnk, chkSetProIniBnk, true);
-  cfgFile.Asoc_Bol('SetProEndBnk', @SetProEndBnk, chkSetProEndBnk, true);
+  cfgFile.Asoc_Bol('OptBnkAftIF' , @OptBnkAftIF , chkOptBnkAftIF , true);
+  cfgFile.Asoc_Bol('OptBnkBefPro', @OptBnkBefPro, chkOptBnkBefPro, true);
+  cfgFile.Asoc_Bol('OptBnkAftPro', @OptBnkAftPro, chkOptBnkAftPro, true);
   //////////////////////////////////////////////////
   cfgFile.OnPropertiesChanges := @cfgFilePropertiesChanges;
   if not cfgFile.FileToProperties then begin

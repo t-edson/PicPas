@@ -23,10 +23,32 @@ Se activa la definición de marcadores de texto con Shift+Ctrl+<0..9>
 Se crea el marcador TSynEditor.MarkErr, para resaltar errores de sintaxis.
 Se activa el remarcado automático de errores de sinatxis, en el editor.
 Se crean los métodos TxpElement.IsCAlledAt() y TxpElement.IsDeclaredAt().
-
+Se cambia el formato de las direcciones de memoria Flash, en el código ensamblador.
+Se mejora el autocompletado para el nombre de unidades, direectivas y dentro de 
+bloques IF.
+Se agregan nuevos dispositivos PIC a la lista de dispositivos soportados.
+Se incluye la preservación de variables de expresión, en TCompiler.CompileInstructionDummy 
+y TCompiler.CompileCurBlockDummy.
+Se crean los métodos TCompiler.CompileConditionalBody() y CompileNoConditionBody().
+Se incluye optimización en el manejo de bancos para las condicionales.
+Se incluye la directiva de compilación: {$MSGBOX } y la posibilidad de mostrar
+variables del sistema.
 
 PENDIENTES
-Implementar la asignación de bancos de RAM, después de las condicionales o lazos.
+Revisar el error en la ubicación de variables ABSOLUTE, cuando por optimizacion, se 
+mueve la variable aludida a otra ubicación:
+var  
+  no_usado: byte;  //No usada
+  vword: word;  //Se reubicará al eliminarse "no_usado"
+  aword: word absolute vword;  //Pierde el rastro de "vword"
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absoulte a;   //Si "b" no se uitliza, aún se sigue marcando "a", como usado.
+
+Implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compialdor (además de CurrBank), en
+los lazos y condicionales.
 Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
 (tal vez se podría detectar siempre la última instrucción compilada).
 Permitir compilar las funciones, como INLINE.
@@ -42,6 +64,7 @@ Revisar el comportamiento de los programas compilados, con más de un banco de me
 y más de una página de ROM.
 Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
 se hace con las funciones en TCompiler.CompileLinkProgram().
+Activar las funciones de búsqueda y reemplazo de texto.
 
 PicPas 0.7.0
 ============

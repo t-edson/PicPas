@@ -1051,7 +1051,7 @@ begin
   end;
   coVariab: begin
     SetResultExpres_byte(operType);  //Realmente, el resultado no es importante
-    _BANKSEL(p2^.bank);  //verifica banco destino
+    _BANKSEL(p2^.bank);  //verifica banco fuente
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);

@@ -405,6 +405,7 @@ var
   curTok: TFaTokInfo;
 begin
   hl.ExploreLine(p1, toks, tokIdx);  //Explora la línea aludida
+  if tokIdx = -1 then exit;
   MarkErr.Enabled := true;
   //Marca en los límites del token actual
   curTok := toks[tokIdx];

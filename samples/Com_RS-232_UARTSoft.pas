@@ -81,25 +81,25 @@ var
 begin
   ASM  
               ;2078 cycles -> 20 MHz
-            ;1243 cycles -> 12 MHz
-            ;1038 cycles -> 10 MHz
-            ; 828 cycles ->  8 MHz
+              ;1243 cycles -> 12 MHz
+              ;1038 cycles -> 10 MHz
+              ; 828 cycles ->  8 MHz
               movlw        CICLOS_DELAY_1
               movwf        d1
               movlw        CICLOS_DELAY_2
               movwf        d2
   Delay_0:              
-              decfsz         d1, f
+              decfsz       d1, f
               goto         $+2
-              decfsz         d2, f
+              decfsz       d2, f
               goto         Delay_0
                          
               ;2 cycles    
               goto         $+1               ; -> Para 8, 12 y 20 MHz
               ;2 cycles    
               ;goto         $+1               ; -> Para 12 MHz
-            ;1 cycle
-            ;nop                            ; -> Para 10 y 20 Mhz
+              ;1 cycle
+              ;nop                            ; -> Para 10 y 20 Mhz
               ;4 cycles (call & return)
   END
 end;
@@ -134,7 +134,7 @@ end;
 // Procedure UARTSOFT_SENTCHAR
 // Envia un caracter enviado por el puerto serie (UART).
 // -----------------------------------------------------------------
-procedure UARTSoft_SendChar(register dato : char);
+procedure UARTSoft_SendChar(dato : char);
 var
   contador, dataValue : byte;
 begin
@@ -170,20 +170,20 @@ begin
   MedioBitDelay;                     // Espera 1/2 tiempo de transmision para hacer la lectura en un punto central del pulso.
  
   repeat                             // Recibe los 8 bits de datos.
-    dataValue   := dataValue>>1;     // Desplaza a la derecha el dato parcialmente recibido antes de aÒadir un nuevo bit.
-    dataValue.7 := UART_RX;          // AÒade bit de datos recibido.
+    dataValue   := dataValue>>1;     // Desplaza a la derecha el dato parcialmente recibido antes de a√±adir un nuevo bit.
+    dataValue.7 := UART_RX;          // A√±ade bit de datos recibido.
     BitDelay;                        // Tiempo de espera antes de detectar estado del siguiente bit de datos.
     Inc(contador);                   // Incrementa contador de bits de datos.
   until (contador = DataBitCount);   // Acaba cuando se han recibido los 8 bits de datos.
  
     // Comprueba correcta recepcion mediante bit de Stop.
-  // AquÌ se podrÌa aÒadir en su caso la deteccion de los bits de paridad.
-    if (UART_RX = HIGH_LEVEL) then     // Bit de Stop debe ser un uno logico.
-        MedioBitDelay;                   // Espera final para completar el tiempo de la trama de bits completa.
-        exit(Chr(DataValue));            // Devuelve el dato leido.
-    else                               // Ha ocurrido algun error !
-        MedioBitDelay;                   // Espera final para completar el tiempo de la trama de bits completa.
-        exit(Chr(0));                    // Si detecta error devuelve el valor cero.
+    // Aqu√≠ se podr√≠a a√±adir en su caso la deteccion de los bits de paridad.
+    if (UART_RX = HIGH_LEVEL) then   // Bit de Stop debe ser un uno logico.
+        MedioBitDelay;               // Espera final para completar el tiempo de la trama de bits completa.
+        exit(Chr(DataValue));        // Devuelve el dato leido.
+    else                             // Ha ocurrido algun error !
+        MedioBitDelay;               // Espera final para completar el tiempo de la trama de bits completa.
+        exit(Chr(0));                // Si detecta error devuelve el valor cero.
     end;  
 end;
  
