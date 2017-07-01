@@ -416,10 +416,15 @@ Specify the syntax mode, used by the compiler. The allowed values are:
 Shows a text message in the screen:
 
 {$MSGBOX 'Hello World'} -> Shows the message 'Hello World' in the screen.
+
 {$MSGBOX $PROCESSOR} -> Shows the PIC model defined.
+
 {$MSGBOX $FREQUENCY} -> Shows the Clock frequency.
+
 {$MSGBOX $MODE} -> Shows the syntax Mode of the compiler.
+
 {$MSGBOX $CURRBANK} -> Shows the current RAM bank.
+
 {$MSGBOX $IFLASH} -> Shows the current Progarm Counter.
 
 
