@@ -425,7 +425,11 @@ Shows a text message in the screen:
 
 {$MSGBOX $CURRBANK} -> Shows the current RAM bank.
 
-{$MSGBOX $IFLASH} -> Shows the current Progarm Counter.
+{$MSGBOX $IFLASH} -> Shows the current Program Counter.
+
+{$MSGBOX $PROCESSOR $FREQUENCY} -> Shows the PIC model and the Clock frequency.
+
+{$MSGBOX 'clock=' $FREQUENCY}  -> Shows the message: "clock=8000000" (if the Frequency was set to 8MHz).
 
 
 ## Limitations
