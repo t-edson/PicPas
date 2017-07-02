@@ -1,0 +1,2305 @@
+Index: PicPas.de.po
+===================================================================
+--- PicPas.de.po	(nonexistent)
++++ PicPas.de.po	(working copy)
+@@ -0,0 +1,536 @@
++msgid ""
++msgstr ""
++"Content-Type: text/plain; charset=UTF-8\n"
++"Project-Id-Version: \n"
++"POT-Creation-Date: \n"
++"PO-Revision-Date: \n"
++"Last-Translator: Joe Care\n"
++"Language-Team: \n"
++"MIME-Version: 1.0\n"
++"Content-Transfer-Encoding: 8bit\n"
++"Language: de\n"
++"X-Generator: Poedit 2.0.2\n"
++
++#: FormConfig.Caption
++msgid "Settings"
++msgstr "Einstellungen"
++
++#: FormConfig.tabGeneral.Caption
++msgid "General"
++msgstr "Allgemein"
++
++#: FormConfig.RadioGroup1.Caption
++msgid "Toolbar"
++msgstr "Werkzeugleiste"
++
++#: FormConfig.RadioGroup1.Items[0]
++msgid "Small Icons"
++msgstr "Kleine Bilder"
++
++#: FormConfig.RadioGroup1.Items[1]
++msgid "Big Icons"
++msgstr "Große Bilder"
++
++#: FormConfig.label1.Caption
++msgid "Units Path:"
++msgstr "Unitpfad:"
++
++#: FormConfig.chkLoadLast.Caption
++msgid "Load last file edited"
++msgstr "Letzte editierte Datei laden"
++
++#: FormConfig.Label2.Caption
++msgid "Language"
++msgstr "Sprache"
++
++#: FormConfig.tabEditor.Caption
++msgid "Editor"
++msgstr "Editor"
++
++#: FormConfig.tabEnsamb.Caption
++msgid "Assembler"
++msgstr "Assembler"
++
++#: FormConfig.chkIncHeadMpu.Caption
++msgid "Include MPU &Header"
++msgstr "MPU &Kopfzeilen einfügen"
++
++#: FormConfig.chkIncDecVar.Caption
++msgid "Include &Variables declaration"
++msgstr "Variablendeklaration einfügen"
++
++#: FormConfig.RadioGroup2.Caption
++msgid "Style"
++msgstr "Stil"
++
++#: FormConfig.chkExcUnus.Caption
++msgid "Exclude unused"
++msgstr "Unbenutzte ausschließen"
++
++#: FormConfig.chkIncAddress.Caption
++msgid "Include &Memory Address"
++msgstr "Speicheradressen zufügen"
++
++#: FormConfig.chkIncComment.Caption
++msgid "Include &Comments"
++msgstr "Kommentare hinzufügen"
++
++#: FormConfig.chkIncComment2.Caption
++msgid "Include &Detailed comments"
++msgstr "&Detaillierte Kommentare hinzufügen"
++
++#: FormConfig.tabOutput.Caption
++msgid "Compiler"
++msgstr "Compiler"
++
++#: FormConfig.chkShowErrMsg.Caption
++msgid "&Show Error Messages"
++msgstr "&Zeige Fehlermeldungen"
++
++#: FormConfig.grpOptimLev.Caption
++msgid "Optimization Level:"
++msgstr "Optimierungsstufe:"
++
++#: FormConfig.grpOptimLev.Items[0]
++msgid "Fool"
++msgstr "Dumm"
++
++#: FormConfig.grpOptimLev.Items[1]
++msgid "Smart"
++msgstr "Schlau"
++
++#: FormPrincipal.mnFile.Caption
++msgid "&File"
++msgstr "&Datei"
++
++#: FormPrincipal.mnEdit.Caption
++msgid "&Edit"
++msgstr "&Bearbeiten"
++
++#: FormPrincipal.mnFind.Caption
++msgid "&Search"
++msgstr "&Suchen"
++
++#: FormPrincipal.mnView.Caption
++msgid "&View"
++msgstr "&Ansicht"
++
++#: FormPrincipal.mnTools.Caption
++msgid "&Tools"
++msgstr "&Werkzeuge"
++
++#: FormPrincipal.acArcNewProj.Caption FormPrincipal.acArcNewProj.Hint
++msgid "New &Project"
++msgstr "Neues &Projekt"
++
++#: FormPrincipal.acArcNewFile.Caption
++msgid "New &File"
++msgstr "&Neu"
++
++#: FormPrincipal.acArcNewFile.Hint
++msgid "New File"
++msgstr "Neue Datei"
++
++#: FormPrincipal.acArcOpen.Caption
++msgid "&Open..."
++msgstr "&Öffnen..."
++
++#: FormPrincipal.acArcOpen.Hint
++msgid "Open file"
++msgstr "Datei öffnen"
++
++#: FormPrincipal.acArcSave.Caption
++msgid "&Save"
++msgstr "&Speichern"
++
++#: FormPrincipal.acArcSave.Hint
++msgid "Save file"
++msgstr "Datei speichern"
++
++#: FormPrincipal.acArcSaveAs.Caption
++msgid "Sa&ve As..."
++msgstr "Speichern &unter ..."
++
++#: FormPrincipal.acArcSaveAs.Hint
++msgid "Save file as..."
++msgstr "Datei mit unter neuem Namen speichern ..."
++
++#: FormPrincipal.acArcCloseFile.Caption
++msgid "&Close File"
++msgstr "Datei s&chließen"
++
++#: FormPrincipal.acArcCloseProj.Caption
++msgid "Close Project"
++msgstr "Projekt schließen"
++
++#: FormPrincipal.mnSamples.Caption
++msgid "Samples"
++msgstr "Beispiele"
++
++#: FormPrincipal.acArcQuit.Caption
++msgid "&Quit"
++msgstr "&Beenden"
++
++#: FormPrincipal.acArcQuit.Hint
++msgid "Close the program"
++msgstr "Programm beenden"
++
++#: FormPrincipal.acEdUndo.Caption
++msgid "&Undo"
++msgstr "&Zurück"
++
++#: FormPrincipal.acEdUndo.Hint
++msgid "Undo"
++msgstr "Änderung zurücknehmen"
++
++#: FormPrincipal.acEdRedo.Caption
++msgid "&Redo"
++msgstr "&Wiederholen"
++
++#: FormPrincipal.acEdRedo.Hint
++msgid "Redo"
++msgstr "Änderung wiederholen"
++
++#: FormPrincipal.acEdCut.Caption
++msgid "C&ut"
++msgstr "A&usschneiden"
++
++#: FormPrincipal.acEdCut.Hint
++msgid "Cut"
++msgstr "Ausschneiden"
++
++#: FormPrincipal.acEdCopy.Caption
++msgid "&Copy"
++msgstr "&Kopieren"
++
++#: FormPrincipal.acEdCopy.Hint
++msgid "Copy"
++msgstr "Kopieren"
++
++#: FormPrincipal.acEdPaste.Caption
++msgid "&Paste"
++msgstr "&Einfügen"
++
++#: FormPrincipal.acEdPaste.Hint
++msgid "Paste"
++msgstr "Einfügen"
++
++#: FormPrincipal.acEdSelecAll.Caption
++msgid "Select &All"
++msgstr "Alles &Auswählen"
++
++#: FormPrincipal.acEdSelecAll.Hint
++msgid "Select all"
++msgstr "Alles auswählen"
++
++#: FormPrincipal.acBusFind.Caption
++msgid "Search..."
++msgstr "Suchen..."
++
++#: FormPrincipal.acBusFind.Hint
++msgid "Search text"
++msgstr "Text suchen"
++
++#: FormPrincipal.acBusFindNxt.Caption
++msgid "Search &Next"
++msgstr "Weitersuche&n"
++
++#: FormPrincipal.acBusFindNxt.Hint
++msgid "Search Next"
++msgstr "Nächste Stelle suchen"
++
++#: FormPrincipal.acBusReplac.Caption
++msgid "&Replace..."
++msgstr "&Ersetzen..."
++
++#: FormPrincipal.acBusReplac.Hint
++msgid "Replace text"
++msgstr "Text ersetzen"
++
++#: FormPrincipal.acViewMsgPan.Caption
++msgid "&Messages Panel"
++msgstr "&Nachrichten Panel"
++
++#: FormPrincipal.acViewMsgPan.Hint
++msgid "Show/hide Messages Panel"
++msgstr "Nachrichten Panel zeigen oder verbergen"
++
++#: FormPrincipal.acViewStatbar.Caption
++msgid "&Status Bar"
++msgstr "&Statuszeile"
++
++#: FormPrincipal.acViewStatbar.Hint
++msgid "Show/hide Status Bar"
++msgstr "Statuszeile zeigen oder verbergen"
++
++#: FormPrincipal.acViewToolbar.Caption
++msgid "&Tool Bar"
++msgstr "&Werkzeugleiste"
++
++#: FormPrincipal.acViewToolbar.Hint
++msgid "Show/hide Tool Bar"
++msgstr "Werkzeugleiste zeigen oder verbergen"
++
++#: FormPrincipal.acViewSynTree.Caption
++msgid "&Code explorer"
++msgstr "&Quelltext-Explorer"
++
++#: FormPrincipal.acToolCompil.Caption
++msgid "&Compile"
++msgstr "&Compilieren"
++
++#: FormPrincipal.acToolCompil.Hint
++msgid "Compile the source code"
++msgstr "Compiliere den Quelltext"
++
++#: FormPrincipal.acToolComEjec.Caption
++msgid "Compile and E&xecute"
++msgstr "Compilieren und Au&sführen"
++
++#: FormPrincipal.acToolComEjec.Hint
++msgid "Compile and Execute"
++msgstr "Compilieren und Ausführen"
++
++#: FormPrincipal.acToolPICExpl.Caption
++msgid "PIC E&xplorer"
++msgstr "PIC E&xplorer"
++
++#: FormPrincipal.acToolPICExpl.Hint
++msgid "Open the PIC devices explorer"
++msgstr "Öffne den PIC Geräte explorer"
++
++#: FormPrincipal.acToolConfig.Caption
++msgid "&Settings"
++msgstr "&Einstellungen"
++
++#: FormPrincipal.acToolConfig.Hint
++msgid "Settings dialog"
++msgstr "Einstellungs-Dialog"
++
++#: FrameEditView.MSG_NOFIL
++msgid "No files"
++msgstr "Keine Dateien"
++
++#: FrameEditView.MSG_PASFI
++msgid "Pascal Files"
++msgstr "Pascal Dateien"
++
++#: FrameEditView.MSG_ALLFI
++msgid "All files"
++msgstr "Alle Dateien"
++
++#: FrameEditView.MSG_MODIF
++msgid "File %s has been modified. Save?"
++msgstr "Die Datei %s wurde verändert. Speichern ?"
++
++#: FrameEditView.mnNewTab.Caption
++msgid "New"
++msgstr "Neu"
++
++#: FrameEditView.mnCloseTab.Caption
++msgid "Close"
++msgstr "Schließen"
++
++#: FrameEditView.if mnRecents<>nil then mnRecents.Caption
++msgid "&Recents"
++msgstr "&Letzte"
++
++#: FrameMessagesWin.MSG_INICOMP
++msgid "Starting Compilation..."
++msgstr "Compilieren ausführen..."
++
++#: FrameMessagesWin.MSG_WARN
++msgid "Warning"
++msgstr "Warnung"
++
++#: FrameMessagesWin.MSG_WARNS FrameMessagesWin.chkWarns.Caption
++msgid "Warnings"
++msgstr "Warnungen"
++
++#: FrameMessagesWin.MSG_ERROR
++msgid "Error"
++msgstr "Fehler"
++
++#: FrameMessagesWin.MSG_ERRORS FrameMessagesWin.chkErrors.Caption
++msgid "Errors"
++msgstr "Fehler"
++
++#: FrameMessagesWin.MSG_COMPIL
++msgid "Compiled in: "
++msgstr "Compiliert in: "
++
++#: FrameMessagesWin.chkInform.Caption
++msgid "Information"
++msgstr "Information"
++
++#: FrameMessagesWin.PanGrilla.Caption
++msgid "<< No messages >>"
++msgstr "<<Keine Meldungen>>"
++
++#: FrameSyntaxTree.TIT_MAIN
++msgid "Program"
++msgstr "Programm"
++
++#: FrameSyntaxTree.TIT_UNIT
++msgid "Units"
++msgstr "Units"
++
++#: FrameSyntaxTree.TIT_CONS
++msgid "Constants"
++msgstr "Konstanten"
++
++#: FrameSyntaxTree.TIT_VARS
++msgid "Variables"
++msgstr "Variablen"
++
++#: FrameSyntaxTree.TIT_FUNC
++msgid "Functions"
++msgstr "Funktionen"
++
++#: FrameSyntaxTree.TIT_OTHER
++msgid "Others"
++msgstr "Anderes"
++
++#: FrameSyntaxTree.Label1.Caption
++msgid "Code Explorer"
++msgstr "Quellenexplorer"
++
++#: Parser.ER_NOT_IMPLEM_
++msgid "Not implemented: \"%s\""
++msgstr "Nicht implementiert: \"%s\""
++
++#: Parser.ER_IDEN_EXPECT
++msgid "Identifier expected."
++msgstr "Bezeichner erwartet."
++
++#: Parser.ER_DUPLIC_IDEN
++msgid "Duplicated identifier: \"%s\""
++msgstr "Doppelter Platzhalter: \"%s\""
++
++#: Parser.ER_INVAL_FLOAT
++msgid "Unvalid float number."
++msgstr "Ungültige Gleitkommazahl."
++
++#: Parser.ER_ERR_IN_NUMB
++msgid "Error in number."
++msgstr "Fehler bei Nummer."
++
++#: Parser.ER_NOTYPDEFNUM
++msgid "No type defined to accommodate this number."
++msgstr "Kein Typ definiert."
++
++#: Parser.ER_UNDEF_TYPE_
++msgid "Undefined type \"%s\""
++msgstr "Undefinierter Typ \"%s\""
++
++#: Parser.ER_INV_MEMADDR
++msgid "Invalid memory address."
++msgstr "Ungültige Speicheradresse."
++
++#: Parser.ER_BIT_VAR_REF
++msgid "A bit variable reference expected."
++msgstr "Es wird eine Bitvariablen-referenz erwartet."
++
++#: Parser.ER_INV_MAD_DEV
++msgid "Invalid memory address for this device."
++msgstr "Ungültige Speicheradresse für dieses Gerät."
++
++#: Parser.ER_EXP_VAR_IDE
++msgid "Identifier of variable expected."
++msgstr "Variablenbezeichner erwartet."
++
++#: Parser.ER_UNKNOWN_ID_
++msgid "Unknown identifier: %s"
++msgstr "Unbekannter Bezeichner: %s"
++
++#: Parser.ER_IDE_CON_EXP
++msgid "Identifier of constant expected."
++msgstr "Konstantenbezeichner erwartet."
++
++#: Parser.ER_NUM_ADD_EXP
++msgid "Numeric address expected."
++msgstr "Numerische Adresse erwartet."
++
++#: Parser.ER_IDE_TYP_EXP
++msgid "Identifier of type expected."
++msgstr "Typenbezeichner erwartet."
++
++#: Parser.ER_SEM_COM_EXP
++msgid "\":\" or \",\" expected."
++msgstr "\":\"oder\",\" erwartet."
++
++#: Parser.ER_EQU_COM_EXP
++msgid "\"=\" or \",\" expected."
++msgstr "\"=\" oder \",\" erwartet."
++
++#: Parser.ER_END_EXPECTE
++msgid "\"end\" expected."
++msgstr "\"End\" erwartet."
++
++#: Parser.ER_EOF_END_EXP
++msgid "Unexpected end of file. \"end\" expected."
++msgstr "Unerwartetes Dateiende. \"end\" erwartet."
++
++#: Parser.ER_BOOL_EXPECT
++msgid "Boolean expression expected."
++msgstr "Bool'scher Ausdruck erwartet."
++
++#: Parser.ER_UNKN_STRUCT
++msgid "Unknown structure."
++msgstr "Unbekannte Struktur."
++
++#: Parser.ER_PROG_NAM_EX
++msgid "Program name expected."
++msgstr "Name des Programms erwartet."
++
++#: Parser.ER_COMPIL_PROC
++msgid "There is a compilation in progress."
++msgstr "Es ist (noch) ein Kompiliervorgang aktiv."
++
++#: Parser.ER_CON_EXP_EXP
++msgid "Constant expression expected."
++msgstr "Konstanter Ausdruck erwartet."
++
++#: Parser.ER_ERROR_DIREC
++msgid "Error in directive."
++msgstr "Fehler bei Direktive."
++
++#: Parser.ER_UNKNO_DIREC
++msgid "Unknown directive: %s"
++msgstr "Unbekannte Direktive: %s"
++
++#: Parser.ER_UNKNO_DEVIC
++msgid "Unknown device: %s"
++msgstr "Unbekanntes Gerät: %s"
++
++#: Parser.ER_NOT_AFT_END
++msgid "Syntax error. Nothing should be after \"END.\""
++msgstr "Syntax-Fehler. Es sollte nichts nach \"END.\" kommen."
++
++#: Parser.ER_ELS_UNEXPEC
++msgid "\"else\" unexpected."
++msgstr "\"else\" nicht erwartet."
++
++#: Parser.ER_INST_NEV_EXE
++msgid "Instruction will never execute."
++msgstr "Bereich wird niemals ausgeführt."
++
++#: Parser.ER_MODE_UNKNOWN
++msgid "Mode unknown: %s"
++msgstr "Unbekannter Modus: %s"
++
++#: Parser.ER_ONLY_ONE_REG
++msgid "Only one REGISTER parameter is allowed."
++msgstr "Nur ein REGISTER Parameter erlaubt."
++
++#: Parser.ER_VARIAB_EXPEC
++msgid "Variable expected."
++msgstr "Variable erwartet."
++
++#: Parser.ER_ONL_BYT_WORD
++msgid "Only BYTE or WORD index is allowed in FOR."
++msgstr "In FOR-Schleifen sind nur BYTE oder WORD Indizes erlaubt."
++
++#: Parser.ER_ASIG_EXPECT
++msgid "\":=\" expected."
++msgstr "\":=\" erwartet."
+Index: PicPas.en.po
+===================================================================
+--- PicPas.en.po	(nonexistent)
++++ PicPas.en.po	(working copy)
+@@ -0,0 +1,537 @@
++msgid ""
++msgstr ""
++"Content-Type: text/plain; charset=UTF-8\n"
++"Plural-Forms: nplurals=2; plural=(n != 1);\n"
++"Project-Id-Version: \n"
++"POT-Creation-Date: \n"
++"PO-Revision-Date: \n"
++"Last-Translator: Joe Care\n"
++"Language-Team: \n"
++"MIME-Version: 1.0\n"
++"Content-Transfer-Encoding: 8bit\n"
++"Language: en\n"
++"X-Generator: Poedit 2.0.2\n"
++
++#: FormConfig.Caption
++msgid "Settings"
++msgstr "Settings"
++
++#: FormConfig.tabGeneral.Caption
++msgid "General"
++msgstr "General"
++
++#: FormConfig.RadioGroup1.Caption
++msgid "Toolbar"
++msgstr "Toolbar"
++
++#: FormConfig.RadioGroup1.Items[0]
++msgid "Small Icons"
++msgstr "Small Icons"
++
++#: FormConfig.RadioGroup1.Items[1]
++msgid "Big Icons"
++msgstr "Big Icons"
++
++#: FormConfig.label1.Caption
++msgid "Units Path:"
++msgstr "Units Path:"
++
++#: FormConfig.chkLoadLast.Caption
++msgid "Load last file edited"
++msgstr "Load last file edited"
++
++#: FormConfig.Label2.Caption
++msgid "Language"
++msgstr "Language"
++
++#: FormConfig.tabEditor.Caption
++msgid "Editor"
++msgstr "Editor"
++
++#: FormConfig.tabEnsamb.Caption
++msgid "Assembler"
++msgstr "Assembler"
++
++#: FormConfig.chkIncHeadMpu.Caption
++msgid "Include MPU &Header"
++msgstr "Include MPU &Header"
++
++#: FormConfig.chkIncDecVar.Caption
++msgid "Include &Variables declaration"
++msgstr "Include &Variables declaration"
++
++#: FormConfig.RadioGroup2.Caption
++msgid "Style"
++msgstr "Style"
++
++#: FormConfig.chkExcUnus.Caption
++msgid "Exclude unused"
++msgstr "Exclude unused"
++
++#: FormConfig.chkIncAddress.Caption
++msgid "Include &Memory Address"
++msgstr "Include &Memory Address"
++
++#: FormConfig.chkIncComment.Caption
++msgid "Include &Comments"
++msgstr "Include &Comments"
++
++#: FormConfig.chkIncComment2.Caption
++msgid "Include &Detailed comments"
++msgstr "Include &Detailed comments"
++
++#: FormConfig.tabOutput.Caption
++msgid "Compiler"
++msgstr "Compiler"
++
++#: FormConfig.chkShowErrMsg.Caption
++msgid "&Show Error Messages"
++msgstr "&Show Error Messages"
++
++#: FormConfig.grpOptimLev.Caption
++msgid "Optimization Level:"
++msgstr "Optimization Level:"
++
++#: FormConfig.grpOptimLev.Items[0]
++msgid "Fool"
++msgstr "Fool"
++
++#: FormConfig.grpOptimLev.Items[1]
++msgid "Smart"
++msgstr "Smart"
++
++#: FormPrincipal.mnFile.Caption
++msgid "&File"
++msgstr "&File"
++
++#: FormPrincipal.mnEdit.Caption
++msgid "&Edit"
++msgstr "&Edit"
++
++#: FormPrincipal.mnFind.Caption
++msgid "&Search"
++msgstr "&Search"
++
++#: FormPrincipal.mnView.Caption
++msgid "&View"
++msgstr "&View"
++
++#: FormPrincipal.mnTools.Caption
++msgid "&Tools"
++msgstr "&Tools"
++
++#: FormPrincipal.acArcNewProj.Caption FormPrincipal.acArcNewProj.Hint
++msgid "New &Project"
++msgstr "New &Project"
++
++#: FormPrincipal.acArcNewFile.Caption
++msgid "New &File"
++msgstr "New &File"
++
++#: FormPrincipal.acArcNewFile.Hint
++msgid "New File"
++msgstr "New File"
++
++#: FormPrincipal.acArcOpen.Caption
++msgid "&Open..."
++msgstr "&Open..."
++
++#: FormPrincipal.acArcOpen.Hint
++msgid "Open file"
++msgstr "Open file"
++
++#: FormPrincipal.acArcSave.Caption
++msgid "&Save"
++msgstr "&Save"
++
++#: FormPrincipal.acArcSave.Hint
++msgid "Save file"
++msgstr "Save file"
++
++#: FormPrincipal.acArcSaveAs.Caption
++msgid "Sa&ve As..."
++msgstr "Sa&ve As..."
++
++#: FormPrincipal.acArcSaveAs.Hint
++msgid "Save file as..."
++msgstr "Save file as..."
++
++#: FormPrincipal.acArcCloseFile.Caption
++msgid "&Close File"
++msgstr "&Close File"
++
++#: FormPrincipal.acArcCloseProj.Caption
++msgid "Close Project"
++msgstr "Close Project"
++
++#: FormPrincipal.mnSamples.Caption
++msgid "Samples"
++msgstr "Samples"
++
++#: FormPrincipal.acArcQuit.Caption
++msgid "&Quit"
++msgstr "&Quit"
++
++#: FormPrincipal.acArcQuit.Hint
++msgid "Close the program"
++msgstr "Close the program"
++
++#: FormPrincipal.acEdUndo.Caption
++msgid "&Undo"
++msgstr "&Undo"
++
++#: FormPrincipal.acEdUndo.Hint
++msgid "Undo"
++msgstr "Undo"
++
++#: FormPrincipal.acEdRedo.Caption
++msgid "&Redo"
++msgstr "&Redo"
++
++#: FormPrincipal.acEdRedo.Hint
++msgid "Redo"
++msgstr "Redo"
++
++#: FormPrincipal.acEdCut.Caption
++msgid "C&ut"
++msgstr "C&ut"
++
++#: FormPrincipal.acEdCut.Hint
++msgid "Cut"
++msgstr "Cut"
++
++#: FormPrincipal.acEdCopy.Caption
++msgid "&Copy"
++msgstr "&Copy"
++
++#: FormPrincipal.acEdCopy.Hint
++msgid "Copy"
++msgstr "Copy"
++
++#: FormPrincipal.acEdPaste.Caption
++msgid "&Paste"
++msgstr "&Paste"
++
++#: FormPrincipal.acEdPaste.Hint
++msgid "Paste"
++msgstr "Paste"
++
++#: FormPrincipal.acEdSelecAll.Caption
++msgid "Select &All"
++msgstr "Select &All"
++
++#: FormPrincipal.acEdSelecAll.Hint
++msgid "Select all"
++msgstr "Select all"
++
++#: FormPrincipal.acBusFind.Caption
++msgid "Search..."
++msgstr "Search..."
++
++#: FormPrincipal.acBusFind.Hint
++msgid "Search text"
++msgstr "Search text"
++
++#: FormPrincipal.acBusFindNxt.Caption
++msgid "Search &Next"
++msgstr "Search &Next"
++
++#: FormPrincipal.acBusFindNxt.Hint
++msgid "Search Next"
++msgstr "Search Next"
++
++#: FormPrincipal.acBusReplac.Caption
++msgid "&Replace..."
++msgstr "&Replace..."
++
++#: FormPrincipal.acBusReplac.Hint
++msgid "Replace text"
++msgstr "Replace text"
++
++#: FormPrincipal.acViewMsgPan.Caption
++msgid "&Messages Panel"
++msgstr "&Messages Panel"
++
++#: FormPrincipal.acViewMsgPan.Hint
++msgid "Show/hide Messages Panel"
++msgstr "Show/hide Messages Panel"
++
++#: FormPrincipal.acViewStatbar.Caption
++msgid "&Status Bar"
++msgstr "&Status Bar"
++
++#: FormPrincipal.acViewStatbar.Hint
++msgid "Show/hide Status Bar"
++msgstr "Show/hide Status Bar"
++
++#: FormPrincipal.acViewToolbar.Caption
++msgid "&Tool Bar"
++msgstr "&Tool Bar"
++
++#: FormPrincipal.acViewToolbar.Hint
++msgid "Show/hide Tool Bar"
++msgstr "Show/hide Tool Bar"
++
++#: FormPrincipal.acViewSynTree.Caption
++msgid "&Code explorer"
++msgstr "&Code explorer"
++
++#: FormPrincipal.acToolCompil.Caption
++msgid "&Compile"
++msgstr "&Compile"
++
++#: FormPrincipal.acToolCompil.Hint
++msgid "Compile the source code"
++msgstr "Compile the source code"
++
++#: FormPrincipal.acToolComEjec.Caption
++msgid "Compile and E&xecute"
++msgstr "Compile and E&xecute"
++
++#: FormPrincipal.acToolComEjec.Hint
++msgid "Compile and Execute"
++msgstr "Compile and Execute"
++
++#: FormPrincipal.acToolPICExpl.Caption
++msgid "PIC E&xplorer"
++msgstr "PIC E&xplorer"
++
++#: FormPrincipal.acToolPICExpl.Hint
++msgid "Open the PIC devices explorer"
++msgstr "Open the PIC devices explorer"
++
++#: FormPrincipal.acToolConfig.Caption
++msgid "&Settings"
++msgstr "&Settings"
++
++#: FormPrincipal.acToolConfig.Hint
++msgid "Settings dialog"
++msgstr "Settings dialog"
++
++#: FrameEditView.MSG_NOFIL
++msgid "No files"
++msgstr "No files"
++
++#: FrameEditView.MSG_PASFI
++msgid "Pascal Files"
++msgstr "Pascal Files"
++
++#: FrameEditView.MSG_ALLFI
++msgid "All files"
++msgstr "All files"
++
++#: FrameEditView.MSG_MODIF
++msgid "File %s has been modified. Save?"
++msgstr "File %s has been modified. Save?"
++
++#: FrameEditView.mnNewTab.Caption
++msgid "New"
++msgstr "New"
++
++#: FrameEditView.mnCloseTab.Caption
++msgid "Close"
++msgstr "Close"
++
++#: FrameEditView.if mnRecents<>nil then mnRecents.Caption
++msgid "&Recents"
++msgstr "&Recents"
++
++#: FrameMessagesWin.MSG_INICOMP
++msgid "Starting Compilation..."
++msgstr "Starting Compilation..."
++
++#: FrameMessagesWin.MSG_WARN
++msgid "Warning"
++msgstr "Warning"
++
++#: FrameMessagesWin.MSG_WARNS FrameMessagesWin.chkWarns.Caption
++msgid "Warnings"
++msgstr "Warnings"
++
++#: FrameMessagesWin.MSG_ERROR
++msgid "Error"
++msgstr "Error"
++
++#: FrameMessagesWin.MSG_ERRORS FrameMessagesWin.chkErrors.Caption
++msgid "Errors"
++msgstr "Errors"
++
++#: FrameMessagesWin.MSG_COMPIL
++msgid "Compiled in: "
++msgstr "Compiled in: "
++
++#: FrameMessagesWin.chkInform.Caption
++msgid "Information"
++msgstr "Information"
++
++#: FrameMessagesWin.PanGrilla.Caption
++msgid "<< No messages >>"
++msgstr "<< No messages >>"
++
++#: FrameSyntaxTree.TIT_MAIN
++msgid "Program"
++msgstr "Program"
++
++#: FrameSyntaxTree.TIT_UNIT
++msgid "Units"
++msgstr "Units"
++
++#: FrameSyntaxTree.TIT_CONS
++msgid "Constants"
++msgstr "Constants"
++
++#: FrameSyntaxTree.TIT_VARS
++msgid "Variables"
++msgstr "Variables"
++
++#: FrameSyntaxTree.TIT_FUNC
++msgid "Functions"
++msgstr "Functions"
++
++#: FrameSyntaxTree.TIT_OTHER
++msgid "Others"
++msgstr "Others"
++
++#: FrameSyntaxTree.Label1.Caption
++msgid "Code Explorer"
++msgstr "Code Explorer"
++
++#: Parser.ER_NOT_IMPLEM_
++msgid "Not implemented: \"%s\""
++msgstr "Not implemented: \"%s\""
++
++#: Parser.ER_IDEN_EXPECT
++msgid "Identifier expected."
++msgstr "Identifier expected."
++
++#: Parser.ER_DUPLIC_IDEN
++msgid "Duplicated identifier: \"%s\""
++msgstr "Duplicated identifier: \"%s\""
++
++#: Parser.ER_INVAL_FLOAT
++msgid "Unvalid float number."
++msgstr "Unvalid float number."
++
++#: Parser.ER_ERR_IN_NUMB
++msgid "Error in number."
++msgstr "Error in number."
++
++#: Parser.ER_NOTYPDEFNUM
++msgid "No type defined to accommodate this number."
++msgstr "No type defined to accommodate this number."
++
++#: Parser.ER_UNDEF_TYPE_
++msgid "Undefined type \"%s\""
++msgstr "Undefined type \"%s\""
++
++#: Parser.ER_INV_MEMADDR
++msgid "Invalid memory address."
++msgstr "Invalid memory address."
++
++#: Parser.ER_BIT_VAR_REF
++msgid "A bit variable reference expected."
++msgstr "A bit variable reference expected."
++
++#: Parser.ER_INV_MAD_DEV
++msgid "Invalid memory address for this device."
++msgstr "Invalid memory address for this device."
++
++#: Parser.ER_EXP_VAR_IDE
++msgid "Identifier of variable expected."
++msgstr "Identifier of variable expected."
++
++#: Parser.ER_UNKNOWN_ID_
++msgid "Unknown identifier: %s"
++msgstr "Unknown identifier: %s"
++
++#: Parser.ER_IDE_CON_EXP
++msgid "Identifier of constant expected."
++msgstr "Identifier of constant expected."
++
++#: Parser.ER_NUM_ADD_EXP
++msgid "Numeric address expected."
++msgstr "Numeric address expected."
++
++#: Parser.ER_IDE_TYP_EXP
++msgid "Identifier of type expected."
++msgstr "Identifier of type expected."
++
++#: Parser.ER_SEM_COM_EXP
++msgid "\":\" or \",\" expected."
++msgstr "\":\" or \",\" expected."
++
++#: Parser.ER_EQU_COM_EXP
++msgid "\"=\" or \",\" expected."
++msgstr "\"=\" or \",\" expected."
++
++#: Parser.ER_END_EXPECTE
++msgid "\"end\" expected."
++msgstr "\"end\" expected."
++
++#: Parser.ER_EOF_END_EXP
++msgid "Unexpected end of file. \"end\" expected."
++msgstr "Unexpected end of file. \"end\" expected."
++
++#: Parser.ER_BOOL_EXPECT
++msgid "Boolean expression expected."
++msgstr "Boolean expression expected."
++
++#: Parser.ER_UNKN_STRUCT
++msgid "Unknown structure."
++msgstr "Unknown structure."
++
++#: Parser.ER_PROG_NAM_EX
++msgid "Program name expected."
++msgstr "Program name expected."
++
++#: Parser.ER_COMPIL_PROC
++msgid "There is a compilation in progress."
++msgstr "There is a compilation in progress."
++
++#: Parser.ER_CON_EXP_EXP
++msgid "Constant expression expected."
++msgstr "Constant expression expected."
++
++#: Parser.ER_ERROR_DIREC
++msgid "Error in directive."
++msgstr "Error in directive."
++
++#: Parser.ER_UNKNO_DIREC
++msgid "Unknown directive: %s"
++msgstr "Unknown directive: %s"
++
++#: Parser.ER_UNKNO_DEVIC
++msgid "Unknown device: %s"
++msgstr "Unknown device: %s"
++
++#: Parser.ER_NOT_AFT_END
++msgid "Syntax error. Nothing should be after \"END.\""
++msgstr "Syntax error. Nothing should be after \"END.\""
++
++#: Parser.ER_ELS_UNEXPEC
++msgid "\"else\" unexpected."
++msgstr "\"else\" unexpected."
++
++#: Parser.ER_INST_NEV_EXE
++msgid "Instruction will never execute."
++msgstr "Instruction will never execute."
++
++#: Parser.ER_MODE_UNKNOWN
++msgid "Mode unknown: %s"
++msgstr "Mode unknown: %s"
++
++#: Parser.ER_ONLY_ONE_REG
++msgid "Only one REGISTER parameter is allowed."
++msgstr "Only one REGISTER parameter is allowed."
++
++#: Parser.ER_VARIAB_EXPEC
++msgid "Variable expected."
++msgstr "Variable expected."
++
++#: Parser.ER_ONL_BYT_WORD
++msgid "Only BYTE or WORD index is allowed in FOR."
++msgstr "Only BYTE or WORD index is allowed in FOR."
++
++#: Parser.ER_ASIG_EXPECT
++msgid "\":=\" expected."
++msgstr "\":=\" expected."
+Index: PicPas.es.po
+===================================================================
+--- PicPas.es.po	(nonexistent)
++++ PicPas.es.po	(working copy)
+@@ -0,0 +1,536 @@
++msgid ""
++msgstr ""
++"Content-Type: text/plain; charset=UTF-8\n"
++"Project-Id-Version: \n"
++"POT-Creation-Date: \n"
++"PO-Revision-Date: \n"
++"Last-Translator: Joe Care\n"
++"Language-Team: \n"
++"MIME-Version: 1.0\n"
++"Content-Transfer-Encoding: 8bit\n"
++"Language: es\n"
++"X-Generator: Poedit 2.0.2\n"
++
++#: FormConfig.Caption
++msgid "Settings"
++msgstr "Configuración"
++
++#: FormConfig.tabGeneral.Caption
++msgid "General"
++msgstr "General"
++
++#: FormConfig.RadioGroup1.Caption
++msgid "Toolbar"
++msgstr "Barra de herramientas"
++
++#: FormConfig.RadioGroup1.Items[0]
++msgid "Small Icons"
++msgstr "Íconos pequeños"
++
++#: FormConfig.RadioGroup1.Items[1]
++msgid "Big Icons"
++msgstr "Íconos grandes"
++
++#: FormConfig.label1.Caption
++msgid "Units Path:"
++msgstr "Ruta de unidades"
++
++#: FormConfig.chkLoadLast.Caption
++msgid "Load last file edited"
++msgstr "Cargar último archivo editado"
++
++#: FormConfig.Label2.Caption
++msgid "Language"
++msgstr "Lenguaje"
++
++#: FormConfig.tabEditor.Caption
++msgid "Editor"
++msgstr "Editor"
++
++#: FormConfig.tabEnsamb.Caption
++msgid "Assembler"
++msgstr "Ensamblador"
++
++#: FormConfig.chkIncHeadMpu.Caption
++msgid "Include MPU &Header"
++msgstr "Incluir &Encabezado de MPU"
++
++#: FormConfig.chkIncDecVar.Caption
++msgid "Include &Variables declaration"
++msgstr "Incluir Declaración de variables"
++
++#: FormConfig.RadioGroup2.Caption
++msgid "Style"
++msgstr "Estilo"
++
++#: FormConfig.chkExcUnus.Caption
++msgid "Exclude unused"
++msgstr "Excluir no usadas"
++
++#: FormConfig.chkIncAddress.Caption
++msgid "Include &Memory Address"
++msgstr "Incluir &Dirección de memoria"
++
++#: FormConfig.chkIncComment.Caption
++msgid "Include &Comments"
++msgstr "Incluir &Comentarios"
++
++#: FormConfig.chkIncComment2.Caption
++msgid "Include &Detailed comments"
++msgstr "Incluir Comentarios &detallados"
++
++#: FormConfig.tabOutput.Caption
++msgid "Compiler"
++msgstr "Compilador"
++
++#: FormConfig.chkShowErrMsg.Caption
++msgid "&Show Error Messages"
++msgstr "&Mostrar mensajes de error"
++
++#: FormConfig.grpOptimLev.Caption
++msgid "Optimization Level:"
++msgstr "Nivel de optimización:"
++
++#: FormConfig.grpOptimLev.Items[0]
++msgid "Fool"
++msgstr "Tonto"
++
++#: FormConfig.grpOptimLev.Items[1]
++msgid "Smart"
++msgstr "Inteligente"
++
++#: FormPrincipal.mnFile.Caption
++msgid "&File"
++msgstr "&Archivo"
++
++#: FormPrincipal.mnEdit.Caption
++msgid "&Edit"
++msgstr "&Edición"
++
++#: FormPrincipal.mnFind.Caption
++msgid "&Search"
++msgstr "&Buscar"
++
++#: FormPrincipal.mnView.Caption
++msgid "&View"
++msgstr "&Ver"
++
++#: FormPrincipal.mnTools.Caption
++msgid "&Tools"
++msgstr "&Herramientas"
++
++#: FormPrincipal.acArcNewProj.Caption FormPrincipal.acArcNewProj.Hint
++msgid "New &Project"
++msgstr "Nuevo &Proyecto"
++
++#: FormPrincipal.acArcNewFile.Caption
++msgid "New &File"
++msgstr "Nuevo &Archivo"
++
++#: FormPrincipal.acArcNewFile.Hint
++msgid "New File"
++msgstr "Nuevo Archivo"
++
++#: FormPrincipal.acArcOpen.Caption
++msgid "&Open..."
++msgstr "&Abrir..."
++
++#: FormPrincipal.acArcOpen.Hint
++msgid "Open file"
++msgstr "Abrir archivo"
++
++#: FormPrincipal.acArcSave.Caption
++msgid "&Save"
++msgstr "&Guardar"
++
++#: FormPrincipal.acArcSave.Hint
++msgid "Save file"
++msgstr "Guardar archivo"
++
++#: FormPrincipal.acArcSaveAs.Caption
++msgid "Sa&ve As..."
++msgstr "G&uardar Como..."
++
++#: FormPrincipal.acArcSaveAs.Hint
++msgid "Save file as..."
++msgstr "Guardar como..."
++
++#: FormPrincipal.acArcCloseFile.Caption
++msgid "&Close File"
++msgstr "&Cerrar archivo"
++
++#: FormPrincipal.acArcCloseProj.Caption
++msgid "Close Project"
++msgstr "Cerrar Proyecto"
++
++#: FormPrincipal.mnSamples.Caption
++msgid "Samples"
++msgstr "Ejemplos"
++
++#: FormPrincipal.acArcQuit.Caption
++msgid "&Quit"
++msgstr "&Salir"
++
++#: FormPrincipal.acArcQuit.Hint
++msgid "Close the program"
++msgstr "Cerrar el programa"
++
++#: FormPrincipal.acEdUndo.Caption
++msgid "&Undo"
++msgstr "&Deshacer"
++
++#: FormPrincipal.acEdUndo.Hint
++msgid "Undo"
++msgstr "Deshacer"
++
++#: FormPrincipal.acEdRedo.Caption
++msgid "&Redo"
++msgstr "&Rehacer"
++
++#: FormPrincipal.acEdRedo.Hint
++msgid "Redo"
++msgstr "Reahacer"
++
++#: FormPrincipal.acEdCut.Caption
++msgid "C&ut"
++msgstr "Cor&tar"
++
++#: FormPrincipal.acEdCut.Hint
++msgid "Cut"
++msgstr "Cortar"
++
++#: FormPrincipal.acEdCopy.Caption
++msgid "&Copy"
++msgstr "&Copiar"
++
++#: FormPrincipal.acEdCopy.Hint
++msgid "Copy"
++msgstr "Copiar"
++
++#: FormPrincipal.acEdPaste.Caption
++msgid "&Paste"
++msgstr "&Pegar"
++
++#: FormPrincipal.acEdPaste.Hint
++msgid "Paste"
++msgstr "Pegar"
++
++#: FormPrincipal.acEdSelecAll.Caption
++msgid "Select &All"
++msgstr "Seleccionar &Todo"
++
++#: FormPrincipal.acEdSelecAll.Hint
++msgid "Select all"
++msgstr "Seleccionar todo"
++
++#: FormPrincipal.acBusFind.Caption
++msgid "Search..."
++msgstr "Buscar..."
++
++#: FormPrincipal.acBusFind.Hint
++msgid "Search text"
++msgstr "Buscar texto"
++
++#: FormPrincipal.acBusFindNxt.Caption
++msgid "Search &Next"
++msgstr "Buscar &Siguiente"
++
++#: FormPrincipal.acBusFindNxt.Hint
++msgid "Search Next"
++msgstr "Buscar Siguiente"
++
++#: FormPrincipal.acBusReplac.Caption
++msgid "&Replace..."
++msgstr "&Reemplazar..."
++
++#: FormPrincipal.acBusReplac.Hint
++msgid "Replace text"
++msgstr "Reemplazar texto"
++
++#: FormPrincipal.acViewMsgPan.Caption
++msgid "&Messages Panel"
++msgstr "Panel de &Mensajes"
++
++#: FormPrincipal.acViewMsgPan.Hint
++msgid "Show/hide Messages Panel"
++msgstr "Mostrar/Ocultar el Panel de Mensajes"
++
++#: FormPrincipal.acViewStatbar.Caption
++msgid "&Status Bar"
++msgstr "Barra de &Estado"
++
++#: FormPrincipal.acViewStatbar.Hint
++msgid "Show/hide Status Bar"
++msgstr "Mostrar/Ocultar la barra de estado"
++
++#: FormPrincipal.acViewToolbar.Caption
++msgid "&Tool Bar"
++msgstr "Barra de &Herramientas"
++
++#: FormPrincipal.acViewToolbar.Hint
++msgid "Show/hide Tool Bar"
++msgstr "Mostrar/Ocultar la barra de herramientas"
++
++#: FormPrincipal.acViewSynTree.Caption
++msgid "&Code explorer"
++msgstr "&Explorador de código."
++
++#: FormPrincipal.acToolCompil.Caption
++msgid "&Compile"
++msgstr "&Compilar"
++
++#: FormPrincipal.acToolCompil.Hint
++msgid "Compile the source code"
++msgstr "Compila el código fuente"
++
++#: FormPrincipal.acToolComEjec.Caption
++msgid "Compile and E&xecute"
++msgstr "Compilar y Ej&ecutar"
++
++#: FormPrincipal.acToolComEjec.Hint
++msgid "Compile and Execute"
++msgstr "Compilar y Ejecutar"
++
++#: FormPrincipal.acToolPICExpl.Caption
++msgid "PIC E&xplorer"
++msgstr "E&xplorador de PIC"
++
++#: FormPrincipal.acToolPICExpl.Hint
++msgid "Open the PIC devices explorer"
++msgstr "Abrir el explorador de dispos. PIC"
++
++#: FormPrincipal.acToolConfig.Caption
++msgid "&Settings"
++msgstr "Configuración"
++
++#: FormPrincipal.acToolConfig.Hint
++msgid "Settings dialog"
++msgstr "Ver configuración"
++
++#: FrameEditView.MSG_NOFIL
++msgid "No files"
++msgstr "No hay archivos"
++
++#: FrameEditView.MSG_PASFI
++msgid "Pascal Files"
++msgstr "Archivos Pascal"
++
++#: FrameEditView.MSG_ALLFI
++msgid "All files"
++msgstr "Todos los archivos"
++
++#: FrameEditView.MSG_MODIF
++msgid "File %s has been modified. Save?"
++msgstr "El archivo %s ha sido modificado. Guardar cambios?"
++
++#: FrameEditView.mnNewTab.Caption
++msgid "New"
++msgstr "Nuevo"
++
++#: FrameEditView.mnCloseTab.Caption
++msgid "Close"
++msgstr "Cerrar"
++
++#: FrameEditView.mnRecents.Caption
++msgid "&Recents"
++msgstr "&Recientes"
++
++#: FrameMessagesWin.MSG_INICOMP
++msgid "Starting Compilation..."
++msgstr "Iniciando compilación..."
++
++#: FrameMessagesWin.MSG_WARN
++msgid "Warning"
++msgstr "Advertencia"
++
++#: FrameMessagesWin.MSG_WARNS FrameMessagesWin.chkWarns.Caption
++msgid "Warnings"
++msgstr "Advertencias"
++
++#: FrameMessagesWin.MSG_ERROR
++msgid "Error"
++msgstr "Error"
++
++#: FrameMessagesWin.MSG_ERRORS FrameMessagesWin.chkErrors.Caption
++msgid "Errors"
++msgstr "Errores"
++
++#: FrameMessagesWin.MSG_COMPIL
++msgid "Compiled in: "
++msgstr "Compilado en: "
++
++#: FrameMessagesWin.chkInform.Caption
++msgid "Information"
++msgstr "Información"
++
++#: FrameMessagesWin.PanGrilla.Caption
++msgid "<< No messages >>"
++msgstr "<< Sin mensajes >>"
++
++#: FrameSyntaxTree.TIT_MAIN
++msgid "Program"
++msgstr "Programa"
++
++#: FrameSyntaxTree.TIT_UNIT
++msgid "Units"
++msgstr "Unidades"
++
++#: FrameSyntaxTree.TIT_CONS
++msgid "Constants"
++msgstr "Constantes"
++
++#: FrameSyntaxTree.TIT_VARS
++msgid "Variables"
++msgstr "Variables"
++
++#: FrameSyntaxTree.TIT_FUNC
++msgid "Functions"
++msgstr "Funciones"
++
++#: FrameSyntaxTree.TIT_OTHER
++msgid "Others"
++msgstr "Otros"
++
++#: FrameSyntaxTree.Label1.Caption
++msgid "Code Explorer"
++msgstr "Explorador de Código"
++
++#: Parser.ER_NOT_IMPLEM_
++msgid "Not implemented: \"%s\""
++msgstr "No implementado: \"%s\""
++
++#: Parser.ER_IDEN_EXPECT
++msgid "Identifier expected."
++msgstr "Identificador esperado."
++
++#: Parser.ER_DUPLIC_IDEN
++msgid "Duplicated identifier: \"%s\""
++msgstr "Identificador duplicado: \"%s\""
++
++#: Parser.ER_INVAL_FLOAT
++msgid "Unvalid float number."
++msgstr "Número decimal no válido."
++
++#: Parser.ER_ERR_IN_NUMB
++msgid "Error in number."
++msgstr "Error en número"
++
++#: Parser.ER_NOTYPDEFNUM
++msgid "No type defined to accommodate this number."
++msgstr "No hay tipo definido para albergar a este número."
++
++#: Parser.ER_UNDEF_TYPE_
++msgid "Undefined type \"%s\""
++msgstr "Tipo \"%s\" no definido."
++
++#: Parser.ER_INV_MEMADDR
++msgid "Invalid memory address."
++msgstr "Dirección de memoria inválida."
++
++#: Parser.ER_BIT_VAR_REF
++msgid "A bit variable reference expected."
++msgstr "Se esreraba referencia a una variable bit."
++
++#: Parser.ER_INV_MAD_DEV
++msgid "Invalid memory address for this device."
++msgstr "No existe esta dirección de memoria en este dispositivo."
++
++#: Parser.ER_EXP_VAR_IDE
++msgid "Identifier of variable expected."
++msgstr "Se esperaba identificador de variable."
++
++#: Parser.ER_UNKNOWN_ID_
++msgid "Unknown identifier: %s"
++msgstr "Identificador desconocido: %s"
++
++#: Parser.ER_IDE_CON_EXP
++msgid "Identifier of constant expected."
++msgstr "Se esperaba identificador de constante"
++
++#: Parser.ER_NUM_ADD_EXP
++msgid "Numeric address expected."
++msgstr "Se esperaba dirección numérica."
++
++#: Parser.ER_IDE_TYP_EXP
++msgid "Identifier of type expected."
++msgstr "Se esperaba identificador de tipo."
++
++#: Parser.ER_SEM_COM_EXP
++msgid "\":\" or \",\" expected."
++msgstr "Se esperaba \":\" o \",\"."
++
++#: Parser.ER_EQU_COM_EXP
++msgid "\"=\" or \",\" expected."
++msgstr "Se esperaba \"=\" o \",\"."
++
++#: Parser.ER_END_EXPECTE
++msgid "\"end\" expected."
++msgstr "Se esperaba \"end\"."
++
++#: Parser.ER_EOF_END_EXP
++msgid "Unexpected end of file. \"end\" expected."
++msgstr "Inesperado fin de archivo. Se esperaba \"end\"."
++
++#: Parser.ER_BOOL_EXPECT
++msgid "Boolean expression expected."
++msgstr "Se esperaba expresión booleana."
++
++#: Parser.ER_UNKN_STRUCT
++msgid "Unknown structure."
++msgstr "Estructura desconocida."
++
++#: Parser.ER_PROG_NAM_EX
++msgid "Program name expected."
++msgstr "Se esperaba nombre de programa."
++
++#: Parser.ER_COMPIL_PROC
++msgid "There is a compilation in progress."
++msgstr "Ya se está compilando un programa actualmente."
++
++#: Parser.ER_CON_EXP_EXP
++msgid "Constant expression expected."
++msgstr "Se esperaba una expresión constante."
++
++#: Parser.ER_ERROR_DIREC
++msgid "Error in directive."
++msgstr "Error en directiva"
++
++#: Parser.ER_UNKNO_DIREC
++msgid "Unknown directive: %s"
++msgstr "Directiva desconocida: %s"
++
++#: Parser.ER_UNKNO_DEVIC
++msgid "Unknown device: %s"
++msgstr "Dispositivo desconocido: %s"
++
++#: Parser.ER_NOT_AFT_END
++msgid "Syntax error. Nothing should be after \"END.\""
++msgstr "Error de sintaxis. Nada debe aparecer después de \"END.\""
++
++#: Parser.ER_ELS_UNEXPEC
++msgid "\"else\" unexpected."
++msgstr "\"else\" inesperado."
++
++#: Parser.ER_INST_NEV_EXE
++msgid "Instruction will never execute."
++msgstr "Esta instrucción no se ejecutará"
++
++#: Parser.ER_MODE_UNKNOWN
++msgid "Mode unknown: %s"
++msgstr "Modo inválido"
++
++#: Parser.ER_ONLY_ONE_REG
++msgid "Only one REGISTER parameter is allowed."
++msgstr "Solo se permite un parámetro REGISTER."
++
++#: Parser.ER_VARIAB_EXPEC
++msgid "Variable expected."
++msgstr "Se esperaba Variable"
++
++#: Parser.ER_ONL_BYT_WORD
++msgid "Only BYTE or WORD index is allowed in FOR."
++msgstr "Solo variables Byte o Word son permitidas."
++
++#: Parser.ER_ASIG_EXPECT
++msgid "\":=\" expected."
++msgstr "Se esperaba \":=\"."
+Index: PicPas.po
+===================================================================
+--- PicPas.po	(nonexistent)
++++ PicPas.po	(working copy)
+@@ -0,0 +1,535 @@
++msgid ""
++msgstr ""
++"Content-Type: text/plain; charset=UTF-8\n"
++"Project-Id-Version: \n"
++"POT-Creation-Date: \n"
++"PO-Revision-Date: \n"
++"Last-Translator: Joe Care\n"
++"Language-Team: \n"
++"MIME-Version: 1.0\n"
++"Content-Transfer-Encoding: 8bit\n"
++"X-Generator: Poedit 2.0.2\n"
++
++#: FormConfig.Caption
++msgid "Settings"
++msgstr ""
++
++#: FormConfig.tabGeneral.Caption
++msgid "General"
++msgstr ""
++
++#: FormConfig.RadioGroup1.Caption
++msgid "Toolbar"
++msgstr ""
++
++#: FormConfig.RadioGroup1.Items[0]
++msgid "Small Icons"
++msgstr ""
++
++#: FormConfig.RadioGroup1.Items[1]
++msgid "Big Icons"
++msgstr ""
++
++#: FormConfig.label1.Caption
++msgid "Units Path:"
++msgstr ""
++
++#: FormConfig.chkLoadLast.Caption
++msgid "Load last file edited"
++msgstr ""
++
++#: FormConfig.Label2.Caption
++msgid "Language"
++msgstr ""
++
++#: FormConfig.tabEditor.Caption
++msgid "Editor"
++msgstr ""
++
++#: FormConfig.tabEnsamb.Caption
++msgid "Assembler"
++msgstr ""
++
++#: FormConfig.chkIncHeadMpu.Caption
++msgid "Include MPU &Header"
++msgstr ""
++
++#: FormConfig.chkIncDecVar.Caption
++msgid "Include &Variables declaration"
++msgstr ""
++
++#: FormConfig.RadioGroup2.Caption
++msgid "Style"
++msgstr ""
++
++#: FormConfig.chkExcUnus.Caption
++msgid "Exclude unused"
++msgstr ""
++
++#: FormConfig.chkIncAddress.Caption
++msgid "Include &Memory Address"
++msgstr ""
++
++#: FormConfig.chkIncComment.Caption
++msgid "Include &Comments"
++msgstr ""
++
++#: FormConfig.chkIncComment2.Caption
++msgid "Include &Detailed comments"
++msgstr ""
++
++#: FormConfig.tabOutput.Caption
++msgid "Compiler"
++msgstr ""
++
++#: FormConfig.chkShowErrMsg.Caption
++msgid "&Show Error Messages"
++msgstr ""
++
++#: FormConfig.grpOptimLev.Caption
++msgid "Optimization Level:"
++msgstr ""
++
++#: FormConfig.grpOptimLev.Items[0]
++msgid "Fool"
++msgstr ""
++
++#: FormConfig.grpOptimLev.Items[1]
++msgid "Smart"
++msgstr ""
++
++#: FormPrincipal.mnFile.Caption
++msgid "&File"
++msgstr ""
++
++#: FormPrincipal.mnEdit.Caption
++msgid "&Edit"
++msgstr ""
++
++#: FormPrincipal.mnFind.Caption
++msgid "&Search"
++msgstr ""
++
++#: FormPrincipal.mnView.Caption
++msgid "&View"
++msgstr ""
++
++#: FormPrincipal.mnTools.Caption
++msgid "&Tools"
++msgstr ""
++
++#: FormPrincipal.acArcNewProj.Caption FormPrincipal.acArcNewProj.Hint
++msgid "New &Project"
++msgstr ""
++
++#: FormPrincipal.acArcNewFile.Caption
++msgid "New &File"
++msgstr ""
++
++#: FormPrincipal.acArcNewFile.Hint
++msgid "New File"
++msgstr ""
++
++#: FormPrincipal.acArcOpen.Caption
++msgid "&Open..."
++msgstr ""
++
++#: FormPrincipal.acArcOpen.Hint
++msgid "Open file"
++msgstr ""
++
++#: FormPrincipal.acArcSave.Caption
++msgid "&Save"
++msgstr ""
++
++#: FormPrincipal.acArcSave.Hint
++msgid "Save file"
++msgstr ""
++
++#: FormPrincipal.acArcSaveAs.Caption
++msgid "Sa&ve As..."
++msgstr ""
++
++#: FormPrincipal.acArcSaveAs.Hint
++msgid "Save file as..."
++msgstr ""
++
++#: FormPrincipal.acArcCloseFile.Caption
++msgid "&Close File"
++msgstr ""
++
++#: FormPrincipal.acArcCloseProj.Caption
++msgid "Close Project"
++msgstr ""
++
++#: FormPrincipal.mnSamples.Caption
++msgid "Samples"
++msgstr ""
++
++#: FormPrincipal.acArcQuit.Caption
++msgid "&Quit"
++msgstr ""
++
++#: FormPrincipal.acArcQuit.Hint
++msgid "Close the program"
++msgstr ""
++
++#: FormPrincipal.acEdUndo.Caption
++msgid "&Undo"
++msgstr ""
++
++#: FormPrincipal.acEdUndo.Hint
++msgid "Undo"
++msgstr ""
++
++#: FormPrincipal.acEdRedo.Caption
++msgid "&Redo"
++msgstr ""
++
++#: FormPrincipal.acEdRedo.Hint
++msgid "Redo"
++msgstr ""
++
++#: FormPrincipal.acEdCut.Caption
++msgid "C&ut"
++msgstr ""
++
++#: FormPrincipal.acEdCut.Hint
++msgid "Cut"
++msgstr ""
++
++#: FormPrincipal.acEdCopy.Caption
++msgid "&Copy"
++msgstr ""
++
++#: FormPrincipal.acEdCopy.Hint
++msgid "Copy"
++msgstr ""
++
++#: FormPrincipal.acEdPaste.Caption
++msgid "&Paste"
++msgstr ""
++
++#: FormPrincipal.acEdPaste.Hint
++msgid "Paste"
++msgstr ""
++
++#: FormPrincipal.acEdSelecAll.Caption
++msgid "Select &All"
++msgstr ""
++
++#: FormPrincipal.acEdSelecAll.Hint
++msgid "Select all"
++msgstr ""
++
++#: FormPrincipal.acBusFind.Caption
++msgid "Search..."
++msgstr ""
++
++#: FormPrincipal.acBusFind.Hint
++msgid "Search text"
++msgstr ""
++
++#: FormPrincipal.acBusFindNxt.Caption
++msgid "Search &Next"
++msgstr ""
++
++#: FormPrincipal.acBusFindNxt.Hint
++msgid "Search Next"
++msgstr ""
++
++#: FormPrincipal.acBusReplac.Caption
++msgid "&Replace..."
++msgstr ""
++
++#: FormPrincipal.acBusReplac.Hint
++msgid "Replace text"
++msgstr ""
++
++#: FormPrincipal.acViewMsgPan.Caption
++msgid "&Messages Panel"
++msgstr ""
++
++#: FormPrincipal.acViewMsgPan.Hint
++msgid "Show/hide Messages Panel"
++msgstr ""
++
++#: FormPrincipal.acViewStatbar.Caption
++msgid "&Status Bar"
++msgstr ""
++
++#: FormPrincipal.acViewStatbar.Hint
++msgid "Show/hide Status Bar"
++msgstr ""
++
++#: FormPrincipal.acViewToolbar.Caption
++msgid "&Tool Bar"
++msgstr ""
++
++#: FormPrincipal.acViewToolbar.Hint
++msgid "Show/hide Tool Bar"
++msgstr ""
++
++#: FormPrincipal.acViewSynTree.Caption
++msgid "&Code explorer"
++msgstr ""
++
++#: FormPrincipal.acToolCompil.Caption
++msgid "&Compile"
++msgstr ""
++
++#: FormPrincipal.acToolCompil.Hint
++msgid "Compile the source code"
++msgstr ""
++
++#: FormPrincipal.acToolComEjec.Caption
++msgid "Compile and E&xecute"
++msgstr ""
++
++#: FormPrincipal.acToolComEjec.Hint
++msgid "Compile and Execute"
++msgstr ""
++
++#: FormPrincipal.acToolPICExpl.Caption
++msgid "PIC E&xplorer"
++msgstr ""
++
++#: FormPrincipal.acToolPICExpl.Hint
++msgid "Open the PIC devices explorer"
++msgstr ""
++
++#: FormPrincipal.acToolConfig.Caption
++msgid "&Settings"
++msgstr ""
++
++#: FormPrincipal.acToolConfig.Hint
++msgid "Settings dialog"
++msgstr ""
++
++#: FrameEditView.MSG_NOFIL
++msgid "No files"
++msgstr ""
++
++#: FrameEditView.MSG_PASFI
++msgid "Pascal Files"
++msgstr ""
++
++#: FrameEditView.MSG_ALLFI
++msgid "All files"
++msgstr ""
++
++#: FrameEditView.MSG_MODIF
++msgid "File %s has been modified. Save?"
++msgstr ""
++
++#: FrameEditView.mnNewTab.Caption
++msgid "New"
++msgstr ""
++
++#: FrameEditView.mnCloseTab.Caption
++msgid "Close"
++msgstr ""
++
++#: FrameEditView.mnRecents.Caption
++msgid "&Recents"
++msgstr ""
++
++#: FrameMessagesWin.MSG_INICOMP
++msgid "Starting Compilation..."
++msgstr ""
++
++#: FrameMessagesWin.MSG_WARN
++msgid "Warning"
++msgstr ""
++
++#: FrameMessagesWin.MSG_WARNS FrameMessagesWin.chkWarns.Caption
++msgid "Warnings"
++msgstr ""
++
++#: FrameMessagesWin.MSG_ERROR
++msgid "Error"
++msgstr ""
++
++#: FrameMessagesWin.MSG_ERRORS FrameMessagesWin.chkErrors.Caption
++msgid "Errors"
++msgstr ""
++
++#: FrameMessagesWin.MSG_COMPIL
++msgid "Compiled in: "
++msgstr ""
++
++#: FrameMessagesWin.chkInform.Caption
++msgid "Information"
++msgstr ""
++
++#: FrameMessagesWin.PanGrilla.Caption
++msgid "<< No messages >>"
++msgstr ""
++
++#: FrameSyntaxTree.TIT_MAIN
++msgid "Program"
++msgstr ""
++
++#: FrameSyntaxTree.TIT_UNIT
++msgid "Units"
++msgstr ""
++
++#: FrameSyntaxTree.TIT_CONS
++msgid "Constants"
++msgstr ""
++
++#: FrameSyntaxTree.TIT_VARS
++msgid "Variables"
++msgstr ""
++
++#: FrameSyntaxTree.TIT_FUNC
++msgid "Functions"
++msgstr ""
++
++#: FrameSyntaxTree.TIT_OTHER
++msgid "Others"
++msgstr ""
++
++#: FrameSyntaxTree.Label1.Caption
++msgid "Code Explorer"
++msgstr ""
++
++#: Parser.ER_NOT_IMPLEM_
++msgid "Not implemented: \"%s\""
++msgstr ""
++
++#: Parser.ER_IDEN_EXPECT
++msgid "Identifier expected."
++msgstr ""
++
++#: Parser.ER_DUPLIC_IDEN
++msgid "Duplicated identifier: \"%s\""
++msgstr ""
++
++#: Parser.ER_INVAL_FLOAT
++msgid "Unvalid float number."
++msgstr ""
++
++#: Parser.ER_ERR_IN_NUMB
++msgid "Error in number."
++msgstr ""
++
++#: Parser.ER_NOTYPDEFNUM
++msgid "No type defined to accommodate this number."
++msgstr ""
++
++#: Parser.ER_UNDEF_TYPE_
++msgid "Undefined type \"%s\""
++msgstr ""
++
++#: Parser.ER_INV_MEMADDR
++msgid "Invalid memory address."
++msgstr ""
++
++#: Parser.ER_BIT_VAR_REF
++msgid "A bit variable reference expected."
++msgstr ""
++
++#: Parser.ER_INV_MAD_DEV
++msgid "Invalid memory address for this device."
++msgstr ""
++
++#: Parser.ER_EXP_VAR_IDE
++msgid "Identifier of variable expected."
++msgstr ""
++
++#: Parser.ER_UNKNOWN_ID_
++msgid "Unknown identifier: %s"
++msgstr ""
++
++#: Parser.ER_IDE_CON_EXP
++msgid "Identifier of constant expected."
++msgstr ""
++
++#: Parser.ER_NUM_ADD_EXP
++msgid "Numeric address expected."
++msgstr ""
++
++#: Parser.ER_IDE_TYP_EXP
++msgid "Identifier of type expected."
++msgstr ""
++
++#: Parser.ER_SEM_COM_EXP
++msgid "\":\" or \",\" expected."
++msgstr ""
++
++#: Parser.ER_EQU_COM_EXP
++msgid "\"=\" or \",\" expected."
++msgstr ""
++
++#: Parser.ER_END_EXPECTE
++msgid "\"end\" expected."
++msgstr ""
++
++#: Parser.ER_EOF_END_EXP
++msgid "Unexpected end of file. \"end\" expected."
++msgstr ""
++
++#: Parser.ER_BOOL_EXPECT
++msgid "Boolean expression expected."
++msgstr ""
++
++#: Parser.ER_UNKN_STRUCT
++msgid "Unknown structure."
++msgstr ""
++
++#: Parser.ER_PROG_NAM_EX
++msgid "Program name expected."
++msgstr ""
++
++#: Parser.ER_COMPIL_PROC
++msgid "There is a compilation in progress."
++msgstr ""
++
++#: Parser.ER_CON_EXP_EXP
++msgid "Constant expression expected."
++msgstr ""
++
++#: Parser.ER_ERROR_DIREC
++msgid "Error in directive."
++msgstr ""
++
++#: Parser.ER_UNKNO_DIREC
++msgid "Unknown directive: %s"
++msgstr ""
++
++#: Parser.ER_UNKNO_DEVIC
++msgid "Unknown device: %s"
++msgstr ""
++
++#: Parser.ER_NOT_AFT_END
++msgid "Syntax error. Nothing should be after \"END.\""
++msgstr ""
++
++#: Parser.ER_ELS_UNEXPEC
++msgid "\"else\" unexpected."
++msgstr ""
++
++#: Parser.ER_INST_NEV_EXE
++msgid "Instruction will never execute."
++msgstr ""
++
++#: Parser.ER_MODE_UNKNOWN
++msgid "Mode unknown: %s"
++msgstr ""
++
++#: Parser.ER_ONLY_ONE_REG
++msgid "Only one REGISTER parameter is allowed."
++msgstr ""
++
++#: Parser.ER_VARIAB_EXPEC
++msgid "Variable expected."
++msgstr ""
++
++#: Parser.ER_ONL_BYT_WORD
++msgid "Only BYTE or WORD index is allowed in FOR."
++msgstr ""
++
++#: Parser.ER_ASIG_EXPECT
++msgid "\":=\" expected."
++msgstr ""
+Index: tra_FormConfig.pas
+===================================================================
+--- tra_FormConfig.pas	(revision 958)
++++ tra_FormConfig.pas	(working copy)
+@@ -23,7 +23,7 @@
+ //Output Settings
+ tabOutput.Caption    := Trans('Compiler'               , 'Compilador'               , '', 'Compiler');
+ chkShowErrMsg.Caption:= Trans('&Show Error Messages'   , '&Mostrar mensajes de error', '', '&Zeige Fehlermeldungen');
+-grpOptimLev.Caption  := Trans('Optimization Level:'    , 'Nivel de optimización:'   , '', 'Optimierungsstufe');
++grpOptimLev.Caption  := Trans('Optimization Level:'    , 'Nivel de optimización:'   , '', 'Optimierungsstufe:');
+ grpOptimLev.Items[0] := Trans('Fool'                   , 'Tonto'                    , '', 'Dumm');
+ grpOptimLev.Items[1] := Trans('Smart'                  , 'Inteligente'              , '', 'Schlau');
+ 
+Index: tra_FrameMessagesWin.pas
+===================================================================
+--- tra_FrameMessagesWin.pas	(revision 958)
++++ tra_FrameMessagesWin.pas	(working copy)
+@@ -3,7 +3,7 @@
+ MSG_WARNS  := trans('Warnings'    , 'Advertencias', '','Warnungen');
+ MSG_ERROR  := trans('Error'       , 'Error'       , '','Fehler');
+ MSG_ERRORS := trans('Errors'      , 'Errores'     , '','Fehler');
+-MSG_COMPIL := trans('Compiled in: ', 'Compilado en: ', '','Compiliert in:');
++MSG_COMPIL := trans('Compiled in: ', 'Compilado en: ', '','Compiliert in: ');
+ 
+ chkInform.Caption  := Trans('Information', 'Información' ,'','Information');
+ chkWarns.Caption   := Trans('Warnings'   , 'Advertencias','','Warnungen');
+Index: tra_FrameSyntaxTree.pas
+===================================================================
+--- tra_FrameSyntaxTree.pas	(revision 958)
++++ tra_FrameSyntaxTree.pas	(working copy)
+@@ -5,4 +5,3 @@
+ TIT_FUNC := trans('Functions','Funciones','','Funktionen');
+ TIT_OTHER:= trans('Others','Otros','','Anderes');
+ Label1.Caption := Trans('Code Explorer', 'Explorador de Código','','Quellenexplorer');
+-
+Index: tra_Parser.pas
+===================================================================
+--- tra_Parser.pas	(revision 958)
++++ tra_Parser.pas	(working copy)
+@@ -1,8 +1,8 @@
+ //Update messages
+ ER_NOT_IMPLEM_ := trans('Not implemented: "%s"'      , 'No implementado: "%s"'         ,'',
+-                        'Nicht implementiert');
++                        'Nicht implementiert: "%s"');
+ ER_IDEN_EXPECT := trans('Identifier expected.'       , 'Identificador esperado.'       ,'',
+-                        'Platzhalter erwartet');
++                        'Bezeichner erwartet.');
+ ER_DUPLIC_IDEN := trans('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"' ,'',
+                         'Doppelter Platzhalter: "%s"');
+ ER_INVAL_FLOAT := trans('Unvalid float number.'      , 'Número decimal no válido.'     ,'',
+@@ -10,63 +10,62 @@
+ ER_ERR_IN_NUMB := trans('Error in number.'           , 'Error en número'               ,'',
+                         'Fehler bei Nummer.');
+ ER_NOTYPDEFNUM := trans('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.','',
+-                        'Kein Typ definiert ');
++                        'Kein Typ definiert.');
+ ER_UNDEF_TYPE_ := trans('Undefined type "%s"'        , 'Tipo "%s" no definido.'        ,'',
+                         'Undefinierter Typ "%s"');
+ ER_INV_MEMADDR := trans('Invalid memory address.'    , 'Dirección de memoria inválida.','',
+-                        'Ungültige Speicheradresse');
++                        'Ungültige Speicheradresse.');
+ ER_BIT_VAR_REF := trans('A bit variable reference expected.', 'Se esreraba referencia a una variable bit.','',
+                         'Es wird eine Bitvariablen-referenz erwartet.');
+ ER_INV_MAD_DEV := trans('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.','',
+                         'Ungültige Speicheradresse für dieses Gerät.');
+ ER_EXP_VAR_IDE := trans('Identifier of variable expected.', 'Se esperaba identificador de variable.','',
+-                        'Platzhalter einer Variablen erwartet.');
++                        'Variablenbezeichner erwartet.');
+ ER_UNKNOWN_ID_ := trans('Unknown identifier: %s'     , 'Identificador desconocido: %s' ,'',
+-                        '');
++                        'Unbekannter Bezeichner: %s');
+ ER_IDE_CON_EXP := trans('Identifier of constant expected.', 'Se esperaba identificador de constante','',
+-                        '');
++                        'Konstantenbezeichner erwartet.');
+ ER_NUM_ADD_EXP := trans('Numeric address expected.'  , 'Se esperaba dirección numérica.','',
+-                        '');
++                        'Numerische Adresse erwartet.');
+ ER_IDE_TYP_EXP := trans('Identifier of type expected.', 'Se esperaba identificador de tipo.','',
+-                        '');
++                        'Typenbezeichner erwartet.');
+ ER_SEM_COM_EXP := trans('":" or "," expected.'       , 'Se esperaba ":" o ",".'        ,'',
+-                        '');
++                        '":"oder"," erwartet.');
+ ER_EQU_COM_EXP := trans('"=" or "," expected.', 'Se esperaba "=" o ","','',
+-                        '');
++                        '"=" oder "," erwartet.');
+ ER_END_EXPECTE := trans('"end" expected.', 'Se esperaba "end".','',
+-                        '');
++                        '"End" erwartet.');
+ ER_EOF_END_EXP := trans('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".','',
+-                        '');
++                        'Unerwartetes Dateiende. "end" erwartet.');
+ ER_BOOL_EXPECT := trans('Boolean expression expected.', 'Se esperaba expresión booleana.','',
+-                        '');
++                        'Bool''scher Ausdruck erwartet.');
+ ER_UNKN_STRUCT := trans('Unknown structure.', 'Estructura desconocida.','',
+-                        '');
++                        'Unbekannte Struktur.');
+ ER_PROG_NAM_EX := trans('Program name expected.', 'Se esperaba nombre de programa.','',
+-                        '');
++                        'Name des Programms erwartet.');
+ ER_COMPIL_PROC := trans('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.','',
+-                        '');
++                        'Es ist (noch) ein Kompiliervorgang aktiv.');
+ ER_CON_EXP_EXP := trans('Constant expression expected.', 'Se esperaba una expresión constante','',
+-                        '');
++                        'Konstanter Ausdruck erwartet.');
+ ER_ERROR_DIREC := trans('Error in directive.', 'Error en directiva','',
+-                        '');
++                        'Fehler bei Direktive.');
+ ER_UNKNO_DIREC := trans('Unknown directive: %s', 'Directiva desconocida: %s','',
+-                        '');
++                        'Unbekannte Direktive: %s');
+ ER_UNKNO_DEVIC := trans('Unknown device: %s', 'Dispositivo desconocido: %s','',
+-                        '');
++                        'Unbekanntes Gerät: %s');
+ ER_NOT_AFT_END := trans('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."','',
+-                        '');
++                        'Syntax-Fehler. Es sollte nichts nach "END." kommen.');
+ ER_ELS_UNEXPEC := trans('"else" unexpected.', '"else" inesperado', '',
+-                        '');
++                        '"else" nicht erwartet.');
+ ER_INST_NEV_EXE:= trans('Instruction will never execute.', 'Esta instrucción no se ejecutará', '',
+-                        '');
++                        'Bereich wird niemals ausgeführt.');
+ ER_MODE_UNKNOWN:= trans('Mode unknown: %s', 'Modo inválido', '',
+-                        '');
++                        'Unbekannter Modus: %s');
+ ER_ONLY_ONE_REG:= trans('Only one REGISTER parameter is allowed.', 'Solo se permite un parámetro REGISTER.', '',
+-                        '');
++                        'Nur ein REGISTER Parameter erlaubt.');
+ ER_VARIAB_EXPEC:= trans('Variable expected.', 'Se esperaba Variable', '',
+-                        '');
++                        'Variable erwartet.');
+ ER_ONL_BYT_WORD:= trans('Only BYTE or WORD index is allowed in FOR.', 'Solo variables Byte o Word son permitidas.', '',
+-                        '');
++                        'In FOR-Schleifen sind nur BYTE oder WORD Indizes erlaubt.');
+ ER_ASIG_EXPECT := trans('":=" expected.', 'Se esperaba ":="', '',
+-                        '');
+-
++                        '":=" erwartet.');

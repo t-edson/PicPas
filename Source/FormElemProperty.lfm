@@ -3,6 +3,7 @@ object frmElemProperty: TfrmElemProperty
   Height = 277
   Top = 130
   Width = 333
+  BorderStyle = bsDialog
   Caption = 'Element Properties'
   ClientHeight = 277
   ClientWidth = 333
@@ -19,7 +20,7 @@ object frmElemProperty: TfrmElemProperty
   end
   object Memo1: TMemo
     Left = 16
-    Height = 50
+    Height = 56
     Top = 144
     Width = 288
     Enabled = False
@@ -84,7 +85,7 @@ object frmElemProperty: TfrmElemProperty
   object lblElemName3: TLabel
     Left = 16
     Height = 17
-    Top = 200
+    Top = 208
     Width = 38
     Caption = 'Status:'
     Font.Height = -13
@@ -94,7 +95,7 @@ object frmElemProperty: TfrmElemProperty
   object lblUsed: TLabel
     Left = 72
     Height = 18
-    Top = 200
+    Top = 208
     Width = 232
     AutoSize = False
     Caption = 'lblUsed'
@@ -173,7 +174,7 @@ object frmElemProperty: TfrmElemProperty
   object butDetails: TButton
     Left = 216
     Height = 25
-    Top = 200
+    Top = 208
     Width = 75
     Caption = '&Details ...'
     OnClick = butDetailsClick

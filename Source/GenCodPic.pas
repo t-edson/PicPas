@@ -39,7 +39,7 @@ type
     procedure PutTopComm(cmt: string; replace: boolean = true); inline;
     procedure PutComm(cmt: string); inline;
     procedure PutFwdComm(cmt: string); inline;
-    procedure AddCaller(elem: TxpElement);
+    function AddCaller(elem: TxpElement): TxpEleCaller;
     function ReportRAMusage: string;
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
@@ -152,6 +152,7 @@ type
     incDetComm: boolean;   //Incluir Comentarios detallados.
     SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
     SetProEndBnk: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
+    OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
   public  //Acceso a registro de trabajo
     property H_register: TPicRegister read H;
   public  //Inicialización
@@ -171,7 +172,7 @@ const
 //  _IRP = 7;
 
 implementation
-procedure TGenCodPic.AddCaller(elem: TxpElement);
+function TGenCodPic.AddCaller(elem: TxpElement): TxpEleCaller;
 {Agrega una llamada a un elemento de la sintaxis.}
 var
   fc: TxpEleCaller;
@@ -180,7 +181,9 @@ begin
   //Carga información del estado actual del parser
   fc.caller := TreeElems.curNode;
   fc.curBnk := CurrBank;
+  fc.curPos := cIn.ReadSrcPos;
   elem.lstCallers.Add(fc);
+  Result := fc;
 end;
 { TGenCodPic }
 procedure TGenCodPic.ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);

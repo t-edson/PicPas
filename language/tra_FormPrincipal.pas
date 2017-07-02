@@ -49,12 +49,13 @@
  acViewToolbar.Caption:= Trans('&Tool Bar'               , 'Barra de &Herramientas'       , '','&Werkzeugleiste');
  acViewToolbar.Hint   := Trans('Show/hide Tool Bar'      , 'Mostrar/Ocultar la barra de herramientas', '', 'Werkzeugleiste zeigen oder verbergen');
  acViewSynTree.Caption:= Trans('&Code explorer'          , '&Explorador de código.'       , '', '&Quelltext-Explorer');
-
+ //Tool actions
  acToolCompil.Caption := Trans('&Compile'                , '&Compilar'                    , '', '&Compilieren');
- acToolCompil.Hint   := Trans('Compile the source code'  , 'Compila el código fuente'     , '', 'Compiliere den Quelltext');
+ acToolCompil.Hint    := Trans('Compile the source code'  , 'Compila el código fuente'    , '', 'Compiliere den Quelltext');
  acToolComEjec.Caption:= Trans('Compile and E&xecute'    , 'Compilar y Ej&ecutar'         , '', 'Compilieren und Au&sführen');
- acToolComEjec.Hint  := Trans('Compile and Execute'      , 'Compilar y Ejecutar'          , '', 'Compilieren und Ausführen');
+ acToolComEjec.Hint   := Trans('Compile and Execute'      , 'Compilar y Ejecutar'         , '', 'Compilieren und Ausführen');
  acToolPICExpl.Caption:= Trans('PIC E&xplorer'           , 'E&xplorador de PIC'           , '', 'PIC E&xplorer');
  acToolPICExpl.Hint   := Trans('Open the PIC devices explorer','Abrir el explorador de dispos. PIC', '','Öffne den PIC Geräte explorer');
  acToolConfig.Caption := Trans('&Settings'               , 'Configuración'                , 'Kamachina', '&Einstellungen');
  acToolConfig.Hint    := Trans('Settings dialog'         , 'Ver configuración'            , 'Kamachinata qhaway', 'Einstellungs-Dialog');
+ acToolFindDec.Caption:= Trans('Find declaration'        , 'Ir a la declaración'          , '', '');

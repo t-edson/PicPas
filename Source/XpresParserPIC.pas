@@ -376,7 +376,7 @@ function TCompilerBase.CaptureTok(tok: string): boolean;
 {Toma el token indicado del contexto de entrada. Si no lo encuentra, genera error y
 devuelve FALSE.}
   procedure GenErrorInLastLine(var p: TSrcPos);
-  {Genera error posicionando el punto del error, en una línea anterios, que no esté
+  {Genera error posicionando el punto del error, en una línea anterior, que no esté
   vacía.}
   var
     lin: String;
@@ -388,7 +388,8 @@ devuelve FALSE.}
         lin := cIn.curCon.curLines[p.row - 1];
       until (p.row<=1) or (trim(lin)<>'');
       //Encontró línea anterior no nula o llegó a la primera línea.
-      p.col := length(lin) + 1;   //mueve al final
+//      xlex.ExploreLine(Point(length(lin), p.row), toks, CurTok );
+      p.col := length(lin);   //mueve al final (antes del EOL)
       GenErrorPos('"%s" expected.', [tok], p);  //Genera error
     end else begin
       //No hay línea anterior
@@ -584,6 +585,8 @@ var
   posFlash: Integer;
   cod: Longint;
   RTstate0: TType;
+  caller: TxpEleCaller;
+  posCall: TSrcPos;
 begin
   ClearError;
   SkipWhites;
@@ -695,6 +698,7 @@ begin
     end else if ele.elemType = eltFunc then begin  //es función
       {Se sabe que es función, pero no se tiene la función exacta porque puede haber
        versiones, sobrecargadas de la misma función.}
+      posCall := cIn.ReadSrcPos;   //gaurda la posición de llamada.
       cIn.Next;    //Toma identificador
       SkipWhites;  //Quita posibles blancos
       posPar := cIn.PosAct;   //guarda porque va a pasar otra vez por aquí
@@ -728,7 +732,11 @@ begin
         if high(func0.pars)+1>0 then
           CaptureParamsFinal(xfun);  //evalúa y asigna
 //if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
-        if FirstPass then xfun.AddCaller;  //se hace después de leer parámetros
+        if FirstPass then begin
+          //Se hace después de leer parámetros, para tener información del banco.
+          caller := xfun.AddCaller;
+          caller.curPos := posCall;  //corrige posición de llamada, sino estaría
+        end;
         xfun.procCall(xfun); //codifica el "CALL"
         RTstate := xfun.typ;  //para indicar que los RT están ocupados
         Result.catOp := coExpres;

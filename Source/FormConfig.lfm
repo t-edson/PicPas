@@ -57,14 +57,14 @@ object Config: TConfig
     Height = 307
     Top = 0
     Width = 402
-    ActivePage = tabEnviron
+    ActivePage = tabOutput
     Align = alClient
-    TabIndex = 1
+    TabIndex = 5
     TabOrder = 1
     object tabGeneral: TTabSheet
       Caption = 'General'
-      ClientHeight = 253
-      ClientWidth = 393
+      ClientHeight = 279
+      ClientWidth = 394
       object RadioGroup1: TRadioGroup
         Left = 16
         Height = 49
@@ -150,6 +150,14 @@ object Config: TConfig
           'Hide always'
         )
         TabOrder = 3
+      end
+      object chkAutSynChk: TCheckBox
+        Left = 16
+        Height = 19
+        Top = 144
+        Width = 164
+        Caption = 'Automatic Syntax checking'
+        TabOrder = 4
       end
     end
     object tabEnviron: TTabSheet
@@ -403,8 +411,8 @@ object Config: TConfig
     end
     object tabOutput: TTabSheet
       Caption = 'Compiler'
-      ClientHeight = 249
-      ClientWidth = 383
+      ClientHeight = 279
+      ClientWidth = 394
       object grpOptimLev: TRadioGroup
         Left = 8
         Height = 120
@@ -436,21 +444,39 @@ object Config: TConfig
         Caption = 'Show Error Messages'
         TabOrder = 1
       end
-      object chkSetProIniBnk: TCheckBox
-        Left = 160
-        Height = 19
+      object GroupBox1: TGroupBox
+        Left = 184
+        Height = 120
         Top = 80
-        Width = 192
-        Caption = 'Set always Procedure initial bank'
+        Width = 185
+        Caption = 'Optimize Bank Selection'
+        ClientHeight = 100
+        ClientWidth = 181
         TabOrder = 2
-      end
-      object chkSetProEndBnk: TCheckBox
-        Left = 160
-        Height = 19
-        Top = 112
-        Width = 183
-        Caption = 'Set always Procedure end bank'
-        TabOrder = 3
+        object chkOptBnkAftIF: TCheckBox
+          Left = 8
+          Height = 19
+          Top = 8
+          Width = 108
+          Caption = 'After IF structure'
+          TabOrder = 0
+        end
+        object chkOptBnkBefPro: TCheckBox
+          Left = 8
+          Height = 19
+          Top = 40
+          Width = 116
+          Caption = 'Before Procedures'
+          TabOrder = 1
+        end
+        object chkOptBnkAftPro: TCheckBox
+          Left = 8
+          Height = 19
+          Top = 72
+          Width = 108
+          Caption = 'After Procedures'
+          TabOrder = 2
+        end
       end
     end
   end
