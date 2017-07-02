@@ -5,8 +5,8 @@ MSG_ERROR  := trans('Error'       , 'Error'       , '','Fehler');
 MSG_ERRORS := trans('Errors'      , 'Errores'     , '','Fehler');
 MSG_COMPIL := trans('Compiled in: ', 'Compilado en: ', '','Compiliert in: ');
 
-chkInform.Caption  := Trans('Information', 'Información' ,'','Information');
-chkWarns.Caption   := Trans('Warnings'   , 'Advertencias','','Warnungen');
-chkErrors.Caption  := Trans('Errors'     , 'Errores'     ,'','Fehler');
+lblInform.Caption  := Trans('Information', 'Información' ,'','Information');
+lblWarns.Caption   := Trans('Warnings'   , 'Advertencias','','Warnungen');
+lblErrors.Caption  := Trans('Errors'     , 'Errores'     ,'','Fehler');
 PanGrilla.Caption  := Trans('<< No messages >>', '<< Sin mensajes >>', '','<<Keine Meldungen>>');
 

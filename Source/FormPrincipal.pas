@@ -11,7 +11,7 @@ uses
   ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
   SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
   FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
-  FrameMessagesWin, XpresElementsPIC, ProcAsm;
+  FrameMessagesWin, XpresElementsPIC, ProcAsm, CodeTools;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -32,6 +32,7 @@ type
     acArcNewProj: TAction;
     acArcCloseProj: TAction;
     acArcCloseFile: TAction;
+    acToolFindDec: TAction;
     acToolConfig2: TAction;
     acToolConfig: TAction;
     acToolCompil: TAction;
@@ -72,6 +73,7 @@ type
     MenuItem33: TMenuItem;
     MenuItem34: TMenuItem;
     MenuItem35: TMenuItem;
+    MenuItem36: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -128,6 +130,7 @@ type
     procedure acEdUndoExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
+    procedure acToolFindDecExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
     procedure acViewSynTreeExecute(Sender: TObject);
     procedure acViewStatbarExecute(Sender: TObject);
@@ -145,11 +148,16 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
   private
+    tic         : integer;  //Contador para temporización
+    ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
     curProj     : TPicPasProject; //Proyecto actual
     hlAssem     : TSynFacilSyn;   //resaltador para ensamblador
     fraEditView1: TfraEditView;   //Panel de editores
     fraSynTree  : TfraSyntaxTree; //Árbol de sintaxis
     fraMessages : TfraMessagesWin;
+    CT          : TCodeTool;
+    procedure cxp_AfterCompile;
+    procedure cxp_RequireFileString(FilePath: string; var strList: TStrings);
     procedure fraSynTreeSelecFileExplorer;
     procedure fraEdit_RequireSynEditConfig(ed: TsynEdit);
     procedure ChangeAppearance;
@@ -200,11 +208,33 @@ begin
      fraSynTree.LocateFile(ed.NomArc);
   end;
 end;
+procedure TfrmPrincipal.cxp_RequireFileString(FilePath: string; var strList: TStrings);
+{El compilador está solicitando acceder a un STringList, con el contenido de "FilePath",
+para evitar tener que leerlo de disco, y ahcer más rápido el acceso.}
+var
+  i: Integer;
+  ed: TSynEditor;
+begin
+  i := fraEditView1.SearchEditorIdx(FilePath);
+  if i <> -1 then begin
+    //Tiene el archivo abierto. Pasa la referencia.
+    ed := fraEditView1.editors[i];
+    if cxp.Compiling then ed.SaveFile;   //En compilación gurada siempre los archivos afectados
+    strList := ed.SynEdit.Lines;
+  end;
+end;
+procedure TfrmPrincipal.cxp_AfterCompile;
+{Se genera después de realizar la compilación.}
+begin
+  //Refresca el árbol de sintaxis, para actualizar la estructura del árbol de sintaxis
+  if fraSynTree.Visible then begin
+    fraSynTree.Refresh;
+  end;
+end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 var
   synFile: String;
 begin
-
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
   //configura panel de mensajes
@@ -229,6 +259,9 @@ begin
   if FileExists(synFile) then begin
     hlAssem.LoadFromFile(synFile);
   end;
+  CT := TCodeTool.Create(fraEditView1, cxp, fraSynTree);
+  cxp.OnRequireFileString := @cxp_RequireFileString;
+  cxp.OnAfterCompile := @cxp_AfterCompile;
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
@@ -291,28 +324,55 @@ begin
 end;
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
 begin
+  CT.Destroy;
   hlAssem.Free;
 end;
 procedure TfrmPrincipal.Timer1Timer(Sender: TObject);
 var
   ed: TSynEditor;
+  filname, msg: string;
+  row, col: integer;
 begin
-  if fraEditView1.Count = 0 then begin
-    //No hay editores
-     StatusBar1.Panels[0].Text := ''
-  end else begin
-    //Hay archivos abiertos
-    ed := fraEditView1.ActiveEditor;
-    //Actualiza Barra de estado
-    if ed.Modified then
-      StatusBar1.Panels[0].Text := '(*)Modified'
-    else
-      StatusBar1.Panels[0].Text := 'Saved';
-    //Actualiza cursor
-    StatusBar1.Panels[1].Text := Format('%d,%d', [ed.SynEdit.CaretX, ed.SynEdit.CaretY]);
+  inc(tic);
+  inc(ticSynCheck);
+  if (tic mod 5 = 0) and StatusBar1.Visible then begin
+    //Cada 0.5 seg, se actualiza la barra de estado
+    if fraEditView1.Count = 0 then begin
+      //No hay editores
+       StatusBar1.Panels[0].Text := ''
+    end else begin
+      //Hay archivos abiertos
+      ed := fraEditView1.ActiveEditor;
+      //Actualiza Barra de estado
+      if ed.Modified then
+        StatusBar1.Panels[0].Text := '(*)Modified'
+      else
+        StatusBar1.Panels[0].Text := 'Saved';
+      //Actualiza cursor
+      StatusBar1.Panels[1].Text := Format('%d,%d', [ed.SynEdit.CaretX, ed.SynEdit.CaretY]);
+    end;
+  end;
+  if Config.AutSynChk and (ticSynCheck = 10) then begin
+    //Se cumplió el tiempo para iniciar la verificación automática de sintaxis
+    debugln('--Verif. Syntax.' + TimeToStr(now));
+    if fraEditView1.Count>0 then begin
+      //Hay archivo abiertos
+      ed := fraEditView1.ActiveEditor;
+      fraMessages.InitCompilation(cxp, false);  //Limpia mensajes
+      cxp.Compile(ed.NomArc, false);
+      //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
+      if cxp.HayError then begin
+        //Obtiene las coordenadas del primer error
+         fraMessages.GetFirstError(msg, filname, row, col);
+         if (msg<>'') and (filname = ed.NomArc) then begin
+           //Hay error en el archivo actual
+           ed.MarkError(Point(col, row));
+         end;
+      end;
+      fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
+    end;
   end;
 end;
-
 procedure TfrmPrincipal.FormDropFiles(Sender: TObject; const FileNames: array of String);
 var
   i: Integer;
@@ -325,6 +385,7 @@ end;
 procedure TfrmPrincipal.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
+  {Realmente, todo este código podrái ir dentro de de CT.KeyDown.}
   if (Shift = [ssCtrl]) and (Key = VK_TAB) then begin
     if fraEditView1.HasFocus then begin
       if fraEditView1.Count>1 then begin
@@ -344,9 +405,16 @@ begin
     if fraEditView1.HasFocus then acArcCloseFileExecute(self);
     Shift := []; Key := 0;  //para qie no pase
   end;
+  //Pasa evento a COde Tool
+  CT.KeyDown(Sender, Key, Shift);
 end;
 procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
+{Se produjo una modificación en el editor "ed"}
 begin
+  if not cxp.Compiling then begin
+    //En compilación no se activa la verificación automática de sintaxis
+    ticSynCheck := 0;  //reinicia cuenta
+  end;
   acArcSave.Enabled := ed.Modified;
   acEdUndo.Enabled  := ed.CanUndo;
   acEdRedo.Enabled  := ed.CanRedo;
@@ -354,6 +422,7 @@ begin
 //  acEdiCortar.Enabled := edit.canCopy;
 //  acEdiCopiar.Enabled := edit.canCopy;
 //  acEdiPegar.Enabled  := edit.CanPaste;
+  ed.ClearMarkErr;  //Quita la marca de error que pudiera haber
 end;
 procedure TfrmPrincipal.fraEdit_SelectEditor;
 {Se ha cambiado el estado de los editores: Se ha cambaido la selección, se ha
@@ -599,20 +668,19 @@ begin
       MsgExc('File must be saved before compiling.');
       exit;
     end;
-  end else begin
-    //Este es el caso normal
-//    fraEditView1.SaveFile;  //Guarda primero el archivo
-    fraEditView1.SaveAll;   //puede que se esté editando archivos que usa el programa
   end;
-  fraMessages.InitCompilation(cxp);  //Limpia mensajes
-  cxp.incDetComm := Config.IncComment2;   //Visualización de mensajes
-  cxp.SetProIniBnk := Config.SetProIniBnk;
-  cxp.SetProEndBnk := Config.SetProEndBnk;
-  cxp.Compile(filName, fraEditView1.ActiveEditor.SynEdit.Lines);
+  fraMessages.InitCompilation(cxp, true);  //Limpia mensajes
+  cxp.incDetComm   := Config.IncComment2;   //Visualización de mensajes
+  cxp.SetProIniBnk := not Config.OptBnkBefPro;
+  cxp.SetProEndBnk := not Config.OptBnkAftPro;
+  cxp.OptBnkAftIF  := Config.OptBnkAftIF;
+  ticSynCheck := 1000; //Desactiva alguna Verif. de sintaxis, en camino.
+  cxp.Compiling := true;   //Activa bandera
+  cxp.Compile(filName);
+  cxp.Compiling := false;
   if cxp.HayError then begin
     fraMessages.EndCompilation;
     VerificarError;
-    fraSynTree.Refresh;  //refresca lo que se tenga del árbol
     exit;
   end;
   fraMessages.EndCompilation;
@@ -634,8 +702,6 @@ begin
   edAsm.Lines.Add(';--------------------');
   edAsm.Lines.Add('    END');
   edAsm.EndUpdate;
-  //Actualiz panel de árbol de sintaxis
-  fraSynTree.Refresh;
 end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin
@@ -644,6 +710,12 @@ end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
   Config.Mostrar;
+end;
+procedure TfrmPrincipal.acToolFindDecExecute(Sender: TObject);
+{Ubica la declaración del elemento}
+begin
+  if fraEditView1.Count=0 then exit;
+  ct.GoToDeclaration;
 end;
 //Adicionales
 procedure TfrmPrincipal.VerificarError;

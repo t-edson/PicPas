@@ -168,6 +168,7 @@ var
   xcon: TxpEleCon;
   ele: TxpElement;
   bytePos: byte;
+  str: String;
 begin
   skipWhites;
   if tokType = lexAsm.tnNumber then begin
@@ -217,6 +218,12 @@ begin
       GenError(ER_EXP_CON_VAL);
       exit(false);
     end;
+  end else if (tokType = lexasm.tnString) and (length(lexAsm.GetToken) = 3) then begin
+    //Es un caracter
+    str := lexAsm.GetToken;
+    k := ord(str[2]);   //lee código de caracter
+    lexAsm.Next;
+    exit(true);
   end else begin
     GenError(ER_EXPECT_BYTE);
     exit(false);
@@ -703,6 +710,7 @@ initialization
   lexAsm.AddIdentSpecList('RETLW RETURN SLEEP SUBLW XORLW', lexAsm.tnKeyword);
   lexAsm.AddIdentSpecList('ORG', lexAsm.tnKeyword);
   lexAsm.DefTokDelim(';','', lexAsm.tnComment);
+  lexAsm.DefTokDelim('''','''', lexAsm.tnString);
   lexAsm.Rebuild;
 finalization
   lexAsm.Destroy;

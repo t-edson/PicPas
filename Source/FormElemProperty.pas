@@ -72,7 +72,8 @@ begin
       callerStr := cal.caller.name;
     end;
     bnkStr := IntToStr(cal.curBnk);
-    tmp := tmp + 'Called by: ' + callerStr + ' form Bank:' + bnkStr + LineEnding;
+    tmp := tmp + 'Called by: ' + callerStr + ' from Bank:' + bnkStr +
+           ' Pos:' + cal.curPos.RowColString + LineEnding;
   end;
   MsgBox(tmp);
 end;
@@ -95,8 +96,7 @@ begin
     txtEleType.Caption := elem.typ.name;
   end;
   txtEleLocaPath.Caption := ExtractFileDir(elem.srcDec.Fil);
-  txtEleLocFile.Caption := ExtractFileName(elem.srcDec.Fil) + ' [' + IntToStr(elem.srcDec.Row) + ',' +
-                                             IntToStr(elem.srcDec.Col)+']';
+  txtEleLocFile.Caption := ExtractFileName(elem.srcDec.Fil) + elem.srcDec.RowColString;
   BitBtn2.Enabled := true;
   //Muestra número de llamadas
   nCalled := elem.nCalled;
@@ -130,7 +130,8 @@ begin
   end else if elem is TxpEleBody then begin
     ImageList1.GetBitmap(12, Image1.Picture.Bitmap);
     adicInformation := 'Dirección: $' + IntToHex(fun.adrr, 3) + LineEnding +
-           'Tamaño: ' + IntToStr(fun.srcSize);
+           'Tamaño: ' + IntToStr(fun.srcSize)  + LineEnding +
+           'Fin: ' + elem.srcEnd.RowColString;
   end else begin
     ImageList1.GetBitmap(13, Image1.Picture.Bitmap);
     adicInformation := '';
