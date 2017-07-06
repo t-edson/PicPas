@@ -46,20 +46,20 @@ const
   begin
    ASM
    ;Inicializacion de Registros
-     BCF STATUS,bit_RP0        ; RP0=0 / Trabajamos en el Banco de memoria 0.
+     BCF STATUS_RP0            ; RP0=0 / Trabajamos en el Banco de memoria 0.
      CLRF resultado.LOW        ; Limpia el byte bajo de la variable global resultado.
      CLRF resultado.HIGH       ; Limpia el byte alto de la variable global resultado.
 	   CLRF _H
    ;Comprueba multiplicacion por cero.
      MOVLW $00
      SUBWF multiplicador,W
-     BTFSC STATUS,bit_Z
+     BTFSC STATUS_Z
      GOTO MULT_FIN             ; Si multiplicador = 0 entonces acabar.
    ;LOOP de multiplicacion
    MULT_LOOP:
      MOVF multiplicando,W      ; Carga el multiplicador en el registro W.
      ADDWF resultado.LOW,F     ; Suma el valor de multiplicando al byte bajo de la variable global resultado
-     BTFSC STATUS,bit_C        ; Comprueba el bit CARRY del registro STATUS.
+     BTFSC STATUS_C        ; Comprueba el bit CARRY del registro STATUS.
      INCF resultado.HIGH,F     ; Si CARRY es 0 resultado.LOW se ha desbordado se incrementa resultado.HIGH
      DECFSZ multiplicador,F    ; Decrementa multiplicador y comprueba si ha llegado a cero.
      GOTO MULT_LOOP            ; nuevo paso del bucle de multiplicacion.

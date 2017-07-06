@@ -120,6 +120,7 @@ type  //tipos enumerados
     size : smallint;    //tamaño en bytes del tipo
     procedure SaveToStk;
     procedure DefineRegister;
+    function IsSizeBit: boolean;
   public   //Eventos
     {Este evento es llamado automáticamente por el Analizador de expresiones,
      cuando encuentre una expresión de un solo operando, de este tipo.
@@ -224,7 +225,11 @@ procedure TType.DefineRegister;
 begin
   if OnDefineRegister<>nil then OnDefineRegister;
 end;
-
+function TType.IsSizeBit: boolean;
+{Indica si el tipo tiene un bit de tamaño.}
+begin
+  Result := size = -1;
+end;
 function TType.CreateBinaryOperator(txt: string; prec: byte; OpName: string
   ): TxpOperator;
 {Permite crear un nuevo ooperador bianrio soportado por este tipo de datos. Si hubiera

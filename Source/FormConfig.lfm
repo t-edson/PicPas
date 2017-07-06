@@ -57,9 +57,9 @@ object Config: TConfig
     Height = 307
     Top = 0
     Width = 402
-    ActivePage = tabOutput
+    ActivePage = tabGeneral
     Align = alClient
-    TabIndex = 5
+    TabIndex = 0
     TabOrder = 1
     object tabGeneral: TTabSheet
       Caption = 'General'

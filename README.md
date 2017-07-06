@@ -1,4 +1,4 @@
-PicPas 0.7.1
+PicPas 0.7.2
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
@@ -369,6 +369,7 @@ The devices supported by now are:
  PIC16C65
  PIC16C65A
  PIC16CR65
+ PIC16F72
  PIC16F83
  PIC16CR83
  PIC16F84

@@ -4,18 +4,17 @@ unit Parser;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, lclProc, SynEditHighlighter, types, SynFacilHighlighter,
+  Classes, SysUtils, lclProc, SynEditHighlighter, types,
   MisUtils, XpresBas, XpresTypesPIC, XpresElementsPIC, XpresParserPIC, Pic16Utils,
-  Pic16Devices, Globales, ProcAsm, GenCod, GenCodPic, FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
+  Globales, GenCodPic, GenCod, ParserDirec,
+  FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
 type
-
  { TCompiler }
-  TCompiler = class(TGenCod)
+  TCompiler = class(TParserDirec)
   private  //Funciones básicas
     mainFile: string;  //archivo inicial que se compila
-    lexDir : TSynFacilSyn;  //lexer para analizar directivas
-    function AddVariable(varName: string; typ: ttype; absAddr, absBit: integer;
-      srcPos: TSrcPos): TxpEleVar;
+    function AddVariable(varName: string; typ: ttype; srcPos: TSrcPos): TxpEleVar;
+    function GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
     procedure cInNewLine(lin: string);
     procedure Cod_JumpIfTrue;
     function CompileStructBody(GenCode: boolean): boolean;
@@ -49,7 +48,6 @@ type
     procedure CompileProcDeclar(IsImplementation: boolean);
     procedure CompileInstruction;
     procedure CompileInstructionDummy;
-    procedure DefLexDirectiv;
     function OpenContextFrom(filePath: string): boolean;
     procedure CompileCurBlock;
     procedure CompileCurBlockDummy;
@@ -57,16 +55,12 @@ type
     procedure CompileUsesDeclaration;
     procedure CompileProgram;
     procedure CompileLinkProgram;
-  private  //Variables internas del compilador
-    mode : (modPascal, modPicPas);
   public
-    Compiling   : boolean;  //Bandera para el compilado
     OnAfterCompile: procedure of object;   //Al finalizar la compilación.
     {Indica que TCompiler, va a acceder a un archivo, peor está pregunatndo para ver
      si se tiene un Stringlist, con los datos ya caragdos del archivo, para evitar
      tener que abrir nuevamente al archivo.}
     OnRequireFileString: procedure(FilePath: string; var strList: TStrings) of object;
-    function modeStr: string;
     procedure Compile(NombArc: string; Link: boolean = true);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
     procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);  //uso de la memoria Flash
@@ -92,9 +86,8 @@ var
   ER_IDE_CON_EXP, ER_NUM_ADD_EXP, ER_IDE_TYP_EXP, ER_SEM_COM_EXP: String;
   ER_EQU_COM_EXP, ER_END_EXPECTE, ER_EOF_END_EXP, ER_BOOL_EXPECT: String;
   ER_UNKN_STRUCT, ER_PROG_NAM_EX, ER_COMPIL_PROC, ER_CON_EXP_EXP: String;
-  ER_ERROR_DIREC, ER_UNKNO_DIREC, ER_UNKNO_DEVIC, ER_NOT_AFT_END,
-  ER_ELS_UNEXPEC : String;
-  ER_INST_NEV_EXE, ER_MODE_UNKNOWN, ER_ONLY_ONE_REG: String;
+  ER_NOT_AFT_END, ER_ELS_UNEXPEC : String;
+  ER_INST_NEV_EXE, ER_ONLY_ONE_REG: String;
   ER_VARIAB_EXPEC, ER_ONL_BYT_WORD, ER_ASIG_EXPECT: String;
   ER_FIL_NOFOUND, WA_UNUSED_CON_, WA_UNUSED_VAR_,WA_UNUSED_PRO_: String;
   MSG_RAM_USED, MSG_FLS_USED: String;
@@ -162,128 +155,34 @@ begin
 end;
 procedure TCompiler.ProcComments;
 {Procesa comentarios, directivas y bloques ASM. Los bloques ASM, se processan también
-como comentarios o directivas, para poder ubicarlos dentro ed instrucciones, y poder
-darle mayor poder, en el futuro.}
-  function tokType: integer;
-  begin
-    Result := lexdir.GetTokenKind;
-  end;
-  procedure skipWhites;
-  begin
-    if tokType = lexDir.tnSpace then
-      lexDir.Next;  //quita espacios
-  end;
-var
-  f: Integer;
-  txtMode, txtMsg, tmp: String;
+como comentarios o directivas, para poder ubicarlos dentro de instrucciones, y poder
+darle mayor poder, en el futuro.
+Notar que este procedimiento puede detectar varios errores en el mismo bloque, y que
+pasa al siguiente token, aún cuando detecta errores. Esto permite seguir proesando
+el texto, después de que ya se han generado errores dentro de este blqoue. Así, no
+sería necesario verificar error después de esta rutina, y se podrían detectar errores
+adicionales en el código fuente.}
 begin
   cIn.SkipWhites;
   while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
     if cIn.tokType = tnAsm then begin
-      //procesa la línea ASM
-      ProcASMlime(cIn.tok);
-      if HayError then exit;
+      //Es una línea ASM
+      ProcASMlime(cIn.tok);  //procesa línea
+      if HayError then begin
+        cIn.Next;   //Pasa, porque es un error ya ubicado, y mejor buscamos otros
+        cIn.SkipWhites;
+        continue;
+      end;
     end else begin
-      //Se ha detectado una directiva
-      //Usa SynFacilSyn como lexer para analizar texto
-      lexDir.SetLine(copy(Cin.tok,3,1000), 0);  //inicica cadena
-      if tokType = lexDir.tnSpace then lexDir.Next;  //quita espacios
-      if tokType <> lexDir.tnIdentif then begin
-        GenError(ER_ERROR_DIREC);
-        exit;
-      end;
-      //sigue identificador
-      case UpperCase(lexDir.GetToken) of
-      'PROCESSOR': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-        if not GetHardwareInfo(pic, lexDir.GetToken) then begin
-          GenError(ER_UNKNO_DEVIC, [lexDir.GetToken]);
-          exit;
-        end;
-      end;
-      'FREQUENCY': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-        if tokType <> lexDir.tnNumber then begin
-          GenError(ER_ERROR_DIREC);
-          exit;
-        end;
-        if not TryStrToInt(lexDir.GetToken, f) then begin
-          GenError('Error in frequency.');
-          exit;
-        end;
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-        case UpperCase(lexDir.GetToken) of
-        'KHZ': f := f * 1000;
-        'MHZ': f := f * 1000000;
-        else
-          GenError(ER_ERROR_DIREC);
-          exit;
-        end;
-        pic.frequen:=f; //asigna freecuencia
-      end;
-      'POINTERS': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-
-      end;
-      'CONFIG': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-
-      end;
-      'DEFINE': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-      end;
-      'MODE': begin  //Define el dialecto del lenguaje
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-        txtMode := UpCase(lexDir.GetToken);
-        if txtMode = 'PICPAS' then begin
-          self.mode := modPicPas;
-        end else if txtMode = 'PASCAL' then begin
-          self.mode := modPascal;
-        end else begin
-          GenError(ER_MODE_UNKNOWN, [txtMode]);
-          exit;
-        end;
-      end;
-      'MSGBOX': begin
-        lexDir.Next;  //pasa al siguiente
-        skipWhites;
-        //Captura tokens para mostrarlos
-        txtMsg := '';
-        while not lexDir.GetEol do begin
-          tmp :=  lexDir.GetToken;  //lee token
-          if lexDir.GetTokenKind = lexDir.tnString then begin
-            tmp := copy(tmp, 2, length(tmp)-2);
-          end else if lexDir.GetToken = '}' then begin
-            break;  //sale
-          end else begin
-            //Verifica si es variable de sistema
-            if UpCase(tmp) = '$FREQUENCY' then tmp := IntToStr(pic.frequen);
-            if UpCase(tmp) = '$PROCESSOR' then tmp := pic.Model;
-            if UpCase(tmp) = '$MODE' then tmp := modeStr;
-            if UpCase(tmp) = '$CURRBANK' then tmp := IntToStr(CurrBank);
-            if UpCase(tmp) = '$IFLASH' then tmp := IntToStr(pic.iFlash);
-          end;
-          //Concatena
-          txtMsg := txtMsg + tmp;
-          lexDir.Next;  //pasa al siguiente
-          skipWhites;
-        end;
-        //Solo muestra en compilación y en la primera pasada
-        if Compiling and FirstPass then msgbox(txtMsg);
-      end;
-      else
-        GenError(ER_UNKNO_DIREC, [lexDir.GetToken]);
-        exit;
+      //Es una directiva
+      ProcDIRline(cIn.tok, Cin.curCon.lex.GetX);  //procesa línea
+      if HayError then begin
+        cIn.Next;   //Pasa, porque es un error ya ubicado, y mejor buscamos otros
+        cIn.SkipWhites;
+        continue;
       end;
     end;
-    //pasa w siguiente
+    //Pasa a siguiente
     cIn.Next;
     cIn.SkipWhites;  //limpia blancos
   end;
@@ -315,25 +214,24 @@ begin
     exit;       //sale
   end;
 end;
-function TCompiler.AddVariable(varName: string; typ: ttype; absAddr, absBit: integer;
-  srcPos: TSrcPos): TxpEleVar;
-{Crea una variable, le asigna memoria, y la agrega en el nodo actual del árbol de
-sintaxis. Verifica errores. SI no hay errores, devuelve la referencia a la variable.}
+function TCompiler.AddVariable(varName: string; typ: ttype; srcPos: TSrcPos
+  ): TxpEleVar;
+{Crea un elemento variable y lo agrega en el nodo actual del árbol de sintaxis.
+Si no hay errores, devuelve la referencia a la variable. En caso contrario,
+devuelve NIL.
+Notar que este método, no asigna RAM a la variable. En una creación completa de
+variables, se debería llamar a CreateVarInRAM(), después de agregar la variable.}
 var
   xvar: TxpEleVar;
 begin
-  xvar := CreateVar(varName, typ, absAddr, absBit);
+  //Inicia parámetros adicionales de declaración
+  xvar := CreateVar(varName, typ);
   xvar.srcDec := srcPos;  //Actualiza posición
   Result := xvar;
-  CreateVarInRAM(xvar);  //Crea la variable
-  if HayError then begin
-    xvar.Destroy;   //Hay una variable creada
-    exit;
-  end;
   if not TreeElems.AddElement(xvar) then begin
     GenErrorPos(ER_DUPLIC_IDEN, [xvar.name], xvar.srcDec);
     xvar.Destroy;   //Hay una variable creada
-    exit;
+    exit(nil);
   end;
 end;
 procedure TCompiler.CaptureDecParams(fun: TxpEleFun);
@@ -347,7 +245,7 @@ var
   srcPosArray: TSrcPosArray;
   i: Integer;
 begin
-  SkipWhites;
+  cIn.SkipWhites;
   if EOBlock or EOExpres or (cIn.tok = ':') then begin
     //no tiene parámetros
   end else begin
@@ -393,15 +291,17 @@ begin
           end;
           {Crea como variable absoluta a una posición cualquiera porque esta variable,
           no debería estar mapeada.}
-          xvar := AddVariable(itemList[i], typ, 0, 0, srcPosArray[i]);
+          xvar := AddVariable(itemList[i], typ, srcPosArray[i]);
           xvar.IsParameter := true;  //Marca bandera
-          xvar.IsRegister := IsRegister;
+          xvar.IsRegister := true;
+          //CreateVarInRAM(xvar);  //Crea la variable
           if HayError then exit;
         end else begin
           //Parámetro normal
-          xvar := AddVariable(itemList[i], typ, -1, -1, srcPosArray[i]);
+          xvar := AddVariable(itemList[i], typ, srcPosArray[i]);
           xvar.IsParameter := true;  //Marca bandera
-          xvar.IsRegister := IsRegister;
+          xvar.IsRegister := false;
+          //CreateVarInRAM(xvar);  //Crea la variable
           if HayError then exit;
         end;
         //Ahora ya tiene la variable
@@ -411,7 +311,7 @@ begin
       //Busca delimitador
       if cIn.tok = ';' then begin
         cIn.Next;   //toma separador
-        SkipWhites;
+        cIn.SkipWhites;
       end else begin
         //no sigue separador de parámetros,
         //debe terminar la lista de parámetros
@@ -511,6 +411,21 @@ begin
 end;
 procedure TCompiler.CompileIF;
 {Compila una extructura IF}
+  procedure SetFinalBank(bnk1, bnk2: byte);
+  {Fija el valor de CurrBank, de acuerdo a dos bancos finales.}
+  begin
+    if OptBnkAftIF then begin
+      //Optimizar banking
+      if bnk1 = bnk2 then begin
+        //Es el mismo banco (aunque sea 255). Lo deja allí.
+      end else begin
+        CurrBank := 255;  //Indefinido
+      end;
+    end else begin
+      //Sin optimización
+      _BANKRESET;
+    end;
+  end;
 var
   jFALSE, jEND_TRUE: integer;
   bnkExp, bnkTHEN, bnkELSE: Byte;
@@ -571,42 +486,22 @@ begin
       CurrBank := bnkExp;  //Fija el banco inicial antes de compilar
       if not CompileConditionalBody(bnkELSE) then exit;
       _LABEL(jEND_TRUE);   //termina de codificar el salto
-      //Manejo de bancos
-      if OptBnkAftIF then begin
-        //Optimizar banking
-        if bnkTHEN = bnkELSE then begin
-          //Es el mismo banco (aunque sea 255). Lo deja allí.
-        end else begin
-          CurrBank := 255;  //Indefinido
-        end;
-      end else begin
-        //Sin optimización
-        _BANKRESET;
-      end;
+      SetFinalBank(bnkTHEN, bnkELSE);  //Manejo de bancos
       VerifyEND;   //puede salir con error
     end else if cIn.tokL = 'elsif' then begin
+      //Es: IF ... THEN ... ELSIF ...
       cIn.Next;
       _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
       _LABEL(jFALSE);   //termina de codificar el salto
       CompileIF;  //más fácil es la forma recursiva
       if HayError then exit;
       _LABEL(jEND_TRUE);   //termina de codificar el salto
+      SetFinalBank(bnkTHEN, CurrBank);  //Manejo de bancos
       //No es necesario verificar el END final.
     end else begin
       //Es: IF ... THEN ... END. (Puede ser recursivo)
       _LABEL(jFALSE);   //termina de codificar el salto
-      //Manejo de bancos
-      if OptBnkAftIF then begin
-        //Optimizar banking
-        if bnkExp = bnkTHEN then begin
-          //Es el mismo banco. Lo deja allí.
-        end else begin
-          CurrBank := 255;  //Indefinido
-        end;
-      end else begin
-        //Sin optimización
-        _BANKRESET;
-      end;
+      SetFinalBank(bnkTHEN, bnkELSE);  //Manejo de bancos
       VerifyEND;  //puede salir con error
     end;
   end;
@@ -674,26 +569,28 @@ begin
   end;
 end;
 procedure TCompiler.CompileWHILE;
-{Compila uan extructura WHILE}
+{Compila una extructura WHILE}
 var
   l1: Word;
   dg: Integer;
-  bnkEND: byte;
+  bnkEND, bnkExp1, bnkExp2: byte;
 begin
   l1 := _PC;        //guarda dirección de inicio
-  if not GetExpressionBool then exit;
+  bnkExp1 := CurrBank;   //Guarda el banco antes de la expresión
+  if not GetExpressionBool then exit;  //Condición
+  bnkExp2 := CurrBank;   //Guarda el banco antes de la expresión
   if not CaptureStr('do') then exit;  //toma "do"
-  //aquí debe estar el cuerpo del "while"
+  //Aquí debe estar el cuerpo del "while"
   case res.catOp of
   coConst: begin  //la condición es fija
     if res.valBool then begin
       //Lazo infinito
       if not CompileNoConditionBody(true) then exit;
       if not VerifyEND then exit;
+      _BANKSEL(bnkExp1);   //asegura que el lazo se ejecutará en el mismo banco de origen
       _GOTO(l1);
     end else begin
-      //lazo nulo
-      //Compila la parte TRUE
+      //Lazo nulo. Compila sin generar código.
       if not CompileNoConditionBody(false) then exit;
       if not VerifyEND then exit;
     end;
@@ -702,12 +599,14 @@ begin
     Cod_JumpIfTrue;
     _GOTO_PEND(dg);  //salto pendiente
     if not CompileConditionalBody(bnkEND) then exit;
+    _BANKSEL(bnkExp1);   //asegura que el lazo se ejecutará en el mismo banco de origen
+    _GOTO(l1);   //salta a evaluar la condición
     if not VerifyEND then exit;
-    _GOTO(l1);
     //ya se tiene el destino del salto
     _LABEL(dg);   //termina de codificar el salto
   end;
   end;
+  CurrBank := bnkExp2;  //Este es el banco con que se sale del WHILE
 end;
 procedure TCompiler.CompileFOR;
 {Compila uan extructura WHILE}
@@ -728,7 +627,7 @@ begin
     GenError(ER_ONL_BYT_WORD);
     exit;
   end;
-  SkipWhites;
+  cIn.SkipWhites;
   opr1 := GetOperator(Op1);   //debe ser ":="
   if opr1.txt <> ':=' then begin
     GenError(ER_ASIG_EXPECT);
@@ -956,171 +855,134 @@ begin
   ProcComments;
   //puede salir con error
 end;
+function TCompiler.GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
+{Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
+pone "IsAbs" en TRUE y actualiza los valores "absAddr" y "absBit". }
+  function ReadAddres(tok: string): word;
+  {Lee una dirección de RAM a partir de una cadena numérica.
+  Puede generar error.}
+  var
+    n: LongInt;
+  begin
+    //COnvierte cadena (soporta binario y hexadecimal)
+    if not TryStrToInt(tok, n) then begin
+      //Podría fallar si es un número muy grande
+      GenError(ER_INV_MEMADDR);
+      exit;
+    end;
+    if (n<0) or (n>$ffff) then begin
+      //Debe set Word
+      GenError(ER_INV_MEMADDR);
+      exit;
+    end;
+    Result := n;
+    if not pic.ValidRAMaddr(Result) then begin
+      GenError(ER_INV_MAD_DEV);
+      exit;
+    end;
+  end;
+  function ReadAddresBit(tok: string): byte;
+  {Lee la parte del bit de una dirección de RAM a partir de una cadena numérica.
+  Puede generar error.}
+  var
+    n: Longint;
+  begin
+    if not TryStrToInt(tok, n) then begin
+      GenError(ER_INV_MEMADDR);
+      exit;
+    end;
+    if (n<0) or (n>7) then begin
+      GenError(ER_INV_MEMADDR);
+      exit;
+    end;
+    Result := n;   //no debe fallar
+  end;
+var
+  xvar: TxpEleVar;
+  n: integer;
+  Op: TOperand;
+begin
+  Result.srcDec  := cIn.PosAct;  //Posición de inicio de posibles parámetros adic.
+  Result.isAbsol := false; //bandera
+  if (cIn.tokL <> 'absolute') and (cIn.tok <> '@') then begin
+    exit;  //no es variable absoluta
+  end;
+  //// Hay especificación de dirección absoluta ////
+  Result.isAbsol := true;    //marca bandera
+  cIn.Next;
+  cIn.SkipWhites;
+  if cIn.tokType = tnNumber then begin
+    if (cIn.tok[1]<>'$') and ((pos('e', cIn.tok)<>0) or (pos('E', cIn.tok)<>0)) then begin
+      //La notación exponencial, no es válida.
+      GenError(ER_INV_MEMADDR);
+      exit;
+    end;
+    n := pos('.', cIn.tok);   //no debe fallar
+    if n=0 then begin
+      //Número entero sin parte decimal
+      Result.absAddr := ReadAddres(cIn.tok);
+      cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
+      //Puede que siga la parte de bit
+      if cIn.tok = '.' then begin
+        cIn.Next;
+        IsBit := true;  //Tiene parte de bit
+        Result.absBit := ReadAddresBit(cIn.tok);  //Parte decimal
+        cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
+      end else begin
+        IsBit := false;  //No tiene parte de bit
+      end;
+    end else begin
+      //Puede ser el formato <dirección>.<bit>, en un solo token, que es válido.
+      IsBit := true;  //Se deduce que tiene punto decimal
+      //Ya sabemos que tiene que ser decimal, con punto
+      Result.absAddr := ReadAddres(copy(cIn.tok, 1, n-1));
+      //Puede haber error
+      Result.absBit := ReadAddresBit(copy(cIn.tok, n+1, 100));  //Parte decimal
+      cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
+    end;
+  end else if cIn.tokType = tnIdentif then begin
+    //Puede ser variable
+    GetOperandIdent(Op);
+    if HayError then exit;
+    if Op.catOp <> coVariab then begin
+      GenError(ER_EXP_VAR_IDE);
+      cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
+      exit;
+    end;
+    //Es variable. Notar que puede ser una variable temporal, si se usa: <var_byte>.0
+    xvar := Op.rVar;
+    //Ya tiene la variable en "xvar".
+    if xvar.typ.IsSizeBit then begin //boolean o bit
+      IsBit := true;  //Es una dirección de bit
+      Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
+      Result.absBit := xvar.adrBit.bit;
+    end else begin
+      IsBit := false;  //Es una dirección normal (byte)
+      Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
+    end;
+    if Result.absAddr = ADRR_ERROR then begin
+      //No se implemento el tipo. No debería pasar.
+      GenError('Internal Error: TxpEleVar.AbsAddr.');
+      exit;
+    end;
+  end else begin   //error
+    GenError(ER_NUM_ADD_EXP);
+    cIn.Next;    //pasa siempre
+    exit;
+  end;
+end;
 procedure TCompiler.CompileVarDeclar(IsInterface: boolean = false);
 {Compila la declaración de variables en el nodo actual.
-"IsInterface", indica el valor que se pondrá al as varaibles, en la bandera "IsInterface" }
-var
-  absAddr: integer;
-  absBit: integer;
-  Number: TOperand;  //para ser es usado por las subrutinas
-
-  procedure CheckVarField;
-  {Extrae la parte del bit de una dirección absoluta. Actualiza "absBit"}
-  begin
-    if not CaptureTok('.') then exit;
-    //toma posición de bit
-    TipDefecNumber(Number, cIn.tok); //encuentra tipo de número, tamaño y valor
-    if HayError then exit;  //verifica
-    if Number.CanBeByte then
-       absBit := Number.valInt
-    else begin
-      GenError(ER_INV_MEMADDR);
-      exit;
-    end;
-    if absBit > 7 then begin
-      GenError(ER_INV_MEMADDR);
-      exit;
-    end;
-    cIn.Next;    //Pasa al siguiente
-  end;
-  procedure CheckAbsolute(out IsAbs: boolean; const IsBit: boolean);
-  {Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
-  pone "IsAbs" en TRUE y actualiza los valores "absAddr" y "absBit". }
-  var
-    elem: TxpElement;
-    xvar: TxpEleVar;
-    n: integer;
-    tmp: String;
-  begin
-    IsAbs := false;   //bandera
-    absAddr := -1;  //inicia valores pore defecto, por seguridad
-    absBit := -1;   //inicia valores pore defecto, por seguridad
-    if (cIn.tokL <> 'absolute') and (cIn.tok <> '@') then begin
-      exit;  //no es variable absoluta
-    end;
-    //// Hay especificación de dirección absoluta ////
-    IsAbs := true;    //marca bandera
-    cIn.Next;
-    cIn.SkipWhites;
-    if cIn.tokType = tnNumber then begin
-      TipDefecNumber(Number, cIn.tok); //encuentra tipo de número, tamaño y valor
-      if HayError then exit;  //verifica
-      if Number.typ.cat = t_float then begin
-        //Caso especial porque el puede ser el formato <dirección>.<bit> que es
-        //totalmenet válido, y el lexer lo captura como un solo token.
-        if IsBit then begin
-          //Puede ser válido el número "decimal", hay que extraer los campos,
-          //pero primero hay que asegurarnos que no tenga notación exponencial.
-          if (pos('e', cIn.tok)<>0) or (pos('E', cIn.tok)<>0) then begin
-            GenError(ER_INV_MEMADDR);
-            exit;
-          end;
-          //ya sabemos que tiene que ser decimal, con punto
-          absAddr := trunc(Number.valFloat);   //la dirección es la parte entera
-          n := pos('.', cIn.tok);   //no debe fallar
-          tmp := copy(cIn.tok, n+1, 1000);   //copia parte decimal
-          if length(tmp)<>1 then begin  //valida longitud
-            GenError(ER_INV_MEMADDR);
-            exit;
-          end;
-          absBit:=StrToInt(tmp);   //no debe fallar
-          //valida
-          if not pic.ValidRAMaddr(absAddr) then begin
-            GenError(ER_INV_MAD_DEV);
-            exit;
-          end;
-          if absBit > 7 then begin
-            GenError(ER_INV_MEMADDR);
-            exit;
-          end;
-          cIn.Next;    //Pasa al siguiente
-        end else begin  //no puede ser correcto
-          GenError(ER_INV_MEMADDR);
-          exit;
-        end;
-      end else begin
-        //Se asume número entero
-        if Number.CanBeWord then
-           absAddr := Number.aWord
-        else begin
-          GenError(ER_INV_MEMADDR);
-          exit;
-        end;
-        if not pic.ValidRAMaddr(absAddr) then begin
-          GenError(ER_INV_MAD_DEV);
-          exit;
-        end;
-        cIn.Next;    //Pasa al siguiente
-        if IsBit then begin
-          CheckVarField;  //es un boolean, debe especificarse el bit
-          if HayError then exit;  //verifica
-        end;
-      end;
-    end else if cIn.tokType = tnIdentif then begin
-      //Puede ser variable
-      elem := TreeElems.FindFirst(cIn.tok);
-      if elem=nil then begin
-        GenError(ER_UNKNOWN_ID_, [cIn.tok]);
-        exit;
-      end;
-      if elem is TxpEleVar then begin
-        //Es variable
-        xvar := TxpEleVar(elem);
-        if FirstPass then xvar.AddCaller;   //Considera que se usa la variable, auqnue no se llame desde código.
-      end else begin
-        GenError(ER_EXP_VAR_IDE);
-        exit;
-      end;
-      cIn.Next;    //Pasa al siguiente
-      //Ya se tiene la variable en "xvar". Pero podría haber campos.
-      if cIn.tok = '.' then begin
-        //Hay identificador de campo
-        //Lo pone como operando, para usar IdentifyField()
-        res.catOp:=coVariab;    //variable
-        res.typ:=xvar.typ;
-        res.rVar:=xvar;   //guarda referencia a la variable
-        IdentifyField(res);  //Puede estar creado variables temporales
-        if HayError then exit;
-        //El resultado se devuelve en "res"
-        if res.catOp <> coVariab then begin
-          GenError(ER_EXP_VAR_IDE);
-          exit;
-        end;
-        xvar := res.rVar;  //actualiza referencia
-      end;
-      //Ya tiene la variable en "res".
-      if IsBit then begin
-        //Se pide una dirección de bit
-        if (xvar.typ <> typBit) and (xvar.typ <> typBool) then begin
-          //Se esperaba una variable BIT
-          GenError(ER_BIT_VAR_REF);
-          exit;
-        end;
-        absAddr := xvar.AbsAddr;  //debe ser absoluta
-        absBit := xvar.adrBit.bit;
-      end else begin
-        //Se pide una dirección normal
-        absAddr := xvar.AbsAddr;  //debe ser absoluta
-      end;
-      if absAddr = ADRR_ERROR then begin
-        //No se implemento el tipo. No debería pasar.
-        GenError('Internal Error: TxpEleVar.AbsAddr.');
-        exit;
-      end;
-    end else begin   //error
-      GenError(ER_NUM_ADD_EXP);
-      exit;
-    end;
-  end;
-
+"IsInterface", indica el valor que se pondrá al as variables, en la bandera "IsInterface" }
 var
   varType: String;
   varNames: array of string;  //nombre de variables
-  isAbsolute: Boolean;
+  IsBit: Boolean;
   typ: TType;
   srcPosArray: TSrcPosArray;
   i: Integer;
   xvar: TxpEleVar;
+  adicVarDec: TAdicVarDec;
 begin
   //Procesa variables a,b,c : int;
   getListOfIdent(varNames, srcPosArray);
@@ -1146,14 +1008,40 @@ begin
       GenError(ER_UNDEF_TYPE_, [varType]);
       exit;
     end;
-    //verifica si tiene dirección absoluta
-    CheckAbsolute(isAbsolute, (typ = typBool) or (typ = typBit) );
+    //Lee información aicional de la declaración (ABSOLUTE)
+    adicVarDec := GetAdicVarDeclar(IsBit);
+    if HayError then exit;
+    if adicVarDec.isAbsol then begin
+      //Es una declaración ABSOLUTE
+      if (typ = typBool) or (typ = typBit) then begin
+        //Se espera un bit, valida el ABSOLUTE. Debe ser bit
+        if not IsBit then begin
+          GenError(ER_INV_MEMADDR);
+        end;
+      end else begin
+        //Se espera un byte
+        if IsBit then begin
+          {En realidad se podría aceptar posicionar un byte en una variable bit,
+          posicionándolo en su byte contenedor.}
+          GenError(ER_INV_MEMADDR);
+        end;
+      end;
+    end;
     if HayError then exit;
     //reserva espacio para las variables
     for i := 0 to high(varNames) do begin
-      xvar := AddVariable(varNames[i], typ, absAddr{%H-}, absBit{%H-}, srcPosArray[i]);
-      xvar.InInterface := IsInterface;   //actualiza bandera
-      if HayError then exit;
+      xvar := AddVariable(varNames[i], typ, srcPosArray[i]);
+      if HayError then break;        //Sale para ver otros errores
+      xvar.adicPar := adicVarDec;    //Actualiza propiedades adicionales
+      xvar.InInterface := IsInterface;  //Actualiza bandera
+      {Técnicamente, no sería necesario, asignar RAM a la variable aquí (y así se
+      optimizaría), porque este método, solo se ejecuta en la primera pasada, y no
+      es vital tener las referencias a memoria, en esta pasada.
+      Pero se incluye la ásignación de RAM, por:
+      * Porque el acceso con directivas, a con variables del sistema como "CurrBank",
+      se hace en la primera pasada, y es necesario que estas varaibles sean válidas.
+      * Para tener en la primera pasada, un código más similar al código final.}
+      CreateVarInRAM(xvar);  //Crea la variable
     end;
   end else begin
     GenError(ER_SEM_COM_EXP);
@@ -1325,7 +1213,6 @@ procedure TCompiler.CompileInstruction;
  }
 begin
   ProcComments;
-  if HayError then exit;   //puede dar error por código assembler o directivas
   if cIn.tokL='begin' then begin
     //es bloque
     cIn.Next;  //toma "begin"
@@ -1390,7 +1277,6 @@ procedure TCompiler.CompileCurBlock;
 de archivo. }
 begin
   ProcComments;
-  if HayError then exit;   //puede dar error por código assembler o directivas
   while not cIn.Eof and (cIn.tokType<>tnBlkDelim) do begin
     //se espera una expresión o estructura
     CompileInstruction;
@@ -1399,7 +1285,6 @@ begin
     if cIn.Eof then break;  //sale por fin de archivo
     //busca delimitador
     ProcComments;
-    if HayError then exit;   //puede dar error por código assembler o directivas
     //Puede terminar con un delimitador de bloque
     if cIn.tokType=tnBlkDelim then break;
     //Pero lo común es que haya un delimitador de expresión
@@ -1438,12 +1323,10 @@ begin
   ClearError;
   pic.MsjError := '';
   ProcComments;
-  if HayError then exit;
   //Busca UNIT
   if cIn.tokL = 'unit' then begin
     cIn.Next;  //pasa al nombre
     ProcComments;
-    if HayError then exit;   //puede dar error por código assembler o directivas
     if cIn.Eof then begin
       GenError('Name of unit expected.');
       exit;
@@ -1459,7 +1342,6 @@ begin
     exit;
   end;
   ProcComments;
-  if HayError then exit;
   if cIn.tokL <> 'interface' then begin
     GenError('Expected: INTERFACE');
     exit;
@@ -1506,7 +1388,6 @@ begin
     end;
   end;
   ProcComments;
-  if HayError then exit;
   if cIn.tokL <> 'implementation' then begin
     GenError('Expected: IMPLEMENTATION');
     exit;
@@ -1639,7 +1520,6 @@ begin
   ClearError;
   pic.MsjError := '';
   ProcComments;
-  if HayError then exit;
   //Busca PROGRAM
   if cIn.tokL = 'unit' then begin
     //Se intenta compilar una unidad
@@ -1649,7 +1529,6 @@ begin
   if cIn.tokL = 'program' then begin
     cIn.Next;  //pasa al nombre
     ProcComments;
-    if HayError then exit;   //puede dar error por código assembler o directivas
     if cIn.Eof then begin
       GenError(ER_PROG_NAM_EX);
       exit;
@@ -1789,6 +1668,9 @@ var
   xvar   : TxpEleVar;
   fun    : TxpEleFun;
   iniMain, noUsed, noUsedPrev: integer;
+  adicVarDec: TAdicVarDec;
+  posAct: TPosCont;
+  IsBit: boolean;
 begin
   ExprLevel := 0;
   pic.ClearMemFlash;
@@ -1815,6 +1697,20 @@ begin
 //debugln('xvar=%s', [xvar.name]);
     if xvar.nCalled>0 then begin
       //Asigna una dirección válida para esta variable
+      if xvar.adicPar.isAbsol then begin
+        {Tiene declaración absoluta. Mejor compilamos de nuevo, la declaración, porque
+        puede haber referencia a variables que han cambiado de ubicación, por
+        optimización.
+        Se podría hacer una verificación, para saber si la refErencia es a direcciones
+        absolutas, en lugar de a variables (o a varaibles temporales), y así evitar
+        tener que compilar de nuevo, la declaración}
+        posAct := cIn.PosAct;   //guarda posición actual
+        cIn.PosAct := xVar.adicPar.srcDec;  //posiciona en la declaración adicional
+        adicVarDec := GetAdicVarDeclar(IsBit);
+        //No debería dar error, porque ya pasó la primera pasada
+        xvar.adicPar := adicVarDec;
+        cIn.PosAct := posAct;
+      end;
       CreateVarInRAM(xVar);  //Crea la variable
       xvar.typ.DefineRegister;  //Asegura que se dispondrá de los RT necesarios
 //debugln('  Defined in %s', [xvar.AddrString]);
@@ -1899,20 +1795,10 @@ begin
   {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
   _SLEEP();   //agrega instrucción final
 end;
-function TCompiler.modeStr: string;
-begin
-  case mode of
-  modPascal: Result := 'modPascal';
-  modPicPas: Result := 'modPicPas';
-  else
-    Result := 'Unknown';
-  end;
-end;
 function TCompiler.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}
 begin
   ProcComments;
-  if HayError then exit(false);
   //Busca UNIT
   if cIn.tokL = 'unit' then begin
     cIn.curCon.SetStartPos;   //retorna al inicio
@@ -1950,6 +1836,7 @@ begin
     TreeElems.OnAddElement := @Tree_AddElement;   //Se va a modificar el árbol
     listFunSys.Clear;
     CreateSystemElements;  //Crea los elementos del sistema
+    ClearMacros;           //Limpia las macros
     //Inicia PIC
     ExprLevel := 0;  //inicia
     pic.ClearMemFlash;
@@ -2122,31 +2009,16 @@ begin
   stkUse := 0;  //calor por defecto
   { TODO : Por implementar }
 end;
-procedure TCompiler.DefLexDirectiv;
-(*Define la sintaxis del lexer que se usará para analizar las directivas. La que
- debe estar entre los símbolo {$ ... }
-*)
-begin
-  //solo se requiere identificadores y números
-  lexDir.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
-  lexDir.DefTokContent('[0-9]', '[0-9.]*', lexDir.tnNumber);
-  lexDir.DefTokDelim('''', '''', lexDir.tnString);  //cadenas
-  lexDir.Rebuild;
-end;
 constructor TCompiler.Create;
 begin
   inherited Create;
-  lexDir := TSynFacilSyn.Create(nil);  //crea lexer para analzar directivas
-  DefLexDirectiv;
   cIn.OnNewLine:=@cInNewLine;
   mode := modPicPas;   //Por defecto en sintaxis nueva
   StartSyntax;   //Debe hacerse solo una vez al inicio
   DefCompiler;   //Debe hacerse solo una vez al inicio
-  InitAsm(pic, self);   //inicia el procesamiento de ASM
 end;
 destructor TCompiler.Destroy;
 begin
-  lexDir.Destroy;
   inherited Destroy;
 end;
 
@@ -2157,4 +2029,4 @@ initialization
 finalization
   cxp.Destroy;
 end.
-
+//2161

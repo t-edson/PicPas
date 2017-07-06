@@ -34,7 +34,6 @@ procedure TCodeTool.ReadCurIdentif(out tok: string; out tokType: integer;
 nula en "tok".}
 var
   sed: TSynEdit;
-  lin: String;
   toks: TATokInfo;
   hl: TSynCustomHighlighter;
   tokIdx: integer;
@@ -60,7 +59,7 @@ begin
 //    MsgBox('%d', [high(toks)]);
   end else begin
     //Es otro resaltador
-    lin := sed.Lines[sed.CaretY - 1];
+//    lin := sed.Lines[sed.CaretY - 1];
     tok := '';
   end;
 end;
@@ -119,13 +118,27 @@ begin
   end;
 end;
 procedure TCodeTool.KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-{Procesa el evento de teclado}
+{Procesa el evento de teclado, para cuando se tiene el editor seleccionado.}
+var
+  ed: TSynEditor;
 begin
   if not fraEdit.HasFocus then exit;
   if fraEdit.Count=0 then exit;
+  ed := fraEdit.ActiveEditor;
   if (Shift = [ssAlt]) and (Key = VK_UP) then begin
     //Se pide ubicar la declaración del elemento
     GoToDeclaration;
+  end;
+  if not ed.SynEdit.SelAvail then begin
+    //No hay selección. Pero se pulsa ...
+    if (Shift = [ssCtrl]) and (Key = VK_C) then begin  //Ctrl+C
+      ed.SynEdit.SelectWord;
+      ed.Copy;
+    end;
+    if (Shift = [ssCtrl]) and (Key = VK_INSERT) then begin  //Ctrl+Insert
+      ed.SynEdit.SelectWord;
+      ed.Copy;
+    end;
   end;
 end;
 constructor TCodeTool.Create(fraEdit0: TfraEditView; cxp0 : TCompiler;

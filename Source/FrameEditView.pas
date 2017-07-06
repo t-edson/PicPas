@@ -157,7 +157,6 @@ type
     function CloseEditor: boolean;
     function CloseAll: boolean;
     procedure LoadLastFileEdited;
-    procedure HighlightToken;
   private  //Manejo de menús recientes
     mnRecents   : TMenuItem;  //Menú de archivos recientes
     RecentFiles : TStringList;  //Lista de archivos recientes
@@ -398,20 +397,69 @@ begin
   SynEdit.Invalidate;
 end;
 procedure TSynEditor.MarkError(p1: TPoint);
-{Marca el token que se encuentra en la coordenada indicada.}
+{Marca el token que se encuentra en la coordenada indicada. Para ubicar al token afectado,
+usa información del lexer/resaltador del editor, que debe ser consistente con el lexer del
+compilador, para obtener resultados corectos.
+En caso de errores dentro de bloques ASM o Directivas, usa un lexer interno simple,
+porque no se tiene acceso a los lexer que procesan los bloques ASM y Directivas.}
+  function LocEndOfWord(const lin: string; col1: integer): integer;
+  {Devuelve el final de la palabra actual, que empieza en "col1".}
+  var
+    i: Integer;
+  begin
+    i := col1;  //empìeza por aquí
+    if i>length(lin) then exit;
+    if lin[i] in ['A'..'Z','a'..'z'] then begin
+      //Es identificador. Ubica los límites del identificador.
+      while (i<=length(lin)) and (lin[i] in ['A'..'Z','a'..'z','0'..'9']) do begin
+        inc(i);
+      end;
+    end else begin
+      //Es otro token. Ubica espacio o fin de línea
+      while (i<=length(lin)) and (lin[i]<>' ') do begin
+        inc(i);
+      end;
+    end;
+    Result := i;
+  end;
 var
   toks: TATokInfo;
-  tokIdx: integer;
+  tokIdx, col1, col2: integer;
   curTok: TFaTokInfo;
+  lin: String;
 begin
   hl.ExploreLine(p1, toks, tokIdx);  //Explora la línea aludida
   if tokIdx = -1 then exit;
   MarkErr.Enabled := true;
-  //Marca en los límites del token actual
-  curTok := toks[tokIdx];
-  MarkErr.SetMark(Point(curTok.posIni+1, p1.y),
-                  Point(curTok.posIni+1+curTok.length, p1.y));
-//  MarkErr.SetMark(p1, Point(p1.x+3,p1.y));
+  curTok := toks[tokIdx];  //token actual
+  //Obtiene línea actual
+  if hl.CurrentLines = nil then begin
+    exit;
+  end else begin
+    lin := hl.CurrentLines[p1.y-1];
+  end;
+  //Obtiene en los límites del token actual
+  col1 := curTok.posIni+1;
+  col2 := curTok.posIni+1+curTok.length;
+  if curTok.TokTyp = hl.tnEol then begin
+    //Es la marca de final de línea. Extiende para que sea visible
+    MarkErr.SetMark(Point(col1, p1.y),
+                    Point(col2 + 2, p1.y));
+  end else if curTok.TokTyp = hl.GetAttribIDByName('Asm') then begin
+    //Es bloque ensamblador.
+    col2 := LocEndOfWord(lin, p1.x);  //ubica a la palabra actual
+    MarkErr.SetMark(Point(p1.x, p1.y),
+                    Point(col2, p1.y));
+  end else if curTok.TokTyp = hl.GetAttribIDByName('Directive') then begin
+    //Es directiva
+    col2 := LocEndOfWord(lin, p1.x);  //ubica a la palabra actual
+    MarkErr.SetMark(Point(p1.x, p1.y),
+                    Point(col2, p1.y));
+  end else begin
+    //Es un token normal
+    MarkErr.SetMark(Point(col1, p1.y),
+                    Point(col2, p1.y));
+  end;
 end;
 constructor TSynEditor.Create(AOwner: TComponent; nomDef0, extDef0: string;
   panTabs0: TPanel);
@@ -1270,10 +1318,6 @@ begin
   if mnRecents.Count = 0 then exit;
   ActualMenusReciente(self);
   mnRecents.Items[0].Click;
-end;
-procedure TfraEditView.HighlightToken;
-begin
-
 end;
 procedure TfraEditView.RecentClick(Sender: TObject);
 //Se selecciona un archivo de la lista de recientes

@@ -1,16 +1,15 @@
-{$PROCESSOR PIC16F84}
-{$FREQUENCY 8Mhz}
-var  //simple type declarations
-	vbyte: byte;
-  vword: word;
-  aword: word absolute vword;
-  procedure proc1;
-  begin
-    
-  end; 
-begin
-  aword := $2010;
-//  vword.low.bit0 := 1;
-  proc1;
-end.
+{
+ Unidad para el compilador PicPas,
+ con definiciones del microcontrolador PIC16C63
 
+ Por Tito Hinostroza 29/06/2017
+}
+{$PROCESSOR PIC16C63}
+unit NewFile1;
+
+interface
+var
+  TMR1L: byte absolute 1e+21; 
+ 
+implementation
+end.

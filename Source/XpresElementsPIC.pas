@@ -162,13 +162,28 @@ type
   end;
   TxpEleCons = specialize TFPGObjectList<TxpEleCon>; //lista de constantes
 
+  {Descripción de la parte adicional en la declaración de una variable (como si
+  es ABSOLUTE)}
+  TAdicVarDec = record
+    //Por el momento, el único parámetro adicional es ABSOLUTE
+    isAbsol   : boolean;   //Indica si es ABSOLUTE
+    absAddr   : integer;   //dirección ABSOLUTE
+    absBit    : byte;      //bit ABSOLUTE
+    //Posición donde empieza la declaración de parámetros adicionales de la variable
+    srcDec    : TPosCont;
+  end;
+
   { TxpEleVar }
   //Clase para modelar a las variables
   TxpEleVar = class(TxpElement)
-    {Campos de dirección solicitadas en la declaración de la variable, cuando es
-    Absoluta. Si no se usan, se ponen en -1}
-    solAdr : integer;    //dirección absoluta.
-    solBit : shortint;   //posición del bit
+  private
+    function GetHavAdicPar: boolean;
+    procedure SetHavAdicPar(AValue: boolean);
+  public   //Manejo de parámetros adicionales
+    adicPar   : TAdicVarDec;  //Parámetros adicionales en la declaración de la variable.
+    //Indica si la variable tiene parámetros adicionales en la declaración
+    property havAdicPar: boolean read GetHavAdicPar write SetHavAdicPar;
+  public
     {Bandera para indicar si la variable, ha sido declarada en la sección INTERFACE. Este
     campo es úitl para cuando se procesan unidades.}
     InInterface: boolean;
@@ -177,7 +192,10 @@ type
     {Bandera para indicar que el valor de la variable se alamcena en lso registros de
     trabajo, es decir que se manejan, más como expresión que como variables. Se diseñó,
     como una forma rápida para pasar parámetros a funciones.}
-    IsRegister: boolean;
+    IsRegister : boolean;
+    {Indica si la variables es temporal, es decir que se ha creado solo para acceder a
+    una parte de otra variable, que si tiene almacenamiento físico.}
+    IsTmp      : boolean;
     //Campos para guardar las direcciones físicas asignadas en RAM.
     adrBit : TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
     adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Char/Word
@@ -543,6 +561,15 @@ begin
   inherited;
   elemType:=eltCons;
 end;
+{ TxpEleVar }
+function TxpEleVar.GetHavAdicPar: boolean;
+begin
+  Result := adicPar.isAbsol;  //De momento, es el único parámetro adicional
+end;
+procedure TxpEleVar.SetHavAdicPar(AValue: boolean);
+begin
+  adicPar.isAbsol := Avalue;  //De momento, es el único parámetro adicional
+end;
 function TxpEleVar.AbsAddr: word;
 {Devuelve la dirección absoluta de la variable. Tener en cuenta que la variable, no
 siempre tiene un solo byte, así que se trata de devolver siempre la dirección del
@@ -615,7 +642,6 @@ begin
   adrByte1.bank := 0;
   adrByte1.offs := 0;
 end;
-{ TxpEleVar }
 constructor TxpEleVar.Create;
 begin
   inherited;

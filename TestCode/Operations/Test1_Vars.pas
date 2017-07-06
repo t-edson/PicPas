@@ -27,7 +27,7 @@ var  //simple type declarations
 var  //absolute type declarations
   abit: bit absolute $20.0;
   abool: boolean absolute vbool;
-  achar: char absolute abit;
+  achar: char absolute vchar;
 	abyte: byte absolute vbyte;
   aword: word absolute vword;
   byteL: byte absolute aword.low;
@@ -37,53 +37,53 @@ const
 begin
   SetAsOutput(pinLed);
   //Basic assigment
-//  vbit := 0;
-//	if vbit=0 then bien else mal end;
-//  vbit := 1;
-//	if vbit=1 then bien else mal end;
-//
-//  vbool := false;
-//	if vbool then mal else bien end;
-//  vbool := true;
-//	if vbool then bien else mal end;
-//
-//	vchar := ' ';
-//	if vchar = ' ' then bien else mal end;
-//  vchar := #65;
-//	if vchar = chr(65) then bien else mal end;
-//  vchar := #65;
-//	if vchar = 'A' then bien else mal end;
-//	
-//	//Absolute position
-//  abool := false;
-//	if vbool then mal else bien end;
-//  abool := true;
-//	if vbool then bien else mal end;
-//
-//  vbyte := 5;
-//	if abyte = 0 then mal else bien end;
-//  vbyte := 255;
-//	if abyte = 255 then bien else mal end;
-//
-//  //Access to bit
-//  vbyte := 0;
-//  vbyte.bit0 := 1;
-//  vbyte.bit7 := 1;
-//	if vbyte = $81 then bien else mal end;
-//
-//  //Access to bytes of word
-//  vword:=$FF01;
-//  vbyte := vword.low;
-//	if vbyte = 1 then bien else mal end;
-//  vbyte := vword.high;
-//	if vbyte = 255 then bien else mal end;
-//  vbyte := consWord.high;
-//	if vbyte = 10 then bien else mal end;
-//
-//  byteL := 0;
-//  aword := $2010;
-//	if byteL = $10 then bien else mal end;
-//	if byteH = $20 then bien else mal end;
+  vbit := 0;
+	if vbit=0 then bien else mal end;
+  vbit := 1;
+	if vbit=1 then bien else mal end;
+
+  vbool := false;
+	if vbool then mal else bien end;
+  vbool := true;
+	if vbool then bien else mal end;
+
+	vchar := ' ';
+	if vchar = ' ' then bien else mal end;
+  vchar := #65;
+	if vchar = chr(65) then bien else mal end;
+  vchar := #65;
+	if vchar = 'A' then bien else mal end;
+	
+	//Absolute position
+  abool := false;
+	if vbool then mal else bien end;
+  abool := true;
+	if vbool then bien else mal end;
+
+  vbyte := 5;
+	if abyte = 0 then mal else bien end;
+  vbyte := 255;
+	if abyte = 255 then bien else mal end;
+
+  //Access to bit
+  vbyte := 0;
+  vbyte.bit0 := 1;
+  vbyte.bit7 := 1;
+	if vbyte = $81 then bien else mal end;
+
+  //Access to bytes of word
+  vword:=$FF01;
+  vbyte := vword.low;
+	if vbyte = 1 then bien else mal end;
+  vbyte := vword.high;
+	if vbyte = 255 then bien else mal end;
+  vbyte := consWord.high;
+	if vbyte = 10 then bien else mal end;
+
+  byteL := 0;
+  aword := $2010;
+	if byteL = $10 then bien else mal end;
+	if byteH = $20 then bien else mal end;
 
   aword := $2010;
   vword.low.bit0 := 1;
