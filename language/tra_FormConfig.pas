@@ -106,8 +106,10 @@ grpOptimLev.Items[0] := Trans('Fool'                   , 'Tonto'                
                               'Dumm');
 grpOptimLev.Items[1] := Trans('Smart'                  , 'Inteligente'              , '',
                               'Schlau');
-chkSetProIniBnk.Caption:= Trans('Set &Always Procedure &Initial Bank', 'Fijar siempre banco &Inicial en proc.', '',
-                              '');
-chkSetProEndBnk.Caption:= Trans('Set always Procedure &End Bank'     , 'Fijar siempre el banco &Final en proc.', '',
-                              '');
+chkOptBnkAftIF.Caption := Trans('After IF structure'    , 'Después de instrucciones IF.', '',
+                               '');
+chkOptBnkBefPro.Caption:= Trans('Before Procedures'     , 'Antes de procedimientos.', '',
+                               '');
+chkOptBnkAftPro.Caption:= Trans('After Procedures'      , 'Después de procedimientos.', '',
+                                '');;
 
