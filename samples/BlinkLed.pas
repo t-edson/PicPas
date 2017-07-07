@@ -8,7 +8,7 @@ var
   pin: bit absolute PORTB.7;
 begin                          
   TRISB := 0;   //all outputs
-  while true do begin
+  while true do
     delay_ms(1000);
     pin := not pin;
   end;

@@ -7,7 +7,7 @@ var
 	in2: bit absolute PORTB.6;
 begin
   TRISB := %00001110;
-  while true do begin
+  while true do 
 	 out1 := in1 xor in2; 
    delay_ms(100);
   end;
