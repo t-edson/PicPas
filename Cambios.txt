@@ -1,3 +1,63 @@
+PicPas 0.7.2
+============
+Se corrige TSynEditor.MarkError(), para que marque errores cuando se indica el final 
+de línea.
+Se crea la unidad ParserASM, y se mueve allí, todas las rutinas de procesamiento de
+bloques ASM, que antes estaban en la unidad ProcAsm.
+Se elimina la unidad ProcAsm.
+Se elimina TCompilerBase.SkipWhites, para evitar confusión con otras rutinas.
+Se crea la unidad ParserDirec, y se mueven allí las rutinas de procesamiento de 
+directivas.
+Se implementan las rutinas TParserDirec.GenErrorDir() para precisar la posición de 
+errores en directivas.
+Se modifica TSynEditor.MarkError(), para marcar con mayor precisión, los errores
+dentro de bloques ASM y Directivas.
+Se agrega una verificación de error de sintaxis adicional en: 
+TParserAsm.CaptureRegister().
+Se quitan llamadas innecesarias a ClearError(), para poder acumular errores.
+Se modifica TCompiler.ProcComments, de modo que pase al siguiente token, aún después
+de detectar error.
+Se crea procedure TParserAsm.GenWarnAsm(), para precisar ubicación en advertencias.
+Se implementa la directiva {$DEFINE ... } para crea macros. Aún no se
+Se crea el método TCompiler.GetAdicVarDeclar(), para leer información adicional en la
+declaración de variables.
+Se crea el campo TxpEleVar.IsTmp.
+Se crea el método TCompilerBase.GetOperandIdent(), para separar el procesamiento de 
+identifiacdores.
+Se activa la posibilidad de copiar texto con Ctrl+C/Insert, sin necesidad de tener 
+selección activa. 
+Se corrige el problema de asignación de memoria a variables absolutas, después de 
+cambio de dirección de las variables referenciadas, por optimización.
+Se implementa el manejo de bancos para la condicionales múltiples.
+Se implementa el manejo de bancos para los lazaos WHILE.
+Se agrega soporte para el PIC16F72.
+
+PENDIENTES
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absoulte a;   //Si "b" no se uitliza, aún se sigue marcando "a", como usado.
+
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+Teerminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema.
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir arreglos y registros.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar las funciones de búsqueda y reemplazo de texto.
+
 PicPas 0.7.1
 ============
 Se crea la unidad CodeTools, para implementar herramientas de navegación del código.
@@ -6,8 +66,8 @@ ticSynCheck, para controlar la detección automática de errores de sintaxis.
 Se hace editors[], campo público en TfraEditView.
 Se crea el evento TCompiler.OnRequireFileString.
 Se crea TCompiler.OpenContextFrom(), para centralizar los accesos a contextos.
-Se crea la bandera TfrmPrincipal.Compiling para indicar que se está en compilación.
-Se activa la verifiación automática de sintaxis.
+Se crea la bandera TCompiler.Compiling para indicar que se está en compilación.
+Se activa la verificación automática de sintaxis.
 Se cambia de nombre a TCompiler.CompileBody por TCompiler.CompileStructBody
 Se crea el evento TCompiler.OnAfterCompile, para detectar el fin de la compilación.
 Se crea el campo TxpEleCaller.curPos.
@@ -34,37 +94,6 @@ Se incluye optimización en el manejo de bancos para las condicionales.
 Se incluye la directiva de compilación: {$MSGBOX } y la posibilidad de mostrar
 variables del sistema.
 
-PENDIENTES
-Revisar el error en la ubicación de variables ABSOLUTE, cuando por optimizacion, se 
-mueve la variable aludida a otra ubicación:
-var  
-  no_usado: byte;  //No usada
-  vword: word;  //Se reubicará al eliminarse "no_usado"
-  aword: word absolute vword;  //Pierde el rastro de "vword"
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absoulte a;   //Si "b" no se uitliza, aún se sigue marcando "a", como usado.
-
-Implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compialdor (además de CurrBank), en
-los lazos y condicionales.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema.
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir arreglos y registros.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
-Activar las funciones de búsqueda y reemplazo de texto.
 
 PicPas 0.7.0
 ============

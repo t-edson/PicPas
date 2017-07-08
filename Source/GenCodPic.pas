@@ -172,6 +172,31 @@ const
 //  _IRP = 7;
 
 implementation
+
+procedure SetLanguage(lang: string);
+begin
+  case lang of
+  'en': begin
+    dicClear;  //it's yet in English
+  end;
+  'es': begin
+    //Update messages
+    dicSet(';save W', ';guardar W');
+    dicSet(';save Z', ';guardar Z');
+    dicSet(';save H', ';guardar H');
+    dicSet(';restore W','restaurar W');
+    dicSet(';restore Z','restaurar Z');
+    dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
+    dicSet('RAM memory is full.', 'Memoria RAM agotada.');
+    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
+    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
+    dicSet('Very complex expression. To simplify.','Expresión muy compleja. Simplificar.');
+    dicSet('Stack Overflow', 'Desborde de pila.');
+    dicSet('Not implemented.', 'No implementado');
+  end;
+  end;
+end;
+
 function TGenCodPic.AddCaller(elem: TxpElement): TxpEleCaller;
 {Agrega una llamada a un elemento de la sintaxis.}
 var
@@ -383,8 +408,8 @@ begin
   tmpVar:= TxpEleVar.Create;
   tmpVar.name := nam;
   tmpVar.typ := typ;
-  tmpVar.solAdr := -1;
-  tmpVar.solBit := -1;
+  tmpVar.havAdicPar := false;
+  tmpVar.IsTmp := true;  //para que se pueda luego identificar.
   varFields.Add(tmpVar);  //agrega
   Result := tmpVar;
 end;
@@ -611,17 +636,25 @@ begin
   end;
 end;
 procedure TGenCodPic.CreateVarInRAM(nVar: TxpEleVar);
-{Rutina para asignar espacio físico a una variable. Funciona también en variables
-ABSOLUTE. }
+{Rutina para asignar espacio físico a una variable. La variable, es creada en memoria
+con lso parámetros que posea en ese momento. Si está definida como ABSOLUTE, se le
+creará en la posicón indicada. }
 var
   varName: String;
   absAdd: integer;
   absBit: integer;
 begin
-  //Valores solicitados. Ya deben estar iniciado este campo
+  //Valores solicitados. Ya deben estar iniciado este campo.
   varName := nVar.name;
-  absAdd  := nVar.solAdr;  //si no aplica, debe valer -1
-  absBit  := nVar.solBit;  //si no aplica, debe valer -1
+  if nVar.adicPar.isAbsol then begin
+    absAdd := nVar.adicPar.absAddr;
+    if nVar.typ.IsSizeBit then begin
+      absBit := nVar.adicPar.absBit;
+    end;
+  end else begin
+    absAdd  := -1;  //no aplica
+    absBit  := -1;  //no aplica
+  end;
   if nVar.typ = typBit then begin
     AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
   end else if nVar.typ = typBool then begin
@@ -1172,29 +1205,6 @@ begin
   varStkWord.Destroy;
   pic.Destroy;
   inherited Destroy;
-end;
-procedure SetLanguage(lang: string);
-begin
-  case lang of
-  'en': begin
-    dicClear;  //it's yet in English
-  end;
-  'es': begin
-    //Update messages
-    dicSet(';save W', ';guardar W');
-    dicSet(';save Z', ';guardar Z');
-    dicSet(';save H', ';guardar H');
-    dicSet(';restore W','restaurar W');
-    dicSet(';restore Z','restaurar Z');
-    dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
-    dicSet('RAM memory is full.', 'Memoria RAM agotada.');
-    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
-    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
-    dicSet('Very complex expression. To simplify.','Expresión muy compleja. Simplificar.');
-    dicSet('Stack Overflow', 'Desborde de pila.');
-    dicSet('Not implemented.', 'No implementado');
-  end;
-  end;
 end;
 
 end.

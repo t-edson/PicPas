@@ -69,7 +69,7 @@ var
   PIR1_TMR1IF       : bit  absolute PIR1.0;
   PIR2              : byte absolute $000D;
   PIR2_CCP2IF       : bit  absolute PIR2.0;
-  TMR1L             : byte absolute $000E;
+  TMR1L             : byte absolute $000E; 
   TMR1H             : byte absolute $000F;
   T1CON             : byte absolute $0010;
   T1CON_T1CKPS1     : bit  absolute T1CON.5;

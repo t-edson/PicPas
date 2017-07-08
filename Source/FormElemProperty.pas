@@ -117,7 +117,9 @@ begin
     ImageList1.GetBitmap(2, Image1.Picture.Bitmap);
 
     xvar := TxpEleVar(elem);
-    adicInformation := 'Direcc. Solicitada: ' + IntToStr(xvar.solAdr) + ':' + IntToStr(xvar.solBit) + LineEnding +
+    adicInformation :=
+           'Direcc. Solicitada: ' + IntToStr(xvar.adicPar.absAddr) + ':' +
+                                    IntToStr(xvar.adicPar.absBit) + LineEnding +
            'Direcc. Asignada: ' + xvar.AddrString;
   end else if elem is TxpEleFun then begin
     ImageList1.GetBitmap(3, Image1.Picture.Bitmap);

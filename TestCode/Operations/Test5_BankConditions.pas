@@ -114,5 +114,53 @@ begin
   end; 
   {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
 
+  //Multiple IF - Final bank defined.
+  if PORTB = 1 then  
+    PORTB := 3;   //Block in bank 0
+  elsif PORTB = 2 then 
+    PORTB := 4;   //Block in bank 0
+  else
+    PORTB := 5;   //Block in bank 0
+  end; 
+  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+
+  //Multiple IF - Final bank defined.
+  if PORTB = 1 then  
+    TRISB := 3;   //Block in bank 0
+  elsif TRISB = 2 then 
+    TRISB := 4;   //Block in bank 0
+  else
+    TRISB := 5;   //Block in bank 0
+  end; 
+  {$MSGBOX 'Is this 1? -> ' $CURRBANK} 
   
+  //Multiple IF - Final bank undefined.
+  if PORTB = 1 then  
+    TRISB := 4;   //Block in bank 1
+  elsif PORTB = 2 then 
+    PORTB := 3;   //Block in bank 0
+  else
+    PORTB := 5;   //Block in bank 0
+  end; 
+  {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
+
+  //Multiple IF - Final bank undefined.
+  if PORTB = 1 then  
+    PORTB := 3;   //Block in bank 0
+  elsif PORTB = 2 then 
+    TRISB := 4;   //Block in bank 1
+  else
+    PORTB := 5;   //Block in bank 0
+  end; 
+  {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
+
+  //Multiple IF - Final bank undefined.
+  if PORTB = 1 then  
+    PORTB := 3;   //Block in bank 0
+  elsif PORTB = 2 then 
+    PORTB := 5;   //Block in bank 0
+  else
+    TRISB := 4;   //Block in bank 1
+  end; 
+  {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
 end.

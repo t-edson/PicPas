@@ -47,20 +47,12 @@ ER_COMPIL_PROC := trans('There is a compilation in progress.', 'Ya se está comp
                         'Es ist (noch) ein Kompiliervorgang aktiv.');
 ER_CON_EXP_EXP := trans('Constant expression expected.', 'Se esperaba una expresión constante','',
                         'Konstanter Ausdruck erwartet.');
-ER_ERROR_DIREC := trans('Error in directive.', 'Error en directiva','',
-                        'Fehler bei Direktive.');
-ER_UNKNO_DIREC := trans('Unknown directive: %s', 'Directiva desconocida: %s','',
-                        'Unbekannte Direktive: %s');
-ER_UNKNO_DEVIC := trans('Unknown device: %s', 'Dispositivo desconocido: %s','',
-                        'Unbekanntes Gerät: %s');
 ER_NOT_AFT_END := trans('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."','',
                         'Syntax-Fehler. Es sollte nichts nach "END." kommen.');
 ER_ELS_UNEXPEC := trans('"else" unexpected.', '"else" inesperado', '',
                         '"else" nicht erwartet.');
 ER_INST_NEV_EXE:= trans('Instruction will never execute.', 'Esta instrucción no se ejecutará', '',
                         'Bereich wird niemals ausgeführt.');
-ER_MODE_UNKNOWN:= trans('Mode unknown: %s', 'Modo inválido', '',
-                        'Unbekannter Modus: %s');
 ER_ONLY_ONE_REG:= trans('Only one REGISTER parameter is allowed.', 'Solo se permite un parámetro REGISTER.', '',
                         'Nur ein REGISTER Parameter erlaubt.');
 ER_VARIAB_EXPEC:= trans('Variable expected.', 'Se esperaba Variable', '',
@@ -69,3 +61,19 @@ ER_ONL_BYT_WORD:= trans('Only BYTE or WORD index is allowed in FOR.', 'Solo vari
                         'In FOR-Schleifen sind nur BYTE oder WORD Indizes erlaubt.');
 ER_ASIG_EXPECT := trans('":=" expected.', 'Se esperaba ":="', '',
                         '":=" erwartet.');
+ER_FIL_NOFOUND := trans('File not found: %s', 'Archivo no encontrado: %s', '',
+                        '');
+
+WA_UNUSED_CON_ := trans('Unused constant: %s', 'Constante sin usar: %s', '',
+                        '');
+WA_UNUSED_VAR_ := trans('Unused variable: %s', 'Variable sin usar: %s', '',
+                        '');
+WA_UNUSED_PRO_ := trans('Unused procedure: %s', 'Procedimiento sin usar: %s', '',
+                        '');
+
+MSG_RAM_USED   := trans('RAM Used   = ', 'RAM usada  =', '',
+                        '');
+MSG_FLS_USED   := trans('Flash Used = ', 'Flash usada=', '',
+                        '');
+
+

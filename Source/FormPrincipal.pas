@@ -11,7 +11,7 @@ uses
   ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
   SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
   FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
-  FrameMessagesWin, XpresElementsPIC, ProcAsm, CodeTools;
+  FrameMessagesWin, XpresElementsPIC, CodeTools, ParserAsm, ParserDirec;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -184,7 +184,8 @@ begin
   fraEditView1.SetLanguage(idLang);
   fraMessages.SetLanguage(idLang);
   Parser.SetLanguage(idLang);
-  ProcAsm.SetLanguage(idLang);
+  ParserAsm.SetLanguage(idLang);
+  ParserDirec.SetLanguage(idLang);
   curLang := idLang;
   {$I ..\language\tra_FormPrincipal.pas}
 end;

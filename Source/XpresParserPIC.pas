@@ -35,7 +35,6 @@ public
   catOp: TCatOperan; //Categoría de operando
   typ  : TType;      //Referencia al tipo de dato
   txt  : string;     //Texto del operando o expresión, tal como aparece en la fuente
-//  fun  : Tfunc;    //referencia a función en caso de que sea una función
   rVar : TxpEleVar;  //referencia a la variable, en caso de que sea variable
   Inverted: boolean; {Este campo se usa para cuando el operando es de tipo Bit o Boolean.
                       Indica que la lógica debe leerse de forma invertida.}
@@ -100,7 +99,6 @@ protected  //Eventos del compilador
   procedure TipDefecBoolean(var Op: TOperand; tokcad: string); virtual; abstract;
   function EOExpres: boolean;
   function EOBlock: boolean;
-  procedure SkipWhites; virtual;  //rutina para saltar blancos
   //Manejo de tipos
   procedure ClearTypes;
   function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
@@ -108,7 +106,7 @@ protected  //Eventos del compilador
   //Manejo de constantes
   function CreateCons(consName: string; typ: ttype): TxpEleCon;
   //Manejo de variables
-  function CreateVar(varName: string; typ: ttype; absAddr, absBit: integer): TxpEleVar;
+  function CreateVar(varName: string; typ: ttype): TxpEleVar;
   //Manejo de funciones
   function CreateFunction(funName: string; typ: ttype; procParam,
     procCall: TProcExecFunction): TxpEleFun;
@@ -124,6 +122,7 @@ protected  //Eventos del compilador
   //Manejo de Unidades
   function CreateUnit(uniName: string): TxpEleUnit;
   //Mmanejo de expresiones
+  procedure GetOperandIdent(var Op: TOperand);
   function GetOperand: TOperand; virtual;
   function GetOperandPrec(pre: integer): TOperand;
   function GetOperator(const Op: Toperand): Txpoperator;
@@ -246,16 +245,10 @@ begin
    condición sería:
   Result := cIn.tokType = tnBlkDelim;}
 end;
-procedure TCompilerBase.SkipWhites;
-{Se crea como rutina aparte, para facilitar el poder cambiar el comportamiento y
-adaptarlo al modo de trabajo del lenguaje.}
-begin
-  cIn.SkipWhites;
-end;
 function TCompilerBase.CaptureDelExpres: boolean;
 //Verifica si sigue un delimitador de expresión. Si encuentra devuelve false.
 begin
-  SkipWhites;
+  cIn.SkipWhites;
   if EOExpres then begin //encontró
     cIn.Next;   //pasa al siguiente
     exit(true);
@@ -314,8 +307,7 @@ begin
   Result := conx;
 end;
 //Manejo de variables
-function TCompilerBase.CreateVar(varName: string; typ: ttype; absAddr,
-  absBit: integer): TxpEleVar;
+function TCompilerBase.CreateVar(varName: string; typ: ttype): TxpEleVar;
 {Rutina para crear una variable. Devuelve referencia a la variable creada.}
 var
   xVar: TxpEleVar;
@@ -323,9 +315,8 @@ begin
   xVar := TxpEleVar.Create;
   xVar.name := varName;
   xVar.typ := typ;
-  xVar.solAdr := absAddr;   //Si no es ABSOLUTE, valdrá -1
-  xVar.solBit := absBit;
-  Result := xVAr;
+  xVar.havAdicPar := false;
+  Result := xVar;
 end;
 //Manejo de funciones
 function TCompilerBase.CreateFunction(funName: string; typ: ttype;
@@ -464,7 +455,7 @@ begin
       func0.CreateParam('',res.typ, nil);
       if cIn.tok = ',' then begin
         cIn.Next;   //toma separador
-        SkipWhites;
+        cIn.SkipWhites;
       end else begin
         //no sigue separador de parámetros,
         //debe terminar la lista de parámetros
@@ -501,7 +492,7 @@ begin
     if HayError then exit;   //aborta
     if cIn.tok = ',' then begin
       cIn.Next;
-      SkipWhites;
+      cIn.SkipWhites;
     end;
     //Genera código para la asignación
     if par.pvar.IsRegister then begin
@@ -535,7 +526,6 @@ begin
   uni.name := uniName;
   Result := uni;
 end;
-//Manejo de expresiones
 procedure TCompilerBase.IdentifyField(xOperand: TOperand);
 {Identifica el campo de una variable. Si encuentra algún problema genera error.
 Notar que el parámetro es por valor, es decir, se crea una copia, por seguridad.
@@ -547,6 +537,7 @@ begin
   cIn.Next;    //TOma el "."
   if (cIn.tokType<>tnIdentif) and (cIn.tokType<>tnNumber) then begin
     GenError('Identifier expected.');
+    cIn.Next;    //Pasa siempre
     exit;
   end;
   //Hay un identificador
@@ -568,28 +559,142 @@ begin
   //No encontró
   GenError('Unknown identifier: %s', [identif]);
 end;
+//Manejo de expresiones
+procedure TCompilerBase.GetOperandIdent(var Op: TOperand);
+{Lee un operando de tipo identificador, devuelve en "Op". Esta rutina era inicialmente
+parte de GetOperand(), pero se separó porque:
+* Es una rutina larga y se piensa agregar más código, aún.
+* Porque se piensa usarla también, de forma independiente.
+Se declara como porcedimiento, en lugar de función, para evitar crear copias del
+operando y mejorar así el desempeñó. Incluso se espera que GetOperand(), se declare
+luego de la misma forma.}
+var
+  ele     : TxpElement;
+  xvar    : TxpEleVar;
+  xcon    : TxpEleCon;
+  posCall : TSrcPos;
+  posPar  : TPosCont;
+  posFlash: Integer;
+  RTstate0: TType;
+  xfun    : TxpEleFun;
+  Found   : Boolean;
+  caller  : TxpEleCaller;
+begin
+  ele := TreeElems.FindFirst(cIn.tok);  //identifica elemento
+  if ele = nil then begin
+    //No identifica a este elemento
+    GenError('Unknown identifier: %s', [cIn.tok]);
+    exit;
+  end;
+  if ele is TxpEleVar then begin
+    //es una variable
+    xvar := TxpEleVar(ele);
+    if FirstPass then xvar.AddCaller;   //lleva la cuenta
+    cIn.Next;    //Pasa al siguiente
+    if xvar.IsRegister then begin
+      //Es una variables REGISTER
+      Op.catOp:=coExpres;
+      Op.typ:=xvar.typ;
+      //Faltaría asegurarse de que los registros estén disponibles
+      Op.DefineRegister;
+    end else begin
+      //Es una variable común
+      Op.catOp:=coVariab;    //variable
+      Op.typ:=xvar.typ;
+      Op.rVar:=xvar;   //guarda referencia a la variable
+      {$IFDEF LogExpres} Op.txt:= xvar.name; {$ENDIF}   //toma el texto
+      //Verifica si tiene referencia a campos con "."
+      if cIn.tok = '.' then begin
+        IdentifyField(Op);
+        Op := res;  //notar que se usa "res".
+        if HayError then exit;;
+      end;
+    end;
+  end else if ele.elemType = eltCons then begin  //es constante
+    //es una constante
+    xcon := TxpEleCon(ele);
+    if FirstPass then xcon.AddCaller;//lleva la cuenta
+    cIn.Next;    //Pasa al siguiente
+    Op.catOp:=coConst;    //constante
+    Op.typ:=xcon.typ;
+    Op.GetConsValFrom(xcon);  //lee valor
+    {$IFDEF LogExpres} Op.txt:= xcon.name; {$ENDIF}   //toma el texto
+    //Verifica si tiene referencia a campos con "."
+    if cIn.tok = '.' then begin
+      IdentifyField(Op);
+      Op := res;  //notar que se usa "res".
+      if HayError then exit;;
+    end;
+  end else if ele.elemType = eltFunc then begin  //es función
+    {Se sabe que es función, pero no se tiene la función exacta porque puede haber
+     versiones, sobrecargadas de la misma función.}
+    posCall := cIn.ReadSrcPos;   //gaurda la posición de llamada.
+    cIn.Next;    //Toma identificador
+    cIn.SkipWhites;  //Quita posibles blancos
+    posPar := cIn.PosAct;   //guarda porque va a pasar otra vez por aquí
+    posFlash := pic.iFlash; //guarda posición, antes del código de evaluación.
+    RTstate0 := RTstate;    //guarda porque se va a alterar con CaptureParams().
+    CaptureParams;  //primero lee parámetros
+    if HayError then exit;
+    //Aquí se identifica la función exacta, que coincida con sus parámetros
+    xfun := TxpEleFun(ele);
+    //Primero vemos si la primera función encontrada, coincide:
+    if func0.SameParams(xfun) then begin
+      //Coincide
+      Found := true;
+    end else begin
+      //No es, es una pena. Ahora tenemos que seguir buscando en el árbol de sintaxis.
+      repeat
+        //Usar FindNextFunc, es la forma es eficiente, porque retoma la búsqueda anterior.
+        xfun := TreeElems.FindNextFunc;
+      until (xfun = nil) or func0.SameParams(xfun);
+      Found := (xfun <> nil);
+    end;
+    if Found then begin
+      //Ya se identificó a la función que cuadra con los parámetros
+      {$IFDEF LogExpres} Op.txt:= cIn.tok; {$ENDIF}   //toma el texto
+      {Ahora que ya sabe cúal es la función referenciada, captura de nuevo los
+      parámetros, pero asignándola al parámetro que corresponde.}
+      cIn.PosAct := posPar;
+      pic.iFlash := posFlash;
+      RTstate := RTstate0;
+      xfun.procParam(xfun);  //antes de leer los parámetros
+      if high(func0.pars)+1>0 then
+        CaptureParamsFinal(xfun);  //evalúa y asigna
+//if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
+      if FirstPass then begin
+        //Se hace después de leer parámetros, para tener información del banco.
+        caller := xfun.AddCaller;
+        caller.curPos := posCall;  //corrige posición de llamada, sino estaría
+      end;
+      xfun.procCall(xfun); //codifica el "CALL"
+      RTstate := xfun.typ;  //para indicar que los RT están ocupados
+      Op.catOp := coExpres;
+      Op.typ := xfun.typ;
+      exit;
+    end else begin
+      //Encontró la función, pero no coincidió con los parámetros
+      GenError('Type parameters error on %s', [ele.name + '()']);
+      exit;
+    end;
+  end else begin
+    GenError('Not implemented.');
+    exit;
+  end;
+end;
 function TCompilerBase.GetOperand: TOperand;
 {Parte de la funcion analizadora de expresiones que genera codigo para leer un operando.
 Debe devolver el tipo del operando y también el valor. En algunos casos, puede modificar
 "res".}
 var
-  xcon: TxpEleCon;
-  xvar: TxpEleVar;
-  xfun: TxpEleFun;
+  xfun  : TxpEleFun;
   tmp, oprTxt: String;
-  ele: TxpElement;
-  Op: TOperand;
-  posAct, posPar: TPosCont;
-  opr: TxpOperator;
-  Found: Boolean;
-  posFlash: Integer;
-  cod: Longint;
-  RTstate0: TType;
-  caller: TxpEleCaller;
-  posCall: TSrcPos;
+  Op    : TOperand;
+  posAct: TPosCont;
+  opr   : TxpOperator;
+  cod   : Longint;
 begin
-  ClearError;
-  SkipWhites;
+  cIn.SkipWhites;
   Result.Inverted := false;   //inicia campo
   if cIn.tokType = tnNumber then begin  //constantes numéricas
     Result.catOp:=coConst;       //constante es Mono Operando
@@ -650,107 +755,8 @@ begin
     end;
     GenError('Not implemented.');
   end else if cIn.tokType = tnIdentif then begin  //puede ser variable, constante, función
-    ele := TreeElems.FindFirst(cIn.tok);  //identifica elemento
-    if ele = nil then begin
-      //No identifica a este elemento
-      GenError('Unknown identifier: %s', [cIn.tok]);
-      exit;
-    end;
-    if ele.elemType = eltVar then begin
-      //es una variable
-      xvar := TxpEleVar(ele);
-      if FirstPass then xvar.AddCaller;   //lleva la cuenta
-      cIn.Next;    //Pasa al siguiente
-      if xvar.IsRegister then begin
-        //Es una variables REGISTER
-        Result.catOp:=coExpres;
-        Result.typ:=xvar.typ;
-        //Faltaría asegurarse de que los registros estén disponibles
-        Result.DefineRegister;
-      end else begin
-        //Es una variable común
-        Result.catOp:=coVariab;    //variable
-        Result.typ:=xvar.typ;
-        Result.rVar:=xvar;   //guarda referencia a la variable
-        {$IFDEF LogExpres} Result.txt:= xvar.name; {$ENDIF}   //toma el texto
-        //Verifica si tiene referencia a campos con "."
-        if cIn.tok = '.' then begin
-          IdentifyField(Result);
-          Result := res;  //notar que se usa "res".
-          if HayError then exit;;
-        end;
-      end;
-    end else if ele.elemType = eltCons then begin  //es constante
-      //es una constante
-      xcon := TxpEleCon(ele);
-      if FirstPass then xcon.AddCaller;//lleva la cuenta
-      cIn.Next;    //Pasa al siguiente
-      Result.catOp:=coConst;    //constante
-      Result.typ:=xcon.typ;
-      Result.GetConsValFrom(xcon);  //lee valor
-      {$IFDEF LogExpres} Result.txt:= xcon.name; {$ENDIF}   //toma el texto
-      //Verifica si tiene referencia a campos con "."
-      if cIn.tok = '.' then begin
-        IdentifyField(Result);
-        Result := res;  //notar que se usa "res".
-        if HayError then exit;;
-      end;
-    end else if ele.elemType = eltFunc then begin  //es función
-      {Se sabe que es función, pero no se tiene la función exacta porque puede haber
-       versiones, sobrecargadas de la misma función.}
-      posCall := cIn.ReadSrcPos;   //gaurda la posición de llamada.
-      cIn.Next;    //Toma identificador
-      SkipWhites;  //Quita posibles blancos
-      posPar := cIn.PosAct;   //guarda porque va a pasar otra vez por aquí
-      posFlash := pic.iFlash; //guarda posición, antes del código de evaluación.
-      RTstate0 := RTstate;    //guarda porque se va a alterar con CaptureParams().
-      CaptureParams;  //primero lee parámetros
-      if HayError then exit;
-      //Aquí se identifica la función exacta, que coincida con sus parámetros
-      xfun := TxpEleFun(ele);
-      //Primero vemos si la primera función encontrada, coincide:
-      if func0.SameParams(xfun) then begin
-        //Coincide
-        Found := true;
-      end else begin
-        //No es, es una pena. Ahora tenemos que seguir buscando en el árbol de sintaxis.
-        repeat
-          //Usar FindNextFunc, es la forma es eficiente, porque retoma la búsqueda anterior.
-          xfun := TreeElems.FindNextFunc;
-        until (xfun = nil) or func0.SameParams(xfun);
-        Found := (xfun <> nil);
-      end;
-      if Found then begin
-        //Ya se identificó a la función que cuadra con los parámetros
-        {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
-        {Ahora que ya sabe cúal es la función referenciada, captura de nuevo los
-        parámetros, pero asignándola al parámetro que corresponde.}
-        cIn.PosAct := posPar;
-        pic.iFlash := posFlash;
-        RTstate := RTstate0;
-        xfun.procParam(xfun);  //antes de leer los parámetros
-        if high(func0.pars)+1>0 then
-          CaptureParamsFinal(xfun);  //evalúa y asigna
-//if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
-        if FirstPass then begin
-          //Se hace después de leer parámetros, para tener información del banco.
-          caller := xfun.AddCaller;
-          caller.curPos := posCall;  //corrige posición de llamada, sino estaría
-        end;
-        xfun.procCall(xfun); //codifica el "CALL"
-        RTstate := xfun.typ;  //para indicar que los RT están ocupados
-        Result.catOp := coExpres;
-        Result.typ := xfun.typ;
-        exit;
-      end else begin
-        //Encontró la función, pero no coincidió con los parámetros
-        GenError('Type parameters error on %s', [ele.name + '()']);
-        exit;
-      end;
-    end else begin
-      GenError('Not implemented.');
-      exit;
-    end;
+    GetOperandIdent(Result);
+    //Puede salir con error.
   end else if cIn.tokType = tnBoolean then begin  //true o false
     Result.catOp:=coConst;       //constante es Mono Operando
     {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
@@ -824,7 +830,6 @@ begin
    {$IFDEF LogExpres}
    LogExpLevel('-- Op1='+Op1.txt+', Op2='+Op2.txt+' --');
    {$ENDIF}
-   ClearError;
    //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
    Operation := opr.FindOperation(Op2.typ);
    if Operation = nil then begin
@@ -859,7 +864,6 @@ begin
   {$IFDEF LogExpres}
   LogExpLevel('-- Op1='+Op1.txt+' --');
   {$ENDIF}
-   ClearError;
    if opr.OperationPre = nil then begin
       GenError('Illegal Operation: %s',
                  [opr.txt + '('+Op1.typ.name+')']);
@@ -884,7 +888,6 @@ begin
   {$IFDEF LogExpres}
   LogExpLevel('-- Op1='+Op1.txt+' --');
   {$ENDIF}
-   ClearError;
    if opr.OperationPost = nil then begin
       GenError('Illegal Operation: %s',
                  ['('+Op1.typ.name+')' + opr.txt]);
@@ -937,7 +940,7 @@ begin
   if HayError then exit;
   //verifica si termina la expresion
   pos := cIn.PosAct;    //Guarda por si lo necesita
-  SkipWhites;
+  cIn.SkipWhites;
   opr := GetOperator(Op1);
   if opr = nil then begin  //no sigue operador
     Result:=Op1;
@@ -980,12 +983,11 @@ var
   Op1, Op2  : TOperand;   //Operandos
   opr1: TxpOperator;  //Operadores
 begin
-  ClearError;
   //----------------coger primer operando------------------
   Op1 := GetOperand;
   if HayError then exit;
   //verifica si termina la expresion
-  SkipWhites;
+  cIn.SkipWhites;
   opr1 := GetOperator(Op1);
   if opr1 = nil then begin  //no sigue operador
     //Expresión de un solo operando. Lo carga por si se necesita
@@ -1010,7 +1012,7 @@ begin
       OperPost(Op1, opr1);
       if HayError then exit;
       Op1 := res;
-      SkipWhites;
+      cIn.SkipWhites;
       opr1 := GetOperator(Op1);
       continue;
     end;
@@ -1021,7 +1023,7 @@ begin
     Oper(Op1, opr1, Op2);    //evalua resultado en "res"
     Op1 := res;
     if HayError then exit;
-    SkipWhites;
+    cIn.SkipWhites;
     opr1 := GetOperator(Op1);   {lo toma ahora con el tipo de la evaluación Op1 (opr1) Op2
                                 porque puede que Op1 (opr1) Op2, haya cambiado de tipo}
   end;  //hasta que ya no siga un operador
@@ -1049,6 +1051,12 @@ begin
 end;
 //Manejo de errores y advertencias
 procedure TCompilerBase.ClearError;
+{Limpia la bandera de errores. Tomar en cuenta que solo se debe usar para iniciar el
+procesamiento de errores. Limpiar errores en medio de la compilación, podría hacer que
+se pierda el rastro de errores anteriores, y que inclusive, la compilación termine sin
+error, aún cuando haya generado errores intermedios.
+Como norma, se podría decir que solo se debe usar, después de haber proecsado un posible
+error anterior.}
 begin
   HayError := false;
 end;
@@ -1208,7 +1216,6 @@ begin
   //Si se pide el bit, se asume que es de tipo "Bit".
   Result := rVar.adrBit.bit;
 end;
-
 procedure TOperand.Invert;
 begin
   if catOp = coConst then begin
@@ -1219,7 +1226,6 @@ begin
     Inverted := not Inverted;  //invierte lógica
   end;
 end;
-
 function TOperand.aWord: word; inline;
 begin
   Result := word(valInt);
