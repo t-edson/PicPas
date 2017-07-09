@@ -1,0 +1,1070 @@
+
+#: CfgSynEdit.Label6.Caption
+msgctxt "CfgSynEdit.Label6.Caption"
+msgid "&Font:"
+msgstr ""
+
+#: CfgSynEdit.Label7.Caption
+msgctxt "CfgSynEdit.Label7.Caption"
+msgid "&Size:"
+msgstr ""
+
+#: CfgSynEdit.Label8.Caption
+msgctxt "CfgSynEdit.Label8.Caption"
+msgid "Back color:"
+msgstr ""
+
+#: CfgSynEdit.Label9.Caption
+msgctxt "CfgSynEdit.Label9.Caption"
+msgid "Font Color:"
+msgstr ""
+
+#: CfgSynEdit.chkViewVScroll.Caption
+msgctxt "CfgSynEdit.chkViewVScroll.Caption"
+msgid "&Vertical Scrollbar"
+msgstr ""
+
+#: CfgSynEdit.chkViewHScroll.Caption
+msgctxt "CfgSynEdit.chkViewHScroll.Caption"
+msgid "&Horizontal Scrollbar"
+msgstr ""
+
+#: CfgSynEdit.chkAutoindent.Caption
+msgctxt "CfgSynEdit.chkAutoindent.Caption"
+msgid "Autoindent"
+msgstr ""
+
+#: CfgSynEdit.chkHighCurWord.Caption
+msgctxt "CfgSynEdit.chkHighCurWord.Caption"
+msgid "Highlight current word"
+msgstr ""
+
+#: CfgSynEdit.chkHighCurLin.Caption
+msgctxt "CfgSynEdit.chkHighCurLin.Caption"
+msgid "Hightlight current line"
+msgstr ""
+
+#: CfgSynEdit.chkVerPanVer.Caption
+msgctxt "CfgSynEdit.chkVerPanVer.Caption"
+msgid "Gutter"
+msgstr ""
+
+#: CfgSynEdit.chkVerNumLin.Caption
+msgctxt "CfgSynEdit.chkVerNumLin.Caption"
+msgid "Show line number"
+msgstr ""
+
+#: CfgSynEdit.label2.Caption
+msgctxt "CfgSynEdit.label2.Caption"
+msgid "Back color:"
+msgstr ""
+
+#: CfgSynEdit.chkVerMarPle.Caption
+msgctxt "CfgSynEdit.chkVerMarPle.Caption"
+msgid "Show folding marks"
+msgstr ""
+
+#: CfgSynEdit.label3.Caption
+msgctxt "CfgSynEdit.label3.Caption"
+msgid "Text color:"
+msgstr ""
+
+#: FormConfig.Caption
+msgctxt "FormConfig.Caption"
+msgid "Settings"
+msgstr ""
+
+#: FormConfig.BitAceptar.Caption
+msgctxt "FormConfig.BitAceptar.Caption"
+msgid "&OK"
+msgstr ""
+
+#: FormConfig.BitAplicar.Caption
+msgctxt "FormConfig.BitAplicar.Caption"
+msgid "&Apply"
+msgstr ""
+
+#: FormConfig.BitCancel.Caption
+msgctxt "FormConfig.BitCancel.Caption"
+msgid "&Cancel"
+msgstr ""
+
+#: FormConfig.tabGeneral.Caption
+msgctxt "FormConfig.tabGeneral.Caption"
+msgid "General"
+msgstr ""
+
+#: FormConfig.RadioGroup1.Caption
+msgctxt "FormConfig.RadioGroup1.Caption"
+msgid "Toolbar"
+msgstr ""
+
+#: FormConfig.RadioGroup1.Items[0]
+msgctxt "FormConfig.RadioGroup1.Items[0]"
+msgid "Small Icons"
+msgstr ""
+
+#: FormConfig.RadioGroup1.Items[1]
+msgctxt "FormConfig.RadioGroup1.Items[1]"
+msgid "Big Icons"
+msgstr ""
+
+#: FormConfig.label1.Caption
+msgctxt "FormConfig.label1.Caption"
+msgid "Units Path:"
+msgstr ""
+
+#: FormConfig.chkAutSynChk.Caption
+msgctxt "FormConfig.chkAutSynChk.Caption"
+msgid "Automatic Syntax checking"
+msgstr ""
+
+#: FormConfig.grpTabEdiState.Caption
+msgctxt "FormConfig.grpTabEdiState.Caption"
+msgid "Tab Editor State"
+msgstr ""
+
+#: FormConfig.grpTabEdiState.Items[0]
+msgctxt "FormConfig.grpTabEdiState.Items[0]"
+msgid "&Show always"
+msgstr ""
+
+#: FormConfig.grpTabEdiState.Items[1]
+msgctxt "FormConfig.grpTabEdiState.Items[1]"
+msgid "Hide for &One file"
+msgstr ""
+
+#: FormConfig.grpTabEdiState.Items[2]
+msgctxt "FormConfig.grpTabEdiState.Items[2]"
+msgid "&Hide always"
+msgstr ""
+
+#: FormConfig.Label2.Caption
+msgctxt "FormConfig.Label2.Caption"
+msgid "Language"
+msgstr ""
+
+#: FormConfig.tabEnviron.Caption
+msgctxt "FormConfig.tabEnviron.Caption"
+msgid "Environment"
+msgstr ""
+
+#: FormConfig.chkLoadLast.Caption
+msgctxt "FormConfig.chkLoadLast.Caption"
+msgid "Load last file edited"
+msgstr ""
+
+#: FormConfig.lblMessPan1.Caption
+msgctxt "FormConfig.lblMessPan1.Caption"
+msgid "Message Panel Back color"
+msgstr ""
+
+#: FormConfig.lblMessPan2.Caption
+msgctxt "FormConfig.lblMessPan2.Caption"
+msgid "Message Panel Text color:"
+msgstr ""
+
+#: FormConfig.lblMessPan3.Caption
+msgctxt "FormConfig.lblMessPan3.Caption"
+msgid "Message Panel Error color:"
+msgstr ""
+
+#: FormConfig.lblMessPan4.Caption
+msgctxt "FormConfig.lblMessPan4.Caption"
+msgid "Message Panel Selec. color:"
+msgstr ""
+
+#: FormConfig.lblPanelCol.Caption
+msgctxt "FormConfig.lblPanelCol.Caption"
+msgid "Panels Color:"
+msgstr ""
+
+#: FormConfig.lblSplitterCol.Caption
+msgctxt "FormConfig.lblSplitterCol.Caption"
+msgid "Splitters color:"
+msgstr ""
+
+#: FormConfig.lblCodExplCol1.Caption
+msgctxt "FormConfig.lblCodExplCol1.Caption"
+msgid "Code Explorer Back color:"
+msgstr ""
+
+#: FormConfig.lblCodExplCol2.Caption
+msgctxt "FormConfig.lblCodExplCol2.Caption"
+msgid "Code Explorer Text Color:"
+msgstr ""
+
+#: FormConfig.butDefval.Caption
+msgctxt "FormConfig.butDefval.Caption"
+msgid "Set &Default Values"
+msgstr ""
+
+#: FormConfig.tabEditor.Caption
+msgctxt "FormConfig.tabEditor.Caption"
+msgid "Editor"
+msgstr ""
+
+#: FormConfig.tabSyntax.Caption
+msgctxt "FormConfig.tabSyntax.Caption"
+msgid "Syntax"
+msgstr ""
+
+#: FormConfig.tabEnsamb.Caption
+msgctxt "FormConfig.tabEnsamb.Caption"
+msgid "Assembler"
+msgstr ""
+
+#: FormConfig.chkIncHeadMpu.Caption
+msgctxt "FormConfig.chkIncHeadMpu.Caption"
+msgid "Include MPU &Header"
+msgstr ""
+
+#: FormConfig.chkIncDecVar.Caption
+msgctxt "FormConfig.chkIncDecVar.Caption"
+msgid "Include &Variables declaration"
+msgstr ""
+
+#: FormConfig.RadioGroup2.Caption
+msgctxt "FormConfig.RadioGroup2.Caption"
+msgid "Style"
+msgstr ""
+
+#: FormConfig.chkExcUnused.Caption
+msgctxt "FormConfig.chkExcUnused.Caption"
+msgid "Exclude unused"
+msgstr ""
+
+#: FormConfig.chkIncAddress.Caption
+msgctxt "FormConfig.chkIncAddress.Caption"
+msgid "Include &Memory Address"
+msgstr ""
+
+#: FormConfig.chkIncComment.Caption
+msgctxt "FormConfig.chkIncComment.Caption"
+msgid "Include &Comments"
+msgstr ""
+
+#: FormConfig.chkIncComment2.Caption
+msgctxt "FormConfig.chkIncComment2.Caption"
+msgid "Include &Detailed comments"
+msgstr ""
+
+#: FormConfig.chkIncVarName.Caption
+msgctxt "FormConfig.chkIncVarName.Caption"
+msgid "Include &Variable Names"
+msgstr ""
+
+#: FormConfig.tabOutput.Caption
+msgctxt "FormConfig.tabOutput.Caption"
+msgid "Compiler"
+msgstr ""
+
+#: FormConfig.chkShowErrMsg.Caption
+msgctxt "FormConfig.chkShowErrMsg.Caption"
+msgid "&Show Error Messages"
+msgstr ""
+
+#: FormConfig.grpOptimLev.Caption
+msgctxt "FormConfig.grpOptimLev.Caption"
+msgid "Optimization Level:"
+msgstr ""
+
+#: FormConfig.grpOptimLev.Items[0]
+msgctxt "FormConfig.grpOptimLev.Items[0]"
+msgid "Fool"
+msgstr ""
+
+#: FormConfig.grpOptimLev.Items[1]
+msgctxt "FormConfig.grpOptimLev.Items[1]"
+msgid "Smart"
+msgstr ""
+
+#: FormConfig.chkOptBnkAftIF.Caption
+msgctxt "FormConfig.chkOptBnkAftIF.Caption"
+msgid "After IF structure"
+msgstr ""
+
+#: FormConfig.chkOptBnkBefPro.Caption
+msgctxt "FormConfig.chkOptBnkBefPro.Caption"
+msgid "Before Procedures"
+msgstr ""
+
+#: FormConfig.chkOptBnkAftPro.Caption
+msgctxt "FormConfig.chkOptBnkAftPro.Caption"
+msgid "After Procedures"
+msgstr ""
+
+#: FormPrincipal.mnFile.Caption
+msgctxt "FormPrincipal.mnFile.Caption"
+msgid "&File"
+msgstr "&Khipu"
+
+#: FormPrincipal.mnEdit.Caption
+msgctxt "FormPrincipal.mnEdit.Caption"
+msgid "&Edit"
+msgstr "&Allichay"
+
+#: FormPrincipal.mnFind.Caption
+msgctxt "FormPrincipal.mnFind.Caption"
+msgid "&Search"
+msgstr "&Maskhay"
+
+#: FormPrincipal.mnView.Caption
+msgctxt "FormPrincipal.mnView.Caption"
+msgid "&View"
+msgstr "&Qhaway"
+
+#: FormPrincipal.mnTools.Caption
+msgctxt "FormPrincipal.mnTools.Caption"
+msgid "&Tools"
+msgstr "&Llamk'anakuna"
+ FormPrincipal.acArcNewProj.Caption
+#: FormPrincipal.acArcNewProj.Caption
+msgctxt "FormPrincipal.acArcNewProj.Caption"
+msgid "New &Project"
+msgstr ""
+
+#: FormPrincipal.acArcNewFile.Caption
+msgctxt "FormPrincipal.acArcNewFile.Caption"
+msgid "New &File"
+msgstr "Musuq &Khipu"
+
+#: FormPrincipal.acArcNewFile.Hint
+msgctxt "FormPrincipal.acArcNewFile.Hint"
+msgid "New File"
+msgstr "Musuq Khipu"
+
+#: FormPrincipal.acArcNewProj.Hint
+msgctxt "FormPrincipal.acArcNewProj.Hint"
+msgid "New &Project"
+msgstr "Musuq Proyecto"
+
+#: FormPrincipal.acArcOpen.Caption
+msgctxt "FormPrincipal.acArcOpen.Caption"
+msgid "&Open..."
+msgstr "K&ichay"
+
+#: FormPrincipal.acArcOpen.Hint
+msgctxt "FormPrincipal.acArcOpen.Hint"
+msgid "Open file"
+msgstr "Khiputa kichay"
+
+#: FormPrincipal.acArcSave.Caption
+msgctxt "FormPrincipal.acArcSave.Caption"
+msgid "&Save"
+msgstr "&Waqaychay"
+
+#: FormPrincipal.acArcSave.Hint
+msgctxt "FormPrincipal.acArcSave.Hint"
+msgid "Save file"
+msgstr "Khiputa waqaychay"
+
+#: FormPrincipal.acArcSaveAs.Caption
+msgctxt "FormPrincipal.acArcSaveAs.Caption"
+msgid "Sa&ve As..."
+msgstr "Kay hinata &waqaychay"
+
+#: FormPrincipal.acArcSaveAs.Hint
+msgctxt "FormPrincipal.acArcSaveAs.Hint"
+msgid "Save file as..."
+msgstr "Kay hinata waqaychay"
+
+#: FormPrincipal.acArcCloseFile.Caption
+msgctxt "FormPrincipal.acArcCloseFile.Caption"
+msgid "&Close File"
+msgstr "Khiputa wi&sqay"
+
+#: FormPrincipal.acArcCloseProj.Caption
+msgctxt "FormPrincipal.acArcCloseProj.Caption"
+msgid "Close Project"
+msgstr "Proyectota wisqay"
+
+#: FormPrincipal.mnSamples.Caption
+msgctxt "FormPrincipal.mnSamples.Caption"
+msgid "Samples"
+msgstr "Qhawarinakuna"
+
+#: FormPrincipal.acArcQuit.Caption
+msgctxt "FormPrincipal.acArcQuit.Caption"
+msgid "&Quit"
+msgstr "Ll&uqsiy"
+
+#: FormPrincipal.acArcQuit.Hint
+msgctxt "FormPrincipal.acArcQuit.Hint"
+msgid "Close the program"
+msgstr "Programata wi&sqay"
+
+#: FormPrincipal.acEdUndo.Caption
+msgctxt "FormPrincipal.acEdUndo.Caption"
+msgid "&Undo"
+msgstr ""
+
+#: FormPrincipal.acEdUndo.Hint
+msgctxt "FormPrincipal.acEdUndo.Hint"
+msgid "Undo"
+msgstr ""
+
+#: FormPrincipal.acEdRedo.Caption
+msgctxt "FormPrincipal.acEdRedo.Caption"
+msgid "&Redo"
+msgstr ""
+
+#: FormPrincipal.acEdRedo.Hint
+msgctxt "FormPrincipal.acEdRedo.Hint"
+msgid "Redo"
+msgstr ""
+
+#: FormPrincipal.acEdCut.Caption
+msgctxt "FormPrincipal.acEdCut.Caption"
+msgid "C&ut"
+msgstr "Ku&chuy"
+
+#: FormPrincipal.acEdCut.Hint
+msgctxt "FormPrincipal.acEdCut.Hint"
+msgid "Cut"
+msgstr "Kuchuy"
+
+#: FormPrincipal.acEdCopy.Caption
+msgctxt "FormPrincipal.acEdCopy.Caption"
+msgid "&Copy"
+msgstr "Kiki&nchay"
+
+#: FormPrincipal.acEdCopy.Hint
+msgctxt "FormPrincipal.acEdCopy.Hint"
+msgid "Copy"
+msgstr "Kikinchay"
+
+#: FormPrincipal.acEdPaste.Caption
+msgctxt "FormPrincipal.acEdPaste.Caption"
+msgid "&Paste"
+msgstr "k'ask&ay"
+
+#: FormPrincipal.acEdPaste.Hint
+msgctxt "FormPrincipal.acEdPaste.Hint"
+msgid "Paste"
+msgstr "K'askay"
+
+#: FormPrincipal.acEdSelecAll.Caption
+msgctxt "FormPrincipal.acEdSelecAll.Caption"
+msgid "Select &All"
+msgstr "Lla&panta Akllay"
+
+#: FormPrincipal.acEdSelecAll.Hint
+msgctxt "FormPrincipal.acEdSelecAll.Hint"
+msgid "Select all"
+msgstr "Llapanta Akllay"
+
+#: FormPrincipal.acBusFind.Caption
+msgctxt "FormPrincipal.acBusFind.Caption"
+msgid "Search..."
+msgstr "Maskhay"
+
+#: FormPrincipal.acBusFind.Hint
+msgctxt "FormPrincipal.acBusFind.Hint"
+msgid "Search text"
+msgstr "Qillqata maskhay"
+
+#: FormPrincipal.acBusFindNxt.Caption
+msgctxt "FormPrincipal.acBusFindNxt.Caption"
+msgid "Search &Next"
+msgstr "&Hamuqta Maskhay"
+
+#: FormPrincipal.acBusFindNxt.Hint
+msgctxt "FormPrincipal.acBusFindNxt.Hint"
+msgid "Search Next"
+msgstr "Hamuqta Maskhay"
+
+#: FormPrincipal.acBusReplac.Caption
+msgctxt "FormPrincipal.acBusReplac.Caption"
+msgid "&Replace..."
+msgstr "&Yankiy"
+
+#: FormPrincipal.acBusReplac.Hint
+msgctxt "FormPrincipal.acBusReplac.Hint"
+msgid "Replace text"
+msgstr "Qillqata yankiy"
+
+#: FormPrincipal.acViewMsgPan.Caption
+msgctxt "FormPrincipal.acViewMsgPan.Caption"
+msgid "&Messages Panel"
+msgstr ""
+
+#: FormPrincipal.acViewMsgPan.Hint
+msgctxt "FormPrincipal.acViewMsgPan.Hint"
+msgid "Show/hide Messages Panel"
+msgstr ""
+
+#: FormPrincipal.acViewStatbar.Caption
+msgctxt "FormPrincipal.acViewStatbar.Caption"
+msgid "&Status Bar"
+msgstr ""
+
+#: FormPrincipal.acViewStatbar.Hint
+msgctxt "FormPrincipal.acViewStatbar.Hint"
+msgid "Show/hide Status Bar"
+msgstr ""
+
+#: FormPrincipal.acViewToolbar.Caption
+msgctxt "FormPrincipal.acViewToolbar.Caption"
+msgid "&Tool Bar"
+msgstr ""
+
+#: FormPrincipal.acViewToolbar.Hint
+msgctxt "FormPrincipal.acViewToolbar.Hint"
+msgid "Show/hide Tool Bar"
+msgstr ""
+
+#: FormPrincipal.acViewSynTree.Caption
+msgctxt "FormPrincipal.acViewSynTree.Caption"
+msgid "&Code explorer"
+msgstr ""
+
+#: FormPrincipal.acToolCompil.Caption
+msgctxt "FormPrincipal.acToolCompil.Caption"
+msgid "&Compile"
+msgstr ""
+
+#: FormPrincipal.acToolCompil.Hint
+msgctxt "FormPrincipal.acToolCompil.Hint"
+msgid "Compile the source code"
+msgstr ""
+
+#: FormPrincipal.acToolComEjec.Caption
+msgctxt "FormPrincipal.acToolComEjec.Caption"
+msgid "Compile and E&xecute"
+msgstr ""
+
+#: FormPrincipal.acToolComEjec.Hint
+msgctxt "FormPrincipal.acToolComEjec.Hint"
+msgid "Compile and Execute"
+msgstr ""
+
+#: FormPrincipal.acToolPICExpl.Caption
+msgctxt "FormPrincipal.acToolPICExpl.Caption"
+msgid "PIC E&xplorer"
+msgstr ""
+
+#: FormPrincipal.acToolPICExpl.Hint
+msgctxt "FormPrincipal.acToolPICExpl.Hint"
+msgid "Open the PIC devices explorer"
+msgstr ""
+
+#: FormPrincipal.acToolConfig.Caption
+msgctxt "FormPrincipal.acToolConfig.Caption"
+msgid "&Settings"
+msgstr "Kamachina"
+
+#: FormPrincipal.acToolConfig.Hint
+msgctxt "FormPrincipal.acToolConfig.Hint"
+msgid "Settings dialog"
+msgstr "Kamachinata qhaway"
+
+#: FormPrincipal.acToolFindDec.Caption
+msgctxt "FormPrincipal.acToolFindDec.Caption"
+msgid "Find declaration"
+msgstr ""
+
+#: FrameEditView.MSG_NOFILES
+msgctxt "FrameEditView.MSG_NOFILES"
+msgid "No files"
+msgstr ""
+
+#: FrameEditView.MSG_PASFILES
+msgctxt "FrameEditView.MSG_PASFILES"
+msgid "Pascal Files"
+msgstr ""
+
+#: FrameEditView.MSG_ALLFILES
+msgctxt "FrameEditView.MSG_ALLFILES"
+msgid "All files"
+msgstr ""
+
+#: FrameEditView.MSG_MODIFSAV
+msgctxt "FrameEditView.MSG_MODIFSAV"
+msgid "File %s has been modified. Save?"
+msgstr ""
+
+#: FrameEditView.MSG_NOSYNFIL
+msgctxt "FrameEditView.MSG_NOSYNFIL"
+msgid "Syntax file not found: %s"
+msgstr ""
+
+#: FrameEditView.lblBackground.Caption
+msgctxt "FrameEditView.lblBackground.Caption"
+msgid "<< No files >>"
+msgstr ""
+
+#: FrameEditView.mnNewTab.Caption
+msgctxt "FrameEditView.mnNewTab.Caption"
+msgid "New"
+msgstr ""
+
+#: FrameEditView.mnCloseTab.Caption
+msgctxt "FrameEditView.mnCloseTab.Caption"
+msgid "Close"
+msgstr ""
+
+#: FrameEditView.mnCloseAll.Caption
+msgctxt "FrameEditView.mnCloseAll.Caption"
+msgid "Close All"
+msgstr ""
+
+#: FrameEditView.if mnRecents<>nil then mnRecents.Caption
+msgctxt "FrameEditView.if mnRecents<>nil then mnRecents.Caption"
+msgid "&Recents"
+msgstr ""
+
+#: FrameMessagesWin.MSG_INICOMP
+msgctxt "FrameMessagesWin.MSG_INICOMP"
+msgid "Starting Compilation..."
+msgstr ""
+
+#: FrameMessagesWin.MSG_WARN
+msgctxt "FrameMessagesWin.MSG_WARN"
+msgid "Warning"
+msgstr ""
+
+#: FrameMessagesWin.MSG_WARNS
+msgctxt "FrameMessagesWin.MSG_WARNS"
+msgid "Warnings"
+msgstr ""
+
+#: FrameMessagesWin.MSG_ERROR
+msgctxt "FrameMessagesWin.MSG_ERROR"
+msgid "Error"
+msgstr ""
+
+#: FrameMessagesWin.MSG_ERRORS
+msgctxt "FrameMessagesWin.MSG_ERRORS"
+msgid "Errors"
+msgstr ""
+
+#: FrameMessagesWin.MSG_COMPIL
+msgctxt "FrameMessagesWin.MSG_COMPIL"
+msgid "Compiled in: "
+msgstr ""
+
+#: FrameMessagesWin.lblInform.Caption
+msgctxt "FrameMessagesWin.lblInform.Caption"
+msgid "Information"
+msgstr ""
+
+#: FrameMessagesWin.lblWarns.Caption
+msgctxt "FrameMessagesWin.lblWarns.Caption"
+msgid "Warnings"
+msgstr ""
+
+#: FrameMessagesWin.lblErrors.Caption
+msgctxt "FrameMessagesWin.lblErrors.Caption"
+msgid "Errors"
+msgstr ""
+
+#: FrameMessagesWin.PanGrilla.Caption
+msgctxt "FrameMessagesWin.PanGrilla.Caption"
+msgid "<< No messages >>"
+msgstr ""
+
+#: FrameSyntaxTree.TIT_MAIN
+msgctxt "FrameSyntaxTree.TIT_MAIN"
+msgid "Program"
+msgstr ""
+
+#: FrameSyntaxTree.TIT_UNIT
+msgctxt "FrameSyntaxTree.TIT_UNIT"
+msgid "Units"
+msgstr ""
+
+#: FrameSyntaxTree.TIT_CONS
+msgctxt "FrameSyntaxTree.TIT_CONS"
+msgid "Constants"
+msgstr ""
+
+#: FrameSyntaxTree.TIT_VARS
+msgctxt "FrameSyntaxTree.TIT_VARS"
+msgid "Variables"
+msgstr ""
+
+#: FrameSyntaxTree.TIT_FUNC
+msgctxt "FrameSyntaxTree.TIT_FUNC"
+msgid "Functions"
+msgstr ""
+
+#: FrameSyntaxTree.TIT_OTHER
+msgctxt "FrameSyntaxTree.TIT_OTHER"
+msgid "Others"
+msgstr ""
+
+#: FrameSyntaxTree.Label1.Caption
+msgctxt "FrameSyntaxTree.Label1.Caption"
+msgid "Code Explorer"
+msgstr ""
+
+#: Parser.ER_NOT_IMPLEM_
+msgctxt "Parser.ER_NOT_IMPLEM_"
+msgid "Not implemented: \"%s\""
+msgstr ""
+
+#: Parser.ER_IDEN_EXPECT
+msgctxt "Parser.ER_IDEN_EXPECT"
+msgid "Identifier expected."
+msgstr ""
+
+#: Parser.ER_DUPLIC_IDEN
+msgctxt "Parser.ER_DUPLIC_IDEN"
+msgid "Duplicated identifier: \"%s\""
+msgstr ""
+
+#: Parser.ER_INVAL_FLOAT
+msgctxt "Parser.ER_INVAL_FLOAT"
+msgid "Unvalid float number."
+msgstr ""
+
+#: Parser.ER_ERR_IN_NUMB
+msgctxt "Parser.ER_ERR_IN_NUMB"
+msgid "Error in number."
+msgstr ""
+
+#: Parser.ER_NOTYPDEFNUM
+msgctxt "Parser.ER_NOTYPDEFNUM"
+msgid "No type defined to accommodate this number."
+msgstr ""
+
+#: Parser.ER_UNDEF_TYPE_
+msgctxt "Parser.ER_UNDEF_TYPE_"
+msgid "Undefined type \"%s\""
+msgstr ""
+
+#: Parser.ER_INV_MEMADDR
+msgctxt "Parser.ER_INV_MEMADDR"
+msgid "Invalid memory address."
+msgstr ""
+
+#: Parser.ER_BIT_VAR_REF
+msgctxt "Parser.ER_BIT_VAR_REF"
+msgid "A bit variable reference expected."
+msgstr ""
+
+#: Parser.ER_INV_MAD_DEV
+msgctxt "Parser.ER_INV_MAD_DEV"
+msgid "Invalid memory address for this device."
+msgstr ""
+
+#: Parser.ER_EXP_VAR_IDE
+msgctxt "Parser.ER_EXP_VAR_IDE"
+msgid "Identifier of variable expected."
+msgstr ""
+
+#: Parser.ER_UNKNOWN_ID_
+msgctxt "Parser.ER_UNKNOWN_ID_"
+msgid "Unknown identifier: %s"
+msgstr ""
+
+#: Parser.ER_IDE_CON_EXP
+msgctxt "Parser.ER_IDE_CON_EXP"
+msgid "Identifier of constant expected."
+msgstr ""
+
+#: Parser.ER_NUM_ADD_EXP
+msgctxt "Parser.ER_NUM_ADD_EXP"
+msgid "Numeric address expected."
+msgstr ""
+
+#: Parser.ER_IDE_TYP_EXP
+msgctxt "Parser.ER_IDE_TYP_EXP"
+msgid "Identifier of type expected."
+msgstr ""
+
+#: Parser.ER_SEM_COM_EXP
+msgctxt "Parser.ER_SEM_COM_EXP"
+msgid "\":\" or \",\" expected."
+msgstr ""
+
+#: Parser.ER_EQU_COM_EXP
+msgctxt "Parser.ER_EQU_COM_EXP"
+msgid "\"=\" or \",\" expected."
+msgstr ""
+
+#: Parser.ER_END_EXPECTE
+msgctxt "Parser.ER_END_EXPECTE"
+msgid "\"end\" expected."
+msgstr ""
+
+#: Parser.ER_EOF_END_EXP
+msgctxt "Parser.ER_EOF_END_EXP"
+msgid "Unexpected end of file. \"end\" expected."
+msgstr ""
+
+#: Parser.ER_BOOL_EXPECT
+msgctxt "Parser.ER_BOOL_EXPECT"
+msgid "Boolean expression expected."
+msgstr ""
+
+#: Parser.ER_UNKN_STRUCT
+msgctxt "Parser.ER_UNKN_STRUCT"
+msgid "Unknown structure."
+msgstr ""
+
+#: Parser.ER_PROG_NAM_EX
+msgctxt "Parser.ER_PROG_NAM_EX"
+msgid "Program name expected."
+msgstr ""
+
+#: Parser.ER_COMPIL_PROC
+msgctxt "Parser.ER_COMPIL_PROC"
+msgid "There is a compilation in progress."
+msgstr ""
+
+#: Parser.ER_CON_EXP_EXP
+msgctxt "Parser.ER_CON_EXP_EXP"
+msgid "Constant expression expected."
+msgstr ""
+
+#: Parser.ER_NOT_AFT_END
+msgctxt "Parser.ER_NOT_AFT_END"
+msgid "Syntax error. Nothing should be after \"END.\""
+msgstr ""
+
+#: Parser.ER_ELS_UNEXPEC
+msgctxt "Parser.ER_ELS_UNEXPEC"
+msgid "\"else\" unexpected."
+msgstr ""
+
+#: Parser.ER_INST_NEV_EXE
+msgctxt "Parser.ER_INST_NEV_EXE"
+msgid "Instruction will never execute."
+msgstr ""
+
+#: Parser.ER_ONLY_ONE_REG
+msgctxt "Parser.ER_ONLY_ONE_REG"
+msgid "Only one REGISTER parameter is allowed."
+msgstr ""
+
+#: Parser.ER_VARIAB_EXPEC
+msgctxt "Parser.ER_VARIAB_EXPEC"
+msgid "Variable expected."
+msgstr ""
+
+#: Parser.ER_ONL_BYT_WORD
+msgctxt "Parser.ER_ONL_BYT_WORD"
+msgid "Only BYTE or WORD index is allowed in FOR."
+msgstr ""
+
+#: Parser.ER_ASIG_EXPECT
+msgctxt "Parser.ER_ASIG_EXPECT"
+msgid "\":=\" expected."
+msgstr ""
+
+#: Parser.ER_FIL_NOFOUND
+msgctxt "Parser.ER_FIL_NOFOUND"
+msgid "File not found: %s"
+msgstr ""
+
+#: Parser.WA_UNUSED_CON_
+msgctxt "Parser.WA_UNUSED_CON_"
+msgid "Unused constant: %s"
+msgstr ""
+
+#: Parser.WA_UNUSED_VAR_
+msgctxt "Parser.WA_UNUSED_VAR_"
+msgid "Unused variable: %s"
+msgstr ""
+
+#: Parser.WA_UNUSED_PRO_
+msgctxt "Parser.WA_UNUSED_PRO_"
+msgid "Unused procedure: %s"
+msgstr ""
+
+#: Parser.MSG_RAM_USED
+msgctxt "Parser.MSG_RAM_USED"
+msgid "RAM Used   = "
+msgstr ""
+
+#: Parser.MSG_FLS_USED
+msgctxt "Parser.MSG_FLS_USED"
+msgid "Flash Used = "
+msgstr ""
+
+#: ParserAsm.ER_EXPEC_COMMA
+msgctxt "ParserAsm.ER_EXPEC_COMMA"
+msgid "Expected \",\"."
+msgstr ""
+
+#: ParserAsm.ER_EXP_ADR_VAR
+msgctxt "ParserAsm.ER_EXP_ADR_VAR"
+msgid "Expected address or variable name."
+msgstr ""
+
+#: ParserAsm.ER_EXP_CON_VAL
+msgctxt "ParserAsm.ER_EXP_CON_VAL"
+msgid "Expected constant or value."
+msgstr ""
+
+#: ParserAsm.ER_NOGETADD_VAR
+msgctxt "ParserAsm.ER_NOGETADD_VAR"
+msgid "Cannot get address of this Variable"
+msgstr ""
+
+#: ParserAsm.ER_NOGETVAL_CON
+msgctxt "ParserAsm.ER_NOGETVAL_CON"
+msgid "Cannot get value of this costant"
+msgstr ""
+
+#: ParserAsm.ER_INV_ASMCODE
+msgctxt "ParserAsm.ER_INV_ASMCODE"
+msgid "Invalid ASM Opcode: %s"
+msgstr ""
+
+#: ParserAsm.ER_EXPECT_W_F
+msgctxt "ParserAsm.ER_EXPECT_W_F"
+msgid "Expected \"w\" or \"f\"."
+msgstr ""
+
+#: ParserAsm.ER_SYNTAX_ERR_
+msgctxt "ParserAsm.ER_SYNTAX_ERR_"
+msgid "Syntax error: \"%s\""
+msgstr ""
+
+#: ParserAsm.ER_DUPLIC_LBL_
+msgctxt "ParserAsm.ER_DUPLIC_LBL_"
+msgid "Duplicated label: \"%s\""
+msgstr ""
+
+#: ParserAsm.ER_EXPE_NUMBIT
+msgctxt "ParserAsm.ER_EXPE_NUMBIT"
+msgid "Expected number of bit: 0..7."
+msgstr ""
+
+#: ParserAsm.ER_EXPECT_ADDR
+msgctxt "ParserAsm.ER_EXPECT_ADDR"
+msgid "Expected address."
+msgstr ""
+
+#: ParserAsm.ER_EXPECT_BYTE
+msgctxt "ParserAsm.ER_EXPECT_BYTE"
+msgid "Expected byte."
+msgstr ""
+
+#: ParserAsm.ER_UNDEF_LABEL_
+msgctxt "ParserAsm.ER_UNDEF_LABEL_"
+msgid "Undefined ASM Label: %s"
+msgstr ""
+
+#: ParserAsm.WA_ADDR_TRUNC
+msgctxt "ParserAsm.WA_ADDR_TRUNC"
+msgid "Address truncated to fit instruction."
+msgstr ""
+
+#: ParserDirec.ER_ERROR_DIREC
+msgctxt "ParserDirec.ER_ERROR_DIREC"
+msgid "Error in directive."
+msgstr ""
+
+#: ParserDirec.ER_UNKNO_DEVIC
+msgctxt "ParserDirec.ER_UNKNO_DEVIC"
+msgid "Unknown device: %s"
+msgstr ""
+
+#: ParserDirec.ER_MODE_UNKNOWN
+msgctxt "ParserDirec.ER_MODE_UNKNOWN"
+msgid "Mode unknown: %s"
+msgstr ""
+
+#: ParserDirec.ER_UNKNO_DIREC
+msgctxt "ParserDirec.ER_UNKNO_DIREC"
+msgid "Unknown directive: %s"
+msgstr ""
+
+#: ParserDirec.ER_ERROR_FREQ
+msgctxt "ParserDirec.ER_ERROR_FREQ"
+msgid "Error in frequency."
+msgstr ""
+
+#: ParserDirec.ER_IDENT_EXPEC
+msgctxt "ParserDirec.ER_IDENT_EXPEC"
+msgid "Identifier expected."
+msgstr ""
+
+#: ParserDirec.ER_EXPEC_EQUAL
+msgctxt "ParserDirec.ER_EXPEC_EQUAL"
+msgid "Expected \"=\""
+msgstr ""
+
+#: ParserDirec.ER_SYNTAX_ERRO
+msgctxt "ParserDirec.ER_SYNTAX_ERRO"
+msgid "Syntax error."
+msgstr ""
+
+#: ParserDirec.ER_SYNTAX_ERR_
+msgctxt "ParserDirec.ER_SYNTAX_ERR_"
+msgid "Syntax error: \"%s\""
+msgstr ""
+ ProcAsm.ER_EXPEC_COMMA ProcAsm.ER_EXPEC_COMMA
+#: ProcAsm.ER_EXPEC_COMMA
+msgctxt "ProcAsm.ER_EXPEC_COMMA"
+msgid "Expected \",\"."
+msgstr ""
+ ProcAsm.ER_EXP_ADR_VAR ProcAsm.ER_EXP_ADR_VAR
+#: ProcAsm.ER_EXP_ADR_VAR
+msgctxt "ProcAsm.ER_EXP_ADR_VAR"
+msgid "Expected address or variable name."
+msgstr ""
+ ProcAsm.ER_EXP_CON_VAL ProcAsm.ER_EXP_CON_VAL
+#: ProcAsm.ER_EXP_CON_VAL
+msgctxt "ProcAsm.ER_EXP_CON_VAL"
+msgid "Expected constant or value."
+msgstr ""
+ ProcAsm.ER_NOGETADD_VAR ProcAsm.ER_NOGETADD_VAR
+#: ProcAsm.ER_NOGETADD_VAR
+msgctxt "ProcAsm.ER_NOGETADD_VAR"
+msgid "Cannot get address of this Variable"
+msgstr ""
+ ProcAsm.ER_NOGETVAL_CON ProcAsm.ER_NOGETVAL_CON
+#: ProcAsm.ER_NOGETVAL_CON
+msgctxt "ProcAsm.ER_NOGETVAL_CON"
+msgid "Cannot get value of this costant"
+msgstr ""
+ ProcAsm.ER_INV_ASMCODE ProcAsm.ER_INV_ASMCODE
+#: ProcAsm.ER_INV_ASMCODE
+msgctxt "ProcAsm.ER_INV_ASMCODE"
+msgid "Invalid ASM Opcode: %s"
+msgstr ""
+ ProcAsm.ER_EXPECT_W_F ProcAsm.ER_EXPECT_W_F
+#: ProcAsm.ER_EXPECT_W_F
+msgctxt "ProcAsm.ER_EXPECT_W_F"
+msgid "Expected \"w\" or \"f\"."
+msgstr ""
+ ProcAsm.ER_SYNTAX_ERR_ ProcAsm.ER_SYNTAX_ERR_
+#: ProcAsm.ER_SYNTAX_ERR_
+msgctxt "ProcAsm.ER_SYNTAX_ERR_"
+msgid "Syntax error: \"%s\""
+msgstr ""
+ ProcAsm.ER_DUPLIC_LBL_ ProcAsm.ER_DUPLIC_LBL_
+#: ProcAsm.ER_DUPLIC_LBL_
+msgctxt "ProcAsm.ER_DUPLIC_LBL_"
+msgid "Duplicated label: \"%s\""
+msgstr ""
+ ProcAsm.ER_EXPE_NUMBIT ProcAsm.ER_EXPE_NUMBIT
+#: ProcAsm.ER_EXPE_NUMBIT
+msgctxt "ProcAsm.ER_EXPE_NUMBIT"
+msgid "Expected number of bit: 0..7."
+msgstr ""
+ ProcAsm.ER_EXPECT_ADDR ProcAsm.ER_EXPECT_ADDR
+#: ProcAsm.ER_EXPECT_ADDR
+msgctxt "ProcAsm.ER_EXPECT_ADDR"
+msgid "Expected address."
+msgstr ""
+ ProcAsm.ER_EXPECT_BYTE ProcAsm.ER_EXPECT_BYTE
+#: ProcAsm.ER_EXPECT_BYTE
+msgctxt "ProcAsm.ER_EXPECT_BYTE"
+msgid "Expected byte."
+msgstr ""
+ ProcAsm.ER_UNDEF_LABEL_ ProcAsm.ER_UNDEF_LABEL_
+#: ProcAsm.ER_UNDEF_LABEL_
+msgctxt "ProcAsm.ER_UNDEF_LABEL_"
+msgid "Undefined ASM Label: %s"
+msgstr ""
+ ProcAsm.WA_ADDR_TRUNC ProcAsm.WA_ADDR_TRUNC
+#: ProcAsm.WA_ADDR_TRUNC
+msgctxt "ProcAsm.WA_ADDR_TRUNC"
+msgid "Address truncated to fit instruction."
+msgstr ""

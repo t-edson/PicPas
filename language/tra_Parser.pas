@@ -62,18 +62,18 @@ ER_ONL_BYT_WORD:= trans('Only BYTE or WORD index is allowed in FOR.', 'Solo vari
 ER_ASIG_EXPECT := trans('":=" expected.', 'Se esperaba ":="', '',
                         '":=" erwartet.');
 ER_FIL_NOFOUND := trans('File not found: %s', 'Archivo no encontrado: %s', '',
-                        '');
+                        'Datei nicht gefunden: "%s"');
 
 WA_UNUSED_CON_ := trans('Unused constant: %s', 'Constante sin usar: %s', '',
-                        '');
+                        'Unbenutzte Konstante:%s');
 WA_UNUSED_VAR_ := trans('Unused variable: %s', 'Variable sin usar: %s', '',
-                        '');
+                        'Unbenutzte Variable:%s');
 WA_UNUSED_PRO_ := trans('Unused procedure: %s', 'Procedimiento sin usar: %s', '',
-                        '');
+                        'Unbenutztes Prozedur:%s');
 
 MSG_RAM_USED   := trans('RAM Used   = ', 'RAM usada  =', '',
-                        '');
+                        'RAM verwendet =');
 MSG_FLS_USED   := trans('Flash Used = ', 'Flash usada=', '',
-                        '');
+                        'Flash verwendet =');
 
 
