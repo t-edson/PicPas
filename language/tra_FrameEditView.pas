@@ -9,10 +9,10 @@ MSG_MODIFSAV := trans('File %s has been modified. Save?',
                       '',
                       'Die Datei %s wurde verändert. Speichern ?');
 MSG_NOSYNFIL := trans('Syntax file not found: %s'   , 'Archivo de sintaxis no encontrado: %s','',
-                      '');
-lblBackground.Caption := Trans('<< No files >>', '<< Sin archivos >>', '', '');
+                      'Syntax-Datei nicht gefunden: %s');
+lblBackground.Caption := Trans('<< No files >>', '<< Sin archivos >>', '', '<< Keine Dateien >>');
 mnNewTab.Caption      := Trans('New', 'Nuevo','','Neu');
 mnCloseTab.Caption    := Trans('Close', 'Cerrar','','Schließen');
-mnCloseAll.Caption    := Trans('Close All', 'Cerrar todos','','');
+mnCloseAll.Caption    := Trans('Close All', 'Cerrar todos','','Alle Schliessen');
 if mnRecents<>nil then mnRecents.Caption:= trans('&Recents' ,'&Recientes','','&Letzte');
 

@@ -1,0 +1,4573 @@
+
+Document Body
+#: P: 16S: 1
+msgctxt "P: 16S: 1"
+msgid "PicPas 0.7.0"
+msgstr ""
+
+#: P: 18S: 1
+msgctxt "P: 18S: 1"
+msgid "Compilador para Microcontroladores PIC"
+msgstr ""
+
+#: P: 20S: 1
+msgctxt "P: 20S: 1"
+msgid "MANUAL DE USUARIO"
+msgstr ""
+
+#: P: 36S: 1
+msgctxt "P: 36S: 1"
+msgid "Por: Tito Hinostroza"
+msgstr ""
+
+#: P: 37S: 1
+msgctxt "P: 37S: 1"
+msgid "Modificado: 12/06/2017"
+msgstr ""
+
+#: P: 38S: 3
+msgctxt "P: 38S: 3"
+msgid "Notas sobre PicPas"
+msgstr ""
+
+#: P: 40S: 1
+msgctxt "P: 40S: 1"
+msgid "PicPas, es un compilador cruzado, multiplataforma, de código abierto (Ver Licencia), para sistemas embebidos, que usen microcontroladores PIC de rango medio (la mayoría de la serie 16F). "
+msgstr ""
+
+#: P: 42S: 1
+msgctxt "P: 42S: 1"
+msgid "Trabaja con el lenguaje de programación Pascal/Modula-2 en una versión adaptada para el manejo de dispositivos de reducida memoria. Solo tiene implementado algunas características básicas del lenguaje y se han agregado algunas nuevas, propias del manejo de bits, que es muy común en los microcontroladores de 8 bits. "
+msgstr ""
+
+#: P: 44S: 1
+msgctxt "P: 44S: 1"
+msgid "PicPas incluye una IDE integrada con el compilador. No se proporciona el compilador de forma separada."
+msgstr ""
+
+#: P: 46S: 1
+msgctxt "P: 46S: 1"
+msgid "PicPas está desarrollado usando el lenguaje Object Pascal, el compilador Free Pascal y el entorno de desarrollo Lazarus."
+msgstr ""
+
+#: P: 48S: 1
+msgctxt "P: 48S: 1"
+msgid "PicPas usa los componentes comunes que vienen en la distribución estándar de Lazarus y algunas librerías adicionales. Estas son:"
+msgstr ""
+
+#: P: 50S: 1
+msgctxt "P: 50S: 1"
+msgid "* SynFacilUtils"
+msgstr ""
+
+#: P: 51S: 1
+msgctxt "P: 51S: 1"
+msgid "* MisUtils"
+msgstr ""
+
+#: P: 52S: 1
+msgctxt "P: 52S: 1"
+msgid "* MiConfig"
+msgstr ""
+
+#: P: 53S: 1
+msgctxt "P: 53S: 1"
+msgid "* PicUtils "
+msgstr ""
+
+#: P: 54S: 1
+msgctxt "P: 54S: 1"
+msgid "* Xpres"
+msgstr ""
+
+#: P: 58S: 2
+msgctxt "P: 58S: 2"
+msgid "INTRODUCCIÓN"
+msgstr ""
+
+#: P: 60S: 2
+msgctxt "P: 60S: 2"
+msgid "Características del Compilador"
+msgstr ""
+
+#: P: 62S: 1
+msgctxt "P: 62S: 1"
+msgid "Usa el lenguaje Pascal, en una versión simplificada, y con características de Modula-2."
+msgstr ""
+
+#: P: 63S: 1
+msgctxt "P: 63S: 1"
+msgid "Es un compilador bastante rápido. La mayoría de operaciones se hacen en memoria."
+msgstr ""
+
+#: P: 64S: 1
+msgctxt "P: 64S: 1"
+msgid "Genera directamente el archivo *.HEX, sin necesidad de librerías, frameworks o programas adicionales."
+msgstr ""
+
+#: P: 65S: 1
+msgctxt "P: 65S: 1"
+msgid "El código generado, es bastante optimizado, al nivel de los mejores compiladores comerciales."
+msgstr ""
+
+#: P: 66S: 1
+msgctxt "P: 66S: 1"
+msgid "El compilador es multiplataforma, así como la IDE."
+msgstr ""
+
+#: P: 67S: 1
+msgctxt "P: 67S: 1"
+msgid "Soporta la inserción de código ensamblador, directamente en el código fuente."
+msgstr ""
+
+#: P: 68S: 1
+msgctxt "P: 68S: 1"
+msgid "El compilador maneja los idiomas inglés y español."
+msgstr ""
+
+#: P: 70S: 2
+msgctxt "P: 70S: 2"
+msgid "Características de la lDE"
+msgstr ""
+
+#: P: 72S: 1
+msgctxt "P: 72S: 1"
+msgid "Soporta múltiples ventanas de edición."
+msgstr ""
+
+#: P: 73S: 1
+msgctxt "P: 73S: 1"
+msgid "Incluye editores con resaltado de sintaxis, plegado de código, y remarcado de palabras y bloques, para el lenguaje Pascal y ASM."
+msgstr ""
+
+#: P: 74S: 1
+msgctxt "P: 74S: 1"
+msgid "Se incluye autocompletado, con plantillas de código para las estructuras, IF, REPEAT, WHILE, …"
+msgstr ""
+
+#: P: 75S: 1
+msgctxt "P: 75S: 1"
+msgid "No tiene dependencias de programas externos."
+msgstr ""
+
+#: P: 76S: 1
+msgctxt "P: 76S: 1"
+msgid "Permite ver el código ensamblador y el uso de los recursos."
+msgstr ""
+
+#: P: 77S: 1
+msgctxt "P: 77S: 1"
+msgid "Altamente configurable."
+msgstr ""
+
+#: P: 79S: 2
+msgctxt "P: 79S: 2"
+msgid "Limitaciones"
+msgstr ""
+
+#: P: 81S: 1
+msgctxt "P: 81S: 1"
+msgid "El lenguaje solo maneja los tipos de datos Bit, Boolean, Byte, Char y Word."
+msgstr ""
+
+#: P: 82S: 1
+msgctxt "P: 82S: 1"
+msgid "Solo se implementan algunas operaciones básicas para el tipo Word."
+msgstr ""
+
+#: P: 83S: 1
+msgctxt "P: 83S: 1"
+msgid "No se soporta recursividad, debido a las limitaciones de recursos en los dispositivos de gama media. "
+msgstr ""
+
+#: P: 84S: 1
+msgctxt "P: 84S: 1"
+msgid "No se incluye aritmética de coma flotante."
+msgstr ""
+
+#: P: 85S: 1
+msgctxt "P: 85S: 1"
+msgid "No se incluye soporte para interrupciones."
+msgstr ""
+
+#: P: 88S: 2
+msgctxt "P: 88S: 2"
+msgid "Instalación"
+msgstr ""
+
+#: P: 90S: 1
+msgctxt "P: 90S: 1"
+msgid "El programa se diseñó para no requerir instalación. Solo basta con copiar y descomprimir la carpeta que contiene los archivos del programa."
+msgstr ""
+
+#: P: 92S: 1
+msgctxt "P: 92S: 1"
+msgid "El ejecutable para Windows es PicPas-win32 o PicPas-win64, de acuerdo a la plataforma. PicPas-win32 funcionará también en plataformas Windows de 64 bits."
+msgstr ""
+
+#: P: 94S: 1
+msgctxt "P: 94S: 1"
+msgid "Para ejecutar correctamente la aplicación solo es necesario el ejecutable y algunas carpetas y archivos de configuración."
+msgstr ""
+
+#: P: 96S: 1
+msgctxt "P: 96S: 1"
+msgid "Las carpetas usadas son:"
+msgstr ""
+
+#: P: 98S: 1
+msgctxt "P: 98S: 1"
+msgid "/temp  -> Es la carpeta donde se crean los archivos temporales, del editor, cuando no se les asigna un nombre particular."
+msgstr ""
+
+#: P: 99S: 1
+msgctxt "P: 99S: 1"
+msgid "/units  -> Es la carpeta en donde deben estar las librerías (unidades) de PicPas. "
+msgstr ""
+
+#: P: 101S: 1
+msgctxt "P: 101S: 1"
+msgid "	Además, para guardar las opciones de configuración, se usa el archivo “PicPas-win32.xml”, o el que corresponda, de acuerdo a la plataforma."
+msgstr ""
+
+#: P: 103S: 1
+msgctxt "P: 103S: 1"
+msgid "	Por defecto, los archivos fuente tienen la extensión *.pas. "
+msgstr ""
+
+#: P: 105S: 2
+msgctxt "P: 105S: 2"
+msgid "LA INTERFAZ"
+msgstr ""
+
+#: P: 107S: 1
+msgctxt "P: 107S: 1"
+msgid "PicPas, tienen una interfaz visual, similar en diversas plataformas. A esta interfaz gráfica, que nos permite crear los programas, editarlos y compilarlos, es la que llamamos IDE (Entorno integrado de desarrollo)."
+msgstr ""
+
+#: P: 109S: 1
+msgctxt "P: 109S: 1"
+msgid "En la siguiente imagen, se muestran las partes de la ventana principal:"
+msgstr ""
+
+#: P: 122S: 2
+msgctxt "P: 122S: 2"
+msgid "Explorador de Código"
+msgstr ""
+
+#: P: 124S: 1
+msgctxt "P: 124S: 1"
+msgid "Se sitúa en la parte izquierda de la interfaz. Este panel muestra el programa fuente en una estructura de árbol."
+msgstr ""
+
+#: P: 126S: 2
+msgctxt "P: 126S: 2"
+msgid "Los diversos elementos del programa, como constantes, variables o procedimientos, aparecen representados de forma gráfica, en este panel."
+msgstr ""
+
+#: P: 128S: 1
+msgctxt "P: 128S: 1"
+msgid "Se puede realizar búsquedas dentro de este panel, usando el cuadro de búsqueda de la parte superior:"
+msgstr ""
+
+#: P: 134S: 1
+msgctxt "P: 134S: 1"
+msgid "También se puede seleccionar entre dos modos de vista usando el control de la parte derecha."
+msgstr ""
+
+#: P: 136S: 1
+msgctxt "P: 136S: 1"
+msgid "Los modos de vista son:"
+msgstr ""
+
+#: P: 138S: 1
+msgctxt "P: 138S: 1"
+msgid "Elementos agrupados."
+msgstr ""
+
+#: P: 139S: 1
+msgctxt "P: 139S: 1"
+msgid "Elementos en el orden de declaración (Sin agrupar)."
+msgstr ""
+
+#: P: 140S: 1
+msgctxt "P: 140S: 1"
+msgid "Carpetas y Directorios de disco (Solo en la versión para Windows). "
+msgstr ""
+
+#: P: 142S: 1
+msgctxt "P: 142S: 1"
+msgid "El explorador de código permite, además, ver información importante, como las veces en que una variable es usada o la dirección física asignada a una variable, usando el cuadro de propiedades, cuando se selecciona un elemento, del explorador de código:"
+msgstr ""
+
+#: P: 146S: 1
+msgctxt "P: 146S: 1"
+msgid "También se puede usar el explorador de código, para encontrar, en el código, la ubicación en que un procedimiento o variable es declarada, usando el menú contextual, o haciendo doble clic en el elemento."
+msgstr ""
+
+#: P: 148S: 3
+msgctxt "P: 148S: 3"
+msgid "Ventana de Edición"
+msgstr ""
+
+#: P: 150S: 1
+msgctxt "P: 150S: 1"
+msgid "Esta ventana, es donde se escribe el código fuente o programa. Es un editor con funciones especiales para facilitar la escritura de código. Algunas de sus características son:"
+msgstr ""
+
+#: P: 152S: 1
+msgctxt "P: 152S: 1"
+msgid "Numerado de líneas."
+msgstr ""
+
+#: P: 153S: 1
+msgctxt "P: 153S: 1"
+msgid "Deshacer, rehacer."
+msgstr ""
+
+#: P: 154S: 1
+msgctxt "P: 154S: 1"
+msgid "Resaltado de paréntesis, llaves o corchetes."
+msgstr ""
+
+#: P: 155S: 1
+msgctxt "P: 155S: 1"
+msgid "Resaltado de la palabra actual."
+msgstr ""
+
+#: P: 156S: 1
+msgctxt "P: 156S: 1"
+msgid "Resaltado de la línea actual."
+msgstr ""
+
+#: P: 157S: 1
+msgctxt "P: 157S: 1"
+msgid "Resaltado de sintaxis."
+msgstr ""
+
+#: P: 158S: 1
+msgctxt "P: 158S: 1"
+msgid "Plegado de código"
+msgstr ""
+
+#: P: 159S: 1
+msgctxt "P: 159S: 1"
+msgid "Menú contextual y autocompletado de código."
+msgstr ""
+
+#: P: 160S: 1
+msgctxt "P: 160S: 1"
+msgid "Selección en modo columna."
+msgstr ""
+
+#: P: 161S: 1
+msgctxt "P: 161S: 1"
+msgid "Edición en modo columna."
+msgstr ""
+
+#: P: 162S: 1
+msgctxt "P: 162S: 1"
+msgid "Edición con múltiples cursores."
+msgstr ""
+
+#: P: 164S: 1
+msgctxt "P: 164S: 1"
+msgid "Algunas de estas características, se pueden activar o desactivar desde la ventana de configuración:"
+msgstr ""
+
+#: P: 168S: 1
+msgctxt "P: 168S: 1"
+msgid "La ventana de edición, soporta múltiples ventanas de texto, a modo de pestañas."
+msgstr ""
+
+#: P: 170S: 1
+msgctxt "P: 170S: 1"
+msgid "Para trasladarse entre pestañas, se puede usar las combinaciones:"
+msgstr ""
+
+#: P: 172S: 1
+msgctxt "P: 172S: 1"
+msgid "<Ctrl>+<Tab> , para pasar a la pestaña siguiente."
+msgstr ""
+
+#: P: 173S: 1
+msgctxt "P: 173S: 1"
+msgid "<Ctrl>+<Tab>+<Shift>, para pasar a la ventana anterior."
+msgstr ""
+
+#: P: 175S: 1
+msgctxt "P: 175S: 1"
+msgid "Para cerrar la ventana de edición actual, se puede usar el menú contextual de la pestaña o usar la combinación:"
+msgstr ""
+
+#: P: 177S: 1
+msgctxt "P: 177S: 1"
+msgid "<Alt> + F4"
+msgstr ""
+
+#: P: 179S: 3
+msgctxt "P: 179S: 3"
+msgid "Panel de mensajes"
+msgstr ""
+
+#: P: 181S: 1
+msgctxt "P: 181S: 1"
+msgid "El panel de mensajes se sitúa en la parte inferior de la ventana principal, y muestra información del proceso de compilación."
+msgstr ""
+
+#: P: 188S: 1
+msgctxt "P: 188S: 1"
+msgid "Estos mensajes muestran tres tipos de mensajes:"
+msgstr ""
+
+#: P: 190S: 1
+msgctxt "P: 190S: 1"
+msgid "Mensajes de Información."
+msgstr ""
+
+#: P: 191S: 1
+msgctxt "P: 191S: 1"
+msgid "Mensajes de Advertencias."
+msgstr ""
+
+#: P: 192S: 1
+msgctxt "P: 192S: 1"
+msgid "Mensajes de error."
+msgstr ""
+
+#: P: 194S: 1
+msgctxt "P: 194S: 1"
+msgid "Los mensajes de información, son datos útiles que genera el compilador, como el tiempo de compilación, o la cantidad de memoria usada."
+msgstr ""
+
+#: P: 196S: 1
+msgctxt "P: 196S: 1"
+msgid "Los mensajes de advertencia, indican algunos aspectos en el código fuente que el compilador detecta como peligrosos, pero que no son errores. Sin embargo, Deben ser tomados en cuenta, para prevenir errores de lógica o para mejorar el código. Estos errores pueden ser, por ejemplo: “Variable no usada”."
+msgstr ""
+
+#: P: 198S: 1
+msgctxt "P: 198S: 1"
+msgid "Los mensajes de error, se generan cuando el compilador detecta errores de sintaxis o falta de recursos, en el programa. Los errores detienen el proceso de compilación y deben ser corregidos para lograr que el programa se compile."
+msgstr ""
+
+#: P: 200S: 1
+msgctxt "P: 200S: 1"
+msgid "Se pueden filtrar los mensajes, usando los controles de la parte izquierda del panel de mensajes. "
+msgstr ""
+
+#: P: 202S: 1
+msgctxt "P: 202S: 1"
+msgid "La parte derecha, muestra el uso de recursos del microcontrolador para el cual se está compilando."
+msgstr ""
+
+#: P: 204S: 1
+msgctxt "P: 204S: 1"
+msgid "Son 3 parámetros los que se muestran:"
+msgstr ""
+
+#: P: 206S: 1
+msgctxt "P: 206S: 1"
+msgid "Uso de memoria RAM.- Indica cuánto de la memoria RAM total, del dispositivo, está siendo usada por el programa. Sea por variables propias del programa o por variables internas que el compilador usa. Se toma en cuenta el espacio de memoria en todos los bancos de RAM."
+msgstr ""
+
+#: P: 207S: 1
+msgctxt "P: 207S: 1"
+msgid "Uso de memoria ROM (o Flash EEPROM). Indica cuánto de la memoria total de programa, está siendo ocupada. Se considera todo el espacio disponible, en todas las páginas de memoria."
+msgstr ""
+
+#: P: 208S: 1
+msgctxt "P: 208S: 1"
+msgid "Uso de la pila (STACK). Indica cuántos niveles de la pila de llamadas, está siendo usada por el programa. El uso de la pila, se debe a la "
+msgstr ""
+
+#: P: 208S: 3
+msgctxt "P: 208S: 3"
+msgid "cantidad de rutinas anidadas que tiene el programa. Por lo general, se dispone de 8 niveles."
+msgstr ""
+
+#: P: 214S: 1
+msgctxt "P: 214S: 1"
+msgid "La opción de plegado de código, se controla mediante la barra lateral derecha, en donde aparecen unos cuadros con el símbolo “+” o “-”."
+msgstr ""
+
+#: P: 218S: 1
+msgctxt "P: 218S: 1"
+msgid "Estos cuadros, permiten expandir o contraer bloques de código."
+msgstr ""
+
+#: P: 220S: 1
+msgctxt "P: 220S: 1"
+msgid "Sin embargo, también se puede plegar y desplegar usando atajos de teclado:"
+msgstr ""
+
+#: P: 222S: 0
+msgctxt "P: 222S: 0"
+msgid "ATAJO"
+msgstr ""
+
+#: P: 222S: 1
+msgctxt "P: 222S: 1"
+msgid "FUNCIÓN"
+msgstr ""
+
+#: P: 222S: 2
+msgctxt "P: 222S: 2"
+msgid "<Alt>+<Shift>+ “+”"
+msgstr ""
+
+#: P: 222S: 3
+msgctxt "P: 222S: 3"
+msgid "Despliega el código en la posición actual."
+msgstr ""
+
+#: P: 222S: 4
+msgctxt "P: 222S: 4"
+msgid "<Alt>+<Shift>+ “-”"
+msgstr ""
+
+#: P: 222S: 5
+msgctxt "P: 222S: 5"
+msgid "Pliega el código en la posición actual."
+msgstr ""
+
+#: P: 222S: 6
+msgctxt "P: 222S: 6"
+msgid "<Alt>+<Shift>+ “0”"
+msgstr ""
+
+#: P: 222S: 7
+msgctxt "P: 222S: 7"
+msgid "Despliega el código de todo el editor."
+msgstr ""
+
+#: P: 222S: 8
+msgctxt "P: 222S: 8"
+msgid "<Alt>+<Shift>+ “1”"
+msgstr ""
+
+#: P: 222S: 9
+msgctxt "P: 222S: 9"
+msgid "Pliega el código en todo el editor."
+msgstr ""
+
+#: P: 225S: 2
+msgctxt "P: 225S: 2"
+msgid "Cursores Múltiples"
+msgstr ""
+
+#: P: 227S: 1
+msgctxt "P: 227S: 1"
+msgid "Los editores de la IDE, soportan el manejo de múltiples cursores, para realizar edición en diversos puntos del código."
+msgstr ""
+
+#: P: 231S: 2
+msgctxt "P: 231S: 2"
+msgid "Normalmente, el editor solo trabajará con un cursor. Para activar cursores adicionales, hay que mantener las teclas <Shift> y <Ctrl> presionadas, y hacer clic en alguna otra posición del texto. De la misma forma se pueden agregar más cursores, que realizarán la misma acción de edición."
+msgstr ""
+
+#: P: 233S: 1
+msgctxt "P: 233S: 1"
+msgid "Para salir del modo de múltiples, cursores, basta con hacer clic con el ratón, en cualquier posición del texto."
+msgstr ""
+
+#: P: 235S: 1
+msgctxt "P: 235S: 1"
+msgid "Los cursores múltiples, también permiten la edición de líneas contiguas, en la misma columna. "
+msgstr ""
+
+#: P: 240S: 1
+msgctxt "P: 240S: 1"
+msgid "Para activar este modo, solo basta con mantener pulsadas las teclas <Alt> y <Shift>, mientras bajamos o subimos el cursor con las teclas direccionales."
+msgstr ""
+
+#: P: 242S: 2
+msgctxt "P: 242S: 2"
+msgid "Edición Sincronizada"
+msgstr ""
+
+#: P: 244S: 1
+msgctxt "P: 244S: 1"
+msgid "La edición sincronizada, consiste en editar diversos puntos en el editor, usando cursores múltiples, pero sin necesidad de colocar manualmente los cursores."
+msgstr ""
+
+#: P: 246S: 1
+msgctxt "P: 246S: 1"
+msgid "Si por ejemplo, se desea editar el nombre de todos los identificadores en un rango de selección, se debe seleccionar el texto, empezando con la primera aparición del identificador:"
+msgstr ""
+
+#: P: 250S: 1
+msgctxt "P: 250S: 1"
+msgid "Luego, se presiona la combinación <Ctrl>+J, y aparecerán diversos cursores, en los puntos en donde aparece el identificador, dentro de la selección."
+msgstr ""
+
+#: P: 254S: 1
+msgctxt "P: 254S: 1"
+msgid "Permitiendo, editar a todos los identificadores, al mismo tiempo."
+msgstr ""
+
+#: P: 256S: 1
+msgctxt "P: 256S: 1"
+msgid "La edición síncrona, se puede usar no solamente a identificadores, también puede aplicarse a símbolos o inclusive a espacios."
+msgstr ""
+
+#: P: 258S: 1
+msgctxt "P: 258S: 1"
+msgid "Una limitación, de la edición síncrona, es que no reconocerán identificadores dentro de comentarios, directivas o bloques ASM, porque sintácticamente, estos bloques corresponden a un solo token, y no se trabajan como elementos individuales."
+msgstr ""
+
+#: P: 263S: 2
+msgctxt "P: 263S: 2"
+msgid "Compilación"
+msgstr ""
+
+#: P: 265S: 1
+msgctxt "P: 265S: 1"
+msgid "Todo el proceso de compilación, ensamblado, y enlazado, lo realiza internamente PicPas, sin requerir de ningún software adicional."
+msgstr ""
+
+#: P: 267S: 1
+msgctxt "P: 267S: 1"
+msgid "El producto de todo este proceso, es un archivo llamado “output.hex”"
+msgstr ""
+
+#: P: 269S: 1
+msgctxt "P: 269S: 1"
+msgid "La compilación se puede iniciar desde el menú principal:"
+msgstr ""
+
+#: P: 273S: 1
+msgctxt "P: 273S: 1"
+msgid "	Con el atajo F9, o con el botón de la barra de herramientas:"
+msgstr ""
+
+#: P: 277S: 1
+msgctxt "P: 277S: 1"
+msgid "Si se produce algún error en el compilado, se muestra un mensaje y se detiene el proceso. En ese caso, se deja el cursor en el archivo, en donde se ha detectado el error."
+msgstr ""
+
+#: P: 279S: 1
+msgctxt "P: 279S: 1"
+msgid "La posición donde el compilador detecta el error, no siempre coincide con la posición real del error, sino que debe ser tomado como una referencia o pista, más que como una posición absoluta."
+msgstr ""
+
+#: P: 281S: 2
+msgctxt "P: 281S: 2"
+msgid "REFERENCIA DEL LENGUAJE"
+msgstr ""
+
+#: P: 283S: 2
+msgctxt "P: 283S: 2"
+msgid "Palabras Reservadas"
+msgstr ""
+
+#: P: 285S: 1
+msgctxt "P: 285S: 1"
+msgid "Dentro del lenguaje Pascal, que implementa PicPas, existe un grupo de palabras que están reservadas por el compilador y que no pueden usarse para ningún otro fin, que no sea el que el compilador les ha asignado. Estas palabras son:"
+msgstr ""
+
+#: P: 287S: 1
+msgctxt "P: 287S: 1"
+msgid "PROGRAM UNIT"
+msgstr ""
+
+#: P: 288S: 1
+msgctxt "P: 288S: 1"
+msgid "CONS VAR TYPE"
+msgstr ""
+
+#: P: 289S: 1
+msgctxt "P: 289S: 1"
+msgid "BIT BOOLEAN BYTE WORD"
+msgstr ""
+
+#: P: 290S: 1
+msgctxt "P: 290S: 1"
+msgid "TRUE FALSE"
+msgstr ""
+
+#: P: 291S: 1
+msgctxt "P: 291S: 1"
+msgid "BEGIN END "
+msgstr ""
+
+#: P: 292S: 1
+msgctxt "P: 292S: 1"
+msgid "IF THEN ELSE"
+msgstr ""
+
+#: P: 293S: 1
+msgctxt "P: 293S: 1"
+msgid "WHILE DO REPEAT UNTIL "
+msgstr ""
+
+#: P: 294S: 1
+msgctxt "P: 294S: 1"
+msgid "FOR TO AND OR XOR NOT DIV MOD IN"
+msgstr ""
+
+#: P: 295S: 1
+msgctxt "P: 295S: 1"
+msgid "EXIT RESULT ABSOLUTE ASM"
+msgstr ""
+
+#: P: 298S: 2
+msgctxt "P: 298S: 2"
+msgid "Identificadores "
+msgstr ""
+
+#: P: 300S: 1
+msgctxt "P: 300S: 1"
+msgid "Los identificadores son palabras que se usan para dar nombre a variables, constantes u otros elementos de un programa."
+msgstr ""
+
+#: P: 302S: 1
+msgctxt "P: 302S: 1"
+msgid "En Pascal, los identificadores debe tener al menos una letra y se forman aplicando las siguientes reglas:"
+msgstr ""
+
+#: P: 304S: 1
+msgctxt "P: 304S: 1"
+msgid "El primer carácter, debe ser siempre una letra, sea mayúscula o minúscula o el carácter guion bajo “_”. "
+msgstr ""
+
+#: P: 305S: 1
+msgctxt "P: 305S: 1"
+msgid "Los caracteres siguientes, si es que los hay, pueden ser cualquier letra, número o el carácter guion bajo “_”. "
+msgstr ""
+
+#: P: 306S: 1
+msgctxt "P: 306S: 1"
+msgid "Los identificadores no pueden ser palabras reservadas."
+msgstr ""
+
+#: P: 308S: 1
+msgctxt "P: 308S: 1"
+msgid "Los caracteres especiales, como espacio, signos o caracteres con tilde, no pueden formas parte de un identificador. "
+msgstr ""
+
+#: P: 310S: 1
+msgctxt "P: 310S: 1"
+msgid "Los siguientes identificadores son válidos:"
+msgstr ""
+
+#: P: 312S: 1
+msgctxt "P: 312S: 1"
+msgid "a"
+msgstr ""
+
+#: P: 313S: 1
+msgctxt "P: 313S: 1"
+msgid "x1"
+msgstr ""
+
+#: P: 314S: 1
+msgctxt "P: 314S: 1"
+msgid "nombre_largo"
+msgstr ""
+
+#: P: 315S: 1
+msgctxt "P: 315S: 1"
+msgid "variable20"
+msgstr ""
+
+#: P: 316S: 1
+msgctxt "P: 316S: 1"
+msgid "a123b_"
+msgstr ""
+
+#: P: 318S: 1
+msgctxt "P: 318S: 1"
+msgid "Los siguientes identificadores, no están permitidos"
+msgstr ""
+
+#: P: 320S: 2
+msgctxt "P: 320S: 2"
+msgid "1nombre	//inicia con número"
+msgstr ""
+
+#: P: 321S: 1
+msgctxt "P: 321S: 1"
+msgid "el_niño		//contiene un carácter inválido"
+msgstr ""
+
+#: P: 322S: 1
+msgctxt "P: 322S: 1"
+msgid "mi nombre 	//contiene espacio"
+msgstr ""
+
+#: P: 323S: 1
+msgctxt "P: 323S: 1"
+msgid "var		//es palabra reservada"
+msgstr ""
+
+#: P: 325S: 1
+msgctxt "P: 325S: 1"
+msgid "Dentro de Pascal, los identificadores no son sensibles a la caja, esto significa que para Pascal, los identificadores : “Pascal”, “PASCAL” o “Pascal”, son exactamente el mismo identificador."
+msgstr ""
+
+#: P: 326S: 1
+msgctxt "P: 326S: 1"
+msgid " "
+msgstr ""
+
+#: P: 327S: 2
+msgctxt "P: 327S: 2"
+msgid "Estructura de un programa"
+msgstr ""
+
+#: P: 329S: 1
+msgctxt "P: 329S: 1"
+msgid "	Un programa típico en Pascal, tiene la siguiente estructura:"
+msgstr ""
+
+#: P: 331S: 1
+msgctxt "P: 331S: 1"
+msgid "program "
+msgstr ""
+
+#: P: 331S: 2
+msgctxt "P: 331S: 2"
+msgid "Modelo"
+msgstr ""
+
+#: P: 331S: 3
+msgctxt "P: 331S: 3"
+msgid ";"
+msgstr ""
+
+#: P: 332S: 1
+msgctxt "P: 332S: 1"
+msgid "uses"
+msgstr ""
+
+#: P: 333S: 1
+msgctxt "P: 333S: 1"
+msgid "  "
+msgstr ""
+
+#: P: 333S: 2
+msgctxt "P: 333S: 2"
+msgid "//"
+msgstr ""
+
+#: P: 333S: 3
+msgctxt "P: 333S: 3"
+msgid "Declaración de unidades"
+msgstr ""
+
+#: P: 335S: 1
+msgctxt "P: 335S: 1"
+msgid "const"
+msgstr ""
+
+#: P: 336S: 3
+msgctxt "P: 336S: 3"
+msgid "Declaración de constantes"
+msgstr ""
+
+#: P: 338S: 1
+msgctxt "P: 338S: 1"
+msgid "var"
+msgstr ""
+
+#: P: 339S: 3
+msgctxt "P: 339S: 3"
+msgid "Declaración de variables"
+msgstr ""
+
+#: P: 341S: 1
+msgctxt "P: 341S: 1"
+msgid "begin"
+msgstr ""
+
+#: P: 342S: 3
+msgctxt "P: 342S: 3"
+msgid "Cuerpo principal del programa"
+msgstr ""
+
+#: P: 343S: 1
+msgctxt "P: 343S: 1"
+msgid "end"
+msgstr ""
+
+#: P: 343S: 2
+msgctxt "P: 343S: 2"
+msgid "."
+msgstr ""
+
+#: P: 345S: 1
+msgctxt "P: 345S: 1"
+msgid "	El cuerpo del programa va siempre al final, entre las palabras reservadas BEGIN … END, y termina siempre con un punto."
+msgstr ""
+
+#: P: 347S: 1
+msgctxt "P: 347S: 1"
+msgid "	El programa principal es un conjunto de instrucciones. Las instrucciones más comunes son las asignaciones:"
+msgstr ""
+
+#: P: 349S: 1
+msgctxt "P: 349S: 1"
+msgid "	x "
+msgstr ""
+
+#: P: 349S: 2
+msgctxt "P: 349S: 2"
+msgid ":="
+msgstr ""
+
+#: P: 349S: 3
+msgctxt "P: 349S: 3"
+msgid " 1"
+msgstr ""
+
+#: P: 350S: 1
+msgctxt "P: 350S: 1"
+msgid "	variables "
+msgstr ""
+
+#: P: 350S: 3
+msgctxt "P: 350S: 3"
+msgid " x "
+msgstr ""
+
+#: P: 350S: 4
+msgctxt "P: 350S: 4"
+msgid "+"
+msgstr ""
+
+#: P: 350S: 5
+msgctxt "P: 350S: 5"
+msgid " y"
+msgstr ""
+
+#: P: 352S: 1
+msgctxt "P: 352S: 1"
+msgid "	También puede haber instrucciones que sean llamadas a procedimientos o función:"
+msgstr ""
+
+#: P: 354S: 1
+msgctxt "P: 354S: 1"
+msgid "	Hacer_algo"
+msgstr ""
+
+#: P: 356S: 1
+msgctxt "P: 356S: 1"
+msgid "	EjecutarFuncion"
+msgstr ""
+
+#: P: 356S: 2
+msgctxt "P: 356S: 2"
+msgid "("
+msgstr ""
+
+#: P: 356S: 3
+msgctxt "P: 356S: 3"
+msgid "x,y"
+msgstr ""
+
+#: P: 356S: 4
+msgctxt "P: 356S: 4"
+msgid ");"
+msgstr ""
+
+#: P: 359S: 1
+msgctxt "P: 359S: 1"
+msgid "	O también, las instrucciones pueden ser estructuras condicionales o de iteración:"
+msgstr ""
+
+#: P: 361S: 1
+msgctxt "P: 361S: 1"
+msgid "	"
+msgstr ""
+
+#: P: 361S: 2
+msgctxt "P: 361S: 2"
+msgid "while "
+msgstr ""
+
+#: P: 361S: 3
+msgctxt "P: 361S: 3"
+msgid "i"
+msgstr ""
+
+#: P: 361S: 4
+msgctxt "P: 361S: 4"
+msgid ">"
+msgstr ""
+
+#: P: 361S: 5
+msgctxt "P: 361S: 5"
+msgid "0 "
+msgstr ""
+
+#: P: 361S: 6
+msgctxt "P: 361S: 6"
+msgid "do "
+msgstr ""
+
+#: P: 361S: 7
+msgctxt "P: 361S: 7"
+msgid "hacer_algo_con_i"
+msgstr ""
+
+#: P: 361S: 10
+msgctxt "P: 361S: 10"
+msgid "end;"
+msgstr ""
+
+#: P: 363S: 2
+msgctxt "P: 363S: 2"
+msgid "if "
+msgstr ""
+
+#: P: 363S: 6
+msgctxt "P: 363S: 6"
+msgid "then "
+msgstr ""
+
+#: P: 363S: 8
+msgctxt "P: 363S: 8"
+msgid "; "
+msgstr ""
+
+#: P: 366S: 1
+msgctxt "P: 366S: 1"
+msgid "	Las estructuras condicionales se describen en la sección "
+msgstr ""
+
+#: P: 366S: 2
+msgctxt "P: 366S: 2"
+msgid "4.9"
+msgstr ""
+
+#: P: 368S: 1
+msgctxt "P: 368S: 1"
+msgid "	Todas las instrucciones deben terminar con el delimitador punto y coma (;)."
+msgstr ""
+
+#: P: 370S: 2
+msgctxt "P: 370S: 2"
+msgid "Operadores"
+msgstr ""
+
+#: P: 372S: 1
+msgctxt "P: 372S: 1"
+msgid "	PicPas soporta un subconjunto de los operadores de Pascal. Estos son:"
+msgstr ""
+
+#: P: 374S: 1
+msgctxt "P: 374S: 1"
+msgid "OPERADORES ARITMÉTICOS"
+msgstr ""
+
+#: P: 376S: 0
+msgctxt "P: 376S: 0"
+msgid "OPERADOR"
+msgstr ""
+
+#: P: 376S: 1
+msgctxt "P: 376S: 1"
+msgid "NOMBRE"
+msgstr ""
+
+#: P: 376S: 3
+msgctxt "P: 376S: 3"
+msgid "Suma"
+msgstr ""
+
+#: P: 376S: 4
+msgctxt "P: 376S: 4"
+msgid "-"
+msgstr ""
+
+#: P: 376S: 5
+msgctxt "P: 376S: 5"
+msgid "Resta"
+msgstr ""
+
+#: P: 376S: 7
+msgctxt "P: 376S: 7"
+msgid "Signo"
+msgstr ""
+
+#: P: 376S: 8
+msgctxt "P: 376S: 8"
+msgid "*"
+msgstr ""
+
+#: P: 376S: 9
+msgctxt "P: 376S: 9"
+msgid "Multiplicación"
+msgstr ""
+
+#: P: 376S: 10
+msgctxt "P: 376S: 10"
+msgid "Div"
+msgstr ""
+
+#: P: 376S: 11
+msgctxt "P: 376S: 11"
+msgid "División entera"
+msgstr ""
+
+#: P: 376S: 12
+msgctxt "P: 376S: 12"
+msgid "Mod"
+msgstr ""
+
+#: P: 376S: 13
+msgctxt "P: 376S: 13"
+msgid "Residuo"
+msgstr ""
+
+#: P: 378S: 1
+msgctxt "P: 378S: 1"
+msgid "	Los operadores de multiplicación, división y residuo, no están implementados en la versión actual del compilador."
+msgstr ""
+
+#: P: 380S: 1
+msgctxt "P: 380S: 1"
+msgid "OPERADORES LÓGICOS"
+msgstr ""
+
+#: P: 382S: 2
+msgctxt "P: 382S: 2"
+msgid "NOT"
+msgstr ""
+
+#: P: 382S: 3
+msgctxt "P: 382S: 3"
+msgid "Operación lógica NOT"
+msgstr ""
+
+#: P: 382S: 4
+msgctxt "P: 382S: 4"
+msgid "AND"
+msgstr ""
+
+#: P: 382S: 5
+msgctxt "P: 382S: 5"
+msgid "Operación lógica AND"
+msgstr ""
+
+#: P: 382S: 6
+msgctxt "P: 382S: 6"
+msgid "OR"
+msgstr ""
+
+#: P: 382S: 7
+msgctxt "P: 382S: 7"
+msgid "Operación lógica OR"
+msgstr ""
+
+#: P: 382S: 8
+msgctxt "P: 382S: 8"
+msgid "XOR"
+msgstr ""
+
+#: P: 382S: 9
+msgctxt "P: 382S: 9"
+msgid "Operación lógica XOR"
+msgstr ""
+
+#: P: 385S: 1
+msgctxt "P: 385S: 1"
+msgid "OPERADORES DE COMPARACIÓN"
+msgstr ""
+
+#: P: 387S: 3
+msgctxt "P: 387S: 3"
+msgid "Mayor que"
+msgstr ""
+
+#: P: 387S: 4
+msgctxt "P: 387S: 4"
+msgid ">="
+msgstr ""
+
+#: P: 387S: 5
+msgctxt "P: 387S: 5"
+msgid "Mayor o igual que"
+msgstr ""
+
+#: P: 387S: 6
+msgctxt "P: 387S: 6"
+msgid "<"
+msgstr ""
+
+#: P: 387S: 7
+msgctxt "P: 387S: 7"
+msgid "Menor"
+msgstr ""
+
+#: P: 387S: 8
+msgctxt "P: 387S: 8"
+msgid "<="
+msgstr ""
+
+#: P: 387S: 9
+msgctxt "P: 387S: 9"
+msgid "Menor o igual que"
+msgstr ""
+
+#: P: 387S: 10
+msgctxt "P: 387S: 10"
+msgid "="
+msgstr ""
+
+#: P: 387S: 11
+msgctxt "P: 387S: 11"
+msgid "Igual"
+msgstr ""
+
+#: P: 387S: 12
+msgctxt "P: 387S: 12"
+msgid "<>"
+msgstr ""
+
+#: P: 387S: 13
+msgctxt "P: 387S: 13"
+msgid "Diferente"
+msgstr ""
+
+#: P: 389S: 1
+msgctxt "P: 389S: 1"
+msgid "OPERADORES DE ASIGNACIÓN"
+msgstr ""
+
+#: P: 391S: 3
+msgctxt "P: 391S: 3"
+msgid "Asignación"
+msgstr ""
+
+#: P: 393S: 1
+msgctxt "P: 393S: 1"
+msgid "Solo existe un único operador de asignación en PicPas, así como también en Pascal."
+msgstr ""
+
+#: P: 395S: 2
+msgctxt "P: 395S: 2"
+msgid "Precedencia de operadores"
+msgstr ""
+
+#: P: 397S: 1
+msgctxt "P: 397S: 1"
+msgid "Los operadores, se evalúan de acuerdo a la precedencia siguiente:"
+msgstr ""
+
+#: P: 399S: 1
+msgctxt "P: 399S: 1"
+msgid "PRECEDENCIA"
+msgstr ""
+
+#: P: 399S: 2
+msgctxt "P: 399S: 2"
+msgid "NOT, signo “-“"
+msgstr ""
+
+#: P: 399S: 3
+msgctxt "P: 399S: 3"
+msgid "6"
+msgstr ""
+
+#: P: 399S: 4
+msgctxt "P: 399S: 4"
+msgid "*, DIV, MOD, AND"
+msgstr ""
+
+#: P: 399S: 5
+msgctxt "P: 399S: 5"
+msgid "5"
+msgstr ""
+
+#: P: 399S: 6
+msgctxt "P: 399S: 6"
+msgid "+, -, OR, XOR"
+msgstr ""
+
+#: P: 399S: 7
+msgctxt "P: 399S: 7"
+msgid "4"
+msgstr ""
+
+#: P: 399S: 8
+msgctxt "P: 399S: 8"
+msgid "=, <>, <, <=, >, >="
+msgstr ""
+
+#: P: 399S: 9
+msgctxt "P: 399S: 9"
+msgid "3"
+msgstr ""
+
+#: P: 399S: 11
+msgctxt "P: 399S: 11"
+msgid "2"
+msgstr ""
+
+#: P: 401S: 1
+msgctxt "P: 401S: 1"
+msgid "Los operadores que tienen mayor precedencia, son los que se evalúan primero en una expresión. Así, por ejemplo, en la siguiente expresión:"
+msgstr ""
+
+#: P: 403S: 1
+msgctxt "P: 403S: 1"
+msgid "1 + 2 * 3  "
+msgstr ""
+
+#: P: 405S: 1
+msgctxt "P: 405S: 1"
+msgid "	Se evaluará primero la operación 2 * 3, porque el operador de multiplicación “*”, tiene mayor precedencia que el operador de suma ”+”."
+msgstr ""
+
+#: P: 407S: 1
+msgctxt "P: 407S: 1"
+msgid "	Para cambar el orden de evaluación, se pueden agrupar las expresiones, usando paréntesis:"
+msgstr ""
+
+#: P: 409S: 1
+msgctxt "P: 409S: 1"
+msgid "	( 1 + 2 ) * 3"
+msgstr ""
+
+#: P: 411S: 2
+msgctxt "P: 411S: 2"
+msgid "Tipos de datos"
+msgstr ""
+
+#: P: 413S: 1
+msgctxt "P: 413S: 1"
+msgid "PicPas soporta los siguientes tipos de datos:"
+msgstr ""
+
+#: P: 415S: 0
+msgctxt "P: 415S: 0"
+msgid "TIPO"
+msgstr ""
+
+#: P: 415S: 1
+msgctxt "P: 415S: 1"
+msgid "TAMAÑO"
+msgstr ""
+
+#: P: 415S: 2
+msgctxt "P: 415S: 2"
+msgid "RANGO"
+msgstr ""
+
+#: P: 415S: 3
+msgctxt "P: 415S: 3"
+msgid "Bit"
+msgstr ""
+
+#: P: 415S: 4
+msgctxt "P: 415S: 4"
+msgid "1 bit"
+msgstr ""
+
+#: P: 415S: 5
+msgctxt "P: 415S: 5"
+msgid "0 o 1"
+msgstr ""
+
+#: P: 415S: 6
+msgctxt "P: 415S: 6"
+msgid "Boolean"
+msgstr ""
+
+#: P: 415S: 8
+msgctxt "P: 415S: 8"
+msgid "TRUE o FALSE"
+msgstr ""
+
+#: P: 415S: 9
+msgctxt "P: 415S: 9"
+msgid "Char"
+msgstr ""
+
+#: P: 415S: 10
+msgctxt "P: 415S: 10"
+msgid "1 byte"
+msgstr ""
+
+#: P: 415S: 11
+msgctxt "P: 415S: 11"
+msgid "chr(0) .. chr(255)"
+msgstr ""
+
+#: P: 415S: 12
+msgctxt "P: 415S: 12"
+msgid "Byte"
+msgstr ""
+
+#: P: 415S: 14
+msgctxt "P: 415S: 14"
+msgid "0..255"
+msgstr ""
+
+#: P: 415S: 15
+msgctxt "P: 415S: 15"
+msgid "Word"
+msgstr ""
+
+#: P: 415S: 16
+msgctxt "P: 415S: 16"
+msgid "2 bytes"
+msgstr ""
+
+#: P: 415S: 17
+msgctxt "P: 415S: 17"
+msgid "0..65535"
+msgstr ""
+
+#: P: 417S: 1
+msgctxt "P: 417S: 1"
+msgid "Para economizar memoria, los tipos Bit y Boolean, ocupan solo un bit."
+msgstr ""
+
+#: P: 419S: 1
+msgctxt "P: 419S: 1"
+msgid "No se manejan variables con signo, ni número es coma flotante, en la versión actual del compilador."
+msgstr ""
+
+#: P: 421S: 1
+msgctxt "P: 421S: 1"
+msgid "Las variables de tipo Word, se almacenan internamente como dos bytes. La ubicación de los bytes, en memoria, no siempre es consecutiva, porque el compilador, tratará de optimizar el uso de la memoria RAM. "
+msgstr ""
+
+#: P: 423S: 2
+msgctxt "P: 423S: 2"
+msgid "Tipo Char"
+msgstr ""
+
+#: P: 425S: 1
+msgctxt "P: 425S: 1"
+msgid "Las variables “char”, almacenan caracteres simples, como la letra ‘A’, o el número ‘0’. Es el único tipo de datos que maneja caracteres alfanuméricos."
+msgstr ""
+
+#: P: 427S: 1
+msgctxt "P: 427S: 1"
+msgid "La asignación de valores se hace, de la siguiente forma:"
+msgstr ""
+
+#: P: 429S: 1
+msgctxt "P: 429S: 1"
+msgid "var "
+msgstr ""
+
+#: P: 430S: 2
+msgctxt "P: 430S: 2"
+msgid "c"
+msgstr ""
+
+#: P: 430S: 3
+msgctxt "P: 430S: 3"
+msgid ":"
+msgstr ""
+
+#: P: 432S: 2
+msgctxt "P: 432S: 2"
+msgid "c "
+msgstr ""
+
+#: P: 432S: 5
+msgctxt "P: 432S: 5"
+msgid "'a'"
+msgstr ""
+
+#: P: 435S: 1
+msgctxt "P: 435S: 1"
+msgid "Los caracteres, deben estar encerrados entre comillas simples, no se puede usar las comillas dobles."
+msgstr ""
+
+#: P: 437S: 1
+msgctxt "P: 437S: 1"
+msgid "También se pueden expresar literales de tipo Char, usando la función Chr():"
+msgstr ""
+
+#: P: 440S: 4
+msgctxt "P: 440S: 4"
+msgid " chr"
+msgstr ""
+
+#: P: 440S: 6
+msgctxt "P: 440S: 6"
+msgid "65"
+msgstr ""
+
+#: P: 440S: 10
+msgctxt "P: 440S: 10"
+msgid "Equivale a c "
+msgstr ""
+
+#: P: 440S: 12
+msgctxt "P: 440S: 12"
+msgid " 'A'"
+msgstr ""
+
+#: P: 443S: 1
+msgctxt "P: 443S: 1"
+msgid "Lo que se indica a la función chr(), como parámetro, es el código ASCII del carácter que se desea obtener."
+msgstr ""
+
+#: P: 445S: 1
+msgctxt "P: 445S: 1"
+msgid "También se puede usar el carácter “#” y el código ASCII directamente:"
+msgstr ""
+
+#: P: 448S: 4
+msgctxt "P: 448S: 4"
+msgid " #49"
+msgstr ""
+
+#: P: 448S: 10
+msgctxt "P: 448S: 10"
+msgid " '1'"
+msgstr ""
+
+#: P: 451S: 1
+msgctxt "P: 451S: 1"
+msgid "Las operaciones permitidas sobre el tipo char son:"
+msgstr ""
+
+#: P: 453S: 1
+msgctxt "P: 453S: 1"
+msgid "Asignación:  var_char := ‘a’;"
+msgstr ""
+
+#: P: 454S: 1
+msgctxt "P: 454S: 1"
+msgid "Comparación: if (var_char = ‘a’) …"
+msgstr ""
+
+#: P: 455S: 1
+msgctxt "P: 455S: 1"
+msgid "Conversión a byte: n := ord(var_char);"
+msgstr ""
+
+#: P: 457S: 2
+msgctxt "P: 457S: 2"
+msgid "Tipo Bit"
+msgstr ""
+
+#: P: 459S: 1
+msgctxt "P: 459S: 1"
+msgid "El tipo Bit, es un tipo que no pertenece al Pascal estándar. Se comporta de forma similar al tipo Boolean, y al igual que este, ocupa solo un bit de memoria. "
+msgstr ""
+
+#: P: 461S: 1
+msgctxt "P: 461S: 1"
+msgid "Se declaran de la forma usual:"
+msgstr ""
+
+#: P: 464S: 3
+msgctxt "P: 464S: 3"
+msgid "var_bit"
+msgstr ""
+
+#: P: 464S: 5
+msgctxt "P: 464S: 5"
+msgid " bit"
+msgstr ""
+
+#: P: 467S: 1
+msgctxt "P: 467S: 1"
+msgid "Soporta los mismos operadores lógicos que los tipos boolean (AND, OR, XOR, NOT):"
+msgstr ""
+
+#: P: 469S: 2
+msgctxt "P: 469S: 2"
+msgid "x := var_"
+msgstr ""
+
+#: P: 469S: 3
+msgctxt "P: 469S: 3"
+msgid "bit_1 "
+msgstr ""
+
+#: P: 469S: 4
+msgctxt "P: 469S: 4"
+msgid "AND "
+msgstr ""
+
+#: P: 469S: 5
+msgctxt "P: 469S: 5"
+msgid "var_bit_2;"
+msgstr ""
+
+#: P: 470S: 2
+msgctxt "P: 470S: 2"
+msgid "x := var"
+msgstr ""
+
+#: P: 470S: 3
+msgctxt "P: 470S: 3"
+msgid "_bool_1 "
+msgstr ""
+
+#: P: 470S: 5
+msgctxt "P: 470S: 5"
+msgid "var_bool_2"
+msgstr ""
+
+#: P: 471S: 2
+msgctxt "P: 471S: 2"
+msgid "x := "
+msgstr ""
+
+#: P: 471S: 3
+msgctxt "P: 471S: 3"
+msgid "NOT "
+msgstr ""
+
+#: P: 471S: 5
+msgctxt "P: 471S: 5"
+msgid "_bit"
+msgstr ""
+
+#: P: 472S: 5
+msgctxt "P: 472S: 5"
+msgid "_bool"
+msgstr ""
+
+#: P: 474S: 1
+msgctxt "P: 474S: 1"
+msgid "Sin embargo, la forma como se inicializan, es diferente: "
+msgstr ""
+
+#: P: 476S: 2
+msgctxt "P: 476S: 2"
+msgid "var_"
+msgstr ""
+
+#: P: 476S: 3
+msgctxt "P: 476S: 3"
+msgid "bit "
+msgstr ""
+
+#: P: 477S: 3
+msgctxt "P: 477S: 3"
+msgid "boolean "
+msgstr ""
+
+#: P: 477S: 6
+msgctxt "P: 477S: 6"
+msgid "TRUE"
+msgstr ""
+
+#: P: 479S: 1
+msgctxt "P: 479S: 1"
+msgid "Las variables o expresiones bit, no pueden usarse como condiciones, directamente. Es decir, si se intenta una verificación de la forma:"
+msgstr ""
+
+#: P: 482S: 4
+msgctxt "P: 482S: 4"
+msgid "_bit "
+msgstr ""
+
+#: P: 482S: 6
+msgctxt "P: 482S: 6"
+msgid "..."
+msgstr ""
+
+#: P: 485S: 1
+msgctxt "P: 485S: 1"
+msgid "Se generará un error, porque se espera una expresión booleana dentro de la condicional IF."
+msgstr ""
+
+#: P: 487S: 1
+msgctxt "P: 487S: 1"
+msgid "Para superar este problema, se debe hacer una comparación de tipo:"
+msgstr ""
+
+#: P: 490S: 6
+msgctxt "P: 490S: 6"
+msgid " 0 "
+msgstr ""
+
+#: P: 493S: 1
+msgctxt "P: 493S: 1"
+msgid "Sin esperar pérdida de eficiencia, ya que el compilador optimiza las operaciones con variables Bit al mismo nivel de eficiencia, que con las variables boolean."
+msgstr ""
+
+#: P: 495S: 1
+msgctxt "P: 495S: 1"
+msgid "Tampoco se pueden asignar directamente valores entre Bit y Boolean, porque semánticamente, se consideran tipos de datos distintos."
+msgstr ""
+
+#: P: 497S: 3
+msgctxt "P: 497S: 3"
+msgid "Conversión de tipos"
+msgstr ""
+
+#: P: 499S: 1
+msgctxt "P: 499S: 1"
+msgid "Pascal es estricto en cuanto a los tipos. Las asignaciones y operaciones deben hacerse solo entre los tipos permitidos. Por ejemplo, no se puede asignar un “char” a un byte o a un boolean."
+msgstr ""
+
+#: P: 501S: 1
+msgctxt "P: 501S: 1"
+msgid "Para realizar conversiones entre tipos, se deben usar las funciones de conversión:"
+msgstr ""
+
+#: P: 503S: 1
+msgctxt "P: 503S: 1"
+msgid "Ord(<char>)"
+msgstr ""
+
+#: P: 504S: 1
+msgctxt "P: 504S: 1"
+msgid "Chr(<byte>)"
+msgstr ""
+
+#: P: 505S: 1
+msgctxt "P: 505S: 1"
+msgid "Bit(<byte>)"
+msgstr ""
+
+#: P: 506S: 1
+msgctxt "P: 506S: 1"
+msgid "Word(<byte>)"
+msgstr ""
+
+#: P: 508S: 1
+msgctxt "P: 508S: 1"
+msgid "Por ejemplo, para convertir un Char a su código ASCII, se usa Ord()."
+msgstr ""
+
+#: P: 510S: 1
+msgctxt "P: 510S: 1"
+msgid "Todas las variables y constantes dentro de PicPas, tienen un tipo asignado, al momento de su declaración o su aparición en el código."
+msgstr ""
+
+#: P: 512S: 1
+msgctxt "P: 512S: 1"
+msgid "PicPas no hace conversiones implícitas de tipo. Todas las operaciones deben estar definidas sobre el tipo de datos usados. Estrictamente no existe algo como “tipos compatibles”. Si se permite la compatibilidad de tipos, es porque tal operación está implementada dentro del compilador."
+msgstr ""
+
+#: P: 514S: 1
+msgctxt "P: 514S: 1"
+msgid "Así, si se tiene el código:"
+msgstr ""
+
+#: P: 516S: 2
+msgctxt "P: 516S: 2"
+msgid "num_grande"
+msgstr ""
+
+#: P: 516S: 4
+msgctxt "P: 516S: 4"
+msgid " word"
+msgstr ""
+
+#: P: 518S: 2
+msgctxt "P: 518S: 2"
+msgid "num_grande "
+msgstr ""
+
+#: P: 518S: 4
+msgctxt "P: 518S: 4"
+msgid " 200"
+msgstr ""
+
+#: P: 521S: 1
+msgctxt "P: 521S: 1"
+msgid "Esta operación sería incompatible por tipos, porque se está asignando un byte a un word, así que legalmente deberíamos hacer:"
+msgstr ""
+
+#: P: 525S: 4
+msgctxt "P: 525S: 4"
+msgid " word(200)"
+msgstr ""
+
+#: P: 528S: 1
+msgctxt "P: 528S: 1"
+msgid "Pero PicPas, permite la primera asignación, porque internamente, se ha implementado la operación <word> := <byte>."
+msgstr ""
+
+#: P: 530S: 1
+msgctxt "P: 530S: 1"
+msgid "Así como esta operación, hay otras operaciones “compatibles” que se encuentran implementadas. Pero en general, se mantiene la rigidez entre tipos, que caracteriza a Pascal."
+msgstr ""
+
+#: P: 532S: 2
+msgctxt "P: 532S: 2"
+msgid "Propiedades de tipos"
+msgstr ""
+
+#: P: 534S: 1
+msgctxt "P: 534S: 1"
+msgid "Una característica no estándar de Pascal, implementada dentro de PicPas, es el poder usar propiedades, en forma de campos, a los tipos básicos como byte o word."
+msgstr ""
+
+#: P: 536S: 1
+msgctxt "P: 536S: 1"
+msgid "Por ejemplo, para acceder al bit de menor peso de una variable tipo Byte, podemos hacer:"
+msgstr ""
+
+#: P: 539S: 2
+msgctxt "P: 539S: 2"
+msgid "un"
+msgstr ""
+
+#: P: 539S: 3
+msgctxt "P: 539S: 3"
+msgid "_byte"
+msgstr ""
+
+#: P: 539S: 5
+msgctxt "P: 539S: 5"
+msgid " byte"
+msgstr ""
+
+#: P: 541S: 3
+msgctxt "P: 541S: 3"
+msgid "_byte.bit0 "
+msgstr ""
+
+#: P: 543S: 1
+msgctxt "P: 543S: 1"
+msgid "El campo “bit0” ya se encuentra internamente definido para todas las variables byte y constante no literales. "
+msgstr ""
+
+#: P: 544S: 1
+msgctxt "P: 544S: 1"
+msgid "Para el caso de las constantes, se procede de forma similar:"
+msgstr ""
+
+#: P: 546S: 1
+msgctxt "P: 546S: 1"
+msgid "const "
+msgstr ""
+
+#: P: 547S: 3
+msgctxt "P: 547S: 3"
+msgid "un_byte "
+msgstr ""
+
+#: P: 547S: 5
+msgctxt "P: 547S: 5"
+msgid " $10"
+msgstr ""
+
+#: P: 552S: 1
+msgctxt "P: 552S: 1"
+msgid "Se han definido las siguientes propiedades para el tipo Byte:"
+msgstr ""
+
+#: P: 554S: 0
+msgctxt "P: 554S: 0"
+msgid "Campo"
+msgstr ""
+
+#: P: 554S: 1
+msgctxt "P: 554S: 1"
+msgid "Descripción"
+msgstr ""
+
+#: P: 554S: 2
+msgctxt "P: 554S: 2"
+msgid "bit0"
+msgstr ""
+
+#: P: 554S: 3
+msgctxt "P: 554S: 3"
+msgid "Devuelve el bit 0 del byte"
+msgstr ""
+
+#: P: 554S: 4
+msgctxt "P: 554S: 4"
+msgid "bit1"
+msgstr ""
+
+#: P: 554S: 5
+msgctxt "P: 554S: 5"
+msgid "Devuelve el bit 1 del byte"
+msgstr ""
+
+#: P: 554S: 6
+msgctxt "P: 554S: 6"
+msgid "bit2"
+msgstr ""
+
+#: P: 554S: 7
+msgctxt "P: 554S: 7"
+msgid "Devuelve el bit 2 del byte"
+msgstr ""
+
+#: P: 554S: 8
+msgctxt "P: 554S: 8"
+msgid "bit3"
+msgstr ""
+
+#: P: 554S: 9
+msgctxt "P: 554S: 9"
+msgid "Devuelve el bit 3 del byte"
+msgstr ""
+
+#: P: 554S: 10
+msgctxt "P: 554S: 10"
+msgid "bit4"
+msgstr ""
+
+#: P: 554S: 11
+msgctxt "P: 554S: 11"
+msgid "Devuelve el bit 4 del byte"
+msgstr ""
+
+#: P: 554S: 12
+msgctxt "P: 554S: 12"
+msgid "bit5"
+msgstr ""
+
+#: P: 554S: 13
+msgctxt "P: 554S: 13"
+msgid "Devuelve el bit 5 del byte"
+msgstr ""
+
+#: P: 554S: 14
+msgctxt "P: 554S: 14"
+msgid "bit6"
+msgstr ""
+
+#: P: 554S: 15
+msgctxt "P: 554S: 15"
+msgid "Devuelve el bit 6 del byte"
+msgstr ""
+
+#: P: 554S: 16
+msgctxt "P: 554S: 16"
+msgid "bit7"
+msgstr ""
+
+#: P: 554S: 17
+msgctxt "P: 554S: 17"
+msgid "Devuelve el bit 7 del byte"
+msgstr ""
+
+#: P: 556S: 1
+msgctxt "P: 556S: 1"
+msgid "También se puede usar la notación simplificada:"
+msgstr ""
+
+#: P: 559S: 2
+msgctxt "P: 559S: 2"
+msgid "un_byte.0 "
+msgstr ""
+
+#: P: 559S: 4
+msgctxt "P: 559S: 4"
+msgid " 0"
+msgstr ""
+
+#: P: 560S: 2
+msgctxt "P: 560S: 2"
+msgid "un_byte.7 "
+msgstr ""
+
+#: P: 563S: 1
+msgctxt "P: 563S: 1"
+msgid "Pero esta notación se mantiene solo por compatibilidad. La forma recomendada, es usar bit0, bit1, etc."
+msgstr ""
+
+#: P: 565S: 1
+msgctxt "P: 565S: 1"
+msgid "Para el tipo Word, se definen dos propiedades:"
+msgstr ""
+
+#: P: 567S: 2
+msgctxt "P: 567S: 2"
+msgid "Low"
+msgstr ""
+
+#: P: 567S: 3
+msgctxt "P: 567S: 3"
+msgid "Devuelve el byte bajo "
+msgstr ""
+
+#: P: 567S: 4
+msgctxt "P: 567S: 4"
+msgid "High"
+msgstr ""
+
+#: P: 567S: 5
+msgctxt "P: 567S: 5"
+msgid "Devuelve el byte alto"
+msgstr ""
+
+#: P: 569S: 1
+msgctxt "P: 569S: 1"
+msgid "Así, por ejemplo, para copiar el byte bajo en el byte alto de un word, se puede hacer:"
+msgstr ""
+
+#: P: 572S: 2
+msgctxt "P: 572S: 2"
+msgid "un_word.High "
+msgstr ""
+
+#: P: 572S: 4
+msgctxt "P: 572S: 4"
+msgid " un_word.Low"
+msgstr ""
+
+#: P: 575S: 1
+msgctxt "P: 575S: 1"
+msgid "También, se puede anidar el acceso, de forma que, para limpiar el bit de mayor peso de un word, se puede hacer:"
+msgstr ""
+
+#: P: 578S: 2
+msgctxt "P: 578S: 2"
+msgid "un_word.High.bit7 "
+msgstr ""
+
+#: P: 581S: 1
+msgctxt "P: 581S: 1"
+msgid "Desde el punto de vista del compilador, las propiedades de las variables, se comportan como si fueran variables comunes, por lo tanto, se pueden trabajar de la misma forma en que se trabaja con una variable."
+msgstr ""
+
+#: P: 583S: 2
+msgctxt "P: 583S: 2"
+msgid "De la misma forma las propiedades de las constantes, se comportan como otras constantes, y no generan código compilado."
+msgstr ""
+
+#: P: 585S: 2
+msgctxt "P: 585S: 2"
+msgid "Variables"
+msgstr ""
+
+#: P: 587S: 1
+msgctxt "P: 587S: 1"
+msgid "Las variables son los elementos del lenguaje que permiten almacenar valores, durante el transcurso de ejecución del programa."
+msgstr ""
+
+#: P: 589S: 1
+msgctxt "P: 589S: 1"
+msgid "Las variables se definen con un identificador en la sección “VAR” de las declaraciones:"
+msgstr ""
+
+#: P: 592S: 2
+msgctxt "P: 592S: 2"
+msgid "var1 "
+msgstr ""
+
+#: P: 593S: 2
+msgctxt "P: 593S: 2"
+msgid "var2 "
+msgstr ""
+
+#: P: 594S: 2
+msgctxt "P: 594S: 2"
+msgid "variable_de_nombre_largo"
+msgstr ""
+
+#: P: 594S: 4
+msgctxt "P: 594S: 4"
+msgid " boolean"
+msgstr ""
+
+#: P: 597S: 1
+msgctxt "P: 597S: 1"
+msgid "Todas las variables deben declararse indicando su tipo. "
+msgstr ""
+
+#: P: 599S: 1
+msgctxt "P: 599S: 1"
+msgid "No puede haber dos variables con el mismo nombre, en el mismo nivel del programa."
+msgstr ""
+
+#: P: 601S: 1
+msgctxt "P: 601S: 1"
+msgid "El compilador, va asignando espacio para las variables, en direcciones libres de memoria, definidas por el criterio del compilador. "
+msgstr ""
+
+#: P: 603S: 2
+msgctxt "P: 603S: 2"
+msgid "Variables Absolutas"
+msgstr ""
+
+#: P: 605S: 1
+msgctxt "P: 605S: 1"
+msgid "Para definir una dirección de memoria específica, para una variable, se usa la palabra reservad ABSOLUTE:"
+msgstr ""
+
+#: P: 608S: 2
+msgctxt "P: 608S: 2"
+msgid "PORTB"
+msgstr ""
+
+#: P: 608S: 4
+msgctxt "P: 608S: 4"
+msgid " BYTE "
+msgstr ""
+
+#: P: 608S: 5
+msgctxt "P: 608S: 5"
+msgid "absolute "
+msgstr ""
+
+#: P: 608S: 6
+msgctxt "P: 608S: 6"
+msgid "$06"
+msgstr ""
+
+#: P: 609S: 2
+msgctxt "P: 609S: 2"
+msgid "pin0"
+msgstr ""
+
+#: P: 609S: 8
+msgctxt "P: 609S: 8"
+msgid "$06.0"
+msgstr ""
+
+#: P: 610S: 2
+msgctxt "P: 610S: 2"
+msgid "pin1"
+msgstr ""
+
+#: P: 610S: 8
+msgctxt "P: 610S: 8"
+msgid "PORTB.1"
+msgstr ""
+
+#: P: 613S: 1
+msgctxt "P: 613S: 1"
+msgid "Las variables bit y boolean, necesitan especificar, además de la dirección, el número de bit."
+msgstr ""
+
+#: P: 615S: 1
+msgctxt "P: 615S: 1"
+msgid "Se pueden usar propiedades de tipos (Ver sección), para especificar la referencia de una variable absoluta:"
+msgstr ""
+
+#: P: 619S: 2
+msgctxt "P: 619S: 2"
+msgid "un_word"
+msgstr ""
+
+#: P: 620S: 1
+msgctxt "P: 620S: 1"
+msgid "	un_bit"
+msgstr ""
+
+#: P: 620S: 3
+msgctxt "P: 620S: 3"
+msgid " bit "
+msgstr ""
+
+#: P: 620S: 5
+msgctxt "P: 620S: 5"
+msgid "un_word.Low.bit0"
+msgstr ""
+
+#: P: 623S: 1
+msgctxt "P: 623S: 1"
+msgid "Dos variables ocupando la misma posición absoluta se comportan como una sola variable. Lo que se escriba en una, se verá reflejada en la otra."
+msgstr ""
+
+#: P: 625S: 2
+msgctxt "P: 625S: 2"
+msgid "Las variables absolutas, ocupan también espacio de memoria cuando apunten al área de memoria del usuario. El compilador no ubicará nuevas variables en posiciones ocupadas por variables absolutas."
+msgstr ""
+
+#: P: 627S: 1
+msgctxt "P: 627S: 1"
+msgid "Las variables de tipo Word, ocupan dos bye. Si se especifican como Absolutas, solo un byte será ubicado en la posición indicada. El otro byte será ubicado en alguna posición libre."
+msgstr ""
+
+#: P: 629S: 3
+msgctxt "P: 629S: 3"
+msgid "Variables REGISTER"
+msgstr ""
+
+#: P: 631S: 1
+msgctxt "P: 631S: 1"
+msgid "Una característica particular de PicPas, es que dispone de un tipo de almacenamiento especial para variables: El almacenamiento REGISTER, permite usar variables que usen registros internos del microcontrolador, como almacenamiento. "
+msgstr ""
+
+#: P: 633S: 1
+msgctxt "P: 633S: 1"
+msgid "La ventaja de una variable REGISTER, es que no ocupa espacio de memoria y su acceso es más rápido."
+msgstr ""
+
+#: P: 634S: 1
+msgctxt "P: 634S: 1"
+msgid "La desventaja es que al tener el PIC, solo un registro, su contenido se pierde, después de ejecutar alguna operación que use ese registro. Que en el caso del PIC, son la mayoría de instrucciones."
+msgstr ""
+
+#: P: 636S: 1
+msgctxt "P: 636S: 1"
+msgid "En la versión actual de PicPas, solo se permite este tipo de almacenamiento para los parámetros de procedimientos. De modo que es posible definir un procedimiento de la forma:"
+msgstr ""
+
+#: P: 638S: 1
+msgctxt "P: 638S: 1"
+msgid "procedure "
+msgstr ""
+
+#: P: 638S: 2
+msgctxt "P: 638S: 2"
+msgid "PonerValorRapidamente"
+msgstr ""
+
+#: P: 638S: 4
+msgctxt "P: 638S: 4"
+msgid "register "
+msgstr ""
+
+#: P: 638S: 5
+msgctxt "P: 638S: 5"
+msgid "fugaz"
+msgstr ""
+
+#: P: 640S: 3
+msgctxt "P: 640S: 3"
+msgid "Cuidado con lo que pones aquí"
+msgstr ""
+
+#: P: 641S: 2
+msgctxt "P: 641S: 2"
+msgid "PORTB "
+msgstr ""
+
+#: P: 641S: 4
+msgctxt "P: 641S: 4"
+msgid " fugaz"
+msgstr ""
+
+#: P: 645S: 1
+msgctxt "P: 645S: 1"
+msgid "Este procedimiento tiene su parámetro “fugaz”, de tipo REGISTER, lo que significa que recibirá el valor directamente en el registro W. Por ello, y como W es un registro volátil, lo primero que hay que hacer es usar a “fugaz”, antes de que se pierda. Si por ejemplo se hiciera esto:"
+msgstr ""
+
+#: P: 649S: 2
+msgctxt "P: 649S: 2"
+msgid "PORTA "
+msgstr ""
+
+#: P: 649S: 4
+msgctxt "P: 649S: 4"
+msgid " $FF"
+msgstr ""
+
+#: P: 649S: 8
+msgctxt "P: 649S: 8"
+msgid "Usa el registro W"
+msgstr ""
+
+#: P: 650S: 8
+msgctxt "P: 650S: 8"
+msgid "”fugaz“ tiene el valor de la última instrucción"
+msgstr ""
+
+#: P: 650S: 10
+msgctxt "P: 650S: 10"
+msgid "tal vez $FF"
+msgstr ""
+
+#: P: 650S: 11
+msgctxt "P: 650S: 11"
+msgid ")"
+msgstr ""
+
+#: P: 653S: 1
+msgctxt "P: 653S: 1"
+msgid "Se tendría un error, por cuanto la instrucción “PORTA := $FF”, hace uso del registro W, y por lo tanto se pierde del valor de “fugaz”."
+msgstr ""
+
+#: P: 655S: 1
+msgctxt "P: 655S: 1"
+msgid "Esto podría parecer una desventaja, sin embargo, usar los parámetros REGISTER permiten:"
+msgstr ""
+
+#: P: 657S: 1
+msgctxt "P: 657S: 1"
+msgid "Asignarlos de forma más rápida."
+msgstr ""
+
+#: P: 658S: 1
+msgctxt "P: 658S: 1"
+msgid "Leerlos de forma más rápida."
+msgstr ""
+
+#: P: 659S: 2
+msgctxt "P: 659S: 2"
+msgid "Ahorrar código en la llamada al procedimiento."
+msgstr ""
+
+#: P: 661S: 1
+msgctxt "P: 661S: 1"
+msgid "IMPORTANTE: Solo se puede declarar un parámetro de tipo REGISTER, y debe ser siempre el último. "
+msgstr ""
+
+#: P: 663S: 1
+msgctxt "P: 663S: 1"
+msgid "Los parámetros REGISTER solo están implementados con los tipos byte, char y word, en la versión actual. Sin embargo, cuando se usa con Word, el ahorro de instrucciones es menor, porque solo se tiene un registro de trabajo en el PIC, y se seguirá usando una posición de memoria adicional."
+msgstr ""
+
+#: P: 665S: 2
+msgctxt "P: 665S: 2"
+msgid "Constantes"
+msgstr ""
+
+#: P: 667S: 1
+msgctxt "P: 667S: 1"
+msgid "Las constantes son como variables que no cambian de valor, durante toda la ejecución del programa. PisPas implementa el uso de constantes, de la forma común en Pascal:"
+msgstr ""
+
+#: P: 670S: 2
+msgctxt "P: 670S: 2"
+msgid "VALOR "
+msgstr ""
+
+#: P: 670S: 4
+msgctxt "P: 670S: 4"
+msgid " 5"
+msgstr ""
+
+#: P: 670S: 6
+msgctxt "P: 670S: 6"
+msgid "			"
+msgstr ""
+
+#: P: 670S: 8
+msgctxt "P: 670S: 8"
+msgid "decimal"
+msgstr ""
+
+#: P: 671S: 2
+msgctxt "P: 671S: 2"
+msgid "DirVar "
+msgstr ""
+
+#: P: 671S: 4
+msgctxt "P: 671S: 4"
+msgid " $21"
+msgstr ""
+
+#: P: 671S: 6
+msgctxt "P: 671S: 6"
+msgid "   		"
+msgstr ""
+
+#: P: 671S: 8
+msgctxt "P: 671S: 8"
+msgid "hexadecimal"
+msgstr ""
+
+#: P: 672S: 2
+msgctxt "P: 672S: 2"
+msgid "Macara "
+msgstr ""
+
+#: P: 672S: 4
+msgctxt "P: 672S: 4"
+msgid " %0101"
+msgstr ""
+
+#: P: 672S: 6
+msgctxt "P: 672S: 6"
+msgid "		"
+msgstr ""
+
+#: P: 672S: 8
+msgctxt "P: 672S: 8"
+msgid "binario"
+msgstr ""
+
+#: P: 673S: 2
+msgctxt "P: 673S: 2"
+msgid "ARROBA "
+msgstr ""
+
+#: P: 673S: 5
+msgctxt "P: 673S: 5"
+msgid "'@'"
+msgstr ""
+
+#: P: 673S: 9
+msgctxt "P: 673S: 9"
+msgid "carácter"
+msgstr ""
+
+#: P: 676S: 1
+msgctxt "P: 676S: 1"
+msgid "Las constantes se definen con el operador “=”, y pueden definirse en formato decimal, hexadecimal o binario. "
+msgstr ""
+
+#: P: 678S: 1
+msgctxt "P: 678S: 1"
+msgid "Las constantes, al igual que las variables, tienen también un tipo. Este tipo, sin embargo, no se suele especificar, sino que es asumido por el compilador. "
+msgstr ""
+
+#: P: 680S: 1
+msgctxt "P: 680S: 1"
+msgid "Por ejemplo, en la siguiente definición:"
+msgstr ""
+
+#: P: 683S: 2
+msgctxt "P: 683S: 2"
+msgid "ALTO "
+msgstr ""
+
+#: P: 686S: 1
+msgctxt "P: 686S: 1"
+msgid "El compilador creará a la constante “ALTO”, como de tipo boolean, y tendrá todas las características y restricciones del tipo boolean."
+msgstr ""
+
+#: P: 688S: 1
+msgctxt "P: 688S: 1"
+msgid "A los literales numéricos se les asigna el menor tipo posible, que pueda almacenarlos. Así tenemos que:"
+msgstr ""
+
+#: P: 690S: 1
+msgctxt "P: 690S: 1"
+msgid "El literal 123, se lee como una constante de tipo Byte."
+msgstr ""
+
+#: P: 691S: 1
+msgctxt "P: 691S: 1"
+msgid "El literal 256, se lee como una constante de tipo Word."
+msgstr ""
+
+#: P: 692S: 1
+msgctxt "P: 692S: 1"
+msgid "El literal 65536, generará un error porque PicPas no dispone de un tipo numérico para almacenar a este valor."
+msgstr ""
+
+#: P: 694S: 1
+msgctxt "P: 694S: 1"
+msgid "El tipo numérico más básico es el byte, a pesar de que los valores “0” y “1”, pueden asumirse como de tipo bit, siempre se asumirá el tipo byte para números menores a 256."
+msgstr ""
+
+#: P: 696S: 2
+msgctxt "P: 696S: 2"
+msgid "Para forzar el tipo asignado a las constantes, se puede usar algunas de las funciones de conversión de tipos, así se podría declarar constantes de tipo word, usando:"
+msgstr ""
+
+#: P: 699S: 6
+msgctxt "P: 699S: 6"
+msgid "1"
+msgstr ""
+
+#: P: 702S: 1
+msgctxt "P: 702S: 1"
+msgid "Y de esta forma, se creará una constante WORD, con el valor 1. Si no se usara la función de conversión, PicPas asumirá el tipo byte."
+msgstr ""
+
+#: P: 704S: 1
+msgctxt "P: 704S: 1"
+msgid "De la misma forma, se pueden usar las funciones de conversión bit(), o chr()."
+msgstr ""
+
+#: P: 706S: 1
+msgctxt "P: 706S: 1"
+msgid "También se pueden definir como expresiones a partir de otras constantes. "
+msgstr ""
+
+#: P: 709S: 2
+msgctxt "P: 709S: 2"
+msgid "ValorLargo "
+msgstr ""
+
+#: P: 709S: 4
+msgctxt "P: 709S: 4"
+msgid " 10000 "
+msgstr ""
+
+#: P: 709S: 6
+msgctxt "P: 709S: 6"
+msgid " Valor"
+msgstr ""
+
+#: P: 709S: 8
+msgctxt "P: 709S: 8"
+msgid "   "
+msgstr ""
+
+#: P: 709S: 10
+msgctxt "P: 709S: 10"
+msgid "Fórmula"
+msgstr ""
+
+#: P: 712S: 1
+msgctxt "P: 712S: 1"
+msgid "Las operaciones soportadas, son las mismas que las variables, de acuerdo a su tipo."
+msgstr ""
+
+#: P: 714S: 3
+msgctxt "P: 714S: 3"
+msgid "Estructuras"
+msgstr ""
+
+#: P: 716S: 1
+msgctxt "P: 716S: 1"
+msgid "PicPas, soporta las estructuras más comunes del lenguaje Pascal:"
+msgstr ""
+
+#: P: 718S: 2
+msgctxt "P: 718S: 2"
+msgid "Condicional IF … THEN"
+msgstr ""
+
+#: P: 719S: 1
+msgctxt "P: 719S: 1"
+msgid "La estructura IF, tiene las siguientes formas:"
+msgstr ""
+
+#: P: 722S: 3
+msgctxt "P: 722S: 3"
+msgid "expresión booleana"
+msgstr ""
+
+#: P: 723S: 3
+msgctxt "P: 723S: 3"
+msgid "instrucciones"
+msgstr ""
+
+#: P: 728S: 1
+msgctxt "P: 728S: 1"
+msgid "else "
+msgstr ""
+
+#: P: 733S: 1
+msgctxt "P: 733S: 1"
+msgid "Notar que la sintaxis de la condicional IF, no es similar al IF de Pascal. Esta variación, corresponde a una de las mejoras en el lenguaje que implementa PicPas."
+msgstr ""
+
+#: P: 735S: 1
+msgctxt "P: 735S: 1"
+msgid "	La condicional IF, termina obligatoriamente con la palabra reservada END, aunque solo tenga una instrucción. Los siguientes son ejemplos de uso:"
+msgstr ""
+
+#: P: 737S: 3
+msgctxt "P: 737S: 3"
+msgid "f "
+msgstr ""
+
+#: P: 737S: 4
+msgctxt "P: 737S: 4"
+msgid "x"
+msgstr ""
+
+#: P: 737S: 6
+msgctxt "P: 737S: 6"
+msgid "1 "
+msgstr ""
+
+#: P: 737S: 8
+msgctxt "P: 737S: 8"
+msgid "x "
+msgstr ""
+
+#: P: 739S: 6
+msgctxt "P: 739S: 6"
+msgid "then"
+msgstr ""
+
+#: P: 740S: 1
+msgctxt "P: 740S: 1"
+msgid "    "
+msgstr ""
+
+#: P: 740S: 2
+msgctxt "P: 740S: 2"
+msgid "y "
+msgstr ""
+
+#: P: 741S: 4
+msgctxt "P: 741S: 4"
+msgid " y "
+msgstr ""
+
+#: P: 749S: 2
+msgctxt "P: 749S: 2"
+msgid "elsif"
+msgstr ""
+
+#: P: 749S: 4
+msgctxt "P: 749S: 4"
+msgid "= "
+msgstr ""
+
+#: P: 756S: 1
+msgctxt "P: 756S: 1"
+msgid "Para hacer comparaciones adicionales, en el mismo IF, solo basta usar la palabra reservada ELSIF, y luego incluir la condición, como si fuera un simple IF."
+msgstr ""
+
+#: P: 758S: 1
+msgctxt "P: 758S: 1"
+msgid "PicPas, puede trabajar con la sintaxis Pascal del IF. Para ello, se debe incluir primero la directiva: {$Mode Pascal}"
+msgstr ""
+
+#: P: 760S: 3
+msgctxt "P: 760S: 3"
+msgid "Lazo REPEAT"
+msgstr ""
+
+#: P: 762S: 1
+msgctxt "P: 762S: 1"
+msgid "El lazo REPEAT tiene la misma forma que en Pascal."
+msgstr ""
+
+#: P: 764S: 1
+msgctxt "P: 764S: 1"
+msgid "repeat "
+msgstr ""
+
+#: P: 765S: 3
+msgctxt "P: 765S: 3"
+msgid "instrucción o bloque"
+msgstr ""
+
+#: P: 766S: 1
+msgctxt "P: 766S: 1"
+msgid "until "
+msgstr ""
+
+#: P: 766S: 4
+msgctxt "P: 766S: 4"
+msgid ">;"
+msgstr ""
+
+#: P: 769S: 1
+msgctxt "P: 769S: 1"
+msgid "	Un ejemplo de lazo REPEAT, sería:"
+msgstr ""
+
+#: P: 772S: 2
+msgctxt "P: 772S: 2"
+msgid "inc"
+msgstr ""
+
+#: P: 775S: 2
+msgctxt "P: 775S: 2"
+msgid "Lazo WHILE"
+msgstr ""
+
+#: P: 777S: 1
+msgctxt "P: 777S: 1"
+msgid "El lazo WHILE, tienen la siguiente sintaxis."
+msgstr ""
+
+#: P: 784S: 1
+msgctxt "P: 784S: 1"
+msgid "Notar que la sintaxis es similar al WHILE de Pascal, pero el cuerpo del lazo siempre incluye el delimitador END, y no se debe incluir el BEGIN."
+msgstr ""
+
+#: P: 786S: 1
+msgctxt "P: 786S: 1"
+msgid "Un ejemplo de lazo WHILE, sería:"
+msgstr ""
+
+#: P: 788S: 4
+msgctxt "P: 788S: 4"
+msgid "5 "
+msgstr ""
+
+#: P: 789S: 2
+msgctxt "P: 789S: 2"
+msgid "a "
+msgstr ""
+
+#: P: 789S: 4
+msgctxt "P: 789S: 4"
+msgid " a "
+msgstr ""
+
+#: P: 793S: 1
+msgctxt "P: 793S: 1"
+msgid "PicPas, puede trabajar con la sintaxis Pascal del WHILE. Para ello, se debe incluir primero la directiva: {$Mode Pascal}"
+msgstr ""
+
+#: P: 795S: 2
+msgctxt "P: 795S: 2"
+msgid "Lazo FOR"
+msgstr ""
+
+#: P: 797S: 1
+msgctxt "P: 797S: 1"
+msgid "El lazo FOR, tiene la siguiente sintaxis:"
+msgstr ""
+
+#: P: 799S: 1
+msgctxt "P: 799S: 1"
+msgid "FOR <variable numérica> := <valor inicial> TO <valor final"
+msgstr ""
+
+#: P: 799S: 3
+msgctxt "P: 799S: 3"
+msgid "> DO"
+msgstr ""
+
+#: P: 803S: 1
+msgctxt "P: 803S: 1"
+msgid "Notar que la sintaxis es similar al FOR de Pascal, pero el cuerpo del lazo siempre incluye el delimitador END, y no se debe incluir el BEGIN."
+msgstr ""
+
+#: P: 805S: 2
+msgctxt "P: 805S: 2"
+msgid "La variable numérica, debe ser de tipo BYTE."
+msgstr ""
+
+#: P: 807S: 1
+msgctxt "P: 807S: 1"
+msgid "Un ejemplo de lazo FOR sería:"
+msgstr ""
+
+#: P: 809S: 1
+msgctxt "P: 809S: 1"
+msgid "for "
+msgstr ""
+
+#: P: 809S: 5
+msgctxt "P: 809S: 5"
+msgid "to "
+msgstr ""
+
+#: P: 809S: 6
+msgctxt "P: 809S: 6"
+msgid "3 "
+msgstr ""
+
+#: P: 810S: 2
+msgctxt "P: 810S: 2"
+msgid "hacer_algo"
+msgstr ""
+
+#: P: 814S: 1
+msgctxt "P: 814S: 1"
+msgid "PicPas, puede trabajar con la sintaxis Pascal del FOR. Para ello, se debe incluir primero la directiva: {$Mode Pascal}"
+msgstr ""
+
+#: P: 817S: 2
+msgctxt "P: 817S: 2"
+msgid "Funciones del sistema"
+msgstr ""
+
+#: P: 819S: 1
+msgctxt "P: 819S: 1"
+msgid "	Existe un grupo de procedimientos y funciones predefinidas y que forman parte del lenguaje, sin necesidad de usar alguna unidad. Estos son:"
+msgstr ""
+
+#: P: 821S: 2
+msgctxt "P: 821S: 2"
+msgid "delay_ms()"
+msgstr ""
+
+#: P: 821S: 3
+msgctxt "P: 821S: 3"
+msgid "Permite generar un retardo de tiempo, la cantidad de milisegundos indicada. Se puede indicar desde 0 a 65536 milisegundos."
+msgstr ""
+
+#: P: 821S: 4
+msgctxt "P: 821S: 4"
+msgid "Inc()"
+msgstr ""
+
+#: P: 821S: 5
+msgctxt "P: 821S: 5"
+msgid "Incrementa el valor de una variable, de tipo Byte o Word."
+msgstr ""
+
+#: P: 821S: 6
+msgctxt "P: 821S: 6"
+msgid "Dec()"
+msgstr ""
+
+#: P: 821S: 7
+msgctxt "P: 821S: 7"
+msgid "Decrementa el valor de una variable, de tipo Byte o Word."
+msgstr ""
+
+#: P: 821S: 8
+msgctxt "P: 821S: 8"
+msgid "SetBank()"
+msgstr ""
+
+#: P: 821S: 9
+msgctxt "P: 821S: 9"
+msgid "Fuerza a conmutar al banco de memoria RAM, indicado. Por ejemplo, la instrucción:
+
+  SetBank(1);  
+
+Genera las instrucciones para conmutar al banco 1, independientemente de la posición del banco actual. Si se proporciona un banco inválido, solo se leen los bits de menor peso."
+msgstr ""
+
+#: P: 821S: 10
+msgctxt "P: 821S: 10"
+msgid "Exit()"
+msgstr ""
+
+#: P: 821S: 11
+msgctxt "P: 821S: 11"
+msgid "Sale de una función o termina la ejecución del programa principal. Si se llama desde dentro de un procedimiento, sale del procedimiento. Si se llama desde dentro de una función, sale de la función, con la posibilidad de devolver un valor. "
+msgstr ""
+
+#: P: 821S: 12
+msgctxt "P: 821S: 12"
+msgid "Ord()"
+msgstr ""
+
+#: P: 821S: 13
+msgctxt "P: 821S: 13"
+msgid "Convierte un carácter a un valor byte."
+msgstr ""
+
+#: P: 821S: 14
+msgctxt "P: 821S: 14"
+msgid "Chr()"
+msgstr ""
+
+#: P: 821S: 15
+msgctxt "P: 821S: 15"
+msgid "Convierte un byte a un carácter."
+msgstr ""
+
+#: P: 821S: 16
+msgctxt "P: 821S: 16"
+msgid "Bit()"
+msgstr ""
+
+#: P: 821S: 17
+msgctxt "P: 821S: 17"
+msgid "Convierte un byte en un bit."
+msgstr ""
+
+#: P: 821S: 18
+msgctxt "P: 821S: 18"
+msgid "Word()"
+msgstr ""
+
+#: P: 821S: 19
+msgctxt "P: 821S: 19"
+msgid "Convierte un byte en word."
+msgstr ""
+
+#: P: 821S: 20
+msgctxt "P: 821S: 20"
+msgid "SetAsInput() "
+msgstr ""
+
+#: P: 821S: 21
+msgctxt "P: 821S: 21"
+msgid "Configura un puerto de tamaño byte o bit, como puerto de entrada. Ejemplos: 
+
+SetAsInput(PORTA)
+
+SetAsInput(pin1) //”pin1” debe haber sido definido"
+msgstr ""
+
+#: P: 821S: 22
+msgctxt "P: 821S: 22"
+msgid "SetAsOutput()"
+msgstr ""
+
+#: P: 821S: 23
+msgctxt "P: 821S: 23"
+msgid "Configura un puerto de tamaño byte o bit, como puerto de salida. Ejemplos: 
+
+SetAsOutput(PORTA)
+
+SetAsOutput(pin1) //”pin1” debe haber sido definido"
+msgstr ""
+
+#: P: 824S: 3
+msgctxt "P: 824S: 3"
+msgid "Procedimientos"
+msgstr ""
+
+#: P: 826S: 1
+msgctxt "P: 826S: 1"
+msgid "En PicPas se pueden declarar procedimientos, en la forma usual en que se hacen en Pascal."
+msgstr ""
+
+#: P: 828S: 2
+msgctxt "P: 828S: 2"
+msgid "proc"
+msgstr ""
+
+#: P: 830S: 8
+msgctxt "P: 830S: 8"
+msgid "variable local"
+msgstr ""
+
+#: P: 835S: 1
+msgctxt "P: 835S: 1"
+msgid "Los procedimientos pueden a su vez tener variables locales. Estas variables no serán accesibles desde fuera del procedimiento."
+msgstr ""
+
+#: P: 837S: 1
+msgctxt "P: 837S: 1"
+msgid "También se pueden usar parámetros dentro de los procedimientos."
+msgstr ""
+
+#: P: 839S: 2
+msgctxt "P: 839S: 2"
+msgid "proc1"
+msgstr ""
+
+#: P: 839S: 4
+msgctxt "P: 839S: 4"
+msgid "par1"
+msgstr ""
+
+#: P: 841S: 4
+msgctxt "P: 841S: 4"
+msgid " par1"
+msgstr ""
+
+#: P: 844S: 2
+msgctxt "P: 844S: 2"
+msgid "proc2"
+msgstr ""
+
+#: P: 844S: 4
+msgctxt "P: 844S: 4"
+msgid "par1, par2"
+msgstr ""
+
+#: P: 846S: 4
+msgctxt "P: 846S: 4"
+msgid " par1 "
+msgstr ""
+
+#: P: 846S: 6
+msgctxt "P: 846S: 6"
+msgid " par2"
+msgstr ""
+
+#: P: 850S: 1
+msgctxt "P: 850S: 1"
+msgid "Los procedimientos pueden a su vez, llamar a otros procedimientos:"
+msgstr ""
+
+#: P: 862S: 1
+msgctxt "P: 862S: 1"
+msgid "Todos los parámetros de los procedimientos, se pasan por valor. En la versión actual, PicPas no soporta parámetros por referencia."
+msgstr ""
+
+#: P: 864S: 3
+msgctxt "P: 864S: 3"
+msgid "Funciones"
+msgstr ""
+
+#: P: 866S: 1
+msgctxt "P: 866S: 1"
+msgid "Las funciones se declaran de forma similar a los procedimientos, pero indicando el tipo de dato que devuelven."
+msgstr ""
+
+#: P: 868S: 2
+msgctxt "P: 868S: 2"
+msgid "Siguiente"
+msgstr ""
+
+#: P: 868S: 7
+msgctxt "P: 868S: 7"
+msgid "):"
+msgstr ""
+
+#: P: 870S: 2
+msgctxt "P: 870S: 2"
+msgid "exit"
+msgstr ""
+
+#: P: 873S: 1
+msgctxt "P: 873S: 1"
+msgid "Esta función devolverá el valor del parámetro, aumentado en 1. La llamada a una función se hace de la forma común a como se hace en Pascal:"
+msgstr ""
+
+#: P: 876S: 4
+msgctxt "P: 876S: 4"
+msgid "  siguiente"
+msgstr ""
+
+#: P: 879S: 1
+msgctxt "P: 879S: 1"
+msgid "La función del sistema “exit”, permite indicar el valor que se devuelve como resultado de la función, y termina la ejecución de la función. También se puede usar “exit” para salir de un procedimiento, pero en este caso no se debe indicar el parámetro."
+msgstr ""
+
+#: P: 881S: 1
+msgctxt "P: 881S: 1"
+msgid "Para optimizar funciones sencillas, se recomienda usar parámetros REGISTER (Sección "
+msgstr ""
+
+#: P: 881S: 2
+msgctxt "P: 881S: 2"
+msgid "4.7.2"
+msgstr ""
+
+#: P: 881S: 3
+msgctxt "P: 881S: 3"
+msgid "), para lograr un código más óptimo. La función anterior, entonces podríamos escribirla así:"
+msgstr ""
+
+#: P: 888S: 1
+msgctxt "P: 888S: 1"
+msgid "Así el código generado es 2 instrucciones más cortas y dos ciclos más rápido."
+msgstr ""
+
+#: P: 890S: 1
+msgctxt "P: 890S: 1"
+msgid "PicPas soporta la sobrecarga de procedimientos, es decir, se pueden declarar diversos procedimientos, con el mismo nombre, siempre que tengan parámetros de distinto tipo."
+msgstr ""
+
+#: P: 892S: 1
+msgctxt "P: 892S: 1"
+msgid "Por ejemplo, en el siguiente código, se declaran dos funciones pero que manejan tipos de parámetros distintos:"
+msgstr ""
+
+#: P: 894S: 3
+msgctxt "P: 894S: 3"
+msgid "Funciones sobrecargadas"
+msgstr ""
+
+#: P: 895S: 3
+msgctxt "P: 895S: 3"
+msgid "fun5"
+msgstr ""
+
+#: P: 895S: 5
+msgctxt "P: 895S: 5"
+msgid "valor1"
+msgstr ""
+
+#: P: 905S: 1
+msgctxt "P: 905S: 1"
+msgid "A pesar de que estas funciones tengan el mismo nombre, para el compilador son completamente diferentes, y se elige una o la otra, dependiendo del tipo de parámetro que se use."
+msgstr ""
+
+#: P: 907S: 1
+msgctxt "P: 907S: 1"
+msgid "Todos los parámetros de las funciones, se pasan por valor. En la versión actual, PicPas no soporta parámetros por referencia."
+msgstr ""
+
+#: P: 909S: 2
+msgctxt "P: 909S: 2"
+msgid "Código ensamblador"
+msgstr ""
+
+#: P: 911S: 1
+msgctxt "P: 911S: 1"
+msgid "Es posible incluir directamente código ensamblador dentro de un programa, casi en cualquier parte. Para ello, se hace uso de un bloque ASM … END."
+msgstr ""
+
+#: P: 913S: 2
+msgctxt "P: 913S: 2"
+msgid "HaceAlgo"
+msgstr ""
+
+#: P: 915S: 4
+msgctxt "P: 915S: 4"
+msgid " 10"
+msgstr ""
+
+#: P: 916S: 2
+msgctxt "P: 916S: 2"
+msgid "asm"
+msgstr ""
+
+#: P: 917S: 2
+msgctxt "P: 917S: 2"
+msgid ";Rutina para sumar 2 la dirección $20 "
+msgstr ""
+
+#: P: 918S: 2
+msgctxt "P: 918S: 2"
+msgid "MOVLW 2"
+msgstr ""
+
+#: P: 919S: 2
+msgctxt "P: 919S: 2"
+msgid "ADDWF $20, F"
+msgstr ""
+
+#: P: 923S: 1
+msgctxt "P: 923S: 1"
+msgid "Los bloques ASM, se pueden escribir en una o varias líneas. Por ejemplo, el siguiente código es completamente válido:"
+msgstr ""
+
+#: P: 928S: 2
+msgctxt "P: 928S: 2"
+msgid "asm sleep end"
+msgstr ""
+
+#: P: 931S: 1
+msgctxt "P: 931S: 1"
+msgid "Notar que no se debe poner “;” después del delimitador END, porque no se trata como una instrucción, sino más bien como un comentario o directiva. Por ello, es posible incluir bloques ASM, inclusive dentro de una instrucción:"
+msgstr ""
+
+#: P: 935S: 4
+msgctxt "P: 935S: 4"
+msgid " 10 "
+msgstr ""
+
+#: P: 935S: 5
+msgctxt "P: 935S: 5"
+msgid "asm CLRF $OC end;"
+msgstr ""
+
+#: P: 938S: 1
+msgctxt "P: 938S: 1"
+msgid "Los comentarios son aceptados, dentro del código ensamblador, y también las etiquetas. "
+msgstr ""
+
+#: P: 940S: 1
+msgctxt "P: 940S: 1"
+msgid "Se pueden incluir varios bloques ASM, dentro del mismo procedimiento o en el programa principal."
+msgstr ""
+
+#: P: 942S: 1
+msgctxt "P: 942S: 1"
+msgid "Los mnemónicos usados para las instrucciones son estándar, pero los formatos numéricos son los que usa Pascal. Esto significa que los valores numéricos, se expresan:"
+msgstr ""
+
+#: P: 944S: 1
+msgctxt "P: 944S: 1"
+msgid "Anteponiendo “$”, para los valores en hexadecimal:  CLRF $20"
+msgstr ""
+
+#: P: 945S: 1
+msgctxt "P: 945S: 1"
+msgid "Anteponiendo “%”, para los valores en binario:  CLRF %1101"
+msgstr ""
+
+#: P: 947S: 1
+msgctxt "P: 947S: 1"
+msgid "También se puede manejar cambio en los bancos de RAM, desde dentro de los bloques ASM:"
+msgstr ""
+
+#: P: 949S: 2
+msgctxt "P: 949S: 2"
+msgid "ejemploASM"
+msgstr ""
+
+#: P: 951S: 2
+msgctxt "P: 951S: 2"
+msgid "asm "
+msgstr ""
+
+#: P: 952S: 3
+msgctxt "P: 952S: 3"
+msgid "bsf 3, 0  ;cambia al banco 1"
+msgstr ""
+
+#: P: 953S: 2
+msgctxt "P: 953S: 2"
+msgid "clrf $20 "
+msgstr ""
+
+#: P: 954S: 2
+msgctxt "P: 954S: 2"
+msgid "bcf 3, 0  ;retorna al banco 0"
+msgstr ""
+
+#: P: 964S: 2
+msgctxt "P: 964S: 2"
+msgid "Etiquetas y saltos"
+msgstr ""
+
+#: P: 966S: 1
+msgctxt "P: 966S: 1"
+msgid "Para especificar saltos, dentro del código ASM, se puede usar la seudo-variable “$”, que indica la dirección actual de memoria. Así, el siguiente código, representa un lazo infinito:"
+msgstr ""
+
+#: P: 969S: 2
+msgctxt "P: 969S: 2"
+msgid ";lazo infinito"
+msgstr ""
+
+#: P: 970S: 2
+msgctxt "P: 970S: 2"
+msgid "goto $ "
+msgstr ""
+
+#: P: 973S: 1
+msgctxt "P: 973S: 1"
+msgid "Esta instrucción, lo que hace es codificar un salto a la misma instrucción de salto."
+msgstr ""
+
+#: P: 975S: 1
+msgctxt "P: 975S: 1"
+msgid "Se puede incluir desplazamientos a la dirección actual, usando operadores de suma y resta. Lo siguientes ejemplos, muestran saltos hacia adelante y hacia atrás:"
+msgstr ""
+
+#: P: 978S: 2
+msgctxt "P: 978S: 2"
+msgid "goto $+1   ;salta una posición adelante "
+msgstr ""
+
+#: P: 979S: 2
+msgctxt "P: 979S: 2"
+msgid "goto $-2   ;salta dos posiciones atrás"
+msgstr ""
+
+#: P: 983S: 1
+msgctxt "P: 983S: 1"
+msgid "También se pueden usar etiquetas para indicar la dirección destino del salto:"
+msgstr ""
+
+#: P: 988S: 1
+msgctxt "P: 988S: 1"
+msgid "etiqueta:"
+msgstr ""
+
+#: P: 989S: 2
+msgctxt "P: 989S: 2"
+msgid "DECFSZ $21,f"
+msgstr ""
+
+#: P: 990S: 2
+msgctxt "P: 990S: 2"
+msgid "GOTO etiqueta"
+msgstr ""
+
+#: P: 993S: 1
+msgctxt "P: 993S: 1"
+msgid "Las etiquetas se definen siempre, como un identificador, seguido de dos puntos “:”. Se permite poner instrucciones, después de las etiquetas."
+msgstr ""
+
+#: P: 995S: 1
+msgctxt "P: 995S: 1"
+msgid "Las etiquetas también pueden usarse para crear subrutinas:"
+msgstr ""
+
+#: P: 998S: 2
+msgctxt "P: 998S: 2"
+msgid "GOTO inic"
+msgstr ""
+
+#: P: 999S: 2
+msgctxt "P: 999S: 2"
+msgid "sub_nada:"
+msgstr ""
+
+#: P: 1000S: 2
+msgctxt "P: 1000S: 2"
+msgid ";no hace nada"
+msgstr ""
+
+#: P: 1001S: 2
+msgctxt "P: 1001S: 2"
+msgid "RETURN"
+msgstr ""
+
+#: P: 1002S: 2
+msgctxt "P: 1002S: 2"
+msgid "inic:"
+msgstr ""
+
+#: P: 1004S: 2
+msgctxt "P: 1004S: 2"
+msgid "CALL sub_nada"
+msgstr ""
+
+#: P: 1007S: 2
+msgctxt "P: 1007S: 2"
+msgid "Referencia a variables"
+msgstr ""
+
+#: P: 1009S: 1
+msgctxt "P: 1009S: 1"
+msgid "Dentro de un bloque ASM, es posible acceder a variables, considerando que:"
+msgstr ""
+
+#: P: 1011S: 1
+msgctxt "P: 1011S: 1"
+msgid "Se pueden acceder a variables de tipo Byte, Char, Boolean, bit y word."
+msgstr ""
+
+#: P: 1012S: 1
+msgctxt "P: 1012S: 1"
+msgid "Se puede acceder a variables globales y locales."
+msgstr ""
+
+#: P: 1013S: 1
+msgctxt "P: 1013S: 1"
+msgid "El acceso a los nombres de las variables, sigue las mismas reglas de alcance que el código Pascal"
+msgstr ""
+
+#: P: 1014S: 1
+msgctxt "P: 1014S: 1"
+msgid "Las variables se pueden leer o escribir."
+msgstr ""
+
+#: P: 1015S: 1
+msgctxt "P: 1015S: 1"
+msgid "Una variable usada, desde dentro de un bloque ASM, se comportará de la misma forma a como si se usara desde el programa Pascal"
+msgstr ""
+
+#: P: 1017S: 1
+msgctxt "P: 1017S: 1"
+msgid "El siguiente código muestra cómo se limpian las variables globales del programa:"
+msgstr ""
+
+#: P: 1020S: 2
+msgctxt "P: 1020S: 2"
+msgid "byte1"
+msgstr ""
+
+#: P: 1021S: 2
+msgctxt "P: 1021S: 2"
+msgid "car1"
+msgstr ""
+
+#: P: 1021S: 4
+msgctxt "P: 1021S: 4"
+msgid " char"
+msgstr ""
+
+#: P: 1023S: 2
+msgctxt "P: 1023S: 2"
+msgid "bol1"
+msgstr ""
+
+#: P: 1025S: 3
+msgctxt "P: 1025S: 3"
+msgid "inicia a bajo nivel"
+msgstr ""
+
+#: P: 1027S: 2
+msgctxt "P: 1027S: 2"
+msgid "CLRF byte1"
+msgstr ""
+
+#: P: 1028S: 2
+msgctxt "P: 1028S: 2"
+msgid "CLRF car1"
+msgstr ""
+
+#: P: 1029S: 2
+msgctxt "P: 1029S: 2"
+msgid "BCF bit1"
+msgstr ""
+
+#: P: 1030S: 2
+msgctxt "P: 1030S: 2"
+msgid "BCF bol1"
+msgstr ""
+
+#: P: 1034S: 1
+msgctxt "P: 1034S: 1"
+msgid "Notar que el acceso a las variables bit, se hace especificando solamente el nombre de la variable, sin necesidad de especificar el bit."
+msgstr ""
+
+#: P: 1036S: 1
+msgctxt "P: 1036S: 1"
+msgid "El acceso a las variables Word, se puede hacer especificando, ‘.High’ o ‘.Low’ para indicar el byte que se desea usar:"
+msgstr ""
+
+#: P: 1039S: 2
+msgctxt "P: 1039S: 2"
+msgid "w"
+msgstr ""
+
+#: P: 1042S: 3
+msgctxt "P: 1042S: 3"
+msgid "MOVLW 0"
+msgstr ""
+
+#: P: 1043S: 2
+msgctxt "P: 1043S: 2"
+msgid "MOVWF w.high"
+msgstr ""
+
+#: P: 1044S: 2
+msgctxt "P: 1044S: 2"
+msgid "MOVLW 1"
+msgstr ""
+
+#: P: 1045S: 2
+msgctxt "P: 1045S: 2"
+msgid "MOVWF w.low"
+msgstr ""
+
+#: P: 1049S: 1
+msgctxt "P: 1049S: 1"
+msgid "El acceso a variables locales o parámetros de un procedimiento, se hace usando el mismo nombre que se usa desde Pascal:"
+msgstr ""
+
+#: P: 1051S: 3
+msgctxt "P: 1051S: 3"
+msgid "Limpiar"
+msgstr ""
+
+#: P: 1051S: 5
+msgctxt "P: 1051S: 5"
+msgid "n"
+msgstr ""
+
+#: P: 1051S: 9
+msgctxt "P: 1051S: 9"
+msgid " car"
+msgstr ""
+
+#: P: 1054S: 1
+msgctxt "P: 1054S: 1"
+msgid "      "
+msgstr ""
+
+#: P: 1054S: 2
+msgctxt "P: 1054S: 2"
+msgid "CLRF n    ;pone a cero"
+msgstr ""
+
+#: P: 1055S: 2
+msgctxt "P: 1055S: 2"
+msgid "CLRF car  ;pone a cero"
+msgstr ""
+
+#: P: 1059S: 1
+msgctxt "P: 1059S: 1"
+msgid "Los parámetros REGISTER, se pueden acceder desde los bloques ASM, considerando que se almacenan en el registro W. No se debe intentar acceder a parámetros REGISTER por su nombre. "
+msgstr ""
+
+#: P: 1061S: 2
+msgctxt "P: 1061S: 2"
+msgid "Referencia a constantes"
+msgstr ""
+
+#: P: 1063S: 1
+msgctxt "P: 1063S: 1"
+msgid "También es posible acceder a constantes del programa desde dentro de un bloque ASM. Las consideraciones son:"
+msgstr ""
+
+#: P: 1065S: 1
+msgctxt "P: 1065S: 1"
+msgid "Se pueden acceder a constantes de tipo Byte, Char, y word."
+msgstr ""
+
+#: P: 1066S: 1
+msgctxt "P: 1066S: 1"
+msgid "Se puede acceder a constantes globales y locales."
+msgstr ""
+
+#: P: 1067S: 1
+msgctxt "P: 1067S: 1"
+msgid "El acceso a los nombres de las constantes, sigue las mismas reglas de alcance que el código Pascal"
+msgstr ""
+
+#: P: 1068S: 1
+msgctxt "P: 1068S: 1"
+msgid "Una constante usada, desde dentro de un bloque ASM, se comportará de la misma forma a como si se usara desde el programa Pascal"
+msgstr ""
+
+#: P: 1070S: 1
+msgctxt "P: 1070S: 1"
+msgid "El siguiente código es un ejemplo de uso de constantes del programa dentro de bloques ASM:"
+msgstr ""
+
+#: P: 1073S: 2
+msgctxt "P: 1073S: 2"
+msgid "CBYTE "
+msgstr ""
+
+#: P: 1073S: 4
+msgctxt "P: 1073S: 4"
+msgid " 3"
+msgstr ""
+
+#: P: 1075S: 3
+msgctxt "P: 1075S: 3"
+msgid "constant access"
+msgstr ""
+
+#: P: 1076S: 2
+msgctxt "P: 1076S: 2"
+msgid "vbyte "
+msgstr ""
+
+#: P: 1078S: 2
+msgctxt "P: 1078S: 2"
+msgid "MOVLW CBYTE "
+msgstr ""
+
+#: P: 1079S: 2
+msgctxt "P: 1079S: 2"
+msgid "MOVWF vbyte"
+msgstr ""
+
+#: P: 1084S: 2
+msgctxt "P: 1084S: 2"
+msgid "BSF vbyte, CBYTE"
+msgstr ""
+
+#: P: 1088S: 2
+msgctxt "P: 1088S: 2"
+msgid "Devolución de resultado para funciones"
+msgstr ""
+
+#: P: 1090S: 1
+msgctxt "P: 1090S: 1"
+msgid "Es posible fijar el resultado de una función, directamente desde ensamblador. Para ello, se debe tener en cuenta, los registros que usan las funciones para devolver sus resultados."
+msgstr ""
+
+#: P: 1092S: 1
+msgctxt "P: 1092S: 1"
+msgid "De acuerdo al tipo que devuelva una función, se deben usar los siguientes registros o bits:"
+msgstr ""
+
+#: P: 1095S: 0
+msgctxt "P: 1095S: 0"
+msgid "TIPO DE DATO"
+msgstr ""
+
+#: P: 1095S: 1
+msgctxt "P: 1095S: 1"
+msgid "LUGAR DONDE SE DEVUELVE EL RESULTADO"
+msgstr ""
+
+#: P: 1095S: 2
+msgctxt "P: 1095S: 2"
+msgid "Bit o Boolean"
+msgstr ""
+
+#: P: 1095S: 3
+msgctxt "P: 1095S: 3"
+msgid "Bit de Z del registro STATUS."
+msgstr ""
+
+#: P: 1095S: 4
+msgctxt "P: 1095S: 4"
+msgid "Byte o Char"
+msgstr ""
+
+#: P: 1095S: 5
+msgctxt "P: 1095S: 5"
+msgid "Acumulador W"
+msgstr ""
+
+#: P: 1095S: 7
+msgctxt "P: 1095S: 7"
+msgid "Byte alto en registro interno H y byte bajo en acumulador"
+msgstr ""
+
+#: P: 1097S: 1
+msgctxt "P: 1097S: 1"
+msgid "El registro H, es un registro interno que crea el compilador, cuando se usan operaciones que involucran al tipo Word."
+msgstr ""
+
+#: P: 1099S: 1
+msgctxt "P: 1099S: 1"
+msgid "Un ejemplo simple podría ser devolver, el resultado de una función Byte, que incremente el valor de un parámetro:"
+msgstr ""
+
+#: P: 1101S: 5
+msgctxt "P: 1101S: 5"
+msgid "par"
+msgstr ""
+
+#: P: 1104S: 2
+msgctxt "P: 1104S: 2"
+msgid "INCF par, w"
+msgstr ""
+
+#: P: 1108S: 1
+msgctxt "P: 1108S: 1"
+msgid "El siguiente ejemplo, muestra cómo se fija el resultado de una función Word:"
+msgstr ""
+
+#: P: 1110S: 3
+msgctxt "P: 1110S: 3"
+msgid "Función para prueba de lectura y devolución de valores"
+msgstr ""
+
+#: P: 1111S: 3
+msgctxt "P: 1111S: 3"
+msgid "SetTo8040"
+msgstr ""
+
+#: P: 1111S: 9
+msgctxt "P: 1111S: 9"
+msgid "Devuelve $8040"
+msgstr ""
+
+#: P: 1114S: 3
+msgctxt "P: 1114S: 3"
+msgid "El resultado de un word, se devuelve en _H "
+msgstr ""
+
+#: P: 1114S: 5
+msgctxt "P: 1114S: 5"
+msgid "parte alta"
+msgstr ""
+
+#: P: 1114S: 7
+msgctxt "P: 1114S: 7"
+msgid " y W "
+msgstr ""
+
+#: P: 1114S: 9
+msgctxt "P: 1114S: 9"
+msgid "parte baja"
+msgstr ""
+
+#: P: 1115S: 2
+msgctxt "P: 1115S: 2"
+msgid "MOVLW $80"
+msgstr ""
+
+#: P: 1116S: 2
+msgctxt "P: 1116S: 2"
+msgid "MOVWF _H"
+msgstr ""
+
+#: P: 1117S: 2
+msgctxt "P: 1117S: 2"
+msgid "MOVLW $40"
+msgstr ""
+
+#: P: 1121S: 1
+msgctxt "P: 1121S: 1"
+msgid "Notar que para acceder al registro H, se hace uso del nombre “_H”, que es un nombre reservado, en los bloques ASM."
+msgstr ""
+
+#: P: 1123S: 2
+msgctxt "P: 1123S: 2"
+msgid "La directiva ORG"
+msgstr ""
+
+#: P: 1125S: 1
+msgctxt "P: 1125S: 1"
+msgid "La directiva ORG permite especificar la dirección actual, en donde se compilarán las siguientes instrucciones."
+msgstr ""
+
+#: P: 1127S: 1
+msgctxt "P: 1127S: 1"
+msgid "El siguiente código, muestra cómo se obliga al compilador a compilar la instrucción “vbit := 1” al inicio de la memoria de programa."
+msgstr ""
+
+#: P: 1130S: 2
+msgctxt "P: 1130S: 2"
+msgid "org 0x00 "
+msgstr ""
+
+#: P: 1132S: 2
+msgctxt "P: 1132S: 2"
+msgid "vbit "
+msgstr ""
+
+#: P: 1140S: 1
+msgctxt "P: 1140S: 1"
+msgid "También se puede usar el carácter “$”, para indicar la dirección de memoria actual, de modo que el siguiente bloque, hará retroceder el contador de programa, 2 posiciones:"
+msgstr ""
+
+#: P: 1143S: 2
+msgctxt "P: 1143S: 2"
+msgid "org $-2 "
+msgstr ""
+
+#: P: 1147S: 1
+msgctxt "P: 1147S: 1"
+msgid "El resultado de este código, será sobre-escribir las últimas dos instrucciones, con el código generado por “vbit := 1”."
+msgstr ""
+
+#: P: 1149S: 2
+msgctxt "P: 1149S: 2"
+msgid "Unidades"
+msgstr ""
+
+#: P: 1151S: 1
+msgctxt "P: 1151S: 1"
+msgid "PicPas soporta el uso de unidades, en forma limitada."
+msgstr ""
+
+#: P: 1153S: 1
+msgctxt "P: 1153S: 1"
+msgid "En las unidades de PicPas, se pueden definir constantes, variables y procedimientos."
+msgstr ""
+
+#: P: 1155S: 1
+msgctxt "P: 1155S: 1"
+msgid "Las unidades de PicPas son similares a las de Turbo Pascal:"
+msgstr ""
+
+#: P: 1157S: 1
+msgctxt "P: 1157S: 1"
+msgid "unit "
+msgstr ""
+
+#: P: 1157S: 2
+msgctxt "P: 1157S: 2"
+msgid "PIC16F84A"
+msgstr ""
+
+#: P: 1158S: 1
+msgctxt "P: 1158S: 1"
+msgid "interface"
+msgstr ""
+
+#: P: 1160S: 2
+msgctxt "P: 1160S: 2"
+msgid "TMR0     "
+msgstr ""
+
+#: P: 1160S: 4
+msgctxt "P: 1160S: 4"
+msgid "byte "
+msgstr ""
+
+#: P: 1160S: 6
+msgctxt "P: 1160S: 6"
+msgid "$01"
+msgstr ""
+
+#: P: 1161S: 2
+msgctxt "P: 1161S: 2"
+msgid "PCL      "
+msgstr ""
+
+#: P: 1161S: 6
+msgctxt "P: 1161S: 6"
+msgid "$02"
+msgstr ""
+
+#: P: 1162S: 2
+msgctxt "P: 1162S: 2"
+msgid "STATUS   "
+msgstr ""
+
+#: P: 1162S: 6
+msgctxt "P: 1162S: 6"
+msgid "$03"
+msgstr ""
+
+#: P: 1166S: 2
+msgctxt "P: 1166S: 2"
+msgid "Implementation"
+msgstr ""
+
+#: P: 1175S: 1
+msgctxt "P: 1175S: 1"
+msgid "El nombre de la unidad, debe coincidir con el nombre del archivo, para que la unidad se considere válida."
+msgstr ""
+
+#: P: 1177S: 1
+msgctxt "P: 1177S: 1"
+msgid "Una unidad se puede compilar individualmente, pero no se generará un archivo *.hex, sino que servirá más como una verificación de que la unidad no contiene errores de sintaxis."
+msgstr ""
+
+#: P: 1179S: 1
+msgctxt "P: 1179S: 1"
+msgid "Una unidad se compila de la misma forma que un programa."
+msgstr ""
+
+#: P: 1182S: 2
+msgctxt "P: 1182S: 2"
+msgid "Directivas"
+msgstr ""
+
+#: P: 1184S: 1
+msgctxt "P: 1184S: 1"
+msgid "Hay un conjunto de directivas del compilador, incluidas en PicPas. Estas se definen como comentarios, pero empiezan siempre con los caracteres “{$”."
+msgstr ""
+
+#: P: 1186S: 1
+msgctxt "P: 1186S: 1"
+msgid "Pueden incluirse en cualquier parte del código, pero por funcionalidad, algunas deben escribirse siempre al inicio."
+msgstr ""
+
+#: P: 1188S: 2
+msgctxt "P: 1188S: 2"
+msgid "$PROCESSOR"
+msgstr ""
+
+#: P: 1190S: 1
+msgctxt "P: 1190S: 1"
+msgid "Permite definir el microcontrolador que se usará para compilar el código. Debe indicarse siempre antes de iniciar el programa. Por ejemplo:"
+msgstr ""
+
+#: P: 1192S: 1
+msgctxt "P: 1192S: 1"
+msgid "{$PROCESSOR PIC16F84}"
+msgstr ""
+
+#: P: 1198S: 1
+msgctxt "P: 1198S: 1"
+msgid "La lista de microcontroladores soportados, se puede ver en el Apéndice."
+msgstr ""
+
+#: P: 1200S: 1
+msgctxt "P: 1200S: 1"
+msgid "Es necesario definir el microcontrolador, para que el compilador sepa las características de hardware destino, como el tamaño de la memoria RAM y ROM, o la cantidad de bancos o páginas."
+msgstr ""
+
+#: P: 1202S: 1
+msgctxt "P: 1202S: 1"
+msgid "Indicar el microcontrolador, no define etiquetas de memoria como STATUS o TMR0, sino simplemente las características del hardware."
+msgstr ""
+
+#: P: 1204S: 1
+msgctxt "P: 1204S: 1"
+msgid "Si no se especifica el microcontrolador, se asumirá un dispositivo genérico, con 68 bytes de RAM y 1024 palabras de Flash EEPROM."
+msgstr ""
+
+#: P: 1206S: 2
+msgctxt "P: 1206S: 2"
+msgid "$FREQUENCY"
+msgstr ""
+
+#: P: 1208S: 1
+msgctxt "P: 1208S: 1"
+msgid "Define la frecuencia del reloj (del cristal u oscilador interno) a la que trabajará el microcontrolador. Debe indicarse siempre antes de iniciar el programa. Por ejemplo:"
+msgstr ""
+
+#: P: 1211S: 1
+msgctxt "P: 1211S: 1"
+msgid "{$FREQUENCY 8Mhz}"
+msgstr ""
+
+#: P: 1217S: 1
+msgctxt "P: 1217S: 1"
+msgid "Las frecuencias pueden expresarse en KHz o MHz. Por ejemplo, 1000Khz o 1Mhz."
+msgstr ""
+
+#: P: 1219S: 1
+msgctxt "P: 1219S: 1"
+msgid "La información de la frecuencia de reloj, la usa el compilador internamente para:"
+msgstr ""
+
+#: P: 1220S: 1
+msgctxt "P: 1220S: 1"
+msgid "Temporizar los retardos, mediante la rutina delay_ms()."
+msgstr ""
+
+#: P: 1221S: 1
+msgctxt "P: 1221S: 1"
+msgid "Temporizar algunos dispositivos de hardware interno, como la comunicación serial"
+msgstr ""
+
+#: P: 1221S: 3
+msgctxt "P: 1221S: 3"
+msgid ".  "
+msgstr ""
+
+#: P: 1223S: 1
+msgctxt "P: 1223S: 1"
+msgid "Si no se usa ninguno de estos ítems, la frecuencia de reloj puede ser casi cualquier valor que se pueda expresar como valores enteros de KHz o MHz."
+msgstr ""
+
+#: P: 1225S: 1
+msgctxt "P: 1225S: 1"
+msgid "Pero si el compilador se usan instrucciones de retardos o maneja hardware que requiera temporización, entonces el compilador solo aceptará algunos valores de frecuencia. Estos valores son:"
+msgstr ""
+
+#: P: 1227S: 1
+msgctxt "P: 1227S: 1"
+msgid "1MHz, 2Mhz, 4Mhz, 8MHz, 10MHz o 12MHz."
+msgstr ""
+
+#: P: 1229S: 1
+msgctxt "P: 1229S: 1"
+msgid "Si no se especifica la frecuencia, se asume por defecto 4Mhz. "
+msgstr ""
+
+#: P: 1231S: 2
+msgctxt "P: 1231S: 2"
+msgid "$MODE"
+msgstr ""
+
+#: P: 1233S: 1
+msgctxt "P: 1233S: 1"
+msgid "La directiva MODE, permite especificar el modo en que trabajará PicPas, con respecto a la sintaxis usada."
+msgstr ""
+
+#: P: 1235S: 1
+msgctxt "P: 1235S: 1"
+msgid "Puede tener dos valores:"
+msgstr ""
+
+#: P: 1237S: 1
+msgctxt "P: 1237S: 1"
+msgid "{$MODE PICPAS}"
+msgstr ""
+
+#: P: 1238S: 1
+msgctxt "P: 1238S: 1"
+msgid "{$MODE "
+msgstr ""
+
+#: P: 1238S: 2
+msgctxt "P: 1238S: 2"
+msgid "PASCAL"
+msgstr ""
+
+#: P: 1238S: 3
+msgctxt "P: 1238S: 3"
+msgid "}"
+msgstr ""
+
+#: P: 1240S: 1
+msgctxt "P: 1240S: 1"
+msgid "El modo PICPAS, es el valor por defecto, e indica que se compilará usando la sintaxis normal de PicPas. Esta sintaxis toma elementos (solo algunos) del lenguaje de programación Modula-2."
+msgstr ""
+
+#: P: 1242S: 1
+msgctxt "P: 1242S: 1"
+msgid "En este modo de sintaxis, las estructuras de control, son diferentes a las de Pascal estándar. Estas tienen la siguiente sintaxis:"
+msgstr ""
+
+#: P: 1244S: 3
+msgctxt "P: 1244S: 3"
+msgid "condition"
+msgstr ""
+
+#: P: 1245S: 3
+msgctxt "P: 1245S: 3"
+msgid "block of"
+msgstr ""
+
+#: P: 1245S: 5
+msgctxt "P: 1245S: 5"
+msgid "code"
+msgstr ""
+
+#: P: 1250S: 1
+msgctxt "P: 1250S: 1"
+msgid "ELSE"
+msgstr ""
+
+#: P: 1256S: 1
+msgctxt "P: 1256S: 1"
+msgid "ELSIF "
+msgstr ""
+
+#: P: 1262S: 6
+msgctxt "P: 1262S: 6"
+msgid "DO"
+msgstr ""
+
+#: P: 1266S: 1
+msgctxt "P: 1266S: 1"
+msgid "REPEAT"
+msgstr ""
+
+#: P: 1270S: 1
+msgctxt "P: 1270S: 1"
+msgid "FOR  "
+msgstr ""
+
+#: P: 1270S: 3
+msgctxt "P: 1270S: 3"
+msgid "variable"
+msgstr ""
+
+#: P: 1270S: 9
+msgctxt "P: 1270S: 9"
+msgid "start"
+msgstr ""
+
+#: P: 1270S: 11
+msgctxt "P: 1270S: 11"
+msgid "value"
+msgstr ""
+
+#: P: 1274S: 1
+msgctxt "P: 1274S: 1"
+msgid "El modo PASCAL, trabaja con la sintaxis normal de Pascal, con respecto a las estructuras de control, pero se mantienen algunas características no-estándar de Pascal, como las variables bit, o las propiedades de tipos básicos (Ver sección "
+msgstr ""
+
+#: P: 1274S: 2
+msgctxt "P: 1274S: 2"
+msgid "4.6.3"
+msgstr ""
+
+#: P: 1274S: 3
+msgctxt "P: 1274S: 3"
+msgid ")."
+msgstr ""
+
+#: P: 1276S: 1
+msgctxt "P: 1276S: 1"
+msgid "Para trabajar en modo Pascal, se debe especificar necesariamente {$MODE PASCAL}."
+msgstr ""
+
+#: P: 1282S: 2
+msgctxt "P: 1282S: 2"
+msgid "APÉNDICE"
+msgstr ""
+
+#: P: 1284S: 2
+msgctxt "P: 1284S: 2"
+msgid "Dispositivos Soportados "
+msgstr ""
+
+#: P: 1286S: 1
+msgctxt "P: 1286S: 1"
+msgid "PicPas soporta, por el momento, un número reducido de dispositivos:"
+msgstr ""
+
+#: P: 1288S: 1
+msgctxt "P: 1288S: 1"
+msgid "PIC12F629"
+msgstr ""
+
+#: P: 1289S: 1
+msgctxt "P: 1289S: 1"
+msgid "PIC12F675"
+msgstr ""
+
+#: P: 1290S: 1
+msgctxt "P: 1290S: 1"
+msgid "PIC16F83"
+msgstr ""
+
+#: P: 1291S: 1
+msgctxt "P: 1291S: 1"
+msgid "PIC16CR83"
+msgstr ""
+
+#: P: 1292S: 1
+msgctxt "P: 1292S: 1"
+msgid "PIC16F84"
+msgstr ""
+
+#: P: 1293S: 1
+msgctxt "P: 1293S: 1"
+msgid "PIC16CR84"
+msgstr ""
+
+#: P: 1295S: 1
+msgctxt "P: 1295S: 1"
+msgid "PIC16F870"
+msgstr ""
+
+#: P: 1296S: 1
+msgctxt "P: 1296S: 1"
+msgid "PIC16F871"
+msgstr ""
+
+#: P: 1297S: 1
+msgctxt "P: 1297S: 1"
+msgid "PIC16F872"
+msgstr ""
+
+#: P: 1298S: 1
+msgctxt "P: 1298S: 1"
+msgid "PIC16F873"
+msgstr ""
+
+#: P: 1299S: 1
+msgctxt "P: 1299S: 1"
+msgid "PIC16F873A"
+msgstr ""
+
+#: P: 1300S: 1
+msgctxt "P: 1300S: 1"
+msgid "PIC16F874"
+msgstr ""
+
+#: P: 1301S: 1
+msgctxt "P: 1301S: 1"
+msgid "PIC16F874A"
+msgstr ""
+
+#: P: 1302S: 1
+msgctxt "P: 1302S: 1"
+msgid "PIC16F876"
+msgstr ""
+
+#: P: 1303S: 1
+msgctxt "P: 1303S: 1"
+msgid "PIC16F876A"
+msgstr ""
+
+#: P: 1304S: 1
+msgctxt "P: 1304S: 1"
+msgid "PIC16F877"
+msgstr ""
+
+#: P: 1305S: 1
+msgctxt "P: 1305S: 1"
+msgid "PIC16F877A"
+msgstr ""
+
+#: P: 1306S: 1
+msgctxt "P: 1306S: 1"
+msgid "PIC16F887"
+msgstr ""
+
+#: P: 1307S: 1
+msgctxt "P: 1307S: 1"
+msgid "PIC16F627A"
+msgstr ""
+
+#: P: 1308S: 1
+msgctxt "P: 1308S: 1"
+msgid "PIC16F628A"
+msgstr ""
+
+#: P: 1309S: 1
+msgctxt "P: 1309S: 1"
+msgid "PIC16F648A"
+msgstr ""
+
+#: P: 1312S: 2
+msgctxt "P: 1312S: 2"
+msgid "Tabla de contenido"
+msgstr ""
+
+#: P: 1314S: 3
+msgctxt "P: 1314S: 3"
+msgid "Notas sobre PicPas	2"
+msgstr ""
+
+#: P: 1315S: 3
+msgctxt "P: 1315S: 3"
+msgid "INTRODUCCIÓN	3"
+msgstr ""
+
+#: P: 1316S: 1
+msgctxt "P: 1316S: 1"
+msgid "2.1"
+msgstr ""
+
+#: P: 1316S: 3
+msgctxt "P: 1316S: 3"
+msgid "Características del Compilador	3"
+msgstr ""
+
+#: P: 1317S: 1
+msgctxt "P: 1317S: 1"
+msgid "2.2"
+msgstr ""
+
+#: P: 1317S: 3
+msgctxt "P: 1317S: 3"
+msgid "Características de la lDE	3"
+msgstr ""
+
+#: P: 1318S: 1
+msgctxt "P: 1318S: 1"
+msgid "2.3"
+msgstr ""
+
+#: P: 1318S: 3
+msgctxt "P: 1318S: 3"
+msgid "Limitaciones	3"
+msgstr ""
+
+#: P: 1319S: 1
+msgctxt "P: 1319S: 1"
+msgid "2.4"
+msgstr ""
+
+#: P: 1319S: 3
+msgctxt "P: 1319S: 3"
+msgid "Instalación	4"
+msgstr ""
+
+#: P: 1320S: 3
+msgctxt "P: 1320S: 3"
+msgid "LA INTERFAZ	5"
+msgstr ""
+
+#: P: 1321S: 1
+msgctxt "P: 1321S: 1"
+msgid "3.1"
+msgstr ""
+
+#: P: 1321S: 3
+msgctxt "P: 1321S: 3"
+msgid "Explorador de Código	6"
+msgstr ""
+
+#: P: 1322S: 1
+msgctxt "P: 1322S: 1"
+msgid "3.2"
+msgstr ""
+
+#: P: 1322S: 3
+msgctxt "P: 1322S: 3"
+msgid "Ventana de Edición	7"
+msgstr ""
+
+#: P: 1323S: 1
+msgctxt "P: 1323S: 1"
+msgid "3.3"
+msgstr ""
+
+#: P: 1323S: 3
+msgctxt "P: 1323S: 3"
+msgid "Panel de mensajes	8"
+msgstr ""
+
+#: P: 1324S: 1
+msgctxt "P: 1324S: 1"
+msgid "3.4"
+msgstr ""
+
+#: P: 1324S: 3
+msgctxt "P: 1324S: 3"
+msgid "Plegado de código	10"
+msgstr ""
+
+#: P: 1325S: 1
+msgctxt "P: 1325S: 1"
+msgid "3.5"
+msgstr ""
+
+#: P: 1325S: 3
+msgctxt "P: 1325S: 3"
+msgid "Cursores Múltiples	10"
+msgstr ""
+
+#: P: 1326S: 1
+msgctxt "P: 1326S: 1"
+msgid "3.6"
+msgstr ""
+
+#: P: 1326S: 3
+msgctxt "P: 1326S: 3"
+msgid "Edición Sincronizada	11"
+msgstr ""
+
+#: P: 1327S: 1
+msgctxt "P: 1327S: 1"
+msgid "3.7"
+msgstr ""
+
+#: P: 1327S: 3
+msgctxt "P: 1327S: 3"
+msgid "Compilación	13"
+msgstr ""
+
+#: P: 1328S: 3
+msgctxt "P: 1328S: 3"
+msgid "REFERENCIA DEL LENGUAJE	14"
+msgstr ""
+
+#: P: 1329S: 1
+msgctxt "P: 1329S: 1"
+msgid "4.1"
+msgstr ""
+
+#: P: 1329S: 3
+msgctxt "P: 1329S: 3"
+msgid "Palabras Reservadas	14"
+msgstr ""
+
+#: P: 1330S: 1
+msgctxt "P: 1330S: 1"
+msgid "4.2"
+msgstr ""
+
+#: P: 1330S: 3
+msgctxt "P: 1330S: 3"
+msgid "Identificadores	14"
+msgstr ""
+
+#: P: 1331S: 1
+msgctxt "P: 1331S: 1"
+msgid "4.3"
+msgstr ""
+
+#: P: 1331S: 3
+msgctxt "P: 1331S: 3"
+msgid "Estructura de un programa	15"
+msgstr ""
+
+#: P: 1332S: 1
+msgctxt "P: 1332S: 1"
+msgid "4.4"
+msgstr ""
+
+#: P: 1332S: 3
+msgctxt "P: 1332S: 3"
+msgid "Operadores	16"
+msgstr ""
+
+#: P: 1333S: 1
+msgctxt "P: 1333S: 1"
+msgid "4.5"
+msgstr ""
+
+#: P: 1333S: 3
+msgctxt "P: 1333S: 3"
+msgid "Precedencia de operadores	17"
+msgstr ""
+
+#: P: 1334S: 1
+msgctxt "P: 1334S: 1"
+msgid "4.6"
+msgstr ""
+
+#: P: 1334S: 3
+msgctxt "P: 1334S: 3"
+msgid "Tipos de datos	18"
+msgstr ""
+
+#: P: 1335S: 1
+msgctxt "P: 1335S: 1"
+msgid "4.6.1"
+msgstr ""
+
+#: P: 1335S: 3
+msgctxt "P: 1335S: 3"
+msgid "Tipo Char	18"
+msgstr ""
+
+#: P: 1336S: 1
+msgctxt "P: 1336S: 1"
+msgid "4.6.2"
+msgstr ""
+
+#: P: 1336S: 3
+msgctxt "P: 1336S: 3"
+msgid "Tipo Bit	19"
+msgstr ""
+
+#: P: 1337S: 3
+msgctxt "P: 1337S: 3"
+msgid "Conversión de tipos	20"
+msgstr ""
+
+#: P: 1338S: 1
+msgctxt "P: 1338S: 1"
+msgid "4.6.4"
+msgstr ""
+
+#: P: 1338S: 3
+msgctxt "P: 1338S: 3"
+msgid "Propiedades de tipos	21"
+msgstr ""
+
+#: P: 1339S: 1
+msgctxt "P: 1339S: 1"
+msgid "4.7"
+msgstr ""
+
+#: P: 1339S: 3
+msgctxt "P: 1339S: 3"
+msgid "Variables	24"
+msgstr ""
+
+#: P: 1340S: 1
+msgctxt "P: 1340S: 1"
+msgid "4.7.1"
+msgstr ""
+
+#: P: 1340S: 3
+msgctxt "P: 1340S: 3"
+msgid "Variables Absolutas	24"
+msgstr ""
+
+#: P: 1341S: 3
+msgctxt "P: 1341S: 3"
+msgid "Variables REGISTER	25"
+msgstr ""
+
+#: P: 1342S: 1
+msgctxt "P: 1342S: 1"
+msgid "4.8"
+msgstr ""
+
+#: P: 1342S: 3
+msgctxt "P: 1342S: 3"
+msgid "Constantes	26"
+msgstr ""
+
+#: P: 1343S: 3
+msgctxt "P: 1343S: 3"
+msgid "Estructuras	28"
+msgstr ""
+
+#: P: 1344S: 1
+msgctxt "P: 1344S: 1"
+msgid "4.9.1"
+msgstr ""
+
+#: P: 1344S: 3
+msgctxt "P: 1344S: 3"
+msgid "Condicional IF … THEN	28"
+msgstr ""
+
+#: P: 1345S: 1
+msgctxt "P: 1345S: 1"
+msgid "4.9.2"
+msgstr ""
+
+#: P: 1345S: 3
+msgctxt "P: 1345S: 3"
+msgid "Lazo REPEAT	29"
+msgstr ""
+
+#: P: 1346S: 1
+msgctxt "P: 1346S: 1"
+msgid "4.9.3"
+msgstr ""
+
+#: P: 1346S: 3
+msgctxt "P: 1346S: 3"
+msgid "Lazo WHILE	29"
+msgstr ""
+
+#: P: 1347S: 1
+msgctxt "P: 1347S: 1"
+msgid "4.9.4"
+msgstr ""
+
+#: P: 1347S: 3
+msgctxt "P: 1347S: 3"
+msgid "Lazo FOR	29"
+msgstr ""
+
+#: P: 1348S: 1
+msgctxt "P: 1348S: 1"
+msgid "4.10"
+msgstr ""
+
+#: P: 1348S: 3
+msgctxt "P: 1348S: 3"
+msgid "Funciones del sistema	30"
+msgstr ""
+
+#: P: 1349S: 1
+msgctxt "P: 1349S: 1"
+msgid "4.11"
+msgstr ""
+
+#: P: 1349S: 3
+msgctxt "P: 1349S: 3"
+msgid "Procedimientos	31"
+msgstr ""
+
+#: P: 1350S: 1
+msgctxt "P: 1350S: 1"
+msgid "4.12"
+msgstr ""
+
+#: P: 1350S: 3
+msgctxt "P: 1350S: 3"
+msgid "Funciones	32"
+msgstr ""
+
+#: P: 1351S: 1
+msgctxt "P: 1351S: 1"
+msgid "4.13"
+msgstr ""
+
+#: P: 1351S: 3
+msgctxt "P: 1351S: 3"
+msgid "Código ensamblador	34"
+msgstr ""
+
+#: P: 1352S: 1
+msgctxt "P: 1352S: 1"
+msgid "4.13.1"
+msgstr ""
+
+#: P: 1352S: 3
+msgctxt "P: 1352S: 3"
+msgid "Etiquetas y saltos	35"
+msgstr ""
+
+#: P: 1353S: 1
+msgctxt "P: 1353S: 1"
+msgid "4.13.2"
+msgstr ""
+
+#: P: 1353S: 3
+msgctxt "P: 1353S: 3"
+msgid "Referencia a variables	36"
+msgstr ""
+
+#: P: 1354S: 1
+msgctxt "P: 1354S: 1"
+msgid "4.13.3"
+msgstr ""
+
+#: P: 1354S: 3
+msgctxt "P: 1354S: 3"
+msgid "Referencia a constantes	37"
+msgstr ""
+
+#: P: 1355S: 1
+msgctxt "P: 1355S: 1"
+msgid "4.13.4"
+msgstr ""
+
+#: P: 1355S: 3
+msgctxt "P: 1355S: 3"
+msgid "Devolución de resultado para funciones	38"
+msgstr ""
+
+#: P: 1356S: 1
+msgctxt "P: 1356S: 1"
+msgid "4.13.5"
+msgstr ""
+
+#: P: 1356S: 3
+msgctxt "P: 1356S: 3"
+msgid "La directiva ORG	39"
+msgstr ""
+
+#: P: 1357S: 1
+msgctxt "P: 1357S: 1"
+msgid "4.14"
+msgstr ""
+
+#: P: 1357S: 3
+msgctxt "P: 1357S: 3"
+msgid "Unidades	40"
+msgstr ""
+
+#: P: 1358S: 1
+msgctxt "P: 1358S: 1"
+msgid "4.15"
+msgstr ""
+
+#: P: 1358S: 3
+msgctxt "P: 1358S: 3"
+msgid "Directivas	41"
+msgstr ""
+
+#: P: 1359S: 1
+msgctxt "P: 1359S: 1"
+msgid "4.15.1"
+msgstr ""
+
+#: P: 1359S: 3
+msgctxt "P: 1359S: 3"
+msgid "$PROCESSOR	41"
+msgstr ""
+
+#: P: 1360S: 1
+msgctxt "P: 1360S: 1"
+msgid "4.15.2"
+msgstr ""
+
+#: P: 1360S: 3
+msgctxt "P: 1360S: 3"
+msgid "$FREQUENCY	42"
+msgstr ""
+
+#: P: 1361S: 2
+msgctxt "P: 1361S: 2"
+msgid "4.15.3"
+msgstr ""
+
+#: P: 1361S: 4
+msgctxt "P: 1361S: 4"
+msgid "$MODE	42"
+msgstr ""
+
+#: P: 1362S: 3
+msgctxt "P: 1362S: 3"
+msgid "APÉNDICE	45"
+msgstr ""
+
+#: P: 1363S: 1
+msgctxt "P: 1363S: 1"
+msgid "5.1"
+msgstr ""
+
+#: P: 1363S: 3
+msgctxt "P: 1363S: 3"
+msgid "Dispositivos Soportados	45"
+msgstr ""
+
+#: P: 1364S: 1
+msgctxt "P: 1364S: 1"
+msgid "Tabla de contenido	46"
+msgstr ""

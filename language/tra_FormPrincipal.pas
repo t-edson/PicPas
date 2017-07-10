@@ -11,7 +11,7 @@
  acArcNewProj.Caption := Trans('New &Project'   , 'Nuevo &Proyecto'  , 'Musuq &Proyecto'     ,'Neues &Projekt');
  acArcNewProj.Hint    := Trans('New &Project'   , 'Nuevo Proyecto'   , 'Musuq Proyecto'      ,'Neues &Projekt');
  acArcOpen.Caption    := Trans('&Open...'       , '&Abrir...'        , 'K&ichay'             ,'&Öffnen...');
- acArcOpen.Hint       := Trans('Open file'      , 'Abrir archivo'    , 'Khiputa kichay'      , 'Datei öffnen');
+ acArcOpen.Hint       := Trans('Open file'      , 'Abrir archivo'    , 'Khiputa kichay'      , 'Datei Öffnen');
  acArcSave.Caption    := Trans('&Save'          , '&Guardar'         , '&Waqaychay'          , '&Speichern');
  acArcSave.Hint       := Trans('Save file'      , 'Guardar archivo'  , 'Khiputa waqaychay'   , 'Datei speichern');
  acArcSaveAs.Caption  := Trans('Sa&ve As...'    , 'G&uardar Como...' , 'Kay hinata &waqaychay', 'Speichern &unter ...');
@@ -58,4 +58,4 @@
  acToolPICExpl.Hint   := Trans('Open the PIC devices explorer','Abrir el explorador de dispos. PIC', '','Öffne den PIC Geräte explorer');
  acToolConfig.Caption := Trans('&Settings'               , 'Configuración'                , 'Kamachina', '&Einstellungen');
  acToolConfig.Hint    := Trans('Settings dialog'         , 'Ver configuración'            , 'Kamachinata qhaway', 'Einstellungs-Dialog');
- acToolFindDec.Caption:= Trans('Find declaration'        , 'Ir a la declaración'          , '', '');
+ acToolFindDec.Caption:= Trans('Find declaration'        , 'Ir a la declaración'          , '', 'Finde Deklaration');
