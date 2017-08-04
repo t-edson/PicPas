@@ -1,0 +1,89 @@
+
+Drillmotor-Speed-Controller with PIC12F629,
+for more drill-power at low speeds.
+
+Principle:
+The motor is powered on with a pulse of constant time.
+After that pulse the motor is free-running an works as a generator,
+producing a voltage proportional to the speed.
+A short delay after the motor was switched off, this generated
+voltage is compared to a voltage set by a potentiometer.
+This is done by the internal comparator of the PIC12F629.
+The (internal) output of the comparator is 1 (high) if the
+voltage from the motor is lower than the potentiometer.
+This means, the motor has to speed-up.
+If the motor-voltage is higher than the potentiometer the
+comparators output is 0 (low) and the motor has to slow-down.
+The potentiometer is set by the user to the desired 
+motor-speed. 
+The signal from the comparators output is taken to control
+a driver-stage by GPIO-Pin GP2.
+The driver-stage is a current-limiting circuit to protect
+the power-supply and the motor. The motor-current is sensed
+over a low resistant resistor, in my case three 1 Ohm resistors
+in parallel (0.33 Ohm), but depending on the drillmotor and
+power-supply the current may be smaller (with 2 resistors)
+or higher with four 1 Ohms in parallel.
+The generated voltage from the motor can only be measured
+if the motor is not powered (driver-stage off), to get the
+actual speed. This voltage is first divided by a voltage-divider
+so that it is lower than maximum inputvoltage for the 
+comparator (5V), then it is low-pass filtered (RC-filters). 
+With the motor powered-off, after a short delay the comparator
+is sampled. Depending on this state the motor stays turned
+off until the speed is below and the motor has to be repowered,
+or, if the speed was slow, the motor is immediately powered
+again.
+
+Fault detection and protection: 
+There are two kinds of failure detection to protect the
+drill-motor and the power-supply. By sampling the comparators
+output during the Motor-ON-state, we expect a 0-signal, because
+the voltage at the motor is forced to the highest level by the
+driver-circuit. If the comparator-level is 1 means, that the
+desired voltage set by the potentiometer can not be reached.
+This can happen only, if the power-supply drops down because
+of overload or the current-limiting of the motor-driver is active.
+In this case the software stays in an endless loop in failuremode
+until the PIC is resetted by the user. 
+The other failuredetection is during Motor-Off-state.
+A high-signal from the comparator means, that the motor must be
+powered. If after a in the software defined number of samples
+the speed is still not reached (comparator must be low), this
+is detected as a blocked motor and the software also stays in an
+endless loop in failuremode. To release, the user has to press
+the reset-button. In both cases the motor is switched off and an
+Error-LED is set.
+
+Used parts:
+A model of my drillmachine is shown in the attached photo.
+The electronic components are dimensioned for this tool. 
+I grabed the parts out of my "trashbox", but also other types 
+will work. The BC547 and BC557 small-signal transistors may be
+replaced with 2N3904 and 2N3906 for example, which are the
+better choice. Or the BD250 by a 2N2955 or by an other PNP
+powertransistor. 
+The feedback voltage-divider is now dimensioned to
+12k/(39k+12k) = 0.235. A motor-voltage of 15V results in 
+15*0.235=3.53V for the PICs input. The maximum Motor-Voltage,
+not exceeding the 5V at GP1, is 21 Volts.
+The speed-setting potentiometer is limited by 8.2k for the
+maximum speed and 2.7k for the minimum speed.
+The 100uF electrolytic capacitor at the speed-setting performs
+a soft-start of the motor speed, if the motor was switched on
+before the powersupply was switched on. This gives a little bit 
+more savety...
+The free-running diode at the motor-terminals should be 
+dimensioned for up to 3 Amperes.
+
+Conclusion:
+This project is very experimental, it's a weekend-project only.
+Maybe, the overload-protection can be omitted, because the
+blocked-detection will also fire an protect in case of overload
+and short-circuit. 
+I discovered that with different types of DC-Motors there was
+a knocking sound or the speed was oscillating up and down.
+In that cases I had to change the timing in software or the
+values of the filter-caps.
+I have to test the circuit in real-live and to optimize it in
+case of problems.
