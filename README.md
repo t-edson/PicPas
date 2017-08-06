@@ -1,4 +1,4 @@
-PicPas 0.7.2
+PicPas 0.7.3
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
@@ -432,6 +432,63 @@ Shows a text message in the screen:
 
 {$MSGBOX 'clock=' $FREQUENCY}  -> Shows the message: "clock=8000000" (if the Frequency was set to 8MHz).
 
+#### $DEFINE
+
+Define symbols or macros
+
+To define a symbol we can do:
+
+{$define MY_SYMBOL}
+
+Once defined, it can be tested using $IFDEF directive.
+
+To define a macro we can do:
+
+{$DEFINE macro=Hello}
+
+Then we can expand a macro, in the code, using the way:
+
+{$macro}
+
+Following, there a sample code:
+
+```
+{$DEFINE pin_out=PORTB.0}
+uses PIC16F84A;
+begin
+  SetAsOutput({$pin_out});
+  {$pin_out} := 1;
+end.
+```
+
+#### $IFDEF, $IFNDEF, $ELSE, $ENDIF
+
+This directives let us to define conditional compilation blocks:
+
+```
+{$DEFINE MyPinOut=PORTB.0}
+uses PIC16F84A;
+begin
+{$IFDEF MyPinOut}
+{$ELSE}
+  {$DEFINE MyPinOut=PORTB.1}
+{$ENDIF}
+  SetAsOutput({$MyPinOut});
+  {$MyPinOut} := 1;
+end.
+```
+
+```
+{$DEFINE MyPinOut=PORTB.0}
+uses PIC16F84A;
+begin
+{$IFNDEF MyPinOut}
+  {$DEFINE MyPinOut=PORTB.1}
+{$ENDIF}
+  SetAsOutput({$MyPinOut});
+  {$MyPinOut} := 1;
+end.
+```
 
 ## Limitations
 
