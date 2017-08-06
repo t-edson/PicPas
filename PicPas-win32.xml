@@ -6,8 +6,8 @@
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
   <SynTreeWidth Val="225"/>
-  <language Val="en - English"/>
-  <TabEdiState Val="0"/>
+  <language Val="es - Español"/>
+  <TabEdiState Val="1"/>
   <CodExplBack Val="2434341"/>
   <CodExplText Val="12632256"/>
   <MessPanBack Val="2368548"/>
@@ -34,14 +34,14 @@
     <cTxtPan Val="12632256"/>
     <TamLet Val="10"/>
     <TipLet Val="Courier New"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.7.2\TestCode\Operations\Test5_BankLoops.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.2\TestCode\Operations\Test5_BankConditions.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.2\TestCode\Operations\Test2_Word2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.2\TestCode\Operations\Test5_Bank.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.2\temp\NewFile1.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.7.3\samples\PicPasDrill\firmware.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.3\samples\Com_RS-232_UARTSoft.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.3\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.3\temp\NewFile2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.3\units\PIC16F84A.pas
 "/>
   </Edit>
-  <viewMode Val="2"/>
+  <viewMode Val="1"/>
   <AutSynChk Val="True"/>
   <IncHeadMpu Val="False"/>
   <IncDecVar Val="True"/>
@@ -56,4 +56,8 @@ D:\Proyectos_Software\Lazarus\PicPas-0.7.2\temp\NewFile1.pas
   <OptBnkAftIF Val="True"/>
   <OptBnkBefPro Val="True"/>
   <OptBnkAftPro Val="True"/>
+  <ExternTool>
+    <extern_tools Val="Editar	                        	notepad	$(hexFile)	F	V					
+"/>
+  </ExternTool>
 </CONFIG>
