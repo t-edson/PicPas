@@ -8,7 +8,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
   Buttons, StdCtrls, ExtCtrls, ComCtrls, ColorBox, FrameCfgSynEdit, Globales,
-  FrameCfgSyntax, MiConfigXML, MisUtils;
+  FrameCfgSyntax, FrameCfgExtTool, MiConfigXML, MisUtils;
 type
   //Tipo de Barra de herramientas
   TStyleToolbar = (stb_SmallIcon, stb_BigIcon);
@@ -75,6 +75,7 @@ type
     tabEnsamb: TTabSheet;
     tabOutput: TTabSheet;
     tabEnviron: TTabSheet;
+    tabExtTool: TTabSheet;
     tabSyntax: TTabSheet;
     procedure BitAceptarClick(Sender: TObject);
     procedure BitAplicarClick(Sender: TObject);
@@ -133,6 +134,7 @@ type
   public
     fraCfgSynEdit: TfraCfgSynEdit;
     fraCfgSyntax : TfraCfgSyntax;
+    fraCfgExtTool: TfraCfgExtTool;
     OnPropertiesChanges: procedure of object;
     procedure Iniciar;
     procedure Mostrar;
@@ -145,6 +147,13 @@ var
 implementation
 {$R *.lfm}
 { TConfig }
+procedure TConfig.SetLanguage(idLang: string);
+begin
+  fraCfgSynEdit.SetLanguage(idLang);
+  fraCfgExtTool.SetLanguage(idLang);
+  curLang := idLang;
+  {$I ..\language\tra_FormConfig.pas}
+end;
 procedure TConfig.FormCreate(Sender: TObject);
 begin
   fraCfgSynEdit := TfraCfgSynEdit.Create(self);
@@ -156,6 +165,11 @@ begin
   fraCfgSyntax.Parent := tabSyntax;
   fraCfgSyntax.Left := 10;
   fraCfgSyntax.Top := 5;
+
+  fraCfgExtTool := TfraCfgExtTool.Create(self);
+  fraCfgExtTool.Parent := tabExtTool;
+  fraCfgExtTool.Left := 10;
+  fraCfgExtTool.Top := 5;
 
   cfgFile.VerifyFile;
 end;
@@ -199,6 +213,7 @@ begin
   RadioGroup2.Enabled := chkIncDecVar.Checked;
   chkExcUnused.Enabled := chkIncDecVar.Checked;
 end;
+
 procedure TConfig.Iniciar;
 //Inicia el formulario de configuración. Debe llamarse antes de usar el formulario y
 //después de haber cargado todos los frames.
@@ -226,7 +241,7 @@ begin
   cfgFile.Asoc_Bol ('chkLoadLast',@LoadLast   , chkLoadLast   , true);
   //Configuraciones del Editor
   fraCfgSynEdit.Iniciar('Edit', cfgFile);
-  //COnfigruación de sintaxis
+  //Configuración de sintaxis
   fraCfgSyntax.Init(rutSyntax);
   //COnfiguración de Vista
   cfgFile.Asoc_Enum('viewMode',  @viewMode   , SizeOf(TTreeViewMode), 0);
@@ -246,6 +261,8 @@ begin
   cfgFile.Asoc_Bol('OptBnkAftIF' , @OptBnkAftIF , chkOptBnkAftIF , true);
   cfgFile.Asoc_Bol('OptBnkBefPro', @OptBnkBefPro, chkOptBnkBefPro, true);
   cfgFile.Asoc_Bol('OptBnkAftPro', @OptBnkAftPro, chkOptBnkAftPro, true);
+  //Configuración de Herramienta Externa
+  fraCfgExtTool.Init('ExternTool', cfgFile);
   //////////////////////////////////////////////////
   cfgFile.OnPropertiesChanges := @cfgFilePropertiesChanges;
   if not cfgFile.FileToProperties then begin
@@ -304,12 +321,6 @@ begin
   if not cfgFile.PropertiesToFile then begin
     MsgErr(cfgFile.MsjErr);
   end;
-end;
-procedure TConfig.SetLanguage(idLang: string);
-begin
-  fraCfgSynEdit.SetLanguage(idLang);
-  curLang := idLang;
-  {$I ..\language\tra_FormConfig.pas}
 end;
 
 end.

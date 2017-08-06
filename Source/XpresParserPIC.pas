@@ -94,6 +94,7 @@ protected  //Eventos del compilador
   RTstate    : TType;    {Estado de los RT. Si es NIL, indica que los RT, no tienen
                          ningún dato cargado, sino indican el tipo cargado en los RT.}
   function CaptureDelExpres: boolean;
+  procedure ProcComments; virtual; abstract;
   procedure TipDefecNumber(var Op: TOperand; toknum: string); virtual; abstract;
   procedure TipDefecString(var Op: TOperand; tokcad: string); virtual; abstract;
   procedure TipDefecBoolean(var Op: TOperand; tokcad: string); virtual; abstract;
@@ -129,7 +130,8 @@ protected  //Eventos del compilador
   procedure GetExpressionE(const prec: Integer; posExpres: TPosExpres = pexINDEP);
 public
   FirstPass  : boolean;   //Indica que está en la primera pasada.
-  TreeElems: TXpTreeElements; //tablas de elementos del lenguaje
+  TreeElems: TXpTreeElements; //Árbol de sintaxis del lenguaje
+  TreeDirec: TXpTreeElements; //Árbol de sinatxis para directivas
   listFunSys: TxpEleFuns;   //lista de funciones del sistema
 protected
   typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
@@ -565,7 +567,7 @@ procedure TCompilerBase.GetOperandIdent(var Op: TOperand);
 parte de GetOperand(), pero se separó porque:
 * Es una rutina larga y se piensa agregar más código, aún.
 * Porque se piensa usarla también, de forma independiente.
-Se declara como porcedimiento, en lugar de función, para evitar crear copias del
+Se declara como procedimiento, en lugar de función, para evitar crear copias del
 operando y mejorar así el desempeñó. Incluso se espera que GetOperand(), se declare
 luego de la misma forma.}
 var
@@ -677,6 +679,8 @@ begin
       GenError('Type parameters error on %s', [ele.name + '()']);
       exit;
     end;
+//  end else if DefinedMacro(cIn.tok) then begin  //verifica macro
+//    //Es una macro
   end else begin
     GenError('Not implemented.');
     exit;
@@ -694,7 +698,8 @@ var
   opr   : TxpOperator;
   cod   : Longint;
 begin
-  cIn.SkipWhites;
+  //cIn.SkipWhites;
+  ProcComments;
   Result.Inverted := false;   //inicia campo
   if cIn.tokType = tnNumber then begin  //constantes numéricas
     Result.catOp:=coConst;       //constante es Mono Operando
@@ -1093,7 +1098,16 @@ end;
 procedure TCompilerBase.GenError(msg: string; fil: String; row, col: integer);
 {Genera un mensaje de error en la posición indicada.}
 begin
-  if OnError<>nil then OnError(msg, fil, row, col);
+  if cIn.curCon.FixErrPos then begin
+    //El contexto actual, tiene configurado uan posición fija para los errores
+    msg := cIn.curCon.PreErrorMsg + msg;  //completa mensaje
+    if OnError<>nil then OnError(msg, cIn.curCon.ErrPosition.fil,
+                                      cIn.curCon.ErrPosition.row,
+                                      cIn.curCon.ErrPosition.col);
+
+  end else begin
+    if OnError<>nil then OnError(msg, fil, row, col);
+  end;
   HayError := true;
 end;
 procedure TCompilerBase.GenError(msg: String; const Args: array of const;
@@ -1132,6 +1146,7 @@ begin
   typs := TTypes.Create(true);
   //Crea arbol de elementos
   TreeElems := TXpTreeElements.Create;
+  TreeDirec:= TXpTreeElements.Create;
   listFunSys:= TxpEleFuns.Create(true);
   //inicia la sintaxis
   xLex := TSynFacilSyn.Create(nil);   //crea lexer
@@ -1169,6 +1184,7 @@ begin
   func0.Destroy;
   xLex.Free;
   listFunSys.Destroy;
+  TreeDirec.Destroy;
   TreeElems.Destroy;
   typs.Free;
   inherited Destroy;

@@ -60,6 +60,7 @@ type
     procedure SetTextColor(AValue: TColor);
     procedure SetTextErrColor(AValue: TColor);
   public
+    HaveErrors: boolean;
     OnDblClickMessage: procedure(const srcPos: TSrcPos) of object;
     property BackColor: TColor read FBackColor write SetBackColor ;
     property TextColor: TColor read FTextColor write SetTextColor ;
@@ -216,6 +217,7 @@ begin
   grilla.RowHeights[f] := ROW_HEIGH;
   UtilGrilla.FijColorFondo(f, FBackColor);  //Color de fondo de la fila
   UtilGrilla.FijColorTexto(f, FTextErrColor);  //Color del texto de la fila
+  HaveErrors := true;  //marca bandera
 end;
 procedure TfraMessagesWin.chkInformChange(Sender: TObject);
 begin
@@ -284,7 +286,6 @@ begin
   Splitter1.Color := AValue;
   Splitter2.Color := AValue;
 end;
-
 procedure TfraMessagesWin.SetTextColor(AValue: TColor);
 begin
   if FTextColor = AValue then Exit;
@@ -307,7 +308,6 @@ begin
   if FTextErrColor = AValue then Exit;
   FTextErrColor := AValue;
 end;
-
 procedure TfraMessagesWin.GetFirstError(out msg: string; out filname: string;
                                         out row, col: integer);
 {Devuelve información sobre el primer error de la lista de errores.
@@ -368,6 +368,7 @@ begin
   cxp.OnError := @AddError;
   timeCnt:=GetTickCount64;
   if InitMsg then AddInformation(MSG_INICOMP);
+  HaveErrors := false;  //limpia bandera
 end;
 procedure TfraMessagesWin.EndCompilation;
 var

@@ -275,8 +275,17 @@ type
   //Clase para modelar al cuerpo principal del programa
 
   { TxpEleBody }
-
   TxpEleBody = class(TxpElement)
+    adrr   : integer;  //dirección física
+    constructor Create; override;
+  end;
+
+  { TxpEleBody }
+  //Representa a una directiva. Diseñado para representar a los nodos {$IFDEF}
+
+  { TxpEleDIREC }
+
+  TxpEleDIREC = class(TxpElement)
     adrr   : integer;  //dirección física
     constructor Create; override;
   end;
@@ -286,10 +295,10 @@ type
   donde se guardará la referencia a todas los elementos (variables, constantes, ..)
   creados.
   Este árbol se usa también como un equivalente al NameSpace, porque se usa para
-  buscar los nombres de los elementos, en una estructura en arbol}
+  buscar los nombres de los elementos, en una estructura en arbol.}
   TXpTreeElements = class
   private
-    //variables de estado para la búsqueda con FindFirst() - FindNext()
+    //Variables de estado para la búsqueda con FindFirst() - FindNext()
     curFindName: string;
     curFindNode: TxpElement;
     curFindIdx : integer;
@@ -326,7 +335,6 @@ type
   end;
 
 implementation
-
 
 { TPicRegister }
 function TPicRegister.AbsAdrr: word;
@@ -768,6 +776,12 @@ constructor TxpEleBody.Create;
 begin
   inherited;
   elemType := eltBody;
+end;
+{ TxpEleDIREC }
+constructor TxpEleDIREC.Create;
+begin
+  inherited Create;
+
 end;
 { TXpTreeElements }
 procedure TXpTreeElements.Clear;

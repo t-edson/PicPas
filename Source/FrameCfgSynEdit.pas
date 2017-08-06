@@ -81,9 +81,15 @@ implementation
 //  MAX_ARC_REC = 5;  //si se cambia, actualizar ActualMenusReciente()
 
 { TfraCfgSynEdit }
+procedure TfraCfgSynEdit.SetLanguage(idLang: string);
+//Rutina de traducción
+begin
+   curLang := idLang;
+   {$I ..\language\tra_CfgSynEdit.pas}
+end;
 procedure TfraCfgSynEdit.Iniciar(section: string; cfgFile: TMiConfigXML);
 begin
-  //asigna referencia necesarias
+  //Asigna referencia necesarias
   //crea las relaciones variable-control
   cfgFile.Asoc_TCol(section+ '/cTxtNor', @cTxtNor, cbutTextCol, clBlack);
   cfgFile.Asoc_TCol(section+ '/cFonEdi', @cFonEdi, cbutBackCol,  clWhite);
@@ -115,7 +121,6 @@ begin
 
   cfgFile.Asoc_StrList(section+ '/recient', @ArcRecientes);
 end;
-
 procedure TfraCfgSynEdit.chkVerPanVerChange(Sender: TObject);
 begin
   chkVerNumLin.Enabled:=chkVerPanVer.Checked;
@@ -130,13 +135,11 @@ begin
   label1.Enabled:=chkHighCurLin.Checked;
   cbutLinAct.Enabled:=chkHighCurLin.Checked;
 end;
-
 procedure TfraCfgSynEdit.chkHighCurWordChange(Sender: TObject);
 begin
   label10.Enabled:=chkHighCurWord.Checked;
   cbutResPal.Enabled:=chkHighCurWord.Checked;
 end;
-
 procedure TfraCfgSynEdit.PropToWindow;
 begin
    inherited;
@@ -200,12 +203,6 @@ begin
    end else begin
      ed.Options := ed.Options - [eoAutoIndent];
    end;
-end;
-procedure TfraCfgSynEdit.SetLanguage(idLang: string);
-//Rutina de traducción
-begin
-   curLang := idLang;
-   {$I ..\language\tra_CfgSynEdit.pas}
 end;
 
 end.

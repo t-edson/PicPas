@@ -27,10 +27,11 @@ type
   { TParserAsm }
   TParserAsm = class(TGenCod)
   private
-    labels: TPicLabel_list; //Lista de etiquetas
-    uJumps: TPicUJump_list; //Lista de instrucciones GOTO o CALL, indefinidas
-    lexAsm: TSynFacilSyn;   //lexer para analizar ASM
-    asmRow: integer;     //número de fila explorada
+    lexAsm : TSynFacilSyn;   //lexer para analizar ASM
+    tokIni : integer;  //Posición inicial del token actual
+    labels : TPicLabel_list; //Lista de etiquetas
+    uJumps : TPicUJump_list; //Lista de instrucciones GOTO o CALL, indefinidas
+    asmRow : integer;     //número de fila explorada
     procedure AddLabel(name: string; addr: integer);
     procedure AddUJump(name: string; addr: integer; idInst: TPIC16Inst);
     function CaptureAddress(const idInst: TPIC16Inst; var a: word): boolean;
@@ -83,7 +84,7 @@ var
   p: TSrcPos;
 begin
   p := cIn.ReadSrcPos;
-  p.col := lexAsm.GetX;  //corrige columna
+  p.col := tokIni + lexAsm.GetX;  //corrige columna
   GenErrorPos(msg, [], p);
 end;
 procedure TParserAsm.GenErrorAsm(msg: string; const Args: array of const);
@@ -91,7 +92,7 @@ var
   p: TSrcPos;
 begin
   p := cIn.ReadSrcPos;
-  p.col := lexAsm.GetX;  //corrige columna
+  p.col := tokIni + lexAsm.GetX;  //corrige columna
   GenErrorPos(msg, Args, p);
 end;
 procedure TParserAsm.GenWarnAsm(msg: string);
@@ -680,26 +681,32 @@ function TParserAsm.IsEndASM(var  lin: string): boolean;
 begin
   if not AnsiEndsText('end', lin) then
     exit(false);  //definitivamente no es
-  //hay coincidencia pero hay que analziar más
+  //Hay coincidencia pero hay que analziar más
   if length(lin) = 3 then begin
     lin := copy(Lin, 1, length(Lin)-3);  //quita "end"
     exit(true);  //es exacto
   end;
-  //podrìa ser, pero hay que descartar que no sea parte de un identificador
+  //Podrìa ser, pero hay que descartar que no sea parte de un identificador
   if lin[length(lin)-3] in ['a'..'z', 'A'..'Z', '0'..'9', '_'] THEN
     exit(false); //es parte de un identificador
-  //es por descarte
+  //Es por descarte
   lin := copy(Lin, 1, length(Lin)-3);  //quita "end"
   exit(true);
 end;
-procedure TParserAsm.ProcASMlime(const AsmLin: string); //Procesa una línea de código ASM
+procedure TParserAsm.ProcASMlime(const AsmLin: string);
+{Procesa una línea de código ASM. Notar que los bloques ASM pueden tener muchas líneas
+pero el procesamiento, se hace siempre línea por línea, debido a cómo trabaja el
+lexer.}
 var
   lin: String;
 begin
   lin := AsmLin;  //crea copia para poder modificarla
   //Extrae el texto entre los delimitadores de ensamblador
   if IsStartASM(lin) then begin
-    //es la primera línea de ensamblador
+    //Como se ha recortado el "ASM", se debe compensar "tokIni"
+    //Además se debe considerar si el delim. ASM, no inicia en 1.
+    tokIni := 3 + Cin.curCon.lex.GetX - 1;
+    //Es la primera línea de ensamblador
     StartASM;
     //puede incluir también al delimitador "end"
     if IsEndASM(lin) then begin
@@ -709,11 +716,13 @@ begin
       ProcASM(lin);  //procesa por si queda código
     end;
   end else if IsEndASM(lin) then begin
-    //es la última línea de ensamblador
+    //Es la última línea de ensamblador
+    tokIni := 0;   //En el margen izquierdo, porque no está el delimit. inicial "ASM"
     ProcASM(lin);  //procesa por si queda código
     EndASM;
   end else begin
-    //línea común de asm
+    //Es una línea común
+    tokIni := 0;   //una línea común, siempre empieza en al margen izquierdo
     ProcASM(lin);
   end;
 end;

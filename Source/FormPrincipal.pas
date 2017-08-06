@@ -10,8 +10,8 @@ uses
   Classes, SysUtils, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
   ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
   SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
-  FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
-  FrameMessagesWin, XpresElementsPIC, CodeTools, ParserAsm, ParserDirec;
+  FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView, FrameMessagesWin,
+  XpresElementsPIC, CodeTools, ParserAsm, ParserDirec, FrameCfgExtTool;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -32,6 +32,11 @@ type
     acArcNewProj: TAction;
     acArcCloseProj: TAction;
     acArcCloseFile: TAction;
+    acToolExt4: TAction;
+    acToolExt5: TAction;
+    acToolExt2: TAction;
+    acToolExt3: TAction;
+    acToolExt1: TAction;
     acToolFindDec: TAction;
     acToolConfig2: TAction;
     acToolConfig: TAction;
@@ -74,6 +79,12 @@ type
     MenuItem34: TMenuItem;
     MenuItem35: TMenuItem;
     MenuItem36: TMenuItem;
+    MenuItem37: TMenuItem;
+    MenuItem38: TMenuItem;
+    MenuItem39: TMenuItem;
+    MenuItem40: TMenuItem;
+    MenuItem41: TMenuItem;
+    MenuItem42: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -104,9 +115,14 @@ type
     ToolButton11: TToolButton;
     ToolButton12: TToolButton;
     ToolButton13: TToolButton;
+    ToolButton14: TToolButton;
     ToolButton15: TToolButton;
     ToolButton16: TToolButton;
+    ToolButton17: TToolButton;
+    ToolButton18: TToolButton;
+    ToolButton19: TToolButton;
     ToolButton2: TToolButton;
+    ToolButton20: TToolButton;
     ToolButton3: TToolButton;
     ToolButton4: TToolButton;
     ToolButton5: TToolButton;
@@ -130,6 +146,11 @@ type
     procedure acEdUndoExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
+    procedure acToolExt1Execute(Sender: TObject);
+    procedure acToolExt2Execute(Sender: TObject);
+    procedure acToolExt3Execute(Sender: TObject);
+    procedure acToolExt4Execute(Sender: TObject);
+    procedure acToolExt5Execute(Sender: TObject);
     procedure acToolFindDecExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
     procedure acViewSynTreeExecute(Sender: TObject);
@@ -156,6 +177,7 @@ type
     fraSynTree  : TfraSyntaxTree; //Árbol de sintaxis
     fraMessages : TfraMessagesWin;
     CT          : TCodeTool;
+    procedure ConfigExtTool_RequirePar(var comLine: string);
     procedure cxp_AfterCompile;
     procedure cxp_RequireFileString(FilePath: string; var strList: TStrings);
     procedure fraSynTreeSelecFileExplorer;
@@ -166,6 +188,7 @@ type
     procedure fraSynTreeOpenFile(filname: string);
     procedure fraSynTreeSelectElemen(var elem: TxpElement);
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
+    procedure MarkErrors;
     procedure VerificarError;
   public
     procedure SetLanguage(idLang: string);
@@ -232,6 +255,11 @@ begin
     fraSynTree.Refresh;
   end;
 end;
+procedure TfrmPrincipal.ConfigExtTool_RequirePar(var comLine: string);
+{Se pide reemplazar parámetros en línea de comandos de Herramienta externa.}
+begin
+  comLine := StringReplace(comLine, '$(hexFile)', cxp.hexFilePath, [rfReplaceAll, rfIgnoreCase]);
+end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 var
   synFile: String;
@@ -281,6 +309,7 @@ begin
   fraEditView1.tmpPath := rutTemp;   //fija ruta de trabajo
   Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
+  Config.fraCfgExtTool.OnReplaceParams := @ConfigExtTool_RequirePar;
   fraEditView1.InitMenuRecents(mnRecents, Config.fraCfgSynEdit.ArcRecientes);  //inicia el menú "Recientes"
   ChangeAppearance;   //primera actualización
   //carga lista de ejemplos
@@ -331,8 +360,6 @@ end;
 procedure TfrmPrincipal.Timer1Timer(Sender: TObject);
 var
   ed: TSynEditor;
-  filname, msg: string;
-  row, col: integer;
 begin
   inc(tic);
   inc(ticSynCheck);
@@ -353,7 +380,7 @@ begin
       StatusBar1.Panels[1].Text := Format('%d,%d', [ed.SynEdit.CaretX, ed.SynEdit.CaretY]);
     end;
   end;
-  if Config.AutSynChk and (ticSynCheck = 10) then begin
+  if Config.AutSynChk and (ticSynCheck = 5) then begin
     //Se cumplió el tiempo para iniciar la verificación automática de sintaxis
     debugln('--Verif. Syntax.' + TimeToStr(now));
     if fraEditView1.Count>0 then begin
@@ -362,14 +389,7 @@ begin
       fraMessages.InitCompilation(cxp, false);  //Limpia mensajes
       cxp.Compile(ed.NomArc, false);
       //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
-      if cxp.HayError then begin
-        //Obtiene las coordenadas del primer error
-         fraMessages.GetFirstError(msg, filname, row, col);
-         if (msg<>'') and (filname = ed.NomArc) then begin
-           //Hay error en el archivo actual
-           ed.MarkError(Point(col, row));
-         end;
-      end;
+      MarkErrors;  //Resalta errores, si están en el editor actual
       fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
     end;
   end;
@@ -479,6 +499,10 @@ procedure TfrmPrincipal.ChangeAppearance;
     acEdCopy.Enabled := state;
     acEdPaste.Enabled := state;
   end;
+var
+  cad: String;
+  i: Integer;
+  tool : TExternTool;
 begin
   SetLanguage(copy(Config.language, 1, 2));
   if curProj = nil then begin
@@ -538,6 +562,44 @@ begin
   //Solicita configura los editores activos
   fraEditView1.UpdateSynEditConfig;
   fraEditView1.TabViewMode := Config.TabEdiMode;
+  //Configura accesos a herramientas externas.
+  //Solo es aplicable a las primeras 5 herramientas
+  acToolExt1.Visible := false;
+  acToolExt2.Visible := false;
+  acToolExt3.Visible := false;
+  acToolExt4.Visible := false;
+  acToolExt5.Visible := false;
+  for i:=0 to config.fraCfgExtTool.ExternTools.Count-1 do begin
+    cad := config.fraCfgExtTool.ExternTools[i];
+    tool.ReadFromString(cad);  //lee campos
+    case i of
+    0: if tool.ShowInTbar then begin
+         acToolExt1.Visible := true;
+         acToolExt1.Caption:= tool.name;
+         acToolExt1.Hint := tool.name;
+       end;
+    1: if tool.ShowInTbar then begin
+         acToolExt2.Visible := true;
+         acToolExt2.Caption:= tool.name;
+         acToolExt2.Hint := tool.name;
+       end;
+    2: if tool.ShowInTbar then begin
+         acToolExt3.Visible := true;
+         acToolExt3.Caption:= tool.name;
+         acToolExt3.Hint := tool.name;
+       end;
+    3: if tool.ShowInTbar then begin
+         acToolExt4.Visible := true;
+         acToolExt4.Caption:= tool.name;
+         acToolExt4.Hint := tool.name;
+       end;
+    4: if tool.ShowInTbar then begin
+         acToolExt5.Visible := true;
+         acToolExt5.Caption:= tool.name;
+         acToolExt5.Hint := tool.name;
+       end;
+    end;
+  end;
 end;
 procedure TfrmPrincipal.editChangeFileInform;
 {Actualiza la barra de título, de acuerdo al estado}
@@ -679,9 +741,10 @@ begin
   cxp.Compiling := true;   //Activa bandera
   cxp.Compile(filName);
   cxp.Compiling := false;
-  if cxp.HayError then begin
+  if fraMessages.HaveErrors then begin
     fraMessages.EndCompilation;
     VerificarError;
+    MarkErrors;
     exit;
   end;
   fraMessages.EndCompilation;
@@ -712,6 +775,26 @@ procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
   Config.Mostrar;
 end;
+procedure TfrmPrincipal.acToolExt1Execute(Sender: TObject);
+begin
+  Config.fraCfgExtTool.ExecTool(0);
+end;
+procedure TfrmPrincipal.acToolExt2Execute(Sender: TObject);
+begin
+  Config.fraCfgExtTool.ExecTool(1);
+end;
+procedure TfrmPrincipal.acToolExt3Execute(Sender: TObject);
+begin
+  Config.fraCfgExtTool.ExecTool(2);
+end;
+procedure TfrmPrincipal.acToolExt4Execute(Sender: TObject);
+begin
+  Config.fraCfgExtTool.ExecTool(3);
+end;
+procedure TfrmPrincipal.acToolExt5Execute(Sender: TObject);
+begin
+  Config.fraCfgExtTool.ExecTool(4);
+end;
 procedure TfrmPrincipal.acToolFindDecExecute(Sender: TObject);
 {Ubica la declaración del elemento}
 begin
@@ -719,6 +802,24 @@ begin
   ct.GoToDeclaration;
 end;
 //Adicionales
+procedure TfrmPrincipal.MarkErrors;
+{Marca los errores del panel de mensajes, en la ventana activa del editor.
+Los erroes solo se marcarán si es que se udican en la ventana activa del editor.}
+var
+  msg, filname: string;
+  row, col: integer;
+  ed: TSynEditor;
+begin
+  ed := fraEditView1.ActiveEditor;
+  if fraMessages.HaveErrors then begin
+    //Obtiene las coordenadas del primer error
+     fraMessages.GetFirstError(msg, filname, row, col);
+     if (msg<>'') and (filname = ed.NomArc) then begin
+       //Hay error en el archivo actual
+       ed.MarkError(Point(col, row));
+     end;
+  end;
+end;
 procedure TfrmPrincipal.VerificarError;
 //Verifica si se ha producido algún error en el preprocesamiento y si lo hay
 //Ve la mejor forma de msotrarlo

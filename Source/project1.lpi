@@ -28,7 +28,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.21;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.9;..\..\_Librerias\Xpres-1.3;..\..\_Librerias\UtilsGrilla 0.8"/>
+            <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.21;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.9;..\..\_Librerias\Xpres-1.3.1;..\..\_Librerias\UtilsGrilla 0.8"/>
             <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
           </SearchPaths>
           <CodeGeneration>
@@ -70,7 +70,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="21">
+    <Units Count="22">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -185,6 +185,13 @@
         <Filename Value="ParserDirec.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit20>
+      <Unit21>
+        <Filename Value="FrameCfgExtTool.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fraCfgExtTool"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+      </Unit21>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -195,7 +202,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.21;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.9;..\..\_Librerias\Xpres-1.3;..\..\_Librerias\UtilsGrilla 0.8"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.21;..\..\_Librerias\MisUtils 0.5;..\..\_Librerias\MiConfig 0.3b;..\..\_Librerias\PicUtils 0.9;..\..\_Librerias\Xpres-1.3.1;..\..\_Librerias\UtilsGrilla 0.8"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

@@ -444,7 +444,7 @@ begin
   if curTok.TokTyp = hl.tnEol then begin
     //Es la marca de final de línea. Extiende para que sea visible
     MarkErr.SetMark(Point(col1, p1.y),
-                    Point(col2 + 2, p1.y));
+                    Point(col2 + 1, p1.y));
   end else if curTok.TokTyp = hl.GetAttribIDByName('Asm') then begin
     //Es bloque ensamblador.
     col2 := LocEndOfWord(lin, p1.x);  //ubica a la palabra actual

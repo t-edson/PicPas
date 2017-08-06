@@ -1,13 +1,9 @@
 unit FrameCfgSyntax;
-
 {$mode objfpc}{$H+}
-
 interface
-
 uses
   Classes, SysUtils, FileUtil, LazUTF8, Forms, Controls, StdCtrls,
   LCLProc, Graphics, MisUtils, fgl, LCLIntf, Dialogs, SynFacilBasic, strutils;
-
 type
   //Registro para modelar la posición de un parámetro de un Nodo CML
 
@@ -89,11 +85,9 @@ type
     curAttr: TSynAttribute;  //Atributo actual
     synLangList: TSynLangList;
     function AddSyntax(synFile: string): TSynLang;
-  public
+  public  //Inicialización
     procedure Init(pathSyn0: string);
     procedure SaveChanges;
-  public
-    //genera constructor y destructor
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
   end;

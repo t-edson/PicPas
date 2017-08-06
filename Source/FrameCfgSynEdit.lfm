@@ -18,9 +18,9 @@ object fraCfgSynEdit: TfraCfgSynEdit
     TabOrder = 0
   end
   object cbutLinAct: TColorButton
-    Left = 269
+    Left = 275
     Height = 25
-    Top = 158
+    Top = 156
     Width = 64
     BorderWidth = 2
     ButtonColorSize = 16
@@ -43,9 +43,9 @@ object fraCfgSynEdit: TfraCfgSynEdit
     ParentColor = False
   end
   object cmbFontName: TComboBox
-    Left = 48
+    Left = 64
     Height = 23
-    Top = 9
+    Top = 10
     Width = 100
     ItemHeight = 15
     TabOrder = 1
@@ -60,9 +60,9 @@ object fraCfgSynEdit: TfraCfgSynEdit
     ParentColor = False
   end
   object spFontSize: TSpinEdit
-    Left = 283
+    Left = 289
     Height = 23
-    Top = 10
+    Top = 8
     Width = 50
     TabOrder = 2
   end
@@ -75,7 +75,7 @@ object fraCfgSynEdit: TfraCfgSynEdit
     ParentColor = False
   end
   object cbutBackCol: TColorButton
-    Left = 96
+    Left = 104
     Height = 25
     Top = 40
     Width = 64
@@ -84,7 +84,7 @@ object fraCfgSynEdit: TfraCfgSynEdit
     ButtonColor = clBlack
   end
   object Label9: TLabel
-    Left = 205
+    Left = 203
     Height = 15
     Top = 46
     Width = 61
@@ -92,9 +92,9 @@ object fraCfgSynEdit: TfraCfgSynEdit
     ParentColor = False
   end
   object cbutTextCol: TColorButton
-    Left = 269
+    Left = 275
     Height = 25
-    Top = 40
+    Top = 38
     Width = 64
     BorderWidth = 2
     ButtonColorSize = 16
@@ -112,10 +112,10 @@ object fraCfgSynEdit: TfraCfgSynEdit
     Left = 8
     Height = 81
     Top = 192
-    Width = 338
+    Width = 346
     Caption = '                            '
     ClientHeight = 61
-    ClientWidth = 334
+    ClientWidth = 342
     TabOrder = 4
     object chkVerPanVer: TCheckBox
       Left = 6
@@ -127,7 +127,7 @@ object fraCfgSynEdit: TfraCfgSynEdit
       TabOrder = 0
     end
     object cbutFonPan: TColorButton
-      Left = 256
+      Left = 264
       Height = 25
       Top = 0
       Width = 64
@@ -152,7 +152,7 @@ object fraCfgSynEdit: TfraCfgSynEdit
       ParentColor = False
     end
     object cbutTxtPan: TColorButton
-      Left = 256
+      Left = 264
       Height = 25
       Top = 28
       Width = 64
@@ -203,9 +203,9 @@ object fraCfgSynEdit: TfraCfgSynEdit
     ParentColor = False
   end
   object cbutResPal: TColorButton
-    Left = 269
+    Left = 275
     Height = 25
-    Top = 128
+    Top = 126
     Width = 64
     BorderWidth = 2
     ButtonColorSize = 16

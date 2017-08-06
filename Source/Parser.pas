@@ -12,7 +12,6 @@ type
  { TCompiler }
   TCompiler = class(TParserDirec)
   private  //Funciones básicas
-    mainFile: string;  //archivo inicial que se compila
     function AddVariable(varName: string; typ: ttype; srcPos: TSrcPos): TxpEleVar;
     function GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
     procedure cInNewLine(lin: string);
@@ -29,7 +28,6 @@ type
     procedure ResetFlashAndRAM;
     procedure getListOfIdent(var itemList: TStringDynArray; out
       srcPosArray: TSrcPosArray);
-    procedure ProcComments;
     procedure CaptureDecParams(fun: TxpEleFun);
     procedure CompileIF;
     procedure CompileREPEAT;
@@ -37,6 +35,7 @@ type
     procedure Tree_AddElement(elem: TxpElement);
     function VerifyEND: boolean;
   protected   //Métodos OVERRIDE
+    procedure ProcComments; override;
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
     procedure TipDefecString(var Op: TOperand; tokcad: string); override;
     procedure TipDefecBoolean(var Op: TOperand; tokcad: string); override;
@@ -56,17 +55,20 @@ type
     procedure CompileProgram;
     procedure CompileLinkProgram;
   public
+    hexFile: string;  //Nombre de archivo de salida
     OnAfterCompile: procedure of object;   //Al finalizar la compilación.
     {Indica que TCompiler, va a acceder a un archivo, peor está pregunatndo para ver
      si se tiene un Stringlist, con los datos ya caragdos del archivo, para evitar
      tener que abrir nuevamente al archivo.}
     OnRequireFileString: procedure(FilePath: string; var strList: TStrings) of object;
+    function hexFilePath: string;
     procedure Compile(NombArc: string; Link: boolean = true);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
     procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);  //uso de la memoria Flash
     function RAMusedStr: string;
     function FLASHusedStr: string;
     procedure GetResourcesUsed(out ramUse, romUse, stkUse: single);
+  public //Inicialización
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -78,30 +80,8 @@ var
 procedure SetLanguage(idLang: string);
 
 implementation
-var
-  ER_NOT_IMPLEM_, ER_IDEN_EXPECT, ER_DUPLIC_IDEN, ER_INVAL_FLOAT: string;
-  ER_ERR_IN_NUMB, ER_NOTYPDEFNUM, ER_UNDEF_TYPE_: string;
-  ER_INV_MAD_DEV, ER_EXP_VAR_IDE, ER_INV_MEMADDR, ER_BIT_VAR_REF: String;
-  ER_UNKNOWN_ID_: string;
-  ER_IDE_CON_EXP, ER_NUM_ADD_EXP, ER_IDE_TYP_EXP, ER_SEM_COM_EXP: String;
-  ER_EQU_COM_EXP, ER_END_EXPECTE, ER_EOF_END_EXP, ER_BOOL_EXPECT: String;
-  ER_UNKN_STRUCT, ER_PROG_NAM_EX, ER_COMPIL_PROC, ER_CON_EXP_EXP: String;
-  ER_NOT_AFT_END, ER_ELS_UNEXPEC : String;
-  ER_INST_NEV_EXE, ER_ONLY_ONE_REG: String;
-  ER_VARIAB_EXPEC, ER_ONL_BYT_WORD, ER_ASIG_EXPECT: String;
-  ER_FIL_NOFOUND, WA_UNUSED_CON_, WA_UNUSED_VAR_,WA_UNUSED_PRO_: String;
-  MSG_RAM_USED, MSG_FLS_USED: String;
 //Funciones básicas
-procedure SetLanguage(idLang: string);
-begin
-  curLang := idLang;
-  {$I ..\language\tra_Parser.pas}
-//  ER_NOT_IMPLEM_ := trans('"begin" expected.', 'Se esperaba "begin".','','');
-//  ER_NOT_IMPLEM_ := trans('"do" expected.', 'Se esperaba "do".','','');
-//  ER_NOT_IMPLEM_ := trans('"then" expected.', 'Se esperaba "then"','','');
-//  ER_NOT_IMPLEM_ := trans('"until" expected.', 'Se esperaba "until"','','');
-//  ER_NOT_IMPLEM_ := trans('Expected "begin", "var", "type" or "const".', 'Se esperaba "begin", "var", "type" o "const".','','');
-end;
+{$I ..\language\tra_Parser.pas}
 procedure TCompiler.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
 begin
@@ -162,6 +142,8 @@ pasa al siguiente token, aún cuando detecta errores. Esto permite seguir proesa
 el texto, después de que ya se han generado errores dentro de este blqoue. Así, no
 sería necesario verificar error después de esta rutina, y se podrían detectar errores
 adicionales en el código fuente.}
+var
+  ctxChanged: Boolean;  //Manejamos variables locales para permitir recursividad
 begin
   cIn.SkipWhites;
   while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
@@ -175,11 +157,18 @@ begin
       end;
     end else begin
       //Es una directiva
-      ProcDIRline(cIn.tok, Cin.curCon.lex.GetX);  //procesa línea
+     ProcDIRline(cIn.tok, ctxChanged);  //procesa línea
       if HayError then begin
         cIn.Next;   //Pasa, porque es un error ya ubicado, y mejor buscamos otros
         cIn.SkipWhites;
         continue;
+      end;
+      if ctxChanged then begin
+        {Hubo cambio de contexto. Procesamos nuevamente, porque ahora estamos ya en
+        otro contexto y se supone que esta llamada a ProcComments(), se hace precisamente
+        para saltar blancos, comentarios, directivas, o bloques ASM.}
+        cIn.SkipWhites;   {En el nuevo contexto puede haber nuevos comentarios.}
+        exit;
       end;
     end;
     //Pasa a siguiente
@@ -1481,7 +1470,7 @@ begin
       uName := uName + '.pas';  //nombre de archivo
 {----}TreeElems.AddElementAndOpen(uni);
       //Ubica al archivo de la unidad
-      p := cIn.PosAct;   //Se debe gaurdar la posición antes de abrir otro contexto
+      p := cIn.PosAct;   //Se debe guardar la posición antes de abrir otro contexto
       //Primero busca en la misma ubicación del archivo fuente
       uPath := ExtractFileDir(mainFile) + DirectorySeparator + uName;
       if OpenContextFrom(uPath) then begin
@@ -1542,6 +1531,7 @@ begin
   end;
   ProcComments;
   //Busca USES
+  if HayError then exit;  //CompileUsesDeclaration, va a limpiar "HayError"
   CompileUsesDeclaration;
   if cIn.Eof then begin
     GenError('Expected "begin", "var", "type" or "const".');
@@ -1701,9 +1691,9 @@ begin
         {Tiene declaración absoluta. Mejor compilamos de nuevo, la declaración, porque
         puede haber referencia a variables que han cambiado de ubicación, por
         optimización.
-        Se podría hacer una verificación, para saber si la refErencia es a direcciones
+        Se podría hacer una verificación, para saber si la referencia es a direcciones
         absolutas, en lugar de a variables (o a varaibles temporales), y así evitar
-        tener que compilar de nuevo, la declaración}
+        tener que compilar de nuevo, la declaración.}
         posAct := cIn.PosAct;   //guarda posición actual
         cIn.PosAct := xVar.adicPar.srcDec;  //posiciona en la declaración adicional
         adicVarDec := GetAdicVarDeclar(IsBit);
@@ -1795,6 +1785,10 @@ begin
   {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
   _SLEEP();   //agrega instrucción final
 end;
+function TCompiler.hexFilePath: string;
+begin
+  Result := ExtractFileDir(mainFile) + DirectorySeparator + hexFile;
+end;
 function TCompiler.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}
 begin
@@ -1833,6 +1827,7 @@ begin
     end;
     {-------------------------------------------------}
     TreeElems.Clear;
+    TreeDirec.Clear;
     TreeElems.OnAddElement := @Tree_AddElement;   //Se va a modificar el árbol
     listFunSys.Clear;
     CreateSystemElements;  //Crea los elementos del sistema
@@ -1878,7 +1873,7 @@ begin
     cIn.ClearAll;//es necesario por dejar limpio
     //Genera archivo hexa, en la misma ruta del programa
     if Link then begin
-       pic.GenHex(ExtractFileDir(mainFile) + DirectorySeparator + 'output.hex');
+       pic.GenHex(hexFilePath, ConfigWord);  //CONFIG_NULL;
     end;
   finally
     ejecProg := false;
@@ -2011,6 +2006,7 @@ begin
 end;
 constructor TCompiler.Create;
 begin
+  hexFile := 'output.hex';
   inherited Create;
   cIn.OnNewLine:=@cInNewLine;
   mode := modPicPas;   //Por defecto en sintaxis nueva

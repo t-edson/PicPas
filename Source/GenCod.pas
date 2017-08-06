@@ -2942,7 +2942,7 @@ begin
   xLex.DefTokDelim('//','', xLex.tnComment);
   xLex.DefTokDelim('{','}', xLex.tnComment, tdMulLin);
   xLex.DefTokDelim('(\*','\*)', xLex.tnComment, tdMulLin);
-  xLex.DefTokDelim('{$','}', tnDirective);
+  xLex.DefTokDelim('{$','}', tnDirective, tdUniLin);
   xLex.DefTokDelim('Asm','End', tnAsm, tdMulLin);
   //define bloques de sintaxis
 //  xLex.AddBlock('{','}');
