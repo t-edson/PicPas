@@ -280,18 +280,15 @@ type
     constructor Create; override;
   end;
 
-  { TxpEleBody }
-  //Representa a una directiva. Diseñado para representar a los nodos {$IFDEF}
-
   { TxpEleDIREC }
-
+  //Representa a una directiva. Diseñado para representar a los nodos {$IFDEF}
   TxpEleDIREC = class(TxpElement)
-    adrr   : integer;  //dirección física
+    ifDefResult  : boolean;   //valor booleano, de la expresión $IFDEF
     constructor Create; override;
   end;
 
   { TXpTreeElements }
-  {Árbol de elementos. Solo se espera que haya una instacia de este objeto. Aquí es
+  {Árbol de elementos. Se usa para el árbol de sinatxis y de directivas. Aquí es
   donde se guardará la referencia a todas los elementos (variables, constantes, ..)
   creados.
   Este árbol se usa también como un equivalente al NameSpace, porque se usa para
@@ -781,7 +778,7 @@ end;
 constructor TxpEleDIREC.Create;
 begin
   inherited Create;
-
+  elemType := eltBody;
 end;
 { TXpTreeElements }
 procedure TXpTreeElements.Clear;

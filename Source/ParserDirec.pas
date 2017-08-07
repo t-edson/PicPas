@@ -33,8 +33,7 @@ type
     procedure ProcCONFIG;
     procedure ProcFREQUENCY;
     procedure ProcDEFINE(lin: string);
-    procedure ProcIFDEF(lin: string);
-    procedure ProcIFNDEF(lin: string);
+    procedure ProcIFDEF(lin: string; negated: boolean);
     procedure ProcINCLUDE(lin: string; var ctxChanged: boolean);
     procedure ProcMODE;
     procedure ProcMSGBOX;
@@ -327,46 +326,38 @@ begin
     NewMacro(Ident, value);
   end;
 end;
-procedure TParserDirec.ProcIFDEF(lin: string);
-var
-  Ident, direc: String;
-  xDirec: TxpEleDIREC;
-begin
-  //Agrega el nodo para gaurdar información para la segunda pasada
-  if FirstPass then begin
-    xDirec := TxpEleDIREC.Create;
-    TreeDirec.AddElement(xDirec);
-  end;
-  lexDir.Next;  //pasa al siguiente
-  Ident := GetIdent;
-  if HayError then exit;
-  skipWhites;
-  if lexDir.GetEol then begin
-    //Esto es lo normal. Buscamos el identificador
-    if DefinedMacro(Ident) then begin
-      //Está definido
-      inc(WaitForEndIF);  //marca bandera para esperar
+procedure TParserDirec.ProcIFDEF(lin: string; negated: boolean);
+  function EvaluateExp(const Ident: string): boolean;
+  {Evalúa el resultado de la expresión de la directiva $IFDEF.
+  Debería ejecutarse solo una vez, en ProcIFDEF(()}
+  var
+    xDirec: TxpEleDIREC;
+    ele: TxpElement;
+  begin
+    if FirstPass then begin
+      //Agrega el nodo para guardar información para la segunda pasada
+      xDirec := TxpEleDIREC.Create;
+      xDirec.srcDec := cIn.ReadSrcPos;   //guarda posición de aparición
+      TreeDirec.AddElement(xDirec, false);  //Agrega sin verificación de nombre
+      //Evalúa
+      Result := DefinedMacro(Ident) xor negated;
+      //Guarda resultado
+      xDirec.ifDefResult := Result;
     end else begin
-      //No está definido, no se debe compilar hasta un {$ENDIF} o un {$ELSE}
-      cIn.Next;
-      //Explora, sin compilar, hasta encontrar directiva delimitadora.
-      if not ScanIFDEF(direc) then begin
-        //Llegó al final del código fuente, sin encontrar el ENDIF
-        GenErrorDir(ER_ENDIF_NOFOU);
-        exit;
+      {En al segunda pasada, ya no se evalúa, porque la segunda pasada, ya no se
+      hace en el orden del código fuente, y se pierde la secuencia de directivas.}
+      for ele in TreeDirec.curNode.elements do begin
+        //Busca la directiva de la dirección actual (ubicada en la primera pasada)
+        if ele.srcDec.EqualTo(cIn.ReadSrcPos) then begin
+          //Encontró
+          Result := TxpEleDIREC(ele).ifDefResult;
+          exit;
+        end;
       end;
-      //Encontró token delimitador
-      //Si es $ENDIF, no hay problema, todo termina allí, pero si es un else:
-      if direc='ELSE' then begin
-        inc(WaitForEndIF);  //marca bandera para esperar
-      end;
+      //No encontró. Esto no debería pasar.
+      MsgErr('Implementation error.');
     end;
-  end else begin
-    //Sigue algo más. No se esperaba.
-    GenErrorDir(ER_SYNTAX_ERRO);
   end;
-end;
-procedure TParserDirec.ProcIFNDEF(lin: string);
 var
   Ident, direc: String;
 begin
@@ -376,12 +367,12 @@ begin
   skipWhites;
   if lexDir.GetEol then begin
     //Esto es lo normal. Buscamos el identificador
-    if not DefinedMacro(Ident) then begin
+    if EvaluateExp(Ident) then begin
       //Está definido
       inc(WaitForEndIF);  //marca bandera para esperar
     end else begin
       //No está definido, no se debe compilar hasta un {$ENDIF} o un {$ELSE}
-      cIn.Next;
+      cIn.Next;  //toma token {$IDEF  }
       //Explora, sin compilar, hasta encontrar directiva delimitadora.
       if not ScanIFDEF(direc) then begin
         //Llegó al final del código fuente, sin encontrar el ENDIF
@@ -437,6 +428,7 @@ begin
       if UpCase(tmp) = '$MODE' then tmp := modeStr;
       if UpCase(tmp) = '$CURRBANK' then tmp := IntToStr(CurrBank);
       if UpCase(tmp) = '$IFLASH' then tmp := IntToStr(pic.iFlash);
+      if UpCase(tmp) = '$WAITFORENDIF' then tmp := IntToStr(WaitForEndIF);
       //Verifica si es una macro definida
       if tmp[1]  = '$' then begin
         //Puede ser macro
@@ -506,13 +498,13 @@ begin
   'CONFIG'   : ProcCONFIG;
   'INCLUDE'  : ProcINCLUDE(lin, ctxChanged);
   'DEFINE'   : ProcDEFINE(lin);
-  'IFDEF'    : ProcIFDEF(lin);
-  'IFNDEF'    : ProcIFNDEF(lin);
+  'IFDEF'    : ProcIFDEF(lin, false);
+  'IFNDEF'   : ProcIFDEF(lin, true);
   'ELSE'     : begin
     if WaitForEndIF>0 then begin
-      {Estamos dentro de un IF, que se supone dio veradero, de otra forma, no llegaría
+      {Estamos dentro de un IF, que se supone dio verdadero, de otra forma, no llegaría
       por aquí. De ser así, el ELSE debe ser falso.}
-      cIn.Next;  //toma token
+      cIn.Next;  //toma token {$ELSE}
       //Explora, sin compilar, hasta encontrar directiva delimitadora.
       if not ScanIFDEF(direc) then begin
         //Llegó al final del código fuente, sin encontrar el ENDIF
@@ -525,6 +517,8 @@ begin
         GenErrorDir(ER_UNEXP_ELSE);
         exit;
       end;
+      //Encontró un $ENDIF
+      dec(WaitForEndIF);  //lleva la cuenta
     end else begin
       //No se esperaba
       GenErrorDir(ER_UNEXP_ENDIF);

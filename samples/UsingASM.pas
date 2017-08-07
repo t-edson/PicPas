@@ -14,4 +14,3 @@ begin
   until a=0;
   a := (a xor %1);
 end.
-

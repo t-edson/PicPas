@@ -112,4 +112,9 @@ chkOptBnkBefPro.Caption:= Trans('Before Procedures'     , 'Antes de procedimient
                                'Vor Prozeduren');
 chkOptBnkAftPro.Caption:= Trans('After Procedures'      , 'Después de procedimientos.', '',
                                 'Nach den Prozeduren');
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////// External Tool ////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+tabExtTool.Caption    := Trans('External Tool'           , 'Herramienta Externa'      , '',
+                               '');
 

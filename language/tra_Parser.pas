@@ -1,3 +1,20 @@
+var
+  ER_NOT_IMPLEM_, ER_IDEN_EXPECT, ER_DUPLIC_IDEN, ER_INVAL_FLOAT: string;
+  ER_ERR_IN_NUMB, ER_NOTYPDEFNUM, ER_UNDEF_TYPE_: string;
+  ER_INV_MAD_DEV, ER_EXP_VAR_IDE, ER_INV_MEMADDR, ER_BIT_VAR_REF: String;
+  ER_UNKNOWN_ID_: string;
+  ER_IDE_CON_EXP, ER_NUM_ADD_EXP, ER_IDE_TYP_EXP, ER_SEM_COM_EXP: String;
+  ER_EQU_COM_EXP, ER_END_EXPECTE, ER_EOF_END_EXP, ER_BOOL_EXPECT: String;
+  ER_UNKN_STRUCT, ER_PROG_NAM_EX, ER_COMPIL_PROC, ER_CON_EXP_EXP: String;
+  ER_NOT_AFT_END, ER_ELS_UNEXPEC : String;
+  ER_INST_NEV_EXE, ER_ONLY_ONE_REG: String;
+  ER_VARIAB_EXPEC, ER_ONL_BYT_WORD, ER_ASIG_EXPECT: String;
+  ER_FIL_NOFOUND, WA_UNUSED_CON_, WA_UNUSED_VAR_,WA_UNUSED_PRO_: String;
+  MSG_RAM_USED, MSG_FLS_USED: String;
+
+procedure SetLanguage(idLang: string);
+begin
+  curLang := idLang;
 //Update messages
 ER_NOT_IMPLEM_ := trans('Not implemented: "%s"'      , 'No implementado: "%s"'         ,'',
                         'Nicht implementiert: "%s"');
@@ -75,5 +92,5 @@ MSG_RAM_USED   := trans('RAM Used   = ', 'RAM usada  =', '',
                         'RAM verwendet =');
 MSG_FLS_USED   := trans('Flash Used = ', 'Flash usada=', '',
                         'Flash verwendet =');
-
+end;
 
