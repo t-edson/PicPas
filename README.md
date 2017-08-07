@@ -466,13 +466,17 @@ Define symbols or macros
 
 To define a symbol we can do:
 
+```
 {$define MY_SYMBOL}
+```
 
 Once defined, it can be tested using $IFDEF directive.
 
 To define a macro we can do:
 
+```
 {$DEFINE macro=Hello}
+```
 
 Then we can expand a macro, in the code, using the way:
 
