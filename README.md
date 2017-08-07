@@ -432,6 +432,34 @@ Shows a text message in the screen:
 
 {$MSGBOX 'clock=' $FREQUENCY}  -> Shows the message: "clock=8000000" (if the Frequency was set to 8MHz).
 
+#### $CONFIG
+
+Sets the configuration bits of the device.
+
+```
+{$CONFIG $3FFD}
+
+{$define _CP_ON       =     0x000F}
+{$define _CP_OFF      =     0x3FFF}
+{$define _WDT_OFF     =     0x3FFB}
+{$define _LP_OSC      =     0x3FFC}
+{$define _XT_OSC      =     $3FFD}
+
+{$CONFIG _CP_OFF, _XT_OSC, _WDT_OFF }
+
+{$CONFIG _CP_OFF _XT_OSC _WDT_OFF }
+```
+
+#### $INCLUDE
+
+Includes the contents of a external file, into de source code:
+
+```
+{$INCLUDE aaa.pas}
+{$INCLUDE d:\temp\aaa.txt}
+x := {$INCLUDE expression.txt};
+```
+
 #### $DEFINE
 
 Define symbols or macros

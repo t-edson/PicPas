@@ -1,3 +1,64 @@
+PicPas 0.7.3
+============
+Se corrige la ubicación exacta de errores en directivas, cuando la directiva no empieza
+en la columna 1 del texto.
+Se incluye corrección de la posición de errores en bloques ASM, cuando el delimitador
+ASM, no emppieza en la columna 1, y cuando todo el bloque ocupa una sola línea.
+Se mueve todo el procedimiento SetLanguage() de la unidad Parser a un archivo externo.
+Se incluye la detección del error, cuando no se coloca delimitador final en una 
+directiva.
+Se baja el periodo del temporizador, para la detección automática de errores. Se baja de 
+1 seg a 0.5 seg.
+Se implementa la definición de macros, usando {$define nombre=valor}
+Se implementa de forma experimental de la directiva $IFDEF. No soporta anidamiento aún.
+Se crea el método virtual TCompilerBase.ProcComments, para permitir al analizador de 
+expresiones a procesar macros y directivas.
+Se agrega la pestaña "External Tool" al diálogo de configuración. 
+Se crean acciones en la ventana principal, para acceder a las herramientas externas 
+(hasta 5).
+Se crea el método TCompiler.hexFilePath(), para obtener el nombre completo del *.hex.
+Se habilita la ejecución de programas externos mediante la opción "External Tool".
+Se crea la bandera HaveErrors en el formulario de mensajes, para detectar cuando se 
+reciben errores.
+Se cambia el modo de detectar errores de compilación en TfrmPrincipal.Timer1Timer() y
+en TfrmPrincipal.acToolCompilExecute(). Ahora se usa fraMessages.HaveErrors.
+Se crea el método TfrmPrincipal.MarkErrors y se configura para que el resaltado de 
+errores, se mantenga después de compilar (si genera errores.)
+Se implementa el procesamiento de la directiva {$CONFIG } par fijar los bits de 
+configuración.
+Se implementa la definición de bits de configuración y su inclusión en el archivo hex.
+Se crea el nuevo árbol TCompilerBase.TreeDirec.
+
+PENDIENTES
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absoulte a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
+
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+Teerminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema.
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir punteros, arreglos y registros.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar las funciones de búsqueda y reemplazo de texto.
+Implementar el anidamiento de la directiva $IFDEF. tal vez se puede modificar al resaltador 
+para que soporte definiciones de bloques o tokens multilínea, con delimitadores definidos
+por código, de modo que se pueda implementar el manejo de bloques condicionales a nivel 
+léxico y a la vez tener la posibilidad de que el resaltador lo muestre.
+
 PicPas 0.7.2
 ============
 Se corrige TSynEditor.MarkError(), para que marque errores cuando se indica el final 
@@ -32,31 +93,6 @@ Se implementa el manejo de bancos para la condicionales múltiples.
 Se implementa el manejo de bancos para los lazaos WHILE.
 Se agrega soporte para el PIC16F72.
 
-PENDIENTES
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absoulte a;   //Si "b" no se uitliza, aún se sigue marcando "a", como usado.
-
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
-Teerminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema.
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir arreglos y registros.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar las funciones de búsqueda y reemplazo de texto.
 
 PicPas 0.7.1
 ============
