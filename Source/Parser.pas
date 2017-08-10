@@ -113,7 +113,7 @@ begin
   setlength(srcPosArray,0 );
   setlength(itemList, 0);  //hace espacio
   repeat
-    cIn.SkipWhites;
+    ProcComments;
     //ahora debe haber un identificador
     if cIn.tokType <> tnIdentif then begin
       GenError(ER_IDEN_EXPECT);
@@ -128,7 +128,7 @@ begin
     itemList[n] := item;  //agrega nombre
     srcPosArray[n] := cIn.ReadSrcPos;  //agrega ubicación de declaración
     cIn.Next;  //lo toma identificador despues, de guardar ubicación
-    cIn.SkipWhites;
+    ProcComments;
     if cIn.tok <> ',' then break; //sale
     cIn.Next;  //toma la coma
   until false;
