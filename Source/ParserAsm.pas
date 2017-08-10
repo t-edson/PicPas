@@ -36,7 +36,7 @@ type
     procedure AddUJump(name: string; addr: integer; idInst: TPIC16Inst);
     function CaptureAddress(const idInst: TPIC16Inst; var a: word): boolean;
     function CaptureBitVar(var f, b: byte): boolean;
-    function CaptureByte(var k: byte): boolean;
+    function CaptureByte(out k: byte): boolean;
     function CaptureComma: boolean;
     function CaptureDestinat(var d: TPIC16destin): boolean;
     function CaptureNbit(var b: byte): boolean;
@@ -46,7 +46,7 @@ type
     procedure GenErrorAsm(msg: string; const Args: array of const);
     procedure GenWarnAsm(msg: string);
     function GetFaddress(addr: integer): byte;
-    function HaveByteInformation(var bytePos: byte): boolean;
+    function HaveByteInformation(out bytePos: byte): boolean;
     function IsLabel(txt: string; out dir: integer): boolean;
     function IsStartASM(var lin: string): boolean;
     function IsEndASM(var lin: string): boolean;
@@ -166,7 +166,7 @@ begin
   //No encontró
   exit(false);
 end;
-function TParserAsm.HaveByteInformation(var bytePos: byte): boolean;
+function TParserAsm.HaveByteInformation(out bytePos: byte): boolean;
 begin
 //    state0 := lexAsm.State;  //gaurda posición
   if lexasm.GetToken = '.' then begin
@@ -189,15 +189,17 @@ begin
     exit(false);
   end;
 end;
-function TParserAsm.CaptureByte(var k: byte): boolean;
-{Captura un byte y devuelve en "k". Si no encuentra devuelve error}
+function TParserAsm.CaptureByte(out k: byte): boolean;
+{Captura un byte y devuelve en "k". Si no encuentra devuelve FALSE.}
 var
   n: Integer;
   xcon: TxpEleCon;
   ele: TxpElement;
   bytePos: byte;
   str: String;
+  xvar: TxpEleVar;
 begin
+  Result := false;
   skipWhites;
   if tokType = lexAsm.tnNumber then begin
     //es una dirección numérica
@@ -241,6 +243,20 @@ begin
         GenErrorAsm(ER_NOGETVAL_CON);
         exit(false);
       end;
+    end else if ele is TxpEleVar then begin
+      //Para varaibles, se toma la dirección
+      xvar := TxpEleVar(ele);
+      if FirstPass then xvar.AddCaller;  //lleva la cuenta
+      //if (xvar.typ = typByte) or (xvar.typ = typChar) then begin
+        n := xvar.AbsAddr;
+        k := GetFaddress(n);
+        lexAsm.Next;
+        exit(true);
+      //end else begin
+      //  //GenErrorAsm(ER_NOGETADD_VAR);
+      //  GenErrorAsm(ER_EXP_CON_VAL);
+      //  exit(false);
+      //end;
     end else begin
       //No es constante
       GenErrorAsm(ER_EXP_CON_VAL);
@@ -349,6 +365,7 @@ var
   xvar: TxpEleVar;
   bytePos: byte;
 begin
+  Result := false;
   skipWhites;
   if tokType = lexAsm.tnNumber then begin
     //Es una dirección numérica
@@ -424,6 +441,8 @@ error y devuelve FALSE.}
 var
   dir: integer;
   offset: byte;
+  ele: TxpElement;
+  xfun: TxpEleFun;
 begin
   skipWhites;
   if lexAsm.GetToken = '$' then begin
@@ -471,6 +490,16 @@ begin
     Result := true;
     exit;
   end else if tokType = lexAsm.tnIdentif  then begin
+    ele := TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
+    if (ele <> nil) and (ele is TxpEleFun) then begin
+      //Es un identificador de función del árbol de sintaxis
+      xfun := TxpEleFun(ele);
+      if FirstPass then xfun.AddCaller;  //lleva la cuenta
+      a := xfun.adrr;   //lee su dirección
+      lexAsm.Next;
+      Result := true;
+      exit;
+    end;
     //Es un identificador, no definido. Puede definirse luego.
     a := $00;
     //Los saltos indefinidos, se guardan en la lista "uJumps"
@@ -566,7 +595,7 @@ begin
     if not CaptureAddress(idInst, a) then exit;
     pic.codAsmA(idInst, a);
   end;
-  'k': begin
+  'k': begin  //MOVLW
      if not CaptureByte(k) then exit;
      pic.codAsmK(idInst, k);
   end;
