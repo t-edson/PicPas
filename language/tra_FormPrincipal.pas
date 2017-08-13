@@ -58,4 +58,4 @@
  acToolPICExpl.Hint   := Trans('Open the PIC devices explorer','Abrir el explorador de dispos. PIC', 'Dispos. PIC nisqa t''aqwiqta kichariy','Öffne den PIC Geräte explorer');
  acToolConfig.Caption := Trans('&Settings'               , 'Configuración'                , 'Kamachina', '&Einstellungen');
  acToolConfig.Hint    := Trans('Settings dialog'         , 'Ver configuración'            , 'Kamachinata qhaway', 'Einstellungs-Dialog');
- acToolFindDec.Caption:= Trans('Find declaration'        , 'Ir a la declaración'          , '', 'Finde Deklaration');
+ acToolFindDec.Caption:= Trans('Find declaration'        , 'Ir a la declaración'          , 'Riqsichikusqan k''itiman riy', 'Finde Deklaration');
