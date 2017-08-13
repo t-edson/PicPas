@@ -48,14 +48,14 @@
  acViewStatbar.Hint   := Trans('Show/hide Status Bar'    , 'Mostrar/Ocultar la barra de estado', 'Imayna Kasqanta Rikuchiy/Pakachiy','Statuszeile zeigen oder verbergen');
  acViewToolbar.Caption:= Trans('&Tool Bar'               , 'Barra de &Herramientas'       , '&Llamk''anakuna Qhawachiq','&Werkzeugleiste');
  acViewToolbar.Hint   := Trans('Show/hide Tool Bar'      , 'Mostrar/Ocultar la barra de herramientas', 'Llamk''anakuna Qhawachiqta Rikuchiy/Pakachiy', 'Werkzeugleiste zeigen oder verbergen');
- acViewSynTree.Caption:= Trans('&Code explorer'          , '&Explorador de código.'       , '', '&Quelltext-Explorer');
+ acViewSynTree.Caption:= Trans('&Code explorer'          , '&Explorador de código.'       , '&Chimpukunata t''aqwiq', '&Quelltext-Explorer');
  //Tool actions
- acToolCompil.Caption := Trans('&Compile'                , '&Compilar'                    , '', '&Compilieren');
- acToolCompil.Hint    := Trans('Compile the source code'  , 'Compila el código fuente'    , '', 'Compiliere den Quelltext');
- acToolComEjec.Caption:= Trans('Compile and E&xecute'    , 'Compilar y Ej&ecutar'         , '', 'Compilieren und Au&sführen');
- acToolComEjec.Hint   := Trans('Compile and Execute'      , 'Compilar y Ejecutar'         , '', 'Compilieren und Ausführen');
- acToolPICExpl.Caption:= Trans('PIC E&xplorer'           , 'E&xplorador de PIC'           , '', 'PIC E&xplorer');
- acToolPICExpl.Hint   := Trans('Open the PIC devices explorer','Abrir el explorador de dispos. PIC', '','Öffne den PIC Geräte explorer');
+ acToolCompil.Caption := Trans('&Compile'                , '&Compilar'                    , '&Compilay', '&Compilieren');
+ acToolCompil.Hint    := Trans('Compile the source code'  , 'Compila el código fuente'    , 'Pachanmanta chimpukuna kaqta compilay', 'Compiliere den Quelltext');
+ acToolComEjec.Caption:= Trans('Compile and E&xecute'    , 'Compilar y Ej&ecutar'         , 'Compilay chaymanta &Hinay', 'Compilieren und Au&sführen');
+ acToolComEjec.Hint   := Trans('Compile and Execute'      , 'Compilar y Ejecutar'         , 'Compilay chaymanta &Hinay', 'Compilieren und Ausführen');
+ acToolPICExpl.Caption:= Trans('PIC E&xplorer'           , 'E&xplorador de PIC'           , 'PIC nisqakunata T''aqwiq', 'PIC E&xplorer');
+ acToolPICExpl.Hint   := Trans('Open the PIC devices explorer','Abrir el explorador de dispos. PIC', 'Dispos. PIC nisqa t''aqwiqta kichariy','Öffne den PIC Geräte explorer');
  acToolConfig.Caption := Trans('&Settings'               , 'Configuración'                , 'Kamachina', '&Einstellungen');
  acToolConfig.Hint    := Trans('Settings dialog'         , 'Ver configuración'            , 'Kamachinata qhaway', 'Einstellungs-Dialog');
  acToolFindDec.Caption:= Trans('Find declaration'        , 'Ir a la declaración'          , '', 'Finde Deklaration');
