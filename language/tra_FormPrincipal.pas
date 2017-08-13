@@ -22,17 +22,17 @@
  acArcQuit.Caption    := Trans('&Quit'          , '&Salir'           , 'Ll&uqsiy'            , '&Beenden');
  acArcQuit.Hint       := Trans('Close the program','Cerrar el programa','Programata wi&sqay', 'Programm beenden');
  //Edit Actions
- acEdUndo.Caption     := Trans('&Undo'       , '&Deshacer'        , '', '&Zurück');
- acEdUndo.Hint        := Trans('Undo'        , 'Deshacer'         , '', 'Änderung zurücknehmen');
- acEdRedo.Caption     := Trans('&Redo'       , '&Rehacer'         , '', '&Wiederholen');
- acEdRedo.Hint        := Trans('Redo'        , 'Reahacer'         , '', 'Änderung wiederholen');
+ acEdUndo.Caption     := Trans('&Undo'       , '&Deshacer'        , '&Paskay', '&Zurück');
+ acEdUndo.Hint        := Trans('Undo'        , 'Deshacer'         , 'Paskay', 'Änderung zurücknehmen');
+ acEdRedo.Caption     := Trans('&Redo'       , '&Rehacer'         , '&Ruwapay', '&Wiederholen');
+ acEdRedo.Hint        := Trans('Redo'        , 'Reahacer'         , 'Ruwapay', 'Änderung wiederholen');
  acEdCut.Caption      := Trans('C&ut'        , 'Cor&tar'          , 'Ku&chuy', 'A&usschneiden');
  acEdCut.Hint         := Trans('Cut'         , 'Cortar'           , 'Kuchuy', 'Ausschneiden');
  acEdCopy.Caption     := Trans('&Copy'       , '&Copiar'          , 'Kiki&nchay', '&Kopieren');
  acEdCopy.Hint        := Trans('Copy'        , 'Copiar'           , 'Kikinchay', 'Kopieren');
  acEdPaste.Caption    := Trans('&Paste'      , '&Pegar'           , 'k''ask&ay', '&Einfügen');
  acEdPaste.Hint       := Trans('Paste'       , 'Pegar'            , 'K''askay', 'Einfügen');
- acEdSelecAll.Caption := Trans('Select &All'    , 'Seleccionar &Todo'  , 'Lla&panta Akllay', 'Alles &Auswählen');
+ acEdSelecAll.Caption := Trans('Select &All'    , 'Seleccionar &Todo'  , 'Llapan&ta Akllay', 'Alles &Auswählen');
  acEdSelecAll.Hint    := Trans('Select all'  , 'Seleccionar todo' , 'Llapanta Akllay', 'Alles auswählen');
  //Search Actions
  acBusFind.Caption    := Trans('Search...'      , 'Buscar...'          , 'Maskhay', 'Suchen...');
@@ -42,12 +42,12 @@
  acBusReplac.Caption  := Trans('&Replace...'    , '&Reemplazar...'     , '&Yankiy', '&Ersetzen...');
  acBusReplac.Hint     := Trans('Replace text'   , 'Reemplazar texto'   , 'Qillqata yankiy', 'Text ersetzen');
  //View actions
- acViewMsgPan.Caption := Trans('&Messages Panel'         , 'Panel de &Mensajes'           , '','&Nachrichten Panel');
- acViewMsgPan.Hint    := Trans('Show/hide Messages Panel', 'Mostrar/Ocultar el Panel de Mensajes', '', 'Nachrichten Panel zeigen oder verbergen');
- acViewStatbar.Caption:= Trans('&Status Bar'             , 'Barra de &Estado'             , '','&Statuszeile');
- acViewStatbar.Hint   := Trans('Show/hide Status Bar'    , 'Mostrar/Ocultar la barra de estado', '','Statuszeile zeigen oder verbergen');
- acViewToolbar.Caption:= Trans('&Tool Bar'               , 'Barra de &Herramientas'       , '','&Werkzeugleiste');
- acViewToolbar.Hint   := Trans('Show/hide Tool Bar'      , 'Mostrar/Ocultar la barra de herramientas', '', 'Werkzeugleiste zeigen oder verbergen');
+ acViewMsgPan.Caption := Trans('&Messages Panel'         , 'Panel de &Mensajes'           , '&Willanakuna qhawachiq','&Nachrichten Panel');
+ acViewMsgPan.Hint    := Trans('Show/hide Messages Panel', 'Mostrar/Ocultar el Panel de Mensajes', 'Willanakuna qhawachiqta Rikuchiy/Pakachiy', 'Nachrichten Panel zeigen oder verbergen');
+ acViewStatbar.Caption:= Trans('&Status Bar'             , 'Barra de &Estado'             , '&Imayna kasqanta Qhawachiq','&Statuszeile');
+ acViewStatbar.Hint   := Trans('Show/hide Status Bar'    , 'Mostrar/Ocultar la barra de estado', 'Imayna Kasqanta Rikuchiy/Pakachiy','Statuszeile zeigen oder verbergen');
+ acViewToolbar.Caption:= Trans('&Tool Bar'               , 'Barra de &Herramientas'       , '&Llamk''anakuna Qhawachiq','&Werkzeugleiste');
+ acViewToolbar.Hint   := Trans('Show/hide Tool Bar'      , 'Mostrar/Ocultar la barra de herramientas', 'Llamk''anakuna Qhawachiqta Rikuchiy/Pakachiy', 'Werkzeugleiste zeigen oder verbergen');
  acViewSynTree.Caption:= Trans('&Code explorer'          , '&Explorador de código.'       , '', '&Quelltext-Explorer');
  //Tool actions
  acToolCompil.Caption := Trans('&Compile'                , '&Compilar'                    , '', '&Compilieren');
