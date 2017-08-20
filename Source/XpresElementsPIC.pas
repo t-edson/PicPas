@@ -63,7 +63,7 @@ var
   typByte: TType;     //número sin signo
   typWord: TType;     //número sin signo
   typChar: TType;     //caracter individual
-//  tipChr : Ttype;   //un caracter
+  typDword:Ttype;     //número sin signo de 32 bits
 
 type
 
@@ -198,8 +198,10 @@ type
     IsTmp      : boolean;
     //Campos para guardar las direcciones físicas asignadas en RAM.
     adrBit : TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
-    adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Char/Word
-    adrByte1: TPicRegister;   //Dirección física, cuando es de tipo Word
+    adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Char/Word/DWord
+    adrByte1: TPicRegister;   //Dirección física, cuando es de tipo Word/DWord
+    adrByte2: TPicRegister;   //Dirección física, cuando es de tipo DWord
+    adrByte3: TPicRegister;   //Dirección física, cuando es de tipo DWord
     function AbsAddr : word;   //Devuelve la dirección absoluta de la variable
     function AbsAddrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
     function AbsAddrH: word;   //Devuelve la dirección absoluta de la variable (HIGH)
@@ -584,7 +586,7 @@ begin
     Result := adrBit.AbsAdrr;
   end else if (typ = typByte) or (typ = typChar) then begin
     Result := adrByte0.AbsAdrr;
-  end else if typ = typWord then begin
+  end else if (typ = typWord) or (typ = typDword) then begin
     Result := adrByte0.AbsAdrr;
   end else begin
     Result := ADRR_ERROR;
@@ -593,7 +595,7 @@ end;
 function TxpEleVar.AbsAddrL: word;
 {Dirección absoluta de la variable de menor pero, cuando es de tipo WORD.}
 begin
-  if typ = typWord then begin
+  if (typ = typWord) or (typ = typDWord) then begin
     Result := adrByte0.AbsAdrr;
   end else begin
     Result := ADRR_ERROR;
@@ -602,7 +604,7 @@ end;
 function TxpEleVar.AbsAddrH: word;
 {Dirección absoluta de la variable de mayor pero, cuando es de tipo WORD.}
 begin
-  if typ = typWord then begin
+  if (typ = typWord) or (typ = typDWord) then begin
     Result := adrByte1.AbsAdrr;
   end else begin
     Result := ADRR_ERROR;
@@ -616,6 +618,8 @@ begin
   end else if (typ = typByte) or (typ = typChar) then begin
     Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
   end else if typ = typWord then begin
+    Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
+  end else if typ = typDword then begin
     Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
   end else begin
     Result := '';   //Error
@@ -646,6 +650,13 @@ begin
 
   adrByte1.bank := 0;
   adrByte1.offs := 0;
+
+  adrByte2.bank := 0;
+  adrByte2.offs := 0;
+
+  adrByte3.bank := 0;
+  adrByte3.offs := 0;
+
 end;
 constructor TxpEleVar.Create;
 begin
@@ -654,11 +665,15 @@ begin
   adrBit:= TPicRegisterBit.Create;  //
   adrByte0:= TPicRegister.Create;
   adrByte1:= TPicRegister.Create;
+  adrByte2:= TPicRegister.Create;
+  adrByte3:= TPicRegister.Create;
 end;
 destructor TxpEleVar.Destroy;
 begin
   adrByte0.Destroy;
   adrByte1.Destroy;
+  adrByte2.Destroy;
+  adrByte3.Destroy;
   adrBit.Destroy;
   inherited Destroy;
 end;

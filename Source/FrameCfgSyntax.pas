@@ -1,18 +1,37 @@
+{Frame para la configuración de los elementos de la sintaxis de los editores de texto.
+A diferencia de los otros frames, este no trabaja a la manera común, que sería asociar
+propiedades a controles, con rutinas de MiConfig.
+Aquí se leen directamente las propiedades de lso archivos XML de sintaxis, y se cargan
+en la lista synLangList. Allí se modifican y solo cuando se pulsa "Aplicar", se vuelca
+nuevamente el contenido a disco, sobreescribiendo todo el archivo.
+}
 unit FrameCfgSyntax;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, FileUtil, LazUTF8, Forms, Controls, StdCtrls,
-  LCLProc, Graphics, MisUtils, fgl, LCLIntf, Dialogs, SynFacilBasic, strutils;
+  Classes, SysUtils, FileUtil, LazUTF8, Forms, Controls, StdCtrls, LCLProc,
+  Graphics, MisUtils, fgl, Types, LCLIntf, Dialogs, SynFacilBasic, strutils;
 type
-  //Registro para modelar la posición de un parámetro de un Nodo CML
 
-  { TParamPos }
+  { TSynParam }
+  {Registro para modelar a un parámetro (color de texto, de fondo, ....) de un
+  atributo. Un atributo contiene varios parámetros.
+  El objeto TParamPos, realmente no guarda copia del valor de un parámetro, sino solo
+  referencias de posición al objeto lines[], que es el único contenedor del archivo de
+  sintaxis. Cuando se actualiza TParamPos, se actualiza directamente el contenido de
+  Lines[].
+  Se podría pensar que guardar las referencias a lines[] y "nlin", podría ser redundante
+  porque todos de los parámetros, están en la misma línea, pero eso es solo cierto para
+  los parámetros de un atributo. Los parámetros peuden aparecer también, fuera de los
+  atributos (por ejemplo el parámetro "pOpenOnKeyUp"), y ocupar líneas diferentes.
+  }
+  TSynAttribute = class;
 
-  TParamPos = object
-    lines: TStringList;   //Referncia a archivo de sintaxis
-    nlin : integer;       //Índice de línea
-    p1, p2: integer;      //Posición de inicio y fin del parámetro
+  TSynParam = class
+    parName: string;      //Nombre del parámetro
+    lines  : TStringList; //Referencia a archivo de sintaxis
+    nlin   : integer;     //Índice de línea
+    OnModified: procedure(paramModf: TSynParam) of object;  //Cuando se modifica
     function Exist: boolean;
     function ReadString: string;
     function ReadColor: TColor;
@@ -20,21 +39,32 @@ type
     procedure WriteString(value: string);
     procedure WriteColor(color: TColor);
     procedure WriteBool(value: boolean);
+  private
+    procedure ReadParamPos(parLabel: string; out p1, p2: integer);
+  public
+    procedure SetSourcePosition(parName0: string; lines0: TStringList;
+      nlin0: integer);
   end;
+  TSynParamList = specialize TFPGObjectList<TSynParam>;
 
   { TSynAttribute }
-
+  {Modela a un atributo (Identificadores, Cadenas, Números, etc.)
+  Un archivo de sinatxis contiene varios atributos.
+  Un atributo contiene a varios parámetros.}
   TSynAttribute = class
   private
     function GetName: string;
     procedure SetName(AValue: string);
   public
-    pName: TParamPos;
-    pTextColor: TParamPos;
-    pBackColor: TParamPos;
-    pBold  : TParamPos;
-    pItalic: TParamPos;
-    pUnder : TParamPos;
+    pName   : TSynParam;
+    pTextColor: TSynParam;
+    pBackColor: TSynParam;
+    pBold   : TSynParam;
+    pItalic : TSynParam;
+    pUnder  : TSynParam;
+  public  //Inicialización
+    constructor Create; virtual;
+    destructor Destroy; override;
   end;
   TSynAttributeList = specialize TFPGObjectList<TSynAttribute>;
 
@@ -47,8 +77,8 @@ type
     lines : TStringList;  //Contenedor del archivo de sintaxis
     linComplet: integer;  //línea donde esta <Completion>
     linLangua : integer;  //línea donde esta <Language>
-    pName: TParamPos;
-    pOpenOnKeyUp: TParamPos;
+    pName: TSynParam;
+    pOpenOnKeyUp: TSynParam;
   public
     filName: string;
     Attributes: TSynAttributeList;  //Lista de atributos
@@ -76,6 +106,9 @@ type
     Label4: TLabel;
     ListBox1: TListBox;
     procedure chkAutoCompChange(Sender: TObject);
+    procedure chkBoldChange(Sender: TObject);
+    procedure chkItalicChange(Sender: TObject);
+    procedure chkUnderChange(Sender: TObject);
     procedure colTextColColorChanged(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
     procedure ListBox1Click(Sender: TObject);
@@ -85,68 +118,88 @@ type
     curAttr: TSynAttribute;  //Atributo actual
     synLangList: TSynLangList;
     function AddSyntax(synFile: string): TSynLang;
-  public  //Inicialización
-    procedure Init(pathSyn0: string);
+  public
     procedure SaveChanges;
+    function GetPropertiesForTheme: string;
+    procedure SetPropertiesForTheme(themeFile: string);
+  public  //Inicialización
+    procedure LoadSyntaxFiles(pathSyn0: string);
+    procedure SetLanguage;
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
   end;
 
 implementation
 {$R *.lfm}
-function ReadParamPos(lines: TStringList; nlin: integer; parName: string): TParamPos;
-{Devuelve un TParamPos, con la posición, en la cadena, del parámetro indicado.
- Si no enecuentra, devuelve TParamPos.p1:=0}
+{ TSynParam }
+procedure TSynParam.ReadParamPos(parLabel: string; out p1, p2: integer);
+{Lee la ubicación (p1 y p2) del parámetro de nombre "parLabel", en la línea lines[nlin].
+ Si no enecuentra, pone p1:=0}
+  function BuscarFinDe(cadBusq: string; const lin: string): integer;
+  {Busca la cadena "cadBusq" en "lin". Si encuentra, devuelve la posición al final de
+  la cadena de búsqueda, saltando espacios.
+  Si no encuentra, devuelve 0.}
+  var
+    p: SizeInt;
+  begin
+    p := pos(cadBusq, lin);
+    if p=0 then begin
+      //No enceontró
+      exit(0);
+    end else begin
+      //Encontró la cadena
+      p := p + length(cadBusq);  //Para que pase
+      //salta blancos
+      while (p<=length(lin)) and (lin[p] in [' ',#9]) do begin
+        inc(p);
+      end;
+      //No debería fallar, si ya se cargó (validó) la sintaxis
+      if p>length(lin) then begin
+        exit(0);
+      end;
+      //Termina apuntando a la siguiente posición no vacía
+      exit(p);
+    end;
+  end;
 var
-  p1: SizeInt;
   carStr: Char;
-  lin: String;
+  lin, cadBuscar: String;
 begin
-  Result.lines := lines;
-  Result.nlin := nlin;
   lin := lines[nlin];
+  parName := parLabel;   //actualzia nombre
   //Busca el inicio del parámetro
   lin := UpCase(lin);  //Para realizar la búsqueda sin considera caja
-  parName := UpCase(parName + '=');
-  p1 := pos(parName, lin);
-  if p1=0 then begin
-    //No enceontró
-    Result.p1 := 0;
-    exit;
-  end else begin
-    //Encontró la cadena
-    p1 := p1 + length(parName);  //Para que pase
-    while (p1<=length(lin)) and (lin[p1] in [' ',#9]) do begin
-      inc(p1);
-    end;
-    //No debería fallar, si ya se cargó la sintaxis
-    if p1>length(lin) then begin
-      Result.p1 := 0;
-      exit;
-    end;
+  cadBuscar := UpCase(parLabel + '=');  //construye cadena de búsqueda
+  p1 := BuscarFinDe(cadBuscar, lin);
+  if p1 <> 0 then begin
     //Debería seguir comilla o doble comilla
     carStr := lin[p1];
     if not (carStr in ['''', '"']) then begin
-      Result.p1 := 0;
+      p1 := 0;
       exit;
     end;
     //Busca el final de cadena
-    Result.p1 := p1 +1;
-    Result.p2 := posEx(carStr, lin, p1+1)-1;
+    p1 := p1 + 1;
+    p2 := posEx(carStr, lin, p1+1)-1;
   end;
 end;
-
-{ TParamPos }
-function TParamPos.Exist: boolean;
+function TSynParam.Exist: boolean;
+var
+  p1, p2: integer;
 begin
+  //Esta verifiación no es muy eficiente, así que usarla con cuidado
+  ReadParamPos(parName, p1, p2);  //actualiza p1 y p2
   Result := p1<>0;
 end;
-function TParamPos.ReadString: string;
+function TSynParam.ReadString: string;
+var
+  p1, p2: integer;
 begin
+  ReadParamPos(parName, p1, p2);  //actualiza p1 y p2
   if p1 = 0 then exit('');
   Result := copy(lines[nlin], p1, p2 - p1 + 1);
 end;
-function TParamPos.ReadColor: TColor;
+function TSynParam.ReadColor: TColor;
   function EsHexa(txt: string; out num: integer): boolean;
   //Convierte un texto en un número entero. Si es numérico devuelve TRUE
   var
@@ -163,40 +216,49 @@ function TParamPos.ReadColor: TColor;
 var
   cad: String;
 begin
-  if p1 = 0 then exit(clBlack);
   cad := ReadString;
+  if cad='' then exit(clBlack);
   Result := clBlack;  //Color por defecto
   Result := ColorFromStr(cad);
 end;
-function TParamPos.ReadBool: boolean;
+function TSynParam.ReadBool: boolean;
 begin
-  if p1=0 then exit(false);
   Result := UpCase(ReadString)='TRUE';
 end;
-procedure TParamPos.WriteString(value: string);
+procedure TSynParam.WriteString(value: string);
 var
-  lin: String;
+  lin, newline: String;
+  p1, p2: integer;
 begin
+  ReadParamPos(parName, p1, p2);  //actualiza p1 y p2
   if p1 = 0 then exit;
   lin := lines[nlin];
-  lines[nlin] := copy(lin, 1, p1-1)+ value + copy(lin, p2+1, length(lin));
+  newline := copy(lin, 1, p1-1)+ value + copy(lin, p2+1, length(lin));
+  lines[nlin] := newline;
+  if OnModified<>nil then OnModified(self);  //Para que se actuliazen los otros parámetros
 end;
-procedure TParamPos.WriteColor(color: TColor);
+procedure TSynParam.WriteColor(color: TColor);
 var
   value: String;
   r, g, b: Integer;
 begin
-  if p1 = 0 then exit;
   r := color and $FF;
   g := (color >> 8) and $FF;
   b := (color >> 16) and $FF;
   value := '#' + IntToHex(r,2) + IntToHex(g,2) + IntToHex(b,2);
   WriteString(value);
 end;
-procedure TParamPos.WriteBool(value: boolean);
+procedure TSynParam.WriteBool(value: boolean);
 begin
-  if p1=0 then exit;
   if Value then WriteString('True') else WriteString('False');
+end;
+procedure TSynParam.SetSourcePosition(parName0: string; lines0: TStringList; nlin0: integer);
+{Configura la ubicación del parámetro, para que pueda encontrar su valro, cuando
+necesite leerlo o modificarlo}
+begin
+  parName:= parName0;
+  lines := lines0;
+  nlin  := nlin0;
 end;
 { TSynAttribute }
 function TSynAttribute.GetName: string;
@@ -206,6 +268,27 @@ end;
 procedure TSynAttribute.SetName(AValue: string);
 begin
   pName.WriteString(AValue);
+end;
+//Inicialización
+constructor TSynAttribute.Create;
+begin
+  //Crea y ubica a sus atributos
+  pName     := TSynParam.Create;
+  pTextColor:= TSynParam.Create;
+  pBackColor:= TSynParam.Create;
+  pBold     := TSynParam.Create;
+  pItalic   := TSynParam.Create;
+  pUnder    := TSynParam.Create;
+end;
+destructor TSynAttribute.Destroy;
+begin
+  pName.Destroy;
+  pTextColor.Destroy;
+  pBackColor.Destroy;
+  pBold.Destroy;
+  pItalic.Destroy;
+  pUnder.Destroy;
+  inherited Destroy;
 end;
 { TSynLang }
 procedure TSynLang.ReadFromFile(fil: string);
@@ -221,50 +304,157 @@ begin
     lin := lines[i];
     if AnsiContainsText(lin, '<Completion') then begin
       linComplet := i;
-      pOpenOnKeyUp := ReadParamPos(lines, i, 'OpenOnKeyUp');
+      pOpenOnKeyUp.SetSourcePosition('OpenOnKeyUp', lines, i );
     end else if AnsiContainsText(lin, '<Language') then begin
       linLangua := i;
-      pName := ReadParamPos(lines, i, 'Name');
+      pName.SetSourcePosition('Name', lines, i);
     end else if AnsiContainsText(lin, '<Attribute') then begin
       //Crea el atributo
       att := TSynAttribute.Create;
-      att.pName := ReadParamPos(lines, i, 'Name');
-      att.pTextColor := ReadParamPos(lines, i, 'ForeCol');
-      att.pBackColor := ReadParamPos(lines, i, 'BackCol');
-      att.pBold      := ReadParamPos(lines, i, 'Bold');
-      att.pItalic    := ReadParamPos(lines, i, 'Italic');
-      att.pUnder     := ReadParamPos(lines, i, 'Underline');
+      att.pName     .SetSourcePosition('Name'     , lines, i);
+      att.pTextColor.SetSourcePosition('ForeCol'  , lines, i);
+      att.pBackColor.SetSourcePosition('BackCol'  , lines, i);
+      att.pBold     .SetSourcePosition('Bold'     , lines, i);
+      att.pItalic   .SetSourcePosition('Italic'   , lines, i);
+      att.pUnder    .SetSourcePosition('Underline', lines, i);
       Attributes.Add(att);
     end;
   end;
-
 end;
 procedure TSynLang.SaveToFile;
+{Vuelca el contenido de todo el archivo de este TSynLang, a disco. Las propiedades ya
+deben haber sido actualizadas en lines[]}
 begin
   lines.SaveToFile(filName);
 end;
 constructor TSynLang.Create;
 begin
+  pName       := TSynParam.Create;
+  pOpenOnKeyUp:= TSynParam.Create;
   lines := TStringList.Create;
   Attributes:= TSynAttributeList.Create(true);
 end;
 destructor TSynLang.Destroy;
 begin
+  pOpenOnKeyUp.Destroy;
+  pName.Destroy;
   lines.Destroy;
   Attributes.Destroy;
   inherited Destroy;
+end;
+{ TfraCfgSyntax }
+procedure TfraCfgSyntax.SetLanguage;
+begin
+  //curLang := idLang;
+  //
 end;
 procedure TfraCfgSyntax.chkAutoCompChange(Sender: TObject);
 begin
   if curLang = nil then exit;
   curLang.pOpenOnKeyUp.WriteBool(chkAutoComp.Checked);
 end;
+procedure TfraCfgSyntax.chkBoldChange(Sender: TObject);
+begin
+  if curAttr = nil then exit;
+  curAttr.pBold.WriteBool(chkBold.Checked);
+end;
+procedure TfraCfgSyntax.chkItalicChange(Sender: TObject);
+begin
+  if curAttr = nil then exit;
+  curAttr.pItalic.WriteBool(chkItalic.Checked);
+end;
+procedure TfraCfgSyntax.chkUnderChange(Sender: TObject);
+begin
+  if curAttr = nil then exit;
+  curAttr.pUnder.WriteBool(chkUnder.Checked);
+end;
 procedure TfraCfgSyntax.colTextColColorChanged(Sender: TObject);
 begin
   if curAttr = nil then exit;
   curAttr.pTextColor.WriteColor(colTextCol.ButtonColor);
 end;
-
+function  TfraCfgSyntax.GetPropertiesForTheme: string;
+{Devuelve en una cadena, las propiedades que se deben guardar como parte de un tema,
+como son los colores.
+Se usa para obtener información de algunas propiedades para guardarlas como parte de
+un tema.}
+var
+  synLang: TSynLang;
+  att: TSynAttribute;
+begin
+  Result := '';
+  for synLang in synLangList do begin
+    Result := Result + 'f:' + synLang.filName + LineEnding;
+    for att in synLang.Attributes do begin
+      //Agrega una línea por atributo
+      Result := Result + att.GetName + #9 +
+                   I2f(att.pTextColor.ReadColor) + #9 +
+                   I2f(att.pBackColor.ReadColor) + #9 +
+                   B2f(att.pBold.ReadBool) + #9 +
+                   B2f(att.pItalic.ReadBool) + #9 +
+                   B2f(att.pUnder.ReadBool) + #9 +
+                   #9 + #9 + #9 + //para amplaición
+                LineEnding;
+    end;
+  end;
+end;
+procedure TfraCfgSyntax.SetPropertiesForTheme(themeFile: string);
+{Fija las propiedades que lee GetPropertiesForTheme(), a partir del contenido de un
+archivo}
+  procedure SetAttribute(fil: string; attribLine: string);
+  var
+    synLang: TSynLang;
+    att: TSynAttribute;
+    campos: TStringDynArray;
+  begin
+    for synLang in synLangList do begin
+      if synLang.filName = fil then begin
+        //Encontró al synLang, que corresponde al archivo
+        campos := Explode(#9, attribLine);  //separa campos
+        //Ahora debe ubicar al atributo que corresponde "attribLine"
+        for att in synLang.Attributes do begin
+          if att.GetName = campos[0] then begin
+            //Encontró al atributo. Ahora lee los parámetros
+            att.pTextColor.WriteColor(f2I(campos[1]));
+            att.pBackColor.WriteColor(f2I(campos[2]));
+            att.pBold.WriteBool      (f2B(campos[3]));
+            att.pItalic.WriteBool    (f2B(campos[4]));
+            att.pUnder.WriteBool     (f2B(campos[5]));
+          end;
+        end;
+        //synLang.Attributes;
+      end;
+    end;
+  end;
+var
+  lin, SyntaxInf, fileNam: String;
+  isSyntaxInf: Boolean;
+  lineas: TStringList;
+begin
+  lineas:= TStringList.Create;
+  try
+    lineas.LoadFromFile(themeFile);
+    isSyntaxInf := false;
+    SyntaxInf := '';
+    for lin in lineas do begin
+      if copy(lin,1,2) = 'f:' then isSyntaxInf := true;
+      if lin = '' then isSyntaxInf := false;
+      if isSyntaxInf then begin
+        //Es una línea Propiedad
+        if copy(lin,1,2) = 'f:' then begin
+          //Es el inicio de un archivo
+          fileNam := copy(lin, 3);
+        end else begin
+          //Debe ser un atributo
+          SetAttribute(fileNam, lin);
+        end;
+        SyntaxInf := SyntaxInf + lin + LineEnding;
+      end;
+    end;
+  finally
+    lineas.Destroy;
+  end;
+end;
 procedure TfraCfgSyntax.ComboBox1Change(Sender: TObject);
 var
   att: TSynAttribute;
@@ -296,8 +486,9 @@ end;
 procedure TfraCfgSyntax.ListBox1Click(Sender: TObject);
 {Se selecciona un atributo de la lista de atributos.}
 var
-  param: TParamPos;
+  param: TSynParam;
   att: TSynAttribute;
+  Exist: Boolean;
 begin
   if ListBox1.ItemIndex = -1 then begin
     curAttr := nil;
@@ -307,24 +498,27 @@ begin
   att := TSynAttribute(ListBox1.Items.Objects[ListBox1.ItemIndex]);
 
   //  MsgBox(att.pName.ReadString);
-  param := att.pTextColor;
-  colTextCol.Enabled := param.Exist;
-  Label2.Enabled := param.Exist;
-  if param.Exist then colTextCol.ButtonColor := param.ReadColor;
+  Exist := att.pTextColor.Exist;
+  colTextCol.Enabled := Exist;
+  Label2.Enabled := Exist;
+  if Exist then colTextCol.ButtonColor := att.pTextColor.ReadColor;
 
-  param := att.pBackColor;
-  colBackCol.Enabled := param.Exist;
-  Label4.Enabled := param.Exist;
-  if param.Exist then  colBackCol.ButtonColor := param.ReadColor;
+  Exist := att.pBackColor.Exist;
+  colBackCol.Enabled := Exist;
+  Label4.Enabled := Exist;
+  if Exist then  colBackCol.ButtonColor := att.pBackColor.ReadColor;
 
-  chkBold.Enabled := att.pBold.Exist;
-  if att.pBold.Exist then chkBold.Checked := att.pBold.ReadBool;
+  Exist := att.pBold.Exist;
+  chkBold.Enabled := Exist;
+  if Exist then chkBold.Checked := att.pBold.ReadBool;
 
-  chkItalic.Enabled := att.pItalic.Exist;
-  if att.pItalic.Exist then chkItalic.Checked := att.pItalic.ReadBool;
+  Exist := att.pItalic.Exist;
+  chkItalic.Enabled := Exist;
+  if Exist then chkItalic.Checked := att.pItalic.ReadBool;
 
-  chkUnder.Enabled := att.pUnder.Exist;
-  if att.pUnder.Exist then chkUnder.Checked := att.pUnder.ReadBool;
+  Exist := att.pUnder.Exist;
+  chkUnder.Enabled := Exist;
+  if Exist then chkUnder.Checked := att.pUnder.ReadBool;
   //Actualiza al final "curAttr".
   curAttr := att;
 end;
@@ -343,8 +537,8 @@ begin
     Result := nil;
   end;
 end;
-{ TfraCfgSyntax }
-procedure TfraCfgSyntax.Init(pathSyn0: string);
+procedure TfraCfgSyntax.LoadSyntaxFiles(pathSyn0: string);
+//Carga el contendio de los archivos de sintaxis en "synLangList".
 var
   directorio, nomArc: String;
   SearchRec: TSearchRec;

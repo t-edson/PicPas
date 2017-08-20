@@ -1,0 +1,23 @@
+object fraRamExplorer: TfraRamExplorer
+  Left = 0
+  Height = 343
+  Top = 0
+  Width = 460
+  ClientHeight = 343
+  ClientWidth = 460
+  TabOrder = 0
+  DesignLeft = 343
+  DesignTop = 284
+  object Label1: TLabel
+    Left = 0
+    Height = 17
+    Top = 0
+    Width = 460
+    Align = alTop
+    AutoSize = False
+    Caption = 'RAM map'
+    Color = clActiveCaption
+    ParentColor = False
+    Transparent = False
+  end
+end

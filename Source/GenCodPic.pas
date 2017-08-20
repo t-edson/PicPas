@@ -8,7 +8,7 @@ uses
   MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 8;  //tamaño de pila para subrutinas en el PIC
-  MAX_REGS_AUX_BYTE = 4;    //cantidad máxima de registros a usar
+  MAX_REGS_AUX_BYTE = 6;    //cantidad máxima de registros a usar
   MAX_REGS_AUX_BIT = 4;    //cantidad máxima de registros bit a usar
   MAX_REGS_STACK_BYTE = 4;   //cantidad máxima de registros a usar en la pila
   MAX_REGS_STACK_BIT = 4;   //cantidad máxima de registros a usar en la pila
@@ -29,6 +29,8 @@ type
     Z      : TPicRegisterBit;  //Registro Interno.
     C      : TPicRegisterBit;  //Registro Interno.
     H      : TPicRegister;     //Registros de trabajo. Se crean siempre.
+    E      : TPicRegister;     //Registros de trabajo. Se crean siempre.
+    U      : TPicRegister;     //Registros de trabajo. Se crean siempre.
     listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
     listRegStk: TPicRegister_list;  //lista de registros de pila
     listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
@@ -43,6 +45,7 @@ type
     function ReportRAMusage: string;
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
+    function ValidateDWordRange(n: Int64): boolean;
     procedure ExchangeP1_P2;
   protected  //Variables de expresión.
     {Estas variables, se inician al inicio de cada expresión y su valor es válido
@@ -69,6 +72,7 @@ type
     varStkBit : TxpEleVar;   //variable bit. Usada para trabajar con la pila
     varStkByte: TxpEleVar;   //variable byte. Usada para trabajar con la pila
     varStkWord: TxpEleVar;   //variable word. Usada para trabajar con la pila
+    varStkDWord: TxpEleVar;  //variable dword. Usada para trabajar con la pila
     function GetAuxRegisterByte: TPicRegister;
     function GetAuxRegisterBit: TPicRegisterBit;
     //Gestión de la pila
@@ -93,6 +97,7 @@ type
     procedure SetResultConst_byte(valByte: integer);
     procedure SetResultConst_char(valByte: integer);
     procedure SetResultConst_word(valWord: integer);
+    procedure SetResultConst_dword(valWord: Int64);
 
     procedure SetResultVariab_bit(rVar: TxpEleVar; Inverted: boolean);
     procedure SetResultVariab_byte(rVar: TxpEleVar);
@@ -103,6 +108,7 @@ type
     procedure SetResultExpres_byte(opType: TOperType);
     procedure SetResultExpres_char(opType: TOperType);
     procedure SetResultExpres_word(opType: TOperType);
+    procedure SetResultExpres_dword(opType: TOperType);
   protected  //Instrucciones
     procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin
       );
@@ -155,6 +161,8 @@ type
     OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
   public  //Acceso a registro de trabajo
     property H_register: TPicRegister read H;
+    property E_register: TPicRegister read E;
+    property U_register: TPicRegister read U;
   public  //Inicialización
     function PicName: string;
     function PicNameShort: string;
@@ -164,7 +172,7 @@ type
   end;
 const
   //constantes útiles para ensamblador
-  _STATUS = $03;
+  STATUS = $03;
   _C = 0;
   _Z = 2;
   _RP0 = 5;
@@ -250,7 +258,7 @@ begin
   if (n>=0) and (n<256) then
      exit(true)
   else begin
-    GenError('Valor numérico excede el rango de un byte.');
+    GenError('Numeric value exceeds a byte range.');
     exit(false);
   end;
 end;
@@ -260,7 +268,16 @@ begin
   if (n>=0) and (n<65536) then
      exit(true)
   else begin
-    GenError('Valor numérico excede el rango de un word.');
+    GenError('Numeric value exceeds a word range.');
+    exit(false);
+  end;
+end;
+function TGenCodPic.ValidateDWordRange(n: Int64): boolean;
+begin
+  if (n>=0) and (n<$100000000) then
+     exit(true)
+  else begin
+    GenError('Numeric value exceeds a dword range.');
     exit(false);
   end;
 end;
@@ -281,7 +298,7 @@ function OperandUseW(Oper: TOperand): boolean;
 {Indica si el operando está usando el registro W}
 begin
   if (Oper.catOp = coExpres) and
-     ((Oper.typ = typByte) or (Oper.typ = typWord)) then
+     ((Oper.typ = typByte) or (Oper.typ = typWord) or (Oper.typ = typDword)) then
     exit(true)
   else
     exit(false);
@@ -290,7 +307,7 @@ function OperandUseH(Oper: TOperand): boolean;
 {Indica si el operando está usando el registro H}
 begin
   if (Oper.catOp = coExpres) and
-     (Oper.typ = typWord) then
+     ((Oper.typ = typWord) or (Oper.typ = typDword)) then
     exit(true)
   else
     exit(false);
@@ -299,7 +316,7 @@ function OperandUseHW(Oper: TOperand): boolean;
 {Indica si el operando está usando los registros H,W}
 begin
   if (Oper.catOp = coExpres) and
-     (Oper.typ = typWord) then
+     ((Oper.typ = typWord) or (Oper.typ = typDword)) then
     exit(true)
   else
     exit(false);
@@ -427,8 +444,10 @@ begin
   usado, como registro auxiliar.}
   for reg in listRegAux do begin
     //Se supone que todos los registros auxiliares, estarán siempre asignados
-    if (reg.typ = prtAuxReg) and not reg.used then
+    if (reg.typ = prtAuxReg) and not reg.used then begin
+      reg.used := true;
       exit(reg);
+    end;
   end;
   //No encontró ninguno libre, crea uno en memoria
   reg := CreateRegisterByte(prtAuxReg);
@@ -436,6 +455,7 @@ begin
   regName := 'aux'+IntToSTr(listRegAux.Count);
   AssignRAM(reg, regName);   //Asigna memoria. Puede generar error.
   if HayError then exit;
+  reg.used := true;  //marca como usado
   Result := reg;   //Devuelve la referencia
 end;
 function TGenCodPic.GetAuxRegisterBit: TPicRegisterBit;
@@ -664,12 +684,21 @@ begin
   end else if nVar.typ = typChar then begin
     AssignRAMinByte(absAdd, nVar.adrByte0, varName);
   end else if nVar.typ = typWord then begin
-    //registra variable en la tabla
+    //Registra variable en la tabla
     {Asigna espacio para los dos bytes. Notar que:
     1. Si se especifica dirección absoluta, esta se usa solo para el primer byte.
     2. Los dos bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
     AssignRAMinByte(absAdd, nVar.adrByte0, varName+'@0');
     AssignRAMinByte(-1    , nVar.adrByte1, varName+'@1');
+  end else if nVar.typ = typDword then begin
+    //Registra variable en la tabla
+    {Asigna espacio para los dos bytes. Notar que:
+    1. Si se especifica dirección absoluta, esta se usa solo para el primer byte.
+    2. Los 4 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
+    AssignRAMinByte(absAdd, nVar.adrByte0, varName+'@0');
+    AssignRAMinByte(-1    , nVar.adrByte1, varName+'@1');
+    AssignRAMinByte(-1    , nVar.adrByte2, varName+'@2');
+    AssignRAMinByte(-1    , nVar.adrByte3, varName+'@3');
   end else begin
     GenError('Not implemented.', [varName]);
   end;
@@ -728,6 +757,13 @@ begin
   if not ValidateWordRange(valWord) then
     exit;  //Error de rango
   SetResult(typWord, coConst);
+  res.valInt := valWord;
+end;
+procedure TGenCodPic.SetResultConst_dword(valWord: Int64);
+begin
+  if not ValidateWordRange(valWord) then
+    exit;  //Error de rango
+  SetResult(typDword, coConst);
   res.valInt := valWord;
 end;
 procedure TGenCodPic.SetResultVariab_bit(rVar: TxpEleVar; Inverted: boolean);
@@ -853,6 +889,27 @@ begin
   //Fija el resultado
   SetResult(typWord, coExpres);
 end;
+procedure TGenCodPic.SetResultExpres_dword(opType: TOperType);
+{Define el resultado como una expresión de tipo Word, y se asegura de reservar los
+registros H,W, para devolver la salida.}
+begin
+  //Se van a usar los RT. Verificar si los RT están ocupadoa
+  if OperandsUseRT(opType) then begin
+    //Alguno de los operandos de la operación actual, está usando algún RT
+    typDWord.DefineRegister;   //Se asegura que exista H, E y U
+  end else begin
+    {Los RT no están siendo usados, por la operación actual.
+     Pero pueden estar ocupados por la operación anterior (Ver doc. técnica).}
+    if RTstate<>nil then begin
+      //Si se usan RT en la operación anterior. Hay que salvar en pila
+      RTstate.SaveToStk;  //Se guardan por tipo
+    end else begin
+      //No se usan. Están libres
+    end;
+  end;
+  //Fija el resultado
+  SetResult(typDWord, coExpres);
+end;
 //Rutinas generales para la codificación
 procedure TGenCodPic.CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
 begin
@@ -881,10 +938,10 @@ Siempre genera dos instrucciones. Se usa cuando no se puede predecir exactamente
 banco se encontrará el compilador.}
 begin
   if pic.NumBanks > 1 then begin
-    _BCF(_STATUS, _RP0); PutComm(';Bank reset.');
+    _BCF(STATUS, _RP0); PutComm(';Bank reset.');
   end;
   if pic.NumBanks > 2 then begin
-    _BCF(_STATUS, _RP1); PutComm(';Bank reset.');
+    _BCF(STATUS, _RP1); PutComm(';Bank reset.');
   end;
   CurrBank:=0;
   BankChanged := true;   //Se asume que hubo cambio
@@ -907,34 +964,34 @@ begin
     //Este caso es equivalente a decir "no sé en qué banco estoy"
     case targetBank of
     0: begin
-       _BCF(_STATUS, _RP0); PutComm(';Bank set.');
+       _BCF(STATUS, _RP0); PutComm(';Bank set.');
        inc(nInst);
        if pic.NumBanks > 2 then begin
-         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BCF(STATUS, _RP1); PutComm(';Bank set.');
          inc(nInst);
        end;
      end;
     1: begin
-       _BSF(_STATUS, _RP0); PutComm(';Bank set.');
+       _BSF(STATUS, _RP0); PutComm(';Bank set.');
        inc(nInst);
        if pic.NumBanks > 2 then begin
-         _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BCF(STATUS, _RP1); PutComm(';Bank set.');
          inc(nInst);
        end;
      end;
     2: begin
-       _BCF(_STATUS, _RP0); PutComm(';Bank set.');
+       _BCF(STATUS, _RP0); PutComm(';Bank set.');
        inc(nInst);
        if pic.NumBanks > 2 then begin
-         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BSF(STATUS, _RP1); PutComm(';Bank set.');
          inc(nInst);
        end;
      end;
     3: begin
-       _BSF(_STATUS, _RP0); PutComm(';Bank set.');
+       _BSF(STATUS, _RP0); PutComm(';Bank set.');
        inc(nInst);
        if pic.NumBanks > 2 then begin
-         _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+         _BSF(STATUS, _RP1); PutComm(';Bank set.');
          inc(nInst);
        end;
      end;
@@ -951,9 +1008,9 @@ begin
       //Debe haber cambio
       inc(nInst);
       if curRP0 = 0 then begin
-        _BSF(_STATUS, _RP0); PutComm(';Bank set.');
+        _BSF(STATUS, _RP0); PutComm(';Bank set.');
       end else begin
-        _BCF(_STATUS, _RP0); PutComm(';Bank set.');
+        _BCF(STATUS, _RP0); PutComm(';Bank set.');
       end;
     end;
     ////////// Verifica RP1 ////////////
@@ -963,9 +1020,9 @@ begin
       //Debe haber cambio
       inc(nInst);
       if curRP1 = 0 then begin
-        _BSF(_STATUS, _RP1); PutComm(';Bank set.');
+        _BSF(STATUS, _RP1); PutComm(';Bank set.');
       end else begin
-        _BCF(_STATUS, _RP1); PutComm(';Bank set.');
+        _BCF(STATUS, _RP1); PutComm(';Bank set.');
       end;
     end;
     //////////////////////////////////////
@@ -1148,9 +1205,11 @@ begin
   listRegAuxBit.Clear;
   listRegStkBit.Clear;   //limpia la pila
   stackTopBit := 0;
-  {Crea registro de trabajo adicional H, para que esté definido, pero aún no tiene
-  asignado una posición en memoria.}
+  {Crea registros de trabajo adicionales H,E,U, para que estén definidos, pero aún no
+  tienen asignados una posición en memoria.}
   H := CreateRegisterByte(prtWorkReg);
+  E := CreateRegisterByte(prtWorkReg);
+  U := CreateRegisterByte(prtWorkReg);
   //Puede salir con error
 end;
 constructor TGenCodPic.Create;
@@ -1164,6 +1223,8 @@ begin
   varStkByte.typ := typByte;
   varStkWord := TxpEleVar.Create;
   varStkWord.typ := typWord;
+  varStkDWord := TxpEleVar.Create;
+  varStkDWord.typ := typDword;
   //Crea lista de variables temporales
   varFields:= TxpEleVars.Create(true);
   //Inicializa contenedores
@@ -1180,13 +1241,13 @@ begin
   {Crea registro de trabajo Z. El registro Z, es el registro interno del PIC, y está
   siempre asignado en RAM. }
   Z := TPicRegisterBit.Create;
-  Z.offs := _STATUS;
+  Z.offs := STATUS;
   Z.bit := _Z;
   Z.assigned := true;   //ya está asignado desde el principio
   {Crea registro de trabajo C. El registro C, es el registro interno del PIC, y está
   siempre asignado en RAM. }
   C := TPicRegisterBit.Create;
-  C.offs := _STATUS;
+  C.offs := STATUS;
   C.bit := _C;
   C.assigned := true;   //ya está asignado desde el principio
 end;
@@ -1203,6 +1264,7 @@ begin
   varStkBit.Destroy;
   varStkByte.Destroy;
   varStkWord.Destroy;
+  varStkDWord.Destroy;
   pic.Destroy;
   inherited Destroy;
 end;

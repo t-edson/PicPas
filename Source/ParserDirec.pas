@@ -59,7 +59,7 @@ type
     destructor Destroy; override;
   end;
 
-  procedure SetLanguage(idLang: string);
+  procedure SetLanguage;
 
 implementation
   {$I ..\language\tra_ParserDirec.pas}

@@ -44,7 +44,7 @@ interface
 
 uses
   Classes,  {$IFDEF MSWINDOWS} Windows, {$ENDIF} SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls,
-  LCLType, Menus, Masks, LazUTF8, Dialogs, strutils, MisUtils;
+  LCLType, Menus, Masks, LazUTF8, Dialogs, Graphics, strutils, MisUtils;
 
 type
   TNodeType = (ntyDrive, ntyFile, ntyFolder);
@@ -119,6 +119,7 @@ type
     procedure acPArcNueEncExecute(Sender: TObject);
     procedure acPArcRefresExecute(Sender: TObject);}
   private
+    FTextColor: TColor;
     NombNodEdi: String;    //nombre actual de nodo en edición
     procedure ActualPanelArc;
     function AddNodeTo(ParentNode: TTreeNode; const S: string): TExplorNode;
@@ -127,6 +128,10 @@ type
     procedure LeerDirectorio(Item0: TTreeNode; filtro: TStringList;
       expandir: boolean=false);
     function NodRuta(rut: string): TExplorNode;
+    procedure SetTextColor(AValue: TColor);
+    procedure TreeView1AdvancedCustomDrawItem(Sender: TCustomTreeView;
+      Node: TTreeNode; State: TCustomDrawState; Stage: TCustomDrawStage;
+      var PaintImages, DefaultDraw: Boolean);
   public
     NewFileName  : string;       //nombre por defecto de archivo nuevo
     NewFolderName: string;       //nombre pord efecto de carpeta nueva
@@ -140,6 +145,7 @@ type
     OnRightClickFolder: TevClickOnFile;  //Click derecho en carpeta
     OnKeyEnterOnFile  : TevClickOnFile;  //Se presionó la tecla enter en un archivo
 //    OnKeyDown         : TKeyEvent;       //TEcla pulsada
+    property TextColor: TColor read FTextColor write SetTextColor;
     function SelectedNode: TExplorNode;
     function SelectedFile: TExplorNode;
     procedure LocateFileOnTree(arch8: string);
@@ -199,7 +205,6 @@ begin
   if not nod.IsFile then exit(nil);     //verifica
   Result := TExplorNode(nod);
 end;
-
 function TfrmArcExplor.NodRuta(rut: string): TExplorNode;
 //Devuelve el nodo a partir de la ruta completa
 var
@@ -211,32 +216,54 @@ var
 begin
   Result := nil;  //valor por defecto
   cadNodos := TStringList.Create;
-  TrozaRuta(rut, cadNodos);
-  //desenrrolla en la ruta
-  nivel := 0;
-  for cadNod in cadNodos do begin
-    //busca nodo
-    encontro := false;
-    for nod in TreeView1.Items do begin
-      if nod.Level = nivel then
-          if UpCase(nod.Text) = UpCase(cadNod) then begin
-            Result := TExplorNode(nod);
-            encontro := true;
-            break;  //sale del for, para buscar siguiente nivel
-          end;
+  try
+    TrozaRuta(rut, cadNodos);
+    //desenrrolla en la ruta
+    nivel := 0;
+    for cadNod in cadNodos do begin
+      //busca nodo
+      encontro := false;
+      for nod in TreeView1.Items do begin
+        if nod.Level = nivel then
+            if UpCase(nod.Text) = UpCase(cadNod) then begin
+              Result := TExplorNode(nod);
+              encontro := true;
+              break;  //sale del for, para buscar siguiente nivel
+            end;
+      end;
+      if not encontro then exit;  //no vale la pena seguir buscando
+      inc(nivel);
     end;
-    if not encontro then exit;  //no vale la pena seguir buscando
-    inc(nivel);
+  finally
+    cadNodos.Free;
   end;
-  cadNodos.Free;
 end;
-procedure TfrmArcExplor.LeeFilt(lfil: TStringList); //devuelve los filtros para nombres de archivos
+procedure TfrmArcExplor.SetTextColor(AValue: TColor);
+begin
+  FTextColor := AValue;
+  Invalidate;
+end;
+procedure TfrmArcExplor.TreeView1AdvancedCustomDrawItem(
+  Sender: TCustomTreeView; Node: TTreeNode; State: TCustomDrawState;
+  Stage: TCustomDrawStage; var PaintImages, DefaultDraw: Boolean);
+begin
+  with TreeView1.Canvas do begin
+     if Node.Level = 0 then  begin
+       Font.Style := [fsBold, fsItalic];
+     end else begin
+       Font.Style := [];
+     end;
+     font.Color:= FTextColor;
+     DefaultDraw := true;   //Para que siga ejecutando la rutina de dibujo
+  end;
+end;
+procedure TfrmArcExplor.LeeFilt(lfil: TStringList);
+//Devuelve los filtros para nombres de archivos
 begin
   lfil.Delimiter:=',';  //intrepreta como delimitador
   lfil.StrictDelimiter:=true;
   lfil.DelimitedText:=Filter.Text;
 end;
-
 procedure TfrmArcExplor.ExpandirNodArc(Node: TTreeNode; expan: Boolean);
 //Lee el contenido de un nodo y permite expandirlo. Usa el filtro actual.
 var
@@ -380,7 +407,6 @@ procedure TfrmArcExplor.FilterChange(Sender: TObject);  //Evento del combo
 begin
   ActualPanelArc;  //actualiza
 end;
-
 //Eventos de TreeView1
 procedure TfrmArcExplor.TreeView1MouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
@@ -552,6 +578,8 @@ begin
     end;
   end;
   unidades.Free;
+  TreeView1.OnAdvancedCustomDrawItem := @TreeView1AdvancedCustomDrawItem;
+  TreeView1.Options := TreeView1.Options - [tvoThemedDraw];
   //inicia propiedades
   NewFileName := dic('nombre.txt');
   NewFolderName := dic('carpeta');
@@ -639,7 +667,6 @@ begin
   if curNod.Visible and curNod.Expanded then
     ExpandirNodArc(curNod, true);   //mantiene expansión
 end;
-
 procedure TfrmArcExplor.mnArcAbrirClick(Sender: TObject);
 begin
   curNod := SelectedNode;
@@ -668,7 +695,6 @@ begin
   end;
   if curNod.Parent.Expanded then ExpandirNodArc(curNod.parent, true);   //refresca
 end;
-
 procedure TfrmArcExplor.mnArcRefrescarClick(Sender: TObject);
 begin
 

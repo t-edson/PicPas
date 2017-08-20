@@ -11,7 +11,8 @@ uses
   ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
   SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
   FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView, FrameMessagesWin,
-  XpresElementsPIC, CodeTools, ParserAsm, ParserDirec, FrameCfgExtTool;
+  XpresElementsPIC, CodeTools, ParserAsm, ParserDirec, FrameCfgExtTool,
+  FormDebugger, FormRAMExplorer;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -32,6 +33,7 @@ type
     acArcNewProj: TAction;
     acArcCloseProj: TAction;
     acArcCloseFile: TAction;
+    acToolRamExp: TAction;
     acToolExt4: TAction;
     acToolExt5: TAction;
     acToolExt2: TAction;
@@ -153,6 +155,7 @@ type
     procedure acToolExt5Execute(Sender: TObject);
     procedure acToolFindDecExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
+    procedure acToolRamExpExecute(Sender: TObject);
     procedure acViewSynTreeExecute(Sender: TObject);
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
@@ -180,6 +183,7 @@ type
     procedure ConfigExtTool_RequirePar(var comLine: string);
     procedure cxp_AfterCompile;
     procedure cxp_RequireFileString(FilePath: string; var strList: TStrings);
+    procedure fraMessagesStatisDBlClick;
     procedure fraSynTreeSelecFileExplorer;
     procedure fraEdit_RequireSynEditConfig(ed: TsynEdit);
     procedure ChangeAppearance;
@@ -202,14 +206,16 @@ implementation
 { TfrmPrincipal }
 procedure TfrmPrincipal.SetLanguage(idLang: string);
 begin
-  Config.SetLanguage(idLang);
-  fraSynTree.SetLanguage(idLang);
-  fraEditView1.SetLanguage(idLang);
-  fraMessages.SetLanguage(idLang);
-  Parser.SetLanguage(idLang);
-  ParserAsm.SetLanguage(idLang);
-  ParserDirec.SetLanguage(idLang);
-  curLang := idLang;
+  if curLanguage = idLang then
+    exit;  //no ha habido cambio de idioma
+  curLanguage := idLang;
+  Config.SetLanguage;
+  fraSynTree.SetLanguage;
+  fraEditView1.SetLanguage;
+  fraMessages.SetLanguage;
+  Parser.SetLanguage;
+  ParserAsm.SetLanguage;
+  ParserDirec.SetLanguage;
   {$I ..\language\tra_FormPrincipal.pas}
 end;
 procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
@@ -220,6 +226,7 @@ procedure TfrmPrincipal.fraSynTreeOpenFile(filname: string);
 {El explorador de código, solicita abrir un archivo.}
 begin
   fraEditView1.LoadFile(filname);
+  Config.SaveToFile;  //guarda la configuración actual
 end;
 procedure TfrmPrincipal.fraSynTreeSelecFileExplorer;
 {Se ha seleccionado el modo de explorador de archivo,}
@@ -247,6 +254,11 @@ begin
     strList := ed.SynEdit.Lines;
   end;
 end;
+procedure TfrmPrincipal.fraMessagesStatisDBlClick;
+//Doble clcik en la sección de estadísticas
+begin
+//  frmDebugger.Exec(cxp);
+end;
 procedure TfrmPrincipal.cxp_AfterCompile;
 {Se genera después de realizar la compilación.}
 begin
@@ -271,6 +283,7 @@ begin
   fraMessages.Parent := panMessages;  //Ubica
   fraMessages.Align := alClient;
   fraMessages.OnDblClickMessage := @fraMessagesDblClickMessage;
+  fraMessages.OnStatisDBlClick := @fraMessagesStatisDBlClick;
   //configura panel de edición
   fraEditView1 := TfraEditView.Create(self);
   fraEditView1.Parent := self;
@@ -542,7 +555,9 @@ begin
   end;
   //Configura Explorador de código
   fraSynTree.BackColor := Config.CodExplBack;;
-  fraSynTree.TextColor := Config.CodExplText;  //No funciona
+  fraSynTree.TextColor := Config.CodExplText;
+  fraSynTree.frmArcExplor1.Filter.ItemIndex := Config.cexpFiltype;
+  fraSynTree.frmArcExplor1.FilterChange(self);
   //Configura Visor de Mensajes
   fraMessages.BackColor := Config.MessPanBack;
   fraMessages.TextColor := Config.MessPanText;
@@ -771,6 +786,10 @@ procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin
   frmPICExplorer.Show;
 end;
+procedure TfrmPrincipal.acToolRamExpExecute(Sender: TObject);
+begin
+   frmRAMExplorer.Exec(cxp.pic);
+end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
   Config.Mostrar;
@@ -807,17 +826,27 @@ procedure TfrmPrincipal.MarkErrors;
 Los erroes solo se marcarán si es que se udican en la ventana activa del editor.}
 var
   msg, filname: string;
-  row, col: integer;
+  row, col, f: integer;
   ed: TSynEditor;
 begin
   ed := fraEditView1.ActiveEditor;
   if fraMessages.HaveErrors then begin
-    //Obtiene las coordenadas del primer error
-     fraMessages.GetFirstError(msg, filname, row, col);
-     if (msg<>'') and (filname = ed.NomArc) then begin
-       //Hay error en el archivo actual
-       ed.MarkError(Point(col, row));
+    //Obtiene las coordenadas de los errores
+     for f:=1 to fraMessages.grilla.RowCount -1 do begin
+       if fraMessages.IsErroridx(f) then begin
+         fraMessages.GetErrorIdx(f, msg, filname, row, col);  //obtiene información del error
+         if (msg<>'') and (filname = ed.NomArc) then begin
+           //Hay error en el archivo actual
+           ed.MarkError(Point(col, row));
+         end;
+       end;
      end;
+
+//     fraMessages.GetFirstError(msg, filname, row, col);
+//     if (msg<>'') and (filname = ed.NomArc) then begin
+//       //Hay error en el archivo actual
+//       ed.MarkError(Point(col, row));
+//     end;
   end;
 end;
 procedure TfrmPrincipal.VerificarError;

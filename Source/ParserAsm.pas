@@ -62,7 +62,7 @@ type
     destructor Destroy; override;
   end;
 
-  procedure SetLanguage(idLang: string);
+  procedure SetLanguage;
 
 implementation
 var  //Mensajes
@@ -71,9 +71,8 @@ var  //Mensajes
   ER_EXPECT_W_F, ER_SYNTAX_ERR_, ER_DUPLIC_LBL_, ER_EXPE_NUMBIT: String;
   ER_EXPECT_ADDR, ER_EXPECT_BYTE, WA_ADDR_TRUNC, ER_UNDEF_LABEL_: String;
 
-procedure SetLanguage(idLang: string);
+procedure SetLanguage;
 begin
-  curLang := idLang;
   {$I ..\language\tra_ParserAsm.pas}
 end;
 
@@ -380,6 +379,18 @@ begin
   end else if lexAsm.GetToken = '_H' then begin
     //Es el registro  de trabajo _H
     f := H_register.offs;
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else if lexAsm.GetToken = '_E' then begin
+    //Es el registro  de trabajo _H
+    f := E_register.offs;
+    lexAsm.Next;
+    Result := true;
+    exit;
+  end else if lexAsm.GetToken = '_U' then begin
+    //Es el registro  de trabajo _H
+    f := U_register.offs;
     lexAsm.Next;
     Result := true;
     exit;

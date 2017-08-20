@@ -1,5 +1,5 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 479
+  Left = 532
   Height = 625
   Top = 158
   Width = 884
@@ -1965,6 +1965,12 @@ object frmPrincipal: TfrmPrincipal
       Caption = 'Find Declaration'
       ImageIndex = 32
       OnExecute = acToolFindDecExecute
+    end
+    object acToolRamExp: TAction
+      Category = 'Tool'
+      Caption = '&RAM Explorer'
+      OnExecute = acToolRamExpExecute
+      ShortCut = 123
     end
     object acToolExt1: TAction
       Category = 'Tool'

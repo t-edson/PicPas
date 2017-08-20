@@ -14,12 +14,13 @@ const
 var
    //Variables globales
    MsjError    : String;    //Bandera - Mensaje de error
-
+   //Rutas sin "/" final
    rutApp     : string;     //ruta de la aplicación
    rutSamples : string;     //ruta de la carpeta de scripts
    rutUnits   : string;     //ruta para guardar las sintaxis
    rutTemp    : string;     //ruta para los archivos temporales
    rutSyntax  : string;     //ruta de los archivos de sintaxis
+   rutThemes  : string;     //ruta de los archivos de temas
 
    archivoEnt  : string;    //archivo de entrada
    MostrarError: Boolean;   //Bandera para mostrar mensajesde error.
@@ -27,7 +28,7 @@ var
 
 /////////////// Campos para manejo del diccionario //////////
 var
- curLang: string;  //identificador del lenguaje
+ curLanguage: string;  //identificador del lenguaje
 
 //type
 // TTranslation = record
@@ -50,7 +51,7 @@ const
 
 function Trans(const strEn, strEs, strQu, strDe: string): string;
 begin
-  case curLang of
+  case curLanguage of
   'en': begin
      Result := strEn;
   end;
@@ -150,6 +151,7 @@ initialization
   rutUnits   := rutApp + 'units';
   rutTemp    := rutApp + 'temp';
   rutSyntax  := rutApp + 'syntax';
+  rutThemes  := rutApp + 'themes';
   archivoEnt := '';    //archivo de entrada
   //verifica existencia de carpetas de trabajo
   try
@@ -169,6 +171,11 @@ initialization
        msgexc(WA_DIR_NOEXIST, [rutSyntax]);
        CreateDir(rutSyntax);
     end;
+    if not DirectoryExists(rutThemes) then begin
+       msgexc(WA_DIR_NOEXIST, [rutThemes]);
+      CreateDir(rutThemes);
+    end;
+
   except
     msgErr(ER_CANN_READDI);
   end;

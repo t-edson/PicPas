@@ -1,0 +1,12 @@
+object frmRAMExplorer: TfrmRAMExplorer
+  Left = 200
+  Height = 488
+  Top = 100
+  Width = 606
+  AutoSize = True
+  Caption = 'RAM Explorer'
+  KeyPreview = True
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  LCLVersion = '1.6.2.0'
+end

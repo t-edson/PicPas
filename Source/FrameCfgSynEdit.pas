@@ -9,7 +9,7 @@ unit FrameCfgSynEdit;
 interface
 uses
   Classes, SysUtils, Forms, StdCtrls, Dialogs, Spin, SynEdit, Graphics,
-  Globales, MiConfigXML, SynEditMarkupHighAll, SynEditMarkup;
+  Globales, MiConfigXML, MiConfigBasic, SynEditMarkupHighAll, SynEditMarkup;
 type
 
   { TfraCfgSynEdit }
@@ -68,7 +68,7 @@ type
     procedure PropToWindow;
     procedure Iniciar(section: string; cfgFile: TMiConfigXML); //Inicia el frame
     procedure ConfigEditor(ed: TSynEdit);
-    procedure SetLanguage(idLang: string);
+    procedure SetLanguage;
   public
     //genera constructor y destructor
     constructor Create(AOwner: TComponent) ; override;
@@ -81,35 +81,42 @@ implementation
 //  MAX_ARC_REC = 5;  //si se cambia, actualizar ActualMenusReciente()
 
 { TfraCfgSynEdit }
-procedure TfraCfgSynEdit.SetLanguage(idLang: string);
+procedure TfraCfgSynEdit.SetLanguage;
 //Rutina de traducción
 begin
-   curLang := idLang;
    {$I ..\language\tra_CfgSynEdit.pas}
 end;
 procedure TfraCfgSynEdit.Iniciar(section: string; cfgFile: TMiConfigXML);
+var
+  s: TParElem;
 begin
   //Asigna referencia necesarias
   //crea las relaciones variable-control
-  cfgFile.Asoc_TCol(section+ '/cTxtNor', @cTxtNor, cbutTextCol, clBlack);
-  cfgFile.Asoc_TCol(section+ '/cFonEdi', @cFonEdi, cbutBackCol,  clWhite);
-  cfgFile.Asoc_TCol(section+ '/cLinAct', @cLinAct, cbutLinAct, clYellow);
-  cfgFile.Asoc_TCol(section+ '/cResPal', @cResPal, cbutResPal, clSkyBlue);
+  s:=cfgFile.Asoc_TCol(section+ '/cTxtNor', @cTxtNor, cbutTextCol, clBlack);
+  s.categ := 1;   //marca como propiedad de tipo "Tema"
+  s:=cfgFile.Asoc_TCol(section+ '/cFonEdi', @cFonEdi, cbutBackCol,  clWhite);
+  s.categ := 1;   //marca como propiedad de tipo "Tema"
+  s:=cfgFile.Asoc_TCol(section+ '/cLinAct', @cLinAct, cbutLinAct, clYellow);
+  s.categ := 1;   //marca como propiedad de tipo "Tema"
+  s:=cfgFile.Asoc_TCol(section+ '/cResPal', @cResPal, cbutResPal, clSkyBlue);
+  s.categ := 1;   //marca como propiedad de tipo "Tema"
 
-  cfgFile.Asoc_Bol(section+ '/VerBarDesV', @VerBarDesV, chkViewVScroll, true);
-  cfgFile.Asoc_Bol(section+ '/VerBarDesH', @VerBarDesH, chkViewHScroll, false);
-  cfgFile.Asoc_Bol(section+ '/Autoindent', @Autoindent, chkAutoindent, true);
+  s:=cfgFile.Asoc_Bol(section+ '/VerBarDesV', @VerBarDesV, chkViewVScroll, true);
+  s:=cfgFile.Asoc_Bol(section+ '/VerBarDesH', @VerBarDesH, chkViewHScroll, false);
+  s:=cfgFile.Asoc_Bol(section+ '/Autoindent', @Autoindent, chkAutoindent, true);
 
-  cfgFile.Asoc_Bol(section+ '/ResPalCur' , @ResPalCur , chkHighCurWord , true);
-  cfgFile.Asoc_Bol(section+ '/MarLinAct' , @MarLinAct , chkHighCurLin , false);
+  s:=cfgFile.Asoc_Bol(section+ '/ResPalCur' , @ResPalCur , chkHighCurWord , true);
+  s:=cfgFile.Asoc_Bol(section+ '/MarLinAct' , @MarLinAct , chkHighCurLin , false);
 
-  cfgFile.Asoc_Bol(section+ '/VerPanVer', @VerPanVer, chkVerPanVer, true);
-  cfgFile.Asoc_Bol(section+ '/VerNumLin', @VerNumLin, chkVerNumLin, false);
-  cfgFile.Asoc_Bol(section+ '/VerMarPle', @VerMarPle, chkVerMarPle, true);
-  cfgFile.Asoc_TCol(section+ '/cFonPan'  , @cFonPan  , cbutFonPan  , clWhite);
-  cfgFile.Asoc_TCol(section+ '/cTxtPan'  , @cTxtPan  , cbutTxtPan  , clBlack);
+  s:=cfgFile.Asoc_Bol(section+ '/VerPanVer', @VerPanVer, chkVerPanVer, true);
+  s:=cfgFile.Asoc_Bol(section+ '/VerNumLin', @VerNumLin, chkVerNumLin, false);
+  s:=cfgFile.Asoc_Bol(section+ '/VerMarPle', @VerMarPle, chkVerMarPle, true);
+  s:=cfgFile.Asoc_TCol(section+ '/cFonPan'  , @cFonPan  , cbutFonPan  , clWhite);
+  s.categ := 1;   //marca como propiedad de tipo "Tema"
+  s:=cfgFile.Asoc_TCol(section+ '/cTxtPan'  , @cTxtPan  , cbutTxtPan  , clBlack);
+  s.categ := 1;   //marca como propiedad de tipo "Tema"
 
-  cfgFile.Asoc_Int(section+ '/TamLet', @TamLet, spFontSize, 10);
+  s:=cfgFile.Asoc_Int(section+ '/TamLet', @TamLet, spFontSize, 10);
 
   cmbFontName.Items.Clear;
   cmbFontName.Items.Add('Courier New');

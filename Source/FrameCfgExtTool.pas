@@ -58,7 +58,7 @@ type
     procedure Execute(const tool: TExternTool);
   public  //Inicialización
     procedure Init(section: string; cfgFile: TMiConfigXML);
-    procedure SetLanguage(idLang: string);
+    procedure SetLanguage;
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
   end;

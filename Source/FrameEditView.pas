@@ -42,7 +42,11 @@ type
       var Special: boolean; Markup: TSynSelectedColor);
     procedure SetCaption(AValue: string);
   protected
-    MarkErr: TMarkup;
+    const MAX_NMARK = 4;
+  protected
+    MarkErr: array[0..MAX_NMARK] of TMarkup;   //lista de marcadores
+    MarkFree: integer;  //Índice al marcador libre
+    function GetFreeMark: TMarkup;
     procedure edKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   public  //Inicialización
     SynEdit: TSynEdit;  //Editor SynEdit
@@ -109,7 +113,6 @@ type
   private
     FTabIndex  : integer;
     FTabViewMode: integer;
-    lang       : string;
     fMultiCaret: TSynPluginMultiCaret;
     procedure ChangeEditorState;
     procedure editChangeFileInform;
@@ -170,7 +173,7 @@ type
       MaxRecents0: integer = 5);
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
-    procedure SetLanguage(idLang: string);
+    procedure SetLanguage;
   end;
 
 implementation
@@ -390,10 +393,25 @@ begin
     end;
   end;
 end;
-procedure TSynEditor.ClearMarkErr;
-{Limpia el marcador de error.}
+function TSynEditor.GetFreeMark: TMarkup;
+//Devuelve referencia a un marcador no usado. Si no encuentra alguno, devuelve NIL.
 begin
-  MarkErr.Enabled := false;
+  if MarkFree <= MAX_NMARK then begin
+    Result := MarkErr[MarkFree];
+    MarkFree := MarkFree + 1;
+  end else begin
+    Result := nil;
+  end;
+end;
+procedure TSynEditor.ClearMarkErr;
+{Limpia marcadores de error.}
+var
+  i: Integer;
+begin
+  for i:=0 to MAX_NMARK do begin
+    MarkErr[i].Enabled := false;
+  end;
+  MarkFree := 0;
   SynEdit.Invalidate;
 end;
 procedure TSynEditor.MarkError(p1: TPoint);
@@ -408,10 +426,10 @@ porque no se tiene acceso a los lexer que procesan los bloques ASM y Directivas.
     i: Integer;
   begin
     i := col1;  //empìeza por aquí
-    if i>length(lin) then exit;
-    if lin[i] in ['A'..'Z','a'..'z'] then begin
+    if i>length(lin) then exit(length(lin));
+    if lin[i] in ['A'..'Z','a'..'z','_'] then begin
       //Es identificador. Ubica los límites del identificador.
-      while (i<=length(lin)) and (lin[i] in ['A'..'Z','a'..'z','0'..'9']) do begin
+      while (i<=length(lin)) and (lin[i] in ['A'..'Z','a'..'z','0'..'9','_']) do begin
         inc(i);
       end;
     end else begin
@@ -427,10 +445,12 @@ var
   tokIdx, col1, col2: integer;
   curTok: TFaTokInfo;
   lin: String;
+  MarkErr1: TMarkup;
 begin
   hl.ExploreLine(p1, toks, tokIdx);  //Explora la línea aludida
   if tokIdx = -1 then exit;
-  MarkErr.Enabled := true;
+  MarkErr1 := GetFreeMark;
+  if MarkErr1 = nil then exit;
   curTok := toks[tokIdx];  //token actual
   //Obtiene línea actual
   if hl.CurrentLines = nil then begin
@@ -438,31 +458,35 @@ begin
   end else begin
     lin := hl.CurrentLines[p1.y-1];
   end;
+  MarkErr1.Enabled := true;
   //Obtiene en los límites del token actual
   col1 := curTok.posIni+1;
   col2 := curTok.posIni+1+curTok.length;
   if curTok.TokTyp = hl.tnEol then begin
     //Es la marca de final de línea. Extiende para que sea visible
-    MarkErr.SetMark(Point(col1, p1.y),
+    MarkErr1.SetMark(Point(col1, p1.y),
                     Point(col2 + 1, p1.y));
   end else if curTok.TokTyp = hl.GetAttribIDByName('Asm') then begin
     //Es bloque ensamblador.
     col2 := LocEndOfWord(lin, p1.x);  //ubica a la palabra actual
-    MarkErr.SetMark(Point(p1.x, p1.y),
+    MarkErr1.SetMark(Point(p1.x, p1.y),
                     Point(col2, p1.y));
   end else if curTok.TokTyp = hl.GetAttribIDByName('Directive') then begin
     //Es directiva
     col2 := LocEndOfWord(lin, p1.x);  //ubica a la palabra actual
-    MarkErr.SetMark(Point(p1.x, p1.y),
+    MarkErr1.SetMark(Point(p1.x, p1.y),
                     Point(col2, p1.y));
   end else begin
     //Es un token normal
-    MarkErr.SetMark(Point(col1, p1.y),
+    MarkErr1.SetMark(Point(col1, p1.y),
                     Point(col2, p1.y));
   end;
 end;
 constructor TSynEditor.Create(AOwner: TComponent; nomDef0, extDef0: string;
   panTabs0: TPanel);
+var
+  i: Integer;
+  mark: TMarkup;
 begin
   SynEdit:= TSynEdit.Create(AOwner);// Crea un editor
 //  inherited Create(SynEdit, nomDef0, extDef0);
@@ -501,16 +525,17 @@ begin
   InicEditorC1(SynEdit);
   SynEdit.Options := SynEdit.Options + [eoTabsToSpaces];  //permite indentar con <Tab>
 
-  //Crea marcador "MarkErr", para erroes de sintaxis
-  MarkErr := TMarkup.Create(SynEdit);
-  MarkErr.MarkupInfo.Background := clNone;
-  MarkErr.MarkupInfo.Foreground := clNone;
-  MarkErr.MarkupInfo.FrameColor := clRed;
-  MarkErr.MarkupInfo.FrameEdges := sfeBottom;
-  MarkErr.MarkupInfo.FrameStyle := slsWaved;
-  SynEdit.MarkupManager.AddMarkUp(MarkErr);   //agrega marcador
-
-  MarkErr.SetMark(Point(3,2), Point(6,2));
+  //Crea marcadores para los errores de sinatxis
+  for i:=0 to MAX_NMARK do begin
+    mark := TMarkup.Create(SynEdit);
+    MarkErr[i] := mark;   //asigna referencia
+    mark.MarkupInfo.Background := clNone;
+    mark.MarkupInfo.Foreground := clNone;
+    mark.MarkupInfo.FrameColor := clRed;
+    mark.MarkupInfo.FrameEdges := sfeBottom;
+    mark.MarkupInfo.FrameStyle := slsWaved;
+    SynEdit.MarkupManager.AddMarkUp(mark);   //agrega marcador
+  end;
 
   NewFile;        //para actualizar estado
 end;
@@ -520,10 +545,8 @@ begin
   FreeAndNil(SynEdit);  //El "Owner", intentará destruirlo, por eso lo ponemos en NIL
 end;
 { TfraEditView }
-procedure TfraEditView.SetLanguage(idLang: string);
+procedure TfraEditView.SetLanguage;
 begin
-  lang := idLang;
-  curLang := idLang;
   {$I ..\language\tra_FrameEditView.pas}
 end;
 procedure TfraEditView.RefreshTabs;
@@ -892,7 +915,7 @@ begin
   ed.OnChangeEditorState := @ChangeEditorState;
   ed.OnChangeFileInform := @editChangeFileInform;
   ed.hl.IconList := ImgCompletion;
-  ed.SetLanguage(lang);
+  ed.SetLanguage(curLanguage);
   //Configura PageControl
   ed.SynEdit.Parent := self;
   ed.SynEdit.Align := alClient;
@@ -1288,7 +1311,7 @@ end;
 function TfraEditView.SaveAsDialog: boolean;
 {Muestra la ventana para grabar un archivo. Si se cancela, devuelve TRUE.}
 begin
-  if ActiveEditor=nil then exit;
+  if ActiveEditor=nil then exit(true);
   Result := ActiveEditor.SaveAsDialog(SaveDialog1);
   if Result then exit;   //se canceló
   if OnSelectEditor<>nil then OnSelectEditor;
@@ -1306,7 +1329,7 @@ function TfraEditView.CloseAll: boolean;
 {Cierra todas las ventanas, pidiendo confirmación. Si se cancela, devuelve TRUE}
 begin
   while editors.Count>0 do begin
-    if ActiveEditor=nil then exit;
+    if ActiveEditor=nil then exit(true);
     if ActiveEditor.SaveQuery(SaveDialog1) then exit(true);  //cancelado
     DeleteEdit;
   end;
@@ -1377,7 +1400,7 @@ begin
     RecentFiles.Delete(MaxRecents);
 end;
 procedure TfraEditView.UpdateSynEditConfig;
-{India que se desea cambiar la configuración de los SynEdit.}
+{Indica que se desea cambiar la configuración de los SynEdit.}
 var
   i: Integer;
 begin

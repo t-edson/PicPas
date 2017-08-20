@@ -77,7 +77,7 @@ type
 var
   cxp : TCompiler;
 
-procedure SetLanguage(idLang: string);
+procedure SetLanguage;
 
 implementation
 //Funciones básicas
@@ -655,7 +655,7 @@ begin
       _INCF(Op1.offs, toF);
     end else if Op1.typ = typWord then begin
       _INCF(Op1.Loffs, toF);
-      _BTFSC(_STATUS, _Z);
+      _BTFSC(STATUS, _Z);
       _INCF(Op1.Hoffs, toF);
     end;
     _GOTO(l1);  //repite el lazo
@@ -728,10 +728,12 @@ begin
     es el byte, y no el bit.}
     if (n>=0) and  (n<=255) then begin
       Op.typ := typByte;
-    end else if (n>= 0) and  (n<=65535) then begin
+    end else if (n>= 0) and (n<=$FFFF) then begin
       Op.typ := typWord;
+    end else if (n>= 0) and (n<=$FFFFFFFF) then begin
+      Op.typ := typDword;
     end else  begin //no encontró
-      GenError('No type defined to accommodate this number.');
+      GenError(ER_NOTYPDEF_NU);
       Op.typ := nil;
     end;
   end;
@@ -1488,7 +1490,6 @@ begin
       end;
       //Aquí ya se puede realizar otra exploración, como si fuera el archivo principal
       CompileUnit(uni);
-//      cIn.CloseContext;  //cierra el contexto
       cIn.PosAct := p;
       if HayError then exit;  //El error debe haber guardado la ubicaicón del error
 {----}TreeElems.CloseElement; //cierra espacio de nombres de la función
@@ -1657,7 +1658,7 @@ var
   bod    : TxpEleBody;
   xvar   : TxpEleVar;
   fun    : TxpEleFun;
-  iniMain, noUsed, noUsedPrev: integer;
+  iniMain, noUsed, noUsedPrev, xxx: integer;
   adicVarDec: TAdicVarDec;
   posAct: TPosCont;
   IsBit: boolean;
@@ -1734,7 +1735,8 @@ begin
   end;
   //Codifica las funciones del sistema usadas
   for fun in listFunSys do begin
-    if (fun.nCalled > 0) and (fun.compile<>nil) then begin
+    xxx := fun.nCalled;
+    if (xxx > 0) and (fun.compile<>nil) then begin
       //Función usada y que tiene una subrutina ASM
       fun.adrr := pic.iFlash;  //actualiza la dirección final
       PutLabel('__'+fun.name);

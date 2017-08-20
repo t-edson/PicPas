@@ -78,7 +78,7 @@ type
     procedure LocateFile(filname: string);
     procedure Init(syntaxTree0: TXpTreeElements);
     procedure Refresh;
-    procedure SetLanguage(idLang: string);
+    procedure SetLanguage;
   end;
 
 implementation
@@ -91,10 +91,8 @@ var
   TIT_OTHER: String;
 
 { TfraSyntaxTree }
-procedure TfraSyntaxTree.SetLanguage(idLang: string);
-{Fija el lenguaje de acuerdo al valor de Globales.curLang}
+procedure TfraSyntaxTree.SetLanguage;
 begin
-  curLang := idLang;
   {$I ..\language\tra_FrameSyntaxTree.pas}
   Refresh;
 end;
@@ -113,11 +111,11 @@ begin
   TreeView1.OnAdvancedCustomDrawItem := @TreeView1AdvancedCustomDrawItem;
   TreeView1.Options := TreeView1.Options - [tvoThemedDraw];
   frmElemProperty.OnExplore := @frmElemPropertyExplore;
-  SetLanguage('en');   //Inicia idioma
   //Configura filtros del explorador de archivos
-  frmArcExplor1.Filter.Items.Add('*.pas,*.pp');  //los filtros se separan por comas
+  frmArcExplor1.Filter.Items.Add('*.pas,*.pp,*.inc');  //los filtros se separan por comas
   frmArcExplor1.Filter.Items.Add('*');  //para seleccionar todos
   frmArcExplor1.Filter.ItemIndex:=0;    //selecciona la primera opción por defecto
+  frmArcExplor1.Filter.Visible := false;
   frmArcExplor1.InternalPopupFile := true;
   frmArcExplor1.InternalPopupFolder := true;
   frmArcExplor1.OnDoubleClickFile := @frmArcExplor1DoubleClickFile;
@@ -334,6 +332,7 @@ procedure TfraSyntaxTree.SetTextColor(AValue: TColor);
 begin
 //  if FTextColor = AValue then Exit;
   FTextColor := AValue;
+  frmArcExplor1.TextColor := AValue;
 end;
 procedure TfraSyntaxTree.TreeView1AdvancedCustomDrawItem(
   Sender: TCustomTreeView; Node: TTreeNode; State: TCustomDrawState;

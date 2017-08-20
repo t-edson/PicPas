@@ -49,6 +49,8 @@ public
   function offs: TVarOffs; //dirección de la variable
   function Loffs: TVarOffs; inline; //dirección del byte bajo
   function Hoffs: TVarOffs; inline; //dirección del byte alto
+  function Eoffs: TVarOffs; inline; //dirección del byte alto
+  function Uoffs: TVarOffs; inline; //dirección del byte alto
   function bank: TVarBank; inline;  //banco
   function Lbank: TVarBank; inline;  //banco
   function bit : byte; inline;  //posición del bit
@@ -68,8 +70,10 @@ public
 //  property valStr  : string read val.ValStr write SetvalStr;
   //funciones de ayuda para adaptar los tipos numéricos
   function aWord: word; inline;  //devuelve el valor en Word
-  function HByte: byte; inline;  //devuelve byte alto de valor entero
   function LByte: byte; inline;  //devuelve byte bajo de valor entero
+  function HByte: byte; inline;  //devuelve byte alto de valor entero
+  function EByte: byte; inline;  //devuelve byte bajo de valor entero
+  function UByte: byte; inline;  //devuelve byte bajo de valor entero
   //campos para validar el rango de los valores
   function CanBeByte: boolean;   //indica si cae en el rango de un BYTE
   function CanBeWord: boolean;   //indica si cae en el rango de un WORD
@@ -89,7 +93,6 @@ protected  //Eventos del compilador
                                       evaluación de una expresión.}
   OnExprEnd  : procedure(posExpres: TPosExpres) of object;  {Se genera al terminar de
                                                              evaluar una expresión.}
-  pic        : TPIC16;   //Objeto PIC de la serie 16.
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
   RTstate    : TType;    {Estado de los RT. Si es NIL, indica que los RT, no tienen
                          ningún dato cargado, sino indican el tipo cargado en los RT.}
@@ -130,9 +133,10 @@ protected  //Eventos del compilador
   procedure GetExpressionE(const prec: Integer; posExpres: TPosExpres = pexINDEP);
 public
   FirstPass  : boolean;   //Indica que está en la primera pasada.
-  TreeElems: TXpTreeElements; //Árbol de sintaxis del lenguaje
-  TreeDirec: TXpTreeElements; //Árbol de sinatxis para directivas
-  listFunSys: TxpEleFuns;   //lista de funciones del sistema
+  TreeElems  : TXpTreeElements; //Árbol de sintaxis del lenguaje
+  TreeDirec  : TXpTreeElements; //Árbol de sinatxis para directivas
+  listFunSys : TxpEleFuns;   //lista de funciones del sistema
+  pic        : TPIC16;   //Objeto PIC de la serie 16.
 protected
   typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
   function GetExpression(const prec: Integer): TOperand;
@@ -736,6 +740,7 @@ begin
     cIn.Next;    //Pasa al siguiente
   end else if (cIn.tokType = tnSysFunct) or //función del sistema
               (cIn.tokL = 'bit') or   //"bit" es de tipo "tnType"
+              (cIn.tokL = 'byte') or   //"byte" es de tipo "tnType"
               (cIn.tokL = 'word') then begin  //"word" es de tipo "tnType"
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
      versiones, sobrecargadas de la misma función.}
@@ -1213,6 +1218,14 @@ function TOperand.Hoffs: TVarOffs;
 begin
   Result := rVar.adrByte1.offs;
 end;
+function TOperand.Eoffs: TVarOffs;
+begin
+  Result := rVar.adrByte2.offs;
+end;
+function TOperand.Uoffs: TVarOffs;
+begin
+  Result := rVar.adrByte3.offs;
+end;
 function TOperand.bank: TVarBank;
 {Banco, cuando es de tipo Byte.}
 begin
@@ -1246,13 +1259,22 @@ function TOperand.aWord: word; inline;
 begin
   Result := word(valInt);
 end;
+function TOperand.LByte: byte; inline;
+begin
+  Result := LO(word(valInt));
+end;
 function TOperand.HByte: byte; inline;
 begin
   Result := HI(word(valInt));
 end;
-function TOperand.LByte: byte; inline;
+function TOperand.EByte: byte;
 begin
-  Result := LO(word(valInt));
+  Result := (valInt >> 16) and $FF;
+end;
+
+function TOperand.UByte: byte;
+begin
+  Result := (valInt >> 24) and $FF;
 end;
 function TOperand.CanBeWord: boolean;
 {Indica si el valor constante que contiene, puede ser convertido a un WORD sin pérdida}

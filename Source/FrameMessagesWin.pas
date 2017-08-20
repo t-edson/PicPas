@@ -41,6 +41,7 @@ type
     procedure chkWarnsChange(Sender: TObject);
     procedure grillaDblClick(Sender: TObject);
     procedure PanGrillaResize(Sender: TObject);
+    procedure panStatisDblClick(Sender: TObject);
     procedure panStatisPaint(Sender: TObject);
   private
     cxp: TCompiler;
@@ -62,6 +63,7 @@ type
   public
     HaveErrors: boolean;
     OnDblClickMessage: procedure(const srcPos: TSrcPos) of object;
+    OnStatisDBlClick: procedure of object;
     property BackColor: TColor read FBackColor write SetBackColor ;
     property TextColor: TColor read FTextColor write SetTextColor ;
     property TextErrColor: TColor read FTextErrColor write SetTextErrColor;
@@ -70,6 +72,9 @@ type
     procedure FilterGrid;
     procedure GetFirstError(out msg: string; out filname: string; out row,
       col: integer);
+    procedure GetErrorIdx(f: integer; out msg: string; out filname: string; out
+      row, col: integer);
+    function IsErroridx(f: integer): boolean;
     procedure InitCompilation(cxp0: TCompiler; InitMsg: boolean);
     procedure EndCompilation;
     procedure AddError(errTxt: string; fileName: string; row, col: integer);
@@ -78,7 +83,7 @@ type
   public //Inicialización
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
-    procedure SetLanguage(idLang: string);
+    procedure SetLanguage;
   end;
 
 implementation
@@ -161,9 +166,8 @@ begin
   BackSelColor := clBtnFace;
 end;
 { TfraMessagesWin }
-procedure TfraMessagesWin.SetLanguage(idLang: string);
+procedure TfraMessagesWin.SetLanguage;
 begin
-  curLang := idLang;
  {$I ..\language\tra_FrameMessagesWin.pas}
 end;
 procedure TfraMessagesWin.AddInformation(infTxt: string);
@@ -252,6 +256,10 @@ procedure TfraMessagesWin.PanGrillaResize(Sender: TObject);
 begin
   grilla.ColWidths[2] := PanGrilla.Width-50;
 end;
+procedure TfraMessagesWin.panStatisDblClick(Sender: TObject);
+begin
+  if OnStatisDBlClick<>nil then OnStatisDBlClick;
+end;
 procedure TfraMessagesWin.CountMessages;
 var
   f: Integer;
@@ -317,17 +325,29 @@ var
   f: Integer;
 begin
   for f:=1 to grilla.RowCount -1 do begin
-    if grilla.Cells[GCOL_ICO, f] = ICO_ERR then begin
-      msg := grilla.Cells[GCOL_MSG, f];
-      filname := grilla.Cells[GCOL_FILE, f];
-      TryStrToInt(grilla.Cells[GCOL_ROW, f], row);
-      TryStrToInt(grilla.Cells[GCOL_COL, f], col);
+    if IsErroridx(f) then begin
+      GetErrorIdx(f, msg, filname, row, col);
       exit;
     end;
   end;
   //No encontró
   msg := '';
 end;
+procedure TfraMessagesWin.GetErrorIdx(f: integer; out msg: string; out
+  filname: string; out row, col: integer);
+{Obtiene el error de índice "f".}
+begin
+  msg := grilla.Cells[GCOL_MSG, f];
+  filname := grilla.Cells[GCOL_FILE, f];
+  TryStrToInt(grilla.Cells[GCOL_ROW, f], row);
+  TryStrToInt(grilla.Cells[GCOL_COL, f], col);
+end;
+function TfraMessagesWin.IsErroridx(f: integer): boolean;
+{Indica si la fila de la grilla contiene un error.}
+begin
+  result := grilla.Cells[GCOL_ICO, f] = ICO_ERR;
+end;
+
 procedure TfraMessagesWin.FilterGrid;
 var
   f: integer;
