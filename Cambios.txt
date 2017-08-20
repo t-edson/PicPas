@@ -1,3 +1,81 @@
+PicPas 0.7.4
+============
+Se modifica la rutina TSynEditor.MarkError(), para que incluya al caracter "_" como 
+parte de un identificador, y marcar mejor al error.
+Se incluye el valor de retorno TRUE  de las funciones TfraEditView.SaveAsDialog y  
+TfraEditView.CloseAll, cuando ActiveEditor es NIL.
+Se modifican las rutinas de la clase TSynEditor, para que admitan más de un marcador 
+de texto en los casos de resaltar error.
+Se crean los métodos TfraMessagesWin.GetErrorIdx() y TfraMessagesWin.IsErroridx().
+Se implementa el remarcado de varios errores en la ventana de edición.
+
+Se agrega un TreeView y se ocultan las pestañas en el diálogo de configuración.
+Se reordenan en categorías los paneles de la ventana de configuración.
+Se configura una rutina personalizada de dibujo a FrameArcExplor, para permitir
+cambiar el color del texto.
+Se habilita la config. de tipos de archivo a mostrar, desde el formulario de 
+configuración principal.
+
+Se cambia el nombre de la variable curLang de la unidad globales a curLanguage.
+Se elimina las asignaciones innecesarias a curLanguage, que se hacían desde varios
+puntos del código, y se quita también el parámetro idLang, en donde no es necesario.
+
+Se cambia la versión de la librería MisConfig a la 0.4, para aprovechar su capacidad
+de leer solo un grupo de propiedades.
+Se define la ruta /themes como la que contendrá los archivos de temas.
+Se modifica y crean rutinas en FrameCfgSyntax, para soportar la carga de temas.
+Se implementa la carga de temas.
+Se corrige un error en la configuración de atributos de texto de la sintaxis.
+Se modifican las rutinas y tipos de FrameCfgSyntax, para corregir un error relativo
+al cambio de valores de parámetros cuando tienen distinta longitud, como el caso 
+True/False.
+
+Se corrige el cambio de estado (used) del registro devuelto, en la rutina 
+TGenCodPic.GetAuxRegisterByte().
+Se termina de implementar la rutina de resta de 16 bits.
+Se implementa la rutina de multiplicación de bytes.
+Se cambia de nombre a la constante _STATUS por STATUS, para facilitar la implementación 
+de rutinas ASM.
+Se crean los registros de trabajo adicionales E y U.
+Se crea el nuevo tipo dword, y las rutinas básicas de asignación.
+Se aumenta el límite para registros auxiliares.
+Se hace público el campo PCompilerBase.pic.
+Se crean los formularios FormDebugger, FormRAMExplorer y el frame FrameRamExplorer.
+Se incluye Config.SaveToFile en TfrmPrincipal.fraSynTreeOpenFile().
+Se incluye acceso a los nuevos registros _E y _U, desde ensamblador.
+Se crea la función del sistema: byte() y se mejora la función word().
+Se actualiza la configuración del autocompletado para las nuevas modificaciones.
+
+PENDIENTES
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absoulte a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
+
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema.
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir punteros, arreglos y registros.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar las funciones de búsqueda y reemplazo de texto.
+Implementar el anidamiento de la directiva $IFDEF. tal vez se puede modificar al resaltador 
+para que soporte definiciones de bloques o tokens multilínea, con delimitadores definidos
+por código, de modo que se pueda implementar el manejo de bloques condicionales a nivel 
+léxico y a la vez tener la posibilidad de que el resaltador lo muestre.
+
 PicPas 0.7.3
 ============
 Se corrige la ubicación exacta de errores en directivas, cuando la directiva no empieza
@@ -29,35 +107,6 @@ configuración.
 Se implementa la definición de bits de configuración y su inclusión en el archivo hex.
 Se crea el nuevo árbol TCompilerBase.TreeDirec.
 
-PENDIENTES
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absoulte a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
-
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
-Teerminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema.
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir punteros, arreglos y registros.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar las funciones de búsqueda y reemplazo de texto.
-Implementar el anidamiento de la directiva $IFDEF. tal vez se puede modificar al resaltador 
-para que soporte definiciones de bloques o tokens multilínea, con delimitadores definidos
-por código, de modo que se pueda implementar el manejo de bloques condicionales a nivel 
-léxico y a la vez tener la posibilidad de que el resaltador lo muestre.
 
 PicPas 0.7.2
 ============

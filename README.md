@@ -1,4 +1,4 @@
-PicPas 0.7.3
+PicPas 0.7.4
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
@@ -198,8 +198,9 @@ SetBank()      Set the current RAM bank.
 Exit()         Exit from a procedure or end the program.
 Ord()          Convert a char to a byte.
 Chr()          Convert a byte to a char.
-Bit()          Convert a byte to a bit.
-Word()         Convert a byte to a word.
+Bit()          Convert an expression to a bit expression.
+Byte()         Convert an expression to a byte expression.
+Word()         Convert an expression to a word expression.
 SetAsInput()   Set a 8-bits port or a pin as an input.
 SetAsOutput()  Set a 8-bits port or a pin as an output.
 ```
@@ -524,7 +525,7 @@ end.
 
 ## Limitations
 
-•	Only basic types are implemented: bit, byte, char, boolean and word (limited support).
+•	Only basic types are implemented: bit, byte, char, boolean, word an dword(limited support).
 
 •	Cannot declare arrays or records.
 
