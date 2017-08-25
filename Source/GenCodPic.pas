@@ -7,11 +7,11 @@ uses
   Classes, SysUtils, XPresParserPIC, XpresElementsPIC, Pic16Utils, XpresTypesPIC,
   MisUtils, LCLType, LCLProc;
 const
-  STACK_SIZE = 8;  //tamaño de pila para subrutinas en el PIC
-  MAX_REGS_AUX_BYTE = 6;    //cantidad máxima de registros a usar
+  STACK_SIZE = 8;      //tamaño de pila para subrutinas en el PIC
+  MAX_REGS_AUX_BYTE = 6;   //cantidad máxima de registros a usar
   MAX_REGS_AUX_BIT = 4;    //cantidad máxima de registros bit a usar
-  MAX_REGS_STACK_BYTE = 4;   //cantidad máxima de registros a usar en la pila
-  MAX_REGS_STACK_BIT = 4;   //cantidad máxima de registros a usar en la pila
+  MAX_REGS_STACK_BYTE = 8; //cantidad máxima de registros a usar en la pila
+  MAX_REGS_STACK_BIT = 4;  //cantidad máxima de registros a usar en la pila
 
 type
 
@@ -66,13 +66,16 @@ type
     function CreateRegisterByte(RegType: TPicRegType): TPicRegister;
     function CreateRegisterBit(RegType: TPicRegType): TPicRegisterBit;
   protected  //Variables temporales para acceso a campos de variables
-    varFields: TxpEleVars;  //lista de variables
+    {Las variables temporales, se crean como forma de acceder a partes de  una variable
+     como varbyte.bit o varword.low.}
+    varFields: TxpEleVars;  //Contenedor
     function CreateTmpVar(nam: string; typ: TType): TxpEleVar;
   protected  //Rutinas de gestión de memoria para registros
     varStkBit : TxpEleVar;   //variable bit. Usada para trabajar con la pila
     varStkByte: TxpEleVar;   //variable byte. Usada para trabajar con la pila
     varStkWord: TxpEleVar;   //variable word. Usada para trabajar con la pila
     varStkDWord: TxpEleVar;  //variable dword. Usada para trabajar con la pila
+    varTmpDWord: TxpEleVar;  //Variable temporal dword.
     function GetAuxRegisterByte: TPicRegister;
     function GetAuxRegisterBit: TPicRegisterBit;
     //Gestión de la pila
@@ -81,8 +84,10 @@ type
     function GetVarBitFromStk: TxpEleVar;
     function GetVarByteFromStk: TxpEleVar;
     function GetVarWordFromStk: TxpEleVar;
+    function GetVarDWordFromStk: TxpEleVar;
     function FreeStkRegisterByte(var reg: TPicRegister): boolean;
     function FreeStkRegisterWord: boolean;
+    function FreeStkRegisterDWord: boolean;
     function FreeStkRegisterBit: boolean;
   protected  //Rutinas de gestión de memoria para variables
     {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
@@ -419,6 +424,8 @@ begin
   Result := reg;   //devuelve referencia
 end;
 function TGenCodPic.CreateTmpVar(nam: string; typ: TType): TxpEleVar;
+{Crea una variabel temporal agregándola al contenedor varFields, que es
+limpiado al iniciar la compilación.}
 var
   tmpVar: TxpEleVar;
 begin
@@ -574,12 +581,29 @@ var
 begin
   //Usamos la variable "varStkWord" que existe siempre, para devolver la referencia.
   //Primero la hacemos apuntar a la dirección física de la pila
-  topreg := listRegStk[stackTop-1];  //toma referecnia de registro de la pila
+  topreg := listRegStk[stackTop-1];  //toma referencia de registro de la pila
   varStkWord.adrByte1.Assign(topreg);
-  topreg := listRegStk[stackTop-2];  //toma referecnia de registro de la pila
+  topreg := listRegStk[stackTop-2];  //toma referencia de registro de la pila
   varStkWord.adrByte0.Assign(topreg);
-  //Ahora que tenemos ya la variable configurada, devolvemos la referecnia
+  //Ahora que tenemos ya la variable configurada, devolvemos la referencia
   Result := varStkWord;
+end;
+function TGenCodPic.GetVarDWordFromStk: TxpEleVar;
+var
+  topreg: TPicRegister;
+begin
+  //Usamos la variable "varStkDWord" que existe siempre, para devolver la referencia.
+  //Primero la hacemos apuntar a la dirección física de la pila
+  topreg := listRegStk[stackTop-1];  //toma referencia de registro de la pila
+  varStkDWord.adrByte3.Assign(topreg);
+  topreg := listRegStk[stackTop-2];  //toma referencia de registro de la pila
+  varStkDWord.adrByte2.Assign(topreg);
+  topreg := listRegStk[stackTop-3];  //toma referencia de registro de la pila
+  varStkDWord.adrByte1.Assign(topreg);
+  topreg := listRegStk[stackTop-4];  //toma referencia de registro de la pila
+  varStkDWord.adrByte0.Assign(topreg);
+  //Ahora que tenemos ya la variable configurada, devolvemos la referencia
+  Result := varStkDWord;
 end;
 function TGenCodPic.FreeStkRegisterBit: boolean;
 {Libera el último bit, que se pidió a la RAM. Devuelve en "reg", la dirección del último
@@ -615,6 +639,15 @@ begin
    end;
    dec(stackTop, 2);   //Baja puntero
 end;
+function TGenCodPic.FreeStkRegisterDWord: boolean;
+begin
+   if stackTop<=1 then begin  //Ya está abajo
+     GenError('Stack Overflow');
+     exit(false);
+   end;
+   dec(stackTop, 4);   //Baja puntero
+end;
+
 ////Rutinas de gestión de memoria para variables
 procedure TGenCodPic.AssignRAMinBit(absAdd, absBit: integer;
   var reg: TPicRegisterBit; regName: string);
@@ -685,20 +718,30 @@ begin
     AssignRAMinByte(absAdd, nVar.adrByte0, varName);
   end else if nVar.typ = typWord then begin
     //Registra variable en la tabla
-    {Asigna espacio para los dos bytes. Notar que:
-    1. Si se especifica dirección absoluta, esta se usa solo para el primer byte.
-    2. Los dos bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
-    AssignRAMinByte(absAdd, nVar.adrByte0, varName+'@0');
-    AssignRAMinByte(-1    , nVar.adrByte1, varName+'@1');
+    if absAdd = -1 then begin  //Variable normal
+      //Los 2 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
+      AssignRAMinByte(-1, nVar.adrByte0, varName+'@0');
+      AssignRAMinByte(-1, nVar.adrByte1, varName+'@1');
+    end else begin             //Variable absoluta
+      //Las variables absolutas se almacenarán siempre consecutivas
+      AssignRAMinByte(absAdd  , nVar.adrByte0, varName+'@0');
+      AssignRAMinByte(absAdd+1, nVar.adrByte1, varName+'@1');
+    end;
   end else if nVar.typ = typDword then begin
     //Registra variable en la tabla
-    {Asigna espacio para los dos bytes. Notar que:
-    1. Si se especifica dirección absoluta, esta se usa solo para el primer byte.
-    2. Los 4 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
-    AssignRAMinByte(absAdd, nVar.adrByte0, varName+'@0');
-    AssignRAMinByte(-1    , nVar.adrByte1, varName+'@1');
-    AssignRAMinByte(-1    , nVar.adrByte2, varName+'@2');
-    AssignRAMinByte(-1    , nVar.adrByte3, varName+'@3');
+    if absAdd = -1 then begin  //Variable normal
+      //Los 4 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
+      AssignRAMinByte(-1, nVar.adrByte0, varName+'@0');
+      AssignRAMinByte(-1, nVar.adrByte1, varName+'@1');
+      AssignRAMinByte(-1, nVar.adrByte2, varName+'@2');
+      AssignRAMinByte(-1, nVar.adrByte3, varName+'@3');
+    end else begin             //Variable absoluta
+      //Las variables absolutas se almacenarán siempre consecutivas
+      AssignRAMinByte(absAdd  , nVar.adrByte0, varName+'@0');
+      AssignRAMinByte(absAdd+1, nVar.adrByte1, varName+'@1');
+      AssignRAMinByte(absAdd+2, nVar.adrByte2, varName+'@2');
+      AssignRAMinByte(absAdd+3, nVar.adrByte3, varName+'@3');
+    end;
   end else begin
     GenError('Not implemented.', [varName]);
   end;
@@ -761,7 +804,7 @@ begin
 end;
 procedure TGenCodPic.SetResultConst_dword(valWord: Int64);
 begin
-  if not ValidateWordRange(valWord) then
+  if not ValidateDWordRange(valWord) then
     exit;  //Error de rango
   SetResult(typDword, coConst);
   res.valInt := valWord;
@@ -1225,6 +1268,10 @@ begin
   varStkWord.typ := typWord;
   varStkDWord := TxpEleVar.Create;
   varStkDWord.typ := typDword;
+  //Variables temporales. Se crean sin asignación de memoria. Se usan para
+  //operaciones en el generador de código
+  varTmpDWord := TxpEleVar.Create;
+  varTmpDWord.typ := typDword;
   //Crea lista de variables temporales
   varFields:= TxpEleVars.Create(true);
   //Inicializa contenedores
@@ -1265,6 +1312,7 @@ begin
   varStkByte.Destroy;
   varStkWord.Destroy;
   varStkDWord.Destroy;
+  varTmpDWord.Destroy;
   pic.Destroy;
   inherited Destroy;
 end;

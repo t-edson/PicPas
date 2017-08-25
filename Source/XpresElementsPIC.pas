@@ -148,7 +148,6 @@ type
   //Clase para modelar a los tipos definidos por el usuario
   { Es diferente a XpresTypesPIC.TType, aunque no se ha hecho un análisis profundo }
   TxpEleType= class(TxpElement)
-    //valores de la constante
     constructor Create; override;
   end;
   TxpEleTypes= specialize TFPGObjectList<TxpEleType>; //lista de variables
@@ -205,6 +204,8 @@ type
     function AbsAddr : word;   //Devuelve la dirección absoluta de la variable
     function AbsAddrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
     function AbsAddrH: word;   //Devuelve la dirección absoluta de la variable (HIGH)
+    function AbsAddrE: word;   //Devuelve la dirección absoluta de la variable (HIGH)
+    function AbsAddrU: word;   //Devuelve la dirección absoluta de la variable (HIGH)
     function AddrString: string;  //Devuelve la dirección física como cadena
     function BitMask: byte;  //Máscara de bit, de acuerdo al valor del campo "bit".
     procedure ResetAddress;  //Limpia las direcciones físicas
@@ -606,6 +607,22 @@ function TxpEleVar.AbsAddrH: word;
 begin
   if (typ = typWord) or (typ = typDWord) then begin
     Result := adrByte1.AbsAdrr;
+  end else begin
+    Result := ADRR_ERROR;
+  end;
+end;
+function TxpEleVar.AbsAddrE: word;
+begin
+  if (typ = typDWord) then begin
+    Result := adrByte2.AbsAdrr;
+  end else begin
+    Result := ADRR_ERROR;
+  end;
+end;
+function TxpEleVar.AbsAddrU: word;
+begin
+  if (typ = typDWord) then begin
+    Result := adrByte3.AbsAdrr;
   end else begin
     Result := ADRR_ERROR;
   end;

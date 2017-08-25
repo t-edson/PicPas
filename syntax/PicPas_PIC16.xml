@@ -2,7 +2,7 @@
 <Language name="PicPas Pascal" ext="pas">
   <!-- Atributos a usar. No cambiar formato porque se modifica automáticamente-->
   <Attribute Name="Keyword"   ForeCol="#0000FF" Bold="True"  Italic="False" Underline="False"/>
-  <Attribute Name="Boolean"   ForeCol="#FFFF00" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Boolean"   ForeCol="#8080FF" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="Comment"   ForeCol="#008000" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="Number"    ForeCol="#074BFF" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="String"    ForeCol="#074BFF" Bold="False" Italic="False" Underline="False"/>
@@ -10,7 +10,7 @@
   <Attribute Name="Asm"       ForeCol="#60C060" Bold="False" Italic="True" Underline="False"/>
   <Attribute Name="Types"     ForeCol="#000000" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="Symbol"    ForeCol="#000000" Bold="False" Italic="False" Underline="False"/>
-  <Completion OpenOnKeyUp="True ">
+  <Completion OpenOnKeyUp="True">
   <!-- Atributos a usar. Fin de lista. -->
 	<List Name="PlantillaIF" IconIndex='5'>
   "if ... then ...;|if \_ then\n\n\uend;"

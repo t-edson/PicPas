@@ -13,6 +13,7 @@ type
   TCompiler = class(TParserDirec)
   private  //Funciones básicas
     function AddVariable(varName: string; typ: ttype; srcPos: TSrcPos): TxpEleVar;
+    procedure ArrayDeclaration;
     function GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
     procedure cInNewLine(lin: string);
     procedure Cod_JumpIfTrue;
@@ -962,6 +963,98 @@ begin
     exit;
   end;
 end;
+procedure TCompiler.ArrayDeclaration;
+{Compila una declaración de arreglo.}
+var
+  n: Longint;
+  varType: String;
+  typ: TType;
+begin
+  cIn.Next;  //lo toma
+  cIn.SkipWhites;
+  if not CaptureTok('[') then exit;
+  cIn.SkipWhites;
+  if cIn.tokType = tnNumber then begin
+    //Intenta obtener valor
+    if not TryStrToInt(cIn.tok, n) then begin
+      //Podría fallar si es un número muy grande o exponencial
+      GenError(ER_ERR_IN_NUMB);
+      exit;
+    end;
+    if (n<0) or (n>$FF) then begin
+      //Límite físico
+      GenError(ER_ARR_SIZ_BIG);
+      exit;
+    end;
+    cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
+    //Verifica si hay memoria para este arreglo
+
+
+//  end else if cIn.tokType = tnIdentif then begin
+//    //Puede ser variable
+//    GetOperandIdent(Op);
+//    if HayError then exit;
+//    if Op.catOp <> coVariab then begin
+//      GenError(ER_EXP_VAR_IDE);
+//      cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
+//      exit;
+//    end;
+//    //Es variable. Notar que puede ser una variable temporal, si se usa: <var_byte>.0
+//    xvar := Op.rVar;
+//    //Ya tiene la variable en "xvar".
+//    if xvar.typ.IsSizeBit then begin //boolean o bit
+//      IsBit := true;  //Es una dirección de bit
+//      Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
+//      Result.absBit := xvar.adrBit.bit;
+//    end else begin
+//      IsBit := false;  //Es una dirección normal (byte)
+//      Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
+//    end;
+//    if Result.absAddr = ADRR_ERROR then begin
+//      //No se implemento el tipo. No debería pasar.
+//      GenError('Internal Error: TxpEleVar.AbsAddr.');
+//      exit;
+//    end;
+  end else begin   //error
+    GenError(ER_INV_ARR_SIZ);
+    cIn.Next;    //pasa siempre
+    exit;
+  end;
+  if not CaptureTok(']') then exit;
+  //Ya se tiene el tamaño del arreglo
+  cIn.SkipWhites;
+  if not CaptureStr('of') then exit;
+  cIn.SkipWhites;
+  if (cIn.tokType <> tnType) then begin
+    GenError(ER_IDE_TYP_EXP);
+    exit;
+  end;
+  varType := cIn.tok;   //lee tipo
+  cIn.Next;
+  cIn.SkipWhites;
+  //Valida el tipo
+  typ := FindType(varType);
+  if typ = nil then begin
+    GenError(ER_UNDEF_TYPE_, [varType]);
+    exit;
+  end;
+  //Ya se tiene el tipo
+  //¿Y si es bit?
+//  totSize := n * typ.size;  //tamaño en bytes
+
+  if not CaptureDelExpres then exit;
+  ProcComments;
+
+  {
+  Esta implementación está incompleta. Solo se pone como prueba, pero es un avance.
+  Tal vez se debe definri primero un sistema de descriptor de tipos.  Se podría usar
+  el mismo elemento TxpEleType, y agregarle propiedades para que indiquen si son
+  arreglos o records y alguna referecnia a lso tipso básicos. Entonces la búsqueda de
+  tipos se debería hacer en los objetos TxpEleType, creados (que se supone se definen
+  con  declaraciones TYPE). También se pueden tener tipos del sistema (que serían los
+  tipos básicos), de la misma forma en que se tienen Funciones del sistema.
+  }
+end;
 procedure TCompiler.CompileVarDeclar(IsInterface: boolean = false);
 {Compila la declaración de variables en el nodo actual.
 "IsInterface", indica el valor que se pondrá al as variables, en la bandera "IsInterface" }
@@ -986,7 +1079,13 @@ begin
     //Debe seguir, el tipo de la variable
     cIn.Next;  //lo toma
     cIn.SkipWhites;
-    if (cIn.tokType <> tnType) then begin
+    if (cIn.tokType = tnType) then begin
+      //Caso normal
+    end else if cIn.tokL = 'array' then begin
+      //Es un arreglo
+      ArrayDeclaration;
+      exit;  //puede salir con error
+    end else begin
       GenError(ER_IDE_TYP_EXP);
       exit;
     end;
@@ -1453,7 +1552,7 @@ begin
     cIn.Next;  //pasa al nombre
     //Toma una a una las unidades
     repeat
-      cIn.SkipWhites;
+      ProcComments;
       //ahora debe haber un identificador
       if cIn.tokType <> tnIdentif then begin
         GenError(ER_IDEN_EXPECT);
@@ -1924,6 +2023,11 @@ begin
       end else if v.typ = typWord then begin
         lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAddrL)+ subUsed);
         lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAddrH)+ subUsed);
+      end else if v.typ = typDWord then begin
+        lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAddrL)+ subUsed);
+        lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAddrH)+ subUsed);
+        lins.Add(v.name+'@2' + ' EQU ' +  AdrStr(v.AbsAddrE)+ subUsed);
+        lins.Add(v.name+'@3' + ' EQU ' +  AdrStr(v.AbsAddrU)+ subUsed);
       end else begin
         lins.Add('"' + v.name + '"->' +  AdrStr(v.AbsAddr) + subUsed);
       end;

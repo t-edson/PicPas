@@ -741,7 +741,8 @@ begin
   end else if (cIn.tokType = tnSysFunct) or //función del sistema
               (cIn.tokL = 'bit') or   //"bit" es de tipo "tnType"
               (cIn.tokL = 'byte') or   //"byte" es de tipo "tnType"
-              (cIn.tokL = 'word') then begin  //"word" es de tipo "tnType"
+              (cIn.tokL = 'word') or   //"word" es de tipo "tnType"
+              (cIn.tokL = 'dword') then begin  //"dword" es de tipo "tnType"
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
      versiones, sobrecargadas de la misma función.}
     tmp := UpCase(cIn.tok);  //guarda nombre de función
@@ -992,12 +993,14 @@ function TCompilerBase.GetExpression(const prec: Integer): TOperand; //inline;
 var
   Op1, Op2  : TOperand;   //Operandos
   opr1: TxpOperator;  //Operadores
+  p: TPosCont;
 begin
   //----------------coger primer operando------------------
   Op1 := GetOperand;
   if HayError then exit;
   //verifica si termina la expresion
   cIn.SkipWhites;
+  p := cIn.PosAct;  //por si necesita volver
   opr1 := GetOperator(Op1);
   if opr1 = nil then begin  //no sigue operador
     //Expresión de un solo operando. Lo carga por si se necesita
@@ -1016,6 +1019,7 @@ begin
     //¿Delimitada por precedencia?
     If opr1.prec<= prec Then begin  //es menor que la que sigue, expres.
       Result := Op1;  //solo devuelve el único operando que leyó
+      cIn.PosAct := p;  //vuleve
       exit;
     End;
     if opr1.OperationPost<>nil then begin  //Verifica si es operación Unaria
@@ -1027,7 +1031,8 @@ begin
       continue;
     end;
     //--------------------coger segundo operando--------------------
-    Op2 := GetOperandPrec(Opr1.prec);   //toma operando con precedencia
+//    Op2 := GetOperandPrec(Opr1.prec);   //toma operando con precedencia
+    Op2 := GetExpression(Opr1.prec);   //toma operando con precedencia
     if HayError then exit;
     //prepara siguiente operación
     Oper(Op1, opr1, Op2);    //evalua resultado en "res"

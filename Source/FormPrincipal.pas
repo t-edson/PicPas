@@ -399,6 +399,11 @@ begin
     if fraEditView1.Count>0 then begin
       //Hay archivo abiertos
       ed := fraEditView1.ActiveEditor;
+      if (ed.SynEdit.Lines.Count <=1) and  (trim(ed.Text)='') then begin
+        //Verifica rápidamente si hay texto en el editor
+         fraMessages.InitCompilation(cxp, false);  //Limpia mensajes
+        exit;
+      end;
       fraMessages.InitCompilation(cxp, false);  //Limpia mensajes
       cxp.Compile(ed.NomArc, false);
       //Puede haber generado error, los mismos que deben haberse mostrado en el panel.

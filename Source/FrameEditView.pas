@@ -69,6 +69,7 @@ type
     imgBookMarks: TImageList;
     ImgCompletion: TImageList;
     lblBackground: TLabel;
+    mnCloseOthers: TMenuItem;
     mnCloseAll: TMenuItem;
     mnNewTab: TMenuItem;
     mnCloseTab: TMenuItem;
@@ -80,6 +81,7 @@ type
     SaveDialog1: TSaveDialog;
     UpDown1: TUpDown;
     procedure FrameResize(Sender: TObject);
+    procedure mnCloseOthersClick(Sender: TObject);
     procedure mnCloseAllClick(Sender: TObject);
     procedure mnCloseTabClick(Sender: TObject);
     procedure mnNewTabClick(Sender: TObject);
@@ -1211,6 +1213,7 @@ begin
   ed := AddEdit('.pas');
   ed.NomArc := tmpPath + DirectorySeparator + ed.Caption;
   ConfigureSyntax(ed);
+  AgregArcReciente(ed.NomArc);
 end;
 function TfraEditView.LoadFile(fileName: string): boolean;
 //Carga un archivo en el editor. Si encuentra algún error. Devuelve FALSE.
@@ -1276,7 +1279,6 @@ begin
   if not OpenDialog1.Execute then exit(true);    //se canceló
   arc0 := OpenDialog1.FileName;
   LoadFile(arc0);  //legalmente debería darle en UTF-8
-  AgregArcReciente(arc0);
   Result := true;   //sale sin incidencias
 end;
 procedure TfraEditView.SaveFile;
@@ -1465,6 +1467,27 @@ end;
 procedure TfraEditView.mnCloseAllClick(Sender: TObject);
 begin
   while self.Count>0 do begin
+    if not CloseEditor then
+      break;  //Se canceló
+  end;
+  SetFocus;
+end;
+procedure TfraEditView.mnCloseOthersClick(Sender: TObject);
+var
+  act: TSynEditor;
+  nBefore, i, nAfter: Integer;
+begin
+  //Cierra anteriores
+  nBefore := TabIndex;
+  for i:= 1 to nBefore do begin
+    TabIndex := 0;
+    if not CloseEditor then
+      break;  //Se canceló
+  end;
+  //Cierra posteriores
+  nAfter := Count - TabIndex - 1;
+  for i:= 1 to nAfter do begin
+    TabIndex := Count-1;
     if not CloseEditor then
       break;  //Se canceló
   end;

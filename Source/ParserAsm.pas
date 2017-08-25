@@ -183,6 +183,28 @@ begin
       //No es ninguno
       exit(false);
     end;
+  end else if lexasm.GetToken = '@' then begin
+    lexAsm.Next;
+    if UpCase(lexasm.GetToken) = '0' then begin
+      bytePos := 0;
+      lexAsm.Next;
+      exit(true);
+    end else if UpCase(lexasm.GetToken) = '1' then begin
+      bytePos := 1;
+      lexAsm.Next;
+      exit(true);
+    end else if UpCase(lexasm.GetToken) = '2' then begin
+      bytePos := 2;
+      lexAsm.Next;
+      exit(true);
+    end else if UpCase(lexasm.GetToken) = '3' then begin
+      bytePos := 3;
+      lexAsm.Next;
+      exit(true);
+    end else begin
+      //No es ninguno
+      exit(false);
+    end;
   end else begin
     //No tiene indicación de campo
     exit(false);
@@ -418,20 +440,46 @@ begin
           if bytePos = 0 then begin  //Byte bajo
             n := xvar.adrByte0.offs;
             f := GetFaddress(n);
-          end else begin        //Byte alto
-             n := xvar.adrByte1.offs;
-             f := GetFaddress(n);
+          end else if bytePos = 1 then begin        //Byte alto
+            n := xvar.adrByte1.offs;
+            f := GetFaddress(n);
+          end else begin
+             GenErrorAsm(ER_NOGETADD_VAR);
+             exit(false);
           end;
         end else begin
            n := xvar.AbsAddr;
            f := GetFaddress(n);
         end;
-        Result := true;
-        exit;
+        exit(true);
+      end else if xvar.typ = typDword then begin
+        lexAsm.Next;
+        if HaveByteInformation(bytePos) then begin
+          //Hay precisión de byte
+          if bytePos = 0 then begin  //Byte bajo
+            n := xvar.adrByte0.offs;
+            f := GetFaddress(n);
+          end else if bytePos = 1 then begin        //Byte alto
+            n := xvar.adrByte1.offs;
+            f := GetFaddress(n);
+          end else if bytePos = 2 then begin        //Byte alto
+            n := xvar.adrByte2.offs;
+            f := GetFaddress(n);
+          end else if bytePos = 3 then begin        //Byte alto
+            n := xvar.adrByte3.offs;
+            f := GetFaddress(n);
+          end else begin
+             GenErrorAsm(ER_NOGETADD_VAR);
+             exit(false);
+          end;
+        end else begin
+           n := xvar.AbsAddr;
+           f := GetFaddress(n);
+        end;
+        exit(true);
       end else begin
         GenErrorAsm(ER_NOGETADD_VAR);
-        Result := false;
-        exit;
+        exit(false);
       end;
     end else begin
       //No es variable
