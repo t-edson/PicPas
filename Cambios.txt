@@ -1,3 +1,67 @@
+PicPas 0.7.5
+============
+Se activa el acceso, desde bloques ASM a los bytes del tipo DWord, usando los 
+modificadores @0, @1, @2 y @3.
+Se crea la función del sistema DWord(), para conversiones.
+se habilita, el mostrar las direcciones de las variables Dword en TCompiler.RAMusage().
+Se habilita las operaciones = y <> para Dword.
+Se agrega el operador += en al definición de sintaxis.
+Se implementa la operación suma de dwords para algunos casos básicos.
+Se configura la declaración absoluta de variables word y dword, para que ubiquen
+sus bytes siempre consecutivos.
+Se agregan los tokens [ y ] en la definición de sintaxis del compilador.
+Se crea de forma experimental, el método TCompiler.ArrayDeclaration().
+Se corrige la extracción de parámetros para las funciones del sistema, cambiando la 
+llamada a GetExpressionE() por GetExpression().
+Se agregan más patrones de prueba.
+Se corrige la precedencia de los operadores >> y <<.
+Se corrige un problema de precedencia, en la rutina TCompilerBase.GetExpression(),
+cambiando la llamada a GetOperandPrec(), por GetExpression().
+Se crean los campos Low, High, Extra, Ultra, LowWord y HighWord como forma de acceder 
+a los bytes y word de un Dword.
+Se deshabilita la verificación automática de sintaxis, cuando el editor no contiene 
+texto.
+Se crea la opción "Cerrar Otros", desde el menú contextual de las pestañas de los
+editores.
+Se implementa la rutina de división de bytes. Aún no está operativa.
+Se habilita el procesamiento de directivas en la sección USES.
+Se incluye AgregArcReciente() en el método TfraEditView.NewFile, para que se incluya 
+un archivo nuevo, como reciente, aún sin guardarlo.
+
+PENDIENTES
+Terminar de implementar la operación de diviisón de bytes.
+Revisar el problema del error al mostrar variables del sistema como $CURRBANK, con
+la directiva $MSGBOX, por haber definido el formato de números como $HHHH.
+
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absoulte a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
+
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema.
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir punteros, arreglos y registros.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar las funciones de búsqueda y reemplazo de texto.
+Implementar el anidamiento de la directiva $IFDEF. tal vez se puede modificar al resaltador 
+para que soporte definiciones de bloques o tokens multilínea, con delimitadores definidos
+por código, de modo que se pueda implementar el manejo de bloques condicionales a nivel 
+léxico y a la vez tener la posibilidad de que el resaltador lo muestre.
+
 PicPas 0.7.4
 ============
 Se modifica la rutina TSynEditor.MarkError(), para que incluya al caracter "_" como 
@@ -46,35 +110,6 @@ Se incluye acceso a los nuevos registros _E y _U, desde ensamblador.
 Se crea la función del sistema: byte() y se mejora la función word().
 Se actualiza la configuración del autocompletado para las nuevas modificaciones.
 
-PENDIENTES
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absoulte a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
-
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema.
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir punteros, arreglos y registros.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar las funciones de búsqueda y reemplazo de texto.
-Implementar el anidamiento de la directiva $IFDEF. tal vez se puede modificar al resaltador 
-para que soporte definiciones de bloques o tokens multilínea, con delimitadores definidos
-por código, de modo que se pueda implementar el manejo de bloques condicionales a nivel 
-léxico y a la vez tener la posibilidad de que el resaltador lo muestre.
 
 PicPas 0.7.3
 ============

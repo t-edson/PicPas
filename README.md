@@ -1,4 +1,4 @@
-PicPas 0.7.4
+PicPas 0.7.5
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
@@ -109,7 +109,19 @@ Operator            Precedence
  *, DIV, MOD, AND      5
  +, -, OR, XOR         4
  =, <>, <, <=, >, >=   3
- :=                    2
+ := +=                 2
+ ```
+
+### Types
+
+```
+Type           Size
+============== ==========
+ bit           1 bit
+ boolean       1 bit
+ byte          1 byte
+ word          2 bytes
+ dword         4 bytes
  ```
 
 ### Variables
@@ -201,6 +213,7 @@ Chr()          Convert a byte to a char.
 Bit()          Convert an expression to a bit expression.
 Byte()         Convert an expression to a byte expression.
 Word()         Convert an expression to a word expression.
+DWord()        Convert an expression to a dword expression.
 SetAsInput()   Set a 8-bits port or a pin as an input.
 SetAsOutput()  Set a 8-bits port or a pin as an output.
 ```
@@ -320,6 +333,7 @@ var
  bit1: bit;
  bol1: boolean; 
  word1: word;
+ dword1: dword;
 begin
   //Low level clear
   asm 
@@ -327,8 +341,12 @@ begin
     CLRF car1
     BCF bit1
     BCF bol1
-    BCF word1.Low
-    BCF word1.high
+    CLRF word1.Low
+    BCF word1.high.bit1
+	CLRF dword1.low
+	CLRF dword1.high
+	CLRF dword1.extra
+	CLRF dword1.ultra
   end
 end.
 ```
