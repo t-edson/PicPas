@@ -1532,9 +1532,14 @@ begin
   end;
   coConst_Variab: begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
-    _MOVLW(p1^.valInt);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.offs, toW);  //si iguales _Z=1
+    if p1^.valInt = 0 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _MOVF(p2^.offs, toF);  //si iguales _Z=1
+    end else begin
+      _MOVLW(p1^.valInt);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.offs, toW);  //si iguales _Z=1
+    end;
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
@@ -1542,9 +1547,14 @@ begin
   end;
   coVariab_Const: begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
-    _MOVLW(p2^.valInt);
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _SUBWF(p1^.offs, toW);  //si iguales _Z=1
+    if p2^.valInt = 0 then begin  //caso especial
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toF);  //si iguales _Z=1
+    end else begin
+      _MOVLW(p2^.valInt);
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _SUBWF(p1^.offs, toW);  //si iguales _Z=1
+    end;
   end;
   coVariab_Variab:begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
