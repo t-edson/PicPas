@@ -27,6 +27,7 @@ Se implementa la rutina de división de bytes. Aún no está operativa.
 Se habilita el procesamiento de directivas en la sección USES.
 Se incluye AgregArcReciente() en el método TfraEditView.NewFile, para que se incluya 
 un archivo nuevo, como reciente, aún sin guardarlo.
+Se optimiza la operación de comparación de bytes para el caso variable=0.
 
 PENDIENTES
 Terminar de implementar la operación de diviisón de bytes.
