@@ -1,0 +1,17 @@
+COMPARACIÓN DE USO DE MEMORIA:
+
+MikroC
+======
+RAM: 18 bytes   FLASH: 126 words
+
+CCS
+=====
+RAM: 7 bytes   FLASH: 135 words
+
+PicPas
+======
+RAM: 2 bytes   FLASH: 64 words
+
+Pic Micro Pacal
+===============
+RAM: 4 bytes   FLASH: 104 words
