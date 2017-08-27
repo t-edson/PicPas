@@ -1,0 +1,21 @@
+MEMORY USE COMPARISON:
+
+MikroC 7.0.0
+============
+RAM: 18 bytes   FLASH: 126 words
+
+CCS 4.104
+=========
+RAM: 7 bytes   FLASH: 135 words
+
+PicPas 0.7.5
+============
+RAM: 2 bytes   FLASH: 64 words
+
+Pic Micro Pacal 2.1.4
+=====================
+RAM: 4 bytes   FLASH: 104 words
+
+JAL 0.9.0
+=========
+RAM: 9 bytes   FLASH: 116 words

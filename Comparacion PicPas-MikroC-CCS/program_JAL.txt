@@ -1,0 +1,49 @@
+--
+-- Programa que genera el efecto de luces del "Auto fantástico"
+-- Compilado en JAL 0.9.0
+-- Adaptado de:
+-- Fuente: http://www.todopic.com.ar/foros/index.php?topic=4530.msg38857#msg38857
+--
+
+include 16f84a                    -- target PICmicro
+pragma target clock 8_000_000     -- oscillator frequency
+pragma target OSC  HS              -- HS crystal or resonator
+pragma target WDT  disabled        -- no watchdog
+include delay
+
+procedure derecha() is
+begin
+   pin_A0 = 1;
+   delay_1ms(300);
+   pin_A0 = 0;
+   pin_A1 = 1;
+   delay_1ms(300);
+   pin_A1 = 0;
+   pin_A2 = 1;
+   delay_1ms(300);
+   pin_A2 = 0;
+   pin_A3 = 1;
+   delay_1ms(300);
+end procedure
+
+procedure izquierda() is
+begin
+   pin_A3 = 0;
+   pin_A2 = 1;
+   delay_1ms(300);
+   pin_A2 = 0;
+   pin_A1 = 1;
+   delay_1ms(300);
+   pin_A1 = 0;
+end procedure
+
+pin_A0_direction =  output
+pin_A1_direction =  output
+pin_A2_direction =  output
+pin_A3_direction =  output
+--
+forever loop
+   derecha();
+   izquierda();
+end loop
+--
