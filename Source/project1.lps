@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Release"/>
-    <Units Count="41">
+    <Units Count="42">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -64,11 +64,10 @@
       <Unit4>
         <Filename Value="GenCod.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="1381"/>
-        <CursorPos X="19" Y="1538"/>
-        <FoldState Value=" TL00AD piAiw40B p0(823]7w927 T4i703 T5iB0{v T7iDE{s T8iE423]sgj54D4 TMlQ011J1H7D7H]-uY810V12]Btf02091E2A]DsV01052A151R[d4703041E111]E.f0M]AV[r48640C]DL[r4X210A183233131 T3lN059 pjJja032]9LjR0S]@k2kW0H[96L[96Ql20HD piejU033]j7jE072]IYj10L1]IKk00W[94Ck307513[K4m80M4 plDle0{*A]J1ma06[S40jA0{L].jTm50{o[x4VmZ0{U]Kk5mX0R2[d5W0C3[S4k40n]bk9lH041[{45J0{[~*5ckd0R[b43jZ03[I5j30K[I41jA[R6Bjg0z2 pkVm90T[I4gkX0}+2 T0leN3F]sZkECs6]9aLHB8]8YiKR3E]iHiJY36]93fi5G[}{55F4[H48Nk6A[y4iTK8D]HU[h44]IbLHn8[Q5Ma6K[94lbI5H]9ajcI69[*5JI[-5ek3I66313],iflNT3B pk1k7R27[{35bR1[94JiT[IBA[}D5GC6I[.51II9 piXjDDE8]a9k7IB7[{V5Gd27[R51I7A[I5AI[}x5dmRQ2G[~/5DW29[}(5OCA[}p5jYIMA[s5SIs]+j3kdCGA[_U6B5E[\5fB2L[s4kcU1L[I4iZD2F[\5Je2G[\4iKU3F[R5Le1B[+4iHU4F T6nK012 p2y601U]P0i-F027 pF;0011 THnO2X1]=0kO2M[94gl44{l]AkNp72F3]sdl92G2[I4mQ2{C01[e45oM2G[d4Hld2{:[e4aoE2Q[S4AkC2{O[A4cmU2{T[A4KnI2{1]dj4me2Y2]mbk52{q]Tl8oU2(4 piXlQ2K4]b0o32O[k4JkX2,1[k4]9M3^"/>
+        <TopLine Value="50"/>
+        <CursorPos X="23" Y="336"/>
+        <FoldState Value=" TL00AD piAiw40B p0(823]7w927 T4i703 T5iB0{v T7iDE{s T8iE423]sgj54D4 TMlQ011J1H7D7H]-uY810V12]Btf02091E2A]DsV01052A151R[d4703041E111]E.f0M]AV[r48640C]DL[r4X210A183233131 T3lN059 pjJja032]9LjR0S]@k2kW0H[96L[96Ql20HD piejU033]j7jE072]IYj10L1]IKk00W[94Ck3076]9EjS04]ajGjN0M4 plDle0{*A]J1ma06[!40jA0{L[c4Tm50{o[,4VmZ0{U]Kk5mX0R2[d5W0C3[S4k40n]bk9lH041[{45J0{[~(5ckd0R[b43jZ03[I5j30K[I41jA[R6Bjg0z2 pkVm90T[I4gkX0}+2 T0leN3F]sZkECs6]9aLHB8]8YiKR3E]iHiJY3]Qj3fi5G[~255F4[H48Nk6A[y4iTK8D]HU[h44]IbLHn8[Q5Ma6K[94lbI5H]9ajcI69[*5JI[-5ek3I66313],iflNT3B pk1k7R27[{35bR1[94JiT[IBA[}D5GC6I[.51II9 piXjDDE8]a9k7IB7[{V5Gd27[R51I7A[I5AI[}x5dmRQ2G[~/5DW29[}(5OCA[}p5jYIMA[s5SIs]+j3kdCGA[_U6B5E[\5fB2L[s4kcU1L[I4iZD2F[\5Je2G[\4iKU3F[R5Le1B[+4iHU4F T6nK012 p2y601U]P0i-F027 pF;0011 THnO2X1]=0kO2M[94gl44{l]AkNp72F3]sdl92G2[I4mQ2{C01[e45oM2G[d4Hld2{:[e4aoE2Q[S4AkC2{O[A4cmU2{T[A4KnI2{13]A4me2Y2]mbk52{q]Tl8oU2(4 piXlQ2K4]b0o32O[k4JkX2,1[k4]9M3G"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -306,9 +305,10 @@
         <ComponentName Value="fraRamExplorer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
-        <TopLine Value="113"/>
-        <CursorPos X="54" Y="109"/>
+        <TopLine Value="91"/>
+        <CursorPos X="16" Y="118"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit23>
@@ -364,7 +364,7 @@
         <EditorIndex Value="6"/>
         <TopLine Value="426"/>
         <CursorPos Y="445"/>
-        <UsageCount Value="59"/>
+        <UsageCount Value="61"/>
         <Loaded Value="True"/>
       </Unit29>
       <Unit30>
@@ -445,127 +445,135 @@
         <CursorPos X="40" Y="17"/>
         <UsageCount Value="10"/>
       </Unit40>
+      <Unit41>
+        <Filename Value="c:\lazarus32\lcl\graphics.pp"/>
+        <UnitName Value="Graphics"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="82"/>
+        <CursorPos X="3" Y="101"/>
+        <UsageCount Value="10"/>
+      </Unit41>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1350" TopLine="1241"/>
+        <Caret Line="1373" Column="12" TopLine="1352"/>
       </Position1>
       <Position2>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1361" Column="30" TopLine="1337"/>
+        <Caret Line="1364" Column="13" TopLine="1346"/>
       </Position2>
       <Position3>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="4577" Column="50" TopLine="4559"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1281" Column="19" TopLine="1091"/>
       </Position3>
       <Position4>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="4579" Column="32" TopLine="4559"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1295" Column="19" TopLine="1149"/>
       </Position4>
       <Position5>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1366" TopLine="1349"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1305" Column="23" TopLine="1215"/>
       </Position5>
       <Position6>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1368" Column="15" TopLine="1353"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1385" Column="40" TopLine="1279"/>
       </Position6>
       <Position7>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1383" Column="38" TopLine="1271"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1305" Column="7" TopLine="1279"/>
       </Position7>
       <Position8>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="4686" Column="41" TopLine="4661"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1295" Column="3" TopLine="1279"/>
       </Position8>
       <Position9>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1372" Column="27" TopLine="1306"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1281" Column="3" TopLine="1149"/>
       </Position9>
       <Position10>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1362" Column="18" TopLine="1331"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1232" Column="17" TopLine="1091"/>
       </Position10>
       <Position11>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1364" Column="14" TopLine="1331"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1231" Column="5" TopLine="1091"/>
       </Position11>
       <Position12>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1367" Column="27" TopLine="1346"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="171" Column="15" TopLine="81"/>
       </Position12>
       <Position13>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1365" Column="22" TopLine="1322"/>
+        <Caret Line="3397" Column="24" TopLine="2970"/>
       </Position13>
       <Position14>
         <Filename Value="GenCod.pas"/>
-        <Caret Line="1367" Column="17" TopLine="1348"/>
+        <Caret Line="1550" Column="10" TopLine="1219"/>
       </Position14>
       <Position15>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1359" Column="13" TopLine="1306"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="110" Column="31" TopLine="86"/>
       </Position15>
       <Position16>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1370" Column="21" TopLine="1348"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="113" Column="28" TopLine="87"/>
       </Position16>
       <Position17>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1373" Column="12" TopLine="1352"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="114" Column="32" TopLine="84"/>
       </Position17>
       <Position18>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1364" Column="13" TopLine="1346"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="87" TopLine="51"/>
       </Position18>
       <Position19>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1281" Column="19" TopLine="1091"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="56" Column="3" TopLine="55"/>
       </Position19>
       <Position20>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1295" Column="19" TopLine="1149"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="15" Column="3"/>
       </Position20>
       <Position21>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1305" Column="23" TopLine="1215"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="75" Column="3" TopLine="54"/>
       </Position21>
       <Position22>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1385" Column="40" TopLine="1279"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="76" Column="3" TopLine="55"/>
       </Position22>
       <Position23>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1305" Column="7" TopLine="1279"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="57" Column="70" TopLine="53"/>
       </Position23>
       <Position24>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1295" Column="3" TopLine="1279"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="63" TopLine="52"/>
       </Position24>
       <Position25>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1281" Column="3" TopLine="1149"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="82" Column="3" TopLine="63"/>
       </Position25>
       <Position26>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1232" Column="17" TopLine="1091"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="53" Column="3" TopLine="53"/>
       </Position26>
       <Position27>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="1231" Column="5" TopLine="1091"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="117" Column="46" TopLine="98"/>
       </Position27>
       <Position28>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="171" Column="15" TopLine="81"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="91" TopLine="58"/>
       </Position28>
       <Position29>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="3397" Column="24" TopLine="2970"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="169" TopLine="132"/>
       </Position29>
       <Position30>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="1550" Column="10" TopLine="1219"/>
+        <Filename Value="FrameRamExplorer.pas"/>
+        <Caret Line="162" Column="24" TopLine="143"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

@@ -12,12 +12,13 @@ type
   TfraRamExplorer = class(TFrame)
     Label1: TLabel;
   private
-    x1, x2: integer;
+//    x1, x2: integer;
     procedure DibBancoRAM(x, y, ancho, alto: integer; bnk: TRAMBank; dirIni: integer
       );
-    procedure DibBar(y, alto: integer; dirIni, dirFin: integer);
-    procedure DibBloque(y, alto: integer; dirIni, dirFin: integer;
-      blkType: TPIC16CellState);
+    procedure DibBar(const x1, x2: integer; y, alto: integer; dirIni,
+      dirFin: integer; lbl: string);
+    procedure DibBloque(const x1, x2: integer; y, alto: integer; dirIni,
+      dirFin: integer; blkType: TPIC16CellState);
     procedure Frame1Paint(Sender: TObject);
     procedure TextCEnt(x, y: integer; txt: string);
     procedure TextCentX(x, y: integer; txt: string);
@@ -32,7 +33,7 @@ implementation
 
 {$R *.lfm}
 { TfraRamExplorer }
-procedure TfraRamExplorer.TextCEnt(x, y: integer; txt: string);
+procedure TfraRamExplorer.TextCent(x, y: integer; txt: string);
 {Excribe texto centrado}
 var
   ancTxt, altTxt: Integer;
@@ -52,11 +53,14 @@ begin
   Canvas.Brush.Color := clWhite;
   Canvas.TextOut(x - ancTxt div 2, y, txt);
 end;
-procedure TfraRamExplorer.DibBar(y, alto: integer; dirIni, dirFin: integer);
-//Dibuja una barra, en la posición y, con altura "alto".
+procedure TfraRamExplorer.DibBar(const x1, x2: integer; y, alto: integer;
+                                 dirIni, dirFin: integer; lbl: string);
+//Dibuja una barra, en la posición: x1, x2, y, con altura "alto".
 var
   etiq: String;
-  altTxt: Integer;
+  altTxt, ancho, ancTxt, xt, yt: Integer;
+  ARect: TRect;
+  TextStyle: TTextStyle;
 begin
   Canvas.Rectangle(x1, y, x2, y + alto);
   if (alto>20) and (dirIni<>-1) then begin
@@ -68,15 +72,30 @@ begin
     altTxt := Canvas.TextHeight(etiq);
     Canvas.TextOut(x1+2, y+alto-altTxt-1, etiq);
   end;
+  //////// Escribe etiqueta centrada /////////////
+  ancho := x2 - x1;
+  altTxt := Canvas.TextHeight(lbl);
+  ancTxt := Canvas.TextWidth(lbl);
+  ARect.Left := x1;
+  ARect.Right := x2;
+  ARect.Top := y;
+  ARect.Bottom := y + alto;
+  xt := x1 + ancho div 2 -  ancTxt div 2;
+  yt := y + alto div 2 - altTxt div 2;
+//  Canvas.Pen.Color := clred;
+  TextStyle := Canvas.TextStyle;
+  TextStyle.EndEllipsis := true;
+  Canvas.TextRect(Arect, xt, yt, lbl, TextStyle);
+
 end;
-procedure TfraRamExplorer.DibBloque(y, alto: integer; dirIni, dirFin: integer;
-                                      blkType: TPIC16CellState);
+procedure TfraRamExplorer.DibBloque(const x1, x2: integer; y, alto: integer;
+                                 dirIni, dirFin: integer;
+                                 blkType: TPIC16CellState);
 {Dibuja un bloque, de memoria RAM, pone etqiueta descriptiva y pinta con color
 indicativo.}
 var
   lbl: String;
-  altTxt, ancTxt, ancho: Integer;
-  ARect: TRect;
+  TextStyle: TTextStyle;
 begin
   case blkType of
   cs_impleSFR: begin
@@ -96,21 +115,8 @@ begin
     lbl := 'Mapped to';
   end;
   end;
-  DibBar(y, alto, dirIni, dirFin);
-  //Escribe etiqueta centrada
-  ancho := x2 - x1;
-  //altTxt := Canvas.TextHeight(lbl);
-  //ancTxt := Canvas.TextWidth(lbl);
-  ARect.Left := x1;
-  ARect.Right := x2;
-  ARect.Top := y;
-  ARect.Bottom := y + alto;
-  DrawText(Canvas.Handle, PChar(lbl), Length(lbl),
-           ARect, DT_CENTER or DT_VCENTER or DT_END_ELLIPSIS);
-  //ARect, DT_CENTER or DT_VCENTER or DT_WORDBREAK or DT_CALCRECT);
+  DibBar(x1, x2, y, alto, dirIni, dirFin, lbl);
 
-  //TextCent(x1 + ancho div 2, y + alto div 2, lbl);
-  //Canvas.TextOut(x1+2, y+alto-altTxt-1, lbl);
 end;
 procedure TfraRamExplorer.DibBancoRAM(x, y, ancho, alto: integer; bnk: TRAMBank;
                                       dirIni: integer);
@@ -126,7 +132,6 @@ begin
   cv.Rectangle(x, y, x + ancho, y + alto);
   altoSFR := round((bnk.GPRStart / $80) * alto);
   altoGPR := round((bnk.TotalGPR / $80) * alto);
-  x1 := x;  x2 := x + ancho;
 
 //  //Dibuja SFR
 //  cv.Pen.Color := clBlack;
@@ -154,7 +159,7 @@ begin
         //Cierra el anterior
         numBytes := pos2 - pos1 + 1;
         altBloq := round((numBytes/$80) * alto);
-        DibBloque(y, altBloq, pos1, -1, tipBloque);  //dibuja
+        DibBloque(x, x+ancho, y, altBloq, pos1, -1, tipBloque);  //dibuja
         y := y + altBloq-1;  //nueva posición de inicio
         //Define nuevo blqoue
         tipBloque := bnk.mem[i]^.state;
@@ -166,7 +171,7 @@ begin
   //Cierra el último bloque
   numBytes := pos2 - pos1 + 1;
   altBloq := round((numBytes/$80) * alto);
-  DibBloque(y, altBloq, pos1, -1, tipBloque);  //dibuja
+  DibBloque(x, x + ancho, y, altBloq, pos1, -1, tipBloque);  //dibuja
 
 end;
 procedure TfraRamExplorer.Frame1Paint(Sender: TObject);
