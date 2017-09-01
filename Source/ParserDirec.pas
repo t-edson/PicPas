@@ -24,6 +24,7 @@ type  //Tipos para manejo de expresiones
     datTyp: TDirDatType;  //Tipo de dato
     property valNum: Single read GetvalNum write SetvalNum ;    //Valor numérico de la expresión
     property valStr: string read GetvalStr write SetvalStr;  //Valor cadena de la expresión
+    procedure SetBool(value: boolean);
   End;
 
   TDirEveReadNum =  function: Single of object;
@@ -73,7 +74,7 @@ type
     function CogNumero(var n: Single): boolean;
     function CogOperando: TDirOperand;
     function cogOperador: String;
-    function DirIsVar(cad: string; out dvar: TDirVar): boolean;
+    function DefinedVar(cad: string; out dvar: TDirVar): boolean;
     function read_CURRBANK: Single;
     function read_PIC_FREQUEN: Single;
     function read_PIC_MAXFREQ: Single;
@@ -107,6 +108,7 @@ type
     procedure ProcFREQUENCY;
     procedure ProcDEFINE(lin: string);
     procedure ProcIFDEF(lin: string; negated: boolean);
+    procedure ProcIF(lin: string; negated: boolean);
     procedure ProcINCLUDE(lin: string; var ctxChanged: boolean);
     procedure ProcMODE;
     procedure ProcMSGBOX;
@@ -165,6 +167,12 @@ procedure TDirOperand.SetvalStr(AValue: string);
 begin
   datTyp := ddtString;   //fuerza a que sea string
   FvalStr := AValue;
+end;
+procedure TDirOperand.SetBool(value: boolean);
+{Asigna un valro booleano al operando. En realidad, no hay valores booleando, así
+que se usará los números 0 o 1}
+begin
+  if value then valNum := 1 else valNum := 0;
 end;
 { TDirVar }
 function TDirVar.Getvalor: TDirOperand;
@@ -260,7 +268,7 @@ begin
   Result := lexDir.GetToken;
   lexDir.Next;  //toma identificador
 end;
-function TParserDirec.DirIsVar(cad: string; out dvar: TDirVar): boolean;
+function TParserDirec.DefinedVar(cad: string; out dvar: TDirVar): boolean;
 {Indica si un identificador corresponde a una variable. Devuelve la referencia a la
 variable encontrada.}
 begin
@@ -406,6 +414,7 @@ begin
     exit;  //Puede salir con error
   end else begin
     //Debe ser otra cosa
+    GenErrorDir(ER_SYNTAX_ERRO);
     exit;  //no devuelve nada
   end;
 end;
@@ -415,45 +424,90 @@ function TParserDirec.cogOperador: String;
 begin
   Result := '';
   skipWhites;     //quita blancos iniciales
-  Case lexDir.GetToken of //completa con operador de más caracteres
+  Case UpCase(lexDir.GetToken) of //completa con operador de más caracteres
   '+': begin
-         Result := '+';
+         Result := lexDir.GetToken;
          lexDir.next;
         end;
   '-': begin
-         Result := '-';
+         Result := lexDir.GetToken;
          lexDir.next;
       end;
   '*': begin
-        Result := '*';
+        Result := lexDir.GetToken;
         lexDir.next;
       end;
   '/': begin
-        Result := '/';
+        Result := lexDir.GetToken;
         lexDir.next;
       end;
   '\': begin
-        Result := '\';
+        Result := lexDir.GetToken;
         lexDir.next;
       end;
   '%': begin
-        Result := '%';
+        Result := lexDir.GetToken;
         lexDir.next;
       end;
   '^': begin
-        Result := '^';
+        Result := lexDir.GetToken;
         lexDir.next;
       end;
-  End;
+  //Operadores de comparación
+  '=': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  '<>': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  '>': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  '<': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  '>=': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  '<=': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  'AND': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  'OR': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  'XOR': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  'NOT': begin
+        Result := lexDir.GetToken;
+        lexDir.next;
+      end;
+  end;
 end;
 function TParserDirec.jerOp(operad: String): Integer;
 //Devuelve la jerarquía de un operador ver documentación técnica.
 begin
     case operad of
-    '+', '-': jerOp := 5;
-    '*', '/', '\', '%': jerOp := 6;
-    '^': jerOp := 8;
-    else jerOp := 0;
+    'OR','XOR'             : Result := 2;
+    'AND'                  : Result := 3;
+    '=', '<>', '>', '<', '>=', '<=': Result := 4;
+    '+', '-'               : Result := 5;
+    '*', '/', '\', '%'     : Result := 6;
+    '^', 'NOT'             : Result := 8;
+    else
+      Result := 0;
     end;
 End;
 function TParserDirec.Evaluar(Op1: TDirOperand; opr: String; Op2: TDirOperand): TDirOperand;
@@ -508,8 +562,71 @@ begin
               Result.valNum := power(Op1.valNum, Op2.valNum);
           end;
          end;
+    //Operadores de comparación
+    '=': begin
+          //Puede ser concatenación o suma
+          if (Op1.datTyp = ddtString) or (Op2.datTyp = ddtString) then begin
+            //Al menos uno es cadena, compara cadenas
+            Result.SetBool(Op1.valStr = Op2.valStr);
+          end else begin
+            //Son dos números, compara valores
+            Result.SetBool(Op1.valNum = Op2.valNum);
+          end;
+         end;
+    '<>': begin
+          //Puede ser concatenación o suma
+          if (Op1.datTyp = ddtString) or (Op2.datTyp = ddtString) then begin
+            //Al menos uno es cadena, compara cadenas
+            Result.SetBool(Op1.valStr <> Op2.valStr);
+          end else begin
+            //Son dos números, compara valores
+            Result.SetBool(Op1.valNum <> Op2.valNum);
+          end;
+         end;
+    '>': begin
+          //Puede ser concatenación o suma
+          if (Op1.datTyp = ddtString) or (Op2.datTyp = ddtString) then begin
+            //Al menos uno es cadena, compara cadenas
+            Result.SetBool(Op1.valStr > Op2.valStr);
+          end else begin
+            //Son dos números, compara valores
+            Result.SetBool(Op1.valNum > Op2.valNum);
+          end;
+         end;
+    '<': begin
+          //Puede ser concatenación o suma
+          if (Op1.datTyp = ddtString) or (Op2.datTyp = ddtString) then begin
+            //Al menos uno es cadena, compara cadenas
+            Result.SetBool(Op1.valStr < Op2.valStr);
+          end else begin
+            //Son dos números, compara valores
+            Result.SetBool(Op1.valNum < Op2.valNum);
+          end;
+         end;
+    '>=': begin
+          //Puede ser concatenación o suma
+          if (Op1.datTyp = ddtString) or (Op2.datTyp = ddtString) then begin
+            //Al menos uno es cadena, compara cadenas
+            Result.SetBool(Op1.valStr >= Op2.valStr);
+          end else begin
+            //Son dos números, compara valores
+            Result.SetBool(Op1.valNum >= Op2.valNum);
+          end;
+         end;
+    '<=': begin
+          //Puede ser concatenación o suma
+          if (Op1.datTyp = ddtString) or (Op2.datTyp = ddtString) then begin
+            //Al menos uno es cadena, compara cadenas
+            Result.SetBool(Op1.valStr <= Op2.valStr);
+          end else begin
+            //Son dos números, compara valores
+            Result.SetBool(Op1.valNum <= Op2.valNum);
+          end;
+         end;
+    //Operadores lógicos
+    //Falta ...
     else begin
-        GenErrorDir(ER_OPE_NOT_IMP);
+        GenErrorDir(ER_OPE_NOT_IMP_, [opr]);
         Exit;
          End;
     end;
@@ -569,7 +686,7 @@ function TParserDirec.AsigVariable(VarName: string; const value: TDirOperand): T
 Devuelve la referencia a la variable asignada.}
 begin
   //Busca variable
-  if DirIsVar(VarName, Result) then begin
+  if DefinedVar(VarName, Result) then begin
     //Encontró la variable
     Result.valor := value;
     exit(Result);
@@ -801,6 +918,7 @@ procedure TParserDirec.ProcIFDEF(lin: string; negated: boolean);
   var
     xDirec: TxpEleDIREC;
     ele: TxpElement;
+    dvar: TDirVar;
   begin
     if FirstPass then begin
       //Agrega el nodo para guardar información para la segunda pasada
@@ -808,7 +926,7 @@ procedure TParserDirec.ProcIFDEF(lin: string; negated: boolean);
       xDirec.srcDec := cIn.ReadSrcPos;   //guarda posición de aparición
       TreeDirec.AddElement(xDirec, false);  //Agrega sin verificación de nombre
       //Evalúa
-      Result := DefinedMacro(Ident) xor negated;
+      Result := (DefinedMacro(Ident) or DefinedVar(Ident, dvar)) xor negated;
       //Guarda resultado
       xDirec.ifDefResult := Result;
     end else begin
@@ -858,6 +976,81 @@ begin
     GenErrorDir(ER_SYNTAX_ERRO);
   end;
 end;
+procedure TParserDirec.ProcIF(lin: string; negated: boolean);
+  function EvaluateExp(const Ident: string): boolean;
+  {Evalúa el resultado de la expresión de la directiva $IFDEF.
+  Debería ejecutarse solo una vez, en ProcIFDEF(()}
+  var
+    xDirec: TxpEleDIREC;
+    ele: TxpElement;
+    varValue: TDirOperand;
+  begin
+    if FirstPass then begin
+      //Agrega el nodo para guardar información para la segunda pasada
+      xDirec := TxpEleDIREC.Create;
+      xDirec.srcDec := cIn.ReadSrcPos;   //guarda posición de aparición
+      TreeDirec.AddElement(xDirec, false);  //Agrega sin verificación de nombre
+      //Evalúa
+      varValue := CogExpresion(0);
+      //No debería seguir nada más
+      if not lexDir.GetEol then begin
+        GenErrorDir(ER_SYNTAX_ERRO);
+        exit;
+      end;
+      if varValue.datTyp = ddtNumber then begin
+        //En números, cualquier valor <>0 se considera verdadero
+        Result := (varValue.valNum<>0) xor negated;
+      end else begin
+        //En cadenas, cualquier cadena no nula se considera verdadero
+        Result := (varValue.valStr<>'') xor negated;
+      end;
+      //Guarda resultado
+      xDirec.ifDefResult := Result;
+    end else begin
+      {En al segunda pasada, ya no se evalúa, porque la segunda pasada, ya no se
+      hace en el orden del código fuente, y se pierde la secuencia de directivas.}
+      for ele in TreeDirec.curNode.elements do begin
+        //Busca la directiva de la dirección actual (ubicada en la primera pasada)
+        if ele.srcDec.EqualTo(cIn.ReadSrcPos) then begin
+          //Encontró
+          Result := TxpEleDIREC(ele).ifDefResult;
+          exit;
+        end;
+      end;
+      //No encontró. Esto no debería pasar.
+      MsgErr('Implementation error.');
+    end;
+  end;
+var
+  Ident, direc, tmp: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  skipWhites;
+  if lexDir.GetEol then begin
+    GenErrorDir(ER_SYNTAX_ERRO);
+    exit;
+  end;
+  //Se supone que sigue una expresión
+tmp := lexDir.GetToken;
+  if EvaluateExp(Ident) then begin
+    //Es verdadero
+    inc(WaitForEndIF);  //marca bandera para esperar
+  end else begin
+    //No es verdadero, no se debe compilar hasta un {$ENDIF} o un {$ELSE}
+    cIn.Next;  //toma token {$IDEF  }
+    //Explora, sin compilar, hasta encontrar directiva delimitadora.
+    if not ScanIFDEF(direc) then begin
+      //Llegó al final del código fuente, sin encontrar el ENDIF
+      GenErrorDir(ER_ENDIF_NOFOU);
+      exit;
+    end;
+    //Encontró token delimitador
+    //Si es $ENDIF, no hay problema, todo termina allí, pero si es un else:
+    if direc='ELSE' then begin
+      inc(WaitForEndIF);  //marca bandera para esperar
+    end;
+  end;
+end;
 procedure TParserDirec.ProcMODE;
 var
   txtMode: String;
@@ -879,7 +1072,6 @@ var
   txtMsg: String;
 begin
   lexDir.Next;  //pasa al siguiente
-  skipWhites;
   txtMsg := CogExpresion(0).valStr;
   if HayError then Exit;
   //Solo muestra en compilación y en la primera pasada
@@ -890,7 +1082,6 @@ var
   txtMsg: String;
 begin
   lexDir.Next;  //pasa al siguiente
-  skipWhites;
   txtMsg := CogExpresion(0).valStr;
   if HayError then Exit;
   //Solo muestra en compilación y en la primera pasada
@@ -901,7 +1092,6 @@ var
   txtMsg: String;
 begin
   lexDir.Next;  //pasa al siguiente
-  skipWhites;
   txtMsg := CogExpresion(0).valStr;
   if HayError then Exit;
   //Solo muestra en compilación y en la primera pasada
@@ -927,7 +1117,6 @@ begin
   lexDir.Next;
   skipWhites;
   if not CogCarERR('=') then exit;  //sale con error
-  skipWhites;
   varValue := CogExpresion(0);
   if HayError then exit;
   AsigVariable(varName, varValue);
@@ -987,6 +1176,8 @@ begin
   'DEFINE'   : ProcDEFINE(lin);
   'IFDEF'    : ProcIFDEF(lin, false);
   'IFNDEF'   : ProcIFDEF(lin, true);
+  'IF'       : ProcIF(lin, false);
+  'IFNOT'    : ProcIF(lin, true);
   'ELSE'     : begin
     if WaitForEndIF>0 then begin
       {Estamos dentro de un IF, que se supone dio verdadero, de otra forma, no llegaría
@@ -1042,7 +1233,7 @@ begin
       cIn.curCon.ErrPosition := p;    //Posición a usar para ubicar el error
       cIn.curCon.PreErrorMsg := 'Macro '+dmac.name+': ';
       ctxChanged := true;  //Marca bandera para indciar que se ha cambiado de contexto
-    end else if DirIsVar(lexDir.GetToken, dvar) then begin
+    end else if DefinedVar(lexDir.GetToken, dvar) then begin
       //Es variable
       p := cIn.ReadSrcPos;   //Guarda posición del token
       cIn.Next;  //pasa la directiva
@@ -1196,7 +1387,19 @@ begin
   lexDir.DefTokContent('[$]','[0-9A-Fa-f]*', lexDir.tnNumber);
   lexDir.DefTokDelim('''', '''', lexDir.tnString);  //cadenas
   lexDir.DefTokDelim('"', '"', lexDir.tnString);  //cadenas
+
   lexDir.AddSymbSpec('=', dirOperator);
+  lexDir.AddSymbSpec('<>', dirOperator);
+  lexDir.AddSymbSpec('>', dirOperator);
+  lexDir.AddSymbSpec('<', dirOperator);
+  lexDir.AddSymbSpec('>=', dirOperator);
+  lexDir.AddSymbSpec('<=', dirOperator);
+
+  lexDir.AddSymbSpec('AND', dirOperator);
+  lexDir.AddSymbSpec('OR', dirOperator);
+  lexDir.AddSymbSpec('XOR', dirOperator);
+  lexDir.AddSymbSpec('NOT', dirOperator);
+
   lexDir.AddSymbSpec('+', dirOperator);
   lexDir.AddSymbSpec('-', dirOperator);
   lexDir.AddSymbSpec('*', dirOperator);
@@ -1204,6 +1407,7 @@ begin
   lexDir.AddSymbSpec('\', dirOperator);
   lexDir.AddSymbSpec('%', dirOperator);
   lexDir.AddSymbSpec('^', dirOperator);
+
   lexDir.AddSymbSpec('(', dirDelimiter);
   lexDir.AddSymbSpec(')', dirDelimiter);
   lexDir.AddSymbSpec('{$', dirDelimiter);

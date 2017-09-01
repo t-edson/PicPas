@@ -503,7 +503,7 @@ begin
 end;
 procedure TfrmPrincipal.fraMessagesDblClickMessage(const srcPos: TSrcPos);
 begin
-//  fraEditView1.SelectOrLoad(srcPos, false);
+  fraEditView1.SelectOrLoad(srcPos, false);
 end;
 procedure TfrmPrincipal.ChangeAppearance;
 //Se han cambiado las opciones de configuración.

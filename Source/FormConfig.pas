@@ -371,6 +371,7 @@ begin
   s:=cfgFile.Asoc_TCol('CodExplText',@CodExplText, colCodExplText, clDefault);
   s.categ := 1;   //marca como propiedad de tipo "Tema"
   s:=cfgFile.Asoc_Int ('grpFiltypes',@cexpFiltype,  grpFiltype, 0);
+
   //Configuraciones del Editor
   s:=cfgFile.Asoc_Int('TamLet', @TamLet, spFontSize, 10);
   s.categ := 1;
@@ -385,13 +386,13 @@ begin
   s.categ := 1;
   s:=cfgFile.Asoc_Bol('VerBarDesV', @VerBarDesV, chkViewVScroll, true);
   s:=cfgFile.Asoc_Bol('VerBarDesH', @VerBarDesH, chkViewHScroll, false);
-
   s:=cfgFile.Asoc_Int('TabEdiState', @TabEdiMode, grpTabEdiState, 0);
   s:=cfgFile.Asoc_Bol('AutSynChk',  @AutSynChk  , chkAutSynChk , false);
   //Configuraciones del Editor-Colores
   fraCfgSynEdit.Iniciar('Edit', cfgFile);
   //Configuración del Editor-Sintaxis
   fraCfgSyntax.LoadSyntaxFiles(rutSyntax);
+
   //Configuraciones de Ensamblador
   cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu , chkIncHeadMpu , false);
   cfgFile.Asoc_Bol('IncDecVar' , @IncVarDec  , chkIncDecVar  , true);
