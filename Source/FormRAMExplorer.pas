@@ -41,6 +41,10 @@ begin
     Key := 0;
     self.Hide;
   end;
+  if Key = VK_ESCAPE then begin
+    Key := 0;
+    self.Hide;
+  end;
 end;
 
 procedure TfrmRAMExplorer.Exec(pic0: TPIC16);

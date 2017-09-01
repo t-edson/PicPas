@@ -15,48 +15,48 @@ type
   { TfraCfgSynEdit }
   TfraCfgSynEdit = class(TFrame)
     cbutFonPan: TColorButton;
-    cbutResPal: TColorButton;
+    cbutResPalCFon: TColorButton;
+    cbutResPalCTxt: TColorButton;
+    cbutResPalCBor: TColorButton;
     cbutTxtPan: TColorButton;
+    chkFullWord: TCheckBox;
     chkHighCurWord: TCheckBox;
-    chkViewHScroll: TCheckBox;
     chkAutoindent: TCheckBox;
     chkVerPanVer: TCheckBox;
     chkHighCurLin: TCheckBox;
     cbutLinAct: TColorButton;
-    chkViewVScroll: TCheckBox;
     chkVerNumLin: TCheckBox;
     chkVerMarPle: TCheckBox;
-    cmbFontName: TComboBox;
     cbutBackCol: TColorButton;
     cbutTextCol: TColorButton;
     GroupBox1: TGroupBox;
+    GroupBox2: TGroupBox;
     Label1: TLabel;
     Label10: TLabel;
+    Label11: TLabel;
+    Label12: TLabel;
     Label2: TLabel;
     Label3: TLabel;
-    Label6: TLabel;
-    Label7: TLabel;
     Label8: TLabel;
     Label9: TLabel;
-    spFontSize: TSpinEdit;
     procedure chkHighCurLinChange(Sender: TObject);
     procedure chkHighCurWordChange(Sender: TObject);
     procedure chkVerPanVerChange(Sender: TObject);
   public
     //configuración del editor
-    TipLet     : string;    //tipo de letra
-    TamLet     : integer;   //tamaño de letra
     MarLinAct  : boolean;   //marcar línea actual
-    VerBarDesV : boolean;   //ver barras de desplazamiento
-    VerBarDesH : boolean;   //ver barras de desplazamiento
     Autoindent : boolean;   //Autotabulación
-    ResPalCur  : boolean;   //resaltar palabra bajo el cursor
+    ResPalAct  : boolean;   //resaltar palabra actual
+    ResPalCFon : TColor;    //color de fondo de la palabra actual
+    ResPalCTxt : TColor;    //color de texto de la palabra actual
+    ResPalCBor : TColor;    //color de borde de la palabra actual
+    ResPalFWord: Boolean;    //Activa "palabra completa"
+
     cTxtNor    : TColor;    //color de texto normal
     cFonEdi    : TColor;    //Color de fondo del control de edición
     cFonSel    : TColor;    //color del fondo de la selección
     cTxtSel    : TColor;    //color del texto de la selección
     cLinAct    : TColor;    //color de la línea actual
-    cResPal    : TColor;    //color de la palabra actual
     //panel vertical
     VerPanVer  : boolean;    //ver pánel vertical
     VerNumLin  : boolean;    //ver número de línea
@@ -98,15 +98,19 @@ begin
   s.categ := 1;   //marca como propiedad de tipo "Tema"
   s:=cfgFile.Asoc_TCol(section+ '/cLinAct', @cLinAct, cbutLinAct, clYellow);
   s.categ := 1;   //marca como propiedad de tipo "Tema"
-  s:=cfgFile.Asoc_TCol(section+ '/cResPal', @cResPal, cbutResPal, clSkyBlue);
-  s.categ := 1;   //marca como propiedad de tipo "Tema"
 
-  s:=cfgFile.Asoc_Bol(section+ '/VerBarDesV', @VerBarDesV, chkViewVScroll, true);
-  s:=cfgFile.Asoc_Bol(section+ '/VerBarDesH', @VerBarDesH, chkViewHScroll, false);
   s:=cfgFile.Asoc_Bol(section+ '/Autoindent', @Autoindent, chkAutoindent, true);
-
-  s:=cfgFile.Asoc_Bol(section+ '/ResPalCur' , @ResPalCur , chkHighCurWord , true);
   s:=cfgFile.Asoc_Bol(section+ '/MarLinAct' , @MarLinAct , chkHighCurLin , false);
+
+  s:=cfgFile.Asoc_Bol(section+ '/ResPalCur' , @ResPalAct , chkHighCurWord , true);
+  s.categ := 1;
+  s:=cfgFile.Asoc_TCol(section+ '/ResPalCFon',@ResPalCFon, cbutResPalCFon, clSkyBlue);
+  s.categ := 1;
+  s:=cfgFile.Asoc_TCol(section+ '/ResPalCTxt',@ResPalCTxt, cbutResPalCTxt, clBlack);
+  s.categ := 1;
+  s:=cfgFile.Asoc_TCol(section+ '/ResPalCBor',@ResPalCBor, cbutResPalCBor, clSkyBlue);
+  s.categ := 1;
+  s:=cfgFile.Asoc_Bol(section+ '/ResPalFWord',@ResPalFWord, chkFullWord, false);
 
   s:=cfgFile.Asoc_Bol(section+ '/VerPanVer', @VerPanVer, chkVerPanVer, true);
   s:=cfgFile.Asoc_Bol(section+ '/VerNumLin', @VerNumLin, chkVerNumLin, false);
@@ -115,16 +119,6 @@ begin
   s.categ := 1;   //marca como propiedad de tipo "Tema"
   s:=cfgFile.Asoc_TCol(section+ '/cTxtPan'  , @cTxtPan  , cbutTxtPan  , clBlack);
   s.categ := 1;   //marca como propiedad de tipo "Tema"
-
-  s:=cfgFile.Asoc_Int(section+ '/TamLet', @TamLet, spFontSize, 10);
-
-  cmbFontName.Items.Clear;
-  cmbFontName.Items.Add('Courier New');
-  cmbFontName.Items.Add('Fixedsys');
-  cmbFontName.Items.Add('Lucida Console');
-  cmbFontName.Items.Add('Consolas');
-  cmbFontName.Items.Add('Cambria');
-  cfgFile.Asoc_Str(section+ '/TipLet', @TipLet, cmbFontName, 'Courier New');
 
   cfgFile.Asoc_StrList(section+ '/recient', @ArcRecientes);
 end;
@@ -145,7 +139,7 @@ end;
 procedure TfraCfgSynEdit.chkHighCurWordChange(Sender: TObject);
 begin
   label10.Enabled:=chkHighCurWord.Checked;
-  cbutResPal.Enabled:=chkHighCurWord.Checked;
+  cbutResPalCFon.Enabled:=chkHighCurWord.Checked;
 end;
 procedure TfraCfgSynEdit.PropToWindow;
 begin
@@ -169,9 +163,6 @@ var
   marc: TSynEditMarkup;
 begin
    if ed = nil then exit;  //protección
-   //tipo de texto
-   if TipLet <> '' then ed.Font.Name:=TipLet;
-   if (TamLet > 6) and (TamLet < 32) then ed.Font.Size:=Round(TamLet);
 
    ed.Font.Color:=cTxtNor;      //color de texto normal
    ed.Color:=cFonEdi;           //color de fondo
@@ -188,19 +179,14 @@ begin
    ed.Gutter.Parts[1].MarkupInfo.Background:=cFonPan; //fondo del núemro de línea
    ed.Gutter.Parts[1].MarkupInfo.Foreground:=cTxtPan; //texto del núemro de línea
 
-   if VerBarDesV and VerBarDesH then  //barras de desplazamiento
-     ed.ScrollBars:= ssBoth
-   else if VerBarDesV and not VerBarDesH then
-     ed.ScrollBars:= ssVertical
-   else if not VerBarDesV and VerBarDesH then
-     ed.ScrollBars:= ssHorizontal
-   else
-     ed.ScrollBars := ssNone;
    ////////Configura el resaltado de la palabra actual //////////
    marc := ed.MarkupByClass[TSynEditMarkupHighlightAllCaret];
    if marc<>nil then begin  //hay marcador
-      marc.Enabled:=ResPalCur;  //configura
-      marc.MarkupInfo.Background := cResPal;
+      marc.Enabled:=ResPalAct;  //configura
+      marc.MarkupInfo.Background := ResPalCFon;
+      marc.MarkupInfo.FrameColor := ResPalCBor;
+      marc.MarkupInfo.Foreground := ResPalCTxt;
+      TSynEditMarkupHighlightAllCaret(marc).FullWord := ResPalFWord;
    end;
    ///////fija color de delimitadores () {} [] ///////////
    ed.BracketMatchColor.Foreground := clRed;

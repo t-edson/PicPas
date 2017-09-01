@@ -5,7 +5,6 @@ object frmArcExplor: TfrmArcExplor
   Width = 211
   ClientHeight = 469
   ClientWidth = 211
-  LCLVersion = '1.6.0.4'
   TabOrder = 0
   DesignLeft = 256
   DesignTop = 153

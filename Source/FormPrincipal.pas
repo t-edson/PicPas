@@ -257,7 +257,7 @@ end;
 procedure TfrmPrincipal.fraMessagesStatisDBlClick;
 //Doble clcik en la sección de estadísticas
 begin
-//  frmDebugger.Exec(cxp);
+  frmDebugger.Exec(cxp);
 end;
 procedure TfrmPrincipal.cxp_AfterCompile;
 {Se genera después de realizar la compilación.}
@@ -503,7 +503,7 @@ begin
 end;
 procedure TfrmPrincipal.fraMessagesDblClickMessage(const srcPos: TSrcPos);
 begin
-  fraEditView1.SelectOrLoad(srcPos, false);
+//  fraEditView1.SelectOrLoad(srcPos, false);
 end;
 procedure TfrmPrincipal.ChangeAppearance;
 //Se han cambiado las opciones de configuración.

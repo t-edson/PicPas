@@ -9,8 +9,9 @@ unit FrameCfgSyntax;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, FileUtil, LazUTF8, Forms, Controls, StdCtrls, LCLProc,
-  Graphics, MisUtils, fgl, Types, LCLIntf, Dialogs, SynFacilBasic, strutils;
+  Classes, SysUtils, FileUtil, LazUTF8, LazFileUtils, Forms, Controls, StdCtrls,
+  LCLProc, Graphics, MisUtils, fgl, Types, LCLIntf, Dialogs, SynFacilBasic,
+  strutils;
 type
 
   { TSynParam }
@@ -408,7 +409,7 @@ archivo}
     campos: TStringDynArray;
   begin
     for synLang in synLangList do begin
-      if synLang.filName = fil then begin
+      if Upcase(ExtractFileNameOnly(synLang.filName)) = Upcase(ExtractFileNameOnly(fil)) then begin
         //Encontró al synLang, que corresponde al archivo
         campos := Explode(#9, attribLine);  //separa campos
         //Ahora debe ubicar al atributo que corresponde "attribLine"

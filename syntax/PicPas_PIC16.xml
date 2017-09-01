@@ -2,7 +2,7 @@
 <Language name="PicPas Pascal" ext="pas">
   <!-- Atributos a usar. No cambiar formato porque se modifica automáticamente-->
   <Attribute Name="Keyword"   ForeCol="#0000FF" Bold="True"  Italic="False" Underline="False"/>
-  <Attribute Name="Boolean"   ForeCol="#8080FF" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Boolean"   ForeCol="#000000" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="Comment"   ForeCol="#008000" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="Number"    ForeCol="#074BFF" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="String"    ForeCol="#074BFF" Bold="False" Italic="False" Underline="False"/>
@@ -147,6 +147,12 @@
 	  "{$MODE PASCAL}"
 	  "{$MODE PICPAS}"
 	  "{$MSGBOX 'Hello'}"
+	  "{$SET \_}"
+	  "{$SET variable = 'valor'}"
+	  "{$WARNING \_}"
+	  "{$WARNING 'Hello'}"
+	  "{$ERROR \_}"
+	  "{$ERROR 'Hello'}"
 	  
          "{$PROCESSOR PIC12F629}"
          "{$PROCESSOR PIC12F675}"

@@ -581,7 +581,7 @@ begin
   TreeView1.OnAdvancedCustomDrawItem := @TreeView1AdvancedCustomDrawItem;
   TreeView1.Options := TreeView1.Options - [tvoThemedDraw];
   //inicia propiedades
-  NewFileName := dic('nombre.txt');
+  NewFileName := dic('nuevo.pas');
   NewFolderName := dic('carpeta');
   InternalPopupFolder := false;  //desactiva el menú interno
   InternalPopupFile := false;  //desactiva el menú interno
@@ -622,7 +622,7 @@ begin
   if not curNod.IsFolder then exit;  //solo permite en carpetas
   //crea archivo nuevo
   try
-    archivo := GetNewFileName(curNod.Path +  PathDelim +NewFilename);
+    archivo := GetNewFileName(curNod.Path +  PathDelim + NewFilename);
     archivo := UTF8ToSys(archivo);
     if not FileExists(archivo) then
       StringToFile('', archivo);

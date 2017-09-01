@@ -70,7 +70,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="25">
+    <Units Count="27">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -213,6 +213,19 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit24>
+      <Unit25>
+        <Filename Value="FrameRomExplorer.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fraRomExplorer"/>
+        <ResourceBaseClass Value="Frame"/>
+      </Unit25>
+      <Unit26>
+        <Filename Value="FramePicRegisters.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fraPicRegisters"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+      </Unit26>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

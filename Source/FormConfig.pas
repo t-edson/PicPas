@@ -7,9 +7,9 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
-  Buttons, StdCtrls, ExtCtrls, ComCtrls, ColorBox, LCLType, FrameCfgSynEdit,
-  Globales, FrameCfgSyntax, FrameCfgExtTool, MiConfigXML, MiConfigBasic,
-  MisUtils;
+  Buttons, StdCtrls, ExtCtrls, ComCtrls, ColorBox, LCLType, Spin,
+  FrameCfgSynEdit, Globales, FrameCfgSyntax, FrameCfgExtTool, MiConfigXML,
+  MiConfigBasic, MisUtils;
 type
   //Tipo de Barra de herramientas
   TStyleToolbar = (stb_SmallIcon, stb_BigIcon);
@@ -44,6 +44,9 @@ type
     chkIncAddress: TCheckBox;
     chkIncComment: TCheckBox;
     chkIncHeadMpu: TCheckBox;
+    chkViewHScroll: TCheckBox;
+    chkViewVScroll: TCheckBox;
+    cmbFontName: TComboBox;
     colCodExplBack: TColorBox;
     colCodExplText: TColorBox;
     colMessPanBack: TColorBox;
@@ -62,6 +65,8 @@ type
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
+    Label6: TLabel;
+    Label7: TLabel;
     lblCodExplCol1: TLabel;
     lblCodExplCol2: TLabel;
     lblMessPan1: TLabel;
@@ -77,6 +82,7 @@ type
     RadioGroup1: TRadioGroup;
     RadioGroup2: TRadioGroup;
     grpFilType: TRadioGroup;
+    spFontSize: TSpinEdit;
     tabEditor: TTabSheet;
     tabEdiColor: TTabSheet;
     tabEnsamb: TTabSheet;
@@ -110,17 +116,22 @@ type
     procedure SetViewSynTree(AValue: boolean);
     procedure SetViewToolbar(AValue: boolean);
   public  //Configuraciones generales
-    StateToolbar: TStyleToolbar;
-    SynTreeWidth: integer;   //Ancho del panel del árbol ed sintaxis
-    viewMode  : TTreeViewMode;
-    AutSynChk : boolean;  //Verificación automática de sintaxis
     language  : string;   //Lenguaje
+  public //Configuraciones de Editor
+    TipLet     : string;    //tipo de letra
+    TamLet     : integer;   //tamaño de letra
+    VerBarDesV : boolean;   //ver barras de desplazamiento
+    VerBarDesH : boolean;   //ver barras de desplazamiento
     TabEdiMode: integer;  //Estado de pestañas del editor
+    AutSynChk : boolean;  //Verificación automática de sintaxis
     property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
     property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
     property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
     property ViewSynTree: boolean read FViewSynTree write SetViewSynTree;
   public  //Configuraciones de entorno
+    StateToolbar: TStyleToolbar;
+    SynTreeWidth: integer;   //Ancho del panel del árbol ed sintaxis
+    viewMode  : TTreeViewMode;
     CodExplBack: TColor;
     CodExplText: TColor;
     cexpFiltype   : integer;
@@ -274,11 +285,11 @@ begin
   //Verifica primero si hay tema, para cargarlo antes que nada
   if cmbThemes.ItemIndex > 0 then begin
     filTheme := rutThemes + DirectorySeparator + cmbThemes.Text + '.theme';
+    //Lee de archivo, solo las propiedades marcadas con categoría 1.
     if not cfgFile.FileToPropertiesCat(filTheme, 1) then begin
       MsgErr(cfgFile.MsjErr);
     end;
-    //Se mueven valores del archivo de temas a las propiedades.
-    //Falta moverlas a los controles.
+    //Mueva valor de las propiedades, a los controles.
     if not cfgFile.PropertiesToWindowCat(1) then begin
       MsgErr(cfgFile.MsjErr);
     end;
@@ -361,6 +372,20 @@ begin
   s.categ := 1;   //marca como propiedad de tipo "Tema"
   s:=cfgFile.Asoc_Int ('grpFiltypes',@cexpFiltype,  grpFiltype, 0);
   //Configuraciones del Editor
+  s:=cfgFile.Asoc_Int('TamLet', @TamLet, spFontSize, 10);
+  s.categ := 1;
+  cmbFontName.Items.Clear;
+  cmbFontName.Items.Add('Courier New');
+  cmbFontName.Items.Add('DejaVu Sans Mono');
+  cmbFontName.Items.Add('Fixedsys');
+  cmbFontName.Items.Add('Lucida Console');
+  cmbFontName.Items.Add('Consolas');
+  cmbFontName.Items.Add('Cambria');
+  s:=cfgFile.Asoc_Str('TipLet', @TipLet, cmbFontName, 'Courier New');
+  s.categ := 1;
+  s:=cfgFile.Asoc_Bol('VerBarDesV', @VerBarDesV, chkViewVScroll, true);
+  s:=cfgFile.Asoc_Bol('VerBarDesH', @VerBarDesH, chkViewHScroll, false);
+
   s:=cfgFile.Asoc_Int('TabEdiState', @TabEdiMode, grpTabEdiState, 0);
   s:=cfgFile.Asoc_Bol('AutSynChk',  @AutSynChk  , chkAutSynChk , false);
   //Configuraciones del Editor-Colores
@@ -401,6 +426,18 @@ procedure TConfig.ConfigEditor(ed: TSynEdit);
 //Configura un editor con las opciones definidas aquí
 begin
   fraCfgSynEdit.ConfigEditor(ed);
+  //tipo de texto
+  if TipLet <> '' then ed.Font.Name:=TipLet;
+  if (TamLet > 6) and (TamLet < 32) then ed.Font.Size:=Round(TamLet);
+  //Barras de desplazamiento
+  if VerBarDesV and VerBarDesH then  //barras de desplazamiento
+    ed.ScrollBars:= ssBoth
+  else if VerBarDesV and not VerBarDesH then
+    ed.ScrollBars:= ssVertical
+  else if not VerBarDesV and VerBarDesH then
+    ed.ScrollBars:= ssHorizontal
+  else
+    ed.ScrollBars := ssNone;
 end;
 procedure TConfig.cfgFilePropertiesChanges;
 begin

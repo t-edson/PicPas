@@ -25,6 +25,7 @@ type
     procedure CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
     function GetExpressionBool: boolean;
     function IsUnit: boolean;
+    procedure ProcCommentsNoExec;
     function StartOfSection: boolean;
     procedure ResetFlashAndRAM;
     procedure getListOfIdent(var itemList: TStringDynArray; out
@@ -172,6 +173,18 @@ begin
         exit;
       end;
     end;
+    //Pasa a siguiente
+    cIn.Next;
+    cIn.SkipWhites;  //limpia blancos
+  end;
+end;
+procedure TCompiler.ProcCommentsNoExec;
+{Similar a ProcComments(), pero no ejecuta directivas o bloques ASM.}
+var
+  ctxChanged: Boolean;  //Manejamos variables locales para permitir recursividad
+begin
+  cIn.SkipWhites;
+  while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
     //Pasa a siguiente
     cIn.Next;
     cIn.SkipWhites;  //limpia blancos
@@ -902,7 +915,7 @@ begin
   //// Hay especificación de dirección absoluta ////
   Result.isAbsol := true;    //marca bandera
   cIn.Next;
-  cIn.SkipWhites;
+  ProcComments;
   if cIn.tokType = tnNumber then begin
     if (cIn.tok[1]<>'$') and ((pos('e', cIn.tok)<>0) or (pos('E', cIn.tok)<>0)) then begin
       //La notación exponencial, no es válida.
@@ -1078,7 +1091,7 @@ begin
   if cIn.tok = ':' then begin
     //Debe seguir, el tipo de la variable
     cIn.Next;  //lo toma
-    cIn.SkipWhites;
+    ProcComments;
     if (cIn.tokType = tnType) then begin
       //Caso normal
     end else if cIn.tokL = 'array' then begin
@@ -1091,7 +1104,7 @@ begin
     end;
     varType := cIn.tok;   //lee tipo
     cIn.Next;
-    cIn.SkipWhites;
+    ProcComments;
     //Valida el tipo
     typ := FindType(varType);
     if typ = nil then begin
@@ -1893,7 +1906,7 @@ end;
 function TCompiler.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}
 begin
-  ProcComments;
+  ProcCommentsNoExec;  //Solo es validación, así que no debe ejecutar nada
   //Busca UNIT
   if cIn.tokL = 'unit' then begin
     cIn.curCon.SetStartPos;   //retorna al inicio

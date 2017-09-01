@@ -11,7 +11,8 @@ uses
   XpresParserPIC, FrameSyntaxTree, XpresElementsPIC, Globales, FormConfig,
   PicPasProject, FrameEditView, FrameMessagesWin, FormElemProperty,
   FrameCfgSyntax, FrameCfgSynEdit, CodeTools, ParserAsm, ParserDirec,
-  FrameCfgExtTool, FormDebugger, FrameRamExplorer, FormRAMExplorer;
+  FrameCfgExtTool, FormDebugger, FrameRamExplorer, FormRAMExplorer,
+  FrameRomExplorer, FramePicRegisters;
 
 {$R *.res}
 
