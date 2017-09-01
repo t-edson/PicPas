@@ -7,7 +7,7 @@ configuración.
 Se agregan nuevas propiedades para salvar en los temas.
 Se agregan nuevas propiedades a la ventana de configuración, en la sección de 
 "Resaltado de palabra actual".
-Se corrige la configuración de temas, cuando la ruta almacenada en el teme, es diferente
+Se corrige la configuración de temas, cuando la ruta almacenada en el tema, es diferente
 a la ruta actual de los archivos de sintaxis.
 Se corrige la visualización de bancos de RAM en FrameRAMExplorer.
 Se crean los frames FrameRomExplorer y FramePicRegisters.
@@ -17,6 +17,7 @@ Se crea el método TCompiler.ProcCommentsNoExec().
 Se incluye un analizador de expresiones para las directivas en ParserDirec.
 Se cambia el comportamiento de $MSGBOX en las directivas.
 Se crean las directivas $SET, $WARNING y $ERROR.
+Se crean las directivas $IF e $IFNOT.
 Se activa el uso de variables y macros, en expresiones de directivas.
 Se activa el uso de variables y macros, desde el código Pascal.
 Se cambia el nombre de las variables del sistema, cuando se accede por directivas.

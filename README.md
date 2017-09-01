@@ -437,19 +437,15 @@ Shows a text message in the screen:
 
 {$MSGBOX 'Hello World'} -> Shows the message 'Hello World' in the screen.
 
-{$MSGBOX $PROCESSOR} -> Shows the PIC model defined.
+{$MSGBOX PIC_MODEL} -> Shows the PIC model defined.
 
-{$MSGBOX $FREQUENCY} -> Shows the Clock frequency.
+{$MSGBOX PIC_FREQUEN} -> Shows the Clock frequency.
 
-{$MSGBOX $MODE} -> Shows the syntax Mode of the compiler.
+{$MSGBOX SYN_MODE} -> Shows the syntax Mode of the compiler.
 
-{$MSGBOX $CURRBANK} -> Shows the current RAM bank.
+{$MSGBOX CURRBANK} -> Shows the current RAM bank.
 
-{$MSGBOX $IFLASH} -> Shows the current Program Counter.
-
-{$MSGBOX $PROCESSOR $FREQUENCY} -> Shows the PIC model and the Clock frequency.
-
-{$MSGBOX 'clock=' $FREQUENCY}  -> Shows the message: "clock=8000000" (if the Frequency was set to 8MHz).
+{$MSGBOX 'clock=' + PIC_FREQUEN}  -> Shows the message: "clock=8000000" (if the Frequency was set to 8MHz).
 
 #### $CONFIG
 
@@ -512,6 +508,29 @@ begin
 end.
 ```
 
+#### $SET
+
+Set a value for a variable. If variables doesn't exist, it will be created.
+
+```
+{$SET pin_out='PORTB.0'}
+uses PIC16F84A;
+begin
+  SetAsOutput({$pin_out});
+  {$pin_out} := 1;
+end.
+```
+
+Variables can be numbers or string.
+
+Variables supports expresions:
+
+```
+{$SET a_var = 1 + 2 * another_var + 2 ^ sin(0.5)}
+```
+
+Unlike macros, variables values are solved when assigned. Macros values, are solved when macro is referenced.
+
 #### $IFDEF, $IFNDEF, $ELSE, $ENDIF
 
 This directives let us to define conditional compilation blocks:
@@ -540,6 +559,17 @@ begin
   {$MyPinOut} := 1;
 end.
 ```
+
+#### $IF, $IFNOT
+
+This directives let us to define conditional compilation blocks, using expressions:
+
+{$IF valor>255}
+var x: word;
+{$ELSE}
+var x: byte;
+{$ENDIF}
+
 
 ## Limitations
 
