@@ -13,7 +13,7 @@ var
   procedure bien;
   begin
     pinLed := 1;
-    delay_ms(30);
+    delay_ms(25);
     pinLed := 0;
     delay_ms(30);
   end;
@@ -36,42 +36,35 @@ begin
 	//////////////  Operación Igualdad ///////////////////
   //////////////////////////////////////////////////////////
 
-	//Constante
+	//coConst_Const
   if 0 = 0 then bien else mal end;
   if 0 = 1 then mal else bien end;
   if 255 = 255 then bien else mal end;
-  if 1 = 0 then mal else bien end;
-
   if 0 <> 0 then mal else bien end;
   if 255 <> 0 then bien else mal end;
-  if 255 <> 255 then mal else bien end;
 
-	//Variables
+	//coConst_Variab
+  a := 10;
+  if 10 = a then bien else mal end;
+  if 0 = a then mal else bien end;
+  if 10 <> a then mal else bien end;
+
+  //coVariab_Const
+  a := 10;
+  if a = 10 then bien else mal end;
+  if a = 0 then mal else bien end;
+  if a <> 10 then mal else bien end;
+
+	//coVariab_Variab
   a := 0;
   b := 255;
   if a = a then bien else mal end;
   if a = b then mal else bien end;
   if a <> a then mal else bien end;
-  if a <> b then bien else mal end;
-
   a := 255;
-  b := 255;
   if a = a then bien else mal end;
   if a = b then bien else mal end;
-  if b = a then bien else mal end;
   if a <> a then mal else bien end;
-  if a <> b then mal else bien end;
-
-	//Variables - constantes
-  a := 10;
-  if a = 10 then bien else mal end;
-  if 10 = a then bien else mal end;
-  if a = 0 then mal else bien end;
-  if 0 = a then mal else bien end;
-  if a <> 10 then mal else bien end;
-  if 10 <> a then mal else bien end;
-  if a <> 255 then bien else mal end;
-  if 255 <> a then bien else mal end;
 
 	//Expresiones
   a := 10;

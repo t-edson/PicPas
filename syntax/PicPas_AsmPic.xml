@@ -3,7 +3,7 @@
   <Attribute Name="Directive" ForeCol="#FF00FF" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="Label"     ForeCol="#007000" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="Keyword"   ForeCol="#00FF00" Bold="True" Italic="False" Underline="False"/>
-  <Attribute Name="Comment"   ForeCol="#808080" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Comment"   ForeCol="#80FFFF" Bold="False" Italic="False" Underline="False"/>
   <Identifiers CharsStart= "A..Za..z" Content = "A..Za..z0..9_"> 
     <Keyword> 
   ADDWF    ANDWF    CLRF    CLRW    COMF 

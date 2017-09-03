@@ -1,4 +1,7 @@
 {Description of the unit.}
+{$IFNDEF LCD_EN}
+{$MSGBOX 'Debe definir LCD_EN'}
+{$ENDIF}
 unit LCDlib;
 interface
 uses PIC16F84A, LCDconst;
