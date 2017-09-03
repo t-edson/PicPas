@@ -9,8 +9,8 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="1"/>
-  <viewMode Val="2"/>
+  <SynTreeWidth Val="177"/>
+  <viewMode Val="1"/>
   <MessPanBack Val="4718592"/>
   <MessPanText Val="16777215"/>
   <MessPanErr Val="255"/>
