@@ -6,7 +6,7 @@ unit ParserDirec;
 interface
 uses
   Classes, SysUtils, ParserAsm, fgl, math, SynFacilHighlighter, Globales,
-  XpresElementsPIC, Pic16Devices, MisUtils, XpresBas, LCLProc;
+  XpresElementsPIC, Pic16Devices, MisUtils, XpresBas, LCLProc, Graphics;
 type  //Tipos para manejo de expresiones
   TDirDatType = (ddtNumber, ddtString);
 
@@ -257,10 +257,15 @@ begin
   end;
 end;
 function TParserDirec.GetIdent: string;
+var
+  m: Integer;
+  txt: String;
 begin
   if tokType = lexDir.tnSpace then
     lexDir.Next;  //quita espacios
   //verifica
+m := lexDir.GetTokenKind;
+txt := lexDir.GetToken;
   if lexDir.GetTokenKind <> lexDir.tnIdentif then begin
     GenErrorDir(ER_IDENT_EXPEC);
     exit;
@@ -1379,8 +1384,14 @@ procedure TParserDirec.DefLexDirectiv;
  debe estar entre los símbolo {$ ... }
 *)
 begin
+  lexDir.ClearSpecials;               //para empezar a definir tokens
+  lexDir.CreateAttributes;            //Limpia atributos
+  lexDir.ClearMethodTables;
+
   dirOperator := lexDir.NewTokType('operator');
   dirDelimiter:= lexDir.NewTokType('delimiter');
+  lexDir.Attrib[lexDir.tnSymbol].Background := clRed;
+  lexDir.Attrib[dirOperator].Background := clGreen;
   //solo se requiere identificadores y números
   lexDir.DefTokIdentif('[A-Za-z_]', '[A-Za-z0-9_]*');
   lexDir.DefTokContent('[0-9]', '[0-9.]*', lexDir.tnNumber);
@@ -1395,10 +1406,10 @@ begin
   lexDir.AddSymbSpec('>=', dirOperator);
   lexDir.AddSymbSpec('<=', dirOperator);
 
-  lexDir.AddSymbSpec('AND', dirOperator);
-  lexDir.AddSymbSpec('OR', dirOperator);
-  lexDir.AddSymbSpec('XOR', dirOperator);
-  lexDir.AddSymbSpec('NOT', dirOperator);
+  lexDir.AddIdentSpec('AND', dirOperator);
+  lexDir.AddIdentSpec('OR', dirOperator);
+  lexDir.AddIdentSpec('XOR', dirOperator);
+  lexDir.AddIdentSpec('NOT', dirOperator);
 
   lexDir.AddSymbSpec('+', dirOperator);
   lexDir.AddSymbSpec('-', dirOperator);
