@@ -120,6 +120,7 @@ Type           Size
  bit           1 bit
  boolean       1 bit
  byte          1 byte
+ char          1 byte
  word          2 bytes
  dword         4 bytes
  ```
