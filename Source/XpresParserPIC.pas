@@ -105,12 +105,16 @@ protected  //Eventos del compilador
   function EOBlock: boolean;
   //Manejo de tipos
   procedure ClearTypes;
-  function CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
-  function FindType(TypName: string): TType;
+  function CreateSysType(nom0: string; cat0: TTypeGroup; siz0: smallint): TType;
+  function CreateSysEleType(typ: TType): TxpEleType;
+  function FindSysType(TypName: string): TType;
+  function FindSysEleType(TypName: string): TxpEleType;
   //Manejo de constantes
   function CreateCons(consName: string; typ: ttype): TxpEleCon;
   //Manejo de variables
-  function CreateVar(varName: string; typ: ttype): TxpEleVar;
+  function CreateVar(varName: string; eleTyp: TxpEleType): TxpEleVar;
+  //Manejo de tipos
+  function CreateEleType(typName: string): TxpEleType;
   //Manejo de funciones
   function CreateFunction(funName: string; typ: ttype; procParam,
     procCall: TProcExecFunction): TxpEleFun;
@@ -136,7 +140,8 @@ public
   TreeElems  : TXpTreeElements; //Árbol de sintaxis del lenguaje
   TreeDirec  : TXpTreeElements; //Árbol de sinatxis para directivas
   listFunSys : TxpEleFuns;   //lista de funciones del sistema
-  pic        : TPIC16;   //Objeto PIC de la serie 16.
+  listTypSys : TxpEleTypes;  //lista de tipos del sistema
+  pic        : TPIC16;       //Objeto PIC de la serie 16.
 protected
   typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
   function GetExpression(const prec: Integer): TOperand;
@@ -197,7 +202,11 @@ public  //Manejo de errores y advertencias
   HayError: boolean;
   OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
   OnError  : procedure(errTxt: string; fileName: string; row, col: integer) of object;
+  OnInfo   : procedure(infTxt: string) of object;
   procedure ClearError;
+  //Rutinas de generación de mensajes
+  procedure GenInfo(msg: string);
+  //Rutinas de generación de advertencias
   procedure GenWarn(msg: string; fil: String; row, col: integer);
   procedure GenWarn(msg: string; const Args: array of const; fil: String; row, col: integer);
   procedure GenWarn(msg: string);
@@ -269,7 +278,7 @@ procedure TCompilerBase.ClearTypes;  //Limpia los tipos
 begin
   typs.Clear;
 end;
-function TCompilerBase.CreateType(nom0: string; cat0: TCatType; siz0: smallint): TType;
+function TCompilerBase.CreateSysType(nom0: string; cat0: TTypeGroup; siz0: smallint): TType;
 {Crea una nueva definición de tipo en el compilador. Devuelve referencia al tipo recien
 creado. El nombre del tipo, debe darse en minúscula, porque así se hará la búsqueda. con
 FindType().}
@@ -277,20 +286,34 @@ var
   r: TType;
 begin
   //verifica nombre
-  if FindType(nom0) <> nil then begin
+  if FindSysType(nom0) <> nil then begin
     GenError('Duplicated identifier: "%s"', [nom0]);
     exit;
   end;
   //configura nuevo tipo
   r := TType.Create;
   r.name:=nom0;
-  r.cat:=cat0;
+  r.grp:=cat0;
   r.size:=siz0;
-  //agrega
-  typs.Add(r);
-  Result:=r;   //devuelve índice al tipo
+  typs.Add(r);  //agrega
+  //Devuelve referencia al tipo
+  Result:=r;
 end;
-function TCompilerBase.FindType(TypName: string): TType;
+function TCompilerBase.CreateSysEleType(typ: TType): TxpEleType;
+{Crea un elemento tipo, del sistema, a partir de un tipo básico TType.}
+var
+  eType: TxpEleType;
+begin
+  //Crea elemento de tipo
+  eType := TxpEleType.Create;
+  eType.name := UpCase(typ.name);
+  eType.catType := tctAtomic;
+  eType.typRef := typ;   //guarda referencia al tipo básico
+  listTypSys.Add(eType);
+  //Devuelve referencia al tipo
+  Result:=eType;
+end;
+function TCompilerBase.FindSysType(TypName: string): TType;
 {Busca un tipo, por su nombre. Si no encuentra, devuelve NIL.}
 var
   t: TType;
@@ -300,6 +323,17 @@ begin
     if t.name = TypName then exit(t);
   end;
   exit(nil)
+end;
+function TCompilerBase.FindSysEleType(TypName: string): TxpEleType;
+{Busca un elemento de tipo por su nombre. Si no encuentra, devuelve NIL.}
+var
+  etyp: TxpEleType;
+begin
+  typName := upcase(typName);   //los tipos se guardan en mayúscula
+  for etyp in listTypSys do begin
+    if etyp.name = typName then exit(etyp);  //devuelve referencia
+  end;
+  exit(nil);
 end;
 function TCompilerBase.CreateCons(consName: string; typ: ttype): TxpEleCon;
 {Rutina para crear una constante. Devuelve referencia a la constante creada.}
@@ -313,16 +347,27 @@ begin
   Result := conx;
 end;
 //Manejo de variables
-function TCompilerBase.CreateVar(varName: string; typ: ttype): TxpEleVar;
+function TCompilerBase.CreateVar(varName: string; eleTyp: TxpEleType): TxpEleVar;
 {Rutina para crear una variable. Devuelve referencia a la variable creada.}
 var
   xVar: TxpEleVar;
 begin
   xVar := TxpEleVar.Create;
   xVar.name := varName;
-  xVar.typ := typ;
+  xVar.eleType := eleTyp;
+  xVar.typ := eleTyp.typRef;
   xVar.havAdicPar := false;
   Result := xVar;
+end;
+//Manejo de tipos
+function TCompilerBase.CreateEleType(typName: string): TxpEleType;
+var
+  xTyp: TxpEleType;
+begin
+  xTyp := TxpEleType.Create;
+  xTyp.name := typName;
+//  xTyp.typ := typ;
+  Result := xTyp;
 end;
 //Manejo de funciones
 function TCompilerBase.CreateFunction(funName: string; typ: ttype;
@@ -365,7 +410,6 @@ begin
   fun.procParam := procParam;
   fun.procCall:= procCall;
   fun.ClearParams;
-//  TreeElems.AddElement(fun, false);  //no verifica duplicidad
   listFunSys.Add(fun);  //Las funciones de sistema son accesibles siempre
   Result := fun;
 end;
@@ -1064,7 +1108,7 @@ begin
   if ExprLevel = 0 then debugln('');
   {$ENDIF}
 end;
-//Manejo de errores y advertencias
+//Manejo de mensjes, errores y advertencias
 procedure TCompilerBase.ClearError;
 {Limpia la bandera de errores. Tomar en cuenta que solo se debe usar para iniciar el
 procesamiento de errores. Limpiar errores en medio de la compilación, podría hacer que
@@ -1074,6 +1118,10 @@ Como norma, se podría decir que solo se debe usar, después de haber proecsado 
 error anterior.}
 begin
   HayError := false;
+end;
+procedure TCompilerBase.GenInfo(msg: string);
+begin
+  if OnInfo<>nil then OnInfo(msg);
 end;
 procedure TCompilerBase.GenWarn(msg: string; fil: String; row, col: integer);
 {Genera un mensaje de advertencia en la posición indicada.}
@@ -1155,9 +1203,10 @@ begin
   //Inicia lista de tipos
   typs := TTypes.Create(true);
   //Crea arbol de elementos
-  TreeElems := TXpTreeElements.Create;
-  TreeDirec:= TXpTreeElements.Create;
-  listFunSys:= TxpEleFuns.Create(true);
+  TreeElems  := TXpTreeElements.Create;
+  TreeDirec  := TXpTreeElements.Create;
+  listFunSys := TxpEleFuns.Create(true);
+  listTypSys := TxpEleTypes.Create(true);
   //inicia la sintaxis
   xLex := TSynFacilSyn.Create(nil);   //crea lexer
   func0 := TxpEleFun.Create;  //crea la función 0, para uso interno
@@ -1193,6 +1242,7 @@ begin
   cIn.Destroy; //Limpia lista de Contextos
   func0.Destroy;
   xLex.Free;
+  listTypSys.Destroy;
   listFunSys.Destroy;
   TreeDirec.Destroy;
   TreeElems.Destroy;
@@ -1294,7 +1344,7 @@ end;
 procedure TOperand.CopyConsValTo(var c: TxpEleCon);
 begin
   //hace una copia selectiva por velocidad, de acuerdo a la categoría
-  case typ.cat of
+  case typ.grp of
   t_boolean : c.val.ValBool:=val.ValBool;
   t_integer,
   t_uinteger: c.val.ValInt  := val.ValInt;
@@ -1303,7 +1353,7 @@ begin
   else
     MsgErr('Internal PicPas error');
     {En teoría, cualquier valor constante que pueda contener TOperand, debería poder
-    transferirse a una cosntante, porque usan el mismo contenedor, así que si pasa esto
+    transferirse a una constante, porque usan el mismo contenedor, así que si pasa esto
     solo puede ser que faltó implementar.}
   end;
 end;
@@ -1311,7 +1361,7 @@ procedure TOperand.GetConsValFrom(const c: TxpEleCon);
 {Copia valores constante desde una constante. Primero TOperand, debería tener inicializado
  correctamente su campo "catTyp". }
 begin
-  case typ.cat of
+  case typ.grp of
   t_boolean : val.ValBool := c.val.ValBool;
   t_integer,
   t_uinteger: val.ValInt := c.val.ValInt;

@@ -31,7 +31,7 @@ procedure TfrmRAMExplorer.FormCreate(Sender: TObject);
 begin
   fra:= TfraRamExplorer.Create(self);
   fra.Parent := self;
-  fra.Label1.Height := 0;   //oculta barra
+  fra.panTitle.Visible := false;
 end;
 
 procedure TfrmRAMExplorer.FormKeyDown(Sender: TObject; var Key: Word;
@@ -56,7 +56,7 @@ begin
   self.Width := 600;
   self.Height := 480;
   fra.Align := alClient;
-  fra.Invalidate;
+//  fra.Invalidate;
 end;
 
 end.

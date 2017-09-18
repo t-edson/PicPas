@@ -51,7 +51,7 @@ interface
 uses
   Classes, SysUtils, SynEditHighlighter, Graphics, LCLType, LCLProc,
   SynFacilBasic, XpresTypesPIC, XPresParserPIC, XpresElementsPIC, GenCodPic,
-  Pic16Utils, MisUtils, XpresBas;
+  Pic16Utils, MisUtils;
 type
     { TGenCod }
     TGenCod = class(TGenCodPic)
@@ -102,6 +102,7 @@ type
       procedure Oper_dword_difer_dword;
       procedure Oper_dword_equal_dword;
       procedure Oper_not_bit;
+      procedure Oper_not_byte;
       procedure Oper_word_umulword_word;
       procedure word_mul_word_16(fun: TxpEleFun);
     private  //Operaciones con boolean
@@ -181,6 +182,13 @@ type
       procedure fun_Word(fun: TxpEleFun);
       procedure fun_SetBank(fun: TxpEleFun);
     protected
+      //Elementos de tipo
+      typEleBit  : TxpEleType;
+      typEleBool : TxpEleType;
+      typEleByte : TxpEleType;
+      typEleWord : TxpEleType;
+      typEleDWord: TxpEleType;
+      typEleChar : TxpEleType;
       procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
       procedure Cod_StartProgram;
@@ -977,6 +985,25 @@ begin
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
+procedure TGenCod.Oper_not_byte;
+begin
+  case p1^.catOp of
+  coConst : begin
+    {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
+    SetResultConst_byte((not p1^.valInt) and $FF);
+  end;
+  coVariab: begin
+    SetResultExpres_byte(operType);
+    _COMF(p1^.offs, toW);
+  end;
+//  coExpres: begin
+//    SetResultExpres_byte(operType);
+//    //////
+//  end;
+  else
+    genError('Not implemented: "%s"', [CatOperationToStr]);
+  end;
+end;
 ////////////operaciones con Boolean
 procedure TGenCod.Oper_bool_asig_bool;
 begin
@@ -1314,6 +1341,7 @@ begin
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetResultExpres_word(operType);
+    _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p1 -> E
     _MOVLW(p2^.valInt); //p2 -> W
     _CALL(f_byte_mul_byte_16.adrr);
@@ -1357,7 +1385,6 @@ begin
     aux := GetAuxRegisterByte;  //Pide registro auxiliar
     aux2 := GetAuxRegisterByte;  //Pide registro auxiliar
     _MOVWF (aux.offs);
-
     _clrf   (E.offs);        //En principio el resultado es cero.
     _clrf   (U.offs);
     _movlw  (8);             //Carga el contador.
@@ -1366,14 +1393,13 @@ Arit_DivideBit8 := _PC;
     _rlf    (H.offs,toF);
     _rlf    (U.offs,toF);    // (U.offs) contiene el dividendo parcial.
     _movf   (aux.offs,toW);
-    _subwf  (U.offs,toW);    // Compara dividendo parcial y divisor.
-    _btfsc  (STATUS,_C);     // Si (dividendo parcial)>(divisor)
-    _movwf  (U.offs	 );      // (dividendo parcial) - (divisor) --> (dividendo parcial)
+    _subwf  (U.offs,toW);    //Compara dividendo parcial y divisor.
+    _btfsc  (STATUS,_C);     //Si (dividendo parcial)>(divisor)
+    _movwf  (U.offs);        //(dividendo parcial) - (divisor) --> (dividendo parcial)
     _rlf    (E.offs,toF);    //Desplaza el cociente introduciendo el bit apropiado.
     _decfsz (aux2.offs,toF);
     _goto   (Arit_DivideBit8);
-    _movf   (U.offs,toW);    //El resto también en (toW)
-
+    _movf   (E.offs,toW);    //Devuelve también en (W)
     _RETURN;
     aux2.used := false;
     aux.used := false;
@@ -1398,82 +1424,107 @@ begin
     end;
     SetResultExpres_byte(operType);
     _MOVLW(p1^.valInt);
-    _BANKSEL(E.bank);
-    _MOVF(E.offs, toW);
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _CALL(f_byte_div_byte.adrr);
     if FirstPass then f_byte_div_byte.AddCaller;
-    _MOVWF(E.offs);  //devuelve cociente
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+    if p1^.valInt=0 then begin  //caso especial
+      SetResultConst_byte(0);
+      exit;
+    end;
     SetResultExpres_byte(operType);
     _BANKSEL(E.bank);
-    _MOVWF(E.offs);
+    _MOVWF(E.offs);  //guarda divisor
+
     _MOVLW(p1^.valInt);
-    _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);  //dividendo
+
+    _BANKSEL(E.bank);
+    _MOVF(E.offs, toW);  //divisor
+    _CALL(f_byte_div_byte.adrr);
+    if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coVariab_Const: begin
     SetResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW);
-    _BANKSEL(E.bank);
-    _MOVWF(E.offs);
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);
     _MOVLW(p2^.valInt);
-    _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    _CALL(f_byte_div_byte.adrr);
+    if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coVariab_Variab:begin
     SetResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW);
-    _BANKSEL(E.bank);
-    _MOVWF(E.offs);
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
-    _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    _CALL(f_byte_div_byte.adrr);
+    if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     SetResultExpres_byte(operType);
+    //guarda divisor
     _BANKSEL(E.bank);
-    _MOVWF(E.offs);  //p2 -> E
+    _MOVWF(E.offs);
+    //p1 -> H
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW); //p1 -> W
-    _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);  //dividendo
+
+    _BANKSEL(E.bank);
+    _MOVF(E.offs, toW);  //divisor
+    _CALL(f_byte_div_byte.adrr);
+    if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetResultExpres_byte(operType);
-    _MOVWF(E.offs);  //p1 -> E
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);  //p1 -> H
     _MOVLW(p2^.valInt); //p2 -> W
-    _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    _CALL(f_byte_div_byte.adrr);
+    if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetResultExpres_byte(operType);
-    _BANKSEL(E.bank);
-    _MOVWF(E.offs);  //p1 -> E
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);  //p1 -> H
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW); //p2 -> W
-    _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    _CALL(f_byte_div_byte.adrr);
+    if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coExpres_Expres:begin
     SetResultExpres_byte(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
     FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
+    //guarda divisor
     _BANKSEL(E.bank);
-    _MOVWF(E.offs);  //p2 -> E
+    _MOVWF(E.offs);
+    //pila -> H
     _BANKSEL(r.bank);
     _MOVF(r.offs, toW); //p1 -> W
-    _CALL(f_byte_mul_byte_16.adrr);
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);  //dividendo
+    //divisor -> W
+    _BANKSEL(E.bank);
+    _MOVF(E.offs, toW);  //p2 -> E
+
+    _CALL(f_byte_div_byte.adrr);
     {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
     variable) temporal, si se tuviera una rutina de multiplicación que compilara a
     partir de la direccion de una variable (en este caso de la pila, que se puede
     modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    if FirstPass then f_byte_div_byte.AddCaller;
   end;
   end;
 end;
@@ -1535,6 +1586,12 @@ begin
     if p1^.valInt = 0 then begin  //caso especial
       _BANKSEL(p2^.bank);  //verifica banco destino
       _MOVF(p2^.offs, toF);  //si iguales _Z=1
+    end else if p1^.valInt = 1 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _DECF(p2^.offs, toW);  //si el resultado es cero _Z=1
+    end else if p1^.valInt = 255 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _INCF(p2^.offs, toW);  //si el resultado es cero _Z=1
     end else begin
       _MOVLW(p1^.valInt);
       _BANKSEL(p2^.bank);  //verifica banco destino
@@ -1546,15 +1603,8 @@ begin
     _SUBLW(p1^.valInt);  //si iguales _Z=1
   end;
   coVariab_Const: begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
-    if p2^.valInt = 0 then begin  //caso especial
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toF);  //si iguales _Z=1
-    end else begin
-      _MOVLW(p2^.valInt);
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _SUBWF(p1^.offs, toW);  //si iguales _Z=1
-    end;
+    ExchangeP1_P2;  //Convierte a coConst_Variab
+    Oper_byte_equal_byte;
   end;
   coVariab_Variab:begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
@@ -1587,8 +1637,6 @@ begin
     _BANKSEL(r.bank);  //verifica banco destino
     _SUBWF(r.offs, toW);  //compara directamente a lo que había en pila.
   end;
-  else
-    genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
 procedure TGenCod.Oper_byte_difer_byte;
@@ -1640,9 +1688,9 @@ begin
   end;
   coVariab_Const: begin
     if p2^.valInt = 255 then begin
-      //nada es mayor que 255
+      //Nada es mayor que 255
       SetResultConst_bool(false);
-//      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
+      GenWarn('Expression will always be FALSE or TRUE.');
     end else begin
       SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -2080,7 +2128,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typBit;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.bit' + IntToStr(nbit), typBit);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.bit' + IntToStr(nbit), typEleBit);   //crea variable temporal
     tmpVar.adrBit.offs := xvar.adrByte0.offs;
     tmpVar.adrBit.bank := xvar.adrByte0.bank;
     tmpVar.adrBit.bit  := nbit;
@@ -2176,11 +2224,13 @@ var
 begin
   //guarda W
   stk := GetStkRegisterByte;  //pide memoria
+  if stk = nil then exit;
   _BANKSEL(stk.bank);
   _MOVWF(stk.offs);PutComm(';save W');
   stk.used := true;
   //guarda H
   stk := GetStkRegisterByte;   //pide memoria
+  if stk = nil then exit;
   _BANKSEL(H.bank);
   _MOVF(H.offs, toW);PutComm(';save H');
   _BANKSEL(stk.bank);
@@ -2270,17 +2320,54 @@ begin
   end;
   coConst_Variab: begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
-    //Compara byte alto
-    _MOVLW(p1^.HByte);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Hoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale);  //no son iguales
-    //Son iguales, comparar el byte bajo
-    _MOVLW(p1^.LByte);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Loffs,toW);	//p2-p1
-_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    ////////// Compara byte alto
+    if p1^.HByte = 0 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _MOVF(p2^.Hoffs, toW); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale);  //no son iguales
+    end else if p1^.HByte = 1 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _DECF(p2^.Hoffs, toW); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      {De no ser porque se tiene que devolver siempre, el valor de Z,
+      las 2 instrucciones anteriores, se podrían reemplazar con un DECFSZ,
+      pero DECFSZ, no actualiza Z}
+      _GOTO_PEND(sale);  //no son iguales
+    end else if p1^.HByte = 255 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _INCF(p2^.Hoffs, toW); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      {De no ser porque se tiene que devolver siempre, el valor de Z,
+      las 2 instrucciones anteriores, se podrían reemplazar con un DECFSZ,
+      pero DECFSZ, no actualiza Z}
+      _GOTO_PEND(sale);  //no son iguales
+    end else begin  //caso general
+      _MOVLW(p1^.HByte);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.Hoffs, toW); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale);  //no son iguales
+    end;
+    //////////  Son iguales, comparar el byte bajo
+    if p1^.LByte = 0 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _MOVF(p2^.Loffs,toW);	//p2-p1
+  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    end else if p1^.LByte = 1 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _DECF(p2^.Loffs,toW);	//p2-p1
+  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    end else if p1^.LByte = 255 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _INCF(p2^.Loffs,toW);	//p2-p1
+  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    end else begin
+      _MOVLW(p1^.LByte);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.Loffs,toW);	//p2-p1
+  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    end;
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó p2 esta en W
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
@@ -2368,9 +2455,53 @@ begin
   res.Invert;
 end;
 procedure TGenCod.Oper_word_great_word;
+  procedure codVariab_Const;
+  {Codifica el caso variable (p1) - constante (p2)}
+  var
+    sale: integer;
+  begin
+    if p2^.valInt = $FFFF then begin
+      //Nada es mayor que $FFFF
+      SetResultConst_bool(false);
+      GenWarn('Expression will always be FALSE or TRUE.');
+    end else begin
+      //Compara byte alto
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.Hoffs, toW);
+      _SUBLW(p2^.HByte); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale);  //no son iguales
+      //Son iguales, comparar el byte bajo
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.Loffs, toW);
+      _SUBLW(p2^.LByte);	//p2-p1
+  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+      CopyInvert_C_to_Z;  //Pasa a Z
+    end;
+  end;
+  procedure codVariab_Variab;
+  var
+    sale: integer;
+  begin
+    //Compara byte alto
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Hoffs, toW);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Hoffs, toW); //p2-p1
+    _BTFSS(Z.offs, Z.bit);
+    _GOTO_PEND(sale);  //no son iguales
+    //Son iguales, comparar el byte bajo
+    _BANKSEL(p1^.bank);  //verifica banco destino
+    _MOVF(p1^.Loffs, toW);
+    _BANKSEL(p2^.bank);  //verifica banco destino
+    _SUBWF(p2^.Loffs,toW);	//p2-p1
+_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
+    CopyInvert_C_to_Z;  //Pasa a Z
+  end;
 var
-  tmp: TPicRegister;
+  tmp, aux: TPicRegister;
   sale: integer;
+  varTmp: TxpEleVar;
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
@@ -2380,7 +2511,10 @@ begin
     if p1^.valInt = 0 then begin
       //0 es mayor que nada
       SetResultConst_bool(false);
-//      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
+      GenWarn('Expression will always be FALSE or TRUE.');
+      {No se define realmente el mensaje (si es con TRUE o FALSE), porque
+      Oper_word_great_word(), es también llamado, por Oper_word_lequ_word para con
+      lógica invertida}
     end else begin
       SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
       //Compara byte alto
@@ -2416,28 +2550,15 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     CopyInvert_C_to_Z;  //Pasa a Z
     tmp.used := false;
   end;
-//  coVariab_Const: begin
-//    ExchangeP1_P2;  //Convierte a coConst_Variab
-//    Oper_word_equal_word;
-//  end;
+  coVariab_Const: begin
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    codVariab_Const;
+  end;
   coVariab_Variab:begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
-    //Compara byte alto
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Hoffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Hoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale);  //no son iguales
-    //Son iguales, comparar el byte bajo
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Loffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Loffs,toW);	//p2-p1
-_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-    CopyInvert_C_to_Z;  //Pasa a Z
+    codVariab_Variab;
   end;
-  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en H,W
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     tmp := GetAuxRegisterByte;
     _BANKSEL(tmp.bank);
@@ -2458,14 +2579,26 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
 _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     CopyInvert_C_to_Z;  //Pasa a Z
   end;
-//  coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-//    ExchangeP1_P2;  //Convierte a coConst_Expres;
-//    Oper_word_equal_word;
-//  end;
-//  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-//    ExchangeP1_P2;  //Convierte a coVariab_Expres;
-//    Oper_word_equal_word;
-//  end;
+  coExpres_Const: begin   //la expresión p1 se evaluó y esta en H,W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    _MOVWF(aux.offs);  //guarda W
+    varTmp := NewTmpVarWord(aux, H);  //Crea variable temporal
+    p1^.rVar := varTmp;  //para que se pueda procesar como variable
+    codVariab_Const;      //Lo evalúa como coVariab_Const
+    varTmp.Destroy;
+    aux.used := false;
+  end;
+  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en H,W
+    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    _MOVWF(aux.offs);  //guarda W
+    varTmp := NewTmpVarWord(aux, H);  //Crea variable temporal
+    p1^.rVar := varTmp;  //para que se pueda procesar como variable
+    codVariab_Variab;      //Lo evalúa como coVariab_Variab;
+    varTmp.Destroy;
+    aux.used := false;
+  end;
   coExpres_Expres:begin
     //La expresión p1, debe estar salvada y p2 en (H,W)
     p1^.catOp := coVariab;
@@ -2890,8 +3023,6 @@ MUL16LOOP := _PC;
    EndCodeSub;  //termina codificación
 end;
 procedure TGenCod.Oper_word_umulword_word;
-var
-  r: TPicRegister;
 begin
   case catOperation of
   coConst_Const:begin  //producto de dos constantes. Caso especial
@@ -2991,7 +3122,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Low', typByte);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.Low', typEleByte);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
     res.rVar := tmpVar;   //actualiza la referencia
   end;
@@ -3019,7 +3150,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.High', typByte);
+    tmpVar := CreateTmpVar(xvar.name+'.High', typEleByte);
     tmpVar.adrByte0.Assign(xvar.adrByte1);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
   end;
@@ -3289,27 +3420,89 @@ begin
   coConst_Variab: begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //Compara byte U
-    _MOVLW(p1^.UByte);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Uoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale1);  //no son iguales
+    if p1^.UByte = 0 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _MOVF(p2^.Uoffs, toW); //p2=0?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale1);  //no son iguales
+    end else if p1^.UByte = 1 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _DECF(p2^.Uoffs, toW); //p2=1?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale1);  //no son iguales
+    end else if p1^.UByte = 255 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _INCF(p2^.Uoffs, toW); //p2=255?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale1);  //no son iguales
+    end else begin  //caso general
+      _MOVLW(p1^.UByte);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.Uoffs, toW); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale1);  //no son iguales
+    end;
     //Compara byte E
-    _MOVLW(p1^.EByte);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Eoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale2);  //no son iguales
+    if p1^.EByte = 0 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _MOVF(p2^.Eoffs, toW); //p2=0?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale2);  //no son iguales
+    end else if p1^.EByte = 1 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _DECF(p2^.Eoffs, toW); //p2=1?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale2);  //no son iguales
+    end else if p1^.EByte = 255 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _INCF(p2^.Eoffs, toW); //p2=255?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale2);  //no son iguales
+    end else begin  //caso general
+      _MOVLW(p1^.EByte);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.Eoffs, toW); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale2);  //no son iguales
+    end;
     //Compara byte H
-    _MOVLW(p1^.HByte);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Hoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale3);  //no son iguales
+    if p1^.HByte = 0 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _MOVF(p2^.Hoffs, toW); //p2=0?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale3);  //no son iguales
+    end else if p1^.HByte = 1 then begin
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _DECF(p2^.Hoffs, toW); //p2=1?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale3);  //no son iguales
+    end else if p1^.HByte = 255 then begin
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _INCF(p2^.Hoffs, toW); //p2=255?
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale3);  //no son iguales
+    end else begin  //caso general
+      _MOVLW(p1^.HByte);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.Hoffs, toW); //p2-p1
+      _BTFSS(Z.offs, Z.bit);
+      _GOTO_PEND(sale3);  //no son iguales
+    end;
     //Son iguales, comparar el byte bajo
-    _MOVLW(p1^.LByte);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Loffs,toW);	//p2-p1
+    if p1^.LByte = 0 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _MOVF(p2^.Loffs,toW);	//p2=0?
+    end else if p1^.LByte = 1 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _DECF(p2^.Loffs,toW);	//p2=1?
+    end else if p1^.LByte = 255 then begin  //caso especial
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _INCF(p2^.Loffs,toW);	//p2=255?
+    end else begin  //caso general
+      _MOVLW(p1^.LByte);
+      _BANKSEL(p2^.bank);  //verifica banco destino
+      _SUBWF(p2^.Loffs,toW);	//p2-p1
+    end;
 _LABEL(sale1); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
 _LABEL(sale2);
 _LABEL(sale3);
@@ -3425,6 +3618,7 @@ end;
 procedure TGenCod.Oper_dword_add_dword;
 var
   aux: TPicRegister;
+  varTmp: TxpEleVar;
 begin
   case catOperation of
   coConst_Const: begin
@@ -3471,17 +3665,15 @@ begin
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
     //K + WHEU -> WHEU, se puede manejar como asignación con sums
     aux := GetAuxRegisterByte;  //Pide un registro libre
-    _MOVWF(aux.offs);  //gaurda W
+    _MOVWF(aux.offs);  //guarda W
+    varTmp := NewTmpVarDword(aux, H, E, U);  //Crea variable temporal
     p2^.catOp := coVariab;  //Convierte p2 a variable
-    p2^.rVar := varTmpDWord;  //Usa la variable "varTmpDWord"
-    varTmpDWord.adrByte0.Assign(aux);  //asigna direcciones
-    varTmpDWord.adrByte1.Assign(H);
-    varTmpDWord.adrByte2.Assign(E);
-    varTmpDWord.adrByte3.Assign(U);
+    p2^.rVar := varTmp;
     ExchangeP1_P2;  //Convierte a p1 := p1 + K;
     Oper_dword_aadd_dword;  //compila como autosuma
     _MOVF(aux.offs, toW);  //devuelve byet bajo en W
     aux.used := false;
+    varTmp.Destroy;  //Destruye la variable
   end;
   coVariab_Const: begin
     ExchangeP1_P2;  //Convierte a coConst_Variab
@@ -3565,15 +3757,13 @@ begin
     //WHEU + K -> WHEU, se puede manejar como asignación con sums
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //gaurda W
+    varTmp := NewTmpVarDword(aux, H, E, U);  //Crea variable temporal
     p1^.catOp := coVariab;  //Convierte p1 a variable
-    p1^.rVar := varTmpDWord;  //Usa la variable "varTmpDWord"
-    varTmpDWord.adrByte0.Assign(aux);  //asigna direcciones
-    varTmpDWord.adrByte1.Assign(H);
-    varTmpDWord.adrByte2.Assign(E);
-    varTmpDWord.adrByte3.Assign(U);
+    p1^.rVar := varTmp;
     Oper_dword_aadd_dword;  //compila como autosuma
     _MOVF(aux.offs, toW);  //devuelve byet bajo en W
     aux.used := false;
+    varTmp.Destroy;  //Destruye la variable
   end;
 //  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
 //    SetResultExpres_word(operType);
@@ -3706,7 +3896,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Low', typByte);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.Low', typEleByte);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
     res.rVar := tmpVar;   //actualiza la referencia
   end;
@@ -3734,7 +3924,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.High', typByte);
+    tmpVar := CreateTmpVar(xvar.name+'.High', typEleByte);
     tmpVar.adrByte0.Assign(xvar.adrByte1);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
   end;
@@ -3762,7 +3952,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Extra', typByte);
+    tmpVar := CreateTmpVar(xvar.name+'.Extra', typEleByte);
     tmpVar.adrByte0.Assign(xvar.adrByte2);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
   end;
@@ -3790,7 +3980,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Ultra', typByte);
+    tmpVar := CreateTmpVar(xvar.name+'.Ultra', typEleByte);
     tmpVar.adrByte0.Assign(xvar.adrByte3);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
   end;
@@ -3818,7 +4008,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typWord;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.LowW', typWord);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.LowW', typEleWord);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
     tmpVar.adrByte1.Assign(xvar.adrByte1);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
@@ -3847,7 +4037,7 @@ begin
     res.catOp := coVariab;
     res.typ   := typWord;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.HighW', typWord);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.HighW', typEleWord);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte2);  //byte bajo
     tmpVar.adrByte1.Assign(xvar.adrByte3);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
@@ -4027,6 +4217,7 @@ procedure TGenCod.fun_Exit(fun: TxpEleFun);
 var
   curFunTyp: TType;
   curBlk: TxpElement;
+  curFun: TxpEleFun;
 //  adrReturn: word;
 begin
   curBlk := TreeElems.curNode.Parent;  //El curNode, debe ser de tipo "Body".
@@ -4034,7 +4225,9 @@ begin
     _SLEEP;   //Así se termina un programa en PicPas
     exit;
   end;
-  curFunTyp := curBlk.typ;
+  //curBlk debe ser de tipo TxpEleFun
+  curFun := TxpEleFun(curBlk);
+  curFunTyp := curFun.typ;
   if curFunTyp = typNull then begin
     //No lleva parámetros,
     CodifRETURN(curBlk);
@@ -4515,7 +4708,6 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-
 procedure TGenCod.StartSyntax;
 //Se ejecuta solo una vez al inicio
 begin
@@ -4606,19 +4798,25 @@ begin
 
   ///////////Crea tipos y operaciones
   ClearTypes;
-  typNull := CreateType('null',t_boolean,-1);
+  typNull := CreateSysType('null',t_boolean,-1);
   //tipo bit
-  typBit :=CreateType('bit',t_uinteger,-1);   //de 1 bit
+  typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
+  typEleBit := CreateSysEleType(typBit);
   //tipo booleano
-  typBool :=CreateType('boolean',t_boolean,-1);   //de 1 bit
+  typBool := CreateSysType('boolean',t_boolean,-1);   //de 1 bit
+  typEleBool := CreateSysEleType(typBool);
   //tipo numérico de un solo byte
-  typByte :=CreateType('byte',t_uinteger,1);   //de 1 bytes
+  typByte := CreateSysType('byte',t_uinteger,1);   //de 1 byte
+  typEleByte := CreateSysEleType(typByte);
   //tipo numérico de dos bytes
-  typWord :=CreateType('word',t_uinteger,2);   //de 2 bytes
+  typWord := CreateSysType('word',t_uinteger,2);   //de 2 bytes
+  typEleWord := CreateSysEleType(typWord);
   //tipo numérico de cuatro bytes
-  typDword :=CreateType('dword',t_uinteger,4);  //de 4 bytes
+  typDword := CreateSysType('dword',t_uinteger,4);  //de 4 bytes
+  typEleDWord := CreateSysEleType(typDword);
   //tipo caracter
-  typChar :=CreateType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como númeor
+  typChar := CreateSysType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como número
+  typEleChar := CreateSysEleType(typChar);
 
   {Los operadores deben crearse con su precedencia correcta
   Precedencia de operadores en Pascal:
@@ -4712,6 +4910,8 @@ begin
   opr:=typByte.CreateBinaryOperator('XOR',4,'xor');  //suma
   opr.CreateOperation(typByte,@Oper_byte_xor_byte);
   opr.CreateOperation(typBit,@Oper_byte_xor_bit);
+
+  opr:=typByte.CreateUnaryPreOperator('NOT', 6, 'not', @Oper_not_byte);
 
   opr:=typByte.CreateBinaryOperator('=',3,'equal');
   opr.CreateOperation(typByte,@Oper_byte_equal_byte);

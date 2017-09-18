@@ -365,14 +365,14 @@ begin
   if tokType <> lexAsm.tnIdentif then exit(false);  //no es identificador
   //Hay un identificador
   ele := TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
-  if ele = nil then exit(false);  //nos e identifica
+  if ele = nil then exit(false);  //no se identifica
   //Se identificó elemento
   if not (ele is TxpEleVar) then exit(false);
   //Es variable
-  if (ele.typ <> typBit) and (ele.typ <> typBool) then exit(false);
+  xvar := TxpEleVar(ele);
+  if not xvar.eleType.IsBitSize then exit(false);
   //Es variable bit o boolean
   lexAsm.Next;   //toma identificador
-  xvar := TxpEleVar(ele);
   if FirstPass then xvar.AddCaller;  //lleva la cuenta
   f := GetFaddress(xvar.adrBit.offs);
   b := xvar.adrBit.bit;

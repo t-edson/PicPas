@@ -487,7 +487,6 @@ end;
 procedure TfraCfgSyntax.ListBox1Click(Sender: TObject);
 {Se selecciona un atributo de la lista de atributos.}
 var
-  param: TSynParam;
   att: TSynAttribute;
   Exist: Boolean;
 begin

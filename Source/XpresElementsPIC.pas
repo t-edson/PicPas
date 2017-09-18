@@ -58,7 +58,7 @@ type
 var
   /////// Tipos de datos del lenguaje ////////////
   typNull: TType;     //Tipo nulo (sin tipo) Usado para procedimientos
-  typBit : TType;
+  typBit : TType;     //Valor 0 o 1
   typBool: TType;     //Booleanos
   typByte: TType;     //número sin signo
   typWord: TType;     //número sin signo
@@ -66,7 +66,6 @@ var
   typDword:Ttype;     //número sin signo de 32 bits
 
 type
-
   //Tipos de elementos del lenguaje
   TxpElemType = (eltNone,  //sin tipo
                  eltMain,  //programa principal
@@ -109,11 +108,10 @@ type
     procedure ClearCallers;  //limpia lista de llamantes
     function DuplicateIn(list: TxpElements): boolean; virtual;
   public
-    name : string;        //nombre de la variable
-    typ  : TType;         //tipo del elemento, si aplica
-    Parent: TxpElement;   //referencia al padre
-    elemType: TxpElemType; //no debería ser necesario
-    elements: TxpElements; //referencia a nombres anidados, cuando sea función
+    name : string;        //Nombre de la variable, constante, unidad, tipo, ...
+    Parent: TxpElement;   //Referencia al padre
+    elemType: TxpElemType; //No debería ser necesario
+    elements: TxpElements; //Referencia a nombres anidados, cuando sea función
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
     function LastNode: TxpElement;
     function BodyNode: TxpEleBody;
@@ -144,10 +142,25 @@ type
     constructor Create; override;
   end;
 
+  //Categorías de tipos
+  TxpCatType = (
+    tctAtomic,  //tipo básico
+    tctArray,   //arreglo de otro tipo
+    tctRecord   //registro de varios campos
+  );
   { TxpEleType }
-  //Clase para modelar a los tipos definidos por el usuario
-  { Es diferente a XpresTypesPIC.TType, aunque no se ha hecho un análisis profundo }
+  //Clase para modelar a los tipos definidos por el usuario y a los tipos del sistema
+  { Notar que es diferente a XpresTypesPIC.TType, porque este elemento, permite crear
+  configruaciones diversas de tipos que incluyen a varios XpresTypesPIC.TType}
   TxpEleType= class(TxpElement)
+    catType  : TxpCatType;
+    typRef   : TType;   //Referencia al tipo, cuando es tctAtomic o tctArray
+    arrSize  : integer; //Tamaño, cuando es tctArray
+    {Bandera para indicar si la variable, ha sido declarada en la sección INTERFACE. Este
+    campo es úitl para cuando se procesan unidades.}
+    InInterface: boolean;
+    function IsBitSize: boolean;
+    function TypeName: string;
     constructor Create; override;
   end;
   TxpEleTypes= specialize TFPGObjectList<TxpEleType>; //lista de variables
@@ -155,6 +168,7 @@ type
   { TxpEleCon }
   //Clase para modelar a las constantes
   TxpEleCon = class(TxpElement)
+    typ  : TType;         //Tipo del elemento, si aplica
     //valores de la constante
     val : TConsValue;
     constructor Create; override;
@@ -179,6 +193,8 @@ type
     function GetHavAdicPar: boolean;
     procedure SetHavAdicPar(AValue: boolean);
   public   //Manejo de parámetros adicionales
+    typ     : TType;      //Debe desaparecer, porque ya se tiene eleType
+    eleType   : TxpEleType;   //Referencia al elemento de tipo
     adicPar   : TAdicVarDec;  //Parámetros adicionales en la declaración de la variable.
     //Indica si la variable tiene parámetros adicionales en la declaración
     property havAdicPar: boolean read GetHavAdicPar write SetHavAdicPar;
@@ -217,8 +233,8 @@ type
   //Parámetro de una función
   TxpParFunc = record
     name: string;    //nombre de parámetro
-    typ : TType;     //tipo del parñametro
-    pvar: TxpEleVar; //referecnia a la variable que se usa para el parámetro
+    typ : TType;     //Debería ser de tipo "TxpEleType"
+    pvar: TxpEleVar; //referencia a la variable que se usa para el parámetro
   end;
 
   TxpEleFun = class;
@@ -227,6 +243,7 @@ type
   TProcExecFunction = procedure(fun: TxpEleFun) of object;  //con índice de función
   TxpEleFun = class(TxpElement)
   public
+    typ  : TType;     //Debería ser de tipo "TxpEleType"
     pars: array of TxpParFunc;  //parámetros de entrada
     adrr: integer;     //Dirección física, en donde se compila
     adrReturn: integer;  //Dirección física del RETURN final de la función.
@@ -582,14 +599,23 @@ function TxpEleVar.AbsAddr: word;
 {Devuelve la dirección absoluta de la variable. Tener en cuenta que la variable, no
 siempre tiene un solo byte, así que se trata de devolver siempre la dirección del
 byte de menor peso.}
+var
+  atyp: TType;
 begin
-  if (typ = typBit) or (typ = typBool) then begin
-    Result := adrBit.AbsAdrr;
-  end else if (typ = typByte) or (typ = typChar) then begin
-    Result := adrByte0.AbsAdrr;
-  end else if (typ = typWord) or (typ = typDword) then begin
-    Result := adrByte0.AbsAdrr;
+  if eleType.catType = tctAtomic then begin
+    //Tipo básico
+    atyp := eleType.typRef;  //este es el tipo
+    if (atyp = typBit) or (atyp = typBool) then begin
+      Result := adrBit.AbsAdrr;
+    end else if (atyp = typByte) or (atyp = typChar) then begin
+      Result := adrByte0.AbsAdrr;
+    end else if (atyp = typWord) or (atyp = typDword) then begin
+      Result := adrByte0.AbsAdrr;
+    end else begin
+      Result := ADRR_ERROR;
+    end;
   end else begin
+    //No soportado
     Result := ADRR_ERROR;
   end;
 end;
@@ -695,6 +721,29 @@ begin
   inherited Destroy;
 end;
 { TxpEleType }
+function TxpEleType.IsBitSize: boolean;
+{Indica si el tipo, tiene 1 bit de tamaño}
+begin
+  if catType = tctAtomic then begin
+    //Solo hay dos tipso de tamaño bit:
+    Result := (typRef = typBit) or (typref = typBool);
+  end else begin
+    //Los tipos estructurados, no deberían poder ser de 1 bit
+    exit(false);
+  end;
+end;
+function TxpEleType.TypeName: string;
+{Devuelve una cadena con el nombre del tipo. }
+{ TODO : Ver si no es lo mismo que el campo "Name" }
+begin
+  case catType of
+  tctAtomic: begin
+    Result := typRef.name;   //Este debe ser el tipo, en este caso
+  end;
+  else
+    Result := 'Unknown'
+  end;
+end;
 constructor TxpEleType.Create;
 begin
   inherited;

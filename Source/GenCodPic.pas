@@ -69,13 +69,12 @@ type
     {Las variables temporales, se crean como forma de acceder a partes de  una variable
      como varbyte.bit o varword.low.}
     varFields: TxpEleVars;  //Contenedor
-    function CreateTmpVar(nam: string; typ: TType): TxpEleVar;
+    function CreateTmpVar(nam: string; eleTyp: TxpEleType): TxpEleVar;
   protected  //Rutinas de gestión de memoria para registros
     varStkBit : TxpEleVar;   //variable bit. Usada para trabajar con la pila
     varStkByte: TxpEleVar;   //variable byte. Usada para trabajar con la pila
     varStkWord: TxpEleVar;   //variable word. Usada para trabajar con la pila
     varStkDWord: TxpEleVar;  //variable dword. Usada para trabajar con la pila
-    varTmpDWord: TxpEleVar;  //Variable temporal dword.
     function GetAuxRegisterByte: TPicRegister;
     function GetAuxRegisterBit: TPicRegisterBit;
     //Gestión de la pila
@@ -89,6 +88,10 @@ type
     function FreeStkRegisterWord: boolean;
     function FreeStkRegisterDWord: boolean;
     function FreeStkRegisterBit: boolean;
+    //Variables temporales
+    //Se usa para operaciones en el generador de código
+    function NewTmpVarWord(rL, rH: TPicRegister): TxpEleVar;
+    function NewTmpVarDword(rL, rH, rE, rU: TPicRegister): TxpEleVar;
   protected  //Rutinas de gestión de memoria para variables
     {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
     objeto "pic", se colocan mejor aquí.}
@@ -423,15 +426,16 @@ begin
   end;
   Result := reg;   //devuelve referencia
 end;
-function TGenCodPic.CreateTmpVar(nam: string; typ: TType): TxpEleVar;
-{Crea una variabel temporal agregándola al contenedor varFields, que es
+function TGenCodPic.CreateTmpVar(nam: string; eleTyp: TxpEleType): TxpEleVar;
+{Crea una variable temporal agregándola al contenedor varFields, que es
 limpiado al iniciar la compilación.}
 var
   tmpVar: TxpEleVar;
 begin
   tmpVar:= TxpEleVar.Create;
   tmpVar.name := nam;
-  tmpVar.typ := typ;
+  tmpVar.eleType := eleTyp;
+  tmpVar.typ := eleTyp.typRef;
   tmpVar.havAdicPar := false;
   tmpVar.IsTmp := true;  //para que se pueda luego identificar.
   varFields.Add(tmpVar);  //agrega
@@ -616,6 +620,27 @@ begin
    end;
    dec(stackTopBit);   //Baja puntero
 end;
+function TGenCodPic.NewTmpVarWord(rL, rH: TPicRegister): TxpEleVar;
+{Crea una variable temporal Word, con las direcciones de los registros indicados, y
+devuelve la referencia. La variable se crea sin asignación de memoria.}
+begin
+  Result := TxpEleVar.Create;
+  Result.typ := typWord;
+  Result.adrByte0.Assign(rL);  //asigna direcciones
+  Result.adrByte1.Assign(rH);
+end;
+//Variables temporales
+function TGenCodPic.NewTmpVarDword(rL, rH, rE, rU: TPicRegister): TxpEleVar;
+{Crea una variable temporal DWord, con las direcciones de los registros indicados, y
+devuelve la referencia. La variable se crea sin asignación de memoria.}
+begin
+  Result := TxpEleVar.Create;
+  Result.typ := typDword;
+  Result.adrByte0.Assign(rL);  //asigna direcciones
+  Result.adrByte1.Assign(rH);
+  Result.adrByte2.Assign(rE);
+  Result.adrByte3.Assign(rU);
+end;
 function TGenCodPic.FreeStkRegisterByte(var reg: TPicRegister): boolean;
 {Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
  byte pedido. Si hubo error, devuelve FALSE.
@@ -647,7 +672,6 @@ begin
    end;
    dec(stackTop, 4);   //Baja puntero
 end;
-
 ////Rutinas de gestión de memoria para variables
 procedure TGenCodPic.AssignRAMinBit(absAdd, absBit: integer;
   var reg: TPicRegisterBit; regName: string);
@@ -696,27 +720,29 @@ var
   varName: String;
   absAdd: integer;
   absBit: integer;
+  typ: TType;
 begin
   //Valores solicitados. Ya deben estar iniciado este campo.
   varName := nVar.name;
+  typ := nVar.eleType.typRef;
   if nVar.adicPar.isAbsol then begin
     absAdd := nVar.adicPar.absAddr;
-    if nVar.typ.IsSizeBit then begin
+    if typ.IsSizeBit then begin
       absBit := nVar.adicPar.absBit;
     end;
   end else begin
     absAdd  := -1;  //no aplica
     absBit  := -1;  //no aplica
   end;
-  if nVar.typ = typBit then begin
+  if typ = typBit then begin
     AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
-  end else if nVar.typ = typBool then begin
+  end else if typ = typBool then begin
     AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
-  end else if nVar.typ = typByte then begin
+  end else if typ = typByte then begin
     AssignRAMinByte(absAdd, nVar.adrByte0, varName);
-  end else if nVar.typ = typChar then begin
+  end else if typ = typChar then begin
     AssignRAMinByte(absAdd, nVar.adrByte0, varName);
-  end else if nVar.typ = typWord then begin
+  end else if typ = typWord then begin
     //Registra variable en la tabla
     if absAdd = -1 then begin  //Variable normal
       //Los 2 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
@@ -727,7 +753,7 @@ begin
       AssignRAMinByte(absAdd  , nVar.adrByte0, varName+'@0');
       AssignRAMinByte(absAdd+1, nVar.adrByte1, varName+'@1');
     end;
-  end else if nVar.typ = typDword then begin
+  end else if typ = typDword then begin
     //Registra variable en la tabla
     if absAdd = -1 then begin  //Variable normal
       //Los 4 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
@@ -746,7 +772,7 @@ begin
     GenError('Not implemented.', [varName]);
   end;
   if HayError then  exit;
-  if nVar.typ.OnGlobalDef<>nil then nVar.typ.OnGlobalDef(varName, '');
+  if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
 //Métodos para fijar el resultado
 procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
@@ -925,6 +951,7 @@ begin
     if RTstate<>nil then begin
       //Si se usan RT en la operación anterior. Hay que salvar en pila
       RTstate.SaveToStk;  //Se guardan por tipo
+      //
     end else begin
       //No se usan. Están libres
     end;
@@ -1268,10 +1295,6 @@ begin
   varStkWord.typ := typWord;
   varStkDWord := TxpEleVar.Create;
   varStkDWord.typ := typDword;
-  //Variables temporales. Se crean sin asignación de memoria. Se usan para
-  //operaciones en el generador de código
-  varTmpDWord := TxpEleVar.Create;
-  varTmpDWord.typ := typDword;
   //Crea lista de variables temporales
   varFields:= TxpEleVars.Create(true);
   //Inicializa contenedores
@@ -1312,7 +1335,6 @@ begin
   varStkByte.Destroy;
   varStkWord.Destroy;
   varStkDWord.Destroy;
-  varTmpDWord.Destroy;
   pic.Destroy;
   inherited Destroy;
 end;

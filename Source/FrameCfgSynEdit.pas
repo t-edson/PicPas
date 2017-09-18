@@ -8,7 +8,7 @@ unit FrameCfgSynEdit;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, Forms, StdCtrls, Dialogs, Spin, SynEdit, Graphics,
+  Classes, SysUtils, Forms, StdCtrls, Dialogs, SynEdit, Graphics,
   Globales, MiConfigXML, MiConfigBasic, SynEditMarkupHighAll, SynEditMarkup;
 type
 

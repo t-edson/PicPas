@@ -1474,7 +1474,6 @@ begin
 end;
 procedure TfraEditView.mnCloseOthersClick(Sender: TObject);
 var
-  act: TSynEditor;
   nBefore, i, nAfter: Integer;
 begin
   //Cierra anteriores

@@ -70,7 +70,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="27">
+    <Units Count="28">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -226,6 +226,13 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
       </Unit26>
+      <Unit27>
+        <Filename Value="FrameRegWatcher.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="fraRegWatcher"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+      </Unit27>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

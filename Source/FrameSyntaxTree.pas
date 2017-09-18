@@ -84,10 +84,12 @@ type
 implementation
 {$R *.lfm}
 var
+  //Cadenas con los títulos de los nodos a mostrar en el árbol
   TIT_MAIN, TIT_UNIT : string;
   TIT_CONS: String;
   TIT_VARS: String;
   TIT_FUNC: String;
+  TIT_TYPE: String;
   TIT_OTHER: String;
 
 { TfraSyntaxTree }
@@ -126,6 +128,12 @@ function TfraSyntaxTree.AddNodeTo(nodParent: TTreeNode; elem: TxpElement): TTree
 var
   nod: TTreeNode;
 begin
+  if elem = nil then begin
+    nod := TreeView1.Items.AddChild(nodParent, '???');
+    nod.Data := elem;
+    Result := nod;
+    exit;
+  end;
   nod := TreeView1.Items.AddChild(nodParent, elem.name);
   if elem is TxpEleCon then begin
     nod.ImageIndex := 4;
@@ -133,6 +141,9 @@ begin
   end else if elem is TxpEleVar then begin
     nod.ImageIndex := 2;
     nod.SelectedIndex := 2;
+  end else if elem is TxpEleType then begin
+    nod.ImageIndex := 15;
+    nod.SelectedIndex := 15;
   end else if elem is TxpEleFun then begin
     nod.ImageIndex := 3;
     nod.SelectedIndex := 3;
@@ -156,13 +167,14 @@ end;
 procedure TfraSyntaxTree.RefreshByGroups(nodMain: TTreeNode; curEle: TxpElement);
 var
   elem, elFun: TxpElement;
-  nodVar, nodOtr, nodFun, nodCte, nodUni, nodEleUni, nodEleFun: TTreeNode;
+  nodVar, nodOtr, nodFun, nodCte, nodUni, nodTyp, nodEleUni, nodEleFun: TTreeNode;
 begin
   //Agrega grupos
   nodUni := nil;
   nodVar := nil;
   nodCte := nil;
   nodFun := nil;
+  nodTyp := nil;
   nodOtr := nil;  //por defecto
   //Agrega elementos
   for elem in curEle.elements do begin
@@ -190,6 +202,13 @@ begin
         nodVar.SelectedIndex := 0;
       end;
       AddNodeTo(nodVar, elem);
+    end else if elem is TxpEleType then begin  //variable
+      if nodTyp = nil then begin
+        nodTyp := TreeView1.Items.AddChild(nodMain, TIT_TYPE);
+        nodTyp.ImageIndex := 0;
+        nodTyp.SelectedIndex := 0;
+      end;
+      AddNodeTo(nodTyp, elem);
     end else if elem is TxpEleFun then begin  //función
       if nodFun = nil then begin  //Si no se ha creado, lo crea
         nodFun := TreeView1.Items.AddChild(nodMain, TIT_FUNC);

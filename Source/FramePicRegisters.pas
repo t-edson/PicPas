@@ -38,7 +38,7 @@ type
     procedure TextCEnt(x, y: integer; txt: string);
   public
     pic: TPIC16;
-    procedure Refresh;
+    procedure Refrescar;
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
   end;
@@ -56,8 +56,8 @@ begin
   Canvas.Brush.Color := clWhite;
   Canvas.TextOut(x - ancTxt div 2, y - altTxt div 2, txt);
 end;
-procedure TfraPicRegisters.Refresh;
-{Refersca valores de los registros}
+procedure TfraPicRegisters.Refrescar;
+{Refresca valores de los registros}
 var
   w0,w1,w2,w3,w4,w5,w6,w7: Byte;
 begin
@@ -181,7 +181,7 @@ begin
 end;
 procedure TfraPicRegisters.Frame1Paint(Sender: TObject);
 var
-  bordlat, ancPag, x0, i, separ, altur, bordSup, y0: Integer;
+  bordlat, separ: Integer;
 begin
   if pic = nil then exit;
   ////////////////////////

@@ -386,6 +386,7 @@ begin
   grilla.RowCount := 1;   //Limpia Grilla
   cxp.OnWarning := @AddWarning;  //Inicia evento
   cxp.OnError := @AddError;
+  cxp.OnInfo := @AddInformation;
   timeCnt:=GetTickCount64;
   if InitMsg then AddInformation(MSG_INICOMP);
   HaveErrors := false;  //limpia bandera

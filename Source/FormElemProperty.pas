@@ -80,7 +80,8 @@ end;
 procedure TfrmElemProperty.Exec(elem0: TxpElement);
 var
   adicInformation: String;
-  fun: TxpEleFun;
+  xcon: TxpEleCon;
+  xfun: TxpEleFun;
   xvar: TxpEleVar;
   nCalled: Integer;
 begin
@@ -90,11 +91,6 @@ begin
   Image1.Proportional := true;  // to keep width/height ratio
   adicInformation := '';
   txtEleName.Caption := elem.name;
-  if elem.typ = nil then begin
-    txtEleType.Caption := 'Unknown';
-  end else begin
-    txtEleType.Caption := elem.typ.name;
-  end;
   txtEleLocaPath.Caption := ExtractFileDir(elem.srcDec.Fil);
   txtEleLocFile.Caption := ExtractFileName(elem.srcDec.Fil) + elem.srcDec.RowColString;
   BitBtn2.Enabled := true;
@@ -109,30 +105,38 @@ begin
       lblUsed.Caption := 'Used ' + IntToStr(nCalled) + ' times.';
       butDetails.Enabled := true;
   end;
-  //Ícono e infromación adicional
+  //Ícono e información adicional
   if elem is TxpEleCon then begin
+    xcon := TxpEleCon(elem);
+    if xcon.typ = nil then txtEleType.Caption := 'Unknown'
+    else txtEleType.Caption := xcon.typ.name;
+
     ImageList1.GetBitmap(4, Image1.Picture.Bitmap);
     adicInformation := '';
   end else if elem is TxpEleVar then begin
-    ImageList1.GetBitmap(2, Image1.Picture.Bitmap);
-
     xvar := TxpEleVar(elem);
+    txtEleType.Caption := xvar.eleType.TypeName;
+
+    ImageList1.GetBitmap(2, Image1.Picture.Bitmap);
     adicInformation :=
            'Direcc. Solicitada: ' + IntToStr(xvar.adicPar.absAddr) + ':' +
                                     IntToStr(xvar.adicPar.absBit) + LineEnding +
            'Direcc. Asignada: ' + xvar.AddrString;
   end else if elem is TxpEleFun then begin
+    xfun := TxpEleFun(elem);
+    if xfun.typ = nil then txtEleType.Caption := 'Unknown'
+    else txtEleType.Caption := xfun.typ.name;
+
     ImageList1.GetBitmap(3, Image1.Picture.Bitmap);
-    fun := TxpEleFun(elem);
-    adicInformation := 'Dirección: $' + IntToHex(fun.adrr, 3) + LineEnding +
-           'Tamaño: ' + IntToStr(fun.srcSize);
+    adicInformation := 'Dirección: $' + IntToHex(xfun.adrr, 3) + LineEnding +
+           'Tamaño: ' + IntToStr(xfun.srcSize);
   end else if elem is TxpEleUnit then begin
     ImageList1.GetBitmap(6, Image1.Picture.Bitmap);
     adicInformation := '';
   end else if elem is TxpEleBody then begin
     ImageList1.GetBitmap(12, Image1.Picture.Bitmap);
-    adicInformation := 'Dirección: $' + IntToHex(fun.adrr, 3) + LineEnding +
-           'Tamaño: ' + IntToStr(fun.srcSize)  + LineEnding +
+    adicInformation := 'Dirección: $' + IntToHex(xfun.adrr, 3) + LineEnding +
+           'Tamaño: ' + IntToStr(xfun.srcSize)  + LineEnding +
            'Fin: ' + elem.srcEnd.RowColString;
   end else begin
     ImageList1.GetBitmap(13, Image1.Picture.Bitmap);

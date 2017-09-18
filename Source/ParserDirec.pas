@@ -16,13 +16,13 @@ type  //Tipos para manejo de expresiones
   private
     FvalStr: string;
     FvalNum: Double;
-    function GetvalNum: Single;
-    procedure SetvalNum(AValue: Single);
+    function GetvalNum: Double;
+    procedure SetvalNum(AValue: Double);
     function GetvalStr: string;
     procedure SetvalStr(AValue: string);
   public  //Campos principales
     datTyp: TDirDatType;  //Tipo de dato
-    property valNum: Single read GetvalNum write SetvalNum ;    //Valor numérico de la expresión
+    property valNum: Double read GetvalNum write SetvalNum ;    //Valor numérico de la expresión
     property valStr: string read GetvalStr write SetvalStr;  //Valor cadena de la expresión
     procedure SetBool(value: boolean);
   End;
@@ -71,25 +71,36 @@ type
     function CogCarERR(car: char): Boolean;
     function CogExpresionPar: TDirOperand;
     function CogIdentif(var s: string): boolean;
-    function CogNumero(var n: Single): boolean;
+    function CogNumero(var n: Double): boolean;
     function CogOperando: TDirOperand;
     function cogOperador: String;
     function DefinedVar(cad: string; out dvar: TDirVar): boolean;
+    procedure ProcINFO;
+    procedure ProcMSGERR;
+    procedure ProcMSGWAR;
+    procedure ProcSET_MAPPED_RAM;
+    procedure ProcSET_STATE_RAM;
     function read_CURRBANK: Single;
     function read_PIC_FREQUEN: Single;
+    function read_PIC_IFLASH: Single;
+    function read_PIC_MAXFLASH: Single;
     function read_PIC_MAXFREQ: Single;
     function read_PIC_MODEL: string;
+    function read_PIC_NPINS: Single;
     function read_PIC_NUMBANKS: Single;
     function read_PIC_NUMPAGES: Single;
     function read_SYN_MODE: String;
     procedure write_CURRBANK(AValue: Single);
     procedure write_PIC_FREQUEN(AValue: Single);
+    procedure write_PIC_IFLASH(AValue: Single);
+    procedure write_PIC_MAXFLASH(AValue: Single);
     procedure write_PIC_MAXFREQ(AValue: Single);
     procedure write_PIC_MODEL(AValue: string);
     function Evaluar(Op1: TDirOperand; opr: String; Op2: TDirOperand): TDirOperand;
     function jerOp(operad: String): Integer;
     function CogExpresion(jerar: Integer): TDirOperand;
     function AsigVariable(VarName: string; const value: TDirOperand): TDirVar;
+    procedure write_PIC_NPINS(AValue: Single);
     procedure write_PIC_NUMBANKS(AValue: Single);
     procedure write_PIC_NUMPAGES(AValue: Single);
     procedure write_SYN_MODE(AValue: String);
@@ -141,7 +152,7 @@ type
 implementation
 {$I ..\language\tra_ParserDirec.pas}
 { TDirOperand }
-function TDirOperand.GetvalNum: Single;
+function TDirOperand.GetvalNum: Double;
 begin
   if datTyp = ddtNumber then begin
     Result := FvalNum;
@@ -150,7 +161,7 @@ begin
     if not TryStrToFloat(FvalStr , Result) then exit(0);
   end;
 end;
-procedure TDirOperand.SetvalNum(AValue: Single);
+procedure TDirOperand.SetvalNum(AValue: Double);
 begin
   datTyp := ddtNumber;   //fuerza a que sea numéro
   FvalNum := AValue;
@@ -257,15 +268,10 @@ begin
   end;
 end;
 function TParserDirec.GetIdent: string;
-var
-  m: Integer;
-  txt: String;
 begin
   if tokType = lexDir.tnSpace then
     lexDir.Next;  //quita espacios
   //verifica
-m := lexDir.GetTokenKind;
-txt := lexDir.GetToken;
   if lexDir.GetTokenKind <> lexDir.tnIdentif then begin
     GenErrorDir(ER_IDENT_EXPEC);
     exit;
@@ -294,7 +300,7 @@ begin
   skipWhites;
   if not CogCarERR(')') then exit;  //sale con error
 end;
-function TParserDirec.CogNumero(var n: Single): boolean;
+function TParserDirec.CogNumero(var n: Double): boolean;
 {Veririfca si lo que sigues es un número y de ser así, intenta tomarlo.
 Puede generar error al convertir el número}
 var
@@ -335,11 +341,12 @@ function TParserDirec.CogOperando: TDirOperand;
 el operando o es erróneo, genera Error.}
 var
   cad , tmp: String;
-  num : single;
+  num : Double;
   exp : TDirOperand;
   mac: TDirMacro;
   p: TFaLexerState;
   dvar: TDirVar;
+  delim: Char;
 begin
   skipWhites;   //quita blancos iniciales
   if lexDir.GetEol then begin
@@ -351,7 +358,15 @@ begin
   end else if lexDir.GetTokenKind = lexDir.tnString then begin
     //Es cadena
     tmp := lexDir.GetToken;
-    Result.valStr := copy(tmp, 2, length(tmp)-2);  //quita delimitadores
+    delim := tmp[1];
+    tmp := copy(tmp, 2, length(tmp)-2);  //quita delimitadores
+    if delim='"' then begin
+      //Es cadena con comilla doble
+      tmp := StringReplace(tmp, '\n', LineEnding, [rfReplaceAll]);
+      tmp := StringReplace(tmp, '\r', chr($0D), [rfReplaceAll]);
+      tmp := StringReplace(tmp, '\t', #9, [rfReplaceAll]);
+    end;
+    Result.valStr := tmp;
     lexDir.Next;
   end else if CogIdentif(cad) then begin
     {Es un identificador}
@@ -411,11 +426,53 @@ begin
       Result.valNum := ln(exp.valNum);
       exit;  //sale sin error
     end;
+    'ROUND': begin
+      exp := CogExpresionPar;
+      if HayError then exit;
+      Result.valNum := round(exp.valNum);
+      exit;  //sale sin error
+    end;
+    'TRUNC': begin
+      exp := CogExpresionPar;
+      if HayError then exit;
+      Result.valNum := trunc(exp.valNum);
+      exit;  //sale sin error
+    end;
+    'LENGTH': begin
+      exp := CogExpresionPar;
+      if HayError then exit;
+      Result.valNum := length(exp.valStr);
+      exit;  //sale sin error
+    end;
+    'UPCASE': begin
+      exp := CogExpresionPar;
+      if HayError then exit;
+      Result.valStr := upcase(exp.valStr);
+      exit;  //sale sin error
+    end;
+    'LOWCASE': begin
+      exp := CogExpresionPar;
+      if HayError then exit;
+      Result.valStr := LowerCase(exp.valStr);
+      exit;  //sale sin error
+    end;
     end;
     //No es variable ni función.
     GenErrorDir(ER_UNKNW_IDENT_, [cad]);
   end else If lexDir.GetToken = '(' Then begin
     Result := CogExpresionPar;
+    exit;  //Puede salir con error
+  end else If lexDir.GetToken = '-' Then begin
+    //Puede ser número negativo
+    lexDir.Next;  //toma el signo
+    Result := CogOperando();
+    if HayError then exit;
+    if Result.datTyp <> ddtNumber then begin
+      GenErrorDir(ER_SYNTAX_ERRO);
+      exit;  //no devuelve nada
+    end;
+    //Es un número
+    Result.valNum := -Result.valNum;
     exit;  //Puede salir con error
   end else begin
     //Debe ser otra cosa
@@ -799,7 +856,11 @@ begin
     GenErrorDir(ER_ERROR_DIREC);
     exit;
   end;
-  pic.frequen:=f; //asigna freecuencia
+  if f>pic.MaxFreq then begin
+    GenErrorDir(ER_TOOHIGHFRE);
+    exit;
+  end;
+  pic.frequen:=f; //asigna frecuencia
 end;
 procedure TParserDirec.ProcCONFIG;
 var
@@ -1027,7 +1088,7 @@ procedure TParserDirec.ProcIF(lin: string; negated: boolean);
     end;
   end;
 var
-  Ident, direc, tmp: String;
+  Ident, direc: String;
 begin
   lexDir.Next;  //pasa al siguiente
   skipWhites;
@@ -1036,7 +1097,6 @@ begin
     exit;
   end;
   //Se supone que sigue una expresión
-tmp := lexDir.GetToken;
   if EvaluateExp(Ident) then begin
     //Es verdadero
     inc(WaitForEndIF);  //marca bandera para esperar
@@ -1082,6 +1142,36 @@ begin
   //Solo muestra en compilación y en la primera pasada
   if Compiling and FirstPass then msgbox(txtMsg);
 end;
+procedure TParserDirec.ProcMSGERR;
+var
+  txtMsg: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  txtMsg := CogExpresion(0).valStr;
+  if HayError then Exit;
+  //Solo muestra en compilación y en la primera pasada
+  if Compiling and FirstPass then MsgErr(txtMsg);
+end;
+procedure TParserDirec.ProcMSGWAR;
+var
+  txtMsg: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  txtMsg := CogExpresion(0).valStr;
+  if HayError then Exit;
+  //Solo muestra en compilación y en la primera pasada
+  if Compiling and FirstPass then MsgExc(txtMsg);
+end;
+procedure TParserDirec.ProcINFO;
+var
+  txtMsg: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  txtMsg := CogExpresion(0).valStr;
+  if HayError then Exit;
+  //Solo muestra en compilación y en la primera pasada
+  if Compiling and FirstPass then GenInfo(txtMsg);
+end;
 procedure TParserDirec.ProcWARNING;
 var
   txtMsg: String;
@@ -1125,6 +1215,26 @@ begin
   varValue := CogExpresion(0);
   if HayError then exit;
   AsigVariable(varName, varValue);
+end;
+procedure TParserDirec.ProcSET_STATE_RAM;
+var
+  txtMsg: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  txtMsg := CogExpresion(0).valStr;
+  if HayError then exit;
+  pic.SetStatRAMCom(txtMsg);
+  if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
+end;
+procedure TParserDirec.ProcSET_MAPPED_RAM;
+var
+  txtMsg: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  txtMsg := CogExpresion(0).valStr;
+  if HayError then exit;
+  pic.SetMappRAMCom(txtMsg);
+  if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
 end;
 procedure TParserDirec.IniExplorDirec(out lin: string);
 (*Inicia la exploración del token de directiva. Extrae el delimitador final "}", y
@@ -1220,9 +1330,14 @@ begin
   end;
   'MODE'     : ProcMODE;
   'MSGBOX'   : ProcMSGBOX;
+  'MSGERR'   : ProcMSGERR;
+  'MSGWAR'   : ProcMSGWAR;
+  'INFO'     : ProcINFO;
   'WARNING'  : ProcWARNING;
   'ERROR'    : ProcERROR;
   'SET'      : ProcSET;
+  'SET_STATE_RAM': ProcSET_STATE_RAM;
+  'SET_MAPPED_RAM': ProcSET_MAPPED_RAM;
   else
     //Puede ser una macro
     dmac := FindMacro(lexDir.GetToken);
@@ -1297,6 +1412,30 @@ procedure TParserDirec.write_PIC_NUMPAGES(AValue: Single);
 begin
   pic.NumPages := round(AValue);
 end;
+function TParserDirec.read_PIC_IFLASH: Single;
+begin
+  Result := pic.iFlash;
+end;
+procedure TParserDirec.write_PIC_IFLASH(AValue: Single);
+begin
+  pic.iFlash := round(AValue);
+end;
+function TParserDirec.read_PIC_MAXFLASH: Single;
+begin
+  Result := pic.MaxFlash;
+end;
+procedure TParserDirec.write_PIC_MAXFLASH(AValue: Single);
+begin
+  pic.MaxFlash := round(AValue);
+end;
+function TParserDirec.read_PIC_NPINS: Single;
+begin
+  Result := pic.Npins;
+end;
+procedure TParserDirec.write_PIC_NPINS(AValue: Single);
+begin
+  pic.Npins := round(AValue);
+end;
 function TParserDirec.read_SYN_MODE: String;
 begin
   case mode of
@@ -1353,6 +1492,22 @@ begin
   dvar.nomb := 'PIC_NUMPAGES';
   dvar.ReflectToNumber(@read_PIC_NUMPAGES, @write_PIC_NUMPAGES);
   varsList.Add(dvar);
+  //PIC_IFLASH
+  dvar :=  TDirVar.Create;
+  dvar.nomb := 'PIC_IFLASH';
+  dvar.ReflectToNumber(@read_PIC_IFLASH, @write_PIC_IFLASH);
+  varsList.Add(dvar);
+  //PIC_NPINS
+  dvar :=  TDirVar.Create;
+  dvar.nomb := 'PIC_NPINS';
+  dvar.ReflectToNumber(@read_PIC_NPINS, @write_PIC_NPINS);
+  varsList.Add(dvar);
+  //PIC_MAXFLASH
+  dvar :=  TDirVar.Create;
+  dvar.nomb := 'PIC_MAXFLASH';
+  dvar.ReflectToNumber(@read_PIC_MAXFLASH, @write_PIC_MAXFLASH);
+  varsList.Add(dvar);
+
   //SYN_MODE
   dvar :=  TDirVar.Create;
   dvar.nomb := 'SYN_MODE';

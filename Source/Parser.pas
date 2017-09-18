@@ -4,16 +4,18 @@ unit Parser;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, lclProc, SynEditHighlighter, types,
-  MisUtils, XpresBas, XpresTypesPIC, XpresElementsPIC, XpresParserPIC, Pic16Utils,
-  Globales, GenCodPic, GenCod, ParserDirec,
-  FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
+  Classes, SysUtils, lclProc, SynEditHighlighter, types, MisUtils, XpresBas,
+  XpresTypesPIC, XpresElementsPIC, XpresParserPIC, Pic16Utils, Pic16Devices,
+  Globales, GenCodPic, GenCod, ParserDirec, FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
 type
  { TCompiler }
   TCompiler = class(TParserDirec)
   private  //Funciones básicas
-    function AddVariable(varName: string; typ: ttype; srcPos: TSrcPos): TxpEleVar;
+    function AddType(typName: string; srcPos: TSrcPos): TxpEleType;
+    function AddVariable(varName: string; eleTyp: TxpEleType; srcPos: TSrcPos
+      ): TxpEleVar;
     procedure ArrayDeclaration;
+    procedure CompileTypeDeclar(IsInterface: boolean; typName: string = '');
     function GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
     procedure cInNewLine(lin: string);
     procedure Cod_JumpIfTrue;
@@ -24,6 +26,7 @@ type
     procedure CompileLastEnd;
     procedure CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
     function GetExpressionBool: boolean;
+    function GetTypeVarDeclar: TxpEleType;
     function IsUnit: boolean;
     procedure ProcCommentsNoExec;
     function StartOfSection: boolean;
@@ -180,8 +183,6 @@ begin
 end;
 procedure TCompiler.ProcCommentsNoExec;
 {Similar a ProcComments(), pero no ejecuta directivas o bloques ASM.}
-var
-  ctxChanged: Boolean;  //Manejamos variables locales para permitir recursividad
 begin
   cIn.SkipWhites;
   while (cIn.tokType = tnDirective) or (cIn.tokType = tnAsm) do begin
@@ -217,7 +218,7 @@ begin
     exit;       //sale
   end;
 end;
-function TCompiler.AddVariable(varName: string; typ: ttype; srcPos: TSrcPos
+function TCompiler.AddVariable(varName: string; eleTyp: TxpEleType; srcPos: TSrcPos
   ): TxpEleVar;
 {Crea un elemento variable y lo agrega en el nodo actual del árbol de sintaxis.
 Si no hay errores, devuelve la referencia a la variable. En caso contrario,
@@ -228,7 +229,7 @@ var
   xvar: TxpEleVar;
 begin
   //Inicia parámetros adicionales de declaración
-  xvar := CreateVar(varName, typ);
+  xvar := CreateVar(varName, eleTyp);
   xvar.srcDec := srcPos;  //Actualiza posición
   Result := xvar;
   if not TreeElems.AddElement(xvar) then begin
@@ -237,11 +238,28 @@ begin
     exit(nil);
   end;
 end;
+function TCompiler.AddType(typName: string; srcPos: TSrcPos): TxpEleType;
+{Crea un elemento tipo y lo agrega en el nodo actual del árbol de sintaxis.
+Si no hay errores, devuelve la referencia al tipo. En caso contrario,
+devuelve NIL.}
+var
+  xtyp: TxpEleType;
+begin
+  //Inicia parámetros adicionales de declaración
+  xtyp := CreateEleType(typName);
+  xtyp.srcDec := srcPos;  //Actualiza posición
+  Result := xtyp;
+  if not TreeElems.AddElement(xtyp) then begin
+    GenErrorPos(ER_DUPLIC_IDEN, [xtyp.name], xtyp.srcDec);
+    xtyp.Destroy;   //Hay una variable creada
+    exit(nil);
+  end;
+end;
 procedure TCompiler.CaptureDecParams(fun: TxpEleFun);
 //Lee la declaración de parámetros de una función.
 var
   parType: String;
-  typ: TType;
+  typ: TxpEleType;
   xvar: TxpEleVar;
   IsRegister: Boolean;
   itemList: TStringDynArray;
@@ -277,7 +295,7 @@ begin
       parType := cIn.tok;   //lee tipo de parámetro
       cIn.Next;
       //Valida el tipo
-      typ := FindType(parType);
+      typ := FindSysEleType(parType);  //Solo acepta tipos básicos
       if typ = nil then begin
         GenError(ER_UNDEF_TYPE_, [parType]);
         exit;
@@ -308,7 +326,7 @@ begin
           if HayError then exit;
         end;
         //Ahora ya tiene la variable
-        fun.CreateParam(itemList[i], typ, xvar);
+        fun.CreateParam(itemList[i], typ.typRef, xvar);
         if HayError then exit;
       end;
       //Busca delimitador
@@ -504,7 +522,7 @@ begin
     end else begin
       //Es: IF ... THEN ... END. (Puede ser recursivo)
       _LABEL(jFALSE);   //termina de codificar el salto
-      SetFinalBank(bnkTHEN, bnkELSE);  //Manejo de bancos
+      SetFinalBank(bnkExp, bnkTHEN);  //Manejo de bancos
       VerifyEND;  //puede salir con error
     end;
   end;
@@ -957,7 +975,7 @@ begin
     //Es variable. Notar que puede ser una variable temporal, si se usa: <var_byte>.0
     xvar := Op.rVar;
     //Ya tiene la variable en "xvar".
-    if xvar.typ.IsSizeBit then begin //boolean o bit
+    if xvar.eleType.IsBitSize then begin //boolean o bit
       IsBit := true;  //Es una dirección de bit
       Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
       Result.absBit := xvar.adrBit.bit;
@@ -1046,7 +1064,7 @@ begin
   cIn.Next;
   cIn.SkipWhites;
   //Valida el tipo
-  typ := FindType(varType);
+  typ := FindSysType(varType);
   if typ = nil then begin
     GenError(ER_UNDEF_TYPE_, [varType]);
     exit;
@@ -1060,26 +1078,152 @@ begin
 
   {
   Esta implementación está incompleta. Solo se pone como prueba, pero es un avance.
-  Tal vez se debe definri primero un sistema de descriptor de tipos.  Se podría usar
+  Tal vez se debe definir primero un sistema de descriptor de tipos.  Se podría usar
   el mismo elemento TxpEleType, y agregarle propiedades para que indiquen si son
-  arreglos o records y alguna referecnia a lso tipso básicos. Entonces la búsqueda de
+  arreglos o records y alguna referencia a lso tipso básicos. Entonces la búsqueda de
   tipos se debería hacer en los objetos TxpEleType, creados (que se supone se definen
   con  declaraciones TYPE). También se pueden tener tipos del sistema (que serían los
   tipos básicos), de la misma forma en que se tienen Funciones del sistema.
   }
 end;
+procedure TCompiler.CompileTypeDeclar(IsInterface: boolean; typName: string = '');
+{Compila la sección de declaración de un tipo, y genera un elemento TxpEleType, en el
+árbol de sintaxis.
+Si se especifica typName, se obvia la extracción de la parte " nombreTipo = ", y se
+toma el nombre indicado.}
+var
+  etyp, systyp: TxpEleType;
+  srcpos: TSrcPos;
+begin
+  ProcComments;
+  if cIn.tokType <> tnIdentif then begin
+    GenError(ER_IDEN_EXPECT);
+    exit;
+  end;
+  //hay un identificador
+  srcpos := cIn.ReadSrcPos;
+  typName := cIn.tok;
+  cIn.Next;
+  ProcComments;
+  if not CaptureTok('=') then exit;
+  ProcComments;
+  //Analiza el tipo declarado
+  if (cIn.tokType = tnType) then begin
+    //Caso normal. Es un tipo del sistema
+    systyp := FindSysEleType(cIn.tok); //Busca elemento
+    if systyp = nil then begin
+      //Esto no debería pasar, porque el lexer indica que es un tipo del sistema.
+      GenError(ER_NOT_IMPLEM_, [typName]);
+      exit;
+    end;
+    //Encontró al tipo del sistema
+    cIn.Next;   //lo toma
+    etyp := AddType(typName, srcpos);
+    if HayError then exit;        //Sale para ver otros errores
+    etyp.typRef := systyp.typRef;  //toma su misma referencia
+    etyp.InInterface := IsInterface;
+
+//  end else if cIn.tokL = 'array' then begin
+//    //Es un arreglo
+//    ArrayDeclaration;
+//    exit;  //puede salir con error
+  end else begin
+    GenError(ER_IDE_TYP_EXP);
+    exit;
+  end;
+
+  if not CaptureDelExpres then exit;
+  ProcComments;
+  //puede salir con error
+end;
+function TCompiler.GetTypeVarDeclar: TxpEleType;
+{Extrae la sección de tipo de la declaración de una variable, y devuelve la referencia
+al elemento TxpEleType correspondiente.
+Todas las variables y constantes tienen un tipo asociado.
+
+* En los casos de tipos simples como: bit, byte o word, se devuelve la referencia, al
+tipo del sistema, almacenado en "listTypSys":
+VAR
+  a, b: byte;
+  c: bit;
+
+* En los casos de tipos definidos en la declaración, se crea una nueva definición de tipo
+y se agrega al árbol de sintaxis:
+VAR
+  a, b: array[0..5] of char;  //Se crea nuevo tipo: "array[0..5] of char"
+
+* Para los casos de tipos con nombre, simplemente se devuelve la referencia al tipo que
+debe estar creado en el árbol de sintaxis:
+VAR
+  a, b: MiTipo;
+}
+var
+  systyp: TxpEleType;
+  typName, varType: String;
+  typ: TType;
+  ele: TxpElement;
+begin
+  ProcComments;
+  if (cIn.tokType = tnType) then begin
+    //Caso normal. Es un tipo del sistema
+    systyp := FindSysEleType(cIn.tok); //Busca elemento
+    if systyp = nil then begin
+      //Esto no debería pasar, porque el lexer indica que es un tipo del sistema.
+      GenError(ER_NOT_IMPLEM_, [typName]);
+      exit;
+    end;
+    cIn.Next;   //lo toma
+    ProcComments;
+    Result := systyp;  //devuelve la referencia
+    exit;
+  end else if cIn.tokType = tnIdentif then begin
+    //Puede ser identificador de tipo
+    {Se pensó usar GetOperandIdent(), para identificar al tipo, pero no está preparado
+    para procesar tipos y no se espera tanat flexibilidad. Así que se hace "a mano".}
+    ele := TreeElems.FindFirst(cIn.tok);
+    if ele = nil then begin
+      //No identifica a este elemento
+      GenError('Unknown identifier: %s', [cIn.tok]);
+      exit;
+    end;
+    if ele is TxpEleType then begin
+      cIn.Next;   //lo toma
+      ProcComments;
+      Result := TxpEleType(ele);  //devuelve la referencia
+      exit;
+    end else begin
+      GenError('A type identifier expected.');
+      exit;
+    end;
+  end else if cIn.tokL = 'array' then begin
+    //Es un arreglo
+    ArrayDeclaration;
+    exit;  //puede salir con error
+  end else begin
+    GenError(ER_IDE_TYP_EXP);
+    exit;
+  end;
+  varType := cIn.tok;   //lee tipo
+  cIn.Next;
+  ProcComments;
+  //Valida el tipo
+  typ := FindSysType(varType);
+  if typ = nil then begin
+    GenError(ER_UNDEF_TYPE_, [varType]);
+    exit;
+  end;
+end;
 procedure TCompiler.CompileVarDeclar(IsInterface: boolean = false);
 {Compila la declaración de variables en el nodo actual.
 "IsInterface", indica el valor que se pondrá al as variables, en la bandera "IsInterface" }
 var
-  varType: String;
   varNames: array of string;  //nombre de variables
   IsBit: Boolean;
-  typ: TType;
   srcPosArray: TSrcPosArray;
   i: Integer;
   xvar: TxpEleVar;
   adicVarDec: TAdicVarDec;
+  typEleDec: TxpEleType;
 begin
   //Procesa variables a,b,c : int;
   getListOfIdent(varNames, srcPosArray);
@@ -1092,48 +1236,27 @@ begin
     //Debe seguir, el tipo de la variable
     cIn.Next;  //lo toma
     ProcComments;
-    if (cIn.tokType = tnType) then begin
-      //Caso normal
-    end else if cIn.tokL = 'array' then begin
-      //Es un arreglo
-      ArrayDeclaration;
-      exit;  //puede salir con error
-    end else begin
-      GenError(ER_IDE_TYP_EXP);
-      exit;
-    end;
-    varType := cIn.tok;   //lee tipo
-    cIn.Next;
-    ProcComments;
-    //Valida el tipo
-    typ := FindType(varType);
-    if typ = nil then begin
-      GenError(ER_UNDEF_TYPE_, [varType]);
-      exit;
-    end;
+    //Lee el tipo de la variable
+    typEleDec := GetTypeVarDeclar;
     //Lee información aicional de la declaración (ABSOLUTE)
     adicVarDec := GetAdicVarDeclar(IsBit);
     if HayError then exit;
-    if adicVarDec.isAbsol then begin
+    if adicVarDec.isAbsol then begin  //valida tamaño
       //Es una declaración ABSOLUTE
-      if (typ = typBool) or (typ = typBit) then begin
-        //Se espera un bit, valida el ABSOLUTE. Debe ser bit
-        if not IsBit then begin
-          GenError(ER_INV_MEMADDR);
-        end;
-      end else begin
-        //Se espera un byte
-        if IsBit then begin
-          {En realidad se podría aceptar posicionar un byte en una variable bit,
-          posicionándolo en su byte contenedor.}
-          GenError(ER_INV_MEMADDR);
-        end;
+      if typEleDec.IsBitSize and (not Isbit) then begin
+        //Se esperaba un bit, en el ABSOLUTE.
+        GenError(ER_INV_MEMADDR);
+      end;
+      if not typEleDec.IsBitSize and IsBit then begin
+        {En realidad se podría aceptar posicionar un byte en una variable bit,
+        posicionándolo en su byte contenedor.}
+        GenError(ER_INV_MEMADDR);
       end;
     end;
     if HayError then exit;
     //reserva espacio para las variables
     for i := 0 to high(varNames) do begin
-      xvar := AddVariable(varNames[i], typ, srcPosArray[i]);
+      xvar := AddVariable(varNames[i], typEleDec, srcPosArray[i]);
       if HayError then break;        //Sale para ver otros errores
       xvar.adicPar := adicVarDec;    //Actualiza propiedades adicionales
       xvar.InInterface := IsInterface;  //Actualiza bandera
@@ -1141,8 +1264,8 @@ begin
       optimizaría), porque este método, solo se ejecuta en la primera pasada, y no
       es vital tener las referencias a memoria, en esta pasada.
       Pero se incluye la ásignación de RAM, por:
-      * Porque el acceso con directivas, a con variables del sistema como "CurrBank",
-      se hace en la primera pasada, y es necesario que estas varaibles sean válidas.
+      * Porque el acceso con directivas, a variables del sistema como "CurrBank",
+      se hace en la primera pasada, y es necesario que estas variables sean válidas.
       * Para tener en la primera pasada, un código más similar al código final.}
       CreateVarInRAM(xvar);  //Crea la variable
     end;
@@ -1195,7 +1318,7 @@ begin
     parType := cIn.tok;   //lee tipo de parámetro
     cIn.Next;
     //Valida el tipo
-    typ := FindType(parType);
+    typ := FindSysType(parType);
     if typ = nil then begin
       GenError(ER_UNDEF_TYPE_, [parType]);
       exit;
@@ -1473,6 +1596,12 @@ begin
         CompileVarDeclar(true);  //marca como "IsInterface"
         if HayError then exit;;
       end;
+    end else if cIn.tokL = 'type' then begin
+      cIn.Next;    //lo toma
+      while not StartOfSection and (cIn.tokL <>'implementation') do begin
+        CompileTypeDeclar(true);
+        if HayError then exit;
+      end;
     end else if cIn.tokL = 'const' then begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'implementation') do begin
@@ -1660,6 +1789,12 @@ begin
       while not StartOfSection and (cIn.tokL <>'begin') do begin
         CompileVarDeclar;
         if HayError then exit;;
+      end;
+    end else if cIn.tokL = 'type' then begin
+      cIn.Next;    //lo toma
+      while not StartOfSection and (cIn.tokL <>'begin') do begin
+        CompileTypeDeclar(false);
+        if HayError then exit;
       end;
     end else if cIn.tokL = 'const' then begin
       cIn.Next;    //lo toma
@@ -1948,6 +2083,7 @@ begin
     ClearMacros;           //Limpia las macros
     //Inicia PIC
     ExprLevel := 0;  //inicia
+    GetHardwareInfo(pic, 'DEFAULT');  //configura modelo por defecto
     pic.ClearMemFlash;
     ResetFlashAndRAM;  {Realmente lo que importa aquí sería limpiar solo la RAM, porque
                         cada procedimiento, reiniciará el puntero de FLASH}

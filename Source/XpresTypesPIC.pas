@@ -15,8 +15,8 @@ uses
 
 type  //tipos enumerados
 
-  //categorías básicas de tipo de datos
-  TCatType=(
+  //Grupos de tipo de datos
+  TTypeGroup=(
     t_integer,  //números enteros
     t_uinteger, //enteros sin signo
     t_float,    //de coma flotante
@@ -44,15 +44,15 @@ type  //tipos enumerados
   {Categoría de operación. Se construye para poder representar dos valores de TCatOperan
    en una solo valor byte (juntando sus bits), para facilitar el uso de un CASE ... OF}
   TCatOperation =(
-    coConst_Const=  %0000,
-    coConst_Variab= %0001,
-    coConst_Expres= %0010,
-    coVariab_Const= %0100,
-    coVariab_Variab=%0101,
-    coVariab_Expres=%0110,
-    coExpres_Const= %1000,
-    coExpres_Variab=%1001,
-    coExpres_Expres=%1010
+    coConst_Const  = %0000,
+    coConst_Variab = %0001,
+    coConst_Expres = %0010,
+    coVariab_Const = %0100,
+    coVariab_Variab= %0101,
+    coVariab_Expres= %0110,
+    coExpres_Const = %1000,
+    coExpres_Variab= %1001,
+    coExpres_Expres= %1010
   );
 
   TType = class;
@@ -115,9 +115,9 @@ type  //tipos enumerados
    no a los tipos predefinidos.}
   TType = class
   public
-    name : string;      //nombre del tipo ("int8", "int16", ...)
-    cat  : TCatType;    //categoría del tipo (numérico, cadena, etc)
-    size : smallint;    //tamaño en bytes del tipo
+    name : string;      //Nombre del tipo ("int8", "int16", ...)
+    grp  : TTypeGroup;  //Grupo del tipo (numérico, cadena, etc)
+    size : smallint;    //Tamaño en bytes del tipo
     procedure SaveToStk;
     procedure DefineRegister;
     function IsSizeBit: boolean;

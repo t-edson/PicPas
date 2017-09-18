@@ -33,6 +33,7 @@ type
     acArcNewProj: TAction;
     acArcCloseProj: TAction;
     acArcCloseFile: TAction;
+    acViewAsmDbg: TAction;
     acToolRamExp: TAction;
     acToolExt4: TAction;
     acToolExt5: TAction;
@@ -87,6 +88,7 @@ type
     MenuItem40: TMenuItem;
     MenuItem41: TMenuItem;
     MenuItem42: TMenuItem;
+    MenuItem43: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -156,6 +158,7 @@ type
     procedure acToolFindDecExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
     procedure acToolRamExpExecute(Sender: TObject);
+    procedure acViewAsmDbgExecute(Sender: TObject);
     procedure acViewSynTreeExecute(Sender: TObject);
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
@@ -257,7 +260,7 @@ end;
 procedure TfrmPrincipal.fraMessagesStatisDBlClick;
 //Doble clcik en la sección de estadísticas
 begin
-  frmDebugger.Exec(cxp);
+//  frmDebugger.Exec(cxp);
 end;
 procedure TfrmPrincipal.cxp_AfterCompile;
 {Se genera después de realizar la compilación.}
@@ -794,6 +797,10 @@ end;
 procedure TfrmPrincipal.acToolRamExpExecute(Sender: TObject);
 begin
    frmRAMExplorer.Exec(cxp.pic);
+end;
+procedure TfrmPrincipal.acViewAsmDbgExecute(Sender: TObject);
+begin
+  frmDebugger.Exec(cxp);
 end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
