@@ -48,12 +48,15 @@ begin
   if 10 = a then bien else mal end;
   if 0 = a then mal else bien end;
   if 10 <> a then mal else bien end;
+  a := 255;
+  if 255 = a then bien else mal end;
 
   //coVariab_Const
   a := 10;
   if a = 10 then bien else mal end;
   if a = 0 then mal else bien end;
   if a <> 10 then mal else bien end;
+  if a = 5+5 then bien else mal end;
 
 	//coVariab_Variab
   a := 0;
@@ -66,10 +69,19 @@ begin
   if a = b then bien else mal end;
   if a <> a then mal else bien end;
 
-	//Expresiones
+  //coConst_Expres
+  a := 0;
+  if 11 = a+11 then bien else mal end;
+
+  //coExpres_Const
+  if a+255 = 255 then bien else mal end;
+  
+  //coVariab_Variab
+  a:= 255; b := 255;
+  if a = b then bien else mal end;
+  
+	//coExpres_Expres
   a := 10;
-  if a = 5+5 then bien else mal end;
-  if 11 = a+1 then bien else mal end;
   if a+1 = a+1 then bien else mal end;
   if a+1 = a+2 then mal else bien end;
 
@@ -205,5 +217,6 @@ begin
 	if a <= 6 then bien else mal end;
 	if a <= 4 then mal else bien end;
 
+  
 end.
 

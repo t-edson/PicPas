@@ -20,14 +20,14 @@ begin
   if true then 
     a1 := 2;  //Bank 1. Must include Bank selection 
   end;
-  {$MSGBOX 'Is this 1? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 1? -> ' + CURRBANK} 
 
   //Simple IF - Case FALSE
   a0 := 0;  //Bank 0
   if false then 
     a1 := 2;  //Bank 1. Must not generate code.
   end;
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
 
   //Complete IF - Case TRUE
   a0 := 0;  //come from bank 0
@@ -36,14 +36,14 @@ begin
   else
     a1 := 2;  //Bank 1
   end;
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
 
   //Complete IF - Case FALSE 
   a0 := 0;  //come from bank 0
   if false then 
     a1 := 1;  //Bank 1 
   else
-    {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+    {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
     a1 := 2;  //Bank 1
   end;
   
@@ -58,7 +58,7 @@ begin
   else
     a1 := 2;  //Bank 1
   end;
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
 
   //Multiple IF - Case FALSE
   a0 := 0;  //come from bank 0
@@ -71,7 +71,7 @@ begin
   else
     a0 := 4;  //Bank 0
   end;
-  {$MSGBOX 'Is this 1? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 1? -> ' + CURRBANK} 
   
   ///////////////////////////////////////////////////
   ///// Conditional not defined in Compilation Time
@@ -82,14 +82,14 @@ begin
     PORTB := 5;   //Block in bank 0
   end; 
   //Here the CurrBank  must be 0
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK}
 
   //Simple IF - Final bank undefined.
   if PORTB = 2 then  //Condition in bank 0
     TRISB := 5;   //Block in bank 1
   end; 
   //Here the CurrBank  must be 255 (undefined)
-  {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 255? -> ' + CURRBANK} 
   
   //Complete IF - Final bank defined.
   if PORTB = 1 then  
@@ -97,14 +97,14 @@ begin
   else
     PORTB := 4;   //Block in bank 0
   end; 
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
 
   if PORTB = 1 then  
     TRISB := 3;   //Block in bank 1
   else
     TRISB := 4;   //Block in bank 1
   end; 
-  {$MSGBOX 'Is this 1? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 1? -> ' + CURRBANK} 
 
   //Complete IF - Final bank undefined.
   if PORTB = 1 then  
@@ -112,7 +112,7 @@ begin
   else
     TRISB := 4;   //Block in bank 1
   end; 
-  {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 255? -> ' + CURRBANK} 
 
   //Multiple IF - Final bank defined.
   if PORTB = 1 then  
@@ -122,7 +122,7 @@ begin
   else
     PORTB := 5;   //Block in bank 0
   end; 
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
 
   //Multiple IF - Final bank defined.
   if PORTB = 1 then  
@@ -132,7 +132,7 @@ begin
   else
     TRISB := 5;   //Block in bank 0
   end; 
-  {$MSGBOX 'Is this 1? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 1? -> ' + CURRBANK} 
   
   //Multiple IF - Final bank undefined.
   if PORTB = 1 then  
@@ -142,7 +142,7 @@ begin
   else
     PORTB := 5;   //Block in bank 0
   end; 
-  {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 255? -> ' + CURRBANK} 
 
   //Multiple IF - Final bank undefined.
   if PORTB = 1 then  
@@ -152,7 +152,7 @@ begin
   else
     PORTB := 5;   //Block in bank 0
   end; 
-  {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 255? -> ' + CURRBANK} 
 
   //Multiple IF - Final bank undefined.
   if PORTB = 1 then  
@@ -162,5 +162,5 @@ begin
   else
     TRISB := 4;   //Block in bank 1
   end; 
-  {$MSGBOX 'Is this 255? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 255? -> ' + CURRBANK} 
 end.

@@ -32,6 +32,8 @@ begin
   if $123456 = a then good else bad end;
   a := 0;
   if dword(0) = a then good else bad end;
+  a := $01020304;
+  if dword($01020304) = a then good else bad end;
   a := $FFFFFFFF;
   if $FFFFFFFF = a then good else bad end;
   

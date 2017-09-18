@@ -138,5 +138,80 @@ begin
   if a = b + (a-b) then bien else mal end;
   if a + (b+ (a-b)) = a + (a - b + 5) then bien else mal end;
 
+  //////////////////////////////////////////////////////////
+	/////////////////////  Operación AND /////////////////////
+  //////////////////////////////////////////////////////////
+  a := $FF; b:=$0F;
+  //coConst_Variab
+  if $00 and a = 0 then bien else mal end;
+  if $FF and b = $0F then bien else mal end;
+  //coConst_Expres
+  if $FF and (b+1) = $10 then bien else mal end;
+  //coVariab_Const
+  if b and $01 = $01 then bien else mal end;
+  //coVariab_Variab
+  if a and b = $0F then bien else mal end;
+  //coVariab_Expres
+  if a and (b+1) = $10 then bien else mal end;
+  //coExpres_Const    
+  if (b+1) and $0F = $0 then bien else mal end;
+  //coExpres_Variab
+  if (b+1) and a = $10 then bien else mal end;
+  //coExpres_Expres
+  if (b+1) and (a+1) = $00 then bien else mal end;
+
+  //////////////////////////////////////////////////////////
+	/////////////////////  Operación OR /////////////////////
+  //////////////////////////////////////////////////////////
+  a := $FF; b:=$0F;
+  //coConst_Variab
+  if $00 or a = $FF then bien else mal end;
+  if $00 or b = $0F then bien else mal end;
+  //coConst_Expres
+  if $00 or (b+1) = $10 then bien else mal end;
+  //coVariab_Const
+  if b or $01 = $0F then bien else mal end;
+  //coVariab_Variab
+  if a or b = $FF then bien else mal end;
+  //coVariab_Expres
+  if a or (b+1) = $FF then bien else mal end;
+  //coExpres_Const    
+  if (b+1) or $0F = $1F then bien else mal end;
+  //coExpres_Variab
+  if (b+1) or b = $1F then bien else mal end;
+  //coExpres_Expres
+  if (b+1) or (a+1) = $10 then bien else mal end;
   
+  //////////////////////////////////////////////////////////
+	/////////////////////  Operación XOR /////////////////////
+  //////////////////////////////////////////////////////////
+  a := $FF; b:=$0F;
+  //coConst_Variab
+  if $00 xor a = $FF then bien else mal end;
+  if $00 xor b = $0F then bien else mal end;
+  //coConst_Expres
+  if $00 xor (b+1) = $10 then bien else mal end;
+  //coVariab_Const
+  if b xor $01 = $0E then bien else mal end;
+  //coVariab_Variab
+  if a xor b = $F0 then bien else mal end;
+  //coVariab_Expres
+  if a xor (b+1) = $EF then bien else mal end;
+  //coExpres_Const    
+  if (b+1) xor $0F = $1F then bien else mal end;
+  //coExpres_Variab
+  if (b+1) xor b = $1F then bien else mal end;
+  //coExpres_Expres
+  if (b+1) xor (a+1) = $10 then bien else mal end;
+    
+  //////////////////////////////////////////////////////////
+	/////////////////////  Operación NOT /////////////////////
+  //////////////////////////////////////////////////////////
+  a := $FF; 
+  //coConst
+  if not $00 = $FF then bien else mal end;
+  if not $0F = $F0 then bien else mal end;
+  //coConst
+  if not a = $00 then bien else mal end;
+    
 end.

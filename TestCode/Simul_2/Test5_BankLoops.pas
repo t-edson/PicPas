@@ -20,7 +20,7 @@ begin
   while false do 
     a1 := 1;  //Bank 1. Must not generate code.
   end;
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
 
   //WHILE true
   a0 := 0;  //Bank 0
@@ -28,7 +28,7 @@ begin
     a1 := 1;  //Bank 1. Must not generate code.
   end;
   //Verify if _BANSEL(0) is included at the endof the WHILE block
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
 
   //Normal WHILE 
   a0 := 0;  //Bank 0
@@ -36,7 +36,7 @@ begin
     a1 := 1;  //Block in bank 1. 
   end;
   //Verify if CurrBank = 0 at the end of the WHILE (because condition end in bank 0)
-  {$MSGBOX 'Is this 0? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 0? -> ' + CURRBANK} 
 
   //Normal WHILE 
   a0 := 0;  //Bank 0
@@ -44,7 +44,7 @@ begin
     a0 := 1;  //Block in bank 0. 
   end;
   //Verify if CurrBank = 1 at the end of the WHILE (because condition end in bank 1)
-  {$MSGBOX 'Is this 1? -> ' $CURRBANK} 
+  {$MSGBOX 'Is this 1? -> ' + CURRBANK} 
   
   
 end.

@@ -11,9 +11,9 @@ var
 procedure bien;
 begin
   pinLed := 1;
-  delay_ms(30);
+  delay_ms(20);
   pinLed := 0;
-  delay_ms(70);
+  delay_ms(40);
 end;
 procedure Mal;
 begin
