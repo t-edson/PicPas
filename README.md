@@ -1,4 +1,4 @@
-PicPas 0.7.6
+PicPas 0.7.7
 =============
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
@@ -123,6 +123,7 @@ Type           Size
  word          2 bytes
  dword         4 bytes
  ```
+Numerical types are all unsigned.
 
 ### Variables
 
@@ -437,15 +438,19 @@ Shows a text message in the screen:
 
 {$MSGBOX 'Hello World'} -> Shows the message 'Hello World' in the screen.
 
-{$MSGBOX PIC_MODEL} -> Shows the PIC model defined.
+{$MSGBOX PIC_MODEL} -> Shows the system variable PIC_MODEL, that is the PIC model defined.
 
 {$MSGBOX PIC_FREQUEN} -> Shows the Clock frequency.
 
-{$MSGBOX SYN_MODE} -> Shows the syntax Mode of the compiler.
-
-{$MSGBOX CURRBANK} -> Shows the current RAM bank.
-
 {$MSGBOX 'clock=' + PIC_FREQUEN}  -> Shows the message: "clock=8000000" (if the Frequency was set to 8MHz).
+
+#### $MSGERR
+
+Shows a text message in the screen, with an error icon.
+
+#### $MSGWAR
+
+Shows a text message in the screen, with a warning icon.
 
 #### $CONFIG
 
@@ -570,6 +575,45 @@ var x: word;
 var x: byte;
 {$ENDIF}
 
+#### $SET_STATE_RAM, $SET_MAPPED_RAM
+
+This directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
+
+//Define hardware
+{$SET PIC_MODEL='MY_PIC'}
+{$SET PIC_MAXFREQ = 1000000}
+{$SET PIC_NPINS = 18}
+{$SET PIC_NUMBANKS = 2}
+{$SET PIC_NUMPAGES = 1}
+{$SET PIC_MAXFLASH = 1024}
+//Clear memory state
+{$SET_STATE_RAM '000-1FF:NIM'}
+//Define RAM state
+{$SET_STATE_RAM '000-00B:SFR, 00C-04F:GPR'}
+{$SET_STATE_RAM '080-08B:SFR, 08C-0CF:GPR'}
+//Define mapped RAM
+{$SET_MAPPED_RAM '080-080:bnk0, 082-084:bnk0, 08A-08B:bnk0'}
+{$SET_MAPPED_RAM '08C-0CF:bnk0'}
+
+(*) For more information, check the User Manual.
+
+#### SYSTEM VARIABLES
+
+There are some system variables, accessible from the directives language. They are:
+ 
+{$MSGBOX PIC_MODEL} -> Shows the PIC model defined.
+
+{$MSGBOX PIC_FREQUEN} -> Shows the Clock frequency.
+
+{$MSGBOX PIC_MAXFREQ} -> Shows the Max Clock frequency for the device.
+
+{$MSGBOX PIC_NUMBANKS} -> Shows the RAM banks number for the device.
+
+{$MSGBOX SYN_MODE} -> Shows the syntax Mode of the compiler.
+
+{$MSGBOX CURRBANK} -> Shows the current RAM bank.
+
+(*) To see the complete list, check the User Manual.
 
 ## Limitations
 
