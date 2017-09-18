@@ -570,16 +570,19 @@ end.
 
 This directives let us to define conditional compilation blocks, using expressions:
 
+```
 {$IF valor>255}
 var x: word;
 {$ELSE}
 var x: byte;
 {$ENDIF}
+```
 
 #### $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM
 
 These directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
 
+```
 //Define hardware
 {$SET PIC_MODEL='MY_PIC'}
 {$SET PIC_MAXFREQ = 1000000}
@@ -595,6 +598,7 @@ These directives let us to define the RAM memory hardware state. In conjunction 
 //Define mapped RAM
 {$SET_MAPPED_RAM '080-080:bnk0, 082-084:bnk0, 08A-08B:bnk0'}
 {$SET_MAPPED_RAM '08C-0CF:bnk0'}
+```
 
 (*) For more information, check the User Manual.
 
