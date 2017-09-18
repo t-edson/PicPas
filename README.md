@@ -575,9 +575,9 @@ var x: word;
 var x: byte;
 {$ENDIF}
 
-#### $SET_STATE_RAM, $SET_MAPPED_RAM
+#### $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM
 
-This directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
+These directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
 
 //Define hardware
 {$SET PIC_MODEL='MY_PIC'}
