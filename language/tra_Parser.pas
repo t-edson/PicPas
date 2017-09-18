@@ -10,11 +10,11 @@ var
   ER_INST_NEV_EXE, ER_ONLY_ONE_REG: String;
   ER_VARIAB_EXPEC, ER_ONL_BYT_WORD, ER_ASIG_EXPECT: String;
   ER_FIL_NOFOUND, WA_UNUSED_CON_, WA_UNUSED_VAR_,WA_UNUSED_PRO_: String;
-  MSG_RAM_USED, MSG_FLS_USED: String;
+  MSG_RAM_USED, MSG_FLS_USED, ER_NOTYPDEF_NU, ER_ARR_SIZ_BIG: String;
+  ER_INV_ARR_SIZ: String;
 
-procedure SetLanguage(idLang: string);
+procedure SetLanguage;
 begin
-  curLang := idLang;
 //Update messages
 ER_NOT_IMPLEM_ := trans('Not implemented: "%s"'      , 'No implementado: "%s"'         ,'',
                         'Nicht implementiert: "%s"');
@@ -80,6 +80,8 @@ ER_ASIG_EXPECT := trans('":=" expected.', 'Se esperaba ":="', '',
                         '":=" erwartet.');
 ER_FIL_NOFOUND := trans('File not found: %s', 'Archivo no encontrado: %s', '',
                         'Datei nicht gefunden: "%s"');
+ER_NOTYPDEF_NU := trans('No type defined to allocate this number.', 'No hay tipo para almacenar este número.', '',
+                        '');
 
 WA_UNUSED_CON_ := trans('Unused constant: %s', 'Constante sin usar: %s', '',
                         'Unbenutzte Konstante:%s');
@@ -92,5 +94,10 @@ MSG_RAM_USED   := trans('RAM Used   = ', 'RAM usada  =', '',
                         'RAM verwendet =');
 MSG_FLS_USED   := trans('Flash Used = ', 'Flash usada=', '',
                         'Flash verwendet =');
+ER_ARR_SIZ_BIG := trans('Array size to big.'       , 'Tamaño de arreglo muy grande', '',
+                        '');
+ER_INV_ARR_SIZ := trans('Invalid array size.'      , 'Tamaño de arreglo inválido', '',
+                        '');
+
 end;
 

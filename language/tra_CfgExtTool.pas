@@ -1,9 +1,8 @@
 var
   ER_FAIL_EXEC_, PRE_TOOL_NAME: string;
 
-procedure TfraCfgExtTool.SetLanguage(idLang: string);
+procedure TfraCfgExtTool.SetLanguage;
 begin
-  curLang := idLang;
   //Editor settings
   label4.Caption      := trans('Tools:'           , 'Herramientas:'        ,'Llamk''anakuna:',
                                '');

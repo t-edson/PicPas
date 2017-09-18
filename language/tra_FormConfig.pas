@@ -1,3 +1,15 @@
+var
+  TIT_CFG_ENVIRON, TIT_CFG_MESPAN, TIT_CFG_CODEXP,
+  TIT_CFG_EDITOR, TIT_CFG_SYNTAX,
+  TIT_CFG_ASSEMB,  TIT_CFG_COMPIL, TIT_CFG_EXTOOL: String;
+  LABEL_THEM_NONE, TIT_CFG_EDICOL: String;
+
+procedure TConfig.SetLanguage;
+begin
+  fraCfgSynEdit.SetLanguage;
+  fraCfgExtTool.SetLanguage;
+  fraCfgSyntax.SetLanguage;
+
 Caption              := Trans('Settings'               , 'Configuración'            , '',
                               'Einstellungen');
 BitAceptar.Caption   := Trans('&OK'                    , 'Aceptar'                  , '',
@@ -8,20 +20,78 @@ BitCancel.Caption    := Trans('&Cancel'                , 'Cancelar'             
                               '&Abbrechen');
 
 ////////////////////////////////////////////////////////////////////////////
-//////////////////////////  General settings ///////////////////////////////
+//////////////////////////  Environment Settings //////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-tabGeneral.Caption   := Trans('General'                 , 'General'                  , '',
-                              'Allgemein');
-RadioGroup1.Caption  := Trans('Toolbar'                 , 'Barra de herramientas'    , '',
+TIT_CFG_ENVIRON     := Trans('Environment', 'Entorno', '',
+                             'Umgebung');
+
+Label2.Caption      := Trans('Language'               , 'Lenguaje'                 , '',
+                              'Sprache');
+RadioGroup1.Caption := Trans('Toolbar'                 , 'Barra de herramientas'    , '',
                               'Werkzeugleiste');
-RadioGroup1.Items[0] := Trans('Small Icons'             , 'Íconos pequeños'          , '',
+RadioGroup1.Items[0]:= Trans('Small Icons'             , 'Íconos pequeños'          , '',
                               'Kleine Bilder');
-RadioGroup1.Items[1] := Trans('Big Icons'               , 'Íconos grandes'           , '',
+RadioGroup1.Items[1]:= Trans('Big Icons'               , 'Íconos grandes'           , '',
                               'Große Bilder');
-label1.Caption       := Trans('Units Path:'             , 'Ruta de unidades'         , '',
+label1.Caption      := Trans('Units Path:'             , 'Ruta de unidades'         , '',
                               'Unitpfad:');
-chkAutSynChk.Caption := Trans('Automatic Syntax checking', 'Verificac. Automática de sintaxis', '',
-                              'Automatische Syntaxprüfung');
+
+label3.Caption      := Trans('&Set Theme'        , '&Fijar Tema', '',
+                               '');
+LABEL_THEM_NONE     := Trans('None', 'Ninguno', '',
+                             '');
+label4.Caption      := Trans('&Create Theme'        , '&Crear Tema', '',
+                               '');
+butSaveCurThem.Caption := Trans('&Save current config.', 'Guardar config. actual', '',
+                             '');;
+
+chkLoadLast.Caption := Trans('Load last file edited'     , 'Cargar último archivo editado', '',
+                             'Letzte editierte Datei laden');
+
+lblPanelCol.Caption := Trans('Panels Color:'             , 'Color de los paneles:', '',
+                               'Paneelenfarbe:');
+lblSplitCol.Caption := Trans('Splitters color:'          , 'Color de los separadores:', '',
+                               'Trenner-Farbe:');
+
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////  Code Explorer //////////////////////////
+////////////////////////////////////////////////////////////////////////////
+TIT_CFG_CODEXP    := Trans('Code Explorer', 'Explorador de Código', '',
+                           '');
+lblCodExplCol1.Caption:= Trans('Back color:' , 'Color de Fondo:', '',
+                               'Hintergrundfarbe:');
+lblCodExplCol2.Caption:= Trans('Text Color:' , 'Color de Texto:', '',
+                               'Textfarbe:');
+grpFilType.Caption    := Trans('File types shown:' , 'Tipos de archivos mostrados:', '',
+                               '');
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////  Message Panel //////////////////////////
+////////////////////////////////////////////////////////////////////////////
+TIT_CFG_MESPAN    := Trans('Message Panel', 'Panel de Mensajes', '',
+                           '');
+lblMessPan1.Caption   := Trans('Back color'   , 'Color de Fondo', '',
+                               'Hintergrundfarbe');
+lblMessPan2.Caption   := Trans('Text color:'  , 'Color de Texto', '',
+                               'Textfarbe:');
+lblMessPan3.Caption   := Trans('Error color:' , 'Color de Error', '',
+                               'Fehlerfarbe:');
+lblMessPan4.Caption   := Trans('Selection color:', 'Color de Selección', '',
+                               'Auswahlfarbe:');
+
+////////////////////////////////////////////////////////////////////////////
+//////////////////////////  Editor settings ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+TIT_CFG_EDITOR    := Trans('Editor'                 , 'Editor'                   , '',
+                              'Editor');
+
+Label6.Caption       := trans('&Font:'                 , '&Letra:'                     ,'',
+                              'Schri&ftart:');
+Label7.Caption       := trans('&Size:'                 , '&Tamaño:'                    ,'',
+                              '&Größe:');
+chkViewVScroll.Caption:= trans('&Vertical Scrollbar'    , 'Barra de desplaz &Vert.'     ,'',
+                              '& Vertikale Bildlaufleiste');
+chkViewHScroll.Caption:= trans('&Horizontal Scrollbar'  , 'Barra de desplaz &Horiz.'    ,'',
+                              '&Horizontale Bildlaufleiste');
 
 grpTabEdiState.Caption :=Trans('Tab Editor State'  , 'Estado de pestañas del editor', '',
                               'Registerkarte Editor Zustand');;
@@ -32,50 +102,23 @@ grpTabEdiState.Items[1]:=Trans('Hide for &One file', '&Ocultar si hay un archivo
 grpTabEdiState.Items[2]:=Trans('&Hide always'      , 'Ocultar &Siempre'          , '',
                               '&Immer ausblenden');
 
-Label2.Caption       := Trans('Language'               , 'Lenguaje'                 , '',
-                              'Sprache');
+chkAutSynChk.Caption := Trans('Automatic Syntax checking', 'Verificac. Automática de sintaxis', '',
+                              'Automatische Syntaxprüfung');
 
 ////////////////////////////////////////////////////////////////////////////
-//////////////////////////  Environment Settings //////////////////////////
+//////////////////////////// Editor Colors Settings ////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-tabEnviron.Caption    := Trans('Environment', 'Entorno', '',
-                               'Umgebung');
-chkLoadLast.Caption   := Trans('Load last file edited'     , 'Cargar último archivo editado', '',
-                               'Letzte editierte Datei laden');
-lblMessPan1.Caption   := Trans('Message Panel Back color'  , 'Fondo del panel de mensajes', '',
-                               'Nachrichtenpaneel Hintergrundfarbe');
-lblMessPan2.Caption   := Trans('Message Panel Text color:' , 'Texto del panel de mensajes', '',
-                               'Nachrichtenpaneel Textfarbe:');
-lblMessPan3.Caption   := Trans('Message Panel Error color:', 'Error del panel de mensajes', '',
-                               'Nachrichtenpaneel Fehlerfarbe:');
-lblMessPan4.Caption   := Trans('Message Panel Selec. color:', 'Selec. del panel de mensajes', '',
-                               'Nachrichtenpaneel Auswahlfarbe:');
-
-lblPanelCol.Caption   := Trans('Panels Color:'             , 'Color de los paneles:', '',
-                               'Paneelenfarbe:');
-lblSplitterCol.Caption:= Trans('Splitters color:'          , 'Color de los separadores:', '',
-                               'Trenner-Farbe:');
-lblCodExplCol1.Caption:= Trans('Code Explorer Back color:' , 'Fondo del explor. de código:', '',
-                               'Code-Explorer Hintergrundfarbe:');
-lblCodExplCol2.Caption:= Trans('Code Explorer Text Color:' , 'Texto del explor. de código:', '',
-                               'Code-Explorer Textfarbe:');
-butDefval.Caption     := Trans('Set &Default Values'        , 'Valores por &Defecto', '',
-                               'Setze &Standardwerte');
-
+TIT_CFG_EDICOL    := Trans('Colors'                 , 'Colores'                   , '',
+                           '');
 ////////////////////////////////////////////////////////////////////////////
-//////////////////////////// Editor Settings ////////////////////////////
+//////////////////////////// Editor-Syntax Settings ////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-tabEditor.Caption    := Trans('Editor'                 , 'Editor'                   , '',
-                              'Editor');
-////////////////////////////////////////////////////////////////////////////
-//////////////////////////// Syntax Settings ////////////////////////////
-////////////////////////////////////////////////////////////////////////////
-tabSyntax.Caption    := Trans('Syntax'                 , 'Sintaxis'                 , '',
+TIT_CFG_SYNTAX    := Trans('Syntax'                 , 'Sintaxis'                 , '',
                               'Syntax');
 ////////////////////////////////////////////////////////////////////////////
 //////////////////////////// Assembler settings ////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-tabEnsamb.Caption    := Trans('Assembler'              , 'Ensamblador'              , '',
+TIT_CFG_ASSEMB    := Trans('Assembler'              , 'Ensamblador'              , '',
                               'Assembler');
 chkIncHeadMpu.Caption:= Trans('Include MPU &Header'    , 'Incluir &Encabezado de MPU','',
                               'MPU &Kopfzeilen einbinden');
@@ -96,7 +139,7 @@ chkIncVarName.Caption:= Trans('Include &Variable Names','Incluir Nombre de &Vari
 ////////////////////////////////////////////////////////////////////////////
 //////////////////////////// Output Settings ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-tabOutput.Caption    := Trans('Compiler'               , 'Compilador'               , '',
+TIT_CFG_COMPIL    := Trans('Compiler'               , 'Compilador'               , '',
                               'Compiler');
 chkShowErrMsg.Caption:= Trans('&Show Error Messages'   , '&Mostrar mensajes de error', '',
                               '&Zeige Fehlermeldungen');
@@ -115,6 +158,7 @@ chkOptBnkAftPro.Caption:= Trans('After Procedures'      , 'Después de procedimi
 ////////////////////////////////////////////////////////////////////////////
 //////////////////////////// External Tool ////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
-tabExtTool.Caption    := Trans('External Tool'           , 'Herramienta Externa'      , '',
+TIT_CFG_EXTOOL    := Trans('External Tool'           , 'Herramienta Externa'      , '',
                                '');
-
+FillTree;
+end;

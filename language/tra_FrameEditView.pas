@@ -14,5 +14,5 @@ lblBackground.Caption := Trans('<< No files >>', '<< Sin archivos >>', 'Mana khi
 mnNewTab.Caption      := Trans('New', 'Nuevo','Musuq','Neu');
 mnCloseTab.Caption    := Trans('Close', 'Cerrar','Wisqay','Schließen');
 mnCloseAll.Caption    := Trans('Close All', 'Cerrar todos','Llapanta wisqay','Alle Schliessen');
+mnCloseOthers.Caption := Trans('Close &others', 'Cerrar &otros','','');
 if mnRecents<>nil then mnRecents.Caption:= trans('&Recents' ,'&Recientes','','&Letzte');
-
