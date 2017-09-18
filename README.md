@@ -412,6 +412,8 @@ The devices supported by now are:
  PIC16F628A
  PIC16F648A
 
+ New devices can be configured, using directives.
+ 
 #### $FREQUENCY
 
 Specify the clock frequency, in MHz or KHz. It's used for the delay routines Example:
