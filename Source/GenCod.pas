@@ -182,13 +182,6 @@ type
       procedure fun_Word(fun: TxpEleFun);
       procedure fun_SetBank(fun: TxpEleFun);
     protected
-      //Elementos de tipo
-      typEleBit  : TxpEleType;
-      typEleBool : TxpEleType;
-      typEleByte : TxpEleType;
-      typEleWord : TxpEleType;
-      typEleDWord: TxpEleType;
-      typEleChar : TxpEleType;
       procedure StartCodeSub(fun: TxpEleFun);
       procedure EndCodeSub;
       procedure Cod_StartProgram;
@@ -604,11 +597,11 @@ begin
   end;
   //p2 es constante
   if p2^.valInt = 0 then begin
-    p2^.typ := typBit;   //convierte en bit
+    p2^.eleTyp := typBit;   //convierte en bit
     p2^.valBool := false;
     Oper_bit_and_bit;  //opera como bit
   end else if p2^.valInt = 1 then begin
-    p2^.typ := typBit;   //convierte en bit
+    p2^.eleTyp := typBit;   //convierte en bit
     p2^.valBool := true;
     Oper_bit_and_bit;  //opera como bit
   end else begin
@@ -754,11 +747,11 @@ begin
   end;
   //p2 es constante
   if p2^.valInt = 0 then begin
-    p2^.typ := typBit;   //convierte en bit
+    p2^.eleTyp := typBit;   //convierte en bit
     p2^.valBool := false;
     Oper_bit_or_bit;  //opera como bit
   end else if p2^.valInt = 1 then begin
-    p2^.typ := typBit;   //convierte en bit
+    p2^.eleTyp := typBit;   //convierte en bit
     p2^.valBool := true;
     Oper_bit_or_bit;  //opera como bit
   end else begin
@@ -928,11 +921,11 @@ begin
   end;
   //p2 es constante
   if p2^.valInt = 0 then begin
-    p2^.typ := typBit;   //convierte en bit
+    p2^.eleTyp := typBit;   //convierte en bit
     p2^.valBool := false;
     Oper_bit_xor_bit;  //opera como bit
   end else if p2^.valInt = 1 then begin
-    p2^.typ := typBit;   //convierte en bit
+    p2^.eleTyp := typBit;   //convierte en bit
     p2^.valBool := true;
     Oper_bit_xor_bit;  //opera como bit
   end else begin
@@ -945,26 +938,26 @@ begin
   Oper_bit_xor_bit;  //puede devolver error
   //Niega la lógica
   res.Invert;  //Invierte la lógica
-  res.typ := typBool;   //devuelve boolean
+  res.eleTyp := typBool;   //devuelve boolean
 end;
 procedure TGenCod.Oper_bit_equ_byte;
 begin
   //Una comparación, es lo mismo que un XOR negado
   Oper_bit_xor_byte;  //puede devolver error
   res.Invert;  //Invierte la lógica
-  res.typ := typBool;   //devuelve boolean
+  res.eleTyp := typBool;   //devuelve boolean
 end;
 procedure TGenCod.Oper_bit_dif_bit;
 begin
   //Esta comparación, es lo mismo que un XOR
   Oper_bit_xor_bit;  //puede devolver error
-  res.typ := typBool;   //devuelve boolean
+  res.eleTyp := typBool;   //devuelve boolean
 end;
 procedure TGenCod.Oper_bit_dif_byte;
 begin
   //Una comparación, es lo mismo que un XOR
   Oper_bit_xor_byte;  //puede devolver error
-  res.typ := typBool;   //devuelve boolean
+  res.eleTyp := typBool;   //devuelve boolean
 end;
 procedure TGenCod.Oper_not_bit;
 begin
@@ -1012,22 +1005,22 @@ end;
 procedure TGenCod.Oper_not_bool;
 begin
   Oper_not_bit;  //A bajo nivel es lo mismo
-  res.typ := typBool;  //pero debe devolver este tipo
+  res.eleTyp := typBool;  //pero debe devolver este tipo
 end;
 procedure TGenCod.Oper_bool_and_bool;
 begin
   Oper_bit_and_bit;  //A bajo nivel es lo mismo
-  res.typ := typBool;  //pero debe devolver este tipo
+  res.eleTyp := typBool;  //pero debe devolver este tipo
 end;
 procedure TGenCod.Oper_bool_or_bool;
 begin
   Oper_bit_or_bit;  //A bajo nivel es lo mismo
-  res.typ := typBool;  //pero debe devolver este tipo
+  res.eleTyp := typBool;  //pero debe devolver este tipo
 end;
 procedure TGenCod.Oper_bool_xor_bool;
 begin
   Oper_bit_xor_bit;  //A bajo nivel es lo mismo
-  res.typ := typBool;  //pero debe devolver este tipo
+  res.eleTyp := typBool;  //pero debe devolver este tipo
 end;
 procedure TGenCod.Oper_bool_equ_bool;
 begin
@@ -1249,7 +1242,7 @@ procedure TGenCod.byte_mul_byte_16(fun: TxpEleFun);
 var
   LOOP: Word;
 begin
-    typDword.DefineRegister;   //Asegura que exista W,H,E,U
+    typDWord.DefineRegister;   //Asegura que exista W,H,E,U
     _CLRF (H.offs);
     _CLRF (U.offs);
     _BSF  (U.offs,3);  //8->U
@@ -1381,7 +1374,7 @@ var
   Arit_DivideBit8: Word;
   aux, aux2: TPicRegister;
 begin
-    typDword.DefineRegister;   //Asegura que exista W,H,E,U
+    typDWord.DefineRegister;   //Asegura que exista W,H,E,U
     aux := GetAuxRegisterByte;  //Pide registro auxiliar
     aux2 := GetAuxRegisterByte;  //Pide registro auxiliar
     _MOVWF (aux.offs);
@@ -2126,9 +2119,9 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typBit;
+    res.eleTyp   := typBit;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.bit' + IntToStr(nbit), typEleBit);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.bit' + IntToStr(nbit), typBit);   //crea variable temporal
     tmpVar.adrBit.offs := xvar.adrByte0.offs;
     tmpVar.adrBit.bank := xvar.adrByte0.bank;
     tmpVar.adrBit.bit  := nbit;
@@ -2139,7 +2132,7 @@ begin
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typBit;
+    res.eleTyp   := typBit;
     msk := Op^.valInt and ($01 << nbit);
     res.valBool := msk <> 0;
   end;
@@ -2261,15 +2254,22 @@ begin
   end;
   coVariab: begin
     SetResultExpres_word(operType);  //Realmente, el resultado no es importante
+    _BANKSEL(p2^.bank);
     _MOVF(p2^.Loffs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Loffs);
+    _BANKSEL(p2^.bank);
     _MOVF(p2^.Hoffs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Hoffs);
   end;
   coExpres: begin   //se asume que se tiene en (H,w)
     SetResultExpres_word(operType);  //Realmente, el resultado no es importante
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Loffs);
+    _BANKSEL(H.bank);
     _MOVF(H.offs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Hoffs);
   end;
   else
@@ -3120,16 +3120,16 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Low', typEleByte);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.Low', typByte);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
     res.rVar := tmpVar;   //actualiza la referencia
   end;
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     res.valInt := Op^.ValInt and $ff;
   end;
   else
@@ -3148,16 +3148,16 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.High', typEleByte);
+    tmpVar := CreateTmpVar(xvar.name+'.High', typByte);
     tmpVar.adrByte0.Assign(xvar.adrByte1);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
   end;
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     res.valInt := (Op^.ValInt and $ff00)>>8;
   end;
   else
@@ -3894,16 +3894,16 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Low', typEleByte);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.Low', typByte);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
     res.rVar := tmpVar;   //actualiza la referencia
   end;
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     res.valInt := Op^.ValInt and $ff;
   end;
   else
@@ -3922,16 +3922,16 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.High', typEleByte);
+    tmpVar := CreateTmpVar(xvar.name+'.High', typByte);
     tmpVar.adrByte0.Assign(xvar.adrByte1);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
   end;
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     res.valInt := (Op^.ValInt and $ff00)>>8;
   end;
   else
@@ -3950,16 +3950,16 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Extra', typEleByte);
+    tmpVar := CreateTmpVar(xvar.name+'.Extra', typByte);
     tmpVar.adrByte0.Assign(xvar.adrByte2);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
   end;
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     res.valInt := (Op^.ValInt and $ff0000)>>16;
   end;
   else
@@ -3978,16 +3978,16 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Ultra', typEleByte);
+    tmpVar := CreateTmpVar(xvar.name+'.Ultra', typByte);
     tmpVar.adrByte0.Assign(xvar.adrByte3);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
   end;
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typByte;
+    res.eleTyp   := typByte;
     res.valInt := (Op^.ValInt and $ff000000)>>24;
   end;
   else
@@ -4006,9 +4006,9 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typWord;
+    res.eleTyp   := typWord;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.LowW', typEleWord);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.LowW', typWord);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
     tmpVar.adrByte1.Assign(xvar.adrByte1);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
@@ -4016,7 +4016,7 @@ begin
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typWord;
+    res.eleTyp   := typWord;
     res.valInt := Op^.ValInt and $ffff;
   end;
   else
@@ -4035,9 +4035,9 @@ begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
     res.catOp := coVariab;
-    res.typ   := typWord;
+    res.eleTyp   := typWord;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.HighW', typEleWord);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.HighW', typWord);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte2);  //byte bajo
     tmpVar.adrByte1.Assign(xvar.adrByte3);  //byte alto
     res.rVar := tmpVar;   //actualiza la referencia
@@ -4045,7 +4045,7 @@ begin
   coConst: begin
     //Se devuelve una constante bit
     res.catOp := coConst;
-    res.typ   := typWord;
+    res.eleTyp   := typWord;
     res.valInt := (Op^.ValInt and $ffff0000) >> 16;
   end;
   else
@@ -4184,14 +4184,14 @@ begin
   //Se terminó de evaluar un parámetro
   res.LoadToReg;   //Carga en registro de trabajo
   if HayError then exit;
-  if res.typ = typByte then begin
+  if res.eleTyp = typByte then begin
     //El parámetro byte, debe estar en W
     _CALL(fun.adrr);
-  end else if res.typ = typWord then begin
+  end else if res.eleTyp = typWord then begin
     //El parámetro word, debe estar en (H, W)
     _CALL(fun.adrr+1);
   end else begin
-    GenError('Invalid parameter type: %s', [res.typ.name]);
+    GenError('Invalid parameter type: %s', [res.eleTyp.name]);
     exit;
   end;
   //Verifica fin de parámetros
@@ -4202,7 +4202,7 @@ procedure TGenCod.fun_Exit(fun: TxpEleFun);
   procedure CodifRETURN(curBlk: TxpElement);
   begin
     //Codifica el salto de salida
-    if curBlk is TxpEleFun then begin
+    if curBlk.idClass = eltFunc then begin
       //En la primera pasada, no está definido "adrrEnd".
   //    adrReturn := abs(TxpEleFun(curBlk).adrReturn);  //protege
   //    if pic.iFlash = adrReturn then begin
@@ -4215,13 +4215,13 @@ procedure TGenCod.fun_Exit(fun: TxpEleFun);
     end;
   end;
 var
-  curFunTyp: TType;
+  curFunTyp: TxpEleType;
   curBlk: TxpElement;
   curFun: TxpEleFun;
 //  adrReturn: word;
 begin
   curBlk := TreeElems.curNode.Parent;  //El curNode, debe ser de tipo "Body".
-  if curBlk is TxpEleMain then begin  //En el programa principal
+  if curBlk.idClass = eltMain then begin  //En el programa principal
     _SLEEP;   //Así se termina un programa en PicPas
     exit;
   end;
@@ -4239,11 +4239,11 @@ begin
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
   //El resultado de la expresión está en "res".
-  if curFunTyp <> res.typ then begin
+  if curFunTyp <> res.eleTyp then begin
     GenError('Expected a "%s" expression.', [curFunTyp.name]);
   end;
   res.LoadToReg;
-  res.typ := typNull;  //No es función
+  res.eleTyp := typNull;  //No es función
   CodifRETURN(curBlk);  //Codifica salto
 end;
 procedure TGenCod.fun_Inc(fun: TxpEleFun);
@@ -4256,14 +4256,14 @@ begin
     GenError('Cannot increase a constant.'); exit;
   end;
   coVariab: begin
-    if res.typ = typByte then begin
+    if res.eletyp = typByte then begin
       _INCF(res.offs, toF);
-    end else if res.typ = typWord then begin
+    end else if res.eleTyp = typWord then begin
       _INCF(res.Loffs, toF);
       _BTFSC(STATUS, _Z);
       _INCF(res.Hoffs, toF);
     end else begin
-      GenError('Invalid parameter type: %s', [res.typ.name]);
+      GenError('Invalid parameter type: %s', [res.eleTyp.name]);
       exit;
     end;
   end;
@@ -4271,7 +4271,7 @@ begin
     GenError('Cannot increase an expression.'); exit;
   end;
   end;
-  res.typ := typNull;  //No es función
+  res.eleTyp := typNull;  //No es función
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
 end;
@@ -4285,15 +4285,15 @@ begin
     GenError('Cannot decrease a constant.'); exit;
   end;
   coVariab: begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       _DECF(res.offs, toF);
-    end else if res.typ = typWord then begin
+    end else if res.eleTyp = typWord then begin
       _MOVF(res.offs, toW);
       _BTFSC(STATUS, _Z);
       _DECF(res.Hoffs, toF);
       _DECF(res.Loffs, toF);
     end else begin
-      GenError('Invalid parameter type: %s', [res.typ.name]);
+      GenError('Invalid parameter type: %s', [res.eleTyp.name]);
       exit;
     end;
   end;
@@ -4310,14 +4310,14 @@ begin
   if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.typ = typChar then begin
+    if res.eleTyp = typChar then begin
       SetResultConst_byte(res.valInt);
     end else begin
       GenError('Cannot convert to ordinal.'); exit;
     end;
   end;
   coVariab: begin
-    if res.typ = typChar then begin
+    if res.eleTyp = typChar then begin
       //Sigue siendo variable y apunta a la misma variable, solo que ahora es Byte.
       SetResultVariab_byte(res.rVar);
     end else begin
@@ -4325,9 +4325,9 @@ begin
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.typ = typChar then begin
+    if res.eleTyp = typChar then begin
       //Es la misma expresión, solo que ahora es Byte.
-      res.typ := typByte; //No se puede usar SetResultExpres_byte, porque no hay p1 y p2
+      res.eleTyp := typByte; //No se puede usar SetResultExpres_byte, porque no hay p1 y p2
     end else begin
       GenError('Cannot convert to ordinal.'); exit;
     end;
@@ -4342,14 +4342,14 @@ begin
   if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       SetResultConst_char(res.valInt);
     end else begin
       GenError('Cannot convert to char.'); exit;
     end;
   end;
   coVariab: begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //Sigue siendo variable y apunta a la misma variable, solo que ahora es Char.
       SetResultVariab_char(res.rVar);
     end else begin
@@ -4357,9 +4357,9 @@ begin
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //Es la misma expresión, solo que ahora es Char.
-      res.typ := typChar; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
+      res.eleTyp := typChar; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
     end else begin
       GenError('Cannot convert to char.'); exit;
     end;
@@ -4375,7 +4375,7 @@ begin
   if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       if res.valInt= 0 then SetResultConst_bit(false)
       else SetResultConst_bit(true);
     end else begin
@@ -4383,9 +4383,9 @@ begin
     end;
   end;
   coVariab: begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //Se asumirá que cualuier valor diferente de cero, devuelve 1
-      res.typ := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
+      res.eleTyp := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
       res.catOp := coExpres;
       _MOVF(res.offs, toW);   //el resultado aparecerá en Z, invertido
     end else begin
@@ -4393,8 +4393,8 @@ begin
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.typ = typByte then begin
-      res.typ := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
+    if res.eleTyp = typByte then begin
+      res.eleTyp := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
       _ADDLW(0);   //el resultado aparecerá en Z, invertido
     end else begin
       GenError('Cannot convert to bit.'); exit;
@@ -4410,27 +4410,27 @@ begin
   if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //ya es Byte
-    end else if res.typ = typChar then begin
-      res.typ := typByte;
-    end else if res.typ = typWord then begin
+    end else if res.eleTyp = typChar then begin
+      res.eleTyp := typByte;
+    end else if res.eleTyp = typWord then begin
       res.valInt := res.valInt and $FF;
-      res.typ := typByte;
-    end else if res.typ = typDword then begin
+      res.eleTyp := typByte;
+    end else if res.eleTyp = typDWord then begin
       res.valInt := res.valInt and $FF;
-      res.typ := typByte;
-    end else if (res.typ = typBool) or (res.typ = typBit) then begin
+      res.eleTyp := typByte;
+    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
       if res.valBool then res.valInt := 1 else res.valInt := 0;
-      res.typ := typByte;
+      res.eleTyp := typByte;
     end else begin
       GenError('Cannot convert to byte.'); exit;
     end;
   end;
   coVariab: begin
-//    if res.typ = typByte then begin
+//    if res.eleTyp = typByte then begin
 //      typWord.OperationPop;   //Para asegurar que exista H
-//      res.typ := typWord; //No se puede usar SetResultExpres_word, porque no hay p1 y p2;
+//      res.eleTyp := typWord; //No se puede usar SetResultExpres_word, porque no hay p1 y p2;
 //      res.catOp := coExpres;  //Va a devolver una expresión
 //  !!! Debería guardar en pila, el posible valor de W
 //      SaveW(OLD_W); if HayError then exit;  //Va a usar W
@@ -4441,23 +4441,23 @@ begin
 //    end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //Ya está en W
       //Ya es Byte
-    end else if res.typ = typChar then begin
+    end else if res.eleTyp = typChar then begin
       //Ya está en W
-      res.typ := typByte;
-    end else if res.typ = typWord then begin
+      res.eleTyp := typByte;
+    end else if res.eleTyp = typWord then begin
       //Ya está en W el byet bajo
-      res.typ := typByte;
-    end else if res.typ = typDword then begin
+      res.eleTyp := typByte;
+    end else if res.eleTyp = typDWord then begin
       //Ya está en W el byet bajo
-      res.typ := typByte;
-    end else if (res.typ = typBool) or (res.typ = typBit) then begin
+      res.eleTyp := typByte;
+    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.typ := typByte;
+      res.eleTyp := typByte;
     end else begin
       GenError('Cannot convert to byte.'); exit;
     end;
@@ -4472,66 +4472,66 @@ begin
   if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.typ = typByte then begin
-      res.typ := typWord;  //solo cambia el tipo
-    end else if res.typ = typChar then begin
-      res.typ := typWord;  //solo cambia el tipo
-    end else if res.typ = typWord then begin
+    if res.eleTyp = typByte then begin
+      res.eleTyp := typWord;  //solo cambia el tipo
+    end else if res.eleTyp = typChar then begin
+      res.eleTyp := typWord;  //solo cambia el tipo
+    end else if res.eleTyp = typWord then begin
       //ya es Word
-    end else if res.typ = typDword then begin
+    end else if res.eleTyp = typDWord then begin
       res.valInt := res.valInt and $FFFF;
-      res.typ := typWord;
-    end else if (res.typ = typBool) or (res.typ = typBit) then begin
+      res.eleTyp := typWord;
+    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
       if res.valBool then res.valInt := 1 else res.valInt := 0;
-      res.typ := typWord;
+      res.eleTyp := typWord;
     end else begin
       GenError('Cannot convert this constant to word.'); exit;
     end;
   end;
   coVariab: begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
       _CLRF(H.offs);
       _MOVF(res.offs, toW);
-      res.typ := typWord;
-    end else if res.typ = typWord then begin
+      res.eleTyp := typWord;
+    end else if res.eleTyp = typWord then begin
       //ya es Word
-    end else if res.typ = typDword then begin
+    end else if res.eleTyp = typDWord then begin
       res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
       _CLRF(H.offs);
       _MOVF(res.offs, toW);
-      res.typ := typWord;
-    end else if (res.typ = typBool) or (res.typ = typBit) then begin
+      res.eleTyp := typWord;
+    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
       res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.typ := typWord;
+      res.eleTyp := typWord;
     end else begin
       GenError('Cannot convert this variable to word.'); exit;
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //Ya está en W el byte bajo
       _CLRF(H.offs);
-      res.typ := typWord;
-    end else if res.typ = typChar then begin
+      res.eleTyp := typWord;
+    end else if res.eleTyp = typChar then begin
       //Ya está en W el byte bajo
       _CLRF(H.offs);
-      res.typ := typWord;
-    end else if res.typ = typWord then begin
+      res.eleTyp := typWord;
+    end else if res.eleTyp = typWord then begin
 //      Ya es word
-    end else if res.typ = typDword then begin
+    end else if res.eleTyp = typDWord then begin
 //      //Ya está en H,W el word bajo
-      res.typ := typWord;
-    end else if (res.typ = typBool) or (res.typ = typBit) then begin
+      res.eleTyp := typWord;
+    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.typ := typWord;
+      res.eleTyp := typWord;
     end else begin
       GenError('Cannot convert expression to word.'); exit;
     end;
@@ -4546,40 +4546,40 @@ begin
   if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.typ = typByte then begin
-      res.typ := typDWord;  //solo cambia el tipo
-    end else if res.typ = typChar then begin
-      res.typ := typDWord;  //solo cambia el tipo
-    end else if res.typ = typWord then begin
-      res.typ := typDWord;
-    end else if res.typ = typDword then begin
+    if res.eleTyp = typByte then begin
+      res.eleTyp := typDWord;  //solo cambia el tipo
+    end else if res.eleTyp = typChar then begin
+      res.eleTyp := typDWord;  //solo cambia el tipo
+    end else if res.eleTyp = typWord then begin
+      res.eleTyp := typDWord;
+    end else if res.eleTyp = typDWord then begin
       //ya es DWord
-    end else if (res.typ = typBool) or (res.typ = typBit) then begin
+    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
       if res.valBool then res.valInt := 1 else res.valInt := 0;
-      res.typ := typDWord;
+      res.eleTyp := typDWord;
     end else begin
       GenError('Cannot convert this constant to Dword.'); exit;
     end;
   end;
   coVariab: begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
       _MOVF(res.offs, toW);
-      res.typ := typDWord;
-    end else if res.typ = typWord then begin
+      res.eleTyp := typDWord;
+    end else if res.eleTyp = typWord then begin
       res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
       _CLRF(U.offs);
       _CLRF(E.offs);
       _MOVF(res.Hoffs, toW);
       _MOVWF(H.offs);
       _MOVF(res.Loffs, toW);
-      res.typ := typDWord;
-    end else if res.typ = typDword then begin
+      res.eleTyp := typDWord;
+    end else if res.eleTyp = typDWord then begin
       //ya es Word. Lo deja como varaible DWord
-    end else if (res.typ = typBool) or (res.typ = typBit) then begin
+    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
       res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
       _CLRF(U.offs);
       _CLRF(E.offs);
@@ -4587,39 +4587,39 @@ begin
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.typ := typdWord;
+      res.eleTyp := typDWord;
     end else begin
       GenError('Cannot convert this variable to Dword.'); exit;
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //Ya está en W el byte bajo
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
-      res.typ := typDWord;
-    end else if res.typ = typChar then begin
+      res.eleTyp := typDWord;
+    end else if res.eleTyp = typChar then begin
       //Ya está en W el byte bajo
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
-      res.typ := typDWord;
-    end else if res.typ = typWord then begin
+      res.eleTyp := typDWord;
+    end else if res.eleTyp = typWord then begin
       //Ya está en H,W el word
       _CLRF(U.offs);
       _CLRF(E.offs);
-      res.typ := typDWord;
-    end else if res.typ = typDword then begin
+      res.eleTyp := typDWord;
+    end else if res.eleTyp = typDWord then begin
 //      Ya es Dword
-    end else if (res.typ = typBool) or (res.typ = typBit) then begin
+    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.typ := typDWord;
+      res.eleTyp := typDWord;
     end else begin
       GenError('Cannot convert expression to Dword.'); exit;
     end;
@@ -4637,19 +4637,19 @@ begin
     GenError('PORT or BIT variable expected.'); exit;
   end;
   coVariab: begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //Se asume que será algo como PORTA, PORTB, ...
       _MOVLW($FF);   //todos como entrads
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _MOVWF(res.offs); //escribe en TRIS
-    end else if res.typ = typBit then begin
+    end else if res.eleTyp = typBit then begin
       //Se asume que será algo como PORTA.0, PORTB.0, ...
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _BSF(res.offs, res.bit); //escribe en TRIS
     end else begin
       GenError('Invalid type.'); exit;
     end;
-    res.typ := typNull;  //No es función así que no es necesario fijar el resultado
+    res.eleTyp := typNull;  //No es función así que no es necesario fijar el resultado
   end;
   coExpres: begin  //se asume que ya está en (w)
     GenError('PORT variable expected.'); exit;
@@ -4667,18 +4667,18 @@ begin
     GenError('PORT variable expected.'); exit;
   end;
   coVariab: begin
-    if res.typ = typByte then begin
+    if res.eleTyp = typByte then begin
       //Se asume que será algo como PORTA, PORTB, ...
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _CLRF(res.offs); //escribe en TRIS
-    end else if res.typ = typBit then begin
+    end else if res.eleTyp = typBit then begin
       //Se asume que será algo como PORTA.0, PORTB.0, ...
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _BCF(res.offs, res.bit); //escribe en TRIS
     end else begin
       GenError('Invalid type.'); exit;
     end;
-    res.typ := typNull;  //No es función así que no es necesario fijar el resultado
+    res.eleTyp := typNull;  //No es función así que no es necesario fijar el resultado
   end;
   coExpres: begin  //se asume que ya está en (w)
     GenError('PORT variable expected.'); exit;
@@ -4694,7 +4694,7 @@ begin
   if HayError then exit;   //aborta
   case res.catOp of  //el parámetro debe estar en "res"
   coConst : begin
-    if (res.typ = typByte) or (res.typ = typWord) or (res.typ = typDword) then begin
+    if (res.eleTyp = typByte) or (res.eleTyp = typWord) or (res.eleTyp = typDWord) then begin
       //ya es Word
       CurrBank := 255;   //para forzar el cambio
       _BANKSEL(res.valInt);
@@ -4795,28 +4795,6 @@ begin
   //Define métodos a usar
   OnExprStart := @expr_start;
   OnExprEnd := @expr_End;
-
-  ///////////Crea tipos y operaciones
-  ClearTypes;
-  typNull := CreateSysType('null',t_boolean,-1);
-  //tipo bit
-  typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
-  typEleBit := CreateSysEleType(typBit);
-  //tipo booleano
-  typBool := CreateSysType('boolean',t_boolean,-1);   //de 1 bit
-  typEleBool := CreateSysEleType(typBool);
-  //tipo numérico de un solo byte
-  typByte := CreateSysType('byte',t_uinteger,1);   //de 1 byte
-  typEleByte := CreateSysEleType(typByte);
-  //tipo numérico de dos bytes
-  typWord := CreateSysType('word',t_uinteger,2);   //de 2 bytes
-  typEleWord := CreateSysEleType(typWord);
-  //tipo numérico de cuatro bytes
-  typDword := CreateSysType('dword',t_uinteger,4);  //de 4 bytes
-  typEleDWord := CreateSysEleType(typDword);
-  //tipo caracter
-  typChar := CreateSysType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como número
-  typEleChar := CreateSysEleType(typChar);
 
   {Los operadores deben crearse con su precedencia correcta
   Precedencia de operadores en Pascal:
@@ -5003,8 +4981,8 @@ begin
   typDWord.OnDefineRegister := @dword_DefineRegisters;
   typDWord.OnSaveToStk := @dword_SaveToStk;
 
-  opr:=typDword.CreateBinaryOperator(':=',2,'asig');  //asignación
-  opr.CreateOperation(typDword,@Oper_dword_asig_dword);
+  opr:=typDWord.CreateBinaryOperator(':=',2,'asig');  //asignación
+  opr.CreateOperation(typDWord,@Oper_dword_asig_dword);
   opr.CreateOperation(typWord,@Oper_dword_asig_word);
   opr.CreateOperation(typByte,@Oper_dword_asig_byte);
 

@@ -65,10 +65,19 @@ begin
      grilla.Cells[COLVAL,f] := '';
   end else begin
     //Hay dirección
-    if not TryStrToInt(addrSTr, addr) then begin
-       grilla.Cells[COLNOM,f] := '#error';
-       grilla.Cells[COLVAL,f] := '#error';
-       exit;
+    if addrStr[1] = '$' then begin
+       if not TryStrToInt('$'+copy(addrSTr,2,10), addr) then begin
+          grilla.Cells[COLNOM,f] := '#error';
+          grilla.Cells[COLVAL,f] := '#error';
+          exit;
+       end;
+    end else begin
+      //Debe ser decimal
+      if not TryStrToInt(addrSTr, addr) then begin
+         grilla.Cells[COLNOM,f] := '#error';
+         grilla.Cells[COLVAL,f] := '#error';
+         exit;
+      end;
     end;
     if (addr<0) or (addr>$1FF) then begin
        grilla.Cells[COLNOM,f] := '#error';

@@ -96,7 +96,7 @@ begin
     ele := cxp.TreeElems.GetELementDeclaredAt(callPos);
     if ele <> nil then begin
       //Es el punto donde se declara
-      if ele is TxpEleUnit then begin
+      if ele.idClass = eltUnit then begin
         fraEdit.SelectOrLoad(TxpEleUnit(ele).srcFile);
 //        MsgBox(ele.name);
       end else begin

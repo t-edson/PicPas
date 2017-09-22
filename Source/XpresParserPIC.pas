@@ -33,12 +33,12 @@ TOperType = (operUnary,  //Operación Unaria
 TOperand = object
 public
   catOp: TCatOperan; //Categoría de operando
-  typ  : TType;      //Referencia al tipo de dato
   txt  : string;     //Texto del operando o expresión, tal como aparece en la fuente
   rVar : TxpEleVar;  //referencia a la variable, en caso de que sea variable
   Inverted: boolean; {Este campo se usa para cuando el operando es de tipo Bit o Boolean.
                       Indica que la lógica debe leerse de forma invertida.}
   {---------------------------------------------------------}
+  eleTyp: TxpEleType;
   function catOpStr: string;
   function catOpChr: char;
   procedure LoadToReg; inline;  //Pone el operador en registros de Trabajo
@@ -94,7 +94,7 @@ protected  //Eventos del compilador
   OnExprEnd  : procedure(posExpres: TPosExpres) of object;  {Se genera al terminar de
                                                              evaluar una expresión.}
   ExprLevel  : Integer;  //Nivel de anidamiento de la rutina de evaluación de expresiones
-  RTstate    : TType;    {Estado de los RT. Si es NIL, indica que los RT, no tienen
+  RTstate    : TxpEleType;    {Estado de los RT. Si es NIL, indica que los RT, no tienen
                          ningún dato cargado, sino indican el tipo cargado en los RT.}
   function CaptureDelExpres: boolean;
   procedure ProcComments; virtual; abstract;
@@ -105,18 +105,19 @@ protected  //Eventos del compilador
   function EOBlock: boolean;
   //Manejo de tipos
   procedure ClearTypes;
-  function CreateSysType(nom0: string; cat0: TTypeGroup; siz0: smallint): TType;
-  function CreateSysEleType(typ: TType): TxpEleType;
-  function FindSysType(TypName: string): TType;
+//  function CreateSysType(nom0: string; cat0: TTypeGroup; siz0: smallint): TType;
+  function CreateSysEleType(nom0: string; cat0: TTypeGroup; siz0: smallint
+    ): TxpEleType;
+//  function FindSysType(TypName: string): TType;
   function FindSysEleType(TypName: string): TxpEleType;
   //Manejo de constantes
-  function CreateCons(consName: string; typ: ttype): TxpEleCon;
+  function CreateCons(consName: string; eletyp: TxpEleType): TxpEleCon;
   //Manejo de variables
   function CreateVar(varName: string; eleTyp: TxpEleType): TxpEleVar;
   //Manejo de tipos
   function CreateEleType(typName: string): TxpEleType;
   //Manejo de funciones
-  function CreateFunction(funName: string; typ: ttype; procParam,
+  function CreateFunction(funName: string; typ: TxpEleType; procParam,
     procCall: TProcExecFunction): TxpEleFun;
   function ValidateFunction: boolean;
   function CreateSysFunction(funName: string; procParam,
@@ -133,7 +134,7 @@ protected  //Eventos del compilador
   procedure GetOperandIdent(var Op: TOperand);
   function GetOperand: TOperand; virtual;
   function GetOperandPrec(pre: integer): TOperand;
-  function GetOperator(const Op: Toperand): Txpoperator;
+  function GetOperator(const Op: Toperand): TxpOperator;
   procedure GetExpressionE(const prec: Integer; posExpres: TPosExpres = pexINDEP);
 public
   FirstPass  : boolean;   //Indica que está en la primera pasada.
@@ -143,7 +144,7 @@ public
   listTypSys : TxpEleTypes;  //lista de tipos del sistema
   pic        : TPIC16;       //Objeto PIC de la serie 16.
 protected
-  typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
+//  typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
   function GetExpression(const prec: Integer): TOperand;
   //LLamadas a las rutinas de operación
   procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
@@ -274,68 +275,74 @@ begin
 
 end;
 //Manejo de tipos
-procedure TCompilerBase.ClearTypes;  //Limpia los tipos
+procedure TCompilerBase.ClearTypes;  //Limpia los tipos del sistema
 begin
-  typs.Clear;
+  listTypSys.Clear;
 end;
-function TCompilerBase.CreateSysType(nom0: string; cat0: TTypeGroup; siz0: smallint): TType;
-{Crea una nueva definición de tipo en el compilador. Devuelve referencia al tipo recien
-creado. El nombre del tipo, debe darse en minúscula, porque así se hará la búsqueda. con
-FindType().}
-var
-  r: TType;
-begin
-  //verifica nombre
-  if FindSysType(nom0) <> nil then begin
-    GenError('Duplicated identifier: "%s"', [nom0]);
-    exit;
-  end;
-  //configura nuevo tipo
-  r := TType.Create;
-  r.name:=nom0;
-  r.grp:=cat0;
-  r.size:=siz0;
-  typs.Add(r);  //agrega
-  //Devuelve referencia al tipo
-  Result:=r;
-end;
-function TCompilerBase.CreateSysEleType(typ: TType): TxpEleType;
+//function TCompilerBase.CreateSysType(nom0: string; cat0: TTypeGroup; siz0: smallint): TType;
+//{Crea una nueva definición de tipo en el compilador. Devuelve referencia al tipo recien
+//creado. El nombre del tipo, debe darse en minúscula, porque así se hará la búsqueda. con
+//FindType().}
+//var
+//  r: TType;
+//begin
+//  //verifica nombre
+//  if FindSysType(nom0) <> nil then begin
+//    GenError('Duplicated identifier: "%s"', [nom0]);
+//    {%H-}exit;  //Devuelve valor indeterminado
+//  end;
+//  //configura nuevo tipo
+//  r := TType.Create;
+//  r.name:=nom0;
+//  r.grp:=cat0;
+//  r.size:=siz0;
+//  typs.Add(r);  //agrega
+//  //Devuelve referencia al tipo
+//  Result:=r;
+//end;
+function TCompilerBase.CreateSysEleType(nom0: string; cat0: TTypeGroup; siz0: smallint): TxpEleType;
 {Crea un elemento tipo, del sistema, a partir de un tipo básico TType.}
 var
   eType: TxpEleType;
 begin
+  //Verifica nombre
+  if FindSysEleType(nom0) <> nil then begin
+    GenError('Duplicated identifier: "%s"', [nom0]);
+    {%H-}exit;  //Devuelve valor indeterminado
+  end;
   //Crea elemento de tipo
   eType := TxpEleType.Create;
-  eType.name := UpCase(typ.name);
+  eType.name := nom0;
+  eType.grp := cat0;
+  eType.size := siz0;
   eType.catType := tctAtomic;
-  eType.typRef := typ;   //guarda referencia al tipo básico
   listTypSys.Add(eType);
   //Devuelve referencia al tipo
   Result:=eType;
 end;
-function TCompilerBase.FindSysType(TypName: string): TType;
-{Busca un tipo, por su nombre. Si no encuentra, devuelve NIL.}
-var
-  t: TType;
-begin
-  TypName := LowerCase(TypName);
-  for t in typs do begin
-    if t.name = TypName then exit(t);
-  end;
-  exit(nil)
-end;
+//function TCompilerBase.FindSysType(TypName: string): TType;
+//{Busca un tipo, por su nombre. Si no encuentra, devuelve NIL.}
+//var
+//  t: TType;
+//begin
+//  TypName := LowerCase(TypName);
+//  for t in typs do begin
+//    if t.name = TypName then exit(t);
+//  end;
+//  exit(nil)
+//end;
 function TCompilerBase.FindSysEleType(TypName: string): TxpEleType;
 {Busca un elemento de tipo por su nombre. Si no encuentra, devuelve NIL.}
 var
   etyp: TxpEleType;
 begin
-  typName := upcase(typName);   //los tipos se guardan en mayúscula
+  typName := upcase(typName);
   for etyp in listTypSys do begin
-    if etyp.name = typName then exit(etyp);  //devuelve referencia
+    if UpCase(etyp.name) = typName then exit(etyp);  //devuelve referencia
   end;
   exit(nil);
 end;
-function TCompilerBase.CreateCons(consName: string; typ: ttype): TxpEleCon;
+function TCompilerBase.CreateCons(consName: string; eletyp: TxpEleType): TxpEleCon;
 {Rutina para crear una constante. Devuelve referencia a la constante creada.}
 var
   conx  : TxpEleCon;
@@ -343,7 +350,7 @@ begin
   //registra variable en la tabla
   conx := TxpEleCon.Create;
   conx.name:=consName;
-  conx.typ := typ;   //fija  referencia a tipo
+  conx.typ := eletyp;   //fija  referencia a tipo
   Result := conx;
 end;
 //Manejo de variables
@@ -354,8 +361,7 @@ var
 begin
   xVar := TxpEleVar.Create;
   xVar.name := varName;
-  xVar.eleType := eleTyp;
-  xVar.typ := eleTyp.typRef;
+  xVar.typ := eleTyp;
   xVar.havAdicPar := false;
   Result := xVar;
 end;
@@ -370,7 +376,7 @@ begin
   Result := xTyp;
 end;
 //Manejo de funciones
-function TCompilerBase.CreateFunction(funName: string; typ: ttype;
+function TCompilerBase.CreateFunction(funName: string; typ: TxpEleType;
   procParam, procCall: TProcExecFunction): TxpEleFun;
 {Crea una nueva función y devuelve la referecnia a la función.}
 var
@@ -502,7 +508,7 @@ begin
       GetExpressionE(0, pexPARAM);  //captura parámetro
       if HayError then exit;   //aborta
       //guarda tipo de parámetro
-      func0.CreateParam('',res.typ, nil);
+      func0.CreateParam('',res.eleTyp, nil);
       if cIn.tok = ',' then begin
         cIn.Next;   //toma separador
         cIn.SkipWhites;
@@ -550,10 +556,11 @@ begin
        trabajo.}
       res.LoadToReg;
     end else begin
+      //Crea un operando para generar código de asignación
       Op1.catOp := coVariab;  //configura el operando como variable
-      Op1.rVar  := par.pvar;
+      Op1.rVar  := par.pvar;  //Apunta a la variable
       if FirstPass then par.pvar.AddCaller;   //se está usando
-      Op1.typ   := par.pvar.typ;  //necesario para "FindOperator"
+      Op1.eleTyp := par.pvar.typ;  //necesario para "FindOperator"
       op := Op1.FindOperator(':=');  //busca la operación
       Oper(Op1, op, res);   //Codifica la asignación
     end;
@@ -593,7 +600,7 @@ begin
   //Hay un identificador
   identif :=  cIn.tokL;
   //Prueba con campos del tipo
-  for field in xOperand.typ.fields do begin
+  for field in xOperand.eleTyp.fields do begin
     if LowerCase(field.Name) = identif then begin
       //Encontró el campo
       field.proc(@xOperand);  //Devuelve resultado en "res"
@@ -625,18 +632,21 @@ var
   posCall : TSrcPos;
   posPar  : TPosCont;
   posFlash: Integer;
-  RTstate0: TType;
+  RTstate0: TxpEleType;
   xfun    : TxpEleFun;
   Found   : Boolean;
   caller  : TxpEleCaller;
 begin
+//cIn.ShowCurContInformat;
+//debugln(' ++CurNode:' + TreeElems.curNode.Path);
   ele := TreeElems.FindFirst(cIn.tok);  //identifica elemento
   if ele = nil then begin
     //No identifica a este elemento
     GenError('Unknown identifier: %s', [cIn.tok]);
     exit;
   end;
-  if ele is TxpEleVar then begin
+//debugln(' --Element ' + cIn.tok + ':' + ele.Path);
+  if ele.idClass = eltVar then begin
     //es una variable
     xvar := TxpEleVar(ele);
     if FirstPass then xvar.AddCaller;   //lleva la cuenta
@@ -644,13 +654,13 @@ begin
     if xvar.IsRegister then begin
       //Es una variables REGISTER
       Op.catOp:=coExpres;
-      Op.typ:=xvar.typ;
+      Op.eleTyp := xvar.typ;
       //Faltaría asegurarse de que los registros estén disponibles
       Op.DefineRegister;
     end else begin
       //Es una variable común
       Op.catOp:=coVariab;    //variable
-      Op.typ:=xvar.typ;
+      Op.eleTyp:=xvar.typ;
       Op.rVar:=xvar;   //guarda referencia a la variable
       {$IFDEF LogExpres} Op.txt:= xvar.name; {$ENDIF}   //toma el texto
       //Verifica si tiene referencia a campos con "."
@@ -660,13 +670,13 @@ begin
         if HayError then exit;;
       end;
     end;
-  end else if ele.elemType = eltCons then begin  //es constante
+  end else if ele.idClass = eltCons then begin  //es constante
     //es una constante
     xcon := TxpEleCon(ele);
     if FirstPass then xcon.AddCaller;//lleva la cuenta
     cIn.Next;    //Pasa al siguiente
-    Op.catOp:=coConst;    //constante
-    Op.typ:=xcon.typ;
+    Op.catOp := coConst;    //constante
+    Op.eleTyp  := xcon.typ;
     Op.GetConsValFrom(xcon);  //lee valor
     {$IFDEF LogExpres} Op.txt:= xcon.name; {$ENDIF}   //toma el texto
     //Verifica si tiene referencia a campos con "."
@@ -675,7 +685,7 @@ begin
       Op := res;  //notar que se usa "res".
       if HayError then exit;;
     end;
-  end else if ele.elemType = eltFunc then begin  //es función
+  end else if ele.idClass = eltFunc then begin  //es función
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
      versiones, sobrecargadas de la misma función.}
     posCall := cIn.ReadSrcPos;   //gaurda la posición de llamada.
@@ -720,7 +730,7 @@ begin
       xfun.procCall(xfun); //codifica el "CALL"
       RTstate := xfun.typ;  //para indicar que los RT están ocupados
       Op.catOp := coExpres;
-      Op.typ := xfun.typ;
+      Op.eleTyp := xfun.typ;
       exit;
     end else begin
       //Encontró la función, pero no coincidió con los parámetros
@@ -767,7 +777,7 @@ begin
       exit;
     end;
     Result.valInt := cod;
-    Result.typ := typChar;
+    Result.eleTyp := typChar;
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tokType = tnString then begin  //constante cadena
     Result.catOp:=coConst;       //constante es Mono Operando
@@ -780,7 +790,7 @@ begin
     end;
     {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     Result.valInt := ord(cIn.tok[2]);
-    Result.typ := typChar;
+    Result.eleTyp := typChar;
     cIn.Next;    //Pasa al siguiente
   end else if (cIn.tokType = tnSysFunct) or //función del sistema
               (cIn.tokL = 'bit') or   //"bit" es de tipo "tnType"
@@ -851,11 +861,11 @@ begin
     Op := GetOperand();   //toma el operando. ¡¡¡Importante los peréntesis!!!
     if HayError then exit;
     //Ahora ya tenemos el tipo. Hay que ver si corresponde el operador
-    opr := Op.typ.FindUnaryPreOperator(oprTxt);
+    opr := Op.eleTyp.FindUnaryPreOperator(oprTxt);
     if opr = nullOper then begin
       {Este tipo no permite este operador Unario (a lo mejor ni es unario)}
       cIn.PosAct := posAct;
-      GenError('Cannot apply the operator "%s" to type "%s"', [oprTxt, Op.typ.name]);
+      GenError('Cannot apply the operator "%s" to type "%s"', [oprTxt, Op.eleTyp.name]);
       exit;
     end;
     //Sí corresponde. Así que apliquémoslo
@@ -886,10 +896,10 @@ begin
    LogExpLevel('-- Op1='+Op1.txt+', Op2='+Op2.txt+' --');
    {$ENDIF}
    //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
-   Operation := opr.FindOperation(Op2.typ);
+   Operation := opr.FindOperation(Op2.eleTyp);
    if Operation = nil then begin
-      tmp := '(' + Op1.typ.name + ') '+ opr.txt;
-      tmp := tmp +  ' ('+Op2.typ.name+')';
+      tmp := '(' + Op1.eleTyp.name + ') '+ opr.txt;
+      tmp := tmp +  ' ('+Op2.eleTyp.name+')';
       GenError('Illegal Operation: %s',
                [tmp]);
       exit;
@@ -921,7 +931,7 @@ begin
   {$ENDIF}
    if opr.OperationPre = nil then begin
       GenError('Illegal Operation: %s',
-                 [opr.txt + '('+Op1.typ.name+')']);
+                 [opr.txt + '('+Op1.eleTyp.name+')']);
       exit;
     end;
    {Llama al evento asociado con p1 como operando. }
@@ -945,7 +955,7 @@ begin
   {$ENDIF}
    if opr.OperationPost = nil then begin
       GenError('Illegal Operation: %s',
-                 ['('+Op1.typ.name+')' + opr.txt]);
+                 ['('+Op1.eleTyp.name+')' + opr.txt]);
       exit;
     end;
    {Llama al evento asociado con p1 como operando. }
@@ -1003,7 +1013,7 @@ begin
     //no está definido el operador siguente para el Op1, (no se puede comparar las
     //precedencias) asumimos que aquí termina el operando.
     cIn.PosAct := pos;   //antes de coger el operador
-    GenError('Undefined operator: %s for type: %s', [opr.txt, Op1.typ.name]);
+    GenError('Undefined operator: %s for type: %s', [opr.txt, Op1.eleTyp.name]);
     exit;
 //    Result:=Op1;
   end else begin  //si está definido el operador (opr) para Op1, vemos precedencias
@@ -1019,14 +1029,14 @@ begin
     end;
   end;
 end;
-function TCompilerBase.GetOperator(const Op: Toperand): Txpoperator;
+function TCompilerBase.GetOperator(const Op: Toperand): TxpOperator;
 {Busca la referecnia a un operador de "Op", leyendo del contexto de entrada
 Si no encuentra un operador en el contexto, devuelve NIL, pero no lo toma.
 Si el operador encontrado no se aplica al operando, devuelve nullOper.}
 begin
   if cIn.tokType <> tnOperator then exit(nil);
   //Hay un operador
-  Result := Op.typ.FindBinaryOperator(cIn.tok);
+  Result := Op.eleTyp.FindBinaryOperator(cIn.tok);
   cIn.Next;   //toma el token
 end;
 function TCompilerBase.GetExpression(const prec: Integer): TOperand; //inline;
@@ -1055,7 +1065,7 @@ begin
   //------- sigue un operador ---------
   //verifica si el operador aplica al operando
   if opr1 = nullOper then begin
-    GenError('Undefined operator: %s for type: %s', [opr1.txt, Op1.typ.name]);
+    GenError('Undefined operator: %s for type: %s', [opr1.txt, Op1.eleTyp.name]);
     exit;
   end;
   //inicia secuencia de lectura: <Operador> <Operando>
@@ -1200,9 +1210,7 @@ end;
 constructor TCompilerBase.Create;
 begin
   ClearError;   //inicia motor de errores
-  //Inicia lista de tipos
-  typs := TTypes.Create(true);
-  //Crea arbol de elementos
+  //Crea arbol de elementos y listas
   TreeElems  := TXpTreeElements.Create;
   TreeDirec  := TXpTreeElements.Create;
   listFunSys := TxpEleFuns.Create(true);
@@ -1246,7 +1254,6 @@ begin
   listFunSys.Destroy;
   TreeDirec.Destroy;
   TreeElems.Destroy;
-  typs.Free;
   inherited Destroy;
 end;
 
@@ -1258,7 +1265,7 @@ end;
 function TOperand.offs: TVarOffs;
 {Dirección de memoria, cuando es de tipo Char, Byte, Bit o Boolean.}
 begin
-  if (typ = typBit) or (typ = typBool) then begin
+  if (eleTyp = typBit) or (eleTyp = typBool) then begin
     Result := rVar.adrBit.offs;
   end else begin  //Char o byte
     Result := rVar.adrByte0.offs;
@@ -1284,7 +1291,7 @@ end;
 function TOperand.bank: TVarBank;
 {Banco, cuando es de tipo Byte.}
 begin
-  if (typ = typBit) or (typ = typBool) then begin
+  if (eleTyp = typBit) or (eleTyp = typBool) then begin
     Result := rVar.adrBit.bank;
   end else begin  //Char o byte
     Result := rVar.adrByte0.bank;
@@ -1344,7 +1351,7 @@ end;
 procedure TOperand.CopyConsValTo(var c: TxpEleCon);
 begin
   //hace una copia selectiva por velocidad, de acuerdo a la categoría
-  case typ.grp of
+  case eleTyp.grp of
   t_boolean : c.val.ValBool:=val.ValBool;
   t_integer,
   t_uinteger: c.val.ValInt  := val.ValInt;
@@ -1361,7 +1368,7 @@ procedure TOperand.GetConsValFrom(const c: TxpEleCon);
 {Copia valores constante desde una constante. Primero TOperand, debería tener inicializado
  correctamente su campo "catTyp". }
 begin
-  case typ.grp of
+  case eleTyp.grp of
   t_boolean : val.ValBool := c.val.ValBool;
   t_integer,
   t_uinteger: val.ValInt := c.val.ValInt;
@@ -1398,6 +1405,7 @@ end;
 function TOperand.catOpChr: char;
 {Categoría en caracter.}
 begin
+  Result := ' ';
   case catOp of
   coConst : exit('k');
   coVariab: exit('v');
@@ -1406,18 +1414,18 @@ begin
 end;
 procedure TOperand.LoadToReg;
 begin
-  if typ.OnLoadToReg<> nil then typ.OnLoadToReg(@self);
+  if eleTyp.OnLoadToReg<> nil then eleTyp.OnLoadToReg(@self);
 end;
 procedure TOperand.DefineRegister;
 begin
   //llama al evento de pila
-  if typ.OnDefineRegister<> nil then typ.OnDefineRegister;
+  if eleTyp.OnDefineRegister<> nil then eleTyp.OnDefineRegister;
 end;
 function TOperand.FindOperator(const oper: string): TxpOperator;
 //Recibe la cadena de un operador y devuelve una referencia a un objeto Toperator, del
 //operando. Si no está definido el operador para este operando, devuelve nullOper.
 begin
-  Result := typ.FindBinaryOperator(oper);
+  Result := eleTyp.FindBinaryOperator(oper);
 end;
 procedure SetLanguage(lang: string);
 begin

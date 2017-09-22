@@ -240,7 +240,7 @@ begin
       GenErrorAsm(ER_EXP_CON_VAL);
       exit;
     end;
-    if ele is TxpEleCon then begin
+    if ele.idClass = eltCons then begin
       xcon := TxpEleCon(ele);
       if FirstPass then xcon.AddCaller;  //lleva la cuenta
       if (xcon.typ = typByte) or (xcon.typ = typChar) then begin
@@ -264,20 +264,14 @@ begin
         GenErrorAsm(ER_NOGETVAL_CON);
         exit(false);
       end;
-    end else if ele is TxpEleVar then begin
+    end else if ele.idClass = eltVar then begin
       //Para varaibles, se toma la dirección
       xvar := TxpEleVar(ele);
       if FirstPass then xvar.AddCaller;  //lleva la cuenta
-      //if (xvar.typ = typByte) or (xvar.typ = typChar) then begin
-        n := xvar.AbsAddr;
-        k := GetFaddress(n);
-        lexAsm.Next;
-        exit(true);
-      //end else begin
-      //  //GenErrorAsm(ER_NOGETADD_VAR);
-      //  GenErrorAsm(ER_EXP_CON_VAL);
-      //  exit(false);
-      //end;
+      n := xvar.AbsAddr;
+      k := GetFaddress(n);
+      lexAsm.Next;
+      exit(true);
     end else begin
       //No es constante
       GenErrorAsm(ER_EXP_CON_VAL);
@@ -367,10 +361,10 @@ begin
   ele := TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
   if ele = nil then exit(false);  //no se identifica
   //Se identificó elemento
-  if not (ele is TxpEleVar) then exit(false);
+  if ele.idClass <> eltVar then exit(false);
   //Es variable
   xvar := TxpEleVar(ele);
-  if not xvar.eleType.IsBitSize then exit(false);
+  if not xvar.typ.IsBitSize then exit(false);
   //Es variable bit o boolean
   lexAsm.Next;   //toma identificador
   if FirstPass then xvar.AddCaller;  //lleva la cuenta
@@ -424,16 +418,16 @@ begin
       GenErrorAsm(ER_EXP_ADR_VAR);
       exit;
     end;
-    if ele is TxpEleVar then begin
+    if ele.idClass = eltVar then begin
       xvar := TxpEleVar(ele);
       if FirstPass then xvar.AddCaller;  //lleva la cuenta
-      if (xvar.typ = typByte) or (xvar.typ = typChar) then begin
+      if xvar.typ.IsByteSize then begin
         n := xvar.AbsAddr;
         f := GetFaddress(n);
         lexAsm.Next;
         Result := true;
         exit;
-      end else if xvar.typ = typWord then begin
+      end else if xvar.typ.IsWordSize then begin
         lexAsm.Next;
         if HaveByteInformation(bytePos) then begin
           //Hay precisión de byte
@@ -452,7 +446,7 @@ begin
            f := GetFaddress(n);
         end;
         exit(true);
-      end else if xvar.typ = typDword then begin
+      end else if xvar.typ.IsDWordSize then begin
         lexAsm.Next;
         if HaveByteInformation(bytePos) then begin
           //Hay precisión de byte
@@ -550,7 +544,7 @@ begin
     exit;
   end else if tokType = lexAsm.tnIdentif  then begin
     ele := TreeElems.FindFirst(lexAsm.GetToken);  //identifica elemento
-    if (ele <> nil) and (ele is TxpEleFun) then begin
+    if (ele <> nil) and (ele.idClass = eltFunc) then begin
       //Es un identificador de función del árbol de sintaxis
       xfun := TxpEleFun(ele);
       if FirstPass then xfun.AddCaller;  //lleva la cuenta

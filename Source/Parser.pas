@@ -14,7 +14,7 @@ type
     function AddType(typName: string; srcPos: TSrcPos): TxpEleType;
     function AddVariable(varName: string; eleTyp: TxpEleType; srcPos: TSrcPos
       ): TxpEleVar;
-    procedure ArrayDeclaration;
+    procedure ArrayDeclaration(out itemTyp: TxpEleType; out nEle: integer);
     procedure CompileTypeDeclar(IsInterface: boolean; typName: string = '');
     function GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
     procedure cInNewLine(lin: string);
@@ -28,6 +28,7 @@ type
     function GetExpressionBool: boolean;
     function GetTypeVarDeclar: TxpEleType;
     function IsUnit: boolean;
+    procedure length_array(const OpPtr: pointer);
     procedure ProcCommentsNoExec;
     function StartOfSection: boolean;
     procedure ResetFlashAndRAM;
@@ -326,7 +327,7 @@ begin
           if HayError then exit;
         end;
         //Ahora ya tiene la variable
-        fun.CreateParam(itemList[i], typ.typRef, xvar);
+        fun.CreateParam(itemList[i], typ, xvar);
         if HayError then exit;
       end;
       //Busca delimitador
@@ -423,7 +424,7 @@ function TCompiler.GetExpressionBool: boolean;
 begin
   GetExpressionE(0);
   if HayError then exit(false);
-  if res.typ<>typBool then begin
+  if res.eletyp <> typBool then begin
     GenError(ER_BOOL_EXPECT);
     exit(false);
   end;
@@ -644,7 +645,7 @@ begin
     exit;
   end;
   if HayError then exit;
-  if (Op1.typ<>typByte) and (Op1.typ<>typWord) then begin
+  if (Op1.eletyp<>typByte) and (Op1.eletyp<>typWord) then begin
     GenError(ER_ONL_BYT_WORD);
     exit;
   end;
@@ -671,9 +672,9 @@ begin
     //Se podría optimizar, si el valor inicial es también constante
     l1 := _PC;        //guarda dirección de inicio
     //Codifica rutina de comparación, para salir
-    opr1 := Op1.typ.FindBinaryOperator('<=');  //Busca operador de comparación
+    opr1 := Op1.eleTyp.FindBinaryOperator('<=');  //Busca operador de comparación
     if opr1 = nullOper then begin
-      GenError('Internal: No operator <= defined for %s.', [Op1.typ.name]);
+      GenError('Internal: No operator <= defined for %s.', [Op1.eleTyp.name]);
       exit;
     end;
     Op2 := res;   //Copia porque la operación Oper() modificará res
@@ -683,9 +684,9 @@ begin
     if not CompileConditionalBody(bnkFOR) then exit;
     if not VerifyEND then exit;
     //Incrementa variable cursor
-    if Op1.typ = typByte then begin
+    if Op1.eleTyp = typByte then begin
       _INCF(Op1.offs, toF);
-    end else if Op1.typ = typWord then begin
+    end else if Op1.eleTyp = typWord then begin
       _INCF(Op1.Loffs, toF);
       _BTFSC(STATUS, _Z);
       _INCF(Op1.Hoffs, toF);
@@ -759,14 +760,14 @@ begin
     {Asigna un tipo, de acuerdo al rango. Notar que el tipo más pequeño, usado
     es el byte, y no el bit.}
     if (n>=0) and  (n<=255) then begin
-      Op.typ := typByte;
+      Op.eleTyp := typByte;
     end else if (n>= 0) and (n<=$FFFF) then begin
-      Op.typ := typWord;
+      Op.eleTyp := typWord;
     end else if (n>= 0) and (n<=$FFFFFFFF) then begin
-      Op.typ := typDword;
+      Op.eleTyp := typDWord;
     end else  begin //no encontró
       GenError(ER_NOTYPDEF_NU);
-      Op.typ := nil;
+      Op.eleTyp := nil;
     end;
   end;
 end;
@@ -790,7 +791,7 @@ procedure TCompiler.TipDefecBoolean(var Op: TOperand; tokcad: string);
 begin
   //convierte valor constante
   Op.valBool:= (tokcad[1] in ['t','T']);
-  Op.typ:=typBool;
+  Op.eleTyp:=typBool;
 end;
 //Rutinas para la compilación y enlace
 procedure TCompiler.CompileProcBody(fun: TxpEleFun);
@@ -860,7 +861,7 @@ begin
     //Hasta aquí todo bien, crea la(s) constante(s).
     for i:= 0 to high(consNames) do begin
       //crea constante
-      cons := CreateCons(consNames[i], res.typ);
+      cons := CreateCons(consNames[i], res.eleTyp);
       cons.srcDec := srcPosArray[i];  //guarda punto de declaración
       if not TreeElems.AddElement(cons) then begin
         GenErrorPos(ER_DUPLIC_IDEN, [cons.name], cons.srcDec);
@@ -891,17 +892,17 @@ pone "IsAbs" en TRUE y actualiza los valores "absAddr" y "absBit". }
     if not TryStrToInt(tok, n) then begin
       //Podría fallar si es un número muy grande
       GenError(ER_INV_MEMADDR);
-      exit;
+      {%H-}exit;
     end;
     if (n<0) or (n>$ffff) then begin
       //Debe set Word
       GenError(ER_INV_MEMADDR);
-      exit;
+      {%H-}exit;
     end;
     Result := n;
     if not pic.ValidRAMaddr(Result) then begin
       GenError(ER_INV_MAD_DEV);
-      exit;
+      {%H-}exit;
     end;
   end;
   function ReadAddresBit(tok: string): byte;
@@ -912,11 +913,11 @@ pone "IsAbs" en TRUE y actualiza los valores "absAddr" y "absBit". }
   begin
     if not TryStrToInt(tok, n) then begin
       GenError(ER_INV_MEMADDR);
-      exit;
+      {%H-}exit;
     end;
     if (n<0) or (n>7) then begin
       GenError(ER_INV_MEMADDR);
-      exit;
+      {%H-}exit;
     end;
     Result := n;   //no debe fallar
   end;
@@ -972,10 +973,10 @@ begin
       cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
       exit;
     end;
-    //Es variable. Notar que puede ser una variable temporal, si se usa: <var_byte>.0
+    //Mapeado a variable. Notar que puede ser una variable temporal, si se usa: <var_byte>.0
     xvar := Op.rVar;
     //Ya tiene la variable en "xvar".
-    if xvar.eleType.IsBitSize then begin //boolean o bit
+    if xvar.typ.IsBitSize then begin //boolean o bit
       IsBit := true;  //Es una dirección de bit
       Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
       Result.absBit := xvar.adrBit.bit;
@@ -994,12 +995,28 @@ begin
     exit;
   end;
 end;
-procedure TCompiler.ArrayDeclaration;
+procedure TCompiler.length_array(const OpPtr: pointer);
+var
+  Op: ^TOperand;
+  xvar: TxpEleVar;
+begin
+  Op := OpPtr;
+  case Op^.catOp of
+  coVariab: begin
+    xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
+    //Se devuelve una variable, byte
+    res.catOp := coConst;
+    res.eleTyp := typByte;
+    res.valInt := xvar.typ.arrSize;
+  end;
+  else
+    GenError('Syntax error.');
+  end;
+end;
+procedure TCompiler.ArrayDeclaration(out itemTyp: TxpEleType; out nEle: integer);
 {Compila una declaración de arreglo.}
 var
-  n: Longint;
   varType: String;
-  typ: TType;
 begin
   cIn.Next;  //lo toma
   cIn.SkipWhites;
@@ -1007,14 +1024,9 @@ begin
   cIn.SkipWhites;
   if cIn.tokType = tnNumber then begin
     //Intenta obtener valor
-    if not TryStrToInt(cIn.tok, n) then begin
+    if not TryStrToInt(cIn.tok, nEle) then begin
       //Podría fallar si es un número muy grande o exponencial
       GenError(ER_ERR_IN_NUMB);
-      exit;
-    end;
-    if (n<0) or (n>$FF) then begin
-      //Límite físico
-      GenError(ER_ARR_SIZ_BIG);
       exit;
     end;
     cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
@@ -1064,27 +1076,20 @@ begin
   cIn.Next;
   cIn.SkipWhites;
   //Valida el tipo
-  typ := FindSysType(varType);
-  if typ = nil then begin
+  itemTyp := FindSysEleType(varType);
+  if itemTyp = nil then begin
     GenError(ER_UNDEF_TYPE_, [varType]);
+    exit;
+  end;
+  if (nEle<0) or (nEle>$FF) then begin
+    //Límite físico
+    GenError(ER_ARR_SIZ_BIG);
     exit;
   end;
   //Ya se tiene el tipo
   //¿Y si es bit?
-//  totSize := n * typ.size;  //tamaño en bytes
+//  totSize := nEle * itemTyp.size;  //tamaño en bytes
 
-  if not CaptureDelExpres then exit;
-  ProcComments;
-
-  {
-  Esta implementación está incompleta. Solo se pone como prueba, pero es un avance.
-  Tal vez se debe definir primero un sistema de descriptor de tipos.  Se podría usar
-  el mismo elemento TxpEleType, y agregarle propiedades para que indiquen si son
-  arreglos o records y alguna referencia a lso tipso básicos. Entonces la búsqueda de
-  tipos se debería hacer en los objetos TxpEleType, creados (que se supone se definen
-  con  declaraciones TYPE). También se pueden tener tipos del sistema (que serían los
-  tipos básicos), de la misma forma en que se tienen Funciones del sistema.
-  }
 end;
 procedure TCompiler.CompileTypeDeclar(IsInterface: boolean; typName: string = '');
 {Compila la sección de declaración de un tipo, y genera un elemento TxpEleType, en el
@@ -1092,8 +1097,9 @@ procedure TCompiler.CompileTypeDeclar(IsInterface: boolean; typName: string = ''
 Si se especifica typName, se obvia la extracción de la parte " nombreTipo = ", y se
 toma el nombre indicado.}
 var
-  etyp, systyp: TxpEleType;
+  etyp, systyp, itemTyp: TxpEleType;
   srcpos: TSrcPos;
+  nEle: integer;
 begin
   ProcComments;
   if cIn.tokType <> tnIdentif then begin
@@ -1120,13 +1126,25 @@ begin
     cIn.Next;   //lo toma
     etyp := AddType(typName, srcpos);
     if HayError then exit;        //Sale para ver otros errores
-    etyp.typRef := systyp.typRef;  //toma su misma referencia
-    etyp.InInterface := IsInterface;
-
-//  end else if cIn.tokL = 'array' then begin
-//    //Es un arreglo
-//    ArrayDeclaration;
-//    exit;  //puede salir con error
+    {Crea la copia del tipo del sistama, que básicamente es el mismo tipo, solo que
+    con otro nombre y qeu además, ahora, está en el árbol de sintaxis, por lo tanto
+    tiene otras reglas de alcance.}
+    etyp.copyOf := systyp;  //Indica que es una copia
+    etyp.catType := systyp.catType; //tctAtomic. No debería ser necesario
+    etyp.InInterface := IsInterface; //No debería ser necesario
+  end else if cIn.tokL = 'array' then begin
+    //Es un arreglo
+    ArrayDeclaration(itemTyp, nEle);
+    if HayError then exit;        //Sale para ver otros errores
+    //Es una declaración de arreglo
+    etyp := AddType(typName, srcpos);
+    if HayError then exit;     //Sale para ver otros errores
+    etyp.catType := tctArray;  //Tipo arreglo
+    etyp.arrSize := nEle;      //Número de ítems
+    etyp.refType := itemTyp;   //Tipo de dato
+    etyp.InInterface := IsInterface; //No debería ser necesario
+    //Crea campos
+    etyp.CreateField('length', @length_array);
   end else begin
     GenError(ER_IDE_TYP_EXP);
     exit;
@@ -1139,6 +1157,7 @@ end;
 function TCompiler.GetTypeVarDeclar: TxpEleType;
 {Extrae la sección de tipo de la declaración de una variable, y devuelve la referencia
 al elemento TxpEleType correspondiente.
+Si encuentra algún problema, genera error, y devuelve NIL.
 Todas las variables y constantes tienen un tipo asociado.
 
 * En los casos de tipos simples como: bit, byte o word, se devuelve la referencia, al
@@ -1160,9 +1179,11 @@ VAR
 var
   systyp: TxpEleType;
   typName, varType: String;
-  typ: TType;
+  typ, itemTyp: TxpEleType;
   ele: TxpElement;
+  nEle: integer;
 begin
+  Result := nil;
   ProcComments;
   if (cIn.tokType = tnType) then begin
     //Caso normal. Es un tipo del sistema
@@ -1170,7 +1191,7 @@ begin
     if systyp = nil then begin
       //Esto no debería pasar, porque el lexer indica que es un tipo del sistema.
       GenError(ER_NOT_IMPLEM_, [typName]);
-      exit;
+      exit(nil);
     end;
     cIn.Next;   //lo toma
     ProcComments;
@@ -1184,33 +1205,33 @@ begin
     if ele = nil then begin
       //No identifica a este elemento
       GenError('Unknown identifier: %s', [cIn.tok]);
-      exit;
+      exit(nil);
     end;
-    if ele is TxpEleType then begin
+    if ele.idClass = eltType then begin
       cIn.Next;   //lo toma
       ProcComments;
       Result := TxpEleType(ele);  //devuelve la referencia
       exit;
     end else begin
       GenError('A type identifier expected.');
-      exit;
+      exit(nil);
     end;
-  end else if cIn.tokL = 'array' then begin
-    //Es un arreglo
-    ArrayDeclaration;
-    exit;  //puede salir con error
+//  end else if cIn.tokL = 'array' then begin
+//    //Es un arreglo
+//    ArrayDeclaration(itemTyp, nEle);
+//    {%H-}exit;  //puede salir con error
   end else begin
     GenError(ER_IDE_TYP_EXP);
-    exit;
+    exit(nil);
   end;
   varType := cIn.tok;   //lee tipo
   cIn.Next;
   ProcComments;
   //Valida el tipo
-  typ := FindSysType(varType);
+  typ := FindSysEleType(varType);
   if typ = nil then begin
     GenError(ER_UNDEF_TYPE_, [varType]);
-    exit;
+    exit(nil);
   end;
 end;
 procedure TCompiler.CompileVarDeclar(IsInterface: boolean = false);
@@ -1285,7 +1306,7 @@ en el procesamiento de unidades.}
 var
   srcPos: TSrcPos;
   procName, parType: String;
-  typ: TType;
+  typ: TxpEleType;
 begin
   //Toma información de ubicación, al inicio del procedimiento
   cIn.SkipWhites;
@@ -1318,7 +1339,7 @@ begin
     parType := cIn.tok;   //lee tipo de parámetro
     cIn.Next;
     //Valida el tipo
-    typ := FindSysType(parType);
+    typ := FindSysEleType(parType);
     if typ = nil then begin
       GenError(ER_UNDEF_TYPE_, [parType]);
       exit;
@@ -1366,7 +1387,7 @@ begin
     //debugln('Buscando declaración de %s en nodo %s desde 0 hasta %d', [fun.name, Parent.name, Parent.elements.Count-2]);
     Found := false;
     for i:=0 to Parent.elements.Count-2 do begin  //No se considera a el mismo
-      if not (Parent.elements[i] is TxpEleFun) then continue;
+      if not (Parent.elements[i].idClass = eltFunc) then continue;
       funcX := TxpEleFun(Parent.elements[i]);
       if (UpCase(funcX.name) = Upcase(fun.name)) and
          (fun.SameParams(funcX)) then begin
@@ -1378,7 +1399,7 @@ begin
       //Es una implementación. No vale la pena tener otro nodo.
       TreeElems.CloseElement;  //Cierra Nodo de la función
       Parent.elements.Remove(fun);   //elimina función
-      fun := funcX; //apunta a la nueva función
+      fun := {%H-}funcX; //apunta a la nueva función
       TreeElems.OpenElement(fun);  //Abre el nodo anterior
       fun.Implemented := true;   //marca como implementada
     end else begin
@@ -1652,7 +1673,7 @@ begin
     end;
   end;
   //Verifica si todas las funciones de INTERFACE, se implementaron
-  for elem in TreeElems.curNode.elements do if elem is TxpEleFun then begin
+  for elem in TreeElems.curNode.elements do if elem.idClass = eltFunc then begin
     fun := TxpEleFun(elem);
     if fun.InInterface and not fun.Implemented then begin
       GenErrorPos('Function %s not implemented.', [fun.name], fun.srcDec);
@@ -1788,7 +1809,7 @@ begin
       cIn.Next;    //lo toma
       while not StartOfSection and (cIn.tokL <>'begin') do begin
         CompileVarDeclar;
-        if HayError then exit;;
+        if HayError then exit;
       end;
     end else if cIn.tokL = 'type' then begin
       cIn.Next;    //lo toma
@@ -1916,7 +1937,7 @@ begin
   ClearError;
   pic.MsjError := '';
   //Verifica las constantes usadas. Solo en el nodo principal, para no sobrecargar emnsajes.
-  for elem in TreeElems.main.elements do if elem is TxpEleCon then begin
+  for elem in TreeElems.main.elements do if elem.idClass =  eltCons then begin
       if elem.nCalled = 0 then begin
         GenWarnPos(WA_UNUSED_CON_, [elem.name], elem.srcDec);
       end;
@@ -1932,18 +1953,21 @@ begin
   //Reserva espacio para las variables usadas
   TreeElems.RefreshAllVars;
   for xvar in TreeElems.AllVars do begin
-//debugln('xvar=%s', [xvar.name]);
     if xvar.nCalled>0 then begin
       //Asigna una dirección válida para esta variable
       if xvar.adicPar.isAbsol then begin
-        {Tiene declaración absoluta. Mejor compilamos de nuevo, la declaración, porque
+//        debugln('Abs: xvar=%s at %d', [xvar.name, xvar.adicPar.absAddr]);
+        {Tiene declaración absoluta. Mejor compilamos de nuevo la declaración, porque
         puede haber referencia a variables que han cambiado de ubicación, por
         optimización.
         Se podría hacer una verificación, para saber si la referencia es a direcciones
         absolutas, en lugar de a variables (o a varaibles temporales), y así evitar
         tener que compilar de nuevo, la declaración.}
         posAct := cIn.PosAct;   //guarda posición actual
-        cIn.PosAct := xVar.adicPar.srcDec;  //posiciona en la declaración adicional
+        cIn.PosAct := xVar.adicPar.srcDec;  //Posiciona en la declaración adicional
+        TreeElems.curNode := xvar.Parent;   {Posiciona el árbol, tal cual estaría en la
+                                             primera pasada, para una correcta resolución
+                                             de nombres}
         adicVarDec := GetAdicVarDeclar(IsBit);
         //No debería dar error, porque ya pasó la primera pasada
         xvar.adicPar := adicVarDec;
@@ -2151,11 +2175,11 @@ begin
       if ExcUnused and (v.nCalled = 0) then continue;
       adStr := v.AddrString;  //dirección hexadecimal
       if adStr='' then adStr := 'XXXX';  //Error en dirección
-      if (v.typ = typBool) or (v.typ = typBit) then begin
+      if v.typ.IsBitSize then begin
         lins.Add(' ' + v.name + ' Db ' +  adStr);
-      end else if (v.typ = typByte) or (v.typ = typChar) then begin
+      end else if v.typ.IsByteSize then begin
         lins.Add(' ' + v.name + ' DB ' +  adStr);
-      end else if v.typ = typWord then begin
+      end else if v.typ.IsWordSize then begin
         lins.Add(' ' + v.name + ' DW ' +  adStr);
       end else begin
         lins.Add(' "' + v.name + '"->' +  adStr);
@@ -2164,15 +2188,15 @@ begin
     dvtEQU: begin;
       if ExcUnused and (v.nCalled = 0) then continue;
       if v.nCalled = 0 then subUsed := '; <Unused>' else subUsed := '';
-      if (v.typ = typBool) or (v.typ = typBit) then begin
+      if v.typ.IsBitSize then begin
         lins.Add('#define ' + v.name + ' ' + AdrStr(v.AbsAddr) + ',' +
                                              IntToStr(v.adrBit.bit)+ subUsed);
-      end else if (v.typ = typByte) or (v.typ = typChar) then begin
+      end else if v.typ.IsByteSize then begin
         lins.Add(v.name + ' EQU ' +  AdrStr(v.AbsAddr)+ subUsed);
-      end else if v.typ = typWord then begin
+      end else if v.typ.IsWordSize then begin
         lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAddrL)+ subUsed);
         lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAddrH)+ subUsed);
-      end else if v.typ = typDWord then begin
+      end else if v.typ.IsDWordSize then begin
         lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAddrL)+ subUsed);
         lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAddrH)+ subUsed);
         lins.Add(v.name+'@2' + ' EQU ' +  AdrStr(v.AbsAddrE)+ subUsed);

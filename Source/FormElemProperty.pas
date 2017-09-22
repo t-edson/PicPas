@@ -79,7 +79,7 @@ begin
 end;
 procedure TfrmElemProperty.Exec(elem0: TxpElement);
 var
-  adicInformation: String;
+  adicInformation, dirSolic: String;
   xcon: TxpEleCon;
   xfun: TxpEleFun;
   xvar: TxpEleVar;
@@ -106,23 +106,27 @@ begin
       butDetails.Enabled := true;
   end;
   //Ícono e información adicional
-  if elem is TxpEleCon then begin
+  if elem.idClass = eltCons then begin
     xcon := TxpEleCon(elem);
     if xcon.typ = nil then txtEleType.Caption := 'Unknown'
     else txtEleType.Caption := xcon.typ.name;
 
     ImageList1.GetBitmap(4, Image1.Picture.Bitmap);
     adicInformation := '';
-  end else if elem is TxpEleVar then begin
+  end else if elem.idClass = eltVar then begin
     xvar := TxpEleVar(elem);
-    txtEleType.Caption := xvar.eleType.TypeName;
+    txtEleType.Caption := xvar.typ.name;
 
     ImageList1.GetBitmap(2, Image1.Picture.Bitmap);
+    if xvar.typ.IsBitSize then begin
+      dirSolic := IntToStr(xvar.adicPar.absAddr) + ':' + IntToStr(xvar.adicPar.absBit);
+    end else begin
+      dirSolic := IntToStr(xvar.adicPar.absAddr);
+    end;
     adicInformation :=
-           'Direcc. Solicitada: ' + IntToStr(xvar.adicPar.absAddr) + ':' +
-                                    IntToStr(xvar.adicPar.absBit) + LineEnding +
+           'Direcc. Solicitada: ' + dirSolic + LineEnding +
            'Direcc. Asignada: ' + xvar.AddrString;
-  end else if elem is TxpEleFun then begin
+  end else if elem.idClass = eltFunc then begin
     xfun := TxpEleFun(elem);
     if xfun.typ = nil then txtEleType.Caption := 'Unknown'
     else txtEleType.Caption := xfun.typ.name;
@@ -130,10 +134,10 @@ begin
     ImageList1.GetBitmap(3, Image1.Picture.Bitmap);
     adicInformation := 'Dirección: $' + IntToHex(xfun.adrr, 3) + LineEnding +
            'Tamaño: ' + IntToStr(xfun.srcSize);
-  end else if elem is TxpEleUnit then begin
+  end else if elem.idClass = eltUnit then begin
     ImageList1.GetBitmap(6, Image1.Picture.Bitmap);
     adicInformation := '';
-  end else if elem is TxpEleBody then begin
+  end else if elem.idClass = eltBody then begin
     ImageList1.GetBitmap(12, Image1.Picture.Bitmap);
     adicInformation := 'Dirección: $' + IntToHex(xfun.adrr, 3) + LineEnding +
            'Tamaño: ' + IntToStr(xfun.srcSize)  + LineEnding +

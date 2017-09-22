@@ -14,9 +14,7 @@ const
   MAX_REGS_STACK_BIT = 4;  //cantidad máxima de registros a usar en la pila
 
 type
-
   { TGenCodPic }
-
   TGenCodPic = class(TCompilerBase)
   private
     linRep : string;   //línea para generar de reporte
@@ -84,7 +82,7 @@ type
     function GetVarByteFromStk: TxpEleVar;
     function GetVarWordFromStk: TxpEleVar;
     function GetVarDWordFromStk: TxpEleVar;
-    function FreeStkRegisterByte(var reg: TPicRegister): boolean;
+    function FreeStkRegisterByte(out reg: TPicRegister): boolean;
     function FreeStkRegisterWord: boolean;
     function FreeStkRegisterDWord: boolean;
     function FreeStkRegisterBit: boolean;
@@ -99,7 +97,7 @@ type
     procedure AssignRAMinByte(absAdd: integer; var reg: TPicRegister; regName: string);
     procedure CreateVarInRAM(nVar: TxpEleVar);
   protected  //Métodos para fijar el resultado
-    procedure SetResult(typ: TType; CatOp: TCatOperan);
+    procedure SetResult(typ: TxpEleType; CatOp: TCatOperan);
     procedure SetResultConst_bool(valBool: boolean);
     procedure SetResultConst_bit(valBit: boolean);
     procedure SetResultConst_byte(valByte: integer);
@@ -203,7 +201,7 @@ begin
     dicSet(';restore W','restaurar W');
     dicSet(';restore Z','restaurar Z');
     dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
-    dicSet('RAM memory is full.', 'Memoria RAM agotada.');
+    dicSet('No enough RAM', 'No hay suficiente RAM.');
     dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
     dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
     dicSet('Very complex expression. To simplify.','Expresión muy compleja. Simplificar.');
@@ -306,7 +304,7 @@ function OperandUseW(Oper: TOperand): boolean;
 {Indica si el operando está usando el registro W}
 begin
   if (Oper.catOp = coExpres) and
-     ((Oper.typ = typByte) or (Oper.typ = typWord) or (Oper.typ = typDword)) then
+     ((Oper.eleTyp = typByte) or (Oper.eleTyp = typWord) or (Oper.eleTyp = typDWord)) then
     exit(true)
   else
     exit(false);
@@ -315,7 +313,7 @@ function OperandUseH(Oper: TOperand): boolean;
 {Indica si el operando está usando el registro H}
 begin
   if (Oper.catOp = coExpres) and
-     ((Oper.typ = typWord) or (Oper.typ = typDword)) then
+     ((Oper.eleTyp = typWord) or (Oper.eleTyp = typDWord)) then
     exit(true)
   else
     exit(false);
@@ -324,7 +322,7 @@ function OperandUseHW(Oper: TOperand): boolean;
 {Indica si el operando está usando los registros H,W}
 begin
   if (Oper.catOp = coExpres) and
-     ((Oper.typ = typWord) or (Oper.typ = typDword)) then
+     ((Oper.eleTyp = typWord) or (Oper.eleTyp = typDWord)) then
     exit(true)
   else
     exit(false);
@@ -373,7 +371,7 @@ begin
   {Esta dirección física, la mantendrá este registro hasta el final de la compilación
   y en teoría, hasta el final de la ejecución de programa en el PIC.}
   if not pic.GetFreeByte(reg.offs, reg.bank) then begin
-    GenError('RAM memory is full.');
+    GenError('No enough RAM');
     exit;
   end;
   pic.SetNameRAM(reg.offs, reg.bank, regName);  //pone nombre a registro
@@ -383,7 +381,7 @@ end;
 procedure TGenCodPic.AssignRAMbit(reg: TPicRegisterBit; regName: string);
 begin
   if not pic.GetFreeBit(reg.offs, reg.bank, reg.bit) then begin
-    GenError('RAM memory is full.');
+    GenError('No enough RAM');
     exit;
   end;
   pic.SetNameRAMbit(reg.offs, reg.bank, reg.bit, regName);  //pone nombre a bit
@@ -434,8 +432,7 @@ var
 begin
   tmpVar:= TxpEleVar.Create;
   tmpVar.name := nam;
-  tmpVar.eleType := eleTyp;
-  tmpVar.typ := eleTyp.typRef;
+  tmpVar.typ := eleTyp;
   tmpVar.havAdicPar := false;
   tmpVar.IsTmp := true;  //para que se pueda luego identificar.
   varFields.Add(tmpVar);  //agrega
@@ -516,7 +513,7 @@ begin
     listRegStk.Add(reg0);    //agrega a lista
     regName := 'stk'+IntToSTr(listRegStk.Count);
     AssignRAM(reg0, regName);   //Asigna memoria. Puede generar error.
-    if HayError then exit;
+    if HayError then exit(nil);
   end;
   Result := listRegStk[stackTop];  //toma registro
   Result.used := true;   //lo marca
@@ -545,7 +542,7 @@ begin
     listRegStkBit.Add(reg0);  //agrega a lista
     regName := 'stk'+IntToSTr(listRegStkBit.Count);
     AssignRAMbit(reg0, regName);   //Asigna memoria. Puede generar error.
-    if HayError then exit;
+    if HayError then exit(nil);
   end;
   Result := listRegStkBit[stackTopBit];  //toma registro
   Result.used := true;   //lo marca
@@ -593,6 +590,8 @@ begin
   Result := varStkWord;
 end;
 function TGenCodPic.GetVarDWordFromStk: TxpEleVar;
+{Devuelve la referencia a una variable Dword, que representa al último Dword agregado en
+la pila. Se usa como un medio de trabajar con los datos de la pila.}
 var
   topreg: TPicRegister;
 begin
@@ -619,6 +618,7 @@ begin
      exit(false);
    end;
    dec(stackTopBit);   //Baja puntero
+   exit(true);
 end;
 function TGenCodPic.NewTmpVarWord(rL, rH: TPicRegister): TxpEleVar;
 {Crea una variable temporal Word, con las direcciones de los registros indicados, y
@@ -635,13 +635,13 @@ function TGenCodPic.NewTmpVarDword(rL, rH, rE, rU: TPicRegister): TxpEleVar;
 devuelve la referencia. La variable se crea sin asignación de memoria.}
 begin
   Result := TxpEleVar.Create;
-  Result.typ := typDword;
+  Result.typ := typDWord;
   Result.adrByte0.Assign(rL);  //asigna direcciones
   Result.adrByte1.Assign(rH);
   Result.adrByte2.Assign(rE);
   Result.adrByte3.Assign(rU);
 end;
-function TGenCodPic.FreeStkRegisterByte(var reg: TPicRegister): boolean;
+function TGenCodPic.FreeStkRegisterByte(out reg: TPicRegister): boolean;
 {Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
  byte pedido. Si hubo error, devuelve FALSE.
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
@@ -655,6 +655,7 @@ begin
    reg.used := false;   //marca como no usado
    {Notar que, aunque se devuelve la referencia, el registro está libre, para otra
    operación con GetStkRegisterByte(). Tenerlo en cuenta. }
+   exit(true);
 end;
 function TGenCodPic.FreeStkRegisterWord: boolean;
 begin
@@ -663,6 +664,7 @@ begin
      exit(false);
    end;
    dec(stackTop, 2);   //Baja puntero
+   exit(true);
 end;
 function TGenCodPic.FreeStkRegisterDWord: boolean;
 begin
@@ -671,6 +673,7 @@ begin
      exit(false);
    end;
    dec(stackTop, 4);   //Baja puntero
+   exit(true);
 end;
 ////Rutinas de gestión de memoria para variables
 procedure TGenCodPic.AssignRAMinBit(absAdd, absBit: integer;
@@ -695,7 +698,7 @@ begin
 end;
 procedure TGenCodPic.AssignRAMinByte(absAdd: integer; var reg: TPicRegister;
   regName: string);
-{Aeigna RAM a un registro o lo coloca en la dirección indicada.}
+{Asigna RAM a un registro o lo coloca en la dirección indicada.}
 begin
   //Obtiene los valores de: offs, bnk, y bit, para el alamacenamiento.
   if absAdd=-1 then begin
@@ -719,21 +722,25 @@ creará en la posicón indicada. }
 var
   varName: String;
   absAdd: integer;
-  absBit: integer;
-  typ: TType;
+  absBit, nbytes: integer;
+  typ: TxpEleType;
+  offs, bnk: byte;
 begin
   //Valores solicitados. Ya deben estar iniciado este campo.
   varName := nVar.name;
-  typ := nVar.eleType.typRef;
+  typ := nVar.typ;
   if nVar.adicPar.isAbsol then begin
     absAdd := nVar.adicPar.absAddr;
-    if typ.IsSizeBit then begin
+    if typ.IsBitSize then begin
       absBit := nVar.adicPar.absBit;
+    end else begin
+      absBit := -1;
     end;
   end else begin
     absAdd  := -1;  //no aplica
     absBit  := -1;  //no aplica
   end;
+  //Asigna espacio, de acuerdo al tipo
   if typ = typBit then begin
     AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
   end else if typ = typBool then begin
@@ -753,7 +760,7 @@ begin
       AssignRAMinByte(absAdd  , nVar.adrByte0, varName+'@0');
       AssignRAMinByte(absAdd+1, nVar.adrByte1, varName+'@1');
     end;
-  end else if typ = typDword then begin
+  end else if typ = typDWord then begin
     //Registra variable en la tabla
     if absAdd = -1 then begin  //Variable normal
       //Los 4 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
@@ -768,6 +775,27 @@ begin
       AssignRAMinByte(absAdd+2, nVar.adrByte2, varName+'@2');
       AssignRAMinByte(absAdd+3, nVar.adrByte3, varName+'@3');
     end;
+  end else if typ.catType = tctArray then begin
+    //Es un arreglo de algún tipo
+    if absAdd<>-1 then begin
+      //Se pide mapearlo de forma absoluta
+      GenError('Not implemented.', [varName]);
+      exit;
+    end;
+    //Asignamos espacio en RAM
+    nbytes := typ.arrSize * typ.refType.size;
+    if not pic.GetFreeBytes(nbytes, offs, bnk) then begin
+      GenError('No enough RAM');
+      exit;
+    end;
+    pic.SetNameRAM(offs, bnk, nVar.name);   //Nombre solo al primer byte
+
+    //Fija dirección física. Se usa solamente "adrByte0", como referencia, proque
+    //no se tienen suficientes registros para modelar todo el arreglo.
+    nVar.adrByte0.assigned := true;
+    nVar.adrByte0.used := true;
+    nVar.adrByte0.offs := offs;
+    nVar.adrByte0.bank := bnk;
   end else begin
     GenError('Not implemented.', [varName]);
   end;
@@ -775,20 +803,20 @@ begin
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
 //Métodos para fijar el resultado
-procedure TGenCodPic.SetResult(typ: TType; CatOp: TCatOperan);
+procedure TGenCodPic.SetResult(typ: TxpEleType; CatOp: TCatOperan);
 {Fija los parámetros del resultado de una subexpresion. Este método se debe ejcutar,
 siempre antes de evaluar cada subexpresión, así que es una especie de evento
 "OnSubExpresionStart".}
 begin
   if incDetComm then begin  //Incluir comentario detallado
     if operType = operBinary then begin
-      PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.typ.name + ',' +
-                                  p2^.catOpChr + ':' + p2^.typ.name + ')', false);
+      PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.eleTyp.name + ',' +
+                                  p2^.catOpChr + ':' + p2^.eleTyp.name + ')', false);
     end else begin  //Debe ser unario
-      PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.typ.name + ')', false);
+      PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.eleTyp.name + ')', false);
     end;
   end;
-  res.typ := typ;
+  res.eleTyp := typ;
   res.catOp := CatOp;
   InvertedFromC:=false;   //para limpiar el estado
   if CatOp = coExpres then begin
@@ -832,7 +860,7 @@ procedure TGenCodPic.SetResultConst_dword(valWord: Int64);
 begin
   if not ValidateDWordRange(valWord) then
     exit;  //Error de rango
-  SetResult(typDword, coConst);
+  SetResult(typDWord, coConst);
   res.valInt := valWord;
 end;
 procedure TGenCodPic.SetResultVariab_bit(rVar: TxpEleVar; Inverted: boolean);
@@ -1286,6 +1314,22 @@ constructor TGenCodPic.Create;
 begin
   inherited Create;
   pic := TPIC16.Create;
+  ///////////Crea tipos
+  ClearTypes;
+  typNull := CreateSysEleType('null',t_boolean,-1);
+  //tipo bit
+  typBit := CreateSysEleType('bit', t_uinteger,-1);   //de 1 bit
+  //tipo booleano
+  typBool := CreateSysEleType('boolean',t_boolean,-1);   //de 1 bit
+  //tipo numérico de un solo byte
+  typByte := CreateSysEleType('byte',t_uinteger,1);   //de 1 byte
+  //tipo numérico de dos bytes
+  typWord := CreateSysEleType('word',t_uinteger,2);   //de 2 bytes
+  //tipo numérico de cuatro bytes
+  typDWord := CreateSysEleType('dword',t_uinteger,4);  //de 4 bytes
+  //tipo caracter
+  typChar := CreateSysEleType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como número
+
   //Crea variables de trabajo
   varStkBit := TxpEleVar.Create;
   varStkBit.typ := typBit;
@@ -1294,7 +1338,7 @@ begin
   varStkWord := TxpEleVar.Create;
   varStkWord.typ := typWord;
   varStkDWord := TxpEleVar.Create;
-  varStkDWord.typ := typDword;
+  varStkDWord.typ := typDWord;
   //Crea lista de variables temporales
   varFields:= TxpEleVars.Create(true);
   //Inicializa contenedores

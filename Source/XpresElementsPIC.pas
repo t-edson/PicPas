@@ -1,9 +1,11 @@
 {
-XpresElements
-=============
-Definiciones para el manejo de los elementos del compilador: funciones, constantes, variables.
+XpresElementsPIC
+================
+Definiciones para el manejo de los elementos del compilador: procedimientos, constantes,
+variables, tipos, ....
 Todos estos elementos se deberían almacenar en una estrucutura de arbol.
-Esta unidad es similar a la de Xpres, solamente contiene cambios menores.
+Esta unidad esta basada en la unidad XpresElements de Xpres, pero adaptada a la
+arquitectura de los PIC y al lenguaje de PicPas.
 Por Tito Hinostroza.
 }
 unit XpresElementsPIC;
@@ -55,19 +57,9 @@ type
   end;
   TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros
 
-var
-  /////// Tipos de datos del lenguaje ////////////
-  typNull: TType;     //Tipo nulo (sin tipo) Usado para procedimientos
-  typBit : TType;     //Valor 0 o 1
-  typBool: TType;     //Booleanos
-  typByte: TType;     //número sin signo
-  typWord: TType;     //número sin signo
-  typChar: TType;     //caracter individual
-  typDword:Ttype;     //número sin signo de 32 bits
-
 type
   //Tipos de elementos del lenguaje
-  TxpElemType = (eltNone,  //sin tipo
+  TxpIDClass = (eltNone,  //sin tipo
                  eltMain,  //programa principal
                  eltVar,   //variable
                  eltFunc,  //función
@@ -110,8 +102,9 @@ type
   public
     name : string;        //Nombre de la variable, constante, unidad, tipo, ...
     Parent: TxpElement;   //Referencia al padre
-    elemType: TxpElemType; //No debería ser necesario
+    idClass: TxpIDClass; //No debería ser necesario
     elements: TxpElements; //Referencia a nombres anidados, cuando sea función
+    function Path: string;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
     function LastNode: TxpElement;
     function BodyNode: TxpEleBody;
@@ -148,27 +141,106 @@ type
     tctArray,   //arreglo de otro tipo
     tctRecord   //registro de varios campos
   );
+
+  TxpEleType= class;
+
+  //Tipo operación
+  TxpOperation = class
+    OperatType : TxpEleType;   //tipo de Operando sobre el cual se aplica la operación.
+    proc       : TProcExecOperat;  //Procesamiento de la operación
+  end;
+
+  TxpOperations = specialize TFPGObjectList<TxpOperation>; //lista de operaciones
+
+  { TxpOperator }
+  //Operador
+  TxpOperator = class
+  private
+    Operations: TxpOperations;  //operaciones soportadas. Debería haber tantos como
+                                //Num. Operadores * Num.Tipos compatibles.
+  public
+    txt  : string;    //cadena del operador '+', '-', '++', ...
+    prec : byte;      //precedencia
+    name : string;    //nombre de la operación (suma, resta)
+    kind : TxpOperatorKind;   //Tipo de operador
+    OperationPre: TProcExecOperat;  {Operación asociada al Operador. Usado cuando es un
+                                    operador unario PRE. }
+    OperationPost: TProcExecOperat; {Operación asociada al Operador. Usado cuando es un
+                                    operador unario POST }
+    function CreateOperation(OperandType: TxpEleType; proc: TProcExecOperat
+      ): TxpOperation;  //Crea operación
+    function FindOperation(typ0: TxpEleType): TxpOperation;  //Busca una operación para este operador
+    constructor Create;
+    destructor Destroy; override;
+  end;
+  TxpOperators = specialize TFPGObjectList<TxpOperator>; //lista de operadores
+
   { TxpEleType }
-  //Clase para modelar a los tipos definidos por el usuario y a los tipos del sistema
-  { Notar que es diferente a XpresTypesPIC.TType, porque este elemento, permite crear
-  configruaciones diversas de tipos que incluyen a varios XpresTypesPIC.TType}
+  {Clase para modelar a los tipos definidos por el usuario y a los tipos del sistema.
+  Es una clase relativamente extensa, debido a la flxibilidad que ofrecen lso tipos en
+  Pascal.}
   TxpEleType= class(TxpElement)
-    catType  : TxpCatType;
-    typRef   : TType;   //Referencia al tipo, cuando es tctAtomic o tctArray
-    arrSize  : integer; //Tamaño, cuando es tctArray
+  public   //Eventos
+    {Este evento es llamado automáticamente por el Analizador de expresiones,
+     cuando encuentre una expresión de un solo operando, de este tipo.
+    Por seguridad, debe implementarse siempre para cada tipo creado. La implementación
+    más simple sería devolver en "res", el operando "p1^".}
+    OperationLoad: TProcExecOperat; {Evento. Es llamado cuando se pide evaluar una
+                                 expresión de un solo operando de este tipo. Es un caso
+                                 especial que debe ser tratado por la implementación}
+    {Estos eventos NO se generan automáticamente en TCompilerBase, sino que es la implementación, la
+     que deberá llamarlos. Son como una ayuda para facilitar la implementación.
+     OnPush y OnPop, son útiles para cuando la implementación va a manejar pila.}
+    OnSaveToStk: procedure of object;  //Salva datos en reg. de Pila
+    OnLoadToReg: TProcLoadOperand; {Se usa cuando se solicita cargar un operando
+                                 (de este tipo) en la pila. }
+    OnDefineRegister : procedure of object; {Se usa cuando se solicita descargar un operando
+                                 (de este tipo) de la pila. }
+    OnGlobalDef: TProcDefineVar; {Es llamado cada vez que se encuentra la
+                                  declaración de una variable (de este tipo) en el ámbito global.}
+  public
+    copyOf  : TxpEleType;  //Indica que es una copia de otro tipo
+    grp     : TTypeGroup;  //Grupo del tipo (numérico, cadena, etc)
+    size    : smallint;    //Tamaño en bytes del tipo
+    catType : TxpCatType;
+    arrSize : integer;     //Tamaño, cuando es tctArray
+    refType : TxpEleType;  //Referencia a otro tipo. Valido cuando es puntero o arreglo.
     {Bandera para indicar si la variable, ha sido declarada en la sección INTERFACE. Este
     campo es úitl para cuando se procesan unidades.}
     InInterface: boolean;
+  public  //Campos de operadores
+    Operators: TxpOperators;      //Operadores soportados
+    operAsign: TxpOperator;       //Se guarda una referencia al operador de aignación
+    function CreateBinaryOperator(txt: string; prec: byte; OpName: string
+      ): TxpOperator;
+    function CreateUnaryPreOperator(txt: string; prec: byte; OpName: string;
+      proc: TProcExecOperat): TxpOperator;
+    function CreateUnaryPostOperator(txt: string; prec: byte; OpName: string;
+      proc: TProcExecOperat): TxpOperator;
+    //Funciones de búsqueda
+    function FindBinaryOperator(const OprTxt: string): TxpOperator;
+    function FindUnaryPreOperator(const OprTxt: string): TxpOperator;
+    function FindUnaryPostOperator(const OprTxt: string): TxpOperator;
+    procedure SaveToStk;
+  public  //Manejo de campos
+    fields: TTypFields;
+    procedure CreateField(metName: string; proc: TTypFieldProc);
+  public  //Identificación
     function IsBitSize: boolean;
-    function TypeName: string;
+    function IsByteSize: boolean;
+    function IsWordSize: boolean;
+    function IsDWordSize: boolean;
+    procedure DefineRegister;
+  public
     constructor Create; override;
+    destructor Destroy; override;
   end;
   TxpEleTypes= specialize TFPGObjectList<TxpEleType>; //lista de variables
 
   { TxpEleCon }
   //Clase para modelar a las constantes
   TxpEleCon = class(TxpElement)
-    typ  : TType;         //Tipo del elemento, si aplica
+    typ: TxpEleType;     //Tipo del elemento, si aplica
     //valores de la constante
     val : TConsValue;
     constructor Create; override;
@@ -190,12 +262,15 @@ type
   //Clase para modelar a las variables
   TxpEleVar = class(TxpElement)
   private
+    ftyp: TxpEleType;
     function GetHavAdicPar: boolean;
     procedure SetHavAdicPar(AValue: boolean);
+    function Gettyp: TxpEleType;
+    procedure Settyp(AValue: TxpEleType);
   public   //Manejo de parámetros adicionales
-    typ     : TType;      //Debe desaparecer, porque ya se tiene eleType
-    eleType   : TxpEleType;   //Referencia al elemento de tipo
-    adicPar   : TAdicVarDec;  //Parámetros adicionales en la declaración de la variable.
+    adicPar: TAdicVarDec;  //Parámetros adicionales en la declaración de la variable.
+    //Referencia al elemento de tipo
+    property typ: TxpEleType read Gettyp write Settyp;
     //Indica si la variable tiene parámetros adicionales en la declaración
     property havAdicPar: boolean read GetHavAdicPar write SetHavAdicPar;
   public
@@ -233,7 +308,7 @@ type
   //Parámetro de una función
   TxpParFunc = record
     name: string;    //nombre de parámetro
-    typ : TType;     //Debería ser de tipo "TxpEleType"
+    typ : TxpEleType;  //Referencia al tipo
     pvar: TxpEleVar; //referencia a la variable que se usa para el parámetro
   end;
 
@@ -243,7 +318,7 @@ type
   TProcExecFunction = procedure(fun: TxpEleFun) of object;  //con índice de función
   TxpEleFun = class(TxpElement)
   public
-    typ  : TType;     //Debería ser de tipo "TxpEleType"
+    typ: TxpEleType;  //Referencia al tipo
     pars: array of TxpParFunc;  //parámetros de entrada
     adrr: integer;     //Dirección física, en donde se compila
     adrReturn: integer;  //Dirección física del RETURN final de la función.
@@ -274,7 +349,7 @@ type
     IsInterrupt : boolean;
     ///////////////
     procedure ClearParams;
-    procedure CreateParam(parName: string; typ0: ttype; pvar: TxpEleVar);
+    procedure CreateParam(parName: string; typ0: TxpEleType; pvar: TxpEleVar);
     function SameParams(Fun2: TxpEleFun): boolean;
     function ParamTypesList: string;
     function DuplicateIn(list: TxpElements): boolean; override;
@@ -351,6 +426,18 @@ type
     destructor Destroy; override;
   end;
 
+var
+  ///////////  Tipos del sistema ////////////////
+  typNull : TxpEleType;
+  typBit  : TxpEleType;
+  typBool : TxpEleType;
+  typByte : TxpEleType;
+  typWord : TxpEleType;
+  typDWord: TxpEleType;
+  typChar : TxpEleType;
+  //Operador nulo. Usado como valor cero.
+  nullOper : TxpOperator;
+
 implementation
 
 { TPicRegister }
@@ -421,7 +508,7 @@ var
   elem: TxpElement;
 begin
   elem := LastNode;   //Debe ser el último
-  if not(elem is TxpEleBody) then begin
+  if elem.idClass <> eltBody then begin
     exit(nil);  //No deberría pasar
   end;
   //Devuelve referencia
@@ -521,9 +608,21 @@ begin
   end;
   exit(false);
 end;
+function TxpElement.Path: string;
+{Devuelve una cadena, que indica la ruta del elemento, dentro del árbol de sintaxis.}
+var
+  ele: TxpElement;
+begin
+  ele := self;
+  Result := '';
+  while ele<>nil do begin
+    Result := '\' + ele.name + Result;
+    ele := ele.Parent;
+  end;
+end;
 constructor TxpElement.Create;
 begin
-  elemType := eltNone;
+  idClass := eltNone;
   lstCallers:= TxpListCallers.Create(true);
 end;
 destructor TxpElement.Destroy;
@@ -577,19 +676,27 @@ end;
 constructor TxpEleMain.Create;
 begin
   inherited;
-  elemType:=eltMain;
+  idClass:=eltMain;
   Parent := nil;  //la raiz no tiene padre
 end;
 { TxpEleCon }
 constructor TxpEleCon.Create;
 begin
   inherited;
-  elemType:=eltCons;
+  idClass:=eltCons;
 end;
 { TxpEleVar }
 function TxpEleVar.GetHavAdicPar: boolean;
 begin
   Result := adicPar.isAbsol;  //De momento, es el único parámetro adicional
+end;
+function TxpEleVar.Gettyp: TxpEleType;
+begin
+  if ftyp.copyOf<>nil then Result := ftyp.copyOf else Result := ftyp;
+end;
+procedure TxpEleVar.Settyp(AValue: TxpEleType);
+begin
+  ftyp := AValue;
 end;
 procedure TxpEleVar.SetHavAdicPar(AValue: boolean);
 begin
@@ -599,17 +706,14 @@ function TxpEleVar.AbsAddr: word;
 {Devuelve la dirección absoluta de la variable. Tener en cuenta que la variable, no
 siempre tiene un solo byte, así que se trata de devolver siempre la dirección del
 byte de menor peso.}
-var
-  atyp: TType;
 begin
-  if eleType.catType = tctAtomic then begin
+  if typ.catType = tctAtomic then begin
     //Tipo básico
-    atyp := eleType.typRef;  //este es el tipo
-    if (atyp = typBit) or (atyp = typBool) then begin
+    if (typ = typBit) or (typ = typBool) then begin
       Result := adrBit.AbsAdrr;
-    end else if (atyp = typByte) or (atyp = typChar) then begin
+    end else if (typ = typByte) or (typ = typChar) then begin
       Result := adrByte0.AbsAdrr;
-    end else if (atyp = typWord) or (atyp = typDword) then begin
+    end else if (typ = typWord) or (typ = typDWord) then begin
       Result := adrByte0.AbsAdrr;
     end else begin
       Result := ADRR_ERROR;
@@ -622,47 +726,67 @@ end;
 function TxpEleVar.AbsAddrL: word;
 {Dirección absoluta de la variable de menor pero, cuando es de tipo WORD.}
 begin
-  if (typ = typWord) or (typ = typDWord) then begin
-    Result := adrByte0.AbsAdrr;
+  if typ.catType = tctAtomic then begin
+    if (typ = typWord) or (typ = typDWord) then begin
+      Result := adrByte0.AbsAdrr;
+    end else begin
+      Result := ADRR_ERROR;
+    end;
   end else begin
+    //No soportado
     Result := ADRR_ERROR;
   end;
 end;
 function TxpEleVar.AbsAddrH: word;
 {Dirección absoluta de la variable de mayor pero, cuando es de tipo WORD.}
 begin
-  if (typ = typWord) or (typ = typDWord) then begin
-    Result := adrByte1.AbsAdrr;
+  if typ.catType = tctAtomic then begin
+    if (typ = typWord) or (typ = typDWord) then begin
+      Result := adrByte1.AbsAdrr;
+    end else begin
+      Result := ADRR_ERROR;
+    end;
   end else begin
+    //No soportado
     Result := ADRR_ERROR;
   end;
 end;
 function TxpEleVar.AbsAddrE: word;
 begin
-  if (typ = typDWord) then begin
-    Result := adrByte2.AbsAdrr;
+  if typ.catType = tctAtomic then begin
+    if (typ = typDWord) then begin
+      Result := adrByte2.AbsAdrr;
+    end else begin
+      Result := ADRR_ERROR;
+    end;
   end else begin
+    //No soportado
     Result := ADRR_ERROR;
   end;
 end;
 function TxpEleVar.AbsAddrU: word;
 begin
-  if (typ = typDWord) then begin
-    Result := adrByte3.AbsAdrr;
+  if typ.catType = tctAtomic then begin
+    if (typ = typDWord) then begin
+      Result := adrByte3.AbsAdrr;
+    end else begin
+      Result := ADRR_ERROR;
+    end;
   end else begin
+    //No soportado
     Result := ADRR_ERROR;
   end;
 end;
 function TxpEleVar.AddrString: string;
 {Devuelve una cadena, que representa a la dirección física.}
 begin
-  if (typ = typBit) or (typ = typBool) then begin
+  if typ.IsBitSize then begin
     Result := 'bnk'+ IntToStr(adrBit.bank) + ':$' + IntToHex(adrBit.offs, 3) + '.' + IntToStr(adrBit.bit);
-  end else if (typ = typByte) or (typ = typChar) then begin
+  end else if typ.IsByteSize then begin
     Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
-  end else if typ = typWord then begin
+  end else if typ.IsWordSize then begin
     Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
-  end else if typ = typDword then begin
+  end else if typ.IsDWordSize then begin
     Result := 'bnk'+ IntToStr(adrByte0.bank) + ':$' + IntToHex(adrByte0.offs, 3);
   end else begin
     Result := '';   //Error
@@ -671,16 +795,17 @@ end;
 function TxpEleVar.BitMask: byte;
 {Devuelve la máscara, de acuerdo a su valor de "bit".}
 begin
-    case adrBit.bit of
-    0: Result := %00000001;
-    1: Result := %00000010;
-    2: Result := %00000100;
-    3: Result := %00001000;
-    4: Result := %00010000;
-    5: Result := %00100000;
-    6: Result := %01000000;
-    7: Result := %10000000;
-    end;
+  Result := 0;
+  case adrBit.bit of
+  0: Result := %00000001;
+  1: Result := %00000010;
+  2: Result := %00000100;
+  3: Result := %00001000;
+  4: Result := %00010000;
+  5: Result := %00100000;
+  6: Result := %01000000;
+  7: Result := %10000000;
+  end;
 end;
 procedure TxpEleVar.ResetAddress;
 begin
@@ -704,7 +829,7 @@ end;
 constructor TxpEleVar.Create;
 begin
   inherited;
-  elemType:=eltVar;
+  idClass:=eltVar;
   adrBit:= TPicRegisterBit.Create;  //
   adrByte0:= TPicRegister.Create;
   adrByte1:= TPicRegister.Create;
@@ -720,34 +845,224 @@ begin
   adrBit.Destroy;
   inherited Destroy;
 end;
+
+{ TxpOperator }
+function TxpOperator.CreateOperation(OperandType: TxpEleType;
+  proc: TProcExecOperat): TxpOperation;
+var
+  r: TxpOperation;
+begin
+  //agrega
+  r := TxpOperation.Create;
+  r.OperatType:=OperandType;
+  r.proc:=proc;
+  //agrega
+  operations.Add(r);
+  Result := r;
+end;
+function TxpOperator.FindOperation(typ0: TxpEleType): TxpOperation;
+{Busca, si encuentra definida, alguna operación, de este operador con el tipo indicado.
+Si no lo encuentra devuelve NIL}
+var
+  r: TxpOperation;
+begin
+  Result := nil;
+  for r in Operations do begin
+    if r.OperatType = typ0 then begin
+      exit(r);
+    end;
+  end;
+end;
+constructor TxpOperator.Create;
+begin
+  Operations := TxpOperations.Create(true);
+end;
+destructor TxpOperator.Destroy;
+begin
+  Operations.Free;
+  inherited Destroy;
+end;
+
 { TxpEleType }
+function TxpEleType.CreateBinaryOperator(txt: string; prec: byte; OpName: string
+  ): TxpOperator;
+{Permite crear un nuevo ooperador binario soportado por este tipo de datos. Si hubiera
+error, devuelve NIL. En caso normal devuelve una referencia al operador creado}
+var
+  r: TxpOperator;  //operador
+begin
+  //verifica nombre
+  if FindBinaryOperator(txt)<>nullOper then begin
+    Result := nil;  //indica que hubo error
+    exit;
+  end;
+  //Crea y configura objeto
+  r := TxpOperator.Create;
+  r.txt:=txt;
+  r.prec:=prec;
+  r.name:=OpName;
+  r.kind:=opkBinary;
+  //Agrega operador
+  Operators.Add(r);
+  Result := r;
+  //Verifica si es el operador de asignación
+  if txt = ':=' then begin
+    //Lo guarda porque este operador se usa y no vale la pena buscarlo
+    operAsign := r;
+  end;
+end;
+function TxpEleType.CreateUnaryPreOperator(txt: string; prec: byte; OpName: string;
+  proc: TProcExecOperat): TxpOperator;
+{Crea operador unario de tipo Pre, para este tipo de dato.}
+var
+  r: TxpOperator;  //operador
+begin
+  //Crea y configura objeto
+  r := TxpOperator.Create;
+  r.txt:=txt;
+  r.prec:=prec;
+  r.name:=OpName;
+  r.kind:=opkUnaryPre;
+  r.OperationPre:=proc;
+  //Agrega operador
+  Operators.Add(r);
+  Result := r;
+end;
+function TxpEleType.CreateUnaryPostOperator(txt: string; prec: byte; OpName: string;
+  proc: TProcExecOperat): TxpOperator;
+{Crea operador binario de tipo Post, para este tipo de dato.}
+var
+  r: TxpOperator;  //operador
+begin
+  //Crea y configura objeto
+  r := TxpOperator.Create;
+  r.txt:=txt;
+  r.prec:=prec;
+  r.name:=OpName;
+  r.kind:=opkUnaryPost;
+  r.OperationPost:=proc;
+  //Agrega operador
+  Operators.Add(r);
+  Result := r;
+end;
+function TxpEleType.FindBinaryOperator(const OprTxt: string): TxpOperator;
+{Recibe el texto de un operador y devuelve una referencia a un objeto TxpOperator, del
+tipo. Si no está definido el operador para este tipo, devuelve nullOper.}
+var
+  oper: TxpOperator;
+begin
+//  if copyOf<>nil then begin  //Es copia, pasa a la copia
+//    exit(copyOf.FindBinaryOperator(OprTxt));
+//  end;
+  /////////////////////////////////////////////////////////
+  Result := nullOper;   //valor por defecto
+  for oper in Operators do begin
+    if (oper.kind = opkBinary) and (oper.txt = upCase(OprTxt)) then begin
+      exit(oper); //está definido
+    end;
+  end;
+  //No encontró
+  Result.txt := OprTxt;    //para que sepa el operador leído
+end;
+function TxpEleType.FindUnaryPreOperator(const OprTxt: string): TxpOperator;
+{Recibe el texto de un operador unario Pre y devuelve una referencia a un objeto
+TxpOperator, del tipo. Si no está definido el operador para este tipo, devuelve nullOper.}
+var
+  oper: TxpOperator;
+begin
+//  if copyOf<>nil then begin  //Es copia, pasa a la copia
+//    exit(copyOf.FindUnaryPreOperator(OprTxt));
+//  end;
+  /////////////////////////////////////////////////////////
+  Result := nullOper;   //valor por defecto
+  for oper in Operators do begin
+    if (oper.kind = opkUnaryPre) and (oper.txt = upCase(OprTxt)) then begin
+      exit(oper); //está definido
+    end;
+  end;
+  //no encontró
+  Result.txt := OprTxt;    //para que sepa el operador leído
+end;
+function TxpEleType.FindUnaryPostOperator(const OprTxt: string): TxpOperator;
+{Recibe el texto de un operador unario Post y devuelve una referencia a un objeto
+TxpOperator, del tipo. Si no está definido el operador para este tipo, devuelve nullOper.}
+var
+  oper: TxpOperator;
+begin
+//  if copyOf<>nil then begin  //Es copia, pasa a la copia
+//    exit(copyOf.FindUnaryPostOperator(OprTxt));
+//  end;
+  /////////////////////////////////////////////////////////
+  Result := nullOper;   //valor por defecto
+  for oper in Operators do begin
+    if (oper.kind = opkUnaryPost) and (oper.txt = upCase(OprTxt)) then begin
+      exit(oper); //está definido
+    end;
+  end;
+  //no encontró
+  Result.txt := OprTxt;    //para que sepa el operador leído
+end;
+procedure TxpEleType.SaveToStk;
+begin
+  if OnSaveToStk<>nil then OnSaveToStk;
+end;
+
+procedure TxpEleType.CreateField(metName: string; proc: TTypFieldProc);
+{Crea una función del sistema. A diferencia de las funciones definidas por el usuario,
+una función del sistema se crea, sin crear espacios de nombre. La idea es poder
+crearlas rápidamente.}
+var
+  fun : TTypField;
+begin
+  fun := TTypField.Create;  //Se crea como una función normal
+  fun.Name := metName;
+  fun.proc := proc;
+//no verifica duplicidad
+  fields.Add(fun);
+end;
 function TxpEleType.IsBitSize: boolean;
 {Indica si el tipo, tiene 1 bit de tamaño}
 begin
-  if catType = tctAtomic then begin
-    //Solo hay dos tipso de tamaño bit:
-    Result := (typRef = typBit) or (typref = typBool);
-  end else begin
-    //Los tipos estructurados, no deberían poder ser de 1 bit
-    exit(false);
-  end;
+//  if copyOf<>nil then exit(copyOf.IsBitSize);  //verifica
+  Result := (self = typBit) or (self = typBool);
 end;
-function TxpEleType.TypeName: string;
-{Devuelve una cadena con el nombre del tipo. }
-{ TODO : Ver si no es lo mismo que el campo "Name" }
+function TxpEleType.IsByteSize: boolean;
+{Indica si el tipo, tiene 1 byte de tamaño}
 begin
-  case catType of
-  tctAtomic: begin
-    Result := typRef.name;   //Este debe ser el tipo, en este caso
-  end;
-  else
-    Result := 'Unknown'
-  end;
+//  if copyOf<>nil then exit(copyOf.IsByteSize);  //verifica
+  Result := (self = typByte) or (self = typChar);
+end;
+function TxpEleType.IsWordSize: boolean;
+{Indica si el tipo, tiene 2 bytes de tamaño}
+begin
+//  if copyOf<>nil then exit(copyOf.IsWordSize);  //verifica
+  Result := (self = typWord);
+end;
+function TxpEleType.IsDWordSize: boolean;
+{Indica si el tipo, tiene 4 bytes de tamaño}
+begin
+//  if copyOf<>nil then exit(copyOf.IsDWordSize);  //verifica
+  Result := (self = typDWord);
+end;
+procedure TxpEleType.DefineRegister;
+{Define los registros que va a usar el tipo de dato.}
+begin
+  if OnDefineRegister<>nil then OnDefineRegister;
 end;
 constructor TxpEleType.Create;
 begin
   inherited;
-  elemType:=eltType;
+  idClass:=eltType;
+  //Crea lista de campos
+  fields:= TTypFields.Create(true);
+  //Ceea lista de operadores
+  Operators := TxpOperators.Create(true);  //Lista de operadores aplicables a este tipo
+end;
+destructor TxpEleType.Destroy;
+begin
+  Operators.Destroy;
+  fields.Destroy;
+  inherited;
 end;
 { TxpEleFun }
 procedure TxpEleFun.ClearParams;
@@ -755,7 +1070,7 @@ procedure TxpEleFun.ClearParams;
 begin
   setlength(pars,0);
 end;
-procedure TxpEleFun.CreateParam(parName: string; typ0: ttype; pvar: TxpEleVar);
+procedure TxpEleFun.CreateParam(parName: string; typ0: TxpEleType; pvar: TxpEleVar);
 //Crea un parámetro para la función
 var
   n: Integer;
@@ -809,7 +1124,7 @@ begin
     if ele = self then Continue;  //no se compara el mismo
     if upcase(ele.name) = uName then begin
       //hay coincidencia de nombre
-      if ele.elemType = eltFunc then begin
+      if ele.idClass = eltFunc then begin
         //para las funciones, se debe comparar los parámetros
         if SameParams(TxpEleFun(ele)) then begin
           exit(true);
@@ -832,7 +1147,7 @@ begin
   //Marca sus elementos, como no llamados
   for elem in elements do begin
     elem.ClearCallers;
-    if elem is TxpEleVar then begin
+    if elem.idClass = eltVar then begin
       TxpEleVar(elem).ResetAddress;
     end;
   end;
@@ -840,26 +1155,26 @@ end;
 constructor TxpEleFun.Create;
 begin
   inherited;
-  elemType:=eltFunc;
+  idClass:=eltFunc;
 end;
 
 { TxpEleUnit }
 constructor TxpEleUnit.Create;
 begin
   inherited;
-  elemType:=eltUnit;
+  idClass:=eltUnit;
 end;
 { TxpEleBody }
 constructor TxpEleBody.Create;
 begin
   inherited;
-  elemType := eltBody;
+  idClass := eltBody;
 end;
 { TxpEleDIREC }
 constructor TxpEleDIREC.Create;
 begin
   inherited Create;
-  elemType := eltBody;
+  idClass := eltBody;
 end;
 { TXpTreeElements }
 procedure TXpTreeElements.Clear;
@@ -880,7 +1195,7 @@ una exploración sintáctica normal.}
   begin
     if nod.elements<>nil then begin
       for ele in nod.elements do begin
-        if ele.elemType = eltVar then begin
+        if ele.idClass = eltVar then begin
           AllVars.Add(TxpEleVar(ele));
         end else begin
           if ele.elements<>nil then
@@ -902,7 +1217,7 @@ unidades.}
   begin
     if nod.elements<>nil then begin
       for ele in nod.elements do begin
-        if ele.elemType = eltFunc then begin
+        if ele.idClass = eltFunc then begin
           AllFuncs.Add(TxpEleFun(ele));
         end else begin
           if ele.elements<>nil then
@@ -1016,7 +1331,7 @@ begin
       exit;
     end else begin
       //No tiene el mismo nombre, a lo mejor es una unidad
-      if (elem is TxpEleUnit) and not inUnit then begin   //Si es el priemr nodo de unidad
+      if (elem.idClass = eltUnit) and not inUnit then begin   //Si es el priemr nodo de unidad
         //¡Diablos es una unidad! Ahora tenemos que implementar la búsqueda.
         inUnit := true;   //Marca, para que solo busque en un nivel
         curFindIdx := elem.elements.Count;  //para que busque desde el último
@@ -1039,7 +1354,7 @@ begin
   //Busca recursivamente, a partir del espacio actual
   curFindName := name;     //Este valor no cambiará en toda la búsqueda
   inUnit := false;     //Inicia bandera
-  if curNode is TxpEleBody then begin
+  if curNode.idClass = eltBody then begin
     {Para los cuerpos de procemientos o de programa, se debe explorar hacia atrás a
     partir de la posición del nodo actual.}
     curFindIdx := curNode.Index;  //Ubica posición
@@ -1048,12 +1363,13 @@ begin
   end else begin
     {La otras forma de resolución, debe ser:
     1. Declaración de constantes, cuando se definen como expresión con otras constantes
-    2. Declaración de variables, , cuando se definen como ABSOLUTE <variable>
+    2. Declaración de variables, cuando se definen como ABSOLUTE <variable>
+    3. Declaración de variables, cuando se definen de un tipo definido en TYPES.
     }
     curFindNode := curNode;  //Actualiza nodo actual de búsqueda
-    {Formalmente debería apuntar a la posicñon del elemento actual, pero se deja
+    {Formalmente debería apuntar a la posición del elemento actual, pero se deja
     apuntando a la posición final, sin peligro, porque, la resolución de nombres para
-    consatntes y variables, se hace solo en la primera pasada (con el árbol de sintaxis
+    constantes y variables, se hace solo en la primera pasada (con el árbol de sintaxis
     llenándose.)}
     curFindIdx := curNode.elements.Count;
     //Busca
@@ -1069,7 +1385,7 @@ var
 begin
   repeat
     ele := FindNext;
-  until (ele=nil) or (ele is TxpEleFun);
+  until (ele=nil) or (ele.idClass = eltFunc);
   //Puede que haya encontrado la función o no
   if ele = nil then exit(nil);  //No encontró
   Result := TxpEleFun(ele);   //devuelve como función
@@ -1082,7 +1398,7 @@ var
 begin
   uName := upcase(varName);
   for ele in curNode.elements do begin
-    if (ele.elemType = eltVar) and (upCase(ele.name) = uName) then begin
+    if (ele.idClass = eltVar) and (upCase(ele.name) = uName) then begin
       Result := TxpEleVar(ele);
       exit;
     end;
@@ -1103,7 +1419,7 @@ var
     if nod.elements<>nil then begin
       //Explora a todos sus elementos
       for ele in nod.elements do begin
-        if ele.elemType = eltBody then begin
+        if ele.idClass = eltBody then begin
           //Encontró un Body, verifica
           if ele.posXYin(posXY) then begin
             res := TxpEleBody(ele);   //guarda referencia
@@ -1183,7 +1499,7 @@ begin
   Result := res;
 end;
 
-//constructor y destructror
+//constructor y destructor
 constructor TXpTreeElements.Create;
 begin
   main:= TxpEleMain.Create;  //No debería
@@ -1200,5 +1516,11 @@ begin
   AllFuncs.Free;
   inherited Destroy;
 end;
+initialization
+  //crea el operador NULL
+  nullOper := TxpOperator.Create;
+
+finalization
+  nullOper.Free;
 end.
 

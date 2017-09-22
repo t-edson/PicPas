@@ -34,7 +34,7 @@ type  //Tipos para manejo de expresiones
   { TDirVar }
   //Define a una variable.
   TDirVar= class
-  private
+  private  //Eventos
     {Estos eventos se usan cuando se requiere direccionar, la lectura/escritura de
     valores de la expresión.}
     OnReadNum: TDirEveReadNum;
@@ -79,6 +79,7 @@ type
     procedure ProcMSGERR;
     procedure ProcMSGWAR;
     procedure ProcSET_MAPPED_RAM;
+    procedure ProcCLEAR_STATE_RAM;
     procedure ProcSET_STATE_RAM;
     function read_CURRBANK: Single;
     function read_PIC_FREQUEN: Single;
@@ -1236,6 +1237,11 @@ begin
   pic.SetMappRAMCom(txtMsg);
   if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
 end;
+procedure TParserDirec.ProcCLEAR_STATE_RAM;
+{Limpia el estado de la memoria RAM}
+begin
+   pic.DisableAllRAM;
+end;
 procedure TParserDirec.IniExplorDirec(out lin: string);
 (*Inicia la exploración del token de directiva. Extrae el delimitador final "}", y
 posiciona al lexer justo despues del delimitador inicial "{$". Devuelve la línea
@@ -1336,6 +1342,7 @@ begin
   'WARNING'  : ProcWARNING;
   'ERROR'    : ProcERROR;
   'SET'      : ProcSET;
+  'CLEAR_STATE_RAM': ProcCLEAR_STATE_RAM;
   'SET_STATE_RAM': ProcSET_STATE_RAM;
   'SET_MAPPED_RAM': ProcSET_MAPPED_RAM;
   else

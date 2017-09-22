@@ -55,7 +55,7 @@ type  //tipos enumerados
     coExpres_Expres= %1010
   );
 
-  TType = class;
+//  TType = class;
 
   //Eventos
   TProcExecOperat = procedure of object;
@@ -63,7 +63,7 @@ type  //tipos enumerados
   {Evento para cargar un  operando en la pila.
   "OpPtr" debería ser "TOperand", pero aún no se define "TOperand".}
   TProcLoadOperand = procedure(const OpPtr: pointer) of object;
-
+{
   //Tipo operación
   TxpOperation = class
     OperatType : TType;   //tipo de Operando sobre el cual se aplica la operación.
@@ -71,13 +71,13 @@ type  //tipos enumerados
   end;
 
   TxpOperations = specialize TFPGObjectList<TxpOperation>; //lista de operaciones
-
+}
   TxpOperatorKind = (
     opkUnaryPre,   //operador Unario Pre
     opkUnaryPost,  //operador Unario Post
     opkBinary      //operador Binario
   );
-
+{
   { TxpOperator }
   //Operador
   TxpOperator = class
@@ -100,6 +100,7 @@ type  //tipos enumerados
   end;
 
   TxpOperators = specialize TFPGObjectList<TxpOperator>; //lista de operadores
+}
   {Evento para llamar al código de procesamiento de un campo.
   "OpPtr" debería ser "TOperand", pero aún no se define "TOperand".}
   TTypFieldProc = procedure(const OpPtr: pointer) of object;
@@ -113,7 +114,7 @@ type  //tipos enumerados
   { TType }
   {Tipos de datos básicos. Notar que esta calse define a los tipos básicos del lenguaje,
    no a los tipos predefinidos.}
-  TType = class
+{  TType = class
   public
     name : string;      //Nombre del tipo ("int8", "int16", ...)
     grp  : TTypeGroup;  //Grupo del tipo (numérico, cadena, etc)
@@ -140,7 +141,8 @@ type  //tipos enumerados
     OnGlobalDef: TProcDefineVar; {Es llamado cada vez que se encuentra la
                                   declaración de una variable (de este tipo) en el ámbito global.}
   public  //Campos de operadores
-    Operators: TxpOperators;      //operadores soportados
+    Operators: TxpOperators;      //Operadores soportados
+    operAsign: TxpOperator;       //Se guarda una referencia al operador de aignación
     function CreateBinaryOperator(txt: string; prec: byte; OpName: string): TxpOperator;
     function CreateUnaryPreOperator(txt: string; prec: byte; OpName: string;
                                     proc: TProcExecOperat): TxpOperator;
@@ -152,7 +154,7 @@ type  //tipos enumerados
     function FindUnaryPostOperator(const OprTxt: string): TxpOperator;
   public  //Manejo de campos
     fields: TTypFields;   {lista de métodos del tipo. Se define como lista dinámica,
-                                 para permitir agregar nuevos métodos a los tipos básicos.}
+                          para permitir agregar nuevos métodos a los tipos básicos.}
     procedure CreateField(metName: string; proc: TTypFieldProc);
   public   //Inicialización
     constructor Create;
@@ -161,10 +163,11 @@ type  //tipos enumerados
 
   //Lista de tipos
   TTypes = specialize TFPGObjectList<TType>; //lista de bloques
-
+}
+{
 var
   nullOper : TxpOperator; //Operador nulo. Usado como valor cero.
-
+}
 implementation
 
 {function TCompilerBase.CategName(cat: TCatType): string;
@@ -179,7 +182,7 @@ begin
    else Result := 'Desconocido';
    end;
 end;}
-
+{
 { TxpOperator }
 function TxpOperator.CreateOperation(OperadType: TType; proc: TProcExecOperat
   ): TxpOperation;
@@ -216,6 +219,7 @@ begin
   Operations.Free;
   inherited Destroy;
 end;
+
 { TxpType }
 procedure TType.SaveToStk;
 begin
@@ -232,7 +236,7 @@ begin
 end;
 function TType.CreateBinaryOperator(txt: string; prec: byte; OpName: string
   ): TxpOperator;
-{Permite crear un nuevo ooperador bianrio soportado por este tipo de datos. Si hubiera
+{Permite crear un nuevo ooperador binario soportado por este tipo de datos. Si hubiera
 error, devuelve NIL. En caso normal devuelve una referencia al operador creado}
 var
   r: TxpOperator;  //operador
@@ -251,6 +255,11 @@ begin
   //Agrega operador
   Operators.Add(r);
   Result := r;
+  //Verifica si es el operador de asignación
+  if txt = ':=' then begin
+    //Lo guarda porque este operador se usa y no vale la pena buscarlo
+    operAsign := r;
+  end;
 end;
 function TType.CreateUnaryPreOperator(txt: string; prec: byte; OpName: string;
   proc: TProcExecOperat): TxpOperator;
@@ -334,9 +343,7 @@ begin
 end;
 
 procedure TType.CreateField(metName: string; proc: TTypFieldProc);
-{Crea una función del sistema. A diferencia de las funciones definidas por el usuario,
-una función del sistema se crea, sin crear espacios de nombre. La idea es poder
-crearlas rápidamente.}
+{Crea un campo para un tipo. Algo similar a un método, propiedad o Type helper.}
 var
   fun : TTypField;
 begin
@@ -357,13 +364,13 @@ begin
   Operators.Free;
   inherited Destroy;
 end;
-
-initialization
+}
+{initialization
   //crea el operador NULL
   nullOper := TxpOperator.Create;
 
 finalization
-  nullOper.Free;
+  nullOper.Free;}
 
 end.
 
