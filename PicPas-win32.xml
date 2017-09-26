@@ -9,7 +9,7 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="243"/>
+  <SynTreeWidth Val="209"/>
   <viewMode Val="2"/>
   <MessPanBack Val="2368548"/>
   <MessPanText Val="16777215"/>
@@ -40,17 +40,17 @@
     <VerMarPle Val="True"/>
     <cFonPan Val="2105376"/>
     <cTxtPan Val="12632256"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.7.7\TestCode\Simul_1\Test2_Byte2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.7\TestCode\Simul_1\Test2_Byte3.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.7\TestCode\Simul_1\Test2_Byte1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.7\samples\BlinkLed.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.7.8\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.8\temp\aaa.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.8\temp\NewFile2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.7\temp\NewFile2.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.7.7\temp\NewFile1.pas
 "/>
   </Edit>
   <IncHeadMpu Val="True"/>
   <IncDecVar Val="True"/>
   <VarDecType Val="1"/>
-  <IncAddress Val="False"/>
+  <IncAddress Val="True"/>
   <IncComment Val="True"/>
   <IncComment2 Val="False"/>
   <ExcUnused Val="True"/>

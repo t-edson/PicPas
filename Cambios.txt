@@ -1,3 +1,70 @@
+PicPas 0.7.8
+============
+Se corrigen algunas advertencias, generadas por el compilador.
+Se crean los métodos DefineRegister, IsByteSize, IsWordSize, IsDWordSize, en TxpEleType.
+Se quita la referencia, en distintos puntos del código a TxpEleVar.typ
+Se mueve la creación de tipos de TGenCod.DefCompiler() a TGenCodPic.Create().
+Se cambia de nombre TxpElement.elemType por idClass, y se pasa a usar en lugar del 
+operador Is, que es más lento.
+Se crea el tipo typEleNull.
+Se cambia el tipo de RTState a TxpEleType.
+Se elimina el campo Ttype de los elementos y se pasa a usar TxpEleType (Esto involucró 
+una cantidad considerable de cambios, a lo largo de todo el código).
+Se mueven métodos de TType, a envolturas en TxpEleType.
+Se elimina finalmente el campo TType de TxpEleVar.
+Se mueven todas las funcionalidades de TType a TxpEleType.
+Se elimina definitivamente, la clase TType, para pasar a usar TxpEleType.
+Se corrige un error en el manejo de contextos cuando se usaba USES {$variable}.
+Se corrige el posicionamiento en el árbol de sintaxis al reservar espacio para las 
+variables usadas, en TCompiler.CompileLinkProgram.
+Se modifica FormElemProperty, para no mostrar el bit de dirección, cuando la variable 
+no es de tipo bit.
+Se fusionan los tres archivos de pruebas patrón, para bytes (Test2_Byte1, Test2_Byte2, y
+Test2_Byte3), en uno solo y pasa a la carpeta /Simul_3
+Se corrige una falla en el algoritmo de desplazamiento de bytes, y se crea rutinas de 
+prueba.
+Se modifica TCompilerBase.IdentifyField(), para que no tome el identificador de campo, y
+se deja esa tarea al procedimiento del campo, de modo que se permitirá manejar parámetros.
+Se pasa a usar la versión 1.1, de la librería PicUtils, para corregir un problema en el 
+desensamblado de código de más de 2K de tamaño.
+Se implementan opciones de ejecución temporizada en el simulador, y se agregan nuevas
+acciones a la interfaz.
+Se corrige un error en la rutina delay_ms(), cuando trabajaba con 12MHz y se implementa 
+para 16MHz y 20MHz.
+Se implementan los métodos setitem() y getitem() para los arreglos de bytes, como primer 
+paso al uso de la sintaxis común de corchetes.
+
+
+PENDIENTES
+Resolver el problema de uso adicional de RAM, para la operación Oper_dword_add_dword,
+cuando llama a Oper_dword_aadd_dword.
+
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absoulte a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
+
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema.
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Incluir punteros, arreglos y registros.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar las funciones de búsqueda y reemplazo de texto.
+
+
 PicPas 0.7.7
 ============
 Se pasa a usar la versión 1.0 de PicPas, para mejorar en la representación del
@@ -9,7 +76,7 @@ Se agregan las variables del sistema PIC_IFLASH, PIC_NPINS y PIC_MAXFLASH al Int
 de directivas.
 Se agregan las funciones round() y trunc() , al Intérprete de directivas.
 Se agregan las funciones length(), upcase() y lowcase(), al Intérprete de directivas.
-Se agregan las directivas $SET_STATE_RAM y $SET_MAPPED_RAM
+Se agregan las directivas $CLEAR_STATE_RAM, $SET_STATE_RAM y $SET_MAPPED_RAM
 Se agregan las diectivas {$MSGERR }, {$MSGWAR } y {$INFO }
 Se configura un modelo por defecto para el PIC, al iniciar la compilación: El modelo 
 DEFAULT.
@@ -41,39 +108,7 @@ Se mueve el campo TxpElement.typ, a las clases en las que se aplica: TxpEleVar, 
 y TxpEleFun.
 Se crean patrones de prueba para las operaciones lógicas con bytes.
 Se crea la operación NOT para bytes.
-
-PENDIENTES
-Resolver el problema de uso adicional de RAM, para la operación Oper_dword_add_dword,
-cuando llama a Oper_dword_aadd_dword.
-
-Terminar de implementar la operación de división de bytes.
-Revisar el problema del error al mostrar variables del sistema como $CURRBANK, con
-la directiva $MSGBOX, por haber definido el formato de números como $HHHH.
-
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absoulte a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
-
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema.
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir punteros, arreglos y registros.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar las funciones de búsqueda y reemplazo de texto.
+Se implementó el manejo de bancos de RAM, para las asignaciones Word.
 
 
 PicPas 0.7.6
