@@ -1039,11 +1039,11 @@ begin
   Op := OpPtr;
   case Op^.catOp of  //el parámetro debe estar en "res"
   coConst : begin
-    _MOVLW(res.valInt);
+    _MOVLW(Op^.valInt);
   end;
   coVariab: begin
-    _BANKSEL(res.bank);
-    _MOVF(res.offs, toW);
+    _BANKSEL(Op^.bank);
+    _MOVF(Op^.offs, toW);
   end;
   coExpres: begin  //ya está en w
   end;
@@ -1778,15 +1778,16 @@ procedure TGenCod.CodifShift_by_W(aux: TPicRegister; toRight: boolean);
 {Desplaza el registro "aux", las veces indicadas en el registro W.
 Deja el resultado en W.
 Deja el banco, en el banco de "aux"}
-{ TODO : Tal vez se pueda optimizar usando una rutina que rote W, las veces indicadas en un registro, o se podría generar el código usando la rutina de WHILE. }
+{ TODO : Tal vez se pueda optimizar usando una rutina que rote W, las veces indicadas
+en un registro, o se podría generar el código usando la rutina de WHILE. }
 var
   loop1: Word;
   dg: integer;
 begin
-  _BANKSEL(aux.bank);  //quedará em este banco
+  _BANKSEL(aux.bank);  //quedará en este banco
   _ADDLW(1);   //corrige valor inicial
-  loop1 := _PC;
-  _SUBLW(1);  //decrementa
+loop1 := _PC;
+  _ADDLW(255);  //W=W-1  (no hay instrucción DECW)
   _BTFSC(Z.offs, Z.bit);
   _GOTO_PEND(dg);     //Dio, cero, termina
   //Desplaza
@@ -1959,7 +1960,7 @@ var
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
-    SetResultConst_byte(p1^.valInt >> p2^.valInt);
+    SetResultConst_byte(p1^.valInt << p2^.valInt);
   end;
 //  coConst_Variab: begin
 //  end;
@@ -2113,6 +2114,7 @@ var
   msk: byte;
   Op: ^TOperand;
 begin
+  cIn.Next;       //Toma el identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -3114,6 +3116,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -3142,6 +3145,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -3888,6 +3892,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -3916,6 +3921,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -3944,6 +3950,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -3972,6 +3979,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -4000,6 +4008,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -4029,6 +4038,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -4139,9 +4149,33 @@ begin
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _BTFSS(STATUS,_Z);
-    _GOTO(_PC-5); PutComm(';fin rutina 1 mseg a 12MHz.');
+    _GOTO(_PC-6); PutComm(';fin rutina 1 mseg a 12MHz.');
+  end else if _CLOCK = 16000000 then begin
+    _MOVLW(250);
+    _ADDLW(255);   //lazo de 16 ciclos
+    _GOTO(_PC+1);  //introduce 12 ciclos más de retardo
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _BTFSS(STATUS,_Z);
+    _GOTO(_PC-8); PutComm(';fin rutina 1 mseg a 12MHz.');
+  end else if _CLOCK = 20000000 then begin
+    _MOVLW(250);
+    _ADDLW(255);   //lazo de 20 ciclos
+    _GOTO(_PC+1);  //introduce 16 ciclos más de retardo
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _GOTO(_PC+1);
+    _BTFSS(STATUS,_Z);
+    _GOTO(_PC-10); PutComm(';fin rutina 1 mseg a 12MHz.');
   end else begin
-    GenError('Clock frequency not supported.');
+    GenError('Clock frequency not supported for delay_ms().');
   end;
 end;
 procedure TGenCod.codif_delay_ms(fun: TxpEleFun);
@@ -5002,8 +5036,8 @@ begin
   typDWord.CreateField('High',  @dword_High);
   typDWord.CreateField('Extra', @dword_Extra);
   typDWord.CreateField('Ultra', @dword_Ultra);
-  typDWord.CreateField('LowWord',   @dword_LowWord);
-  typDWord.CreateField('HighWord',  @dword_HighWord);
+  typDWord.CreateField('LowWord', @dword_LowWord);
+  typDWord.CreateField('HighWord',@dword_HighWord);
 end;
 procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}

@@ -15,6 +15,11 @@ type
     function AddVariable(varName: string; eleTyp: TxpEleType; srcPos: TSrcPos
       ): TxpEleVar;
     procedure ArrayDeclaration(out itemTyp: TxpEleType; out nEle: integer);
+    procedure array_high(const OpPtr: pointer);
+    procedure array_getItem(const OpPtr: pointer);
+    procedure array_setItem(const OpPtr: pointer);
+    procedure array_clear(const OpPtr: pointer);
+    procedure array_low(const OpPtr: pointer);
     procedure CompileTypeDeclar(IsInterface: boolean; typName: string = '');
     function GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
     procedure cInNewLine(lin: string);
@@ -28,7 +33,7 @@ type
     function GetExpressionBool: boolean;
     function GetTypeVarDeclar: TxpEleType;
     function IsUnit: boolean;
-    procedure length_array(const OpPtr: pointer);
+    procedure array_length(const OpPtr: pointer);
     procedure ProcCommentsNoExec;
     function StartOfSection: boolean;
     procedure ResetFlashAndRAM;
@@ -981,12 +986,14 @@ begin
       Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
       Result.absBit := xvar.adrBit.bit;
     end else begin
+      //Es cualquier otra variable, que no sea bit. Se intentará
       IsBit := false;  //Es una dirección normal (byte)
       Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
     end;
     if Result.absAddr = ADRR_ERROR then begin
-      //No se implemento el tipo. No debería pasar.
-      GenError('Internal Error: TxpEleVar.AbsAddr.');
+      //No se puede obtener la dirección.
+      GenError('Cannot locate variable at: %s', [xvar.name]);
+//      GenError('Internal Error: TxpEleVar.AbsAddr.');
       exit;
     end;
   end else begin   //error
@@ -995,11 +1002,13 @@ begin
     exit;
   end;
 end;
-procedure TCompiler.length_array(const OpPtr: pointer);
+procedure TCompiler.array_length(const OpPtr: pointer);
+//Devuelve la cantidad de elementos de un arreglo
 var
   Op: ^TOperand;
   xvar: TxpEleVar;
 begin
+  cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.catOp of
   coVariab: begin
@@ -1012,6 +1021,226 @@ begin
   else
     GenError('Syntax error.');
   end;
+end;
+procedure TCompiler.array_high(const OpPtr: pointer);
+//Devuelve el índice máximo de un arreglo
+var
+  Op: ^TOperand;
+  xvar: TxpEleVar;
+begin
+  cIn.Next;  //Toma identificador de campo
+  Op := OpPtr;
+  case Op^.catOp of
+  coVariab: begin
+    xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
+    //Se devuelve una variable, byte
+    res.catOp := coConst;
+    res.eleTyp := typByte;
+    res.valInt {%H-}:= xvar.typ.arrSize-1;
+  end;
+  else
+    GenError('Syntax error.');
+  end;
+end;
+procedure TCompiler.array_low(const OpPtr: pointer);
+//Devuelve el índice mínimo de un arreglo
+var
+  Op: ^TOperand;
+begin
+  cIn.Next;  //Toma identificador de campo
+  Op := OpPtr;
+  case Op^.catOp of
+  coVariab: begin
+    //Se devuelve una variable, byte
+    res.catOp := coConst;
+    res.eleTyp := typByte;
+    res.valInt := 0;  //por ahora siempre inicia en 0
+  end;
+  else
+    GenError('Syntax error.');
+  end;
+end;
+procedure TCompiler.array_getItem(const OpPtr: pointer);
+//Función que devuelve el valor indexado
+var
+  Op: ^TOperand;
+  xVar: TxpEleVar;
+  par: TOperand;
+begin
+  cIn.Next;  //Toma identificador de campo
+  //Captura parámetro
+  if not CaptureTok('(') then exit;
+  par := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
+  if not CaptureTok(')') then exit;
+  //Procesa
+  Op := OpPtr;
+  if Op^.catOp = coVariab then begin  //Se aplica a una variable
+    xVar := Op^.rVar;  //referencia a la variable.
+    if xVar.typ.refType = typByte then begin
+      //Es array de bytes se devuelve una expresión byte
+      res.catOp := coExpres;
+      res.eleTyp := typByte;
+      //Genera el código de acuerdo al índice
+      case par.catOp of
+      coConst: begin  //ïndice constante
+          //Como el índice es constante, se puede acceder directamente
+          _MOVF(xVar.adrByte0.offs+par.valInt, toW);
+        end;
+      coVariab, coExpres: begin
+          par.LoadToReg;   //Lo deja en W
+          _ADDLW(xVar.adrByte0.AbsAdrr);   //agrega OFFSET
+          _MOVWF(04);     //direcciona con FSR
+          _MOVF(0, toW);  //lee indexado en W
+        end;
+      end;
+    end else begin
+      GenError('Not supported type.');
+    end;
+  end else begin
+    GenError('Syntax error.');
+  end;
+end;
+procedure TCompiler.array_setItem(const OpPtr: pointer);
+//Función que fija un valor indexado
+var
+  Op: ^TOperand;
+  arrVar: TxpEleVar;
+  idx, value: TOperand;
+  idxTar: Int64;
+begin
+  cIn.Next;  //Toma identificador de campo
+  //Captura parámetro
+  if not CaptureTok('(') then exit;
+  idx := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
+  //Procesa
+  Op := OpPtr;
+  if Op^.catOp = coVariab then begin  //Se aplica a una variable
+    arrVar := Op^.rVar;  //referencia a la variable.
+    if arrVar.typ.refType = typByte then begin
+      //Es array de bytes se devuelve una expresión byte
+      res.catOp := coExpres;
+      res.eleTyp := typByte;
+      //Genera el código de acuerdo al índice
+      case idx.catOp of
+      coConst: begin  //ïndice constante
+          //Como el índice es constante, se puede acceder directamente
+          idxTar := arrVar.adrByte0.offs+idx.valInt; //índice destino
+          if not CaptureTok(',') then exit;
+          value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
+          if value.eleTyp <> typByte then begin
+            GenError('Byte expression expected.');
+            exit;
+          end;
+          //Sabemos que hay una expresión byte
+          value.LoadToReg;   //Carga resultado en W
+          _MOVWF(idxTar);  //Mueve a arreglo
+        end;
+      coVariab: begin
+          //Tenemos la referencia la variable en idx.rvar
+          if not CaptureTok(',') then exit;
+          value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
+          if value.eleTyp <> typByte then begin
+            GenError('Byte expression expected.');
+            exit;
+          end;
+          //Sabemos que hay una expresión byte
+          value.LoadToReg;   //Carga resultado en W
+          //hay que mover value a arrVar[idx.rvar]
+
+        end;
+      coExpres: begin
+//          idx.LoadToReg;   //Lo deja en W
+//          _ADDLW(arrVar.adrByte0.AbsAdrr);   //agrega OFFSET
+//          _MOVWF(04);     //direcciona con FSR
+//          _MOVF(0, toW);  //lee indexado en W
+        GenError('Not supported expressions here.');
+        end;
+      end;
+    end else begin
+      GenError('Not supported type.');
+    end;
+  end else begin
+    GenError('Syntax error.');
+  end;
+  if not CaptureTok(')') then exit;
+end;
+procedure TCompiler.array_clear(const OpPtr: pointer);
+{Limpia el contenido de todo el arreglo}
+var
+  Op: ^TOperand;
+  xvar: TxpEleVar;
+  j1: Word;
+begin
+  cIn.Next;  //Toma identificador de campo
+  //Limpia el arreglo
+  Op := OpPtr;
+  case Op^.catOp of
+  coVariab: begin
+    xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
+    res.catOp := coConst;  //Realmente no es importante devolver un valor
+    res.eleTyp := typByte;
+    res.valInt {%H-}:= xvar.typ.arrSize-1;
+    if xvar.typ.arrSize = 0 then exit;  //No hay nada que limpiar
+    if xvar.typ.arrSize = 1 then begin  //Es de un solo byte
+      _BANKSEL(xvar.adrByte0.bank);
+      _CLRF(xvar.adrByte0.offs);
+    end else if xvar.typ.arrSize = 2 then begin  //Es de 2 bytes
+      _BANKSEL(xvar.adrByte0.bank);
+      _CLRF(xvar.adrByte0.offs);
+      _CLRF(xvar.adrByte0.offs+1);
+    end else if xvar.typ.arrSize = 3 then begin  //Es de 3 bytes
+      _BANKSEL(xvar.adrByte0.bank);
+      _CLRF(xvar.adrByte0.offs);
+      _CLRF(xvar.adrByte0.offs+1);
+      _CLRF(xvar.adrByte0.offs+2);
+    end else if xvar.typ.arrSize = 4 then begin  //Es de 4 bytes
+      _BANKSEL(xvar.adrByte0.bank);
+      _CLRF(xvar.adrByte0.offs);
+      _CLRF(xvar.adrByte0.offs+1);
+      _CLRF(xvar.adrByte0.offs+2);
+      _CLRF(xvar.adrByte0.offs+3);
+    end else if xvar.typ.arrSize = 5 then begin  //Es de 5 bytes
+      _BANKSEL(xvar.adrByte0.bank);
+      _CLRF(xvar.adrByte0.offs);
+      _CLRF(xvar.adrByte0.offs+1);
+      _CLRF(xvar.adrByte0.offs+2);
+      _CLRF(xvar.adrByte0.offs+3);
+      _CLRF(xvar.adrByte0.offs+4);
+    end else if xvar.typ.arrSize = 6 then begin  //Es de 6 bytes
+      _BANKSEL(xvar.adrByte0.bank);
+      _CLRF(xvar.adrByte0.offs);
+      _CLRF(xvar.adrByte0.offs+1);
+      _CLRF(xvar.adrByte0.offs+2);
+      _CLRF(xvar.adrByte0.offs+3);
+      _CLRF(xvar.adrByte0.offs+4);
+      _CLRF(xvar.adrByte0.offs+5);
+    end else if xvar.typ.arrSize = 7 then begin  //Es de 7 bytes
+      _BANKSEL(xvar.adrByte0.bank);
+      _CLRF(xvar.adrByte0.offs);
+      _CLRF(xvar.adrByte0.offs+1);
+      _CLRF(xvar.adrByte0.offs+2);
+      _CLRF(xvar.adrByte0.offs+3);
+      _CLRF(xvar.adrByte0.offs+4);
+      _CLRF(xvar.adrByte0.offs+5);
+      _CLRF(xvar.adrByte0.offs+6);
+    end else begin
+      //Implementa lazo, usando W como índice
+      _MOVLW(xvar.adrByte0.offs);  //dirección inicial
+      _MOVWF($04);   //FSR
+      _MOVLW(256-xvar.typ.arrSize);
+j1:= _PC;
+      _CLRF($00);    //Limpia [FSR]
+      _INCF($04, toF);    //Siguiente
+      _ADDLW(1);   //W = W + 1
+      _BTFSS(STATUS, _Z);
+      _GOTO(j1);
+    end;
+  end;
+  else
+    GenError('Syntax error.');
+  end;
+
+
 end;
 procedure TCompiler.ArrayDeclaration(out itemTyp: TxpEleType; out nEle: integer);
 {Compila una declaración de arreglo.}
@@ -1143,8 +1372,13 @@ begin
     etyp.arrSize := nEle;      //Número de ítems
     etyp.refType := itemTyp;   //Tipo de dato
     etyp.InInterface := IsInterface; //No debería ser necesario
-    //Crea campos
-    etyp.CreateField('length', @length_array);
+    //Crea campos del arreglo
+    etyp.CreateField('length', @array_length);
+    etyp.CreateField('high', @array_high);
+    etyp.CreateField('low', @array_low);
+    etyp.CreateField('getitem', @array_getItem);
+    etyp.CreateField('setitem', @array_setItem);
+    etyp.CreateField('clear', @array_clear);
   end else begin
     GenError(ER_IDE_TYP_EXP);
     exit;
@@ -1179,9 +1413,8 @@ VAR
 var
   systyp: TxpEleType;
   typName, varType: String;
-  typ, itemTyp: TxpEleType;
+  typ: TxpEleType;
   ele: TxpElement;
-  nEle: integer;
 begin
   Result := nil;
   ProcComments;

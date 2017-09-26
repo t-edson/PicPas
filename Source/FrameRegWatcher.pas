@@ -18,6 +18,7 @@ type
     function FilaEstaVacia(f: integer): boolean;
     procedure grillaKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure RefrescarPorDireccion(f: integer);
+    procedure RefrescarPorNombre(f: integer);
     procedure UtilGrillaFinEditarCelda(var eveSal: TEvSalida; col,
       fil: integer; var ValorAnter, ValorNuev: string);
     procedure UtilGrillaKeyDown(Sender: TObject; var Key: Word;
@@ -46,7 +47,7 @@ begin
   if pic = nil then exit;
   grilla.BeginUpdate;
   for f := 1 to grilla.RowCount-1 do begin
-      grilla.Objects[1, f] := Tobject(Pointer(0));  //inicia con color negro
+      grilla.Objects[1, f] := Tobject(Pointer(0));  //inicia con texto color negro
       RefrescarPorDireccion(f);
   end;
   grilla.EndUpdate();
@@ -93,6 +94,38 @@ begin
     end;
   end;
 end;
+
+procedure TfraRegWatcher.RefrescarPorNombre(f: integer);
+{Refresca la fila f de la grilla, a partir del campo de Nombre }
+var
+  nameStr: String;
+  addr, i: integer;
+begin
+  if pic = nil then exit;
+  nameStr := UpCase(grilla.Cells[COLNOM,f]);
+  if trim(nameStr) = '' then begin
+     //No hay dato
+     grilla.Cells[COLDIR,f] := '';
+     grilla.Cells[COLVAL,f] := '';
+  end else begin
+    //Hay nombre
+    addr := -1;
+    for i:=0 to PIC_MAX_RAM-1 do begin
+      if UpCase(pic.ram[i].name) = nameStr then begin
+        addr := i;
+        break;
+      end;
+    end;
+    if addr=-1 then begin  //No encontrado
+       grilla.Cells[COLDIR,f] := '';
+       grilla.Cells[COLVAL,f] := '#error';
+       exit;
+    end;
+    grilla.Cells[COLDIR,f] := '$'+IntToHex(addr,3);
+    grilla.Cells[COLVAL,f] := '$'+IntToHex(pic.ram[addr].value, 2);
+  end;
+end;
+
 procedure TfraRegWatcher.UtilGrillaFinEditarCelda(var eveSal: TEvSalida; col,
   fil: integer; var ValorAnter, ValorNuev: string);
 begin
@@ -103,6 +136,12 @@ begin
      grilla.Cells[col, fil] := ValorNuev;  //adelanta la escritura
      RefrescarPorDireccion(fil);
   end;
+  if col=COLNOM then begin
+     //Se editó el nombre
+     grilla.Cells[col, fil] := ValorNuev;  //adelanta la escritura
+     RefrescarPorNombre(fil);
+  end;
+
 end;
 function TfraRegWatcher.FilaEstaVacia(f: integer): boolean;
 begin

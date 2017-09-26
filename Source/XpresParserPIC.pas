@@ -604,7 +604,7 @@ begin
     if LowerCase(field.Name) = identif then begin
       //Encontró el campo
       field.proc(@xOperand);  //Devuelve resultado en "res"
-      cIn.Next;    //Coge identificador
+      //cIn.Next;    //Coge identificador
       if cIn.tok = '.' then begin
         //Aún hay más campos, seguimos procesando
         //Como "IdentifyField", crea una copia del parámetro, no hay cruce con el resultado

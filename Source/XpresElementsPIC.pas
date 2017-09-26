@@ -718,6 +718,13 @@ begin
     end else begin
       Result := ADRR_ERROR;
     end;
+  end else if typ.catType = tctArray then begin
+    //Arreglos
+    if (typ.refType = typByte) or (typ.refType = typChar) then begin
+      Result := adrByte0.AbsAdrr;
+    end else begin
+      Result := ADRR_ERROR;
+    end;
   end else begin
     //No soportado
     Result := ADRR_ERROR;
