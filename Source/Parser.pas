@@ -1131,11 +1131,17 @@ begin
             GenError('Byte expression expected.');
             exit;
           end;
-          //Sabemos que hay una expresión byte
-          value.LoadToReg;   //Carga resultado en W
-          _MOVWF(idxTar);  //Mueve a arreglo
+          if (value.catOp = coConst) and (value.valInt=0) then begin
+            //Caso especial, se pone a cero
+            _CLRF(idxTar);
+          end else begin
+            //Sabemos que hay una expresión byte
+            value.LoadToReg; //Carga resultado en W
+            _MOVWF(idxTar);  //Mueve a arreglo
+          end;
         end;
       coVariab: begin
+          //El índice es una variable
           //Tenemos la referencia la variable en idx.rvar
           if not CaptureTok(',') then exit;
           value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
@@ -1144,16 +1150,82 @@ begin
             exit;
           end;
           //Sabemos que hay una expresión byte
-          value.LoadToReg;   //Carga resultado en W
-          //hay que mover value a arrVar[idx.rvar]
-
+          if (value.catOp = coConst) and (value.valInt=0) then begin
+            //Caso especial, se pide asignar una constante cero
+            _MOVF(idx.offs, toW);  //índice
+            _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+            _MOVWF($04);  //Direcciona
+            _CLRF($00);   //Pone a cero
+          end else if value.catOp = coConst then begin
+            //Es una constante cualquiera
+            _MOVF(idx.offs, toW);  //índice
+            _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+            _MOVWF($04);  //Direcciona
+            _MOVLW(value.valInt);
+            _MOVWF($00);   //Escribe valor
+          end else if value.catOp = coVariab then begin
+            //Es una variable
+            _MOVF(idx.offs, toW);  //índice
+            _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+            _MOVWF($04);  //Direcciona
+            _MOVF(value.offs, toW);
+            _MOVWF($00);   //Escribe valor
+          end else begin
+            //Es una expresión. El resultado está en W
+            //hay que mover value a arrVar[idx.rvar]
+            typWord.DefineRegister;   //Para usar H
+            _MOVWF(H.offs);  //W->H   salva H
+            _MOVF(idx.offs, toW);  //índice
+            _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+            _MOVWF($04);  //Direcciona
+            _MOVF(H.offs, toW);
+            _MOVWF($00);   //Escribe valor
+          end;
         end;
       coExpres: begin
-//          idx.LoadToReg;   //Lo deja en W
-//          _ADDLW(arrVar.adrByte0.AbsAdrr);   //agrega OFFSET
-//          _MOVWF(04);     //direcciona con FSR
-//          _MOVF(0, toW);  //lee indexado en W
-        GenError('Not supported expressions here.');
+        //El índice es una expresión y está en W.
+        typWord.DefineRegister;   //Para usar H
+        _MOVWF(H.offs);  //W->H   salva índice en H, por si acaso
+        if not CaptureTok(',') then exit;
+        value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
+        // ¿Y si GetExpression modifica H?  !!!!!!!!!!!
+        if value.eleTyp <> typByte then begin
+          GenError('Byte expression expected.');
+          exit;
+        end;
+        //Sabemos que hay una expresión byte
+        if (value.catOp = coConst) and (value.valInt=0) then begin
+          //Caso especial, se pide asignar una constante cero
+          dec(pic.iFlash);  //elimina la instrucción (MOVWF H) anterior, porque no es necesaria
+          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+          _MOVWF($04);  //Direcciona
+          _CLRF($00);   //Pone a cero
+        end else if value.catOp = coConst then begin
+          //Es una constante cualquiera
+          dec(pic.iFlash);  //elimina la instrucción (MOVWF H) anterior, porque no es necesaria
+          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+          _MOVWF($04);  //Direcciona
+          _MOVLW(value.valInt);
+          _MOVWF($00);   //Escribe valor
+        end else if value.catOp = coVariab then begin
+          //Es una variable
+          dec(pic.iFlash);  //elimina la instrucción (MOVWF H) anterior, porque no es necesaria
+          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+          _MOVWF($04);  //Direcciona
+          _MOVF(value.offs, toW);
+          _MOVWF($00);   //Escribe valor
+        end else begin
+          //Es una expresión. El resultado está en W
+//          //hay que mover value a arrVar[idx.rvar]
+//          typWord.DefineRegister;   //Para usar H
+//          _MOVWF(H.offs);  //W->H   salva H
+//          _MOVF(idx.offs, toW);  //índice
+//          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+//          _MOVWF($04);  //Direcciona
+//          _MOVF(H.offs, toW);
+//          _MOVWF($00);   //Escribe valor
+          GenError('Not supported expressions here.');
+        end;
         end;
       end;
     end else begin

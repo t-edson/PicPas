@@ -836,6 +836,11 @@ begin
     if HayError then exit;
     If cIn.tok = ')' Then begin
        cIn.Next;  //lo toma
+       if cIn.tok = '.' then begin
+         IdentifyField(Result);
+         Result := res;  //notar que se usa "res".
+         if HayError then exit;;
+       end;
     end Else begin
        GenError('Error in expression. ")" expected.');
        Exit;       //error
