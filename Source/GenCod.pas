@@ -103,6 +103,7 @@ type
       procedure Oper_dword_equal_dword;
       procedure Oper_not_bit;
       procedure Oper_not_byte;
+      procedure Oper_word_and_byte;
       procedure Oper_word_umulword_word;
       procedure word_mul_word_16(fun: TxpEleFun);
     private  //Operaciones con boolean
@@ -1376,7 +1377,8 @@ var
 begin
     typDWord.DefineRegister;   //Asegura que exista W,H,E,U
     aux := GetAuxRegisterByte;  //Pide registro auxiliar
-    aux2 := GetAuxRegisterByte;  //Pide registro auxiliar
+//    aux2 := GetAuxRegisterByte;  //Pide registro auxiliar
+    aux2 := FSR;   //utiliza FSR como registro auxiliar
     _MOVWF (aux.offs);
     _clrf   (E.offs);        //En principio el resultado es cero.
     _clrf   (U.offs);
@@ -1394,7 +1396,7 @@ Arit_DivideBit8 := _PC;
     _goto   (Arit_DivideBit8);
     _movf   (E.offs,toW);    //Devuelve también en (W)
     _RETURN;
-    aux2.used := false;
+//    aux2.used := false;
     aux.used := false;
 end;
 procedure TGenCod.Oper_byte_div_byte;
@@ -3110,6 +3112,67 @@ begin
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
+procedure TGenCod.Oper_word_and_byte;
+var
+  spH, spL: TPicRegister;
+begin
+  case catOperation of
+  coConst_Const: begin
+    //Optimiza
+    SetResultConst_byte(p1^.valInt and p2^.valInt);
+  end;
+  coConst_Variab: begin
+    SetResultExpres_byte(operType);
+    _movlw(p1^.LByte);      //Carga menos peso del dato 1
+    _BANKSEL(p2^.bank);
+    _andwf(p2^.Loffs,toW);  //deja en W
+  end;
+  coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
+    SetResultExpres_byte(operType);
+    _andlw(p1^.LByte);      //Deja en W
+  end;
+  coVariab_Const: begin
+    SetResultExpres_byte(operType);
+    _BANKSEL(p1^.bank);
+    _MOVF(p1^.Loffs, toW);
+    _ANDLW(p2^.LByte);
+  end;
+  coVariab_Variab:begin
+    SetResultExpres_byte(operType);
+    _BANKSEL(p1^.bank);
+    _MOVF(p1^.Loffs, toW);
+    _BANKSEL(p2^.bank);
+    _ANDWF(p2^.Loffs, toW);
+  end;
+  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
+    SetResultExpres_byte(operType);
+    _BANKSEL(p1^.bank);
+    _ANDWF(p1^.Loffs, toW);
+  end;
+  coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
+    SetResultExpres_byte(operType);
+    _ANDLW(p2^.LByte);
+  end;
+  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
+    SetResultExpres_byte(operType);
+    _BANKSEL(p2^.bank);
+    _ANDWF(p2^.Loffs, toW);
+  end;
+  coExpres_Expres:begin
+    SetResultExpres_byte(operType);
+    //p1 está salvado en pila y p2 en (W)
+    p1^.catOp := coVariab;  //Convierte a variable
+    p1^.rVar := GetVarWordFromStk;
+    //Luego el caso es similar a coVariab_Expres
+    _BANKSEL(p1^.bank);
+    _ANDWF(p1^.Loffs, toW);
+    FreeStkRegisterByte(spH);   //libera pila
+    FreeStkRegisterByte(spL);   //libera pila
+  end;
+  else
+    genError('Not implemented: "%s"', [CatOperationToStr] );
+  end;
+end;
 procedure TGenCod.word_Low(const OpPtr: pointer);
 {Acceso al byte de menor peso de un word.}
 var
@@ -4188,7 +4251,8 @@ begin
 //  PutLabel('__delay_ms');
   PutTopComm('    ;delay routine.');
   typWord.DefineRegister;   //Se asegura de que se exista y lo marca como "usado".
-  aux := GetAuxRegisterByte;  //Pide un registro libre
+  //aux := GetAuxRegisterByte;  //Pide un registro libre
+  aux := FSR;  //Usa el FSR como registro auxiliar
   if HayError then exit;
   {Esta rutina recibe los milisegundos en los registros en (H,w) o en (w)
   En cualquier caso, siempre usa el registros H , el acumulador "w" y un reg. auxiliar.
@@ -4208,7 +4272,7 @@ delay:= _PC;
   if HayError then exit;
   _GOTO(delay);
   EndCodeSub;  //termina codificación
-  aux.used := false;  //libera registro
+  //aux.used := false;  //libera registro
 end;
 procedure TGenCod.fun_delay_ms(fun: TxpEleFun);
 begin
@@ -4290,12 +4354,20 @@ begin
     GenError('Cannot increase a constant.'); exit;
   end;
   coVariab: begin
-    if res.eletyp = typByte then begin
+    if (res.eletyp = typByte) or (res.eletyp = typChar) then begin
       _INCF(res.offs, toF);
     end else if res.eleTyp = typWord then begin
       _INCF(res.Loffs, toF);
       _BTFSC(STATUS, _Z);
       _INCF(res.Hoffs, toF);
+    end else if res.eleTyp = typDWord then begin
+      _INCF(res.Loffs, toF);
+      _BTFSC(STATUS, _Z);
+      _INCF(res.Hoffs, toF);
+      _BTFSC(STATUS, _Z);
+      _INCF(res.Eoffs, toF);
+      _BTFSC(STATUS, _Z);
+      _INCF(res.Uoffs, toF);
     end else begin
       GenError('Invalid parameter type: %s', [res.eleTyp.name]);
       exit;
@@ -4319,13 +4391,22 @@ begin
     GenError('Cannot decrease a constant.'); exit;
   end;
   coVariab: begin
-    if res.eleTyp = typByte then begin
+    if (res.eleTyp = typByte) then begin
       _DECF(res.offs, toF);
     end else if res.eleTyp = typWord then begin
-      _MOVF(res.offs, toW);
+      _MOVF(res.Loffs, toW);
       _BTFSC(STATUS, _Z);
       _DECF(res.Hoffs, toF);
       _DECF(res.Loffs, toF);
+    end else if res.eleTyp = typDWord then begin
+      _MOVLW(1);
+      _subwf(res.Loffs, toF);
+      _BTFSS(STATUS, _C);
+      _subwf(RES.Hoffs, toF);
+      _BTFSS(STATUS, _C);
+      _subwf(RES.Eoffs, toF);
+      _BTFSS(STATUS, _C);
+      _subwf(RES.Uoffs, toF);
     end else begin
       GenError('Invalid parameter type: %s', [res.eleTyp.name]);
       exit;
@@ -5001,6 +5082,9 @@ begin
 
   opr:=typWord.CreateBinaryOperator('-',4,'subs');  //suma
   opr.CreateOperation(typWord,@Oper_word_sub_word);
+
+  opr:=typWord.CreateBinaryOperator('AND', 5, 'and');  //AND
+  opr.CreateOperation(typByte, @Oper_word_and_byte);
 
   opr:=typWord.CreateBinaryOperator('UMULWORD',5,'umulword');  //suma
   opr.CreateOperation(typWord,@Oper_word_umulword_word);

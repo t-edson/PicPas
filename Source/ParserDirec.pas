@@ -745,7 +745,7 @@ begin
     Result := Op1;
 end;
 function TParserDirec.AsigVariable(VarName: string; const value: TDirOperand): TDirVar;
-{Asigna un valor numérico a una variable. Si no existe la crea.
+{Asigna un valor numérico o de cadena a una variable. Si no existe la crea.
 Devuelve la referencia a la variable asignada.}
 begin
   //Busca variable
@@ -1562,6 +1562,7 @@ begin
   lexDir.DefTokDelim('"', '"', lexDir.tnString);  //cadenas
 
   lexDir.AddSymbSpec('=', dirOperator);
+  lexDir.AddSymbSpec('+=', dirOperator);
   lexDir.AddSymbSpec('<>', dirOperator);
   lexDir.AddSymbSpec('>', dirOperator);
   lexDir.AddSymbSpec('<', dirOperator);

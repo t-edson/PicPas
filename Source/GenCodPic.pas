@@ -23,12 +23,16 @@ type
     function OperandsUseRT(opType: TOperType): boolean;
     function OperandsUseW: boolean;
   protected
+    //Registros de trabajo
     W      : TPicRegister;     //Registro Interno.
     Z      : TPicRegisterBit;  //Registro Interno.
     C      : TPicRegisterBit;  //Registro Interno.
     H      : TPicRegister;     //Registros de trabajo. Se crean siempre.
     E      : TPicRegister;     //Registros de trabajo. Se crean siempre.
     U      : TPicRegister;     //Registros de trabajo. Se crean siempre.
+    //Registros auxiliares
+    FSR    : TPicRegister;     //Registro Interno.
+    //Listas contenedoras de registros
     listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
     listRegStk: TPicRegister_list;  //lista de registros de pila
     listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
@@ -1331,7 +1335,7 @@ begin
   typChar := CreateSysEleType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como número
 
   //Crea variables de trabajo
-  varStkBit := TxpEleVar.Create;
+  varStkBit  := TxpEleVar.Create;
   varStkBit.typ := typBit;
   varStkByte := TxpEleVar.Create;
   varStkByte.typ := typByte;
@@ -1340,14 +1344,14 @@ begin
   varStkDWord := TxpEleVar.Create;
   varStkDWord.typ := typDWord;
   //Crea lista de variables temporales
-  varFields:= TxpEleVars.Create(true);
+  varFields    := TxpEleVars.Create(true);
   //Inicializa contenedores
-  listRegAux := TPicRegister_list.Create(true);
-  listRegStk := TPicRegister_list.Create(true);
+  listRegAux   := TPicRegister_list.Create(true);
+  listRegStk   := TPicRegister_list.Create(true);
   listRegAuxBit:= TPicRegisterBit_list.Create(true);
   listRegStkBit:= TPicRegisterBit_list.Create(true);
-  stackTop := 0;  //Apunta a la siguiente posición libre
-  stackTopBit := 0;  //Apunta a la siguiente posición libre
+  stackTop     := 0;  //Apunta a la siguiente posición libre
+  stackTopBit  := 0;  //Apunta a la siguiente posición libre
   {Crea registro de trabajo W. El registro W, es el registro interno del PIC, y no
   necesita un mapeo en RAM. Solo se le crea aquí, para poder usar su propiedad "used"}
   W := TPicRegister.Create;
@@ -1364,9 +1368,15 @@ begin
   C.offs := STATUS;
   C.bit := _C;
   C.assigned := true;   //ya está asignado desde el principio
+  {Crea registro auxiliar FSR. El registro FSR, es un registro interno del PIC, y está
+  siempre asignado en RAM. }
+  FSR := TPicRegister.Create;
+  FSR.offs := $04;
+  FSR.assigned := true;   //ya está asignado desde el principio
 end;
 destructor TGenCodPic.Destroy;
 begin
+  FSR.Destroy;
   C.Destroy;
   Z.Destroy;
   W.Destroy;

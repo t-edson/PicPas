@@ -242,7 +242,7 @@ begin
   //Lee lista de temas
   cmbThemes.Items.Clear;
   cmbThemes.Items.Add(LABEL_THEM_NONE);
-  Hay := FindFirst(rutThemes + '\*.theme',faAnyFile - faDirectory, SR) = 0;
+  Hay := FindFirst(rutThemes + DirectorySeparator + '*.theme',faAnyFile - faDirectory, SR) = 0;
   while Hay do begin
      //Encontró archivo, lee sus extensiones
      cmbThemes.Items.Add(ExtractFileNameWithoutExt(SR.name));

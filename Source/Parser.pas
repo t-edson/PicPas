@@ -178,7 +178,8 @@ begin
         {Hubo cambio de contexto. Procesamos nuevamente, porque ahora estamos ya en
         otro contexto y se supone que esta llamada a ProcComments(), se hace precisamente
         para saltar blancos, comentarios, directivas, o bloques ASM.}
-        cIn.SkipWhites;   {En el nuevo contexto puede haber nuevos comentarios.}
+//        cIn.SkipWhites;   {En el nuevo contexto puede haber nuevos comentarios.}
+        ProcComments;   {En el nuevo contexto puede haber nuevos comentarios o bloques Asm.}
         exit;
       end;
     end;
@@ -433,7 +434,7 @@ begin
     GenError(ER_BOOL_EXPECT);
     exit(false);
   end;
-  cIn.SkipWhites;
+  ProcComments;
   exit(true);  //No hay error
 end;
 procedure TCompiler.CompileIF;
@@ -1184,8 +1185,6 @@ begin
         end;
       coExpres: begin
         //El índice es una expresión y está en W.
-        typWord.DefineRegister;   //Para usar H
-        _MOVWF(H.offs);  //W->H   salva índice en H, por si acaso
         if not CaptureTok(',') then exit;
         value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
         // ¿Y si GetExpression modifica H?  !!!!!!!!!!!
@@ -1196,35 +1195,31 @@ begin
         //Sabemos que hay una expresión byte
         if (value.catOp = coConst) and (value.valInt=0) then begin
           //Caso especial, se pide asignar una constante cero
-          dec(pic.iFlash);  //elimina la instrucción (MOVWF H) anterior, porque no es necesaria
           _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
           _MOVWF($04);  //Direcciona
           _CLRF($00);   //Pone a cero
         end else if value.catOp = coConst then begin
           //Es una constante cualquiera
-          dec(pic.iFlash);  //elimina la instrucción (MOVWF H) anterior, porque no es necesaria
           _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
           _MOVWF($04);  //Direcciona
           _MOVLW(value.valInt);
           _MOVWF($00);   //Escribe valor
         end else if value.catOp = coVariab then begin
           //Es una variable
-          dec(pic.iFlash);  //elimina la instrucción (MOVWF H) anterior, porque no es necesaria
           _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
           _MOVWF($04);  //Direcciona
           _MOVF(value.offs, toW);
           _MOVWF($00);   //Escribe valor
         end else begin
-          //Es una expresión. El resultado está en W
-//          //hay que mover value a arrVar[idx.rvar]
-//          typWord.DefineRegister;   //Para usar H
-//          _MOVWF(H.offs);  //W->H   salva H
-//          _MOVF(idx.offs, toW);  //índice
-//          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-//          _MOVWF($04);  //Direcciona
-//          _MOVF(H.offs, toW);
-//          _MOVWF($00);   //Escribe valor
-          GenError('Not supported expressions here.');
+          //Es una expresión. El valor a asignar está en W, y el índice en la pila
+          typWord.DefineRegister;   //Para usar H
+          _MOVWF(H.offs);  //W->H   salva valor a H
+          idx.rVar := GetVarByteFromStk;  //toma referencia de la pila
+          _MOVF(idx.offs, toW);  //índice
+          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
+          _MOVWF($04);  //Direcciona
+          _MOVF(H.offs, toW);
+          _MOVWF($00);   //Escribe valor
         end;
         end;
       end;
@@ -1843,7 +1838,7 @@ begin
     if not CaptureTok(';') then exit;
     ProcComments;  //Puede haber Directivas o ASM también
   end;
-end;
+end ;
 procedure TCompiler.CompileCurBlockDummy;
 {Compila un bloque pero sin geenrar código.}
 var
