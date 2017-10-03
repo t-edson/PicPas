@@ -634,9 +634,15 @@ There are some system variables, accessible from the directives language. They a
 
 Some of these limitations must be solved in next versions.
 
+## Development
+
+PicPas is a free software (GPL license) and it's opened for the collaboration of anyone who is interested. 
+
+There is still, much work for development or documentation, so any help will be appreciated.
+
 ## Source Code
 
-The source code is in the folder /Source.
+The source code of the compiler is in the folder /Source.
 
 To compile PicPas, it's needed to have the following libraries:
 
@@ -645,15 +651,12 @@ To compile PicPas, it's needed to have the following libraries:
 * MiConfig
 * PicUtils 
 * Xpres 
+* UtilsGrilla
 
-All of them, must be availables on the Web. Check the versions used.
+All of them, must be availables on the GitHub. Check the versions used.
+
+These libraries don't include package. They are only files in folders that need to be included when compiling PicPas.
 
 PicPas has been compiled, using the version 1.6.2 of Lazarus. Tested in Windows and Ubuntu.
 
 To have more information about the compiler, check the Technical Documentation (Only in spanish by now).
-
-## Development
-
-PicPas is a free software (GPL license) and it's opened for the collaboration of anyone who is interested. 
-
-There is still, much work for development or documentation, so any help will be appreciated.

@@ -33,6 +33,10 @@ Se corrige un error en la rutina delay_ms(), cuando trabajaba con 12MHz y se imp
 para 16MHz y 20MHz.
 Se implementan los métodos setitem() y getitem() para los arreglos de bytes, como primer 
 paso al uso de la sintaxis común de corchetes.
+Se corrige la lectura de temas parala versión Linux.
+Se implementan las funciones Inc() y Dec() para el tipo Char y DWord.
+Se crea el registro FSR como registro auxiliar, y se usa en la rutina delay_ms() y en 
+la rutina de multiplicación de 8 bits.
 
 
 PENDIENTES

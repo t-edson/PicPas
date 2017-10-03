@@ -9,7 +9,7 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="209"/>
+  <SynTreeWidth Val="242"/>
   <viewMode Val="2"/>
   <MessPanBack Val="2368548"/>
   <MessPanText Val="16777215"/>
@@ -36,15 +36,15 @@
     <ResPalCBor Val="15780518"/>
     <ResPalFWord Val="True"/>
     <VerPanVer Val="True"/>
-    <VerNumLin Val="False"/>
+    <VerNumLin Val="True"/>
     <VerMarPle Val="True"/>
     <cFonPan Val="2105376"/>
     <cTxtPan Val="12632256"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.7.8\temp\NewFile1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.8\temp\aaa.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.7.8\TestCode\Simul_1\Test2_Bit.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.8\temp\delay_us_Lib.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.7.8\temp\NewFile2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.7\temp\NewFile2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.7.7\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.8\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.7.8\TestCode\Simul_3\Test1_Byte.pas
 "/>
   </Edit>
   <IncHeadMpu Val="True"/>
