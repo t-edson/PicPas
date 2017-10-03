@@ -25,12 +25,11 @@ type
   private
     { private declarations }
   public
-    { public declarations }
+    pic : TPIC16;
   end;
 
 var
   frmPICExplorer: TfrmPICExplorer;
-  pic : TPIC16;
 
 implementation
 

@@ -9,10 +9,10 @@ interface
 uses
   Classes, SysUtils, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
   ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
-  SynFacilUtils, MisUtils, XpresBas, Parser, FormPICExplorer, Globales,
-  FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView, FrameMessagesWin,
-  XpresElementsPIC, CodeTools, ParserAsm, ParserDirec, FrameCfgExtTool,
-  FormDebugger, FormRAMExplorer;
+  SynFacilUtils, MisUtils, XpresBas, Pic16Utils, Parser, FormPICExplorer,
+  Globales, FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
+  FrameMessagesWin, XpresElementsPIC, CodeTools, ParserAsm, ParserDirec,
+  FrameCfgExtTool, FormDebugger, FormRAMExplorer;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -41,7 +41,7 @@ type
     acToolExt3: TAction;
     acToolExt1: TAction;
     acToolFindDec: TAction;
-    acToolConfig2: TAction;
+    acToolInstCount: TAction;
     acToolConfig: TAction;
     acToolCompil: TAction;
     acToolPICExpl: TAction;
@@ -89,6 +89,7 @@ type
     MenuItem41: TMenuItem;
     MenuItem42: TMenuItem;
     MenuItem43: TMenuItem;
+    MenuItem44: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -149,6 +150,7 @@ type
     procedure acEdSelecAllExecute(Sender: TObject);
     procedure acEdUndoExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
+    procedure acToolInstCountExecute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
     procedure acToolExt1Execute(Sender: TObject);
     procedure acToolExt2Execute(Sender: TObject);
@@ -805,6 +807,54 @@ end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
   Config.Mostrar;
+end;
+procedure TfrmPrincipal.acToolInstCountExecute(Sender: TObject);
+{Muestra un conteo de instrucciones.}
+var
+  nCALL, nGOTO, nBSF, nBCF, nMOVLW, nMOVWF, nRETURN, nBTFSS, nBTFSC: Integer;
+  curInst: TPIC16Inst;
+  i: word;
+  tmp: String;
+begin
+  nCALL := 0;
+  nGOTO := 0;
+  nBSF := 0;
+  nBCF := 0;
+  nMOVLW := 0;
+  nMOVWF := 0;
+  nRETURN := 0;
+  nBTFSS := 0;
+  nBTFSC := 0;
+  for i:=0 to high(cxp.pic.flash) do begin
+    if cxp.pic.flash[i].used then begin
+       cxp.pic.PCH := hi(i);
+       cxp.pic.PCL := lo(i);
+       curInst := cxp.pic.CurInstruction;
+       case curInst of
+       CALL: Inc(nCALL);
+       GOTO_: Inc(nGOTO);
+       BSF  : Inc(nBSF);
+       BCF  : Inc(nBCF);
+       MOVLW: Inc(nMOVLW);
+       MOVWF: Inc(nMOVWF);
+       RETURN:Inc(nRETURN);
+       BTFSS: Inc(nBTFSS);
+       BTFSC: Inc(nBTFSC);
+       end;
+    end;
+  end;
+  //Muestra resumen
+  tmp := 'INSTRUCCIONES: ' + LineEnding;
+  tmp := tmp + 'MOVLW ->' + IntToStr(nMOVLW) + LineEnding;
+  tmp := tmp + 'MOVWF ->' + IntToStr(nMOVWF) + LineEnding;
+  tmp := tmp + 'CALL  ->' + IntToStr(nCALL)  + LineEnding;
+  tmp := tmp + 'GOTO  ->' + IntToStr(nGOTO)  + LineEnding;
+  tmp := tmp + 'BSF   ->' + IntToStr(nBSF)   + LineEnding;
+  tmp := tmp + 'BCF   ->' + IntToStr(nBCF)   + LineEnding;
+  tmp := tmp + 'RETURN->' + IntToStr(nRETURN)+ LineEnding;
+  tmp := tmp + 'BTFSS ->' + IntToStr(nBTFSS) + LineEnding;
+  tmp := tmp + 'BTFSC ->' + IntToStr(nBTFSC) + LineEnding;
+  MsgBox(tmp);
 end;
 procedure TfrmPrincipal.acToolExt1Execute(Sender: TObject);
 begin
