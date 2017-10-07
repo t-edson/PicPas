@@ -56,14 +56,14 @@ object frmDebugger: TfrmDebugger
       Top = 18
       Width = 275
       Align = alClient
-      ColCount = 4
+      ColCount = 3
       FixedRows = 0
       Font.CharSet = ANSI_CHARSET
       Font.Height = -12
       Font.Name = 'Courier New'
       Font.Pitch = fpFixed
       Font.Quality = fqDraft
-      Options = [goFixedVertLine, goFixedHorzLine, goRangeSelect, goRowSelect, goSmoothScroll]
+      Options = [goFixedVertLine, goFixedHorzLine, goRangeSelect, goColSizing, goRowSelect, goSmoothScroll]
       ParentFont = False
       PopupMenu = PopupMenu1
       RowCount = 8192
@@ -75,9 +75,8 @@ object frmDebugger: TfrmDebugger
       TitleFont.Quality = fqDraft
       ColWidths = (
         43
-        29
+        172
         138
-        108
       )
       Cells = (
         1

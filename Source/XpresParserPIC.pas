@@ -31,22 +31,40 @@ TOperType = (operUnary,  //Operación Unaria
 { TOperand }
 //Operando
 TOperand = object
-public
-  catOp: TCatOperan; //Categoría de operando
-  txt  : string;     //Texto del operando o expresión, tal como aparece en la fuente
-  rVar : TxpEleVar;  //referencia a la variable, en caso de que sea variable
+private
+  FCat : TCatOperan;  //Categoría del operando
+  FTyp : TxpEleType;  //Tipo del operando, cuando no es de categoría coVariab
+  FVar : TxpEleVar;   //Referencia a la varaible, cuando es de categoría coVariab
+  FVal : TConsValue;  //Valores constantes, cuando el operando es constante
+  function GetTyp: TxpEleType;
+  procedure SetvalBool(AValue: boolean);
+  procedure SetvalFloat(AValue: extended);
+  procedure SetvalInt(AValue: Int64);
+public  //Campos generales
+  txt     : string;   //Texto del operando o expresión, tal como aparece en la fuente
   Inverted: boolean; {Este campo se usa para cuando el operando es de tipo Bit o Boolean.
                       Indica que la lógica debe leerse de forma invertida.}
-  {---------------------------------------------------------}
-  eleTyp: TxpEleType;
+  {"Cat", "Typ" y "rVar" se consideran de solo lectura. Para cambiarlos, se han definido
+  los métodos: SetAsConst(), SetAsVariab(), SetAsExpres() y SetAsNull, que ofrecen una
+  forma más sencilla y segura que cambiar "Cat", "Typ", y rVar" individualmente (que es
+  como se hacía en versiones anteriores).}
+  property Cat : TCatOperan read FCat;   //Categoría de operando
+  property Typ : TxpEleType read GetTyp; //Tipo del operando
+  property rVar: TxpEleVar  read FVar;   //Referencia a la variable.
+  procedure SetAsConst(xtyp: TxpEleType);
+  procedure SetAsVariab(xvar: TxpEleVar);
+  procedure SetAsExpres(xtyp: TxpEleType);
+  procedure SetAsNull;
   function catOpStr: string;
   function catOpChr: char;
   procedure LoadToReg; inline;  //Pone el operador en registros de Trabajo
   procedure DefineRegister; inline;
   function FindOperator(const oper: string): TxpOperator; //devuelve el objeto operador
-  //Funciones para facilitar el acceso a campos de la variable, cuando sea variable
+  procedure Invert;  //Invierte la lógica del operando
+public  //Campos acceso cuando sea variable.
   function VarName: string; inline; //nombre de la variable, cuando sea de categ. coVariab
   function offs: TVarOffs; //dirección de la variable
+  function Boffs: TVarOffs; inline; //dirección del byte del bit
   function Loffs: TVarOffs; inline; //dirección del byte bajo
   function Hoffs: TVarOffs; inline; //dirección del byte alto
   function Eoffs: TVarOffs; inline; //dirección del byte alto
@@ -54,20 +72,10 @@ public
   function bank: TVarBank; inline;  //banco
   function Lbank: TVarBank; inline;  //banco
   function bit : byte; inline;  //posición del bit
-public  //Manejo de la lógica
-  procedure Invert;  //Invierte la lógica del operando
-private
-  Val  : TConsValue;
-  procedure SetvalBool(AValue: boolean);
-  procedure SetvalFloat(AValue: extended);
-  procedure SetvalInt(AValue: Int64);
-//  procedure SetvalStr(AValue: string);
-public
-  //Campos de acceso a los valores constantes
-  property valInt  : Int64 read val.ValInt write SetvalInt;
-  property valFloat: extended read val.ValFloat write SetvalFloat;
-  property valBool : boolean read val.ValBool write SetvalBool;
-//  property valStr  : string read val.ValStr write SetvalStr;
+public  //Campos de acceso a los valores constantes
+  property valInt  : Int64 read Fval.ValInt write SetvalInt;
+  property valFloat: extended read Fval.ValFloat write SetvalFloat;
+  property valBool : boolean read Fval.ValBool write SetvalBool;
   //funciones de ayuda para adaptar los tipos numéricos
   function aWord: word; inline;  //devuelve el valor en Word
   function LByte: byte; inline;  //devuelve byte bajo de valor entero
@@ -508,7 +516,7 @@ begin
       GetExpressionE(0, pexPARAM);  //captura parámetro
       if HayError then exit;   //aborta
       //guarda tipo de parámetro
-      func0.CreateParam('',res.eleTyp, nil);
+      func0.CreateParam('',res.Typ, nil);
       if cIn.tok = ',' then begin
         cIn.Next;   //toma separador
         cIn.SkipWhites;
@@ -556,11 +564,9 @@ begin
        trabajo.}
       res.LoadToReg;
     end else begin
-      //Crea un operando para generar código de asignación
-      Op1.catOp := coVariab;  //configura el operando como variable
-      Op1.rVar  := par.pvar;  //Apunta a la variable
+      //Crea un operando-variable para generar código de asignación
+      Op1.SetAsVariab(par.pvar); //Apunta a la variable
       if FirstPass then par.pvar.AddCaller;   //se está usando
-      Op1.eleTyp := par.pvar.typ;  //necesario para "FindOperator"
       op := Op1.FindOperator(':=');  //busca la operación
       Oper(Op1, op, res);   //Codifica la asignación
     end;
@@ -600,7 +606,7 @@ begin
   //Hay un identificador
   identif :=  cIn.tokL;
   //Prueba con campos del tipo
-  for field in xOperand.eleTyp.fields do begin
+  for field in xOperand.Typ.fields do begin
     if LowerCase(field.Name) = identif then begin
       //Encontró el campo
       field.proc(@xOperand);  //Devuelve resultado en "res"
@@ -653,15 +659,12 @@ begin
     cIn.Next;    //Pasa al siguiente
     if xvar.IsRegister then begin
       //Es una variables REGISTER
-      Op.catOp:=coExpres;
-      Op.eleTyp := xvar.typ;
+      Op.SetAsExpres(xvar.typ);
       //Faltaría asegurarse de que los registros estén disponibles
       Op.DefineRegister;
     end else begin
       //Es una variable común
-      Op.catOp:=coVariab;    //variable
-      Op.eleTyp:=xvar.typ;
-      Op.rVar:=xvar;   //guarda referencia a la variable
+      Op.SetAsVariab(xvar);   //guarda referencia a la variable (y actualiza el tipo).
       {$IFDEF LogExpres} Op.txt:= xvar.name; {$ENDIF}   //toma el texto
       //Verifica si tiene referencia a campos con "."
       if cIn.tok = '.' then begin
@@ -675,8 +678,7 @@ begin
     xcon := TxpEleCon(ele);
     if FirstPass then xcon.AddCaller;//lleva la cuenta
     cIn.Next;    //Pasa al siguiente
-    Op.catOp := coConst;    //constante
-    Op.eleTyp  := xcon.typ;
+    Op.SetAsConst(xcon.typ); //fija como constante
     Op.GetConsValFrom(xcon);  //lee valor
     {$IFDEF LogExpres} Op.txt:= xcon.name; {$ENDIF}   //toma el texto
     //Verifica si tiene referencia a campos con "."
@@ -729,8 +731,7 @@ begin
       end;
       xfun.procCall(xfun); //codifica el "CALL"
       RTstate := xfun.typ;  //para indicar que los RT están ocupados
-      Op.catOp := coExpres;
-      Op.eleTyp := xfun.typ;
+      Op.SetAsExpres(xfun.typ);
       exit;
     end else begin
       //Encontró la función, pero no coincidió con los parámetros
@@ -760,13 +761,11 @@ begin
   ProcComments;
   Result.Inverted := false;   //inicia campo
   if cIn.tokType = tnNumber then begin  //constantes numéricas
-    Result.catOp:=coConst;       //constante es Mono Operando
     {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if HayError then exit;  //verifica
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tokType = tnChar then begin  //constante caracter
-    Result.catOp:=coConst;       //constante es Mono Operando
     {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     if not TryStrToInt(copy(cIn.tok, 2), cod) then begin
       GenError('Error in character.');   //tal vez, sea muy grande
@@ -776,11 +775,10 @@ begin
       GenError('Invalid code for char.');
       exit;
     end;
+    Result.SetAsConst(typChar);
     Result.valInt := cod;
-    Result.eleTyp := typChar;
     cIn.Next;    //Pasa al siguiente
   end else if cIn.tokType = tnString then begin  //constante cadena
-    Result.catOp:=coConst;       //constante es Mono Operando
     if length(cIn.tok)=2 then begin  //Es ''
       GenError('Char expected.');
       exit;
@@ -789,8 +787,8 @@ begin
       exit;
     end;
     {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
+    Result.SetAsConst(typChar);
     Result.valInt := ord(cIn.tok[2]);
-    Result.eleTyp := typChar;
     cIn.Next;    //Pasa al siguiente
   end else if (cIn.tokType = tnSysFunct) or //función del sistema
               (cIn.tokL = 'bit') or   //"bit" es de tipo "tnType"
@@ -823,7 +821,6 @@ begin
     GetOperandIdent(Result);
     //Puede salir con error.
   end else if cIn.tokType = tnBoolean then begin  //true o false
-    Result.catOp:=coConst;       //constante es Mono Operando
     {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     TipDefecBoolean(Result, cIn.tok); //encuentra tipo y valor
     if HayError then exit;  //verifica
@@ -846,7 +843,7 @@ begin
        Exit;       //error
     end;
 {  end else if (cIn.tokType = tkString) then begin  //constante cadena
-    Result.catOp:=coConst;     //constante es Mono Operando
+    Result.Cat:=coConst;     //constante es Mono Operando
     TipDefecString(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if pErr.HayError then exit;  //verifica
     if Result.typ = nil then begin
@@ -866,11 +863,11 @@ begin
     Op := GetOperand();   //toma el operando. ¡¡¡Importante los peréntesis!!!
     if HayError then exit;
     //Ahora ya tenemos el tipo. Hay que ver si corresponde el operador
-    opr := Op.eleTyp.FindUnaryPreOperator(oprTxt);
+    opr := Op.Typ.FindUnaryPreOperator(oprTxt);
     if opr = nullOper then begin
       {Este tipo no permite este operador Unario (a lo mejor ni es unario)}
       cIn.PosAct := posAct;
-      GenError('Cannot apply the operator "%s" to type "%s"', [oprTxt, Op.eleTyp.name]);
+      GenError('Cannot apply the operator "%s" to type "%s"', [oprTxt, Op.Typ.name]);
       exit;
     end;
     //Sí corresponde. Así que apliquémoslo
@@ -901,10 +898,12 @@ begin
    LogExpLevel('-- Op1='+Op1.txt+', Op2='+Op2.txt+' --');
    {$ENDIF}
    //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
-   Operation := opr.FindOperation(Op2.eleTyp);
+//debugln('Op1: cat=%s, typ=%s',[Op1.catOpStr, Op1.Typ.name]);
+//debugln('Op2: cat=%s, typ=%s',[Op2.catOpStr, Op2.Typ.name]);
+   Operation := opr.FindOperation(Op2.Typ);
    if Operation = nil then begin
-      tmp := '(' + Op1.eleTyp.name + ') '+ opr.txt;
-      tmp := tmp +  ' ('+Op2.eleTyp.name+')';
+      tmp := '(' + Op1.Typ.name + ') '+ opr.txt;
+      tmp := tmp +  ' ('+Op2.Typ.name+')';
       GenError('Illegal Operation: %s',
                [tmp]);
       exit;
@@ -913,11 +912,11 @@ begin
    p1 := @Op1; p2 := @Op2;  { Se usan punteros por velocidad. De otra forma habría que
                              copiar todo el objeto.}
    //junta categorías de operandos
-   catOperation := TCatOperation((Ord(Op1.catOp) << 2) or ord(Op2.catOp));
+   catOperation := TCatOperation((Ord(Op1.Cat) << 2) or ord(Op2.Cat));
    operType := operBinary;
    {Ejecuta la operación.
    Los parámetros de entrada se dejan en p1 y p2. El resultado debe dejarse en "res"}
-   Operation.proc;
+   Operation.proc(true);  //Llama normalmente
    //Completa campos de "res", si es necesario
    {$IFDEF LogExpres}
    LogExpLevel('Oper('+Op1.catOpChr + ' ' + opr.txt + ' ' + Op2.catOpChr+') -> ' +
@@ -936,14 +935,14 @@ begin
   {$ENDIF}
    if opr.OperationPre = nil then begin
       GenError('Illegal Operation: %s',
-                 [opr.txt + '('+Op1.eleTyp.name+')']);
+                 [opr.txt + '('+Op1.Typ.name+')']);
       exit;
     end;
    {Llama al evento asociado con p1 como operando. }
    p1 := @Op1; {Solo hay un parámetro}
    operType := operUnary;
    {Ejecuta la operación. El resultado debe dejarse en "res"}
-   opr.OperationPre;
+   opr.OperationPre(true);  //Llama normalmente
    //Completa campos de "res", si es necesario
    {$IFDEF LogExpres}
    LogExpLevel('Oper('+ opr.txt + ' ' + Op1.catOpChr+ ') -> ' + res.catOpChr);
@@ -960,14 +959,14 @@ begin
   {$ENDIF}
    if opr.OperationPost = nil then begin
       GenError('Illegal Operation: %s',
-                 ['('+Op1.eleTyp.name+')' + opr.txt]);
+                 ['('+Op1.Typ.name+')' + opr.txt]);
       exit;
     end;
    {Llama al evento asociado con p1 como operando. }
    p1 := @Op1; {Solo hay un parámetro}
    operType := operUnary;
    {Ejecuta la operación. El resultado debe dejarse en "res"}
-   opr.OperationPost;
+   opr.OperationPost(true);  //Llama normalmente
    //Completa campos de "res", si es necesario
    {$IFDEF LogExpres}
    LogExpLevel('Oper('+Op1.catOpChr+ ' ' +opr.txt +') -> ' + res.catOpChr);
@@ -1018,7 +1017,7 @@ begin
     //no está definido el operador siguente para el Op1, (no se puede comparar las
     //precedencias) asumimos que aquí termina el operando.
     cIn.PosAct := pos;   //antes de coger el operador
-    GenError('Undefined operator: %s for type: %s', [opr.txt, Op1.eleTyp.name]);
+    GenError('Undefined operator: %s for type: %s', [opr.txt, Op1.Typ.name]);
     exit;
 //    Result:=Op1;
   end else begin  //si está definido el operador (opr) para Op1, vemos precedencias
@@ -1041,7 +1040,7 @@ Si el operador encontrado no se aplica al operando, devuelve nullOper.}
 begin
   if cIn.tokType <> tnOperator then exit(nil);
   //Hay un operador
-  Result := Op.eleTyp.FindBinaryOperator(cIn.tok);
+  Result := Op.Typ.FindBinaryOperator(cIn.tok);
   cIn.Next;   //toma el token
 end;
 function TCompilerBase.GetExpression(const prec: Integer): TOperand; //inline;
@@ -1070,7 +1069,7 @@ begin
   //------- sigue un operador ---------
   //verifica si el operador aplica al operando
   if opr1 = nullOper then begin
-    GenError('Undefined operator: %s for type: %s', [opr1.txt, Op1.eleTyp.name]);
+    GenError('Undefined operator: %s for type: %s', [opr1.txt, Op1.Typ.name]);
     exit;
   end;
   //inicia secuencia de lectura: <Operador> <Operando>
@@ -1270,11 +1269,15 @@ end;
 function TOperand.offs: TVarOffs;
 {Dirección de memoria, cuando es de tipo Char, Byte, Bit o Boolean.}
 begin
-  if (eleTyp = typBit) or (eleTyp = typBool) then begin
+  if (Typ = typBit) or (Typ = typBool) then begin
     Result := rVar.adrBit.offs;
   end else begin  //Char o byte
     Result := rVar.adrByte0.offs;
   end;
+end;
+function TOperand.Boffs: TVarOffs;
+begin
+  Result := rVar.adrBit.offs;
 end;
 function TOperand.Loffs: TVarOffs;
 {Dirección de memoria baja, cuando es de tipo Word.}
@@ -1296,7 +1299,7 @@ end;
 function TOperand.bank: TVarBank;
 {Banco, cuando es de tipo Byte.}
 begin
-  if (eleTyp = typBit) or (eleTyp = typBool) then begin
+  if (Typ = typBit) or (Typ = typBool) then begin
     Result := rVar.adrBit.bank;
   end else begin  //Char o byte
     Result := rVar.adrByte0.bank;
@@ -1314,7 +1317,7 @@ begin
 end;
 procedure TOperand.Invert;
 begin
-  if catOp = coConst then begin
+  if Cat = coConst then begin
     //Para constantes, no se puede negar la lógica, sino el valor
     valBool := not valBool;
   end else begin
@@ -1356,12 +1359,12 @@ end;
 procedure TOperand.CopyConsValTo(var c: TxpEleCon);
 begin
   //hace una copia selectiva por velocidad, de acuerdo a la categoría
-  case eleTyp.grp of
-  t_boolean : c.val.ValBool:=val.ValBool;
+  case Typ.grp of
+  t_boolean : c.val.ValBool:=Fval.ValBool;
   t_integer,
-  t_uinteger: c.val.ValInt  := val.ValInt;
-  t_float   : c.val.ValFloat:= val.ValFloat;
-  t_string  : c.val.ValStr  := val.ValStr;
+  t_uinteger: c.val.ValInt  := Fval.ValInt;
+  t_float   : c.val.ValFloat:= Fval.ValFloat;
+  t_string  : c.val.ValStr  := Fval.ValStr;
   else
     MsgErr('Internal PicPas error');
     {En teoría, cualquier valor constante que pueda contener TOperand, debería poder
@@ -1373,35 +1376,69 @@ procedure TOperand.GetConsValFrom(const c: TxpEleCon);
 {Copia valores constante desde una constante. Primero TOperand, debería tener inicializado
  correctamente su campo "catTyp". }
 begin
-  case eleTyp.grp of
-  t_boolean : val.ValBool := c.val.ValBool;
+  case Typ.grp of
+  t_boolean : Fval.ValBool := c.val.ValBool;
   t_integer,
-  t_uinteger: val.ValInt := c.val.ValInt;
-  t_float   : val.ValFloat := c.val.ValFloat;
-  t_string  : val.ValStr := c.val.ValStr;
+  t_uinteger: Fval.ValInt := c.val.ValInt;
+  t_float   : Fval.ValFloat := c.val.ValFloat;
+  t_string  : Fval.ValStr := c.val.ValStr;
   else
     MsgErr('Internal PicPas error');
     //faltó implementar.
   end;
 end;
+function TOperand.GetTyp: TxpEleType;
+begin
+  if Cat = coVariab then begin
+    Result := rVar.typ;
+  end else begin
+    Result := FTyp;
+  end;
+end;
 procedure TOperand.SetvalBool(AValue: boolean);
 begin
-  val.ValBool:=AValue;
+  Fval.ValBool:=AValue;
 end;
 procedure TOperand.SetvalFloat(AValue: extended);
 begin
 //  if FvalFloat=AValue then Exit;
-  val.ValFloat:=AValue;
+  Fval.ValFloat:=AValue;
 end;
 procedure TOperand.SetvalInt(AValue: Int64);
 begin
 //  if FvalInt=AValue then Exit;
-  val.ValInt:=AValue;
+  Fval.ValInt:=AValue;
+end;
+procedure TOperand.SetAsConst(xtyp: TxpEleType);
+{Fija la categoría del Operando como Constante, del tipo indicado}
+begin
+  FCat := coConst;
+  FTyp := xtyp;
+end;
+procedure TOperand.SetAsVariab(xvar: TxpEleVar);
+{Fija la categoría del Operando como Variable, del tipo de la variable}
+begin
+  FCat := coVariab;
+  FVar := xvar;  //No hace falta actualziar el tipo
+end;
+procedure TOperand.SetAsExpres(xtyp: TxpEleType);
+{Fija la categoría del Operando como Expresión, del tipo indicado}
+begin
+  FCat := coExpres;
+  FTyp := xtyp;
+end;
+procedure TOperand.SetAsNull;
+{Configura al operando como de tipo Null}
+begin
+  {Se pone como constante, que es el tipo más simple, además se protege, pro si era
+  variable}
+  FCat := coConst;
+  FTyp := typNull;   //Este es el tipo NULO
 end;
 function TOperand.catOpStr: string;
 {Categoría en cadena.}
 begin
-  case catOp of
+  case Cat of
   coConst : exit('Constant');
   coVariab: exit('Variable');
   coExpres: exit('Expression');
@@ -1411,7 +1448,7 @@ function TOperand.catOpChr: char;
 {Categoría en caracter.}
 begin
   Result := ' ';
-  case catOp of
+  case Cat of
   coConst : exit('k');
   coVariab: exit('v');
   coExpres: exit('X');
@@ -1419,18 +1456,18 @@ begin
 end;
 procedure TOperand.LoadToReg;
 begin
-  if eleTyp.OnLoadToReg<> nil then eleTyp.OnLoadToReg(@self);
+  if Typ.OnLoadToReg<> nil then Typ.OnLoadToReg(@self);
 end;
 procedure TOperand.DefineRegister;
 begin
   //llama al evento de pila
-  if eleTyp.OnDefineRegister<> nil then eleTyp.OnDefineRegister;
+  if Typ.OnDefineRegister<> nil then Typ.OnDefineRegister;
 end;
 function TOperand.FindOperator(const oper: string): TxpOperator;
 //Recibe la cadena de un operador y devuelve una referencia a un objeto Toperator, del
 //operando. Si no está definido el operador para este operando, devuelve nullOper.
 begin
-  Result := eleTyp.FindBinaryOperator(oper);
+  Result := Typ.FindBinaryOperator(oper);
 end;
 procedure SetLanguage(lang: string);
 begin

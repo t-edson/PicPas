@@ -188,9 +188,10 @@ type
     OperationLoad: TProcExecOperat; {Evento. Es llamado cuando se pide evaluar una
                                  expresión de un solo operando de este tipo. Es un caso
                                  especial que debe ser tratado por la implementación}
-    {Estos eventos NO se generan automáticamente en TCompilerBase, sino que es la implementación, la
-     que deberá llamarlos. Son como una ayuda para facilitar la implementación.
-     OnPush y OnPop, son útiles para cuando la implementación va a manejar pila.}
+    {Estos eventos NO se generan automáticamente en TCompilerBase, sino que es la
+    implementación del tipo, la que deberá llamarlos. Son como una ayuda para facilitar
+    la implementación. OnPush y OnPop, son útiles para cuando la implementación va a
+    manejar pila.}
     OnSaveToStk: procedure of object;  //Salva datos en reg. de Pila
     OnLoadToReg: TProcLoadOperand; {Se usa cuando se solicita cargar un operando
                                  (de este tipo) en la pila. }

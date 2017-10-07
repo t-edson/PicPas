@@ -55,8 +55,11 @@ type  //tipos enumerados
     coExpres_Expres= %1010
   );
 
-  //Eventos
-  TProcExecOperat = procedure of object;
+  {Evento que llama a una Rutina de Operación (ROP).
+  El parámetro "SetRes", se usa para cuando se quiere indicar si se usará la ROP, en
+  modo normal (TRUE) o si solo se quiere usar la ROP, como generador de código}
+  TProcExecOperat = procedure(SetRes: boolean) of object;
+
   TProcDefineVar = procedure(const varName, varInitVal: string) of object;
   {Evento para cargar un  operando en la pila.
   "OpPtr" debería ser "TOperand", pero aún no se define "TOperand".}

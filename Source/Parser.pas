@@ -430,7 +430,7 @@ function TCompiler.GetExpressionBool: boolean;
 begin
   GetExpressionE(0);
   if HayError then exit(false);
-  if res.eletyp <> typBool then begin
+  if res.Typ <> typBool then begin
     GenError(ER_BOOL_EXPECT);
     exit(false);
   end;
@@ -462,7 +462,7 @@ begin
   bnkExp := CurrBank;   //Guarda el banco inicial
   if not CaptureStr('then') then exit; //toma "then"
   //Aquí debe estar el cuerpo del "if"
-  case res.catOp of
+  case res.Cat of
   coConst: begin  //la condición es fija
     if res.valBool then begin
       //Es verdadero, siempre se ejecuta
@@ -540,14 +540,14 @@ procedure  TCompiler.Cod_JumpIfTrue;
 verdadera. Se debe asegurar que la expresión es de tipo booleana y que es de categoría
 coVariab o coExpres.}
 begin
-  if res.catOp = coVariab then begin
+  if res.Cat = coVariab then begin
     //Las variables booleanas, pueden estar invertidas
     if res.Inverted then begin
       _BTFSC(res.offs, res.bit);  //verifica condición
     end else begin
       _BTFSS(res.offs, res.bit);  //verifica condición
     end;
-  end else if res.catOp = coExpres then begin
+  end else if res.Cat = coExpres then begin
     //Los resultados de expresión, pueden optimizarse
     if InvertedFromC then begin
       //El resultado de la expresión, está en Z, pero a partir una copia negada de C
@@ -580,7 +580,7 @@ begin
   cIn.SkipWhites;
   if not CaptureStr('until') then exit; //toma "until"
   if not GetExpressionBool then exit;
-  case res.catOp of
+  case res.Cat of
   coConst: begin  //la condición es fija
     if res.valBool then begin
       //lazo nulo
@@ -609,7 +609,7 @@ begin
   bnkExp2 := CurrBank;   //Guarda el banco antes de la expresión
   if not CaptureStr('do') then exit;  //toma "do"
   //Aquí debe estar el cuerpo del "while"
-  case res.catOp of
+  case res.Cat of
   coConst: begin  //la condición es fija
     if res.valBool then begin
       //Lazo infinito
@@ -646,12 +646,12 @@ var
   bnkFOR: byte;
 begin
   Op1 :=  GetOperand;
-  if Op1.catOp <> coVariab then begin
+  if Op1.Cat <> coVariab then begin
     GenError(ER_VARIAB_EXPEC);
     exit;
   end;
   if HayError then exit;
-  if (Op1.eletyp<>typByte) and (Op1.eletyp<>typWord) then begin
+  if (Op1.Typ<>typByte) and (Op1.Typ<>typWord) then begin
     GenError(ER_ONL_BYT_WORD);
     exit;
   end;
@@ -673,14 +673,14 @@ begin
   cIn.SkipWhites;
   if not CaptureStr('do') then exit;  //toma "do"
   //Aquí debe estar el cuerpo del "for"
-  if (res.catOp = coConst) or (res.catOp = coVariab) then begin
+  if (res.Cat = coConst) or (res.Cat = coVariab) then begin
     //Es un for con valor final de tipo constante
     //Se podría optimizar, si el valor inicial es también constante
     l1 := _PC;        //guarda dirección de inicio
     //Codifica rutina de comparación, para salir
-    opr1 := Op1.eleTyp.FindBinaryOperator('<=');  //Busca operador de comparación
+    opr1 := Op1.Typ.FindBinaryOperator('<=');  //Busca operador de comparación
     if opr1 = nullOper then begin
-      GenError('Internal: No operator <= defined for %s.', [Op1.eleTyp.name]);
+      GenError('Internal: No operator <= defined for %s.', [Op1.Typ.name]);
       exit;
     end;
     Op2 := res;   //Copia porque la operación Oper() modificará res
@@ -690,9 +690,9 @@ begin
     if not CompileConditionalBody(bnkFOR) then exit;
     if not VerifyEND then exit;
     //Incrementa variable cursor
-    if Op1.eleTyp = typByte then begin
+    if Op1.Typ = typByte then begin
       _INCF(Op1.offs, toF);
-    end else if Op1.eleTyp = typWord then begin
+    end else if Op1.Typ = typWord then begin
       _INCF(Op1.Loffs, toF);
       _BTFSC(STATUS, _Z);
       _INCF(Op1.Hoffs, toF);
@@ -758,7 +758,7 @@ begin
     //Intenta convertir la cadena. Notar que se reconocen los formatos $FF y %0101
     if not TryStrToInt64(toknum, n) then begin
       //Si el lexer ha hecho bien su trabajo, esto solo debe pasar, cuando el
-      //número tiene muhcos dígitos.
+      //número tiene mucHos dígitos.
       GenError('Error in number.');
       exit;
     end;
@@ -766,14 +766,14 @@ begin
     {Asigna un tipo, de acuerdo al rango. Notar que el tipo más pequeño, usado
     es el byte, y no el bit.}
     if (n>=0) and  (n<=255) then begin
-      Op.eleTyp := typByte;
+      Op.SetAsConst(typByte);
     end else if (n>= 0) and (n<=$FFFF) then begin
-      Op.eleTyp := typWord;
+      Op.SetAsConst(typWord);
     end else if (n>= 0) and (n<=$FFFFFFFF) then begin
-      Op.eleTyp := typDWord;
+      Op.SetAsConst(typDWord);
     end else  begin //no encontró
       GenError(ER_NOTYPDEF_NU);
-      Op.eleTyp := nil;
+      Op.SetAsNull;
     end;
   end;
 end;
@@ -796,8 +796,8 @@ procedure TCompiler.TipDefecBoolean(var Op: TOperand; tokcad: string);
 //Devuelve el tipo de cadena encontrado en un token
 begin
   //convierte valor constante
+  Op.SetAsConst(typBool);
   Op.valBool:= (tokcad[1] in ['t','T']);
-  Op.eleTyp:=typBool;
 end;
 //Rutinas para la compilación y enlace
 procedure TCompiler.CompileProcBody(fun: TxpEleFun);
@@ -861,13 +861,13 @@ begin
     //Debe seguir una expresiócons constante, que no genere consódigo
     GetExpressionE(0);
     if HayError then exit;
-    if res.catOp <> coConst then begin
+    if res.Cat <> coConst then begin
       GenError(ER_CON_EXP_EXP);
     end;
     //Hasta aquí todo bien, crea la(s) constante(s).
     for i:= 0 to high(consNames) do begin
       //crea constante
-      cons := CreateCons(consNames[i], res.eleTyp);
+      cons := CreateCons(consNames[i], res.Typ);
       cons.srcDec := srcPosArray[i];  //guarda punto de declaración
       if not TreeElems.AddElement(cons) then begin
         GenErrorPos(ER_DUPLIC_IDEN, [cons.name], cons.srcDec);
@@ -974,7 +974,7 @@ begin
     //Puede ser variable
     GetOperandIdent(Op);
     if HayError then exit;
-    if Op.catOp <> coVariab then begin
+    if Op.Cat <> coVariab then begin
       GenError(ER_EXP_VAR_IDE);
       cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
       exit;
@@ -1011,12 +1011,11 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
-    //Se devuelve una variable, byte
-    res.catOp := coConst;
-    res.eleTyp := typByte;
+    //Se devuelve una constante, byte
+    res.SetAsConst(typByte);
     res.valInt := xvar.typ.arrSize;
   end;
   else
@@ -1031,12 +1030,11 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
-    //Se devuelve una variable, byte
-    res.catOp := coConst;
-    res.eleTyp := typByte;
+    //Se devuelve una constante, byte
+    res.SetAsConst(typByte);
     res.valInt {%H-}:= xvar.typ.arrSize-1;
   end;
   else
@@ -1050,11 +1048,10 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
-    //Se devuelve una variable, byte
-    res.catOp := coConst;
-    res.eleTyp := typByte;
+    //Se devuelve una constante, byte
+    res.SetAsConst(typByte);
     res.valInt := 0;  //por ahora siempre inicia en 0
   end;
   else
@@ -1075,14 +1072,13 @@ begin
   if not CaptureTok(')') then exit;
   //Procesa
   Op := OpPtr;
-  if Op^.catOp = coVariab then begin  //Se aplica a una variable
+  if Op^.Cat = coVariab then begin  //Se aplica a una variable
     xVar := Op^.rVar;  //referencia a la variable.
     if xVar.typ.refType = typByte then begin
       //Es array de bytes se devuelve una expresión byte
-      res.catOp := coExpres;
-      res.eleTyp := typByte;
+      res.SetAsExpres(typByte);
       //Genera el código de acuerdo al índice
-      case par.catOp of
+      case par.Cat of
       coConst: begin  //ïndice constante
           //Como el índice es constante, se puede acceder directamente
           _MOVF(xVar.adrByte0.offs+par.valInt, toW);
@@ -1105,7 +1101,7 @@ procedure TCompiler.array_setItem(const OpPtr: pointer);
 //Función que fija un valor indexado
 var
   Op: ^TOperand;
-  arrVar: TxpEleVar;
+  arrVar, rVar: TxpEleVar;
   idx, value: TOperand;
   idxTar: Int64;
 begin
@@ -1115,24 +1111,23 @@ begin
   idx := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   //Procesa
   Op := OpPtr;
-  if Op^.catOp = coVariab then begin  //Se aplica a una variable
+  if Op^.Cat = coVariab then begin  //Se aplica a una variable
     arrVar := Op^.rVar;  //referencia a la variable.
     if arrVar.typ.refType = typByte then begin
       //Es array de bytes se devuelve una expresión byte
-      res.catOp := coExpres;
-      res.eleTyp := typByte;
+      res.SetAsExpres(typByte);
       //Genera el código de acuerdo al índice
-      case idx.catOp of
+      case idx.Cat of
       coConst: begin  //ïndice constante
           //Como el índice es constante, se puede acceder directamente
           idxTar := arrVar.adrByte0.offs+idx.valInt; //índice destino
           if not CaptureTok(',') then exit;
           value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
-          if value.eleTyp <> typByte then begin
+          if value.Typ <> typByte then begin
             GenError('Byte expression expected.');
             exit;
           end;
-          if (value.catOp = coConst) and (value.valInt=0) then begin
+          if (value.Cat = coConst) and (value.valInt=0) then begin
             //Caso especial, se pone a cero
             _CLRF(idxTar);
           end else begin
@@ -1146,25 +1141,25 @@ begin
           //Tenemos la referencia la variable en idx.rvar
           if not CaptureTok(',') then exit;
           value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
-          if value.eleTyp <> typByte then begin
+          if value.Typ <> typByte then begin
             GenError('Byte expression expected.');
             exit;
           end;
           //Sabemos que hay una expresión byte
-          if (value.catOp = coConst) and (value.valInt=0) then begin
+          if (value.Cat = coConst) and (value.valInt=0) then begin
             //Caso especial, se pide asignar una constante cero
             _MOVF(idx.offs, toW);  //índice
             _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
             _MOVWF($04);  //Direcciona
             _CLRF($00);   //Pone a cero
-          end else if value.catOp = coConst then begin
+          end else if value.Cat = coConst then begin
             //Es una constante cualquiera
             _MOVF(idx.offs, toW);  //índice
             _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
             _MOVWF($04);  //Direcciona
             _MOVLW(value.valInt);
             _MOVWF($00);   //Escribe valor
-          end else if value.catOp = coVariab then begin
+          end else if value.Cat = coVariab then begin
             //Es una variable
             _MOVF(idx.offs, toW);  //índice
             _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
@@ -1188,23 +1183,23 @@ begin
         if not CaptureTok(',') then exit;
         value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
         // ¿Y si GetExpression modifica H?  !!!!!!!!!!!
-        if value.eleTyp <> typByte then begin
+        if value.Typ <> typByte then begin
           GenError('Byte expression expected.');
           exit;
         end;
         //Sabemos que hay una expresión byte
-        if (value.catOp = coConst) and (value.valInt=0) then begin
+        if (value.Cat = coConst) and (value.valInt=0) then begin
           //Caso especial, se pide asignar una constante cero
           _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
           _MOVWF($04);  //Direcciona
           _CLRF($00);   //Pone a cero
-        end else if value.catOp = coConst then begin
+        end else if value.Cat = coConst then begin
           //Es una constante cualquiera
           _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
           _MOVWF($04);  //Direcciona
           _MOVLW(value.valInt);
           _MOVWF($00);   //Escribe valor
-        end else if value.catOp = coVariab then begin
+        end else if value.Cat = coVariab then begin
           //Es una variable
           _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
           _MOVWF($04);  //Direcciona
@@ -1214,12 +1209,13 @@ begin
           //Es una expresión. El valor a asignar está en W, y el índice en la pila
           typWord.DefineRegister;   //Para usar H
           _MOVWF(H.offs);  //W->H   salva valor a H
-          idx.rVar := GetVarByteFromStk;  //toma referencia de la pila
-          _MOVF(idx.offs, toW);  //índice
+          rVar := GetVarByteFromStk;  //toma referencia de la pila
+          _MOVF(rVar.adrByte0.offs, toW);  //índice
           _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
           _MOVWF($04);  //Direcciona
           _MOVF(H.offs, toW);
           _MOVWF($00);   //Escribe valor
+          FreeStkRegisterByte;   //Para liberar
         end;
         end;
       end;
@@ -1241,12 +1237,11 @@ begin
   cIn.Next;  //Toma identificador de campo
   //Limpia el arreglo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
-    res.catOp := coConst;  //Realmente no es importante devolver un valor
-    res.eleTyp := typByte;
-    res.valInt {%H-}:= xvar.typ.arrSize-1;
+    res.SetAsConst(typByte);  //Realmente no es importante devolver un valor
+    res.valInt {%H-}:= xvar.typ.arrSize;  //Devuelve tamaño
     if xvar.typ.arrSize = 0 then exit;  //No hay nada que limpiar
     if xvar.typ.arrSize = 1 then begin  //Es de un solo byte
       _BANKSEL(xvar.adrByte0.bank);

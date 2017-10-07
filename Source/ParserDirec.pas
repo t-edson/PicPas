@@ -79,6 +79,7 @@ type
     procedure ProcMSGERR;
     procedure ProcMSGWAR;
     procedure ProcSET_MAPPED_RAM;
+    procedure ProcMAP_PORT_PIN;
     procedure ProcCLEAR_STATE_RAM;
     procedure ProcSET_STATE_RAM;
     function read_CURRBANK: Single;
@@ -1237,6 +1238,16 @@ begin
   pic.SetMappRAMCom(txtMsg);
   if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
 end;
+procedure TParserDirec.ProcMAP_PORT_PIN;
+var
+  txtMsg: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  txtMsg := CogExpresion(0).valStr;
+  if HayError then exit;
+  pic.MapPORTtoPIN(txtMsg);
+  if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
+end;
 procedure TParserDirec.ProcCLEAR_STATE_RAM;
 {Limpia el estado de la memoria RAM}
 begin
@@ -1345,6 +1356,7 @@ begin
   'CLEAR_STATE_RAM': ProcCLEAR_STATE_RAM;
   'SET_STATE_RAM': ProcSET_STATE_RAM;
   'SET_MAPPED_RAM': ProcSET_MAPPED_RAM;
+  'MAP_PORT_TO_PIN': ProcMAP_PORT_PIN;
   else
     //Puede ser una macro
     dmac := FindMacro(lexDir.GetToken);

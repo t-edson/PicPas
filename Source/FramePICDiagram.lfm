@@ -1,0 +1,18 @@
+object fraPICDiagram: TfraPICDiagram
+  Left = 0
+  Height = 317
+  Top = 0
+  Width = 378
+  ClientHeight = 317
+  ClientWidth = 378
+  TabOrder = 0
+  DesignLeft = 323
+  DesignTop = 196
+  object PaintBox1: TPaintBox
+    Left = 0
+    Height = 317
+    Top = 0
+    Width = 378
+    Align = alClient
+  end
+end

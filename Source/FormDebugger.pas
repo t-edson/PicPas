@@ -4,7 +4,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ComCtrls,
   ExtCtrls, StdCtrls, Grids, ActnList, Menus, Parser, FrameRamExplorer,
-  FrameRomExplorer, FramePicRegisters, FrameRegWatcher, Pic16Utils;
+  FrameRomExplorer, FramePicRegisters, FrameRegWatcher, Pic16Utils, FramePICDiagram;
 type
   { TfrmDebugger }
   TfrmDebugger = class(TForm)
@@ -68,10 +68,13 @@ type
     procedure FormCreate(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
   private
+    defHeight: LongInt;
+    margInstrc: Integer;
     fraRamExp: TfraRamExplorer;
     fraRomExp: TfraRomExplorer;
     fraPicReg: TfraPicRegisters;
     fraRegWat: TfraRegWatcher;
+    fraPicDia: TfraPICDiagram;
     milsecRefresh: integer;   //Periodo de refresco en milisegunod
     nCyclesPerClk: integer;   //Número de ciclos a ejecutar por pasada
     procedure picExecutionMsg(message: string);
@@ -87,33 +90,8 @@ var
   frmDebugger: TfrmDebugger;
 
 implementation
-
 {$R *.lfm}
 { TfrmDebugger }
-procedure TfrmDebugger.FormCreate(Sender: TObject);
-begin
-  fraRamExp:= TfraRamExplorer.Create(self);
-  fraRamExp.Parent := panRAM;
-  fraRamExp.Align := alClient;
-
-  fraRomExp:= TfraRomExplorer.Create(self);
-  fraRomExp.Parent := panROM;
-  fraRomExp.Align := alClient;
-
-  fraPicReg:= TfraPicRegisters.Create(self);
-  fraPicReg.Parent := panStatis;
-  fraPicReg.Align := alClient;
-
-  fraRegWat := TfraRegWatcher.Create(self);
-  fraRegWat.Parent := Panel2;
-  fraRegWat.Align := alClient;
-
-  //Configura Toolbar
-//  ToolBar1.ButtonHeight:=38;
-//  ToolBar1.ButtonWidth:=38;
-//  ToolBar1.Height:=42;
-//  ToolBar1.Images:=ImgActions32;
-end;
 procedure TfrmDebugger.Timer1Timer(Sender: TObject);
 var
   stopped: boolean;
@@ -129,7 +107,7 @@ end;
 procedure TfrmDebugger.StringGrid1DrawCell(Sender: TObject; aCol,
   aRow: Integer; aRect: TRect; aState: TGridDrawState);
 var
-  txt: String;           // texto de la celda
+  txt, comm, lab: String;           // texto de la celda
   cv: TCanvas;           //referencia al lienzo
   valp: word;
 begin
@@ -154,7 +132,6 @@ begin
       end else begin  //Dirección no usada
         cv.Brush.Color := $E0E0E0;
       end;
-      cv.Font.Color := clGreen;   //letra verde
       cv.Font.Style := [fsBold];  //negrita
     end;
   end;
@@ -163,27 +140,62 @@ begin
   if ACol = 0 then begin
     txt := '$'+IntToHex(aRow,3);
     cv.TextOut(aRect.Left + 2, aRect.Top + 2, txt);
-  end else if ACol = 1then begin
-    //Breakpoint
-    if pic.flash[aRow].breakPnt then begin
-      ImageList16.Draw(cv, aRect.Left + 1, aRect.Top+2, 9);
-    end;
-    //Columna de marca
-    if aRow = word(pic.PCH<<8) + pic.PCL then begin  //marca
-       ImageList16.Draw(cv, aRect.Left + 10, aRect.Top+2, 3);
-    end;
-  end else if ACol = 2 then begin
+  end else if ACol = 1 then begin
     //Celda normal
     valp := pic.flash[aRow].value;
     pic.Decode(valp);   //decodifica instrucción
     txt := pic.Disassembler(true);
     //Escribe texto con alineación
-    cv.TextOut(aRect.Left + 2, aRect.Top + 2, txt);
-  end else if ACol = 3 then begin
+    if StringGrid1.RowHeights[Arow] = defHeight*3 then begin
+      //Celda con comentario superior y etiqueta
+      lab := trim(pic.flash[Arow].topLabel)+':';
+      comm := trim(pic.flash[Arow].topComment);
+      cv.Font.Color := clGray;
+      cv.TextOut(aRect.Left + 2, aRect.Top + 2, lab);  //comentario
+      cv.Font.Color := clBlue;
+      cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top + defHeight+ 2, comm);  //comentario
+      cv.Font.Color := clGreen;   //letra verde
+      cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top + defHeight*2 + 2, txt);
+      if pic.flash[aRow].breakPnt then begin
+        ImageList16.Draw(cv, aRect.Left + 1, aRect.Top+2 + defHeight*2, 9);
+      end;
+      if aRow = word((pic.PCH<<8) + pic.PCL) then begin  //marca
+         ImageList16.Draw(cv, aRect.Left + 10, aRect.Top+2 + defHeight*2, 3);
+      end;
+    end else if StringGrid1.RowHeights[Arow] = defHeight*2 then begin
+      //Celda con comentario superior
+      comm := trim(pic.flash[Arow].topComment);
+      cv.Font.Color := clBlue;   //letra verde
+      cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top + 2, comm);  //comentario
+      cv.Font.Color := clGreen;   //letra verde
+      cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top+2 + defHeight, txt);
+      if pic.flash[aRow].breakPnt then begin
+        ImageList16.Draw(cv, aRect.Left + 1, aRect.Top+2 + defHeight, 9);
+      end;
+      if aRow = word((pic.PCH<<8) + pic.PCL) then begin  //marca
+         ImageList16.Draw(cv, aRect.Left + 10, aRect.Top+2 + defHeight, 3);
+      end;
+    end else begin
+      cv.Font.Color := clGreen;   //letra verde
+      cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top + 2, txt);
+      if pic.flash[aRow].breakPnt then begin
+        ImageList16.Draw(cv, aRect.Left + 1, aRect.Top+2, 9);
+      end;
+      if aRow = word((pic.PCH<<8) + pic.PCL) then begin  //marca
+         ImageList16.Draw(cv, aRect.Left + 10, aRect.Top+2, 3);
+      end;
+    end;
+  end else if ACol = 2 then begin
     //Celda normal
-//    valp := pic.flash[aRow].value;
-//    pic.Decode(valp);   //decodifica instrucción
-    txt := pic.flash[aRow].topLabel;
+    cv.Font.Color := clBlue;   //letra verde
+    txt := pic.flash[aRow].sideComment;  //comentario
+//    if pic.flash[aRow].idFile=-1 then begin
+//      txt := '';
+//    end else begin
+//      txt := 'IdFil=' + IntToStr(pic.flash[aRow].idFile) +
+//             'row='   + IntToStr(pic.flash[aRow].rowSrc) +
+//             'col='   + IntToStr(pic.flash[aRow].colSrc) ;
+//    end;
     //Escribe texto con alineación
     cv.TextOut(aRect.Left + 2, aRect.Top + 2, txt);
   end;
@@ -200,7 +212,8 @@ begin
   StringGrid1.Invalidate;  //Refersca posibles cambios
   fraPicReg.Refrescar;
   if fraRamExp.Visible then fraRamExp.panGraph.Invalidate;
-  fraRegWat.Refrescar;
+  if fraRegWat.Visible then fraRegWat.Refrescar;
+  if fraPicDia.Visible then fraPicDia.Refrescar;
   StatusBar1.Panels[1].Text := 'Clock Cycles = ' + IntToStr(pic.nClck);
 //  StatusBar1.Panels[1].Text := 'Time seconds = ' + FloatToStr(pic.nClck / pic.frequen);
   StatusBar1.Panels[2].Text := 'Time  = ' +
@@ -315,6 +328,9 @@ begin
   RefreshScreen;
 end;
 procedure TfrmDebugger.Exec(cxp: TCompiler);
+{Inicia el prcceso de depuración, mostrando la ventana.}
+var
+  i: Integer;
 begin
   pic := cxp.pic;
   StringGrid1.DefaultDrawing:=false;
@@ -329,10 +345,28 @@ begin
   fraPicReg.Invalidate;
   fraRegWat.pic := pic;
   fraRegWat.Refrescar;
+  fraPicDia.pic:= pic;
+  fraPicDia.Refrescar;
   pic.AddBreakopint(0);
   pic.OnExecutionMsg := @picExecutionMsg;
   acGenResetExecute(self);
   StatusBar1.Panels[0].Text := pic.Model + ' at ' + IntToStr(pic.frequen) + ' Hz';
+  //Dimensiona la grilla para que pueda mostrar las etoquetas
+//  defHeight := StringGrid1.RowHeights[0];
+  for i:=0 to high(pic.flash) do begin
+    if not pic.flash[i].used then continue;
+    //Es celda usada
+    if (pic.flash[i].topComment<>'') and (pic.flash[i].topLabel<>'') then begin
+      //Tiene comentario arriba
+      StringGrid1.RowHeights[i] := 3*defHeight;
+    end else if pic.flash[i].topComment<>'' then begin
+      //Tiene comentario arriba
+      StringGrid1.RowHeights[i] := 2*defHeight;
+    end else begin
+      //Deja con la misma altura
+      StringGrid1.RowHeights[i] := defHeight;
+    end;
+  end;
   /////////////////////////////////////////////////////////////////////////////////
   ///// Calcula parámetros de refresco, para la ejecución en tiempo real //////////
   {La idea de la ejecución en tiempo real, es ejecutar un paquete de instrucciones
@@ -351,6 +385,37 @@ begin
   nCyclesPerClk := round(int64(pic.frequen) * milsecRefresh / 4000);
   /////////////////////////////////////////////////////////////////////////////////
   self.Show;
+end;
+procedure TfrmDebugger.FormCreate(Sender: TObject);
+begin
+  fraRamExp:= TfraRamExplorer.Create(self);
+  fraRamExp.Parent := panRAM;
+  fraRamExp.Align := alClient;
+
+  fraRomExp:= TfraRomExplorer.Create(self);
+  fraRomExp.Parent := panROM;
+  fraRomExp.Align := alClient;
+
+  fraPicReg:= TfraPicRegisters.Create(self);
+  fraPicReg.Parent := panStatis;
+  fraPicReg.Align := alClient;
+
+  fraRegWat := TfraRegWatcher.Create(self);
+  fraRegWat.Parent := Panel2;
+  fraRegWat.Align := alClient;
+
+  fraPicDia:= TfraPICDiagram.Create(self);
+  fraPicDia.Parent := Panel3;
+  fraPicDia.Align := alClient;
+  //Altura de fila de la grilla por defecto
+  defHeight := 20;
+  //Margen para mostrar las instrucciones en la grilla
+  margInstrc := 32;
+  //Configura Toolbar
+//  ToolBar1.ButtonHeight:=38;
+//  ToolBar1.ButtonWidth:=38;
+//  ToolBar1.Height:=42;
+//  ToolBar1.Images:=ImgActions32;
 end;
 
 end.

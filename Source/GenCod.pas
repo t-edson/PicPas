@@ -80,65 +80,65 @@ type
       procedure dword_Ultra(const OpPtr: pointer);
       procedure fun_Byte(fun: TxpEleFun);
       procedure fun_DWord(fun: TxpEleFun);
-      procedure Oper_bit_asig_bit;
-      procedure Oper_bit_asig_byte;
-      procedure Oper_bit_and_bit;
-      procedure Oper_bit_and_byte;
-      procedure Oper_bit_or_bit;
-      procedure Oper_bit_or_byte;
-      procedure Oper_bit_xor_bit;
-      procedure Oper_bit_xor_byte;
-      procedure Oper_bit_equ_bit;
-      procedure Oper_bit_equ_byte;
-      procedure Oper_bit_dif_bit;
-      procedure Oper_bit_dif_byte;
-      procedure Oper_byte_div_byte;
-      procedure Oper_byte_mul_byte;
-      procedure Oper_dword_aadd_dword;
-      procedure Oper_dword_add_dword;
-      procedure Oper_dword_asig_byte;
-      procedure Oper_dword_asig_dword;
-      procedure Oper_dword_asig_word;
-      procedure Oper_dword_difer_dword;
-      procedure Oper_dword_equal_dword;
-      procedure Oper_not_bit;
-      procedure Oper_not_byte;
-      procedure Oper_word_and_byte;
-      procedure Oper_word_umulword_word;
+      procedure Oper_bit_asig_bit(SetRes: boolean);
+      procedure Oper_bit_asig_byte(SetRes: boolean);
+      procedure Oper_bit_and_bit(SetRes: boolean);
+      procedure Oper_bit_and_byte(SetRes: boolean);
+      procedure Oper_bit_or_bit(SetRes: boolean);
+      procedure Oper_bit_or_byte(SetRes: boolean);
+      procedure Oper_bit_xor_bit(SetRes: boolean);
+      procedure Oper_bit_xor_byte(SetRes: boolean);
+      procedure Oper_bit_equ_bit(SetRes: boolean);
+      procedure Oper_bit_equ_byte(SetRes: boolean);
+      procedure Oper_bit_dif_bit(SetRes: boolean);
+      procedure Oper_bit_dif_byte(SetRes: boolean);
+      procedure Oper_byte_div_byte(SetRes: boolean);
+      procedure Oper_byte_mul_byte(SetRes: boolean);
+      procedure Oper_dword_aadd_dword(SetRes: boolean);
+      procedure Oper_dword_add_dword(SetRes: boolean);
+      procedure Oper_dword_asig_byte(SetRes: boolean);
+      procedure Oper_dword_asig_dword(SetRes: boolean);
+      procedure Oper_dword_asig_word(SetRes: boolean);
+      procedure Oper_dword_difer_dword(SetRes: boolean);
+      procedure Oper_dword_equal_dword(SetRes: boolean);
+      procedure Oper_not_bit(SetRes: boolean);
+      procedure Oper_not_byte(SetRes: boolean);
+      procedure Oper_word_and_byte(SetRes: boolean);
+      procedure Oper_word_umulword_word(SetRes: boolean);
       procedure word_mul_word_16(fun: TxpEleFun);
     private  //Operaciones con boolean
-      procedure Oper_bool_asig_bool;
-      procedure Oper_not_bool;
-      procedure Oper_bool_and_bool;
-      procedure Oper_bool_or_bool;
-      procedure Oper_bool_xor_bool;
-      procedure Oper_bool_equ_bool;
-      procedure Oper_bool_dif_bool;
+      procedure Oper_bool_asig_bool(SetRes: boolean);
+      procedure Oper_not_bool(SetRes: boolean);
+      procedure Oper_bool_and_bool(SetRes: boolean);
+      procedure Oper_bool_or_bool(SetRes: boolean);
+      procedure Oper_bool_xor_bool(SetRes: boolean);
+      procedure Oper_bool_equ_bool(SetRes: boolean);
+      procedure Oper_bool_dif_bool(SetRes: boolean);
     private  //Operaciones con byte
       procedure byte_LoadToReg(const OpPtr: pointer);
       procedure byte_DefineRegisters;
       procedure byte_SaveToStk;
       procedure byte_oper_byte(const InstLW, InstWF: TPIC16Inst);
-      procedure Oper_byte_asig_byte;
-      procedure Oper_byte_sub_byte;
-      procedure Oper_byte_add_byte;
-      procedure Oper_byte_add_word;
-      procedure Oper_byte_and_byte;
-      procedure Oper_byte_and_bit;
-      procedure Oper_byte_or_byte;
-      procedure Oper_byte_or_bit;
-      procedure Oper_byte_xor_byte;
-      procedure Oper_byte_xor_bit;
-      procedure Oper_byte_equal_byte;
-      procedure Oper_byte_difer_byte;
-      procedure Oper_byte_difer_bit;
-      procedure Oper_byte_great_byte;
-      procedure Oper_byte_less_byte;
-      procedure Oper_byte_gequ_byte;
-      procedure Oper_byte_lequ_byte;
+      procedure Oper_byte_asig_byte(SetRes: boolean);
+      procedure Oper_byte_sub_byte(SetRes: boolean);
+      procedure Oper_byte_add_byte(SetRes: boolean);
+      procedure Oper_byte_add_word(SetRes: boolean);
+      procedure Oper_byte_and_byte(SetRes: boolean);
+      procedure Oper_byte_and_bit(SetRes: boolean);
+      procedure Oper_byte_or_byte(SetRes: boolean);
+      procedure Oper_byte_or_bit(SetRes: boolean);
+      procedure Oper_byte_xor_byte(SetRes: boolean);
+      procedure Oper_byte_xor_bit(SetRes: boolean);
+      procedure Oper_byte_equal_byte(SetRes: boolean);
+      procedure Oper_byte_difer_byte(SetRes: boolean);
+      procedure Oper_byte_difer_bit(SetRes: boolean);
+      procedure Oper_byte_great_byte(SetRes: boolean);
+      procedure Oper_byte_less_byte(SetRes: boolean);
+      procedure Oper_byte_gequ_byte(SetRes: boolean);
+      procedure Oper_byte_lequ_byte(SetRes: boolean);
       procedure CodifShift_by_W(aux: TPicRegister; toRight: boolean);
-      procedure Oper_byte_shr_byte;
-      procedure Oper_byte_shl_byte;
+      procedure Oper_byte_shr_byte(SetRes: boolean);
+      procedure Oper_byte_shl_byte(SetRes: boolean);
       procedure byte_bit(const OpPtr: pointer; nbit: byte);
       procedure byte_bit0(const OpPtr: pointer);
       procedure byte_bit1(const OpPtr: pointer);
@@ -152,20 +152,20 @@ type
       procedure word_LoadToReg(const OpPtr: pointer);
       procedure word_DefineRegisters;
       procedure word_SaveToStk;
-      procedure Oper_word_asig_word;
-      procedure Oper_word_asig_byte;
-      procedure Oper_word_equal_word;
-      procedure Oper_word_difer_word;
-      procedure Oper_word_great_word;
-      procedure Oper_word_add_word;
-      procedure Oper_word_add_byte;
-      procedure Oper_word_sub_word;
+      procedure Oper_word_asig_word(SetRes: boolean);
+      procedure Oper_word_asig_byte(SetRes: boolean);
+      procedure Oper_word_equal_word(SetRes: boolean);
+      procedure Oper_word_difer_word(SetRes: boolean);
+      procedure Oper_word_great_word(SetRes: boolean);
+      procedure Oper_word_add_word(SetRes: boolean);
+      procedure Oper_word_add_byte(SetRes: boolean);
+      procedure Oper_word_sub_word(SetRes: boolean);
       procedure word_Low(const OpPtr: pointer);
       procedure word_High(const OpPtr: pointer);
     private  //Operaciones con Char
-      procedure Oper_char_asig_char;
-      procedure Oper_char_equal_char;
-      procedure Oper_char_difer_char;
+      procedure Oper_char_asig_char(SetRes: boolean);
+      procedure Oper_char_equal_char(SetRes: boolean);
+      procedure Oper_char_difer_char(SetRes: boolean);
     private  //Funciones internas.
       procedure codif_1mseg;
       procedure codif_delay_ms(fun: TxpEleFun);
@@ -212,11 +212,7 @@ procedure TGenCod.callParam(fun: TxpEleFun);
 begin
   {Haya o no, parámetros se debe proceder como en cualquier expresión, asumiendo que
   vamos a devolver una expresión.}
-  if RTstate<>nil then begin
-    //Si se usan RT en la operación anterior. Hay que salvar en pila
-    RTstate.SaveToStk;  //Se guardan por tipo
-  end;
-  SetResult(fun.typ, coExpres);  //actualiza "RTstate"
+  SetResultExpres(fun.typ);  //actualiza "RTstate"
 end;
 procedure TGenCod.callFunct(fun: TxpEleFun);
 {Rutina genérica para llamara a una función definida por el usuario}
@@ -266,6 +262,8 @@ begin
   RTstate := nil;         //Inicia con los RT libres.
   //Limpia tabla de variables temporales
   varFields.Clear;
+  //Guarda información de ubicación, en la ubicación actual
+  pic.addPosInformation(cIn.curCon.row, cIn.curCon.col, cIn.curCon.idCtx);
 end;
 procedure TGenCod.expr_end(posExpres: TPosExpres);
 //Se ejecuta al final de una expresión, si es que no ha habido error.
@@ -282,7 +280,7 @@ var
   Op: ^TOperand;
 begin
   Op := OpPtr;
-  case Op^.catOp of  //el parámetro debe estar en "res"
+  case Op^.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     if Op^.valBool then
       _BSF(Z.offs, Z.bit)
@@ -335,14 +333,14 @@ begin
   _BSF(stk.offs, stk.bit); PutComm(';save Z');
   stk.used := true;
 end;
-procedure TGenCod.Oper_bit_asig_bit;
+procedure TGenCod.Oper_bit_asig_bit(SetRes: boolean);
 var
   dg: integer;
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     {Actualmente no existen constantes de tipo "Bit", ya que el número menor que se
@@ -430,12 +428,12 @@ begin
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_bit_asig_byte;
+procedure TGenCod.Oper_bit_asig_byte(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     {Esta es la única opción válida, pero solo para los valores 0 y 1}
@@ -459,7 +457,7 @@ begin
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_bit_and_bit;
+procedure TGenCod.Oper_bit_and_bit(SetRes: boolean);
 begin
     case catOperation of
     coConst_Const: begin  //AND de dos constantes. Caso especial
@@ -470,7 +468,7 @@ begin
       if p1^.valBool then begin  //p1 = 1
         //No usa ningún registro
         //Optimiza devolviendo la misma variable
-        SetResultVariab_bit(p2^.rVar, p2^.Inverted);  //mantiene la lógica
+        SetResultVariab(p2^.rVar, p2^.Inverted);  //mantiene la lógica
       end else begin   //p1 = 0
         //No usa ningún registro
         //Optimiza devolviendo constante = 0
@@ -493,7 +491,7 @@ begin
       if p2^.valBool then begin  //p2 = 1
         //No usa ningún registro
         //Optimiza devolviendo la misma variable
-        SetResultVariab_bit(p1^.rVar, p1^.Inverted);  //mantiene la lógica
+        SetResultVariab(p1^.rVar, p1^.Inverted);  //mantiene la lógica
       end else begin   //p2 = 0
         //No usa ningún registro
         //Optimiza devolviendo constante = 0
@@ -504,19 +502,19 @@ begin
       if p1^.rVar = p2^.rVar then begin
         //Es la misma variable: a AND a
         //Optimiza devolviendo la misma variable
-        SetResultVariab_bit(p1^.rVar, p1^.Inverted);
+        SetResultVariab(p1^.rVar, p1^.Inverted);
       end else begin
         if p1^.Inverted and p2^.Inverted then begin
           //Por La ley de Morgan, se convierten em OR
           p1^.Inverted := false;
           p2^.Inverted := false;
-          Oper_bit_or_bit;  //procesa como OR
+          Oper_bit_or_bit(SetRes);  //procesa como OR
           res.Invert;   //y niega todo
           exit;
         end else if p1^.Inverted then begin
           //Este caso es lo inverso, no vale la pena implementarlo de nuevo
           ExchangeP1_P2;
-          Oper_bit_and_bit;  //procesa como OR
+          Oper_bit_and_bit(SetRes);  //procesa como OR
           exit;
         end else if p2^.Inverted then begin
           SetResultExpres_bit(operType, false);  //Fija resultado
@@ -546,7 +544,7 @@ begin
         //Por La ley de Morgan, se convierten em OR
         p1^.Inverted := false;
         p2^.Inverted := false;
-        Oper_bit_or_bit;  //procesa como OR
+        Oper_bit_or_bit(SetRes);  //procesa como OR
         exit;
       end else if p1^.Inverted then begin  //lógica invertida en p1
         SetResultExpres_bit(operType, false); //Fija resultado
@@ -570,46 +568,45 @@ begin
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
       ExchangeP1_P2;       //Convierte en coConst_Expres
-      Oper_bit_and_bit;
+      Oper_bit_and_bit(SetRes);
       exit;
     end;
     coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
       ExchangeP1_P2;       //Convierte en coVariab_Expres
-      Oper_bit_and_bit;
+      Oper_bit_and_bit(SetRes);
       exit;
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      p1^.catOp := coVariab;
-      p1^.rVar := GetVarBitFromStk;
-      catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+      p1^.SetAsVariab(GetVarBitFromStk);
+      catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
       //Luego el caso es similar a variable-expresión
-      Oper_bit_and_bit;
+      Oper_bit_and_bit(SetRes);
       FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
     end;
     else
       genError('Not implemented: "%s"', [CatOperationToStr]);
     end;
 end;
-procedure TGenCod.Oper_bit_and_byte;
+procedure TGenCod.Oper_bit_and_byte(SetRes: boolean);
 begin
-  if p2^.catOp <> coConst then begin
+  if p2^.Cat <> coConst then begin
     GenError('Incompatible types: (bit) AND (byte).'); exit;
   end;
   //p2 es constante
   if p2^.valInt = 0 then begin
-    p2^.eleTyp := typBit;   //convierte en bit
+    p2^.SetAsConst(typBit);   //convierte en bit
     p2^.valBool := false;
-    Oper_bit_and_bit;  //opera como bit
+    Oper_bit_and_bit(SetRes);  //opera como bit
   end else if p2^.valInt = 1 then begin
-    p2^.eleTyp := typBit;   //convierte en bit
+    p2^.SetAsConst(typBit);   //convierte en bit
     p2^.valBool := true;
-    Oper_bit_and_bit;  //opera como bit
+    Oper_bit_and_bit(SetRes);  //opera como bit
   end else begin
     GenError('Incompatible types: (bit) AND (byte).'); exit;
   end;
 end;
-procedure TGenCod.Oper_bit_or_bit;
+procedure TGenCod.Oper_bit_or_bit(SetRes: boolean);
 begin
     case catOperation of
     coConst_Const: begin  //AND de dos constantes. Caso especial
@@ -624,7 +621,7 @@ begin
       end else begin   //p1 = 0
         //No usa ningún registro
         //Optimiza devolviendo la misma variable
-        SetResultVariab_bit(p2^.rVar, p2^.Inverted);
+        SetResultVariab(p2^.rVar, p2^.Inverted);
       end;
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
@@ -647,26 +644,26 @@ begin
       end else begin   //p2 = 0
         //No usa ningún registro
         //Optimiza devolviendo la misma variable
-        SetResultVariab_bit(p1^.rVar, p1^.Inverted);
+        SetResultVariab(p1^.rVar, p1^.Inverted);
       end;
     end;
     coVariab_Variab:begin
       if p1^.rVar = p2^.rVar then begin
         //Es la misma variable: a OR a
         //Optimiza devolviendo la misma variable
-        SetResultVariab_bit(p1^.rVar, p1^.Inverted);
+        SetResultVariab(p1^.rVar, p1^.Inverted);
       end else begin
         if p1^.Inverted and p2^.Inverted then begin
           //Por La ley de Morgan, se convierten em AND
           p1^.Inverted := false;
           p2^.Inverted := false;
-          Oper_bit_and_bit;  //procesa como OR
+          Oper_bit_and_bit(SetRes);  //procesa como OR
           res.Invert;
           exit;
         end else if p1^.Inverted then begin
           //Este caso es lo inverso, no vale la pena implementarlo de nuevo
           ExchangeP1_P2;
-          Oper_bit_or_bit;  //procesa como OR
+          Oper_bit_or_bit(SetRes);  //procesa como OR
           exit;
         end else if p2^.Inverted then begin
           SetResultExpres_bit(operType, false);  //Fija resultado
@@ -696,7 +693,7 @@ begin
         //Por La ley de Morgan, se convierten em AND
         p1^.Inverted := false;
         p2^.Inverted := false;
-        Oper_bit_and_bit;  //procesa como OR
+        Oper_bit_and_bit(SetRes);  //procesa como OR
         exit;
       end else if p1^.Inverted then begin  //lógica invertida
         SetResultExpres_bit(operType, false);  //Fija resultado
@@ -720,46 +717,45 @@ begin
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
       ExchangeP1_P2;       //Convierte en coConst_Expres
-      Oper_bit_or_bit;
+      Oper_bit_or_bit(SetRes);
       exit;
     end;
     coExpres_Variab:begin  //la expresión p2 se evaluó y esta en W
       ExchangeP1_P2;       //Convierte en coVariab_Expres
-      Oper_bit_or_bit;
+      Oper_bit_or_bit(SetRes);
       exit;
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      p1^.catOp := coVariab;
-      p1^.rVar  := GetVarBitFromStk;
-      catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+      p1^.SetAsVariab(GetVarBitFromStk);
+      catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
       //Luego el caso es similar a variable-expresión
-      Oper_bit_or_bit;
+      Oper_bit_or_bit(SetRes);
       FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
     end;
     else
       genError('Not implemented: "%s"', [CatOperationToStr]);
     end;
 end;
-procedure TGenCod.Oper_bit_or_byte;
+procedure TGenCod.Oper_bit_or_byte(SetRes: boolean);
 begin
-  if p2^.catOp <> coConst then begin
+  if p2^.Cat <> coConst then begin
     GenError('Incompatible types: (bit) OR (byte).'); exit;
   end;
   //p2 es constante
   if p2^.valInt = 0 then begin
-    p2^.eleTyp := typBit;   //convierte en bit
+    p2^.SetAsConst(typBit);   //convierte en bit
     p2^.valBool := false;
-    Oper_bit_or_bit;  //opera como bit
+    Oper_bit_or_bit(SetRes);  //opera como bit
   end else if p2^.valInt = 1 then begin
-    p2^.eleTyp := typBit;   //convierte en bit
+    p2^.SetAsConst(typBit);   //convierte en bit
     p2^.valBool := true;
-    Oper_bit_or_bit;  //opera como bit
+    Oper_bit_or_bit(SetRes);  //opera como bit
   end else begin
     GenError('Incompatible types: (bit) OR (byte).'); exit;
   end;
 end;
-procedure TGenCod.Oper_bit_xor_bit;
+procedure TGenCod.Oper_bit_xor_bit(SetRes: boolean);
 begin
     case catOperation of
     coConst_Const: begin  //XOR de dos constantes. Caso especial
@@ -769,10 +765,10 @@ begin
     coConst_Variab: begin
       if p1^.valBool then begin  //p1 = 1
         //Optimiza devolviendo la variable invertida
-        SetResultVariab_bit(p2^.rVar, not p2^.Inverted);
+        SetResultVariab(p2^.rVar, not p2^.Inverted);
       end else begin   //p1 = 0
         //Optimiza devolviendo la misma variable
-        SetResultVariab_bit(p2^.rVar, p2^.Inverted);
+        SetResultVariab(p2^.rVar, p2^.Inverted);
       end;
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
@@ -786,7 +782,7 @@ begin
     end;
     coVariab_Const: begin
       ExchangeP1_P2;  //Convierte a coConst_Variab
-      Oper_bit_xor_bit;
+      Oper_bit_xor_bit(SetRes);
       exit;
     end;
     coVariab_Variab:begin
@@ -798,17 +794,17 @@ begin
         if p1^.Inverted and p2^.Inverted then begin
           p1^.Inverted := false;
           p2^.Inverted := false;
-          Oper_bit_xor_bit;  //es lo mismo
+          Oper_bit_xor_bit(SetRes);  //es lo mismo
           exit;
         end else if p1^.Inverted then begin
           //Este caso es lo inverso, no vale la pena implementarlo de nuevo
           ExchangeP1_P2;
-          Oper_bit_xor_bit;  //procesa como OR
+          Oper_bit_xor_bit(SetRes);  //procesa como OR
           exit;
         end else if p2^.Inverted then begin
           //a XOR b' = (z XOR b)'
           p2^.Inverted := false;
-          Oper_bit_xor_bit;
+          Oper_bit_xor_bit(SetRes);
           res.Invert;  //Invierte la lógica
           exit;
         end else begin  //Caso normal
@@ -867,7 +863,7 @@ begin
       if p1^.Inverted and p2^.Inverted then begin
         p1^.Inverted := false;
         p2^.Inverted := false;
-        Oper_bit_xor_bit;   //es lo mismo
+        Oper_bit_xor_bit(SetRes);   //es lo mismo
         exit;
       end else if p1^.Inverted then begin  //lógica invertida
         SetResultExpres_bit(operType, false);  //Fija resultado
@@ -894,82 +890,82 @@ begin
     end;
     coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
       ExchangeP1_P2;       //Convierte en coConst_Expres
-      Oper_bit_xor_bit;
+      Oper_bit_xor_bit(SetRes);
       exit;
     end;
     coExpres_Variab:begin  //la expresión p2 se evaluó y esta en W
       ExchangeP1_P2;       //Convierte en coVariab_Expres
-      Oper_bit_xor_bit;
+      Oper_bit_xor_bit(SetRes);
       exit;
     end;
     coExpres_Expres:begin
       //la expresión p1 debe estar salvada y p2 en el acumulador
-      p1^.catOp := coVariab;
-      p1^.rVar := GetVarBitFromStk;
-      catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+      p1^.SetAsVariab(GetVarBitFromStk);
+      catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
       //Luego el caso es similar a coVariab_Expres
-      Oper_bit_xor_bit;
+      Oper_bit_xor_bit(SetRes);
       FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
     end;
     else
       genError('Not implemented: "%s"', [CatOperationToStr]);
     end;
 end;
-procedure TGenCod.Oper_bit_xor_byte;
+procedure TGenCod.Oper_bit_xor_byte(SetRes: boolean);
 begin
-  if p2^.catOp <> coConst then begin
+  if p2^.Cat <> coConst then begin
     GenError('Incompatible types: (bit) XOR (byte).'); exit;
   end;
   //p2 es constante
   if p2^.valInt = 0 then begin
-    p2^.eleTyp := typBit;   //convierte en bit
+    p2^.SetAsConst(typBit);   //convierte en bit
     p2^.valBool := false;
-    Oper_bit_xor_bit;  //opera como bit
+    Oper_bit_xor_bit(SetRes);  //opera como bit
   end else if p2^.valInt = 1 then begin
-    p2^.eleTyp := typBit;   //convierte en bit
+    p2^.SetAsConst(typBit);   //convierte en bit
     p2^.valBool := true;
-    Oper_bit_xor_bit;  //opera como bit
+    Oper_bit_xor_bit(SetRes);  //opera como bit
   end else begin
     GenError('Incompatible types: (bit) XOR (byte).'); exit;
   end;
 end;
-procedure TGenCod.Oper_bit_equ_bit;
+procedure TGenCod.Oper_bit_equ_bit(SetRes: boolean);
 begin
   //Una comparación, es lo mismo que un XOR negado
-  Oper_bit_xor_bit;  //puede devolver error
+  Oper_bit_xor_bit(SetRes);  //puede devolver error
   //Niega la lógica
   res.Invert;  //Invierte la lógica
-  res.eleTyp := typBool;   //devuelve boolean
+  ChangeResultBitToBool;  //devuelve boolean
 end;
-procedure TGenCod.Oper_bit_equ_byte;
+procedure TGenCod.Oper_bit_equ_byte(SetRes: boolean);
 begin
   //Una comparación, es lo mismo que un XOR negado
-  Oper_bit_xor_byte;  //puede devolver error
+  Oper_bit_xor_byte(SetRes);  //puede devolver error
+  //¿Y si devuelve variable?
   res.Invert;  //Invierte la lógica
-  res.eleTyp := typBool;   //devuelve boolean
+  ChangeResultBitToBool;  //devuelve boolean
 end;
-procedure TGenCod.Oper_bit_dif_bit;
+procedure TGenCod.Oper_bit_dif_bit(SetRes: boolean);
 begin
   //Esta comparación, es lo mismo que un XOR
-  Oper_bit_xor_bit;  //puede devolver error
-  res.eleTyp := typBool;   //devuelve boolean
+  Oper_bit_xor_bit(SetRes);  //puede devolver error
+  ChangeResultBitToBool;  //devuelve boolean
 end;
-procedure TGenCod.Oper_bit_dif_byte;
+procedure TGenCod.Oper_bit_dif_byte(SetRes: boolean);
 begin
   //Una comparación, es lo mismo que un XOR
-  Oper_bit_xor_byte;  //puede devolver error
-  res.eleTyp := typBool;   //devuelve boolean
+  Oper_bit_xor_byte(SetRes);  //puede devolver error
+  ChangeResultBitToBool;  //devuelve boolean
 end;
-procedure TGenCod.Oper_not_bit;
+procedure TGenCod.Oper_not_bit(SetRes: boolean);
 begin
-  case p1^.catOp of
+  case p1^.Cat of
   coConst : begin
     {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
     SetResultConst_bit(not p1^.valBool);
   end;
   coVariab: begin
     {Optimiza devolviendo la misma variable, pero invirtiendo la lógica.}
-    SetResultVariab_bit(p1^.rVar, not p1^.Inverted);
+    SetResultVariab(p1^.rVar, not p1^.Inverted);
   end;
   coExpres: begin  //ya está en STATUS.Z
     //No cambiamos su valor, sino su significado.
@@ -979,9 +975,9 @@ begin
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_not_byte;
+procedure TGenCod.Oper_not_byte(SetRes: boolean);
 begin
-  case p1^.catOp of
+  case p1^.Cat of
   coConst : begin
     {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
     SetResultConst_byte((not p1^.valInt) and $FF);
@@ -999,37 +995,37 @@ begin
   end;
 end;
 ////////////operaciones con Boolean
-procedure TGenCod.Oper_bool_asig_bool;
+procedure TGenCod.Oper_bool_asig_bool(SetRes: boolean);
 begin
-  Oper_bit_asig_bit;  //A bajo nivel es lo mismo
+  Oper_bit_asig_bit(SetRes);  //A bajo nivel es lo mismo
 end;
-procedure TGenCod.Oper_not_bool;
+procedure TGenCod.Oper_not_bool(SetRes: boolean);
 begin
-  Oper_not_bit;  //A bajo nivel es lo mismo
-  res.eleTyp := typBool;  //pero debe devolver este tipo
+  Oper_not_bit(SetRes);  //A bajo nivel es lo mismo
+  ChangeResultBitToBool;  //pero debe devolver este tipo
 end;
-procedure TGenCod.Oper_bool_and_bool;
+procedure TGenCod.Oper_bool_and_bool(SetRes: boolean);
 begin
-  Oper_bit_and_bit;  //A bajo nivel es lo mismo
-  res.eleTyp := typBool;  //pero debe devolver este tipo
+  Oper_bit_and_bit(SetRes);  //A bajo nivel es lo mismo
+  ChangeResultBitToBool;  //pero debe devolver este tipo
 end;
-procedure TGenCod.Oper_bool_or_bool;
+procedure TGenCod.Oper_bool_or_bool(SetRes: boolean);
 begin
-  Oper_bit_or_bit;  //A bajo nivel es lo mismo
-  res.eleTyp := typBool;  //pero debe devolver este tipo
+  Oper_bit_or_bit(SetRes);  //A bajo nivel es lo mismo
+  ChangeResultBitToBool;  //pero debe devolver este tipo
 end;
-procedure TGenCod.Oper_bool_xor_bool;
+procedure TGenCod.Oper_bool_xor_bool(SetRes: boolean);
 begin
-  Oper_bit_xor_bit;  //A bajo nivel es lo mismo
-  res.eleTyp := typBool;  //pero debe devolver este tipo
+  Oper_bit_xor_bit(SetRes);  //A bajo nivel es lo mismo
+  ChangeResultBitToBool;  //pero debe devolver este tipo
 end;
-procedure TGenCod.Oper_bool_equ_bool;
+procedure TGenCod.Oper_bool_equ_bool(SetRes: boolean);
 begin
-  Oper_bit_equ_bit;  //Es lo mismo
+  Oper_bit_equ_bit(SetRes);  //Es lo mismo
 end;
-procedure TGenCod.Oper_bool_dif_bool;
+procedure TGenCod.Oper_bool_dif_bool(SetRes: boolean);
 begin
-  Oper_bit_dif_bit;
+  Oper_bit_dif_bit(SetRes);
 end;
 ////////////operaciones con Byte
 procedure TGenCod.byte_LoadToReg(const OpPtr: pointer);
@@ -1038,7 +1034,7 @@ var
   Op: ^TOperand;
 begin
   Op := OpPtr;
-  case Op^.catOp of  //el parámetro debe estar en "res"
+  case Op^.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     _MOVLW(Op^.valInt);
   end;
@@ -1064,12 +1060,12 @@ begin
   _MOVWF(stk.offs);PutComm(';save W');
   stk.used := true;
 end;
-procedure TGenCod.Oper_byte_asig_byte;
+procedure TGenCod.Oper_byte_asig_byte(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_byte(operType);  //Realmente, el resultado no es importante
     if p2^.valInt=0 then begin
@@ -1101,7 +1097,7 @@ end;
 procedure TGenCod.byte_oper_byte(const InstLW, InstWF:TPIC16Inst);
 {Rutina general en operaciones con bytes}
 var
-  r: TPicRegister;
+  rVar: TxpEleVar;
 begin
   case catOperation of
   coConst_Variab: begin
@@ -1143,14 +1139,15 @@ begin
   end;
   coExpres_Expres:begin
     SetResultExpres_byte(operType);
-    //la expresión p1 debe estar salvada y p2 en el acumulador
-    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
-    _BANKSEL(r.bank);
-    CodAsmFD(InstWF, r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    //La expresión p1 debe estar salvada y p2 en el acumulador
+    rVar := GetVarByteFromStk;
+    _BANKSEL(rVar.adrByte0.bank);
+    CodAsmFD(InstWF, rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   end;
 end;
-procedure TGenCod.Oper_byte_add_byte;
+procedure TGenCod.Oper_byte_add_byte(SetRes: boolean);
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     SetResultConst_byte(p1^.valInt+p2^.valInt);  //puede generar error
@@ -1158,31 +1155,28 @@ begin
   end else  //caso general
     byte_oper_byte(ADDLW, ADDWF);
 end;
-procedure TGenCod.Oper_byte_add_word;
-var
-  r: TPicRegister;
+procedure TGenCod.Oper_byte_add_word(SetRes: boolean);
 begin
   case catOperation of
   coExpres_Expres:begin
     {Este es el único caso que no se puede invertir, por la posición de los operandos en
      la pila.}
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    p1^.catOp := coVariab;  //Convierte a variable
-    p1^.rVar := GetVarByteFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarByteFromStk);  //Convierte a variable
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a coVariab_Expres
-    Oper_byte_add_word;
-    FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
+    Oper_byte_add_word(SetRes);
+    FreeStkRegisterByte;   //libera pila porque ya se usó el dato ahí contenido
   end;
   else
     //Para los otros casos, funciona
     ExchangeP1_P2;   //Invierte los operandos
-    Oper_word_add_byte; //Y llama a la función opuesta
+    Oper_word_add_byte(SetRes); //Y llama a la función opuesta
   end;
 end;
-procedure TGenCod.Oper_byte_sub_byte;
+procedure TGenCod.Oper_byte_sub_byte(SetRes: boolean);
 var
-  r: TPicRegister;
+  rVar: TxpEleVar;
 begin
   case catOperation of
   coConst_Const:begin  //suma de dos constantes. Caso especial
@@ -1231,9 +1225,10 @@ begin
   coExpres_Expres:begin
     SetResultExpres_byte(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
-    _BANKSEL(r.bank);
-    _SUBWF(r.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    rVar := GetVarByteFromStk;
+    _BANKSEL(rVar.adrByte0.bank);
+    _SUBWF(rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   end;
 end;
@@ -1259,9 +1254,9 @@ LOOP:=_PC;
     _MOVF(E.offs, toW);
     _RETURN;
 end;
-procedure TGenCod.Oper_byte_mul_byte;
+procedure TGenCod.Oper_byte_mul_byte(SetRes: boolean);
 var
-  r: TPicRegister;
+  rVar: TxpEleVar;
 begin
   case catOperation of
   coConst_Const:begin  //producto de dos constantes. Caso especial
@@ -1273,7 +1268,7 @@ begin
       SetResultConst_byte(0);
       exit;
     end else if p1^.valInt=1 then begin  //caso especial
-      SetResultVariab_byte(p2^.rVar);
+      SetResultVariab(p2^.rVar);
       exit;
     end else if p1^.valInt=2 then begin
       SetResultExpres_word(operType);
@@ -1353,12 +1348,13 @@ begin
   coExpres_Expres:begin
     SetResultExpres_word(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
+    rVar := GetVarByteFromStk;
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p2 -> E
-    _BANKSEL(r.bank);
-    _MOVF(r.offs, toW); //p1 -> W
+    _BANKSEL(rVar.adrByte0.bank);
+    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
     _CALL(f_byte_mul_byte_16.adrr);
+    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
     {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
     variable) temporal, si se tuviera una rutina de multiplicación que compilara a
     partir de la direccion de una variable (en este caso de la pila, que se puede
@@ -1399,9 +1395,9 @@ Arit_DivideBit8 := _PC;
 //    aux2.used := false;
     aux.used := false;
 end;
-procedure TGenCod.Oper_byte_div_byte;
+procedure TGenCod.Oper_byte_div_byte(SetRes: boolean);
 var
-  r: TPicRegister;
+  rVar: TxpEleVar;
 begin
   case catOperation of
   coConst_Const:begin  //producto de dos constantes. Caso especial
@@ -1501,13 +1497,13 @@ begin
   coExpres_Expres:begin
     SetResultExpres_byte(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
+    rVar := GetVarByteFromStk;
     //guarda divisor
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
     //pila -> H
-    _BANKSEL(r.bank);
-    _MOVF(r.offs, toW); //p1 -> W
+    _BANKSEL(rVar.adrByte0.bank);
+    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //dividendo
     //divisor -> W
@@ -1515,6 +1511,7 @@ begin
     _MOVF(E.offs, toW);  //p2 -> E
 
     _CALL(f_byte_div_byte.adrr);
+    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
     {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
     variable) temporal, si se tuviera una rutina de multiplicación que compilara a
     partir de la direccion de una variable (en este caso de la pila, que se puede
@@ -1523,7 +1520,7 @@ begin
   end;
   end;
 end;
-procedure TGenCod.Oper_byte_and_byte;
+procedure TGenCod.Oper_byte_and_byte(SetRes: boolean);
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     SetResultConst_byte(p1^.valInt and p2^.valInt);  //puede generar error
@@ -1531,14 +1528,14 @@ begin
   end else  //caso general
     byte_oper_byte(ANDLW, ANDWF);
 end;
-procedure TGenCod.Oper_byte_and_bit;
+procedure TGenCod.Oper_byte_and_bit(SetRes: boolean);
 begin
   {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
   no se implementa Oper_bit_and_byte.}
   ExchangeP1_P2;   //Invierte los operandos
-  Oper_bit_and_byte;
+  Oper_bit_and_byte(SetRes);
 end;
-procedure TGenCod.Oper_byte_or_byte;
+procedure TGenCod.Oper_byte_or_byte(SetRes: boolean);
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     SetResultConst_byte(p1^.valInt or p2^.valInt);  //puede generar error
@@ -1546,14 +1543,14 @@ begin
   end else  //caso general
     byte_oper_byte(IORLW, IORWF);
 end;
-procedure TGenCod.Oper_byte_or_bit;
+procedure TGenCod.Oper_byte_or_bit(SetRes: boolean);
 begin
   {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
   no se implementa Oper_bit_or_byte.}
   ExchangeP1_P2;   //Invierte los operandos
-  Oper_bit_or_byte;
+  Oper_bit_or_byte(SetRes);
 end;
-procedure TGenCod.Oper_byte_xor_byte;
+procedure TGenCod.Oper_byte_xor_byte(SetRes: boolean);
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
     SetResultConst_byte(p1^.valInt xor p2^.valInt);  //puede generar error
@@ -1561,16 +1558,16 @@ begin
   end else  //caso general
     byte_oper_byte(XORLW, XORWF);
 end;
-procedure TGenCod.Oper_byte_xor_bit;
+procedure TGenCod.Oper_byte_xor_bit(SetRes: boolean);
 begin
   {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
   no se implementa Oper_bit_xor_byte.}
   ExchangeP1_P2;   //Invierte los operandos
-  Oper_bit_xor_byte;
+  Oper_bit_xor_byte(SetRes);
 end;
-procedure TGenCod.Oper_byte_equal_byte;
+procedure TGenCod.Oper_byte_equal_byte(SetRes: boolean);
 var
-  r: TPicRegister;
+  rVar: TxpEleVar;
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
@@ -1599,7 +1596,7 @@ begin
   end;
   coVariab_Const: begin
     ExchangeP1_P2;  //Convierte a coConst_Variab
-    Oper_byte_equal_byte;
+    Oper_byte_equal_byte(SetRes);
   end;
   coVariab_Variab:begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
@@ -1628,27 +1625,28 @@ begin
   coExpres_Expres:begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
-    _BANKSEL(r.bank);  //verifica banco destino
-    _SUBWF(r.offs, toW);  //compara directamente a lo que había en pila.
+    rVar := GetVarByteFromStk;
+    _BANKSEL(rVar.adrByte0.bank);  //verifica banco destino
+    _SUBWF(rVar.adrByte0.offs, toW);  //compara directamente a lo que había en pila.
+    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
   end;
   end;
 end;
-procedure TGenCod.Oper_byte_difer_byte;
+procedure TGenCod.Oper_byte_difer_byte(SetRes: boolean);
 begin
-  Oper_byte_equal_byte;  //usa el mismo código
+  Oper_byte_equal_byte(SetRes);  //usa el mismo código
   res.Invert;  //Invierte la lógica
 end;
-procedure TGenCod.Oper_byte_difer_bit;
+procedure TGenCod.Oper_byte_difer_bit(SetRes: boolean);
 begin
   {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
   no se implementa Oper_bit_dif_byte.}
   ExchangeP1_P2;
-  Oper_bit_dif_byte;
+  Oper_bit_dif_byte(SetRes);
 end;
-procedure TGenCod.Oper_byte_great_byte;
+procedure TGenCod.Oper_byte_great_byte(SetRes: boolean);
 var
-  r, tmp: TPicRegister;
+  tmp: TPicRegister;
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
@@ -1734,18 +1732,15 @@ begin
   end;
   coExpres_Expres:begin
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    p1^.catOp := coVariab;  //Convierte a variable
-    p1^.rVar := GetVarByteFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarByteFromStk);  //Convierte a variable
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a coVariab_Expres
-    Oper_byte_great_byte;
-    FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
+    Oper_byte_great_byte(true);
+    FreeStkRegisterByte;   //libera pila porque ya se usó el dato ahí contenido
   end;
   end;
 end;
-procedure TGenCod.Oper_byte_less_byte;
-var
-  r: TPicRegister;
+procedure TGenCod.Oper_byte_less_byte(SetRes: boolean);
 begin
   //A < B es lo mismo que B > A
   case catOperation of
@@ -1753,27 +1748,26 @@ begin
     {Este es el único caso que no se puede invertir, por la posición de los operandos en
      la pila.}
     //la expresión p1 debe estar salvada y p2 en el acumulador
-    p1^.catOp := coVariab;  //Convierte a variable
-    p1^.rVar := GetVarByteFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarByteFromStk);  //Convierte a variable
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a coVariab_Expres
-    Oper_byte_less_byte;
-    FreeStkRegisterByte(r);   //libera pila porque ya se usó el dato ahí contenido
+    Oper_byte_less_byte(SetRes);
+    FreeStkRegisterByte;   //libera pila porque ya se usó el dato ahí contenido
   end;
   else
     //Para los otros casos, funciona
     ExchangeP1_P2;
-    Oper_byte_great_byte;
+    Oper_byte_great_byte(SetRes);
   end;
 end;
-procedure TGenCod.Oper_byte_gequ_byte;
+procedure TGenCod.Oper_byte_gequ_byte(SetRes: boolean);
 begin
-  Oper_byte_less_byte;
+  Oper_byte_less_byte(SetRes);
   res.Invert;
 end;
-procedure TGenCod.Oper_byte_lequ_byte;
+procedure TGenCod.Oper_byte_lequ_byte(SetRes: boolean);
 begin
-  Oper_byte_great_byte;
+  Oper_byte_great_byte(SetRes);
   res.Invert;
 end;
 procedure TGenCod.CodifShift_by_W(aux: TPicRegister; toRight: boolean);
@@ -1804,7 +1798,7 @@ loop1 := _PC;
   pic.codGotoAt(dg, _PC);   //termina de codificar el salto
   _MOVF(aux.offs, toW);  //deja en W
 end;
-procedure TGenCod.Oper_byte_shr_byte;  //Desplaza a la derecha
+procedure TGenCod.Oper_byte_shr_byte(SetRes: boolean);  //Desplaza a la derecha
 var
   aux: TPicRegister;
 begin
@@ -1956,7 +1950,7 @@ begin
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_byte_shl_byte;   //Desplaza a la izquierda
+procedure TGenCod.Oper_byte_shl_byte(SetRes: boolean);   //Desplaza a la izquierda
 var
   aux: TPicRegister;
 begin
@@ -2118,12 +2112,9 @@ var
 begin
   cIn.Next;       //Toma el identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
-    //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typBit;
     //Crea una variable temporal que representará al campo
     tmpVar := CreateTmpVar(xvar.name+'.bit' + IntToStr(nbit), typBit);   //crea variable temporal
     tmpVar.adrBit.offs := xvar.adrByte0.offs;
@@ -2131,12 +2122,12 @@ begin
     tmpVar.adrBit.bit  := nbit;
     tmpVar.adrBit.assigned := xvar.adrByte0.assigned;
     tmpVar.adrBit.used     := xvar.adrByte0.used;
-    res.rVar := tmpVar;   //actualiza la referencia
+    //Se devuelve una variable, byte
+    res.SetAsVariab(tmpVar);   //actualiza la referencia (y actualiza el tipo).
   end;
   coConst: begin
     //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typBit;
+    res.SetAsConst(typBit);
     msk := Op^.valInt and ($01 << nbit);
     res.valBool := msk <> 0;
   end;
@@ -2183,7 +2174,7 @@ var
   Op: ^TOperand;
 begin
   Op := OpPtr;
-  case Op^.catOp of  //el parámetro debe estar en "Op^"
+  case Op^.Cat of  //el parámetro debe estar en "Op^"
   coConst : begin
     //byte alto
     if Op^.HByte = 0 then begin
@@ -2234,12 +2225,12 @@ begin
   _MOVWF(stk.offs);
   stk.used := true;   //marca
 end;
-procedure TGenCod.Oper_word_asig_word;
+procedure TGenCod.Oper_word_asig_word(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);
@@ -2280,12 +2271,12 @@ begin
     GenError('No soportado'); exit;
   end;
 end;
-procedure TGenCod.Oper_word_asig_byte;
+procedure TGenCod.Oper_word_asig_byte(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_word(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
@@ -2313,7 +2304,7 @@ begin
     GenError('No soportado'); exit;
   end;
 end;
-procedure TGenCod.Oper_word_equal_word;
+procedure TGenCod.Oper_word_equal_word(SetRes: boolean);
 var
   tmp: TPicRegister;
   sale: integer;
@@ -2394,7 +2385,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
   end;
   coVariab_Const: begin
     ExchangeP1_P2;  //Convierte a coConst_Variab
-    Oper_word_equal_word;
+    Oper_word_equal_word(SetRes);
   end;
   coVariab_Variab:begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
@@ -2434,31 +2425,30 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     ExchangeP1_P2;  //Convierte a coConst_Expres;
-    Oper_word_equal_word;
+    Oper_word_equal_word(SetRes);
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     ExchangeP1_P2;  //Convierte a coVariab_Expres;
-    Oper_word_equal_word;
+    Oper_word_equal_word(SetRes);
   end;
   coExpres_Expres:begin
     //La expresión p1, debe estar salvada y p2 en (H,W)
-    p1^.catOp := coVariab;
-    p1^.rVar  := GetVarWordFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarWordFromStk);
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a variable-expresión
-    Oper_word_equal_word;
+    Oper_word_equal_word(SetRes);
     FreeStkRegisterWord;
   end;
   else
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_word_difer_word;
+procedure TGenCod.Oper_word_difer_word(SetRes: boolean);
 begin
-  Oper_word_equal_word;
+  Oper_word_equal_word(SetRes);
   res.Invert;
 end;
-procedure TGenCod.Oper_word_great_word;
+procedure TGenCod.Oper_word_great_word(SetRes: boolean);
   procedure codVariab_Const;
   {Codifica el caso variable (p1) - constante (p2)}
   var
@@ -2588,7 +2578,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //guarda W
     varTmp := NewTmpVarWord(aux, H);  //Crea variable temporal
-    p1^.rVar := varTmp;  //para que se pueda procesar como variable
+    p1^.SetAsVariab(varTmp);  //para que se pueda procesar como variable
     codVariab_Const;      //Lo evalúa como coVariab_Const
     varTmp.Destroy;
     aux.used := false;
@@ -2598,28 +2588,25 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //guarda W
     varTmp := NewTmpVarWord(aux, H);  //Crea variable temporal
-    p1^.rVar := varTmp;  //para que se pueda procesar como variable
+    p1^.SetAsVariab(varTmp);  //para que se pueda procesar como variable
     codVariab_Variab;      //Lo evalúa como coVariab_Variab;
     varTmp.Destroy;
     aux.used := false;
   end;
   coExpres_Expres:begin
     //La expresión p1, debe estar salvada y p2 en (H,W)
-    p1^.catOp := coVariab;
-    p1^.rVar  := GetVarWordFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarWordFromStk);
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a variable-expresión
-    Oper_word_great_word;
+    Oper_word_great_word(SetRes);
     FreeStkRegisterWord;
   end;
   else
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_word_add_word;
+procedure TGenCod.Oper_word_add_word(SetRes: boolean);
 var
-  spH: TPicRegister;
-  spL: TPicRegister;
   aux: TPicRegister;
 begin
   case catOperation of
@@ -2736,22 +2723,18 @@ begin
   coExpres_Expres:begin
     SetResultExpres_word(operType);
     //p1 está salvado en pila y p2 en (_H,W)
-    p1^.catOp := coVariab;  //Convierte a variable
-    p1^.rVar := GetVarWordFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a coVariab_Expres
-    Oper_word_add_word;
-    FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
-    FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
+    Oper_word_add_word(SetRes);
+    FreeStkRegisterWord;   //libera pila, obtiene dirección
   end;
   else
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_word_add_byte;
+procedure TGenCod.Oper_word_add_byte(SetRes: boolean);
 var
-  spH: TPicRegister;
-  spL: TPicRegister;
   aux: TPicRegister;
 begin
   case catOperation of
@@ -2854,21 +2837,19 @@ begin
   coExpres_Expres:begin
     SetResultExpres_word(operType);
     //p1 está salvado en pila y p2 en (_H,W)
-    p1^.catOp := coVariab;  //Convierte a variable
-    p1^.rVar := GetVarWordFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a coVariab_Expres
-    Oper_word_add_byte;
-    FreeStkRegisterByte(spH);   //libera pila
-    FreeStkRegisterByte(spL);   //libera pila
+    Oper_word_add_byte(SetRes);
+    FreeStkRegisterWord;   //libera pila
   end;
   else
     genError('Not implemented: "%s"', [CatOperationToStr] );
   end;
 end;
-procedure TGenCod.Oper_word_sub_word;
+procedure TGenCod.Oper_word_sub_word(SetRes: boolean);
 var
-  aux, spH, spL: TPicRegister;
+  aux: TPicRegister;
 begin
   case catOperation of
   coConst_Const: begin
@@ -2966,13 +2947,11 @@ begin
   coExpres_Expres:begin
     SetResultExpres_word(operType);
     //p1 está salvado en pila y p2 en (_H,W)
-    p1^.catOp := coVariab;  //Convierte a variable
-    p1^.rVar := GetVarWordFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a coVariab_Expres
-    Oper_word_sub_word;
-    FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
-    FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
+    Oper_word_sub_word(SetRes);
+    FreeStkRegisterWord;   //libera pila, obtiene dirección
   end;
   else
     genError('Not implemented: "%s"', [CatOperationToStr]);
@@ -3026,7 +3005,7 @@ MUL16LOOP := _PC;
    SYSTMP02.used := false;
    EndCodeSub;  //termina codificación
 end;
-procedure TGenCod.Oper_word_umulword_word;
+procedure TGenCod.Oper_word_umulword_word(SetRes: boolean);
 begin
   case catOperation of
   coConst_Const:begin  //producto de dos constantes. Caso especial
@@ -3112,9 +3091,7 @@ begin
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_word_and_byte;
-var
-  spH, spL: TPicRegister;
+procedure TGenCod.Oper_word_and_byte(SetRes: boolean);
 begin
   case catOperation of
   coConst_Const: begin
@@ -3161,13 +3138,11 @@ begin
   coExpres_Expres:begin
     SetResultExpres_byte(operType);
     //p1 está salvado en pila y p2 en (W)
-    p1^.catOp := coVariab;  //Convierte a variable
-    p1^.rVar := GetVarWordFromStk;
+    p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
     //Luego el caso es similar a coVariab_Expres
     _BANKSEL(p1^.bank);
     _ANDWF(p1^.Loffs, toW);
-    FreeStkRegisterByte(spH);   //libera pila
-    FreeStkRegisterByte(spL);   //libera pila
+    FreeStkRegisterWord;   //libera pila
   end;
   else
     genError('Not implemented: "%s"', [CatOperationToStr] );
@@ -3181,21 +3156,18 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.Low', typByte);   //crea variable temporal
+    tmpVar := CreateTmpVar(xvar.name+'.L', typByte);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
-    res.rVar := tmpVar;   //actualiza la referencia
+    res.SetAsVariab(tmpVar);
   end;
   coConst: begin
     //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typByte;
+    res.SetAsConst(typByte);
     res.valInt := Op^.ValInt and $ff;
   end;
   else
@@ -3210,21 +3182,18 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
-    tmpVar := CreateTmpVar(xvar.name+'.High', typByte);
+    tmpVar := CreateTmpVar(xvar.name+'.H', typByte);
     tmpVar.adrByte0.Assign(xvar.adrByte1);  //byte alto
-    res.rVar := tmpVar;   //actualiza la referencia
+    res.SetAsVariab(tmpVar);
   end;
   coConst: begin
     //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typByte;
+    res.SetAsConst(typByte);
     res.valInt := (Op^.ValInt and $ff00)>>8;
   end;
   else
@@ -3239,7 +3208,7 @@ var
   Op: ^TOperand;
 begin
   Op := OpPtr;
-  case Op^.catOp of  //el parámetro debe estar en "Op^"
+  case Op^.Cat of  //el parámetro debe estar en "Op^"
   coConst : begin
     //byte U
     if Op^.UByte = 0 then begin
@@ -3341,12 +3310,12 @@ begin
   _MOVWF(stk.offs);
   stk.used := true;   //marca
 end;
-procedure TGenCod.Oper_dword_asig_byte;
+procedure TGenCod.Oper_dword_asig_byte(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
@@ -3382,12 +3351,12 @@ begin
     GenError('No soportado'); exit;
   end;
 end;
-procedure TGenCod.Oper_dword_asig_word;
+procedure TGenCod.Oper_dword_asig_word(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
@@ -3426,21 +3395,23 @@ begin
     GenError('No soportado'); exit;
   end;
 end;
-procedure TGenCod.Oper_dword_asig_dword;
+procedure TGenCod.Oper_dword_asig_dword(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
       //caso especial
+      _BANKSEL(p1^.bank);
       _CLRF(p1^.Uoffs);
       _CLRF(p1^.Eoffs);
       _CLRF(p1^.Hoffs);
       _CLRF(p1^.Loffs);
     end else begin;
+      _BANKSEL(p1^.bank);
       _MOVLW(p2^.UByte);
       _MOVWF(p1^.Uoffs);
       _MOVLW(p2^.EByte);
@@ -3453,22 +3424,35 @@ begin
   end;
   coVariab: begin
     SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    _BANKSEL(p2^.bank);
     _MOVF(p2^.Uoffs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Uoffs);
+    _BANKSEL(p2^.bank);
     _MOVF(p2^.Eoffs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Eoffs);
+    _BANKSEL(p2^.bank);
     _MOVF(p2^.Hoffs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Hoffs);
+    _BANKSEL(p2^.bank);
     _MOVF(p2^.Loffs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Loffs);
   end;
   coExpres: begin   //se asume que está en w
     SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _MOVWF(p1^.Loffs);
+    _BANKSEL(H.bank);
     _MOVF(H.offs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Hoffs);
+    _BANKSEL(E.bank);
     _MOVF(E.offs, toW);
+    _BANKSEL(p1^.bank);
     _MOVWF(p1^.Eoffs);
+    _BANKSEL(U.bank);
     _MOVF(U.offs, toW);
     _MOVWF(p1^.Uoffs);
   end;
@@ -3476,7 +3460,7 @@ begin
     GenError('No soportado'); exit;
   end;
 end;
-procedure TGenCod.Oper_dword_equal_dword;
+procedure TGenCod.Oper_dword_equal_dword(SetRes: boolean);
 var
   sale1, sale2, sale3: integer;
 begin
@@ -3599,7 +3583,7 @@ _LABEL(sale3);
   end;
   coVariab_Const: begin
     ExchangeP1_P2;  //Convierte a coConst_Variab
-    Oper_dword_equal_dword;
+    Oper_dword_equal_dword(SetRes);
   end;
   coVariab_Variab:begin
     SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
@@ -3658,31 +3642,30 @@ _LABEL(sale3);
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     ExchangeP1_P2;  //Convierte a coConst_Expres;
-    Oper_dword_equal_dword;
+    Oper_dword_equal_dword(SetRes);
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     ExchangeP1_P2;  //Convierte a coVariab_Expres;
-    Oper_dword_equal_dword;
+    Oper_dword_equal_dword(SetRes);
   end;
   coExpres_Expres:begin
     //La expresión p1, debe estar salvada y p2 en (H,W,E,U)
-    p1^.catOp := coVariab;
-    p1^.rVar  := GetVarDWordFromStk;
-    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+    p1^.SetAsVariab(GetVarDWordFromStk);
+    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
     //Luego el caso es similar a variable-expresión
-    Oper_dword_equal_dword;
+    Oper_dword_equal_dword(SetRes);
     FreeStkRegisterdWord;
   end;
   else
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_dword_difer_dword;
+procedure TGenCod.Oper_dword_difer_dword(SetRes: boolean);
 begin
-  Oper_dword_equal_dword;
+  Oper_dword_equal_dword(SetRes);
   res.Invert;
 end;
-procedure TGenCod.Oper_dword_add_dword;
+procedure TGenCod.Oper_dword_add_dword(SetRes: boolean);
 var
   aux: TPicRegister;
   varTmp: TxpEleVar;
@@ -3733,18 +3716,17 @@ begin
     //K + WHEU -> WHEU, se puede manejar como asignación con sums
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //guarda W
-    varTmp := NewTmpVarDword(aux, H, E, U);  //Crea variable temporal
-    p2^.catOp := coVariab;  //Convierte p2 a variable
-    p2^.rVar := varTmp;
+    varTmp := NewTmpVarDword(aux, H, E, U);  //Crea variable temporal, con los RT
+    p2^.SetAsVariab(varTmp);  //Convierte p2 a variable
     ExchangeP1_P2;  //Convierte a p1 := p1 + K;
-    Oper_dword_aadd_dword;  //compila como autosuma
+    Oper_dword_aadd_dword(SetRes);  //compila como autosuma
     _MOVF(aux.offs, toW);  //devuelve byet bajo en W
     aux.used := false;
     varTmp.Destroy;  //Destruye la variable
   end;
   coVariab_Const: begin
     ExchangeP1_P2;  //Convierte a coConst_Variab
-    Oper_dword_add_dword;
+    Oper_dword_add_dword(SetRes);
   end;
   coVariab_Variab:begin
     SetResultExpres_dword(operType);
@@ -3821,13 +3803,13 @@ begin
 //    aux.used := false;
 //  end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-    //WHEU + K -> WHEU, se puede manejar como asignación con sums
+    if SetRes then SetResultExpres_dword(operType); //Se fija aquí el resultado
+    //WHEU + K -> WHEU, se puede manejar como asignación con suma
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //gaurda W
     varTmp := NewTmpVarDword(aux, H, E, U);  //Crea variable temporal
-    p1^.catOp := coVariab;  //Convierte p1 a variable
-    p1^.rVar := varTmp;
-    Oper_dword_aadd_dword;  //compila como autosuma
+    p1^.SetAsVariab(varTmp);  //Convierte p1 a variable
+    Oper_dword_aadd_dword(false);  //compila como autosuma
     _MOVF(aux.offs, toW);  //devuelve byet bajo en W
     aux.used := false;
     varTmp.Destroy;  //Destruye la variable
@@ -3853,9 +3835,9 @@ begin
 //  coExpres_Expres:begin
 //    SetResultExpres_word(operType);
 //    //p1 está salvado en pila y p2 en (_H,W)
-//    p1^.catOp := coVariab;  //Convierte a variable
+//    p1^.Cat := coVariab;  //Convierte a variable
 //    p1^.rVar := GetVarWordFromStk;
-//    catOperation := TCatOperation((Ord(p1^.catOp) << 2) or ord(p2^.catOp));
+//    catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
 //    //Luego el caso es similar a coVariab_Expres
 //    Oper_word_add_word;
 //    FreeStkRegisterByte(spH);   //libera pila, obtiene dirección
@@ -3865,14 +3847,14 @@ begin
     genError('Not implemented: "%s"', [CatOperationToStr]);
   end;
 end;
-procedure TGenCod.Oper_dword_aadd_dword;
+procedure TGenCod.Oper_dword_aadd_dword(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    if SetRes then SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
       //No cambia
     end else if p2^.valInt <= $FF then begin
@@ -3913,7 +3895,7 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    if SetRes then SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _movf   (p2^.Loffs,toW);
     _addwf  (p1^.Loffs,toF);
     _movf   (p2^.Hoffs,toW);
@@ -3929,8 +3911,8 @@ begin
     _incfsz (p2^.Uoffs,toW);
     _addwf  (p1^.Uoffs,toF);
   end;
-  coExpres: begin   //se asume que está en w
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+  coExpres: begin   //Se asume que está en U,E,H,w
+    if SetRes then SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _addwf  (p1^.Loffs,toF);  //p2 ya está en W
     _movf   (H.offs,toW);
     _btfsc  (STATUS,_C);
@@ -3957,21 +3939,18 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
     tmpVar := CreateTmpVar(xvar.name+'.Low', typByte);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
-    res.rVar := tmpVar;   //actualiza la referencia
+    res.SetAsVariab(tmpVar);
   end;
   coConst: begin
-    //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typByte;
+    //Se devuelve una constante byte
+    res.SetAsConst(typByte);
     res.valInt := Op^.ValInt and $ff;
   end;
   else
@@ -3986,21 +3965,18 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
     tmpVar := CreateTmpVar(xvar.name+'.High', typByte);
     tmpVar.adrByte0.Assign(xvar.adrByte1);  //byte alto
-    res.rVar := tmpVar;   //actualiza la referencia
+    res.SetAsVariab(tmpVar);
   end;
   coConst: begin
     //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typByte;
+    res.SetAsConst(typByte);
     res.valInt := (Op^.ValInt and $ff00)>>8;
   end;
   else
@@ -4015,21 +3991,18 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
     tmpVar := CreateTmpVar(xvar.name+'.Extra', typByte);
     tmpVar.adrByte0.Assign(xvar.adrByte2);  //byte alto
-    res.rVar := tmpVar;   //actualiza la referencia
+    res.SetAsVariab(tmpVar);
   end;
   coConst: begin
     //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typByte;
+    res.SetAsConst(typByte);
     res.valInt := (Op^.ValInt and $ff0000)>>16;
   end;
   else
@@ -4044,21 +4017,18 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typByte;
     //Crea una variable temporal que representará al campo
     tmpVar := CreateTmpVar(xvar.name+'.Ultra', typByte);
     tmpVar.adrByte0.Assign(xvar.adrByte3);  //byte alto
-    res.rVar := tmpVar;   //actualiza la referencia
+    res.SetAsVariab(tmpVar);
   end;
   coConst: begin
     //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typByte;
+    res.SetAsConst(typByte);
     res.valInt := (Op^.ValInt and $ff000000)>>24;
   end;
   else
@@ -4073,22 +4043,19 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typWord;
     //Crea una variable temporal que representará al campo
     tmpVar := CreateTmpVar(xvar.name+'.LowW', typWord);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte0);  //byte bajo
     tmpVar.adrByte1.Assign(xvar.adrByte1);  //byte alto
-    res.rVar := tmpVar;   //actualiza la referencia
+    res.SetAsVariab(tmpVar);   //actualiza la referencia
   end;
   coConst: begin
     //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typWord;
+    res.SetAsConst(typWord);
     res.valInt := Op^.ValInt and $ffff;
   end;
   else
@@ -4103,22 +4070,19 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.catOp of
+  case Op^.Cat of
   coVariab: begin
     xvar := Op^.rVar;
     //Se devuelve una variable, byte
-    res.catOp := coVariab;
-    res.eleTyp   := typWord;
     //Crea una variable temporal que representará al campo
     tmpVar := CreateTmpVar(xvar.name+'.HighW', typWord);   //crea variable temporal
     tmpVar.adrByte0.Assign(xvar.adrByte2);  //byte bajo
     tmpVar.adrByte1.Assign(xvar.adrByte3);  //byte alto
-    res.rVar := tmpVar;   //actualiza la referencia
+    res.SetAsVariab(tmpVar);   //actualiza la referencia
   end;
   coConst: begin
     //Se devuelve una constante bit
-    res.catOp := coConst;
-    res.eleTyp   := typWord;
+    res.SetAsConst(typWord);
     res.valInt := (Op^.ValInt and $ffff0000) >> 16;
   end;
   else
@@ -4126,12 +4090,12 @@ begin
   end;
 end;
 //////////// Operaciones con Char
-procedure TGenCod.Oper_char_asig_char;
+procedure TGenCod.Oper_char_asig_char(SetRes: boolean);
 begin
-  if p1^.catOp <> coVariab then begin  //validación
+  if p1^.Cat <> coVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;
   end;
-  case p2^.catOp of
+  case p2^.Cat of
   coConst : begin
     SetResultExpres_char(operType);  //Realmente, el resultado no es importante
     if p2^.valInt=0 then begin
@@ -4160,13 +4124,13 @@ begin
     GenError('No soportado'); exit;
   end;
 end;
-procedure TGenCod.Oper_char_equal_char;
+procedure TGenCod.Oper_char_equal_char(SetRes: boolean);
 begin
-  Oper_byte_equal_byte;  //es lo mismo
+  Oper_byte_equal_byte(SetRes);  //es lo mismo
 end;
-procedure TGenCod.Oper_char_difer_char;
+procedure TGenCod.Oper_char_difer_char(SetRes: boolean);
 begin
-  Oper_byte_difer_byte; //es lo mismo
+  Oper_byte_difer_byte(SetRes); //es lo mismo
 end;
 /////////////funciones del sistema
 procedure TGenCod.codif_1mseg;
@@ -4282,14 +4246,14 @@ begin
   //Se terminó de evaluar un parámetro
   res.LoadToReg;   //Carga en registro de trabajo
   if HayError then exit;
-  if res.eleTyp = typByte then begin
+  if res.Typ = typByte then begin
     //El parámetro byte, debe estar en W
     _CALL(fun.adrr);
-  end else if res.eleTyp = typWord then begin
+  end else if res.Typ = typWord then begin
     //El parámetro word, debe estar en (H, W)
     _CALL(fun.adrr+1);
   end else begin
-    GenError('Invalid parameter type: %s', [res.eleTyp.name]);
+    GenError('Invalid parameter type: %s', [res.Typ.name]);
     exit;
   end;
   //Verifica fin de parámetros
@@ -4337,11 +4301,11 @@ begin
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
   //El resultado de la expresión está en "res".
-  if curFunTyp <> res.eleTyp then begin
+  if curFunTyp <> res.Typ then begin
     GenError('Expected a "%s" expression.', [curFunTyp.name]);
   end;
   res.LoadToReg;
-  res.eleTyp := typNull;  //No es función
+  res.SetAsNull;  //No es función
   CodifRETURN(curBlk);  //Codifica salto
 end;
 procedure TGenCod.fun_Inc(fun: TxpEleFun);
@@ -4349,18 +4313,18 @@ begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     GenError('Cannot increase a constant.'); exit;
   end;
   coVariab: begin
-    if (res.eletyp = typByte) or (res.eletyp = typChar) then begin
+    if (res.Typ = typByte) or (res.Typ = typChar) then begin
       _INCF(res.offs, toF);
-    end else if res.eleTyp = typWord then begin
+    end else if res.Typ = typWord then begin
       _INCF(res.Loffs, toF);
       _BTFSC(STATUS, _Z);
       _INCF(res.Hoffs, toF);
-    end else if res.eleTyp = typDWord then begin
+    end else if res.Typ = typDWord then begin
       _INCF(res.Loffs, toF);
       _BTFSC(STATUS, _Z);
       _INCF(res.Hoffs, toF);
@@ -4369,7 +4333,7 @@ begin
       _BTFSC(STATUS, _Z);
       _INCF(res.Uoffs, toF);
     end else begin
-      GenError('Invalid parameter type: %s', [res.eleTyp.name]);
+      GenError('Invalid parameter type: %s', [res.Typ.name]);
       exit;
     end;
   end;
@@ -4377,7 +4341,7 @@ begin
     GenError('Cannot increase an expression.'); exit;
   end;
   end;
-  res.eleTyp := typNull;  //No es función
+  res.SetAsNull;  //No es función
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
 end;
@@ -4386,19 +4350,19 @@ begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     GenError('Cannot decrease a constant.'); exit;
   end;
   coVariab: begin
-    if (res.eleTyp = typByte) then begin
+    if (res.Typ = typByte) or (res.Typ = typChar) then begin
       _DECF(res.offs, toF);
-    end else if res.eleTyp = typWord then begin
+    end else if res.Typ = typWord then begin
       _MOVF(res.Loffs, toW);
       _BTFSC(STATUS, _Z);
       _DECF(res.Hoffs, toF);
       _DECF(res.Loffs, toF);
-    end else if res.eleTyp = typDWord then begin
+    end else if res.Typ = typDWord then begin
       _MOVLW(1);
       _subwf(res.Loffs, toF);
       _BTFSS(STATUS, _C);
@@ -4408,7 +4372,7 @@ begin
       _BTFSS(STATUS, _C);
       _subwf(RES.Uoffs, toF);
     end else begin
-      GenError('Invalid parameter type: %s', [res.eleTyp.name]);
+      GenError('Invalid parameter type: %s', [res.Typ.name]);
       exit;
     end;
   end;
@@ -4416,33 +4380,39 @@ begin
     GenError('Cannot decrease an expression.'); exit;
   end;
   end;
+  res.SetAsNull;  //No es función
+  //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.fun_Ord(fun: TxpEleFun);
+var
+  tmpVar: TxpEleVar;
 begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.eleTyp = typChar then begin
+    if res.Typ = typChar then begin
       SetResultConst_byte(res.valInt);
     end else begin
       GenError('Cannot convert to ordinal.'); exit;
     end;
   end;
   coVariab: begin
-    if res.eleTyp = typChar then begin
-      //Sigue siendo variable y apunta a la misma variable, solo que ahora es Byte.
-      SetResultVariab_byte(res.rVar);
+    if res.Typ = typChar then begin
+      //Sigue siendo variable
+      tmpVar := CreateTmpVar('', typByte);   //crea variable temporal Byte
+      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al mismo byte
+      SetResultVariab(tmpVar);  //Actualiza "res"
     end else begin
       GenError('Cannot convert to ordinal.'); exit;
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.eleTyp = typChar then begin
+    if res.Typ = typChar then begin
       //Es la misma expresión, solo que ahora es Byte.
-      res.eleTyp := typByte; //No se puede usar SetResultExpres_byte, porque no hay p1 y p2
+      res.SetAsExpres(typByte); //No se puede usar SetResultExpres_byte, porque no hay p1 y p2
     end else begin
       GenError('Cannot convert to ordinal.'); exit;
     end;
@@ -4451,30 +4421,34 @@ begin
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.fun_Chr(fun: TxpEleFun);
+var
+  tmpVar: TxpEleVar;
 begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.eleTyp = typByte then begin
+    if res.Typ = typByte then begin
       SetResultConst_char(res.valInt);
     end else begin
       GenError('Cannot convert to char.'); exit;
     end;
   end;
   coVariab: begin
-    if res.eleTyp = typByte then begin
-      //Sigue siendo variable y apunta a la misma variable, solo que ahora es Char.
-      SetResultVariab_char(res.rVar);
+    if res.Typ = typByte then begin
+      //Sigue siendo variable
+      tmpVar := CreateTmpVar('', typChar);   //crea variable temporal
+      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al mismo byte
+      SetResultVariab(tmpVar);
     end else begin
       GenError('Cannot convert to char.'); exit;
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.eleTyp = typByte then begin
+    if res.Typ = typByte then begin
       //Es la misma expresión, solo que ahora es Char.
-      res.eleTyp := typChar; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
+      res.SetAsExpres(typChar); //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
     end else begin
       GenError('Cannot convert to char.'); exit;
     end;
@@ -4488,9 +4462,9 @@ begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.eleTyp = typByte then begin
+    if res.Typ = typByte then begin
       if res.valInt= 0 then SetResultConst_bit(false)
       else SetResultConst_bit(true);
     end else begin
@@ -4498,18 +4472,21 @@ begin
     end;
   end;
   coVariab: begin
-    if res.eleTyp = typByte then begin
-      //Se asumirá que cualuier valor diferente de cero, devuelve 1
-      res.eleTyp := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
-      res.catOp := coExpres;
-      _MOVF(res.offs, toW);   //el resultado aparecerá en Z, invertido
+    if res.Typ = typByte then begin
+      SetResultExpres(typBit); //No se puede usar SetResultExpres_bit, porque no hay p1 y p2;
+      res.Inverted := true;
+      //Se asumirá que cualquier valor diferente de cero, devuelve 1
+      _MOVF(res.Loffs, toW);    //el resultado aparecerá en Z, invertido
+      {Notar que se ha usado res.Loff, para apuntar a la dirección de la variable byte.
+      Si se hubeise usado solo res.off, apuntaría a una dirección del tipo bit}
     end else begin
       GenError('Cannot convert to bit.'); exit;
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.eleTyp = typByte then begin
-      res.eleTyp := typBit; //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
+    if res.Typ = typByte then begin
+      SetResultExpres(typBit); //No se puede usar SetResultExpres_bit, porque no hay p1 y p2;
+      res.Inverted := true;
       _ADDLW(0);   //el resultado aparecerá en Z, invertido
     end else begin
       GenError('Cannot convert to bit.'); exit;
@@ -4519,60 +4496,77 @@ begin
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.fun_Byte(fun: TxpEleFun);
+var
+  tmpVar: TxpEleVar;
 begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.eleTyp = typByte then begin
+    if res.Typ = typByte then begin
       //ya es Byte
-    end else if res.eleTyp = typChar then begin
-      res.eleTyp := typByte;
-    end else if res.eleTyp = typWord then begin
+    end else if res.Typ = typChar then begin
+      res.SetAsConst(typByte);  //Solo cambia el tipo
+    end else if res.Typ = typWord then begin
+      res.SetAsConst(typByte);  //Cambia el tipo
       res.valInt := res.valInt and $FF;
-      res.eleTyp := typByte;
-    end else if res.eleTyp = typDWord then begin
+    end else if res.Typ = typDWord then begin
+      res.SetAsConst(typByte);  //Cambia el tipo
       res.valInt := res.valInt and $FF;
-      res.eleTyp := typByte;
-    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
+    end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
+      res.SetAsConst(typByte);  //Cambia el tipo
       if res.valBool then res.valInt := 1 else res.valInt := 0;
-      res.eleTyp := typByte;
     end else begin
       GenError('Cannot convert to byte.'); exit;
     end;
   end;
   coVariab: begin
-//    if res.eleTyp = typByte then begin
-//      typWord.OperationPop;   //Para asegurar que exista H
-//      res.eleTyp := typWord; //No se puede usar SetResultExpres_word, porque no hay p1 y p2;
-//      res.catOp := coExpres;  //Va a devolver una expresión
-//  !!! Debería guardar en pila, el posible valor de W
-//      SaveW(OLD_W); if HayError then exit;  //Va a usar W
-//      _MOVF(res.offs, toW);   //el resultado aparecerá en Z, invertido
-//      RestoreW(OLD_W);   ///ERROR, modifica Z otra vez
-//    end else begin
+    if res.Typ = typBit then begin
+      SetResultExpres(typByte);
+      _CLRW;
+      _BTFSC(res.Boffs, res.bit);
+      _MOVLW(1);  //devuelve 1
+      //Es lo mismo
+    end else if res.Typ = typChar then begin
+      //Crea varaible que apunte al byte bajo
+      tmpVar := CreateTmpVar('', typByte);   //crea variable temporal Byte
+      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al mismo byte
+      SetResultVariab(tmpVar);
+    end else if res.Typ = typByte then begin
+      //Es lo mismo
+    end else if res.Typ = typWord then begin
+      //Crea varaible que apunte al byte bajo
+      tmpVar := CreateTmpVar('', typByte);   //crea variable temporal Byte
+      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al byte bajo
+      SetResultVariab(tmpVar);
+    end else if res.Typ = typDWord then begin
+      //CRea varaible que apunte al byte bajo
+      tmpVar := CreateTmpVar('', typByte);   //crea variable temporal Byte
+      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al byte bajo
+      SetResultVariab(tmpVar);
+    end else begin
       GenError('Cannot convert to byte.'); exit;
-//    end;
+    end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.eleTyp = typByte then begin
+    if res.Typ = typByte then begin
       //Ya está en W
       //Ya es Byte
-    end else if res.eleTyp = typChar then begin
+    end else if res.Typ = typChar then begin
       //Ya está en W
-      res.eleTyp := typByte;
-    end else if res.eleTyp = typWord then begin
+      res.SetAsExpres(typByte);  //Solo cambia el tipo
+    end else if res.Typ = typWord then begin
+      //Ya está en W el byte bajo
+      res.SetAsExpres(typByte);  //Cambia el tipo
+    end else if res.Typ = typDWord then begin
       //Ya está en W el byet bajo
-      res.eleTyp := typByte;
-    end else if res.eleTyp = typDWord then begin
-      //Ya está en W el byet bajo
-      res.eleTyp := typByte;
-    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
+      res.SetAsExpres(typByte);  //Cambia el tipo
+    end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.eleTyp := typByte;
+      res.SetAsExpres(typByte);  //Cambia el tipo
     end else begin
       GenError('Cannot convert to byte.'); exit;
     end;
@@ -4581,72 +4575,79 @@ begin
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.fun_Word(fun: TxpEleFun);
+var
+  tmpVar: TxpEleVar;
 begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.eleTyp = typByte then begin
-      res.eleTyp := typWord;  //solo cambia el tipo
-    end else if res.eleTyp = typChar then begin
-      res.eleTyp := typWord;  //solo cambia el tipo
-    end else if res.eleTyp = typWord then begin
+    if res.Typ = typByte then begin
+      res.SetAsConst(typWord);  //solo cambia el tipo
+    end else if res.Typ = typChar then begin
+      res.SetAsConst(typWord);  //solo cambia el tipo
+    end else if res.Typ = typWord then begin
       //ya es Word
-    end else if res.eleTyp = typDWord then begin
+    end else if res.Typ = typDWord then begin
+      res.SetAsConst(typWord);
       res.valInt := res.valInt and $FFFF;
-      res.eleTyp := typWord;
-    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
+    end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
+      res.SetAsConst(typWord);
       if res.valBool then res.valInt := 1 else res.valInt := 0;
-      res.eleTyp := typWord;
     end else begin
       GenError('Cannot convert this constant to word.'); exit;
     end;
   end;
   coVariab: begin
-    if res.eleTyp = typByte then begin
-      res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
+    typWord.DefineRegister;
+    if res.Typ = typByte then begin
+      SetResultExpres(typWord);  //No podemos devolver variable. Pero sí expresión
       _CLRF(H.offs);
       _MOVF(res.offs, toW);
-      res.eleTyp := typWord;
-    end else if res.eleTyp = typWord then begin
+    end else if res.Typ = typChar then begin
+      SetResultExpres(typWord);  //No podemos devolver variable. Pero sí expresión
+      _CLRF(H.offs);
+      _MOVF(res.offs, toW);
+    end else if res.Typ = typWord then begin
       //ya es Word
-    end else if res.eleTyp = typDWord then begin
-      res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
+    end else if res.Typ = typDWord then begin
+      //Crea varaible que apunte al word bajo
+      tmpVar := CreateTmpVar('', typWord);   //crea variable temporal Word
+      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al byte L
+      tmpVar.adrByte1.Assign(res.rVar.adrByte1); //apunta al byte H
+      SetResultVariab(tmpVar);
+    end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
+      SetResultExpres(typWord);  //Devolvemo expresión
       _CLRF(H.offs);
-      _MOVF(res.offs, toW);
-      res.eleTyp := typWord;
-    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
-      res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
-      _CLRF(H.offs);
-      _MOVLW(0);    //Z -> W
+      _MOVLW(0);
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.eleTyp := typWord;
     end else begin
       GenError('Cannot convert this variable to word.'); exit;
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.eleTyp = typByte then begin
+    typWord.DefineRegister;
+    if res.Typ = typByte then begin
+      res.SetAsExpres(typWord);
       //Ya está en W el byte bajo
       _CLRF(H.offs);
-      res.eleTyp := typWord;
-    end else if res.eleTyp = typChar then begin
+    end else if res.Typ = typChar then begin
+      res.SetAsExpres(typWord);
       //Ya está en W el byte bajo
       _CLRF(H.offs);
-      res.eleTyp := typWord;
-    end else if res.eleTyp = typWord then begin
+    end else if res.Typ = typWord then begin
 //      Ya es word
-    end else if res.eleTyp = typDWord then begin
-//      //Ya está en H,W el word bajo
-      res.eleTyp := typWord;
-    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
+    end else if res.Typ = typDWord then begin
+      res.SetAsExpres(typWord);
+      //Ya está en H,W el word bajo
+    end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
+      res.SetAsExpres(typWord);
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.eleTyp := typWord;
     end else begin
       GenError('Cannot convert expression to word.'); exit;
     end;
@@ -4659,82 +4660,87 @@ begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
-    if res.eleTyp = typByte then begin
-      res.eleTyp := typDWord;  //solo cambia el tipo
-    end else if res.eleTyp = typChar then begin
-      res.eleTyp := typDWord;  //solo cambia el tipo
-    end else if res.eleTyp = typWord then begin
-      res.eleTyp := typDWord;
-    end else if res.eleTyp = typDWord then begin
+    if res.Typ = typByte then begin
+      res.SetAsConst(typDWord);  //Solo cambia el tipo
+    end else if res.Typ = typChar then begin
+      res.SetAsConst(typDWord);  //Solo cambia el tipo
+    end else if res.Typ = typWord then begin
+      res.SetAsConst(typDWord);  //Solo cambia el tipo
+    end else if res.Typ = typDWord then begin
       //ya es DWord
-    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
+    end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
+      res.SetAsConst(typDWord);  //Solo cambia el tipo
       if res.valBool then res.valInt := 1 else res.valInt := 0;
-      res.eleTyp := typDWord;
     end else begin
       GenError('Cannot convert this constant to Dword.'); exit;
     end;
   end;
   coVariab: begin
-    if res.eleTyp = typByte then begin
-      res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
+    typDword.DefineRegister;
+    if res.Typ = typByte then begin
+      SetResultExpres(typDWord);  //No podemos devolver variable. Pero sí expresión
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
       _MOVF(res.offs, toW);
-      res.eleTyp := typDWord;
-    end else if res.eleTyp = typWord then begin
-      res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
+    end else if res.Typ = typChar then begin
+      SetResultExpres(typDWord);  //No podemos devolver variable. Pero sí expresión
+      _CLRF(U.offs);
+      _CLRF(E.offs);
+      _CLRF(H.offs);
+      _MOVF(res.offs, toW);
+    end else if res.Typ = typWord then begin
+      SetResultExpres(typDWord);  //No podemos devolver variable. Pero sí expresión
       _CLRF(U.offs);
       _CLRF(E.offs);
       _MOVF(res.Hoffs, toW);
       _MOVWF(H.offs);
       _MOVF(res.Loffs, toW);
-      res.eleTyp := typDWord;
-    end else if res.eleTyp = typDWord then begin
+    end else if res.Typ = typDWord then begin
       //ya es Word. Lo deja como varaible DWord
-    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
-      res.catOp := coExpres;  //No podemos devolver variable. Pero sí expresión
+    end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
+      SetResultExpres(typDWord);  //No podemos devolver variable. Pero sí expresión
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.eleTyp := typDWord;
     end else begin
       GenError('Cannot convert this variable to Dword.'); exit;
     end;
   end;
   coExpres: begin  //se asume que ya está en (w)
-    if res.eleTyp = typByte then begin
+    typDword.DefineRegister;
+    if res.Typ = typByte then begin
+      res.SetAsExpres(typDWord);  //No podemos devolver variable. Pero sí expresión
       //Ya está en W el byte bajo
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
-      res.eleTyp := typDWord;
-    end else if res.eleTyp = typChar then begin
+    end else if res.Typ = typChar then begin
+      res.SetAsExpres(typDWord);  //No podemos devolver variable. Pero sí expresión
       //Ya está en W el byte bajo
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
-      res.eleTyp := typDWord;
-    end else if res.eleTyp = typWord then begin
+    end else if res.Typ = typWord then begin
+      res.SetAsExpres(typDWord);  //No podemos devolver variable. Pero sí expresión
       //Ya está en H,W el word
       _CLRF(U.offs);
       _CLRF(E.offs);
-      res.eleTyp := typDWord;
-    end else if res.eleTyp = typDWord then begin
+    end else if res.Typ = typDWord then begin
 //      Ya es Dword
-    end else if (res.eleTyp = typBool) or (res.eleTyp = typBit) then begin
+    end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
+      res.SetAsExpres(typDWord);  //No podemos devolver variable. Pero sí expresión
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
       _BTFSC(STATUS, _Z);
       _MOVLW(1);
-      res.eleTyp := typDWord;
     end else begin
       GenError('Cannot convert expression to Dword.'); exit;
     end;
@@ -4747,24 +4753,24 @@ begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     GenError('PORT or BIT variable expected.'); exit;
   end;
   coVariab: begin
-    if res.eleTyp = typByte then begin
+    if res.Typ = typByte then begin
       //Se asume que será algo como PORTA, PORTB, ...
-      _MOVLW($FF);   //todos como entrads
+      _MOVLW($FF);   //todos como entradas
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _MOVWF(res.offs); //escribe en TRIS
-    end else if res.eleTyp = typBit then begin
+    end else if res.Typ = typBit then begin
       //Se asume que será algo como PORTA.0, PORTB.0, ...
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _BSF(res.offs, res.bit); //escribe en TRIS
     end else begin
       GenError('Invalid type.'); exit;
     end;
-    res.eleTyp := typNull;  //No es función así que no es necesario fijar el resultado
+    res.SetAsNull; //No es función así que no es necesario fijar el resultado
   end;
   coExpres: begin  //se asume que ya está en (w)
     GenError('PORT variable expected.'); exit;
@@ -4777,23 +4783,23 @@ begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     GenError('PORT variable expected.'); exit;
   end;
   coVariab: begin
-    if res.eleTyp = typByte then begin
+    if res.Typ = typByte then begin
       //Se asume que será algo como PORTA, PORTB, ...
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _CLRF(res.offs); //escribe en TRIS
-    end else if res.eleTyp = typBit then begin
+    end else if res.Typ = typBit then begin
       //Se asume que será algo como PORTA.0, PORTB.0, ...
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _BCF(res.offs, res.bit); //escribe en TRIS
     end else begin
       GenError('Invalid type.'); exit;
     end;
-    res.eleTyp := typNull;  //No es función así que no es necesario fijar el resultado
+    res.SetAsNull; //No es función así que no es necesario fijar el resultado
   end;
   coExpres: begin  //se asume que ya está en (w)
     GenError('PORT variable expected.'); exit;
@@ -4807,9 +4813,9 @@ begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
   if HayError then exit;   //aborta
-  case res.catOp of  //el parámetro debe estar en "res"
+  case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
-    if (res.eleTyp = typByte) or (res.eleTyp = typWord) or (res.eleTyp = typDWord) then begin
+    if (res.Typ = typByte) or (res.Typ = typWord) or (res.Typ = typDWord) then begin
       //ya es Word
       CurrBank := 255;   //para forzar el cambio
       _BANKSEL(res.valInt);
