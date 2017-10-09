@@ -15,6 +15,7 @@ type
     pic: TPIC16;   //referencia al PIC
     xpin: Single;  //Posición X del Pin
     nPinsDiag: Integer;  //Número de pines a dibujar
+    procedure DibState(const xc, yc: Single; const pin: TPICpin);
   public
     procedure DibCuerpo;
     procedure Dibujar; override;
@@ -40,42 +41,78 @@ const
   SEP_PIN = 20;   //Separación entre pines
   LON_PIN = 15;   //Longitud de pin
 
+procedure TPicObject.DibState(const xc, yc: Single; const pin: TPICpin);
+{Dibuja un indicador del estado lógico del PIN}
+begin
+  if pin.typ = pptPort then begin
+    //Ve estado
+    if pic.ram[pin.add].value and (1<<pin.bit) = 0 then begin
+      //Estado lógico bajo
+    end else begin
+      //Estado lógico alto
+      v2d.Barra(xc-5, yc-5, xc+5, yc+5, clRed);
+    end;
+  end;
+end;
 procedure TPicObject.DibCuerpo;
 var
-  ypic: Single;
-  i: Integer;
+  ypin, lblWidth: Single;
+  i, nPinsSide: Integer;
+  lbl: String;
 begin
   //Calcula altura
-  height := (nPinsDiag div 2) * SEP_PIN;
+  nPinsSide := nPinsDiag div 2;
+  height := nPinsSide * SEP_PIN;
   //Dibuja borde
   v2d.FijaLapiz(psSolid, 1, clBlack);
   v2d.RectangR(x, y, x+Width, y+Height);
   //Dibuja pines de la izquierda
-  ypic := y+SEP_PIN/2;   //posición inicial
+  ypin := y+SEP_PIN/2;   //posición inicial
   xpin:=x-LON_PIN;
   for i:=1 to nPinsDiag div 2 do begin
-    v2d.Linea(xpin, ypic, xpin+LON_PIN, ypic);
-    ypic := ypic + SEP_PIN;
+    //Pin
+    v2d.Linea(xpin, ypin, xpin+LON_PIN, ypin);
+    //Etiqueta
+    lbl := pic.pines[i].GetLabel;
+    v2d.Texto(x+2, ypin-8, lbl);
+    //Estado de pin
+    DibState(xpin, ypin,  pic.pines[i]);
+    //Calcula siguiente posición
+    ypin := ypin + SEP_PIN;
   end;
   //Dibuja pines de la derecha
-  ypic := y+SEP_PIN/2;   //posición inicial
+  ypin := y+SEP_PIN/2;   //posición inicial
   xpin:=x+width;
   for i:=1 to nPinsDiag div 2 do begin
-    v2d.Linea(xpin, ypic, xpin+LON_PIN, ypic);
-    ypic := ypic + SEP_PIN;
+    //Pin
+    v2d.Linea(xpin, ypin, xpin+LON_PIN, ypin);
+    //Etiqueta
+    lbl := pic.pines[nPinsDiag-i+1].GetLabel;
+    lblWidth := v2d.TextWidth(lbl);
+    v2d.Texto(xpin - lblWidth - 2, ypin-8, lbl);
+    //Estado de pin
+    DibState(xpin+LON_PIN, ypin,  pic.pines[nPinsDiag-i+1]);
+    //Calcula siguiente posición
+    ypin := ypin + SEP_PIN;
   end;
 end;
 
 { TPicObject }
 procedure TPicObject.Dibujar;
+var
+  ancho: Single;
 begin
   if pic= nil then begin
     //Cuando no se ha iniciado el PIC
     v2d.FijaLapiz(psSolid, 1, clBlack);
+    v2d.FijaRelleno(clGray);
     v2d.RectangR(x, y, x+Width, y+Height);
   end else begin
     //Caso normal
-    v2d.Texto(x,y-18,pic.Model);
+    ancho := v2d.TextWidth(pic.Model);
+    v2d.SetText(True, False, False);
+    v2d.Texto(x + width/2 - ancho/2 , y - 18, pic.Model);
+    v2d.SetText(False, False, False);
     if pic.Npins <= 8 then begin
       nPinsDiag := 8;
       DibCuerpo;
@@ -100,8 +137,8 @@ end;
 constructor TPicObject.Create(mGraf: TMotGraf);
 begin
   inherited Create(mGraf);
-  Width := 100;
-  Height := 100;
+  Width := 140;
+  Height := 180;
 end;
 
 { TfraPICDiagram }

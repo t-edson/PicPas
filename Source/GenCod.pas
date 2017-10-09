@@ -342,7 +342,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
+    SetROPResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     {Actualmente no existen constantes de tipo "Bit", ya que el número menor que se
     reconoce es de typo byte. Por eso se define Oper_bit_asig_byte(). }
     if p2^.valBool then begin
@@ -354,7 +354,7 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
+    SetROPResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     if p1^.rVar = p2^.rVar then begin
       //Es asignación de la misma variable.
       if p2^.Inverted then begin  //Es a := not a
@@ -409,7 +409,7 @@ begin
     end;
   end;
   coExpres: begin  //ya está en STATUS.Z
-    SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
+    SetROPResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     if p2^.Inverted then begin  //está invertido
       //No se usa el registro W
       _BANKSEL(p1^.bank);
@@ -435,7 +435,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
+    SetROPResultExpres_bit(operType, false);  //Realmente, el resultado no es importante
     {Esta es la única opción válida, pero solo para los valores 0 y 1}
     if p2^.valInt = 0 then begin
       //No se usa el registro W
@@ -461,29 +461,29 @@ procedure TGenCod.Oper_bit_and_bit(SetRes: boolean);
 begin
     case catOperation of
     coConst_Const: begin  //AND de dos constantes. Caso especial
-      SetResultConst_bit(p1^.valBool and p2^.valBool);
+      SetROPResultConst_bit(p1^.valBool and p2^.valBool);
       exit;  //sale aquí, porque es un caso particular
     end;
     coConst_Variab: begin
       if p1^.valBool then begin  //p1 = 1
         //No usa ningún registro
         //Optimiza devolviendo la misma variable
-        SetResultVariab(p2^.rVar, p2^.Inverted);  //mantiene la lógica
+        SetROPresultVariab(p2^.rVar, p2^.Inverted);  //mantiene la lógica
       end else begin   //p1 = 0
         //No usa ningún registro
         //Optimiza devolviendo constante = 0
-        SetResultConst_bit(false);
+        SetROPResultConst_bit(false);
       end;
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
       if p1^.valBool then begin  //p1 = 1
         //No usa ningún registro
         //Optimiza devolviendo la misma expresión en Z
-        SetResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
+        SetROPResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
       end else begin   //p1 = 0
         //No usa ningún registro
         //Optimiza devolviendo constante = 0
-        SetResultConst_bit(false);
+        SetROPResultConst_bit(false);
         Z.used := false;  //libera el bit Z, porque ya no importa la expresión
       end;
     end;
@@ -491,18 +491,18 @@ begin
       if p2^.valBool then begin  //p2 = 1
         //No usa ningún registro
         //Optimiza devolviendo la misma variable
-        SetResultVariab(p1^.rVar, p1^.Inverted);  //mantiene la lógica
+        SetROPresultVariab(p1^.rVar, p1^.Inverted);  //mantiene la lógica
       end else begin   //p2 = 0
         //No usa ningún registro
         //Optimiza devolviendo constante = 0
-        SetResultConst_bit(false);
+        SetROPResultConst_bit(false);
       end;
     end;
     coVariab_Variab:begin
       if p1^.rVar = p2^.rVar then begin
         //Es la misma variable: a AND a
         //Optimiza devolviendo la misma variable
-        SetResultVariab(p1^.rVar, p1^.Inverted);
+        SetROPresultVariab(p1^.rVar, p1^.Inverted);
       end else begin
         if p1^.Inverted and p2^.Inverted then begin
           //Por La ley de Morgan, se convierten em OR
@@ -517,7 +517,7 @@ begin
           Oper_bit_and_bit(SetRes);  //procesa como OR
           exit;
         end else if p2^.Inverted then begin
-          SetResultExpres_bit(operType, false);  //Fija resultado
+          SetROPResultExpres_bit(operType, false);  //Fija resultado
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -527,7 +527,7 @@ begin
           _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
           _BCF(Z.offs, Z.bit);     //Si es 0, devuelve cero
         end else begin  //Caso normal
-          SetResultExpres_bit(operType, true);  //Fija resultado, con lógica invertida
+          SetROPResultExpres_bit(operType, true);  //Fija resultado, con lógica invertida
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -547,19 +547,19 @@ begin
         Oper_bit_or_bit(SetRes);  //procesa como OR
         exit;
       end else if p1^.Inverted then begin  //lógica invertida en p1
-        SetResultExpres_bit(operType, false); //Fija resultado
+        SetROPResultExpres_bit(operType, false); //Fija resultado
         //Aplica un AND entre p1' y Z.
         _BANKSEL(p1^.bank);
         _BTFSC(p1^.offs, p1^.bit); //Si es 0, deja tal cual
         _BCF(Z.offs, Z.bit);      //Si es 1, devuelve cero
       end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetResultExpres_bit(operType, true); //Deja la lógica invertida por optimización
+        SetROPResultExpres_bit(operType, true); //Deja la lógica invertida por optimización
         //Aplica un AND entre p1 y Z'.
         _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual
         _BSF(Z.offs, Z.bit);       //Si es 0, devuelve cero (1, porque es lógica es invertida)
       end else begin  //lógica normal
-        SetResultExpres_bit(operType, false); //Fija resultado
+        SetROPResultExpres_bit(operType, false); //Fija resultado
         //Aplica un AND entre p1 y Z.
         _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual
@@ -610,48 +610,48 @@ procedure TGenCod.Oper_bit_or_bit(SetRes: boolean);
 begin
     case catOperation of
     coConst_Const: begin  //AND de dos constantes. Caso especial
-      SetResultConst_bit(p1^.valBool or p2^.valBool);
+      SetROPResultConst_bit(p1^.valBool or p2^.valBool);
       exit;  //sale aquí, porque es un caso particular
     end;
     coConst_Variab: begin
       if p1^.valBool then begin  //p1 = 1
         //No usa ningún registro
         //Optimiza devolviendo constante = 1
-        SetResultConst_bit(true);
+        SetROPResultConst_bit(true);
       end else begin   //p1 = 0
         //No usa ningún registro
         //Optimiza devolviendo la misma variable
-        SetResultVariab(p2^.rVar, p2^.Inverted);
+        SetROPresultVariab(p2^.rVar, p2^.Inverted);
       end;
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
       if p1^.valBool then begin  //p1 = 1
         //No usa ningún registro
         //Optimiza devolviendo constante = 1
-        SetResultConst_bit(true);
+        SetROPResultConst_bit(true);
         Z.used := false;  //libera el bit Z, porque ya no importa la expresión
       end else begin   //p1 = 0
         //No usa ningún registro
         //Optimiza devolviendo la misma expresión en Z
-        SetResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
+        SetROPResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
       end;
     end;
     coVariab_Const: begin
       if p2^.valBool then begin  //p2 = 1
         //No usa ningún registro
         //Optimiza devolviendo constante = 1
-        SetResultConst_bit(true);
+        SetROPResultConst_bit(true);
       end else begin   //p2 = 0
         //No usa ningún registro
         //Optimiza devolviendo la misma variable
-        SetResultVariab(p1^.rVar, p1^.Inverted);
+        SetROPresultVariab(p1^.rVar, p1^.Inverted);
       end;
     end;
     coVariab_Variab:begin
       if p1^.rVar = p2^.rVar then begin
         //Es la misma variable: a OR a
         //Optimiza devolviendo la misma variable
-        SetResultVariab(p1^.rVar, p1^.Inverted);
+        SetROPresultVariab(p1^.rVar, p1^.Inverted);
       end else begin
         if p1^.Inverted and p2^.Inverted then begin
           //Por La ley de Morgan, se convierten em AND
@@ -666,7 +666,7 @@ begin
           Oper_bit_or_bit(SetRes);  //procesa como OR
           exit;
         end else if p2^.Inverted then begin
-          SetResultExpres_bit(operType, false);  //Fija resultado
+          SetROPResultExpres_bit(operType, false);  //Fija resultado
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -676,7 +676,7 @@ begin
           _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
           _BSF(Z.offs, Z.bit);     //Si es 1, devuelve uno
         end else begin  //Caso normal
-          SetResultExpres_bit(operType, true);  //Fija resultado, con lógica invertida
+          SetROPResultExpres_bit(operType, true);  //Fija resultado, con lógica invertida
           //Mueve p2 a Z
           _BANKSEL(p2^.bank);
           _MOVLW(p2^.rVar.BitMask);
@@ -696,19 +696,19 @@ begin
         Oper_bit_and_bit(SetRes);  //procesa como OR
         exit;
       end else if p1^.Inverted then begin  //lógica invertida
-        SetResultExpres_bit(operType, false);  //Fija resultado
+        SetROPResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un OR entre p1' y Z.
         _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
         _BSF(Z.offs, Z.bit);     //Si es 0, devuelve uno
       end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetResultExpres_bit(operType, true); //Deja la lógica invertida por optimización
+        SetROPResultExpres_bit(operType, true); //Deja la lógica invertida por optimización
         //Aplica un OR entre p1 y Z.
         _BANKSEL(p1^.bank);
         _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
         _BCF(Z.offs, Z.bit);     //Si es 1, devuelve uno (0 porque es lógica invertida)
       end else begin   //lógica normal
-        SetResultExpres_bit(operType, false);  //Fija resultado
+        SetROPResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un OR entre p1 y Z.
         _BANKSEL(p1^.bank);
         _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
@@ -759,25 +759,25 @@ procedure TGenCod.Oper_bit_xor_bit(SetRes: boolean);
 begin
     case catOperation of
     coConst_Const: begin  //XOR de dos constantes. Caso especial
-      SetResultConst_bit(p1^.valBool xor p2^.valBool);
+      SetROPResultConst_bit(p1^.valBool xor p2^.valBool);
       exit;  //sale aquí, porque es un caso particular
     end;
     coConst_Variab: begin
       if p1^.valBool then begin  //p1 = 1
         //Optimiza devolviendo la variable invertida
-        SetResultVariab(p2^.rVar, not p2^.Inverted);
+        SetROPresultVariab(p2^.rVar, not p2^.Inverted);
       end else begin   //p1 = 0
         //Optimiza devolviendo la misma variable
-        SetResultVariab(p2^.rVar, p2^.Inverted);
+        SetROPresultVariab(p2^.rVar, p2^.Inverted);
       end;
     end;
     coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
       if p1^.valBool then begin  //p1 = 1
         //Optimiza devolviendo la expresión invertida
-        SetResultExpres_bit(operType, not p2^.Inverted);  //mantiene la lógica
+        SetROPResultExpres_bit(operType, not p2^.Inverted);  //mantiene la lógica
       end else begin   //p1 = 0
         //Optimiza devolviendo la misma expresión en Z
-        SetResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
+        SetROPResultExpres_bit(operType, p2^.Inverted);  //mantiene la lógica
       end;
     end;
     coVariab_Const: begin
@@ -789,7 +789,7 @@ begin
       if p1^.rVar = p2^.rVar then begin
         //Es la misma variable: a XOR a
         //Optimiza devolviendo cero
-        SetResultConst_bit(false);
+        SetROPResultConst_bit(false);
       end else begin
         if p1^.Inverted and p2^.Inverted then begin
           p1^.Inverted := false;
@@ -813,7 +813,7 @@ begin
           de bits.}
           if p1^.bit = p2^.bit then begin
             //Están en el mismo bit, se puede optimizar
-            SetResultExpres_bit(operType, true);  //Fija resultado
+            SetROPResultExpres_bit(operType, true);  //Fija resultado
             _BANKSEL(p2^.bank);
             _MOVF(p2^.offs, toW);  //mueve a W
             _BANKSEL(p1^.bank);
@@ -821,7 +821,7 @@ begin
             _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
           end else if p1^.bit = p2^.bit +1 then begin
             //p1 está a un bit a la izquierda, se puede optimizar
-            SetResultExpres_bit(operType, true);  //Fija resultado
+            SetROPResultExpres_bit(operType, true);  //Fija resultado
             _BANKSEL(p2^.bank);
             _RLF(p2^.offs, toW);  //alinea y mueve a W
             _BANKSEL(p1^.bank);
@@ -829,7 +829,7 @@ begin
             _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
           end else if p1^.bit = p2^.bit-1 then begin
             //p1 está a un bit a la derecha, se puede optimizar
-            SetResultExpres_bit(operType, true);  //Fija resultado
+            SetROPResultExpres_bit(operType, true);  //Fija resultado
             _BANKSEL(p2^.bank);
             _RRF(p2^.offs, toW);  //alinea y mueve a W
             _BANKSEL(p1^.bank);
@@ -837,7 +837,7 @@ begin
             _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
           end else if abs(p1^.bit - p2^.bit) = 4 then begin
             //p1 está a un nibble de distancia, se puede optimizar
-            SetResultExpres_bit(operType, true);  //Fija resultado
+            SetROPResultExpres_bit(operType, true);  //Fija resultado
             _BANKSEL(p2^.bank);
             _SWAPF(p2^.offs, toW);  //alinea y mueve a W
             _BANKSEL(p1^.bank);
@@ -845,7 +845,7 @@ begin
             _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
           end else begin
             //La forma larga
-            SetResultExpres_bit(operType, false);  //Fija resultado,
+            SetROPResultExpres_bit(operType, false);  //Fija resultado,
             //Mueve p2 a Z
             _BANKSEL(p2^.bank);
             _MOVLW(p2^.rVar.BitMask);
@@ -866,21 +866,21 @@ begin
         Oper_bit_xor_bit(SetRes);   //es lo mismo
         exit;
       end else if p1^.Inverted then begin  //lógica invertida
-        SetResultExpres_bit(operType, false);  //Fija resultado
+        SetROPResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un XOR entre p1' y Z.
         _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1(0), deja tal cual
         _ANDWF(Z.offs, toW);     //Si es 0(1), invierte
       end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetResultExpres_bit(operType, false);  //Fija resultado
+        SetROPResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un XOR entre p1 y Z'.
         _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1, invierte (deja igual porque ya está invertido)
         _ANDWF(Z.offs, toW);     //Si es 0, deja tal cual (realmente debe invertir)
       end else begin   //lógica normal
-        SetResultExpres_bit(operType, false);  //Fija resultado
+        SetROPResultExpres_bit(operType, false);  //Fija resultado
         //Aplica un XOR entre p1 y Z.
         _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
@@ -961,15 +961,15 @@ begin
   case p1^.Cat of
   coConst : begin
     {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
-    SetResultConst_bit(not p1^.valBool);
+    SetROPResultConst_bit(not p1^.valBool);
   end;
   coVariab: begin
     {Optimiza devolviendo la misma variable, pero invirtiendo la lógica.}
-    SetResultVariab(p1^.rVar, not p1^.Inverted);
+    SetROPresultVariab(p1^.rVar, not p1^.Inverted);
   end;
   coExpres: begin  //ya está en STATUS.Z
     //No cambiamos su valor, sino su significado.
-    SetResultExpres_bit(operType, not p1^.Inverted);
+    SetROPResultExpres_bit(operType, not p1^.Inverted);
   end;
   else
     genError('Not implemented: "%s"', [CatOperationToStr]);
@@ -980,14 +980,14 @@ begin
   case p1^.Cat of
   coConst : begin
     {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
-    SetResultConst_byte((not p1^.valInt) and $FF);
+    SetROPResultConst_byte((not p1^.valInt) and $FF);
   end;
   coVariab: begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _COMF(p1^.offs, toW);
   end;
 //  coExpres: begin
-//    SetResultExpres_byte(operType);
+//    SetROPResultExpres_byte(operType);
 //    //////
 //  end;
   else
@@ -1067,7 +1067,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_byte(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_byte(operType);  //Realmente, el resultado no es importante
     if p2^.valInt=0 then begin
       //caso especial
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1079,14 +1079,14 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_byte(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_byte(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p2^.bank);  //verifica banco fuente
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);
   end;
   coExpres: begin  //ya está en w
-    SetResultExpres_byte(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_byte(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);
   end;
@@ -1101,44 +1101,44 @@ var
 begin
   case catOperation of
   coConst_Variab: begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     CodAsmK(InstLW, p1^.valInt);  //deja en W
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     CodAsmK(InstLW, p1^.valInt);  //deja en W
   end;
   coVariab_Const: begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _MOVLW(p2^.valInt);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     CodAsmK(InstLW, p2^.valInt);  //deja en W
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
   end;
   coExpres_Expres:begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     //La expresión p1 debe estar salvada y p2 en el acumulador
     rVar := GetVarByteFromStk;
     _BANKSEL(rVar.adrByte0.bank);
@@ -1150,7 +1150,7 @@ end;
 procedure TGenCod.Oper_byte_add_byte(SetRes: boolean);
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    SetResultConst_byte(p1^.valInt+p2^.valInt);  //puede generar error
+    SetROPResultConst_byte(p1^.valInt+p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
     byte_oper_byte(ADDLW, ADDWF);
@@ -1180,50 +1180,50 @@ var
 begin
   case catOperation of
   coConst_Const:begin  //suma de dos constantes. Caso especial
-    SetResultConst_byte(p1^.valInt-p2^.valInt);  //puede generar error
+    SetROPResultConst_byte(p1^.valInt-p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
   coConst_Variab: begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _SUBLW(p1^.valInt);   //K - W -> W
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _SUBLW(p1^.valInt);   //K - W -> W
   end;
   coVariab_Const: begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _MOVLW(p2^.valInt);
     _BANKSEL(p1^.bank);
     _SUBWF(p1^.offs, toW);  //F - W -> W
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);
     _SUBWF(p1^.offs, toW);  //F - W -> W
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _SUBWF(p1^.offs, toW);  //F - W -> W
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _SUBLW(p2^.valInt);  //K - W -> W
     _SUBLW(0);  //K - W -> W   //invierte W
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _SUBWF(p2^.offs, toW);  //F - W -> W
     _SUBLW(0);  //K - W -> W   //invierte W
   end;
   coExpres_Expres:begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
     rVar := GetVarByteFromStk;
     _BANKSEL(rVar.adrByte0.bank);
@@ -1260,18 +1260,18 @@ var
 begin
   case catOperation of
   coConst_Const:begin  //producto de dos constantes. Caso especial
-    SetResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+    SetROPResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
   coConst_Variab: begin
     if p1^.valInt=0 then begin  //caso especial
-      SetResultConst_byte(0);
+      SetROPResultConst_byte(0);
       exit;
     end else if p1^.valInt=1 then begin  //caso especial
-      SetResultVariab(p2^.rVar);
+      SetROPresultVariab(p2^.rVar);
       exit;
     end else if p1^.valInt=2 then begin
-      SetResultExpres_word(operType);
+      SetROPResultExpres_word(operType);
       _BANKSEL(H.bank);
       _CLRF(H.offs);
       _BCF(STATUS, _C);
@@ -1281,7 +1281,7 @@ begin
       _RLF(H.offs, toF);
       exit;
     end;
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _BANKSEL(E.bank);
@@ -1291,7 +1291,7 @@ begin
     if FirstPass then f_byte_mul_byte_16.AddCaller;
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
     _MOVLW(p1^.valInt);
@@ -1299,7 +1299,7 @@ begin
     if FirstPass then f_byte_mul_byte_16.AddCaller;
   end;
   coVariab_Const: begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW);
     _BANKSEL(E.bank);
@@ -1309,7 +1309,7 @@ begin
     if FirstPass then f_byte_mul_byte_16.AddCaller;
   end;
   coVariab_Variab:begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW);
     _BANKSEL(E.bank);
@@ -1320,7 +1320,7 @@ begin
     if FirstPass then f_byte_mul_byte_16.AddCaller;
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p2 -> E
     _BANKSEL(p1^.bank);
@@ -1329,7 +1329,7 @@ begin
     if FirstPass then f_byte_mul_byte_16.AddCaller;
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p1 -> E
     _MOVLW(p2^.valInt); //p2 -> W
@@ -1337,7 +1337,7 @@ begin
     if FirstPass then f_byte_mul_byte_16.AddCaller;
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p1 -> E
     _BANKSEL(p2^.bank);
@@ -1346,7 +1346,7 @@ begin
     if FirstPass then f_byte_mul_byte_16.AddCaller;
   end;
   coExpres_Expres:begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
     rVar := GetVarByteFromStk;
     _BANKSEL(E.bank);
@@ -1405,15 +1405,15 @@ begin
       GenError('Cannot divide by zero');
       exit;
     end;
-    SetResultConst_word(p1^.valInt div p2^.valInt);  //puede generar error
+    SetROPResultConst_word(p1^.valInt div p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
   coConst_Variab: begin
     if p1^.valInt=0 then begin  //caso especial
-      SetResultConst_byte(0);
+      SetROPResultConst_byte(0);
       exit;
     end;
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _MOVLW(p1^.valInt);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
@@ -1424,10 +1424,10 @@ begin
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     if p1^.valInt=0 then begin  //caso especial
-      SetResultConst_byte(0);
+      SetROPResultConst_byte(0);
       exit;
     end;
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //guarda divisor
 
@@ -1441,7 +1441,7 @@ begin
     if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coVariab_Const: begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW);
     _BANKSEL(H.bank);
@@ -1451,7 +1451,7 @@ begin
     if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW);
     _BANKSEL(H.bank);
@@ -1462,7 +1462,7 @@ begin
     if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     //guarda divisor
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
@@ -1478,7 +1478,7 @@ begin
     if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //p1 -> H
     _MOVLW(p2^.valInt); //p2 -> W
@@ -1486,7 +1486,7 @@ begin
     if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //p1 -> H
     _BANKSEL(p2^.bank);
@@ -1495,7 +1495,7 @@ begin
     if FirstPass then f_byte_div_byte.AddCaller;
   end;
   coExpres_Expres:begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     //la expresión p1 debe estar salvada y p2 en el acumulador
     rVar := GetVarByteFromStk;
     //guarda divisor
@@ -1523,7 +1523,7 @@ end;
 procedure TGenCod.Oper_byte_and_byte(SetRes: boolean);
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    SetResultConst_byte(p1^.valInt and p2^.valInt);  //puede generar error
+    SetROPResultConst_byte(p1^.valInt and p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
     byte_oper_byte(ANDLW, ANDWF);
@@ -1538,7 +1538,7 @@ end;
 procedure TGenCod.Oper_byte_or_byte(SetRes: boolean);
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    SetResultConst_byte(p1^.valInt or p2^.valInt);  //puede generar error
+    SetROPResultConst_byte(p1^.valInt or p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
     byte_oper_byte(IORLW, IORWF);
@@ -1553,7 +1553,7 @@ end;
 procedure TGenCod.Oper_byte_xor_byte(SetRes: boolean);
 begin
   if catOperation  = coConst_Const then begin  //suma de dos constantes. Caso especial
-    SetResultConst_byte(p1^.valInt xor p2^.valInt);  //puede generar error
+    SetROPResultConst_byte(p1^.valInt xor p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
     byte_oper_byte(XORLW, XORWF);
@@ -1571,10 +1571,10 @@ var
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
-    SetResultConst_bool(p1^.valInt = p2^.valInt);
+    SetROPResultConst_bool(p1^.valInt = p2^.valInt);
   end;
   coConst_Variab: begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     if p1^.valInt = 0 then begin  //caso especial
       _BANKSEL(p2^.bank);  //verifica banco destino
       _MOVF(p2^.offs, toF);  //si iguales _Z=1
@@ -1591,7 +1591,7 @@ begin
     end;
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _SUBLW(p1^.valInt);  //si iguales _Z=1
   end;
   coVariab_Const: begin
@@ -1599,31 +1599,31 @@ begin
     Oper_byte_equal_byte(SetRes);
   end;
   coVariab_Variab:begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVF(p1^.offs, toW);
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.offs, toW);  //si iguales _Z=1
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //ReserveW; if HayError then exit;
     _BANKSEL(p1^.bank);  //verifica banco destino
     _SUBWF(p1^.offs, toW);  //si iguales _Z=1
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //ReserveW; if HayError then exit;
     _SUBLW(p2^.valInt);  //si iguales _Z=1
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //ReserveW; if HayError then exit;
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.offs, toW);  //si iguales _Z=1
   end;
   coExpres_Expres:begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //la expresión p1 debe estar salvada y p2 en el acumulador
     rVar := GetVarByteFromStk;
     _BANKSEL(rVar.adrByte0.bank);  //verifica banco destino
@@ -1650,15 +1650,15 @@ var
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
-    SetResultConst_bool(p1^.valInt > p2^.valInt);
+    SetROPResultConst_bool(p1^.valInt > p2^.valInt);
   end;
   coConst_Variab: begin
     if p1^.valInt = 0 then begin
       //0 es mayor que nada
-      SetResultConst_bool(false);
+      SetROPResultConst_bool(false);
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
     end else begin
-      SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+      SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
       _MOVLW(p1^.valInt);
       _BANKSEL(p2^.bank);  //verifica banco destino
       _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
@@ -1668,12 +1668,12 @@ begin
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     if p1^.valInt = 0 then begin
       //0 es mayor que nada
-      SetResultConst_bool(false);
+      SetROPResultConst_bool(false);
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
     end else begin
       //Optimiza rutina, usando: A>B  equiv. NOT (B<=A-1)
       //Se necesita asegurar que p1, es mayo que cero.
-      SetResultExpres_bool(operType, true);  //invierte la lógica
+      SetROPResultExpres_bool(operType, true);  //invierte la lógica
       //p2, ya está en W
       _SUBLW(p1^.valInt-1);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
@@ -1682,10 +1682,10 @@ begin
   coVariab_Const: begin
     if p2^.valInt = 255 then begin
       //Nada es mayor que 255
-      SetResultConst_bool(false);
+      SetROPResultConst_bool(false);
       GenWarn('Expression will always be FALSE or TRUE.');
     end else begin
-      SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+      SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.offs, toW);
       _SUBLW(p2^.valInt);  //Si p1 > p2: C=0.
@@ -1693,7 +1693,7 @@ begin
     end;
   end;
   coVariab_Variab:begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVF(p1^.offs, toW);
     _BANKSEL(p2^.bank);  //verifica banco destino
@@ -1701,7 +1701,7 @@ begin
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     tmp := GetAuxRegisterByte;  //Se pide registro auxiliar
     _MOVWF(tmp.offs);    //guarda resultado de expresión
     //Ahora es como coVariab_Variab
@@ -1715,17 +1715,17 @@ begin
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     if p2^.valInt = 255 then begin
       //nada es mayor que 255
-      SetResultConst_bool(false);
+      SetROPResultConst_bool(false);
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
     end else begin
-      SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+      SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
   //    p1, ya está en W
       _SUBLW(p2^.valInt);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     end;
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     _BANKSEL(p2^.bank);  //verifica banco destino
     _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
@@ -1804,14 +1804,14 @@ var
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
-    SetResultConst_byte(p1^.valInt >> p2^.valInt);
+    SetROPResultConst_byte(p1^.valInt >> p2^.valInt);
   end;
 //  coConst_Variab: begin
 //  end;
 //  coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
 //  end;
   coVariab_Const: begin
-    SetResultExpres_byte(operType);   //Se pide Z para el resultado
+    SetROPResultExpres_byte(operType);   //Se pide Z para el resultado
     //Verifica casos simples
     if p2^.valInt = 0 then begin
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1874,7 +1874,7 @@ begin
     end;
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte(operType);   //Se pide Z para el resultado
+    SetROPResultExpres_byte(operType);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;
     //copia p1 a "aux"
     _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1891,7 +1891,7 @@ begin
 //  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
 //  end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte(operType);   //Se pide Z para el resultado
+    SetROPResultExpres_byte(operType);   //Se pide Z para el resultado
     //Verifica casos simples
     if p2^.valInt = 0 then begin
       //solo devuelve lo mismo en W
@@ -1956,14 +1956,14 @@ var
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
-    SetResultConst_byte(p1^.valInt << p2^.valInt);
+    SetROPResultConst_byte(p1^.valInt << p2^.valInt);
   end;
 //  coConst_Variab: begin
 //  end;
 //  coConst_Expres: begin  //la expresión p2 se evaluó y esta en W
 //  end;
   coVariab_Const: begin
-    SetResultExpres_byte(operType);   //Se pide Z para el resultado
+    SetROPResultExpres_byte(operType);   //Se pide Z para el resultado
     //Verifica casos simples
     if p2^.valInt = 0 then begin
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -2026,7 +2026,7 @@ begin
     end;
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte(operType);   //Se pide Z para el resultado
+    SetROPResultExpres_byte(operType);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;
     //copia p1 a "aux"
     _BANKSEL(p1^.bank);  //verifica banco destino
@@ -2043,7 +2043,7 @@ begin
 //  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
 //  end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetResultExpres_byte(operType);   //Se pide Z para el resultado
+    SetROPResultExpres_byte(operType);   //Se pide Z para el resultado
     //Verifica casos simples
     if p2^.valInt = 0 then begin
       //solo devuelve lo mismo en W
@@ -2232,7 +2232,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_word(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);
     if p2^.LByte = 0 then begin  //optimiza
       _CLRF(p1^.Loffs);
@@ -2248,7 +2248,7 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_word(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p2^.bank);
     _MOVF(p2^.Loffs, toW);
     _BANKSEL(p1^.bank);
@@ -2259,7 +2259,7 @@ begin
     _MOVWF(p1^.Hoffs);
   end;
   coExpres: begin   //se asume que se tiene en (H,w)
-    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_word(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);
     _MOVWF(p1^.Loffs);
     _BANKSEL(H.bank);
@@ -2278,7 +2278,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_word(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
       //caso especial
       _CLRF(p1^.Loffs);
@@ -2290,13 +2290,13 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_word(operType);  //Realmente, el resultado no es importante
     _CLRF(p1^.Hoffs);
     _MOVF(p2^.Loffs, toW);
     _MOVWF(p1^.Loffs);
   end;
   coExpres: begin   //se asume que está en w
-    SetResultExpres_word(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_word(operType);  //Realmente, el resultado no es importante
     _CLRF(p1^.Hoffs);
     _MOVWF(p1^.offs);
   end;
@@ -2311,10 +2311,10 @@ var
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
-    SetResultConst_bool(p1^.valInt = p2^.valInt);
+    SetROPResultConst_bool(p1^.valInt = p2^.valInt);
   end;
   coConst_Variab: begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     ////////// Compara byte alto
     if p1^.HByte = 0 then begin  //caso especial
       _BANKSEL(p2^.bank);  //verifica banco destino
@@ -2365,7 +2365,7 @@ begin
     end;
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó p2 esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     tmp := GetAuxRegisterByte;
     if HayError then exit;
     _BANKSEL(tmp.bank);
@@ -2388,7 +2388,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     Oper_word_equal_word(SetRes);
   end;
   coVariab_Variab:begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //Compara byte alto
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVF(p1^.Hoffs, toW);
@@ -2404,7 +2404,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
 _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     tmp := GetAuxRegisterByte;
     _BANKSEL(tmp.bank);
     _MOVWF(tmp.offs);   //salva byte bajo de Expresión
@@ -2456,7 +2456,7 @@ procedure TGenCod.Oper_word_great_word(SetRes: boolean);
   begin
     if p2^.valInt = $FFFF then begin
       //Nada es mayor que $FFFF
-      SetResultConst_bool(false);
+      SetROPResultConst_bool(false);
       GenWarn('Expression will always be FALSE or TRUE.');
     end else begin
       //Compara byte alto
@@ -2499,18 +2499,18 @@ var
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
-    SetResultConst_bool(p1^.valInt > p2^.valInt);
+    SetROPResultConst_bool(p1^.valInt > p2^.valInt);
   end;
   coConst_Variab: begin
     if p1^.valInt = 0 then begin
       //0 es mayor que nada
-      SetResultConst_bool(false);
+      SetROPResultConst_bool(false);
       GenWarn('Expression will always be FALSE or TRUE.');
       {No se define realmente el mensaje (si es con TRUE o FALSE), porque
       Oper_word_great_word(), es también llamado, por Oper_word_lequ_word para con
       lógica invertida}
     end else begin
-      SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+      SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
       //Compara byte alto
       _MOVLW(p1^.HByte);
       _BANKSEL(p2^.bank);  //verifica banco destino
@@ -2526,7 +2526,7 @@ begin
     end;
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó p2 esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     tmp := GetAuxRegisterByte;
     _BANKSEL(tmp.bank);
     _MOVWF(tmp.offs);   //salva byte bajo de Expresión
@@ -2545,15 +2545,15 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     tmp.used := false;
   end;
   coVariab_Const: begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     codVariab_Const;
   end;
   coVariab_Variab:begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     codVariab_Variab;
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en H,W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     tmp := GetAuxRegisterByte;
     _BANKSEL(tmp.bank);
     _MOVWF(tmp.offs);   //salva byte bajo de Expresión
@@ -2574,7 +2574,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     CopyInvert_C_to_Z;  //Pasa a Z
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en H,W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //guarda W
     varTmp := NewTmpVarWord(aux, H);  //Crea variable temporal
@@ -2584,7 +2584,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     aux.used := false;
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en H,W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //guarda W
     varTmp := NewTmpVarWord(aux, H);  //Crea variable temporal
@@ -2613,13 +2613,13 @@ begin
   coConst_Const: begin
     if p1^.valInt+p2^.valInt <256 then begin
       //Optimiza
-      SetResultConst_byte(p1^.valInt+p2^.valInt);
+      SetROPResultConst_byte(p1^.valInt+p2^.valInt);
     end else begin
-      SetResultConst_word(p1^.valInt+p2^.valInt);
+      SetROPResultConst_word(p1^.valInt+p2^.valInt);
     end;
   end;
   coConst_Variab: begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
 {     aux := GetUnusedByteRegister;  //Pide un registro libre
     _movlw(p1^.LByte);      //Carga menos peso del dato 1
     _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
@@ -2642,7 +2642,7 @@ begin
     _incf(H.offs, toF);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _movwf(aux.offs);             //guarda byte bajo
     _movlw(p1^.HByte);      //Carga más peso del dato 1
@@ -2654,7 +2654,7 @@ begin
     aux.used := false;
   end;
   coVariab_Const: begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _MOVLW(p2^.HByte);      //Carga más peso del dato 1
     _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
     _MOVWF(H.offs);         //Guarda el resultado
@@ -2664,7 +2664,7 @@ begin
     _INCF(H.offs, toF);
   end;
   coVariab_Variab:begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
     _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
     _MOVWF(H.offs);         //Guarda mayor peso del resultado
@@ -2674,7 +2674,7 @@ begin
     _INCF(H.offs, toF);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _BANKSEL(aux.bank);
     _movwf(aux.offs);        //guarda byte bajo
@@ -2692,7 +2692,7 @@ begin
     aux.used := false;
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _movwf(aux.offs);             //guarda byte bajo
     _movlw(p2^.HByte);      //Carga más peso del dato 1
@@ -2704,7 +2704,7 @@ begin
     aux.used := false;
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _movwf(aux.offs);      //guarda byte bajo
     _BANKSEL(p2^.bank);
@@ -2721,7 +2721,7 @@ begin
     aux.used := false;
   end;
   coExpres_Expres:begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     //p1 está salvado en pila y p2 en (_H,W)
     p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
     catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
@@ -2741,13 +2741,13 @@ begin
   coConst_Const: begin
     if p1^.valInt+p2^.valInt <256 then begin
       //Optimiza
-      SetResultConst_byte(p1^.valInt+p2^.valInt);
+      SetROPResultConst_byte(p1^.valInt+p2^.valInt);
     end else begin
-      SetResultConst_word(p1^.valInt+p2^.valInt);
+      SetROPResultConst_word(p1^.valInt+p2^.valInt);
     end;
   end;
   coConst_Variab: begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     //versión más corta que solo usa _H, por validar
     _movlw(p1^.HByte);      //Carga más peso del dato 1
     _BANKSEL(H.bank);
@@ -2759,7 +2759,7 @@ begin
     _incf(H.offs, toF);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _BANKSEL(aux.bank);
     _movwf(aux.offs);      //guarda byte bajo
@@ -2775,7 +2775,7 @@ begin
     aux.used := false;
   end;
   coVariab_Const: begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(p1^.bank);      //se cambia primero el banco por si acaso
     _MOVF(p1^.Hoffs, toW); //Carga más peso del dato 1
     _BANKSEL(H.bank);      //se cambia primero el banco por si acaso
@@ -2788,7 +2788,7 @@ begin
     _INCF(H.offs, toF);
   end;
   coVariab_Variab:begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.Hoffs, toW);     //Carga más peso del dato 1
     _BANKSEL(H.bank);
@@ -2802,7 +2802,7 @@ begin
     _INCF(H.offs, toF);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _BANKSEL(aux.bank);
     _movwf(aux.offs);        //guarda byte de expresión
@@ -2820,14 +2820,14 @@ begin
     aux.used := false;
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _addlw(p2^.LByte);     //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
     _btfsc(STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _BANKSEL(p2^.bank);
     _addwf(p2^.Loffs,toW);         //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
@@ -2835,7 +2835,7 @@ begin
     _incf(H.offs, toF);
   end;
   coExpres_Expres:begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     //p1 está salvado en pila y p2 en (_H,W)
     p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
     catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
@@ -2859,13 +2859,13 @@ begin
     end;
     if p1^.valInt-p2^.valInt <256 then begin
       //Optimiza
-      SetResultConst_byte(p1^.valInt-p2^.valInt);
+      SetROPResultConst_byte(p1^.valInt-p2^.valInt);
     end else begin
-      SetResultConst_word(p1^.valInt-p2^.valInt);
+      SetROPResultConst_word(p1^.valInt-p2^.valInt);
     end;
   end;
   coConst_Variab: begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _movf (p2^.Hoffs,toW);  //p2->w
     _SUBLW(p1^.HByte);     //p1 - W -W
     _movwf(H.offs);
@@ -2875,7 +2875,7 @@ begin
     _decf(H.offs,toF);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;
     _MOVWF(aux.offs);
     _movf (H.offs,toW);    //p2->w
@@ -2888,7 +2888,7 @@ begin
     aux.used := false;
   end;
   coVariab_Const: begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _movlw(p2^.HByte);
     _subwf(p1^.Hoffs,toW);
     _movwf(H.offs);
@@ -2898,7 +2898,7 @@ begin
     _decf(H.offs,toF);
   end;
   coVariab_Variab:begin  //p1 - p2
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     _movf (p2^.Hoffs,toW);
     _subwf(p1^.Hoffs,toW);
     _movwf(H.offs);
@@ -2908,7 +2908,7 @@ begin
     _decf(H.offs,toF);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);
     _movf (H.offs,toW);
@@ -2921,7 +2921,7 @@ begin
     aux.used := false;
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);
     _movlw(p2^.HByte);
@@ -2933,7 +2933,7 @@ begin
     aux.used := false;
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);
     _movf(p2^.Hoffs, toW);
@@ -2945,7 +2945,7 @@ begin
     aux.used := false;
   end;
   coExpres_Expres:begin
-    SetResultExpres_word(operType);
+    SetROPResultExpres_word(operType);
     //p1 está salvado en pila y p2 en (_H,W)
     p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
     catOperation := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
@@ -3009,11 +3009,11 @@ procedure TGenCod.Oper_word_umulword_word(SetRes: boolean);
 begin
   case catOperation of
   coConst_Const:begin  //producto de dos constantes. Caso especial
-    SetResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+    SetROPResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
 //  coConst_Variab: begin
-//    SetResultExpres_word(operType);
+//    SetROPResultExpres_word(operType);
 //    _BANKSEL(p2^.bank);
 //    _MOVF(p2^.offs, toW);
 //    _BANKSEL(H.bank);
@@ -3030,7 +3030,7 @@ begin
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
 //  coVariab_Const: begin
-//    SetResultExpres_byte(operType);
+//    SetROPResultExpres_byte(operType);
 //    _BANKSEL(p1^.bank);
 //    _MOVF(p1^.offs, toW);
 //    _BANKSEL(H.bank);
@@ -3040,7 +3040,7 @@ begin
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
 //  coVariab_Variab:begin
-//    SetResultExpres_byte(operType);
+//    SetROPResultExpres_byte(operType);
 //    _BANKSEL(p1^.bank);
 //    _MOVF(p1^.offs, toW);
 //    _BANKSEL(H.bank);
@@ -3073,7 +3073,7 @@ begin
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
 //  coExpres_Expres:begin
-//    SetResultExpres_byte(operType);
+//    SetROPResultExpres_byte(operType);
 //    //la expresión p1 debe estar salvada y p2 en el acumulador
 //    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
 //    _BANKSEL(H.bank);
@@ -3096,47 +3096,47 @@ begin
   case catOperation of
   coConst_Const: begin
     //Optimiza
-    SetResultConst_byte(p1^.valInt and p2^.valInt);
+    SetROPResultConst_byte(p1^.valInt and p2^.valInt);
   end;
   coConst_Variab: begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _movlw(p1^.LByte);      //Carga menos peso del dato 1
     _BANKSEL(p2^.bank);
     _andwf(p2^.Loffs,toW);  //deja en W
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _andlw(p1^.LByte);      //Deja en W
   end;
   coVariab_Const: begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.Loffs, toW);
     _ANDLW(p2^.LByte);
   end;
   coVariab_Variab:begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.Loffs, toW);
     _BANKSEL(p2^.bank);
     _ANDWF(p2^.Loffs, toW);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p1^.bank);
     _ANDWF(p1^.Loffs, toW);
   end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _ANDLW(p2^.LByte);
   end;
   coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     _BANKSEL(p2^.bank);
     _ANDWF(p2^.Loffs, toW);
   end;
   coExpres_Expres:begin
-    SetResultExpres_byte(operType);
+    SetROPResultExpres_byte(operType);
     //p1 está salvado en pila y p2 en (W)
     p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
     //Luego el caso es similar a coVariab_Expres
@@ -3317,7 +3317,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
       //caso especial
       _CLRF(p1^.Loffs);
@@ -3333,7 +3333,7 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _CLRF(p1^.Uoffs);
     _CLRF(p1^.Eoffs);
     _CLRF(p1^.Hoffs);
@@ -3341,7 +3341,7 @@ begin
     _MOVWF(p1^.Loffs);
   end;
   coExpres: begin   //se asume que está en w
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _CLRF(p1^.Uoffs);
     _CLRF(p1^.Eoffs);
     _CLRF(p1^.Hoffs);
@@ -3358,7 +3358,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
       //caso especial
       _CLRF(p1^.Uoffs);
@@ -3375,7 +3375,7 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _CLRF(p1^.Uoffs);
     _CLRF(p1^.Eoffs);
     _MOVF(p2^.Hoffs, toW);
@@ -3384,7 +3384,7 @@ begin
     _MOVWF(p1^.Loffs);
   end;
   coExpres: begin   //se asume que está en w
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _CLRF(p1^.Uoffs);
     _CLRF(p1^.Eoffs);
     _MOVWF(p1^.Loffs);
@@ -3402,7 +3402,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
       //caso especial
       _BANKSEL(p1^.bank);
@@ -3423,7 +3423,7 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p2^.bank);
     _MOVF(p2^.Uoffs, toW);
     _BANKSEL(p1^.bank);
@@ -3442,7 +3442,7 @@ begin
     _MOVWF(p1^.Loffs);
   end;
   coExpres: begin   //se asume que está en w
-    SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _MOVWF(p1^.Loffs);
     _BANKSEL(H.bank);
     _MOVF(H.offs, toW);
@@ -3466,10 +3466,10 @@ var
 begin
   case catOperation of
   coConst_Const: begin  //compara constantes. Caso especial
-    SetResultConst_bool(p1^.valInt = p2^.valInt);
+    SetROPResultConst_bool(p1^.valInt = p2^.valInt);
   end;
   coConst_Variab: begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //Compara byte U
     if p1^.UByte = 0 then begin  //caso especial
       _BANKSEL(p2^.bank);  //verifica banco destino
@@ -3559,7 +3559,7 @@ _LABEL(sale2);
 _LABEL(sale3);
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y está en UEHW
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //Compara byte L
     _SUBLW(p1^.LByte); //p2^.L está en W
     _BTFSS(Z.offs, Z.bit);
@@ -3586,7 +3586,7 @@ _LABEL(sale3);
     Oper_dword_equal_dword(SetRes);
   end;
   coVariab_Variab:begin
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //Compara byte U
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVF(p1^.Uoffs, toW);
@@ -3618,7 +3618,7 @@ _LABEL(sale2);
 _LABEL(sale3);
   end;
   coVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetResultExpres_bool(operType, false);   //Se pide Z para el resultado
+    SetROPResultExpres_bool(operType, false);   //Se pide Z para el resultado
     //Compara byte L
     _SUBWF(p1^.Loffs, toW); //p2^.L ya está en W
     _BTFSS(Z.offs, Z.bit);
@@ -3674,16 +3674,16 @@ begin
   coConst_Const: begin
     if p1^.valInt+p2^.valInt < $FF then begin
       //Optimiza
-      SetResultConst_byte(p1^.valInt+p2^.valInt);
+      SetROPResultConst_byte(p1^.valInt+p2^.valInt);
     end else if p1^.valInt+p2^.valInt < $FFFF then begin
       //Optimiza
-      SetResultConst_word(p1^.valInt+p2^.valInt);
+      SetROPResultConst_word(p1^.valInt+p2^.valInt);
     end else begin
-      SetResultConst_dword(p1^.valInt+p2^.valInt);
+      SetROPResultConst_dword(p1^.valInt+p2^.valInt);
     end;
   end;
   coConst_Variab: begin
-    SetResultExpres_dword(operType);
+    SetROPResultExpres_dword(operType);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     if HayError then exit;
     _movf   (p2^.Loffs,toW);
@@ -3713,13 +3713,14 @@ begin
     aux.used := false;
   end;
   coConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
+    if SetRes then SetROPResultExpres_dword(operType); //Se fija aquí el resultado
     //K + WHEU -> WHEU, se puede manejar como asignación con sums
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //guarda W
     varTmp := NewTmpVarDword(aux, H, E, U);  //Crea variable temporal, con los RT
     p2^.SetAsVariab(varTmp);  //Convierte p2 a variable
     ExchangeP1_P2;  //Convierte a p1 := p1 + K;
-    Oper_dword_aadd_dword(SetRes);  //compila como autosuma
+    Oper_dword_aadd_dword(false);  //compila como autosuma
     _MOVF(aux.offs, toW);  //devuelve byet bajo en W
     aux.used := false;
     varTmp.Destroy;  //Destruye la variable
@@ -3729,7 +3730,7 @@ begin
     Oper_dword_add_dword(SetRes);
   end;
   coVariab_Variab:begin
-    SetResultExpres_dword(operType);
+    SetROPResultExpres_dword(operType);
 //  Este algoritmo Falla
 //    aux := GetAuxRegisterByte;  //Pide un registro libre
 //    if HayError then exit;
@@ -3784,7 +3785,7 @@ begin
 
   end;
 //  coVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
-//    SetResultExpres_word(operType);
+//    SetROPResultExpres_word(operType);
 //    aux := GetAuxRegisterByte;  //Pide un registro libre
 //    if HayError then exit;
 //    _BANKSEL(aux.bank);
@@ -3803,7 +3804,7 @@ begin
 //    aux.used := false;
 //  end;
   coExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-    if SetRes then SetResultExpres_dword(operType); //Se fija aquí el resultado
+    if SetRes then SetROPResultExpres_dword(operType); //Se fija aquí el resultado
     //WHEU + K -> WHEU, se puede manejar como asignación con suma
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);  //gaurda W
@@ -3815,7 +3816,7 @@ begin
     varTmp.Destroy;  //Destruye la variable
   end;
 //  coExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-//    SetResultExpres_word(operType);
+//    SetROPResultExpres_word(operType);
 //    aux := GetAuxRegisterByte;  //Pide un registro libre
 //    if HayError then exit;
 //    _movwf(aux.offs);      //guarda byte bajo
@@ -3833,7 +3834,7 @@ begin
 //    aux.used := false;
 //  end;
 //  coExpres_Expres:begin
-//    SetResultExpres_word(operType);
+//    SetROPResultExpres_word(operType);
 //    //p1 está salvado en pila y p2 en (_H,W)
 //    p1^.Cat := coVariab;  //Convierte a variable
 //    p1^.rVar := GetVarWordFromStk;
@@ -3854,7 +3855,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    if SetRes then SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    if SetRes then SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     if p2^.valInt = 0 then begin
       //No cambia
     end else if p2^.valInt <= $FF then begin
@@ -3895,7 +3896,7 @@ begin
     end;
   end;
   coVariab: begin
-    if SetRes then SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    if SetRes then SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _movf   (p2^.Loffs,toW);
     _addwf  (p1^.Loffs,toF);
     _movf   (p2^.Hoffs,toW);
@@ -3912,7 +3913,7 @@ begin
     _addwf  (p1^.Uoffs,toF);
   end;
   coExpres: begin   //Se asume que está en U,E,H,w
-    if SetRes then SetResultExpres_dword(operType);  //Realmente, el resultado no es importante
+    if SetRes then SetROPResultExpres_dword(operType);  //Realmente, el resultado no es importante
     _addwf  (p1^.Loffs,toF);  //p2 ya está en W
     _movf   (H.offs,toW);
     _btfsc  (STATUS,_C);
@@ -4097,7 +4098,7 @@ begin
   end;
   case p2^.Cat of
   coConst : begin
-    SetResultExpres_char(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_char(operType);  //Realmente, el resultado no es importante
     if p2^.valInt=0 then begin
       //caso especial
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -4109,14 +4110,14 @@ begin
     end;
   end;
   coVariab: begin
-    SetResultExpres_char(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_char(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p2^.bank);  //verifica banco destino
     _MOVF(p2^.offs, toW);
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);
   end;
   coExpres: begin  //ya está en w
-    SetResultExpres_char(operType);  //Realmente, el resultado no es importante
+    SetROPResultExpres_char(operType);  //Realmente, el resultado no es importante
     _BANKSEL(p1^.bank);  //verifica banco destino
     _MOVWF(p1^.offs);
   end;
@@ -4394,7 +4395,8 @@ begin
   case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     if res.Typ = typChar then begin
-      SetResultConst_byte(res.valInt);
+      SetResultConst(typByte);  //Solo cambia el tipo, no el valor
+      //No se usa SetROPResultConst_Byte, porque no estamos en ROP
     end else begin
       GenError('Cannot convert to ordinal.'); exit;
     end;
@@ -4412,7 +4414,7 @@ begin
   coExpres: begin  //se asume que ya está en (w)
     if res.Typ = typChar then begin
       //Es la misma expresión, solo que ahora es Byte.
-      res.SetAsExpres(typByte); //No se puede usar SetResultExpres_byte, porque no hay p1 y p2
+      res.SetAsExpres(typByte); //No se puede usar SetROPResultExpres_byte, porque no hay p1 y p2
     end else begin
       GenError('Cannot convert to ordinal.'); exit;
     end;
@@ -4430,7 +4432,8 @@ begin
   case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     if res.Typ = typByte then begin
-      SetResultConst_char(res.valInt);
+      SetResultConst(typChar);  //Solo cambia el tipo, no el valor
+      //No se usa SetROPResultConst_Char, porque no estamos en ROP
     end else begin
       GenError('Cannot convert to char.'); exit;
     end;
@@ -4448,7 +4451,7 @@ begin
   coExpres: begin  //se asume que ya está en (w)
     if res.Typ = typByte then begin
       //Es la misma expresión, solo que ahora es Char.
-      res.SetAsExpres(typChar); //No se puede usar SetResultExpres_char, porque no hay p1 y p2;
+      res.SetAsExpres(typChar); //No se puede usar SetROPResultExpres_char, porque no hay p1 y p2;
     end else begin
       GenError('Cannot convert to char.'); exit;
     end;
@@ -4465,15 +4468,20 @@ begin
   case res.Cat of  //el parámetro debe estar en "res"
   coConst : begin
     if res.Typ = typByte then begin
-      if res.valInt= 0 then SetResultConst_bit(false)
-      else SetResultConst_bit(true);
+      if res.valInt= 0 then begin
+        SetResultConst(typBit);  //No se usa SetROPResultConst_bit, porque no estamos en ROP
+        res.valBool := false;
+      end else begin
+        SetResultConst(typBit);  //No se usa SetROPResultConst_bit, porque no estamos en ROP
+        res.valBool := true;
+      end;
     end else begin
       GenError('Cannot convert to bit.'); exit;
     end;
   end;
   coVariab: begin
     if res.Typ = typByte then begin
-      SetResultExpres(typBit); //No se puede usar SetResultExpres_bit, porque no hay p1 y p2;
+      SetResultExpres(typBit); //No se puede usar SetROPResultExpres_bit, porque no hay p1 y p2;
       res.Inverted := true;
       //Se asumirá que cualquier valor diferente de cero, devuelve 1
       _MOVF(res.Loffs, toW);    //el resultado aparecerá en Z, invertido
@@ -4485,7 +4493,7 @@ begin
   end;
   coExpres: begin  //se asume que ya está en (w)
     if res.Typ = typByte then begin
-      SetResultExpres(typBit); //No se puede usar SetResultExpres_bit, porque no hay p1 y p2;
+      SetResultExpres(typBit); //No se puede usar SetROPResultExpres_bit, porque no hay p1 y p2;
       res.Inverted := true;
       _ADDLW(0);   //el resultado aparecerá en Z, invertido
     end else begin

@@ -237,6 +237,7 @@
         <Filename Value="FramePICDiagram.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fraPICDiagram"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
       </Unit28>
     </Units>

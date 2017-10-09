@@ -2,9 +2,10 @@ unit FormDebugger;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ComCtrls,
-  ExtCtrls, StdCtrls, Grids, ActnList, Menus, Parser, FrameRamExplorer,
-  FrameRomExplorer, FramePicRegisters, FrameRegWatcher, Pic16Utils, FramePICDiagram;
+  Classes, SysUtils, Types, FileUtil, Forms, Controls, Graphics, Dialogs,
+  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, Parser,
+  FrameRamExplorer, FrameRomExplorer, FramePicRegisters, FrameRegWatcher,
+  Pic16Utils, MisUtils, FramePICDiagram;
 type
   { TfrmDebugger }
   TfrmDebugger = class(TForm)
@@ -17,6 +18,7 @@ type
     acGenPause: TAction;
     acGenSetBrkPnt: TAction;
     acGenClearCC: TAction;
+    acGenAddWatch: TAction;
     ActionList1: TActionList;
     Image1: TImage;
     ImageList32: TImageList;
@@ -30,6 +32,7 @@ type
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
+    MenuItem8: TMenuItem;
     mnSetPCHere: TMenuItem;
     Panel1: TPanel;
     Panel2: TPanel;
@@ -56,6 +59,7 @@ type
     ToolButton4: TToolButton;
     ToolButton5: TToolButton;
     ToolButton6: TToolButton;
+    procedure acGenAddWatchExecute(Sender: TObject);
     procedure acGenClearCCExecute(Sender: TObject);
     procedure acGenExecHerExecute(Sender: TObject);
     procedure acGenSetBrkPntExecute(Sender: TObject);
@@ -66,6 +70,7 @@ type
     procedure acGenRunExecute(Sender: TObject);
     procedure acGenSetPCExecute(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure PopupMenu1Popup(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
   private
     defHeight: LongInt;
@@ -77,6 +82,7 @@ type
     fraPicDia: TfraPICDiagram;
     milsecRefresh: integer;   //Periodo de refresco en milisegunod
     nCyclesPerClk: integer;   //Número de ciclos a ejecutar por pasada
+    curVarName : string;
     procedure picExecutionMsg(message: string);
     procedure RefreshScreen(SetGridRow: boolean = true);
     procedure StringGrid1DrawCell(Sender: TObject; aCol, aRow: Integer;
@@ -235,6 +241,36 @@ begin
     pic.CommStop := true;  //Manda comando para detener
   end;
 end;
+procedure TfrmDebugger.PopupMenu1Popup(Sender: TObject);
+var
+  txt: String;
+  a: TStringDynArray;
+  valp: Word;
+begin
+  if StringGrid1.Row=-1 then begin
+    acGenAddWatch.Visible := false;
+    exit;
+  end;
+  //Obtiene instrucción seleccionada
+  valp := pic.flash[StringGrid1.Row].value;
+  pic.Decode(valp);   //decodifica instrucción
+  txt := pic.Disassembler(true);
+  //Valida si es instrucción
+  a := Explode(' ', txt);
+  if (high(a)<>1) and (high(a)<>2) then begin
+    acGenAddWatch.Visible := false;
+    exit;
+  end;
+  //Puede ser una instrucción
+  curVarName := a[1];   //toma la segunda parte
+  if pos(',', curVarName)<>0 then begin
+    //Toma hasta antes de la coma
+    curVarName := copy(curVarName, 1, pos(',', curVarName)-1);
+  end;
+  curVarName := trim(curVarName);
+  acGenAddWatch.Caption := 'Add Watch on ' + curVarName;
+end;
+////////////////////// Acciones ////////////////////
 procedure TfrmDebugger.acGenResetExecute(Sender: TObject);
 begin
   pic.Reset;
@@ -297,6 +333,11 @@ procedure TfrmDebugger.acGenClearCCExecute(Sender: TObject);
 begin
   pic.nClck := 0;
   RefreshScreen(false);
+end;
+procedure TfrmDebugger.acGenAddWatchExecute(Sender: TObject);
+{Agrega un vigilante en la varible "curVarName"}
+begin
+  fraRegWat.AddWatch(curVarName);
 end;
 procedure TfrmDebugger.acGenSetBrkPntExecute(Sender: TObject);
 {Pone o quita un Punto de Interrupción en la posición indicada}

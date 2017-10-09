@@ -96,7 +96,9 @@ implementation
 procedure TCompiler.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
 begin
-  pic.addTopComm('    ;'+trim(lin));  //agrega _Línea al código ensmblador
+  if Config.IncComment then begin
+    pic.addTopComm('    ;'+trim(lin));  //agrega _Línea al código ensmblador
+  end;
 end;
 function TCompiler.StartOfSection: boolean;
 begin

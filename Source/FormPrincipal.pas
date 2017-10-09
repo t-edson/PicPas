@@ -787,7 +787,7 @@ begin
      cxp.RAMusage(edAsm.Lines, Config.VarDecType, Config.ExcUnused);
   end;
   edAsm.Lines.Add(';===Blocks of Code===');
-  cxp.DumpCode(edAsm.Lines, Config.IncAddress, Config.IncComment, COnfig.IncVarName );
+  cxp.DumpCode(edAsm.Lines, Config.IncAddress, true, COnfig.IncVarName );
   edAsm.Lines.Add(';--------------------');
   edAsm.Lines.Add('    END');
   edAsm.EndUpdate;

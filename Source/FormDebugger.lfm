@@ -252,7 +252,7 @@ object frmDebugger: TfrmDebugger
       Hint = 'Reset'
       ImageIndex = 8
       OnExecute = acGenResetExecute
-      ShortCut = 16497
+      ShortCut = 117
     end
     object acGenStep: TAction
       Caption = 'Step Over'
@@ -298,6 +298,10 @@ object frmDebugger: TfrmDebugger
     object acGenClearCC: TAction
       Caption = 'Reset Cycles Counter'
       OnExecute = acGenClearCCExecute
+    end
+    object acGenAddWatch: TAction
+      Caption = 'Add &Watcher on ?'
+      OnExecute = acGenAddWatchExecute
     end
   end
   object ImageList32: TImageList
@@ -1918,6 +1922,7 @@ object frmDebugger: TfrmDebugger
   end
   object PopupMenu1: TPopupMenu
     Images = ImageList16
+    OnPopup = PopupMenu1Popup
     left = 184
     top = 376
     object mnSetPCHere: TMenuItem
@@ -2117,6 +2122,9 @@ object frmDebugger: TfrmDebugger
     end
     object MenuItem4: TMenuItem
       Caption = '-'
+    end
+    object MenuItem8: TMenuItem
+      Action = acGenAddWatch
     end
     object MenuItem3: TMenuItem
       Action = acGenReset

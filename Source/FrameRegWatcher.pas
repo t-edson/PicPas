@@ -26,6 +26,7 @@ type
     function UtilGrillaLeerColorFondo(col, fil: integer): TColor;
   public
     pic: TPIC16;
+    procedure AddWatch(varName: string);
     procedure Refrescar;
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
@@ -94,7 +95,6 @@ begin
     end;
   end;
 end;
-
 procedure TfraRegWatcher.RefrescarPorNombre(f: integer);
 {Refresca la fila f de la grilla, a partir del campo de Nombre }
 var
@@ -125,7 +125,6 @@ begin
     grilla.Cells[COLVAL,f] := '$'+IntToHex(pic.ram[addr].value, 2);
   end;
 end;
-
 procedure TfraRegWatcher.UtilGrillaFinEditarCelda(var eveSal: TEvSalida; col,
   fil: integer; var ValorAnter, ValorNuev: string);
 begin
@@ -170,10 +169,23 @@ begin
      grilla.RowCount := grilla.RowCount + 1;  //agrega fila
   end;
 end;
-
 function TfraRegWatcher.UtilGrillaLeerColorFondo(col, fil: integer): TColor;
 begin
   Result := clWhite;
+end;
+procedure TfraRegWatcher.AddWatch(varName: string);
+{Agrega una variable para vigilar}
+var
+  f: Integer;
+begin
+  f := grilla.RowCount-1;  //última fila
+  if not FilaEstaVacia(f) then begin
+    //Hay que agregar una fila
+    grilla.RowCount := grilla.RowCount + 1;
+    f := grilla.RowCount-1;
+  end;
+  grilla.Cells[2,f] := varName;
+  RefrescarPorNombre(f);
 end;
 constructor TfraRegWatcher.Create(AOwner: TComponent);
 begin

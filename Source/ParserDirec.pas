@@ -79,7 +79,8 @@ type
     procedure ProcMSGERR;
     procedure ProcMSGWAR;
     procedure ProcSET_MAPPED_RAM;
-    procedure ProcMAP_PORT_PIN;
+    procedure ProcMAP_RAM_TO_PIN;
+    procedure ProcSET_UNIMP_BITS;
     procedure ProcCLEAR_STATE_RAM;
     procedure ProcSET_STATE_RAM;
     function read_CURRBANK: Single;
@@ -352,6 +353,8 @@ var
 begin
   skipWhites;   //quita blancos iniciales
   if lexDir.GetEol then begin
+    Result.datTyp := ddtString;
+    Result.FvalStr := '';
     exit;
   end;
   if CogNumero(num) then begin
@@ -1238,14 +1241,29 @@ begin
   pic.SetMappRAMCom(txtMsg);
   if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
 end;
-procedure TParserDirec.ProcMAP_PORT_PIN;
+procedure TParserDirec.ProcMAP_RAM_TO_PIN;
+{Mapea pines del encapsulado a direcciones de memoria}
 var
   txtMsg: String;
 begin
   lexDir.Next;  //pasa al siguiente
   txtMsg := CogExpresion(0).valStr;
   if HayError then exit;
-  pic.MapPORTtoPIN(txtMsg);
+  pic.MapRAMtoPIN(txtMsg);
+  if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
+end;
+procedure TParserDirec.ProcSET_UNIMP_BITS;
+{Configura bits no implementados para una dirección de RAM.}
+var
+  txtMsg: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  txtMsg := CogExpresion(0).valStr;
+  if txtMsg='' then begin
+    GenErrorDir('Expected string');
+  end;
+  if HayError then exit;
+  pic.SetUnimpBITS(txtMsg);
   if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
 end;
 procedure TParserDirec.ProcCLEAR_STATE_RAM;
@@ -1354,9 +1372,11 @@ begin
   'ERROR'    : ProcERROR;
   'SET'      : ProcSET;
   'CLEAR_STATE_RAM': ProcCLEAR_STATE_RAM;
-  'SET_STATE_RAM': ProcSET_STATE_RAM;
-  'SET_MAPPED_RAM': ProcSET_MAPPED_RAM;
-  'MAP_PORT_TO_PIN': ProcMAP_PORT_PIN;
+  'SET_STATE_RAM'  : ProcSET_STATE_RAM;
+  'SET_MAPPED_RAM' : ProcSET_MAPPED_RAM;
+//  'SET_RAM_NAME'   : ProcSET_RAM_NAME;
+  'MAP_RAM_TO_PIN' : ProcMAP_RAM_TO_PIN;
+  'SET_UNIMP_BITS' : ProcSET_UNIMP_BITS;
   else
     //Puede ser una macro
     dmac := FindMacro(lexDir.GetToken);
