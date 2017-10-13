@@ -3,7 +3,8 @@ unit FrameRegWatcher;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Grids, ExtCtrls, StdCtrls,
-  Buttons, Graphics, LCLType, Pic16Utils, MisUtils, CibGrillas;
+  Buttons, Graphics, LCLType, Menus, Pic16Utils, MisUtils, CibGrillas, Parser,
+  XpresElementsPIC;
 type
 
   { TfraRegWatcher }
@@ -11,10 +12,18 @@ type
   TfraRegWatcher = class(TFrame)
     grilla: TStringGrid;
     Label1: TLabel;
+    mnAddRT: TMenuItem;
+    mnClearAll: TMenuItem;
+    mnAddVars: TMenuItem;
     panTitle: TPanel;
+    PopupMenu1: TPopupMenu;
     SpeedButton1: TSpeedButton;
+    procedure mnAddRTClick(Sender: TObject);
+    procedure mnAddVarsClick(Sender: TObject);
+    procedure mnClearAllClick(Sender: TObject);
   private
     UtilGrilla: TGrillaEdicFor;
+    procedure AddWatch(varAddr: word);
     function FilaEstaVacia(f: integer): boolean;
     procedure grillaKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure RefrescarPorDireccion(f: integer);
@@ -26,6 +35,7 @@ type
     function UtilGrillaLeerColorFondo(col, fil: integer): TColor;
   public
     pic: TPIC16;
+    cxp: TCompiler;
     procedure AddWatch(varName: string);
     procedure Refrescar;
     constructor Create(AOwner: TComponent) ; override;
@@ -187,6 +197,77 @@ begin
   grilla.Cells[2,f] := varName;
   RefrescarPorNombre(f);
 end;
+procedure TfraRegWatcher.AddWatch(varAddr: word);
+{Agrega una variable para vigilar, por su dirección}
+var
+  f: Integer;
+begin
+  f := grilla.RowCount-1;  //última fila
+  if not FilaEstaVacia(f) then begin
+    //Hay que agregar una fila
+    grilla.RowCount := grilla.RowCount + 1;
+    f := grilla.RowCount-1;
+  end;
+  grilla.Cells[1,f] := '$'+IntToHex(varAddr, 3);
+  RefrescarPorDireccion(f);
+end;
+procedure TfraRegWatcher.mnAddVarsClick(Sender: TObject);
+{Agrega todas las variables usdas, del programa al inspector.}
+var
+  v: TxpEleVar;
+  i, maxBytes: Integer;
+begin
+  for v in cxp.TreeElems.AllVars do begin   //Se supone que "AllVars" ya se actualizó.
+      if v.nCalled = 0 then continue;
+      if v.typ.IsBitSize then begin
+
+      end else if v.typ.IsByteSize then begin
+        AddWatch(v.name);
+      end else if v.typ.IsWordSize then begin
+        AddWatch(v.name+'@1');
+        AddWatch(v.name+'@0');
+      end else if v.typ.IsDWordSize then begin
+        AddWatch(v.name+'@3');
+        AddWatch(v.name+'@2');
+        AddWatch(v.name+'@1');
+        AddWatch(v.name+'@0');
+      end else if v.typ.catType = tctArray then begin
+        //Arreglo
+        //Agrega primer byte
+        AddWatch(v.name);
+        //agrega bytes siguientes
+        maxBytes := v.typ.arrSize * v.typ.refType.size-1;
+        //if maxBytes > 10 then
+        for i:=1 to maxBytes do begin
+           AddWatch(v.adrByte0.AbsAdrr + i);
+        end;
+      end else begin
+
+      end;
+  end;
+end;
+procedure TfraRegWatcher.mnAddRTClick(Sender: TObject);
+var
+  reg: TPicRegister;
+  nam: String;
+begin
+  for reg in cxp.ProplistRegAux do begin
+    if not reg.assigned then continue;  //puede haber registros de trabajo no asignados
+    nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
+    AddWatch(nam);
+  end;
+//  for rbit in cxp.ProplistRegAuxBit do begin
+//    nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
+//    adStr := '0x' + IntToHex(rbit.AbsAdrr, 3);
+//    lins.Add('#define' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
+//  end;
+end;
+procedure TfraRegWatcher.mnClearAllClick(Sender: TObject);
+begin
+  grilla.RowCount := 1;  //Elimina todas
+  grilla.RowCount := 2;  //Deja fila vacía
+end;
+
 constructor TfraRegWatcher.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);

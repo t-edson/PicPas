@@ -152,7 +152,8 @@ public
   listTypSys : TxpEleTypes;  //lista de tipos del sistema
   pic        : TPIC16;       //Objeto PIC de la serie 16.
 protected
-//  typs   : TTypes;      //lista de tipos (El nombre "types" ya está reservado)
+  inSetItem: boolean;   {Bandera para que se llame dos veces a setitem, en una
+                         expresión.}
   function GetExpression(const prec: Integer): TOperand;
   //LLamadas a las rutinas de operación
   procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
@@ -567,7 +568,8 @@ begin
       //Crea un operando-variable para generar código de asignación
       Op1.SetAsVariab(par.pvar); //Apunta a la variable
       if FirstPass then par.pvar.AddCaller;   //se está usando
-      op := Op1.FindOperator(':=');  //busca la operación
+      //op := Op1.FindOperator(':=');  //busca la operación
+      op := Op1.Typ.operAsign;
       Oper(Op1, op, res);   //Codifica la asignación
     end;
   end;
@@ -597,7 +599,33 @@ var
   field: TTypField;
   identif: String;
 begin
-  cIn.Next;    //TOma el "."
+  if cIn.tok = '[' then begin
+    //Caso especial de llamada a SetItem() o getItem[]
+    if inSetItem then begin
+      {Ya se llamó a setitem(), ahora todas las llamadas a la forma a[] , se asumen
+      que son a getitem().}
+      for field in xOperand.Typ.fields do begin
+        if LowerCase(field.Name) = 'getitem' then begin
+          field.proc(@xOperand);  //Devuelve resultado en "res"
+          exit;
+        end;
+      end;
+    end else begin
+      {Esta es la primera aparición de [], en una expresión. Se asume que está al lado
+      izquierdo de una asignación y por lo tanto se debe llaamr a setitem()}
+      for field in xOperand.Typ.fields do begin
+        if LowerCase(field.Name) = 'setitem' then begin
+          inSetItem := true;
+          field.proc(@xOperand);  //Devuelve resultado en "res"
+          exit;
+        end;
+      end;
+    end;
+    //No encontró setitem()
+    GenError('Unknown identifier: %s', [identif]);
+    exit;
+  end;
+  cIn.Next;    //Toma el "."
   if (cIn.tokType<>tnIdentif) and (cIn.tokType<>tnNumber) then begin
     GenError('Identifier expected.');
     cIn.Next;    //Pasa siempre
@@ -667,7 +695,7 @@ begin
       Op.SetAsVariab(xvar);   //guarda referencia a la variable (y actualiza el tipo).
       {$IFDEF LogExpres} Op.txt:= xvar.name; {$ENDIF}   //toma el texto
       //Verifica si tiene referencia a campos con "."
-      if cIn.tok = '.' then begin
+      if (cIn.tok = '.') or (cIn.tok = '[') then begin
         IdentifyField(Op);
         Op := res;  //notar que se usa "res".
         if HayError then exit;;
@@ -682,7 +710,7 @@ begin
     Op.GetConsValFrom(xcon);  //lee valor
     {$IFDEF LogExpres} Op.txt:= xcon.name; {$ENDIF}   //toma el texto
     //Verifica si tiene referencia a campos con "."
-    if cIn.tok = '.' then begin
+    if (cIn.tok = '.') or (cIn.tok = '[') then begin
       IdentifyField(Op);
       Op := res;  //notar que se usa "res".
       if HayError then exit;;
@@ -833,7 +861,7 @@ begin
     if HayError then exit;
     If cIn.tok = ')' Then begin
        cIn.Next;  //lo toma
-       if cIn.tok = '.' then begin
+        if (cIn.tok = '.') or (cIn.tok = '[') then begin
          IdentifyField(Result);
          Result := res;  //notar que se usa "res".
          if HayError then exit;;
@@ -1056,7 +1084,7 @@ begin
   //----------------coger primer operando------------------
   Op1 := GetOperand;
   if HayError then exit;
-  //verifica si termina la expresion
+  //Verifica si termina la expresion
   cIn.SkipWhites;
   p := cIn.PosAct;  //por si necesita volver
   opr1 := GetOperator(Op1);
@@ -1104,15 +1132,15 @@ begin
 end;
 procedure TCompilerBase.GetExpressionE(const prec: Integer;
   posExpres: TPosExpres);
-{Envoltura para GetExpression(). Se coloca así porque GetExpression()
-tiene diversos puntos de salida y Se necesita llamar siempre a expr_end() al
-terminar.
+{Envoltura para GetExpression(). Se usa para compilar expresiones completas,
+no subexpresiones.
 Toma una expresión del contexto de entrada y devuelve el resultado em "res".
 "isParam" indica que la expresión evaluada es el parámetro de una función.}
 begin
   Inc(ExprLevel);  //cuenta el anidamiento
   {$IFDEF LogExpres} LogExpLevel('>Inic.expr'); {$ENDIF}
   if OnExprStart<>nil then OnExprStart;  //llama a evento
+  inSetItem := false;   //Inicia bandera
   res := GetExpression(prec);
   if HayError then exit;
   if OnExprEnd<>nil then OnExprEnd(posExpres);    //llama al evento de salida

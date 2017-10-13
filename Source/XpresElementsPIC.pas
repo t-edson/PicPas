@@ -181,13 +181,19 @@ type
   Pascal.}
   TxpEleType= class(TxpElement)
   public   //Eventos
-    {Este evento es llamado automáticamente por el Analizador de expresiones,
-     cuando encuentre una expresión de un solo operando, de este tipo.
+    {Estos eventos son llamados automáticamente por el Analizador de expresiones.
     Por seguridad, debe implementarse siempre para cada tipo creado. La implementación
     más simple sería devolver en "res", el operando "p1^".}
     OperationLoad: TProcExecOperat; {Evento. Es llamado cuando se pide evaluar una
                                  expresión de un solo operando de este tipo. Es un caso
                                  especial que debe ser tratado por la implementación}
+    OnGetItem    : TTypFieldProc;  {Es llamado cuando se pide leer un ítem de un
+                                   arreglo. Debe devolver una expresión con el resultado
+                                   dal ítem leído.}
+    OnSetItem    : TTypFieldProc;  {Es llamado cuando se pide escribir un ítem a un
+                                   arreglo.}
+    OnClearItems : TTypFieldProc;  {Usado para la rutina que limpia los ítems de
+                                   un arreglo.}
     {Estos eventos NO se generan automáticamente en TCompilerBase, sino que es la
     implementación del tipo, la que deberá llamarlos. Son como una ayuda para facilitar
     la implementación. OnPush y OnPop, son útiles para cuando la implementación va a
@@ -722,6 +728,8 @@ begin
   end else if typ.catType = tctArray then begin
     //Arreglos
     if (typ.refType = typByte) or (typ.refType = typChar) then begin
+      Result := adrByte0.AbsAdrr;
+    end else if (typ.refType = typWord) then begin
       Result := adrByte0.AbsAdrr;
     end else begin
       Result := ADRR_ERROR;

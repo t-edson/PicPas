@@ -385,6 +385,7 @@ begin
   fraPicReg.pic := pic;
   fraPicReg.Invalidate;
   fraRegWat.pic := pic;
+  fraRegWat.cxp:= cxp;
   fraRegWat.Refrescar;
   fraPicDia.pic:= pic;
   fraPicDia.Refrescar;

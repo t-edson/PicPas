@@ -16,9 +16,6 @@ type
       ): TxpEleVar;
     procedure ArrayDeclaration(out itemTyp: TxpEleType; out nEle: integer);
     procedure array_high(const OpPtr: pointer);
-    procedure array_getItem(const OpPtr: pointer);
-    procedure array_setItem(const OpPtr: pointer);
-    procedure array_clear(const OpPtr: pointer);
     procedure array_low(const OpPtr: pointer);
     procedure CompileTypeDeclar(IsInterface: boolean; typName: string = '');
     function GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
@@ -537,7 +534,7 @@ begin
   end;
   end;
 end;
-procedure  TCompiler.Cod_JumpIfTrue;
+procedure TCompiler.Cod_JumpIfTrue;
 {Codifica una instrucción de salto, si es que el resultado de la última expresión es
 verdadera. Se debe asegurar que la expresión es de tipo booleana y que es de categoría
 coVariab o coExpres.}
@@ -1060,252 +1057,6 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TCompiler.array_getItem(const OpPtr: pointer);
-//Función que devuelve el valor indexado
-var
-  Op: ^TOperand;
-  xVar: TxpEleVar;
-  par: TOperand;
-begin
-  cIn.Next;  //Toma identificador de campo
-  //Captura parámetro
-  if not CaptureTok('(') then exit;
-  par := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
-  if not CaptureTok(')') then exit;
-  //Procesa
-  Op := OpPtr;
-  if Op^.Cat = coVariab then begin  //Se aplica a una variable
-    xVar := Op^.rVar;  //referencia a la variable.
-    if xVar.typ.refType = typByte then begin
-      //Es array de bytes se devuelve una expresión byte
-      res.SetAsExpres(typByte);
-      //Genera el código de acuerdo al índice
-      case par.Cat of
-      coConst: begin  //ïndice constante
-          //Como el índice es constante, se puede acceder directamente
-          _MOVF(xVar.adrByte0.offs+par.valInt, toW);
-        end;
-      coVariab, coExpres: begin
-          par.LoadToReg;   //Lo deja en W
-          _ADDLW(xVar.adrByte0.AbsAdrr);   //agrega OFFSET
-          _MOVWF(04);     //direcciona con FSR
-          _MOVF(0, toW);  //lee indexado en W
-        end;
-      end;
-    end else begin
-      GenError('Not supported type.');
-    end;
-  end else begin
-    GenError('Syntax error.');
-  end;
-end;
-procedure TCompiler.array_setItem(const OpPtr: pointer);
-//Función que fija un valor indexado
-var
-  Op: ^TOperand;
-  arrVar, rVar: TxpEleVar;
-  idx, value: TOperand;
-  idxTar: Int64;
-begin
-  cIn.Next;  //Toma identificador de campo
-  //Captura parámetro
-  if not CaptureTok('(') then exit;
-  idx := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
-  //Procesa
-  Op := OpPtr;
-  if Op^.Cat = coVariab then begin  //Se aplica a una variable
-    arrVar := Op^.rVar;  //referencia a la variable.
-    if arrVar.typ.refType = typByte then begin
-      //Es array de bytes se devuelve una expresión byte
-      res.SetAsExpres(typByte);
-      //Genera el código de acuerdo al índice
-      case idx.Cat of
-      coConst: begin  //ïndice constante
-          //Como el índice es constante, se puede acceder directamente
-          idxTar := arrVar.adrByte0.offs+idx.valInt; //índice destino
-          if not CaptureTok(',') then exit;
-          value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
-          if value.Typ <> typByte then begin
-            GenError('Byte expression expected.');
-            exit;
-          end;
-          if (value.Cat = coConst) and (value.valInt=0) then begin
-            //Caso especial, se pone a cero
-            _CLRF(idxTar);
-          end else begin
-            //Sabemos que hay una expresión byte
-            value.LoadToReg; //Carga resultado en W
-            _MOVWF(idxTar);  //Mueve a arreglo
-          end;
-        end;
-      coVariab: begin
-          //El índice es una variable
-          //Tenemos la referencia la variable en idx.rvar
-          if not CaptureTok(',') then exit;
-          value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
-          if value.Typ <> typByte then begin
-            GenError('Byte expression expected.');
-            exit;
-          end;
-          //Sabemos que hay una expresión byte
-          if (value.Cat = coConst) and (value.valInt=0) then begin
-            //Caso especial, se pide asignar una constante cero
-            _MOVF(idx.offs, toW);  //índice
-            _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-            _MOVWF($04);  //Direcciona
-            _CLRF($00);   //Pone a cero
-          end else if value.Cat = coConst then begin
-            //Es una constante cualquiera
-            _MOVF(idx.offs, toW);  //índice
-            _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-            _MOVWF($04);  //Direcciona
-            _MOVLW(value.valInt);
-            _MOVWF($00);   //Escribe valor
-          end else if value.Cat = coVariab then begin
-            //Es una variable
-            _MOVF(idx.offs, toW);  //índice
-            _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-            _MOVWF($04);  //Direcciona
-            _MOVF(value.offs, toW);
-            _MOVWF($00);   //Escribe valor
-          end else begin
-            //Es una expresión. El resultado está en W
-            //hay que mover value a arrVar[idx.rvar]
-            typWord.DefineRegister;   //Para usar H
-            _MOVWF(H.offs);  //W->H   salva H
-            _MOVF(idx.offs, toW);  //índice
-            _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-            _MOVWF($04);  //Direcciona
-            _MOVF(H.offs, toW);
-            _MOVWF($00);   //Escribe valor
-          end;
-        end;
-      coExpres: begin
-        //El índice es una expresión y está en W.
-        if not CaptureTok(',') then exit;
-        value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
-        // ¿Y si GetExpression modifica H?  !!!!!!!!!!!
-        if value.Typ <> typByte then begin
-          GenError('Byte expression expected.');
-          exit;
-        end;
-        //Sabemos que hay una expresión byte
-        if (value.Cat = coConst) and (value.valInt=0) then begin
-          //Caso especial, se pide asignar una constante cero
-          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-          _MOVWF($04);  //Direcciona
-          _CLRF($00);   //Pone a cero
-        end else if value.Cat = coConst then begin
-          //Es una constante cualquiera
-          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-          _MOVWF($04);  //Direcciona
-          _MOVLW(value.valInt);
-          _MOVWF($00);   //Escribe valor
-        end else if value.Cat = coVariab then begin
-          //Es una variable
-          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-          _MOVWF($04);  //Direcciona
-          _MOVF(value.offs, toW);
-          _MOVWF($00);   //Escribe valor
-        end else begin
-          //Es una expresión. El valor a asignar está en W, y el índice en la pila
-          typWord.DefineRegister;   //Para usar H
-          _MOVWF(H.offs);  //W->H   salva valor a H
-          rVar := GetVarByteFromStk;  //toma referencia de la pila
-          _MOVF(rVar.adrByte0.offs, toW);  //índice
-          _ADDLW(arrVar.adrByte0.AbsAdrr);  //Dirección de inicio
-          _MOVWF($04);  //Direcciona
-          _MOVF(H.offs, toW);
-          _MOVWF($00);   //Escribe valor
-          FreeStkRegisterByte;   //Para liberar
-        end;
-        end;
-      end;
-    end else begin
-      GenError('Not supported type.');
-    end;
-  end else begin
-    GenError('Syntax error.');
-  end;
-  if not CaptureTok(')') then exit;
-end;
-procedure TCompiler.array_clear(const OpPtr: pointer);
-{Limpia el contenido de todo el arreglo}
-var
-  Op: ^TOperand;
-  xvar: TxpEleVar;
-  j1: Word;
-begin
-  cIn.Next;  //Toma identificador de campo
-  //Limpia el arreglo
-  Op := OpPtr;
-  case Op^.Cat of
-  coVariab: begin
-    xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
-    res.SetAsConst(typByte);  //Realmente no es importante devolver un valor
-    res.valInt {%H-}:= xvar.typ.arrSize;  //Devuelve tamaño
-    if xvar.typ.arrSize = 0 then exit;  //No hay nada que limpiar
-    if xvar.typ.arrSize = 1 then begin  //Es de un solo byte
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-    end else if xvar.typ.arrSize = 2 then begin  //Es de 2 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-    end else if xvar.typ.arrSize = 3 then begin  //Es de 3 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-    end else if xvar.typ.arrSize = 4 then begin  //Es de 4 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-    end else if xvar.typ.arrSize = 5 then begin  //Es de 5 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
-    end else if xvar.typ.arrSize = 6 then begin  //Es de 6 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
-      _CLRF(xvar.adrByte0.offs+5);
-    end else if xvar.typ.arrSize = 7 then begin  //Es de 7 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
-      _CLRF(xvar.adrByte0.offs+5);
-      _CLRF(xvar.adrByte0.offs+6);
-    end else begin
-      //Implementa lazo, usando W como índice
-      _MOVLW(xvar.adrByte0.offs);  //dirección inicial
-      _MOVWF($04);   //FSR
-      _MOVLW(256-xvar.typ.arrSize);
-j1:= _PC;
-      _CLRF($00);    //Limpia [FSR]
-      _INCF($04, toF);    //Siguiente
-      _ADDLW(1);   //W = W + 1
-      _BTFSS(STATUS, _Z);
-      _GOTO(j1);
-    end;
-  end;
-  else
-    GenError('Syntax error.');
-  end;
-
-
-end;
 procedure TCompiler.ArrayDeclaration(out itemTyp: TxpEleType; out nEle: integer);
 {Compila una declaración de arreglo.}
 var
@@ -1436,13 +1187,19 @@ begin
     etyp.arrSize := nEle;      //Número de ítems
     etyp.refType := itemTyp;   //Tipo de dato
     etyp.InInterface := IsInterface; //No debería ser necesario
-    //Crea campos del arreglo
+    //Crea campos comunes del arreglo
     etyp.CreateField('length', @array_length);
     etyp.CreateField('high', @array_high);
     etyp.CreateField('low', @array_low);
-    etyp.CreateField('getitem', @array_getItem);
-    etyp.CreateField('setitem', @array_setItem);
-    etyp.CreateField('clear', @array_clear);
+    //Campos que dependen del tipo
+    if (itemTyp.OnGetItem=nil) or (itemTyp.OnSetItem=nil) then begin
+      GenError('Cannot declare array of type: %s', [itemTyp.name]);
+    end;
+    etyp.CreateField('getitem', itemTyp.OnGetItem);
+    etyp.CreateField('setitem', itemTyp.OnSetItem);
+    if itemTyp.OnClearItems <> nil then begin
+      etyp.CreateField('clear'  , itemTyp.OnClearItems);
+    end;
   end else begin
     GenError(ER_IDE_TYP_EXP);
     exit;

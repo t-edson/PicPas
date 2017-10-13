@@ -16,6 +16,7 @@ object fraRegWatcher: TfraRegWatcher
     Align = alClient
     ColCount = 3
     FixedCols = 0
+    PopupMenu = PopupMenu1
     RowCount = 3
     TabOrder = 0
     ColWidths = (
@@ -64,6 +65,22 @@ object fraRegWatcher: TfraRegWatcher
       Width = 20
       Align = alRight
       Caption = 'X'
+    end
+  end
+  object PopupMenu1: TPopupMenu
+    left = 56
+    top = 136
+    object mnClearAll: TMenuItem
+      Caption = '&Clear All'
+      OnClick = mnClearAllClick
+    end
+    object mnAddVars: TMenuItem
+      Caption = 'Add Program &Variables'
+      OnClick = mnAddVarsClick
+    end
+    object mnAddRT: TMenuItem
+      Caption = 'Add &Registers'
+      OnClick = mnAddRTClick
     end
   end
 end
