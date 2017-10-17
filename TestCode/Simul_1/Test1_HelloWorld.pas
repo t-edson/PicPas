@@ -1,8 +1,8 @@
 {Rutina de verificación del programa Hola Mundo. 
 Lo que se prueba aquí, es el funcionamiento báscio y la capacidad de llamar
 a la rutina delay_ms(), definiendo el uso del registro H.}
-{$PROCESSOR PIC16F84}
-{$FREQUENCY 8Mhz}
+{$PROCESSOR PIC16F84A}
+{$FREQUENCY 10Mhz}
 uses PIC16F84A;
 var
   pinLed: bit absolute PORTB.0;

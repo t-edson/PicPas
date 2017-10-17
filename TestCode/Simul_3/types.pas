@@ -1,5 +1,4 @@
-{Rutina de verificación para operaciones aritméticas con datos 
-de tipo WORD. 
+{Rutina de verificación para el manejo de tipos.
 Se debe simular el programa en el circuito "Test1.DSN". Se debe 
 escuchar, una serie de pitidos cortos. Si se escucha un pitido 
 largo, es que hubo algún error en el resultado de alguna operación.}
@@ -27,7 +26,15 @@ var  //variables de tipos equivalentes
   vchar1 : char1;
 	vword1 : word1;
   vdword1: dword1;
-  
+type  //Tipos arreglos
+  Tachar = array[3] of char;
+  Tabyte = array[3] of byte;
+  Taword = array[3] of word;
+var
+  achar: Tachar;
+  abyte: Tabyte;
+  aword: Taword;
+   
 //  procedure proc1(x, y: byte1): word1;
 //  begin
 //    exit(x+y);
@@ -77,6 +84,25 @@ begin
     vword1 := vword1 + 1;
   end;
   if vword1 = word(5) then good else bad end;
+
+  //Paso de parámetros a procedimientos  
+  //  if proc1(1,2) = 3 then good else bad end;
+  // NO IMPLEMENTADO
   
-//  if proc1(1,2) = 3 then good else bad end;
+  //////////////////////////////////////////////////////
+  ////////// Pruebas básicas a tipos  //////////////////
+  //////////////////////////////////////////////////////
+  achar[0] := 'a';
+//  if 'a' = achar[0] then good else bad end;
+  vbyte := 1;
+  achar[vbyte] := 'a';
+//  if achar[vbyte] = 'a' then good else bad end;
+
+  abyte[0] := 1;
+  vbyte := 1;
+  abyte[vbyte] := 1;
+  
+  vbyte := 1;
+  aword[0] := word(5000);
+  aword[vbyte] := word(5000);
 end.

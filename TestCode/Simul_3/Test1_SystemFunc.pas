@@ -156,10 +156,11 @@ begin
   if dword(vdword+dword(1)) = $01020305  then good else bad end;
   
   /////// SetAsInput() function
-  SetAsInput(PORTA);
-  if TRISA = $3F then good else bad end;
   {Cuidado que esto puede fallar en Proteus, porque parece que no maneja
   bien los bits no implementados, y puede leer $FF u otro valor en TRISA}
+//  SetAsInput(PORTA);
+//  if TRISA = $3F then good else bad end;
+
   SetAsInput(PORTB);
   if TRISB = $FF then good else bad end;
   

@@ -1,4 +1,4 @@
-{Test code for validation of variable declarations.}
+{Test code for validation of Variable declarations and Function Systems.}
 {$PROCESSOR PIC16F84}
 {$FREQUENCY 8Mhz}
 uses PIC16F84A;
@@ -9,7 +9,7 @@ begin
   pinLed := 1;
   delay_ms(30);
   pinLed := 0;
-  delay_ms(50);
+  delay_ms(20);
 end;
 procedure Mal;
 begin
@@ -37,6 +37,10 @@ const
   consWord = word($0A00); 
 begin
   SetAsOutput(pinLed);
+
+  ///////////////////////////////////////////////////
+  ///// Var declration
+  ///////////////////////////////////////////////////
   //Basic assigment
   vbit := 0;
 	if vbit=0 then bien else mal end;
@@ -71,6 +75,9 @@ begin
   vbyte.bit0 := 1;
   vbyte.bit7 := 1;
 	if vbyte = $81 then bien else mal end;
+	if ($10).bit0 = 0 then bien else mal end;
+	if ($10).bit4 = 1 then bien else mal end;
+	if ($FFFF).high.bit7 = 1 then bien else mal end;
 
   //Access to bytes of word
   vword:=$FF01;
