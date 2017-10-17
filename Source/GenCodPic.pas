@@ -1386,6 +1386,7 @@ begin
     if not CaptureTok('(') then exit(false);
   end;
   par := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
+  if HayError then exit(false);
   if par.Typ <> typByte then begin
     GenError('Expected byte as index.');
   end;
