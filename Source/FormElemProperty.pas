@@ -135,14 +135,17 @@ begin
     adicInformation := 'Dirección: $' + IntToHex(xfun.adrr, 3) + LineEnding +
            'Tamaño: ' + IntToStr(xfun.srcSize);
   end else if elem.idClass = eltUnit then begin
+    txtEleType.Caption := 'Unit';
     ImageList1.GetBitmap(6, Image1.Picture.Bitmap);
     adicInformation := '';
   end else if elem.idClass = eltBody then begin
+    txtEleType.Caption := 'Body';
     ImageList1.GetBitmap(12, Image1.Picture.Bitmap);
     adicInformation := 'Dirección: $' + IntToHex(xfun.adrr, 3) + LineEnding +
            'Tamaño: ' + IntToStr(xfun.srcSize)  + LineEnding +
            'Fin: ' + elem.srcEnd.RowColString;
   end else begin
+    txtEleType.Caption := 'Unknown';
     ImageList1.GetBitmap(13, Image1.Picture.Bitmap);
     adicInformation := '';
   end;

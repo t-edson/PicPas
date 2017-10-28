@@ -3,17 +3,14 @@ unit FrameEditView;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, FileUtil, LazUTF8, Forms, Controls, Dialogs, ComCtrls, ExtCtrls,
-  Graphics, LCLProc, Menus, LCLType, StdCtrls, strutils, fgl,
-  SynEdit, SynEditMiscClasses, SynEditKeyCmds, SynPluginMultiCaret,
-  SynEditMarkupHighAll, SynEditTypes,
-  Globales, SynFacilUtils, SynFacilCompletion, SynFacilHighlighter,
-  MisUtils, XpresBas;
+  Classes, SysUtils, FileUtil, LazUTF8, LazFileUtils, Forms, Controls, Dialogs,
+  ComCtrls, ExtCtrls, Graphics, LCLProc, Menus, LCLType, StdCtrls, strutils,
+  fgl, SynEdit, SynEditMiscClasses, SynEditKeyCmds, SynPluginMultiCaret,
+  SynEditMarkupHighAll, SynEditTypes, SynPluginSyncroEdit, Globales, SynFacilUtils,
+  SynFacilCompletion, SynFacilHighlighter, MisUtils, XpresBas;
 type
-  {Marcador para resltar errores de sintaxis en SynEdit}
-
   { TMarkup }
-
+  {Marcador para resltar errores de sintaxis en SynEdit}
   TMarkup = class(TSynEditMarkupHighlightMatches)
     public
       procedure SetMark(p1, p2: TPoint);
@@ -30,11 +27,7 @@ type
   TSynEditor = class(TSynFacilEditor)
   private  //Manejo de edición síncrona
     cursorPos: array of TPOINT;  //guarda posiciones de cursor
-    firstTok : boolean;  //bandera para identificar al primer token
-    tokFind  : String;   //token a buscar
     procedure AddCursorPos(x,y: integer);
-    procedure ExploreLine(lin: string; x1, x2, y: integer);
-    procedure ExploreForSyncro;
     procedure SetCursors;
   private
     FCaption : string;
@@ -79,6 +72,7 @@ type
     Panel2: TPanel;
     PopUpTabs: TPopupMenu;
     SaveDialog1: TSaveDialog;
+    SynPluginSyncroEdit1: TSynPluginSyncroEdit;
     UpDown1: TUpDown;
     procedure FrameResize(Sender: TObject);
     procedure mnCloseOthersClick(Sender: TObject);
@@ -92,7 +86,9 @@ type
     tabSelec : integer;
     procedure AddListUnits(OpEve: TFaOpenEvent);
     procedure ConfigureSyntax(ed: TSynEditor; Complete: boolean = true);
-    procedure evoLoadItems(opEve: TFaOpenEvent; curEnv: TFaCursorEnviron;
+    procedure OpenAfterDot1(opEve: TFaOpenEvent; curEnv: TFaCursorEnviron;
+                           out Cancel: boolean);
+    procedure OpenAfterDot2(opEve: TFaOpenEvent; curEnv: TFaCursorEnviron;
                            out Cancel: boolean);
     procedure MakeActiveTabVisible;
     procedure Panel1DragDrop(Sender, Source: TObject; X, Y: Integer);
@@ -116,6 +112,7 @@ type
     FTabIndex  : integer;
     FTabViewMode: integer;
     fMultiCaret: TSynPluginMultiCaret;
+    fSynchro   : TSynPluginSyncroEdit;
     procedure ChangeEditorState;
     procedure editChangeFileInform;
     function GetCanRedo: boolean;
@@ -139,12 +136,15 @@ type
     procedure SelectPrevEditor;
     function HasFocus: boolean;
     procedure SetFocus; override;
-  public  //Administración de archivos
-    tmpPath: string;  //ruta usada para crear archivos temporales para los editores
+  public  //Eventos
     OnChangeEditorState: TSynEditorEvent;
     OnChangeFileInform: procedure of object;
     OnSelectEditor: procedure of object;  //Cuando cambia la selección de editor
     OnRequireSynEditConfig: procedure(ed: TsynEdit) of object;
+    OnRequireFieldsComplet: procedure(ident: string; opEve: TFaOpenEvent;
+                                      tokPos: TSrcPos) of object;
+  public  //Administración de archivos
+    tmpPath: string;  //ruta usada para crear archivos temporales para los editores
     property Modified: boolean read GetModified;
     property CanUndo: boolean read GetCanUndo;
     property CanRedo: boolean read GetCanRedo;
@@ -169,7 +169,7 @@ type
     procedure RecentClick(Sender: TObject);
     procedure ActualMenusReciente(Sender: TObject);
     procedure AgregArcReciente(arch: string);
-  public //Inicialización
+  public   //Inicialización
     procedure UpdateSynEditConfig;
     procedure InitMenuRecents(menRecents0: TMenuItem; RecentList: TStringList;
       MaxRecents0: integer = 5);
@@ -225,76 +225,6 @@ begin
   CursorPos[n].x := x;
   CursorPos[n].y := y;
 end;
-procedure TSynEditor.ExploreLine(lin: string; x1, x2, y: integer);
-var
-  xtok: Integer;
-  tok: String;
-begin
-  if x2<x1 then exit;  //no es válido
-  //Hay una línea que debe ser explorada
-//  linAfec := system.Copy(lin, x1, x2-x1+1);  //La parte afectada
-//  DebugLn('--Lin=%s x1=%d,x2=%d', [lin, x1, x2]);
-  hl.SetLine(lin, 0);
-  while not hl.GetEol do begin
-    tok := hl.GetToken; //lee el token
-    //TokenAtt := hl.GetTokenAttribute;  //lee atributo
-    xtok := hl.GetX;
-    if (xtok>=x1) and (xtok<x2) then begin
-      if firstTok then begin
-        //El primer token es la palabra a buscar
-        tokFind := UpCase(tok);   //guarda palabra
-        firstTok := false;
-        AddCursorPos(xtok, y);   //guarda coordenadas
-      end else begin
-        //Es una búsqueda normal
-        if UpCase(tok) = tokFind then begin
-          //Guarda solo si coincide con el primer token
-         AddCursorPos(xtok, y);   //guarda coordenadas
-        end;
-      end;
-    end;
-    //pasa al siguiente
-    hl.Next;
-  end;
-//    MsgBox(lin);
-end;
-procedure TSynEditor.ExploreForSyncro;
-{Explora el texto seleccionado, para habilitar la edición sincronizada, con múltiples
-cursores.}
-var
-  row: integer;
-  xl1, xl2: integer;
-  lin: String;
-begin
-  setlength(cursorPos,0);   //limpia para guardar posiciones
-  firstTok := true;   //Para la búsqeuda correcta
-  for row := ed.BlockBegin.y to ed.BlockEnd.y do begin
-    lin := ed.Lines[row-1];  //linea en la selección
-    //Calcula coordenadas de la línea afectada
-    if row=ed.BlockBegin.y then begin
-      //Línea inicial
-      if row = ed.BlockEnd.y then begin
-        //Es también la línea final
-        xl1 := ed.BlockBegin.x;
-        xl2 := ed.BlockEnd.x-1;
-      end else begin
-        //Es solo línea inicial
-        xl1 := ed.BlockBegin.x;
-        xl2 := length(lin);
-      end;
-    end else if row=ed.BlockEnd.y then begin
-      //Línea final
-      xl1 := 1;
-      xl2 := ed.BlockEnd.x-1;
-    end else begin
-      //Línea interior
-      xl1 := 1;
-      xl2 := length(lin);
-    end;
-    //Explora
-    ExploreLine(lin, xl1, xl2, row);
-  end;
-end;
 procedure TSynEditor.SetCursors;
 var
   i: Integer;
@@ -344,15 +274,13 @@ procedure TSynEditor.edKeyDown(Sender: TObject; var Key: Word;
 var
   lexState: TFaLexerState;
 begin
-  if (Shift = [ssCtrl]) and (Key = VK_J) then begin
-    //Exploramos el texto usando el resaltador
-    //Utilizaremos el mismo resaltador
-    lexState := hl.State; //Guarda, por si acaso, el estado del elxer
-    ExploreForSyncro;     //Explora selección
-    hl.State := lexState; //recupera estado
-    SetCursors;           //Coloca los cursores
-//    ed.CommandProcessor(ecSelWordRight, '', nil);
-  end;
+//  if (Shift = [ssCtrl]) and (Key = VK_J) then begin
+//    //Exploramos el texto usando el resaltador
+//    //Utilizaremos el mismo resaltador
+
+  //    SetCursors;           //Coloca los cursores
+////    ed.CommandProcessor(ecSelWordRight, '', nil);
+//  end;
   if Key = VK_ESCAPE then begin
     //Cancela una posible edición de múltiples cursores
     ed.CommandProcessor(ecPluginMultiCaretClearAll, '', nil);
@@ -948,23 +876,23 @@ begin
   ed.SynEdit.Keystrokes[n].ShiftMask := [];
   ed.SynEdit.Keystrokes.EndUpdate;
 
+  //Crea un "plugin" de edición síncrona
+  fSynchro := TSynPluginSyncroEdit.Create(self);
+  fSynchro.Editor := ed.SynEdit;
+
   //Configura múltiples cursores
   fMultiCaret := TSynPluginMultiCaret.Create(self);
   with fMultiCaret do begin
     Editor := ed.SynEdit;
     with KeyStrokes do begin
-      with Add do begin
-        Command    := ecPluginMultiCaretSetCaret;
-        Key        := VK_INSERT;
-        Shift      := [ssShift, ssCtrl];
-        ShiftMask  := [ssShift,ssCtrl,ssAlt];
-      end;
-      with Add do begin
-        Command    := ecPluginMultiCaretUnsetCaret;
-        Key        := VK_DELETE;
-        Shift      := [ssShift, ssCtrl];
-        ShiftMask  := [ssShift,ssCtrl,ssAlt];
-      end;
+      Add.Command    := ecPluginMultiCaretSetCaret;
+      Add.Key        := VK_INSERT;
+      Add.Shift      := [ssShift, ssCtrl];
+      Add.ShiftMask  := [ssShift,ssCtrl,ssAlt];
+//      Add.Command    := ecPluginMultiCaretUnsetCaret;
+//      Add.Key        := VK_DELETE;
+//      Add.Shift      := [ssShift, ssCtrl];
+//      Add.ShiftMask  := [ssShift,ssCtrl,ssAlt];
     end;
   end;
 
@@ -1133,18 +1061,42 @@ begin
   ed := ActiveEditor;
   ed.SelectAll;
 end;
-
-procedure TfraEditView.evoLoadItems(opEve: TFaOpenEvent;
+procedure TfraEditView.OpenAfterDot1(opEve: TFaOpenEvent;
   curEnv: TFaCursorEnviron; out Cancel: boolean);
+var
+  ident: String;
+  tokPos: TSrcPos;
 begin
-  opEve.ClearAvails;
-debugln('evoLoadItems');
-  opEve.AddAvail('alfa');
-  opEve.AddAvail('unicorn');
-  opEve.AddAvail('usame');
-  opEve.AddAvail('beta');
-
-  Cancel := true;
+  if ActiveEditor=nil then exit;
+  ident := curEnv.tok_2^.txt;
+  //Calcula la posición del elemento
+  tokPos.row := ActiveEditor.SynEdit.CaretY;
+  tokPos.col := curEnv.tok_2^.posIni+1;
+  tokPos.fil := ActiveEditor.NomArc;
+  //Dispara evento
+  OnRequireFieldsComplet(ident, opEve, tokPos);
+  Cancel := false;
+end;
+procedure TfraEditView.OpenAfterDot2(opEve: TFaOpenEvent;
+  curEnv: TFaCursorEnviron; out Cancel: boolean);
+var
+  ident: String;
+  tokPos: TSrcPos;
+begin
+  if ActiveEditor=nil then exit;
+  ident := curEnv.tok_3^.txt;
+  //Calcula la posición del elemento
+  tokPos.row := ActiveEditor.SynEdit.CaretY;
+  tokPos.col := curEnv.tok_3^.posIni+1;
+  tokPos.fil := ActiveEditor.NomArc;
+  //Dispara evento
+  OnRequireFieldsComplet(ident, opEve, tokPos);
+//debugln('OpenAfterDot2:' + ident);
+//  opEve.AddAvail('alfa');  //NNO DESTRUYE ÍTEMS
+//  opEve.AddAvail('unicorn');
+//  opEve.AddAvail('usame');
+//  opEve.AddAvail('beta');
+  Cancel := false;
 end;
 procedure TfraEditView.AddListUnits(OpEve: TFaOpenEvent);
 {Agrega la lista de unidades disponibles, a la lista Items[] de un Evento de apertura.}
@@ -1185,21 +1137,50 @@ begin
       end;
       ed.LoadSyntaxFromFile(synFile);
       if Complete then begin
-        //Configura eventos de apertura.
+        //Configura eventos de apertura para nombres de unidades.
         opEve := ed.hl.FindOpenEvent('unit1');
         opEve.ClearItems;
         AddListUnits(opEve);  //Configura unidades disponibles
-      //    opEve.OnLoadItems := @evoLoadItems;
 
         opEve := ed.hl.FindOpenEvent('unit2');
         opEve.ClearItems;
         AddListUnits(opEve);  //Configura unidades disponibles
-      //    opEve.OnLoadItems := @evoLoadItems;
 
         opEve := ed.hl.FindOpenEvent('unit3');
         opEve.ClearItems;
         AddListUnits(opEve);  //Configura unidades disponibles
-      //    opEve.OnLoadItems := @evoLoadItems;
+
+        //Configura eventos de apertura para nombres de unidades.
+        opEve := ed.hl.FindOpenEvent('AfterDot1');
+        opEve.OnLoadItems := @OpenAfterDot1;
+        opEve := ed.hl.FindOpenEvent('AfterDot2');
+        opEve.OnLoadItems := @OpenAfterDot2;
+
+      end;
+    end;
+  '.ASM': begin
+      //Es Ensamblador
+      synFile := rutSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
+      if not FileExists(synFile) then begin
+        MsgErr(MSG_NOSYNFIL, [synFile]);
+        exit;
+      end;
+      ed.LoadSyntaxFromFile(synFile);
+      if Complete then begin
+        //Configura eventos de apertura.
+     end;
+   end;
+ '.C': begin
+     //Es C
+     synFile := rutSyntax + DirectorySeparator + 'PicPas_C.xml';
+     if not FileExists(synFile) then begin
+       MsgErr(MSG_NOSYNFIL, [synFile]);
+       exit;
+     end;
+     ed.LoadSyntaxFromFile(synFile);
+     if Complete then begin
+        //Configura eventos de apertura.
+
       end;
     end;
   end;
@@ -1347,10 +1328,12 @@ end;
 procedure TfraEditView.RecentClick(Sender: TObject);
 //Se selecciona un archivo de la lista de recientes
 var
-  cap: string;
+  cap, recFile: string;
 begin
   cap := TMenuItem(Sender).Caption;
-  LoadFile(MidStr(cap, 4,150));
+  recFile := MidStr(cap, 4,150);
+  if not FileExistsUTF8(recFile) then exit;
+  LoadFile(recFile);
 end;
 procedure TfraEditView.ActualMenusReciente(Sender: TObject);
 {Actualiza el menú de archivos recientes con la lista de los archivos abiertos

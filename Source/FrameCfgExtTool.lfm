@@ -111,8 +111,8 @@ object fraCfgExtTool: TfraCfgExtTool
     Left = 8
     Height = 15
     Top = 193
-    Width = 250
-    Caption = 'To reference the output *.hex file, use $(hexFile)'
+    Width = 229
+    Caption = 'To reference the source file, use $(mainFile)'
     ParentColor = False
     WordWrap = True
   end
@@ -172,7 +172,7 @@ object fraCfgExtTool: TfraCfgExtTool
   object butTest: TButton
     Left = 285
     Height = 25
-    Top = 235
+    Top = 266
     Width = 75
     Caption = '&Test'
     OnClick = butTestClick
@@ -189,7 +189,7 @@ object fraCfgExtTool: TfraCfgExtTool
   object chkWaitExit: TCheckBox
     Left = 8
     Height = 19
-    Top = 217
+    Top = 248
     Width = 84
     Caption = '&Wait On Exit'
     OnChange = chkWaitExitChange
@@ -198,10 +198,19 @@ object fraCfgExtTool: TfraCfgExtTool
   object chkShowTBar: TCheckBox
     Left = 8
     Height = 19
-    Top = 241
+    Top = 272
     Width = 106
     Caption = '&Show in Toolbar'
     OnChange = chkShowTBarChange
     TabOrder = 8
+  end
+  object Label6: TLabel
+    Left = 8
+    Height = 15
+    Top = 216
+    Width = 250
+    Caption = 'To reference the output *.hex file, use $(hexFile)'
+    ParentColor = False
+    WordWrap = True
   end
 end

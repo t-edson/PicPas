@@ -241,6 +241,9 @@ begin
         for i:=1 to maxBytes do begin
            AddWatch(v.adrByte0.AbsAdrr + i);
         end;
+      end else if v.typ.catType = tctPointer then begin
+        //Puntero corto
+         AddWatch(v.adrByte0.AbsAdrr);
       end else begin
 
       end;

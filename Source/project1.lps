@@ -4,12 +4,12 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Release"/>
-    <Units Count="39">
+    <Units Count="41">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <CursorPos X="72" Y="15"/>
+        <CursorPos Y="20"/>
         <UsageCount Value="219"/>
       </Unit0>
       <Unit1>
@@ -18,18 +18,20 @@
         <ComponentName Value="frmPrincipal"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <TopLine Value="471"/>
-        <CursorPos X="17" Y="805"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="313"/>
+        <CursorPos X="28" Y="328"/>
+        <FoldState Value=" TL003112 p5.F01 T5m701]88m32]73mJ0D41315 piZlN0f4]9ajd05]qjfC293]HYlW0LJ[Z4ja038]QSjf03]v T6n201F TMq5210F111A121]j0wU04]B T0n7e2D]+glIXDH]+GlYV4G[{Z5gB29 pialBf64 THvA2D28"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
-          <TopLine Value="672"/>
-          <CursorPos X="50" Y="804"/>
-          <FoldState Value=" TL0033 T5F0}J1 T7HI}G T8l32M]F3la0D415 pigkG0A[94djC0F4 pkPiH29E]IYlZ0471A T6mJ01C TMoZ210G1115121D p0t304]B T0mOe2B]sbkZ.4G pjClMV4H]IcmXp85 THtW2D1."/>
+          <TopLine Value="396"/>
+          <CursorPos X="5" Y="780"/>
+          <FoldState Value=" TL0034 T5F0}T1 T7HI}Q T8lD2M]F3m30D8 pidjI0n6]9Zk50P5 pkej02911A133A pjYpU038 T6mT0191 p0u1013 TMpO210F1115121F[P4b04]B T0mYe2D piglAXDH]*GlPV4H]Icn0YF7 THuK2D2O"/>
         </ExtraEditor1>
         <UsageCount Value="219"/>
         <Bookmarks Count="1">
-          <Item0 X="4" Y="790" ID="6"/>
+          <Item0 X="4" Y="951" ID="6"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -37,11 +39,10 @@
       <Unit2>
         <Filename Value="Parser.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="1"/>
-        <TopLine Value="1143"/>
-        <CursorPos X="38" Y="1184"/>
-        <FoldState Value=" TL001G T4503 T590?1 T7BE* T8C2V5 TMo76107183K1C17112 T3j6064 pj0jB09]9kKkY0T5[94j22E3]RClP0@]9iekR06[94cj70{a5]S3l10(011]LZmG0+2]vLm10l]$lTmc0x1]c5kN0}Z]mkOng04016 T0j9S29]uYjPS97[c4iYa4C[?4ieBCA]9XjGY6[a4diGD5F[R5gO5D]j8kEBLE]IajbB3C[\57hQB[94kEY351[c4ElWVB[?4bjch8[I49ifZGG]93kCT5G[:4iLq38[:5HV9E pifj4uDC]aDigRN7[R4iHV3[\4ck4H2[j4Xi2e1333 T6jW02U[J5hA0811]KHrX2/5]KL_04Z'"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="2200"/>
+        <CursorPos Y="2243"/>
+        <FoldState Value=" TL001Q pia$703F T4503 T5ig02 TMo86107183K1C171125 p0t0]L11X131K1Q]Hwc020J]UL1N[F4G21 T3j7064 pj0jB09]9kKkY0T5[94j22E3]RClP0@]9iekR06[94c]s{a5]S3l10(112]BZpb0{B3[%4lA0K1].DkZ0x1]I5kN0}Z512]zbpg045 T0jAS29]HYjPS97[c4iYa4C]IZieBCA]9XjGY6[a4diGD5F[R5gO5D]j8kEBLE]IajbB3C[\57hQB[94kEY3[s4ej7P752A[}L5]c[{26TB4[T4biMZGG]?3kCT5G[?4iLq38[?5HV9E pifj4uDC]aDigRN7[R4iHV381[{D5l7U2A T6jX02T]HXih2216 THrY2/5]IL_V4ZN"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -52,7 +53,7 @@
         </ExtraEditor1>
         <UsageCount Value="200"/>
         <Bookmarks Count="1">
-          <Item0 Y="335" ID="5"/>
+          <Item0 Y="336" ID="5"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit2>
@@ -70,36 +71,39 @@
       <Unit4>
         <Filename Value="GenCod.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <WindowIndex Value="1"/>
-        <CursorPos X="14" Y="187"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="51"/>
+        <CursorPos Y="265"/>
+        <FoldState Value=" TL00AJ piJiyU0B p0/5245 T4i703 T5iB0{a T7iDE{X T8iE427]mYj14F2 TMl5011U7D7H]ztP810M1U]BuJ01021G1D[D4d211A152]41c]H.N3[u4S]BvF]o1181E1N]FyN6].]j16[v4G21031 T3l205912 pkVp20H1]90kJ[96Ol00HB piajN03[a43kA0q]9j3kF0-[I45lR0V[s6X0C6]RRk304[a4JjQ0N4 plJm40{$2]!bmP0{u[u4UkF2N[94FnO0{V1]mMm70l1]cgk50u[{L6L0.1],Qn904[94AlG0{25]bZke0R[b4H]kK3[{V5S0j[94TkZ0)[!4bkV0{B3[k4l20{1[,40mf0G2 T0lSN2325[}u51R4[94YTFJ52E]AXjNF43[J4Ck6A[:4iTK6F pjKiSo36 pj3fi5J pkHjAo34]ZbLHn8[h5Ma6E]Y4kdEA[z6OD47]9XiTI6H]9YjLI8E[95WY29[R4k9G79[/4igI8H[}N5BI5C[s5bT3D pk1kCR2]\jUibR18]9LiY[IBD]jZj8C8]RiciFQ4B]R3jLI39]92jYI3[{I5jAIB7[};5Bd2[961I7A[957IBF[+4mPR5D]s4j5R65 pk4iPQ4G]RdjOI3[#n367p25]aEjgIB6[+56CGE[_U56b7E[#a5Tt[_05cj3U2[}#5iUU7H]s7iKT5K]9GiaU3I[R5TD28 pj6fU5I[_\5F'34 T6n301 p0xA02L pRix502C THq54{j1]oenc4{=4 pkAqI2k3]JbmI2{M[T4XoZ2z[943lB2E1]bHm52{:]clOqa2{O[T4ZmN2{Q[A4HnA2{12]A1lN2b]9maoF2}9]TiYnD2R5[c4pX2R3](2lP2/1 pigl02M3f"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
-          <EditorIndex Value="2"/>
-          <TopLine Value="528"/>
-          <CursorPos X="28" Y="552"/>
-          <FoldState Value=" T4i703 T5iB0{V T7iDE{S T8iE427 pj3jD451 TMl001]83ke0582]A0lNN2779 T6mf0]HHpB2MC"/>
+          <EditorIndex Value="-1"/>
+          <WindowIndex Value="-1"/>
+          <TopLine Value="683"/>
+          <CursorPos Y="903"/>
+          <FoldState Value=" TL00A4 T4i703 T5iB0{V T7iDE{S T8iE427 pj3jD451 TMl001]83ke05A T0lNN2316 T6mf01 p0z90]WHn72{52 pkKnD4{k111y"/>
         </ExtraEditor1>
         <UsageCount Value="202"/>
-        <Bookmarks Count="2">
-          <Item0 Y="3944" ID="2"/>
-          <Item1 X="14" Y="187" ID="4"/>
+        <Bookmarks Count="3">
+          <Item0 X="14" Y="192" ID="4"/>
+          <Item1 X="5" Y="900" ID="2"/>
+          <Item2 Y="964" ID="1"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit4>
       <Unit5>
         <Filename Value="GenCodPic.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="1363"/>
-        <CursorPos X="20" Y="1382"/>
-        <FoldState Value=" TL001d T4502 T5806011 T8iF286111]LMr7010E122]G]3N]W3mU0MB piXjQ0D8]9ajH0H6 pjCjc0S5]IfjW0A]IkNkg0911A THmW2J p0-62A]*0mX82J]hZpVf4K]9YlZYE6382B T6nD01eL"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="1858"/>
+        <CursorPos X="9" Y="1882"/>
         <ExtraEditorCount Value="2"/>
         <ExtraEditor1>
-          <EditorIndex Value="-1"/>
-          <WindowIndex Value="-1"/>
-          <TopLine Value="-1"/>
-          <CursorPos X="-1" Y="-1"/>
+          <IsVisibleTab Value="True"/>
+          <WindowIndex Value="1"/>
+          <TopLine Value="292"/>
+          <CursorPos X="12" Y="361"/>
+          <FoldState Value=" TL00161122 T450]65806011 T8iD2801414 TMqN0]J3mc0MA18 THme2J T0mf8242H T6nL01fg"/>
         </ExtraEditor1>
         <ExtraEditor2>
           <EditorIndex Value="-1"/>
@@ -109,28 +113,25 @@
           <FoldState Value=" TL001321 T4502 T5806 T8I2C414 TMr7010E122111]3N]f3mU0MB piXjQ0D8]9ajH0H6 pjCjc0S5]IfjW0A]IkNkg09A]IgjM0H[R4YjF03[j4Njd03Q]IZ]R3D]I6jO0e511 THmW2J p0-62A3 T0mX82J[h4pVf4K[*4lZYEH]9XlZW2A[{z5RW3D]9cmNT232A44 T6nD01eJ"/>
         </ExtraEditor2>
         <UsageCount Value="200"/>
-        <Bookmarks Count="1">
-          <Item0 Y="1891" ID="1"/>
-        </Bookmarks>
         <Loaded Value="True"/>
       </Unit5>
       <Unit6>
         <Filename Value="XpresParserPIC.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
-        <TopLine Value="1401"/>
-        <CursorPos X="24" Y="1420"/>
-        <FoldState Value=" TL00851B TMnW0K031614191E1 T4C03 T5G0]C8X0801515 T3mO0E8 pibk9084 pjEiD2L3]IekF07]kHmR2A T0nIJ2E]XDmJR3671311144 T6oC01Hh"/>
+        <EditorIndex Value="7"/>
+        <TopLine Value="900"/>
+        <CursorPos X="21" Y="1047"/>
+        <FoldState Value=" TL008G p0wU41L TMqN6104191615121I1713]VtV212216241J]Fsc01 T4C03 T5G[C47WBy T8X08417 T3mL0E8 pibjK]J pjEiD2L3]IfkG071311[M42s50D01A]OYkg099[94jE03E[y5D07D THmO2]Y0=62B4 T0nFJ2E]zDlUR38 piXj9j82221125]FZk0IK7161[)5m3Y491K T6nV01H{"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
-          <TopLine Value="38"/>
-          <CursorPos X="3" Y="38"/>
-          <FoldState Value=" TL00811Y piX?X421 TMiZ010P1316141918 p0tL81021I1D22152]A]L-V0]l4C03 T5G[C48jA0[X4 T3mO0E]wibk9084 pjEiD2L2132113]Ogv10902D]QOm10A11F1546 THmR2A p0=F293 T0nIJ2E]cDmJR]z2151116],dlXIK319[(4j6o41[B5YkOZ4[Z48]FT6oC0]A8E"/>
+          <TopLine Value="95"/>
+          <CursorPos X="3" Y="208"/>
+          <FoldState Value=" TL008S p0:002A TMnW0K03161419]65121I17]XvS32033216241J]HuS01 T4C03 T5G[C48X08015 pibja05212 T3mO0E8[J4k9084 pjEiD2L3]IfkG07]9l5lH0{q124[d4o50.A]9ZkT099]9YjE03E[{45D07D THmR2]Y0=g2B4 T0nIJ2]WjDmJR38 piXj9j8A[954fD5 pigi8O4B]9eiZeDA[{56R6[I4bl9T4J T6oC01H+"/>
         </ExtraEditor1>
         <UsageCount Value="200"/>
         <Bookmarks Count="1">
-          <Item0 X="10" Y="571" ID="3"/>
+          <Item0 X="10" Y="537" ID="3"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit6>
@@ -156,14 +157,14 @@
       <Unit9>
         <Filename Value="XpresElementsPIC.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
-        <TopLine Value="682"/>
-        <CursorPos Y="702"/>
+        <EditorIndex Value="9"/>
+        <TopLine Value="1481"/>
+        <CursorPos Y="1510"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
-          <TopLine Value="38"/>
-          <CursorPos Y="40"/>
+          <TopLine Value="393"/>
+          <CursorPos X="3" Y="401"/>
         </ExtraEditor1>
         <UsageCount Value="211"/>
         <Bookmarks Count="1">
@@ -178,8 +179,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="131"/>
-        <CursorPos X="10" Y="150"/>
+        <TopLine Value="148"/>
+        <CursorPos X="56" Y="353"/>
         <UsageCount Value="200"/>
       </Unit10>
       <Unit11>
@@ -196,10 +197,12 @@
         <ComponentName Value="fraEditView"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="1464"/>
-        <CursorPos Y="1477"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="4" Y="10"/>
+        <FoldState Value=" T7DC32 T8E4151213 TMnI0]91A1r p0vD03071l]Bsd01 T5lA05]83lO056 pibj8084 pjPiJ2J4]IckJ0B1]I2I2O5]HYkb0B[Q5jC067]QRjf0Q9]IdjX073211[$4emY0F[V40jN0D9 TLlW01A THla261 p0/R23 T6m401T]F+N02]V0mIcEL]:Zl3B4E]9XlZW1H]9bnBMCF111G[V4qCW3DO"/>
         <UsageCount Value="200"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit12>
       <Unit13>
         <Filename Value="FrameMessagesWin.pas"/>
@@ -220,8 +223,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="99"/>
-        <CursorPos X="40" Y="118"/>
+        <TopLine Value="112"/>
+        <CursorPos X="37" Y="148"/>
         <UsageCount Value="201"/>
       </Unit14>
       <Unit15>
@@ -262,26 +265,28 @@
       <Unit18>
         <Filename Value="CodeTools.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="81"/>
-        <CursorPos X="32" Y="99"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="148"/>
+        <CursorPos X="21" Y="165"/>
+        <FoldState Value=" T4403 T8E24 TMi941011314241 T3V0Y]F1]BLX0[746Z04[950fQ33]b5-"/>
         <UsageCount Value="201"/>
+        <Loaded Value="True"/>
       </Unit18>
       <Unit19>
         <Filename Value="ParserAsm.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="9"/>
-        <CursorPos X="27" Y="28"/>
+        <TopLine Value="219"/>
+        <CursorPos X="22" Y="237"/>
         <UsageCount Value="200"/>
       </Unit19>
       <Unit20>
         <Filename Value="ParserDirec.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="57"/>
-        <CursorPos X="32" Y="68"/>
-        <FoldState Value=" TL002F T4602 T590k TMx4410O1E1F1 T7EGD]R8F26413 T3kS08D piajH0B6 plbmC0(2 pk4lf0n5]RXk208]Ij2jD0Q[944iC2V[94Uk90F7]aYjE091131H T0kUT1I],Om5L7F[,4j9d3O[$5096H[m4iI/2C]9ZiOb4E[I4kJr3B[$53BEA[j4iTR[a7ZP2[\4fmNR24 T6mC01U THmT252 pk8oN491 pjUnU26 TK\R031J"/>
+        <TopLine Value="105"/>
+        <CursorPos X="5" Y="139"/>
+        <FoldState Value=" TL002F T4602 T590k TMx4410O1E1F1 T7EGD]R8F264111]I3kS08D piajH0B6 plbmC0(2 pk4lf0n5]RXk208]Ij2jD0Q[944iC2V[94Uk90F7]aYjE091131H T0kUT1I],Om5L7F[,4j9d3O[$5096H[m4iI/2C]9ZiOb4E[I4kJr3B[$53BEA[j4iTR[a7ZP2[\4fmNR24 T6mC01U THmT252 pk8oN491 pjUnU26 TK\R031~"/>
         <UsageCount Value="200"/>
       </Unit20>
       <Unit21>
@@ -291,8 +296,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="214"/>
-        <CursorPos X="5" Y="226"/>
+        <TopLine Value="67"/>
+        <CursorPos Y="111"/>
+        <FoldState Value=" T4303 TMif211 T7BG9 T8C27]L3iS0A11512[44 T6iT01014 T0lRY2,"/>
         <UsageCount Value="200"/>
       </Unit21>
       <Unit22>
@@ -302,8 +308,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="-1"/>
-        <CursorPos Y="6"/>
-        <FoldState Value=" T5j802 T3jE0B012161311 T6jF0]A5 T0jKI]O1]ED37 TMlP070C1413]eLqa22b"/>
+        <TopLine Value="398"/>
+        <CursorPos X="13" Y="431"/>
+        <FoldState Value=" T5j802 T3jE0B01219 T6jF01315 T0jKI]K1]ED37 TMlP070C14]H TLqa22t"/>
         <UsageCount Value="202"/>
       </Unit22>
       <Unit23>
@@ -345,8 +352,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="18"/>
-        <CursorPos Y="44"/>
+        <TopLine Value="177"/>
+        <CursorPos X="3" Y="184"/>
         <UsageCount Value="201"/>
       </Unit26>
       <Unit27>
@@ -356,8 +363,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="231"/>
-        <CursorPos X="15" Y="252"/>
+        <TopLine Value="188"/>
+        <CursorPos X="40" Y="214"/>
         <FoldState Value=" T5i304 T3i80D3 pj0jH05361 T6iA01]R0iGb3A piaiKX56q"/>
         <UsageCount Value="211"/>
       </Unit27>
@@ -370,7 +377,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="23"/>
         <CursorPos X="18" Y="49"/>
-        <UsageCount Value="139"/>
+        <UsageCount Value="200"/>
       </Unit28>
       <Unit29>
         <Filename Value="ProcAsm.pas"/>
@@ -378,13 +385,13 @@
         <TopLine Value="165"/>
         <CursorPos X="18" Y="669"/>
         <FoldState Value=" TL0054 T4903 T5D04]D7TE31 T3iE049 pj7jL0.4 pibkN0!3]I5kd0=1]IXiT2Z21]k6iL01D T0jBJ4A]Rdj4M4F]9ciTI38[j5dM49[94gB5A]/3j0PCH[H4jgb2G THse2W."/>
-        <UsageCount Value="61"/>
+        <UsageCount Value="40"/>
       </Unit29>
       <Unit30>
         <Filename Value="XpresTypesPIC.pas"/>
-        <EditorIndex Value="6"/>
-        <TopLine Value="14"/>
-        <CursorPos X="5" Y="33"/>
+        <EditorIndex Value="8"/>
+        <TopLine Value="42"/>
+        <CursorPos X="17" Y="61"/>
         <UsageCount Value="101"/>
         <Loaded Value="True"/>
       </Unit30>
@@ -393,7 +400,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="1131"/>
         <CursorPos X="23" Y="1150"/>
-        <UsageCount Value="18"/>
+        <UsageCount Value="7"/>
       </Unit31>
       <Unit32>
         <Filename Value="..\..\_Librerias\PicUtils 1.0\Pic16Utils.pas"/>
@@ -409,14 +416,14 @@
           <CursorPos X="3" Y="2097"/>
           <FoldState Value=" TL00Ea T4J01 T5L042 pjKjR0e01]IMjc010K121: p0#96]K7j3IG2 T8j426B pidk925[l5Ck6KB T3oA09A]!5]+G9]97jb0B6]ifjG057]9bj90A025 pmYo10{0F pqMsX083]mTk00T5]dcjU0B3[m7@933 T0oCP2K]JZmLp5A151E]Dapbj2J]xDj7D4[V4dm1L1G]9XiIO2H[I4iJa3F[I5Y74[s5iQ92D]sAjDt1[a4ZiLa3L[a4lKNZC[94j5l33141313 T6q402X THuE2H6 pm1pI6L2 pj9lY27]9oPuQ256P"/>
         </ExtraEditor1>
-        <UsageCount Value="71"/>
+        <UsageCount Value="50"/>
       </Unit32>
       <Unit33>
         <Filename Value="..\..\_Librerias\PicUtils 1.0\Pic16Devices.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="118"/>
         <CursorPos X="35" Y="140"/>
-        <UsageCount Value="28"/>
+        <UsageCount Value="7"/>
         <Bookmarks Count="1">
           <Item0 Y="247" ID="2"/>
         </Bookmarks>
@@ -424,169 +431,182 @@
       <Unit34>
         <Filename Value="..\..\_Librerias\PicUtils 1.1\Pic16Utils.pas"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="77"/>
-        <CursorPos X="14" Y="106"/>
-        <FoldState Value=" TL00EZ piXiq2024 T4J01 T5Q0n0111]BMjd010M121! p0ihT6103[Q57jSDJ2 T8j42701A[K4Ck7KG T3of08A pifjV0G9]9djQ0A7]9gjI03]Ij0jF0AF]IYjH0J1 plIle0{03 ppSrR0M5]bQkD0y[945kS0J4]9AjY0@11[$4emP053]KUg2t4 THp124A piYu52}D[Q5nc2~^ p0uL255 T0pAP2L]ZXoTB2L[i4nGB4B[94i7B4H]9ejKm4K[a4jcL1E]9bi7L1[R4aiLL1F[j5KW9F[j4iYN3D[}w5BV5D[s55t2C[_15Fj3L pjMlKU3C[R5dT39[s5ZT3K]R9m4b22 T6r202X_"/>
+        <TopLine Value="1195"/>
+        <CursorPos Y="1334"/>
+        <FoldState Value=" TL00EZ piXiq9024 T4J01 T5L042 pjLjS0c1 pkTlQ05 TMjd010M121! p0ihb610311]o7j3IH];8j427A piZkU2B2 TCk7KG T3of08[O4fjV0G9]9djQ0A7]9gjI03]Ij0jF0AE12 plboE0{0213[W4tb053]WIjT0T5]IcjU0G[R4bjE0@2[{T5K0kA pkTk32t4 THp1248 p0tV251 pl8iY6L21]I-7255 T0pAP2L]yXoTB[95YnGB4B[94i7B4H]9ejKm4E3H[c4kgAJE622F]DfkBO2E]9ciWN3D[}d5BV5D[e4j5t2C[_05Fj3L pjMlKU3C[R5cT39 pieiZT3K]RBm4b22 T6r202X="/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
-          <TopLine Value="1195"/>
-          <CursorPos Y="1334"/>
-          <FoldState Value=" TL00EZ piXiq9024 T4J01 T5L042 pjLjS0c1 pkTlQ05 TMjd010M121! p0ihb610311]o7j3IH];8j427A piZkU2B2 TCk7KG T3of08[O4fjV0G9]9djQ0A7]9gjI03]Ij0jF0AE12 plboE0{0213[W4tb053]WIjT0T5]IcjU0G[R4bjE0@2[{T5K0kA pkTk32t4 THp1248 p0tV251 pl8iY6L21]I-7255 T0pAP2L]yXoTB[95YnGB4B[94i7B4H]9ejKm4E3H[c4kgAJE622F]DfkBO2E]9ciWN3D[}d5BV5D[e4j5t2C[_05Fj3L pjMlKU3C[R5cT39 pieiZT3K]RBm4b22 T6r202X="/>
+          <TopLine Value="1971"/>
+          <CursorPos Y="2013"/>
+          <FoldState Value=" TL00EL T4J01 T5Q0n0111]BMjd010M12]C7jSDJ2 T8j42701A[W4Ck7KG T3of08A pifjV0G9]9djQ0A7]9gjI03]Ij0jF0AF]IYjH0J1 plIle0{03 THp124A[R4u52}D]I0pAP2L]IXoTB2L[R4nGB4B[94i7B4H]9ejKm4K[a4jcL1E]9bi7L1H T6r202X'"/>
         </ExtraEditor1>
-        <UsageCount Value="73"/>
+        <UsageCount Value="52"/>
       </Unit34>
       <Unit35>
-        <Filename Value="..\..\_Librerias\MisUtils 0.5\MisUtils.pas"/>
+        <Filename Value="..\..\_Librerias\PicUtils 1.1\Pic16Devices.pas"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="602"/>
-        <CursorPos X="18" Y="629"/>
-        <UsageCount Value="5"/>
+        <TopLine Value="240"/>
+        <CursorPos X="34" Y="306"/>
+        <FoldState Value=" T0kVGJ5S"/>
+        <UsageCount Value="10"/>
       </Unit35>
       <Unit36>
-        <Filename Value="..\..\_Librerias\Xpres-1.3.2\XpresBas.pas"/>
+        <Filename Value="..\language\tra_FormPrincipal.pas"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="394"/>
-        <CursorPos X="46" Y="457"/>
-        <FoldState Value=" TL00951311 TMmE0101221]44A1]811]361C1[W44F02 T7TC6]DCi7D3 T8iG25[n4]Q3lC03C piZjA038]9Yj50451419]Den405C T6ld014 T0m6J3J]PXo3S2B THvL23s"/>
-        <UsageCount Value="10"/>
+        <TopLine Value="44"/>
+        <CursorPos X="15" Y="47"/>
+        <UsageCount Value="27"/>
       </Unit36>
       <Unit37>
-        <Filename Value="..\..\_Librerias\ogEditGraf 1.6b\ogMotGraf2D.pas"/>
+        <Filename Value="c:\lazarus32\lcl\dialogs.pp"/>
+        <UnitName Value="Dialogs"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="62"/>
-        <CursorPos X="13" Y="70"/>
+        <TopLine Value="357"/>
+        <CursorPos X="25" Y="376"/>
         <UsageCount Value="2"/>
       </Unit37>
       <Unit38>
-        <Filename Value="..\..\_Librerias\PicUtils 1.1\Pic16Devices.pas"/>
+        <Filename Value="..\language\tra_FrameEditView.pas"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="172"/>
-        <CursorPos X="25" Y="278"/>
-        <FoldState Value=" T0kMGJ5p"/>
-        <UsageCount Value="18"/>
+        <UsageCount Value="7"/>
       </Unit38>
+      <Unit39>
+        <Filename Value="..\..\_Librerias\SynFacilUtils-1.21\SynFacilCompletion.pas"/>
+        <EditorIndex Value="2"/>
+        <CursorPos X="3" Y="63"/>
+        <FoldState Value=" TL00HJ TMoJ04141O111 T4iL03 T5mT0.]F7iVJC212 T8iW26717 TCjbM4 T3pD0N4 pjIj42B7 piajg037]IOiP262[95D2I5[94kI2Q3]9FiU2B63];6pF02T T0pNy5E]+bkBU5C]aNm9D64]IZPpFI[84lco2AC22H THxg4l316'"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+      </Unit39>
+      <Unit40>
+        <Filename Value="..\..\_Librerias\SynFacilUtils-1.21\SynFacilHighlighter.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="8"/>
+        <CursorPos X="9" Y="28"/>
+        <UsageCount Value="7"/>
+      </Unit40>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="270" TopLine="182"/>
+        <Filename Value="XpresParserPIC.pas"/>
+        <Caret Line="585" TopLine="270"/>
       </Position1>
       <Position2>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="252" Column="39" TopLine="182"/>
+        <Filename Value="XpresParserPIC.pas"/>
+        <Caret Line="586" TopLine="270"/>
       </Position2>
       <Position3>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="278" TopLine="216"/>
+        <Filename Value="XpresParserPIC.pas"/>
+        <Caret Line="592" TopLine="270"/>
       </Position3>
       <Position4>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="263" TopLine="216"/>
+        <Filename Value="XpresParserPIC.pas"/>
+        <Caret Line="594" TopLine="270"/>
       </Position4>
       <Position5>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="277" TopLine="216"/>
+        <Filename Value="XpresParserPIC.pas"/>
+        <Caret Line="595" TopLine="270"/>
       </Position5>
       <Position6>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="278" TopLine="216"/>
+        <Filename Value="XpresParserPIC.pas"/>
+        <Caret Line="597" TopLine="343"/>
       </Position6>
       <Position7>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="280" TopLine="216"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1895" TopLine="1875"/>
       </Position7>
       <Position8>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="264" Column="18" TopLine="216"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1867" TopLine="1848"/>
       </Position8>
       <Position9>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="422" Column="29" TopLine="283"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1868" TopLine="1848"/>
       </Position9>
       <Position10>
-        <Filename Value="GenCod.pas"/>
-        <Caret Column="2"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1869" TopLine="1848"/>
       </Position10>
       <Position11>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="349" Column="7" TopLine="284"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1870" TopLine="1848"/>
       </Position11>
       <Position12>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="277" TopLine="50"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1872" TopLine="1848"/>
       </Position12>
       <Position13>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="423" TopLine="283"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1874" TopLine="1848"/>
       </Position13>
       <Position14>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="572" TopLine="350"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1875" TopLine="1848"/>
       </Position14>
       <Position15>
-        <Filename Value="GenCod.pas"/>
-        <Caret Line="552" Column="28" TopLine="528"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1876" TopLine="1848"/>
       </Position15>
       <Position16>
-        <Filename Value="XpresElementsPIC.pas"/>
-        <Caret Line="702" Column="8" TopLine="682"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1877" TopLine="1848"/>
       </Position16>
       <Position17>
-        <Filename Value="XpresParserPIC.pas"/>
-        <Caret Line="1420" Column="16" TopLine="1401"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1878" TopLine="1848"/>
       </Position17>
       <Position18>
         <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1377" TopLine="1360"/>
+        <Caret Line="1879" TopLine="1851"/>
       </Position18>
       <Position19>
-        <Filename Value="XpresElementsPIC.pas"/>
-        <Caret Line="702" TopLine="682"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1881" TopLine="1851"/>
       </Position19>
       <Position20>
         <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1377" TopLine="1360"/>
+        <Caret Line="1892" TopLine="1874"/>
       </Position20>
       <Position21>
-        <Filename Value="XpresElementsPIC.pas"/>
-        <Caret Line="702" Column="17" TopLine="682"/>
+        <Filename Value="GenCodPic.pas"/>
+        <Caret Line="1896" TopLine="1873"/>
       </Position21>
       <Position22>
-        <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1377" TopLine="1360"/>
+        <Filename Value="XpresParserPIC.pas"/>
+        <Caret Line="599" TopLine="343"/>
       </Position22>
       <Position23>
-        <Filename Value="XpresElementsPIC.pas"/>
-        <Caret Line="702" TopLine="682"/>
+        <Filename Value="XpresParserPIC.pas"/>
+        <Caret Line="609" TopLine="353"/>
       </Position23>
       <Position24>
         <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1377" TopLine="1360"/>
+        <Caret Line="1882" Column="9" TopLine="1858"/>
       </Position24>
       <Position25>
-        <Filename Value="XpresElementsPIC.pas"/>
-        <Caret Line="702" TopLine="682"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1064" Column="37" TopLine="1001"/>
       </Position25>
       <Position26>
-        <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1377" TopLine="1360"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1155" Column="31" TopLine="1096"/>
       </Position26>
       <Position27>
-        <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1379" TopLine="1360"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="1077" Column="3" TopLine="1064"/>
       </Position27>
       <Position28>
-        <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1380" TopLine="1360"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="18" TopLine="5"/>
       </Position28>
       <Position29>
-        <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1388" TopLine="1363"/>
+        <Filename Value="FrameEditView.pas"/>
+        <Caret Line="10" Column="4"/>
       </Position29>
       <Position30>
-        <Filename Value="GenCodPic.pas"/>
-        <Caret Line="1389" TopLine="1363"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="290" Column="6" TopLine="270"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

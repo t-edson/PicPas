@@ -70,6 +70,7 @@ type
      tener que abrir nuevamente al archivo.}
     OnRequireFileString: procedure(FilePath: string; var strList: TStrings) of object;
     function hexFilePath: string;
+    function mainFilePath: string;
     procedure Compile(NombArc: string; Link: boolean = true);
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
     procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);  //uso de la memoria Flash
@@ -1141,9 +1142,10 @@ procedure TCompiler.CompileTypeDeclar(IsInterface: boolean; typName: string = ''
 Si se especifica typName, se obvia la extracción de la parte " nombreTipo = ", y se
 toma el nombre indicado.}
 var
-  etyp, systyp, itemTyp: TxpEleType;
+  etyp, systyp, itemTyp, reftyp: TxpEleType;
   srcpos: TSrcPos;
   nEle: integer;
+  opr: TxpOperator;
 begin
   ProcComments;
   if cIn.tokType <> tnIdentif then begin
@@ -1170,8 +1172,8 @@ begin
     cIn.Next;   //lo toma
     etyp := AddType(typName, srcpos);
     if HayError then exit;        //Sale para ver otros errores
-    {Crea la copia del tipo del sistama, que básicamente es el mismo tipo, solo que
-    con otro nombre y qeu además, ahora, está en el árbol de sintaxis, por lo tanto
+    {Crea la copia del tipo del sistema, que básicamente es el mismo tipo, solo que
+    con otro nombre y que además, ahora, está en el árbol de sintaxis, por lo tanto
     tiene otras reglas de alcance.}
     etyp.copyOf := systyp;  //Indica que es una copia
     etyp.catType := systyp.catType; //tctAtomic. No debería ser necesario
@@ -1192,14 +1194,40 @@ begin
     etyp.CreateField('high', @array_high);
     etyp.CreateField('low', @array_low);
     //Campos que dependen del tipo
-    if (itemTyp.OnGetItem=nil) or (itemTyp.OnSetItem=nil) then begin
+    if itemTyp.OnGetItem=nil then begin
       GenError('Cannot declare array of type: %s', [itemTyp.name]);
     end;
-    etyp.CreateField('getitem', itemTyp.OnGetItem);
-    etyp.CreateField('setitem', itemTyp.OnSetItem);
+    etyp.CreateField('item', itemTyp.OnGetItem);
     if itemTyp.OnClearItems <> nil then begin
       etyp.CreateField('clear'  , itemTyp.OnClearItems);
     end;
+  end else if cIn.tok = '^' then begin
+    //Es un puntero
+    cIn.Next;
+    //Por ahora solo permitiremos identificadores de tipos
+    reftyp := FindSysEleType(cIn.tok); //Busca elemento
+    if reftyp = nil then begin
+      //No es un tipo del sistema, pero puede ser un tipo prdefinido
+      reftyp := TreeElems.FindType(cIn.tok); //Busca elemento
+      if reftyp = nil then begin
+        GenError('Expected a type identifier.', [typName]);
+        exit;
+      end;
+    end;
+    //Encontró un tipo
+    cIn.Next;   //lo toma
+    etyp := AddType(typName, srcpos);  //Crae el elemento tipo
+    if HayError then exit;        //Sale para ver otros errores
+    etyp.catType := tctPointer;  //Tipo puntero
+    etyp.refType := reftyp;      //EL tipo a donde apunta
+    etyp.InInterface := IsInterface; //No debería ser necesario
+    //Fija operaciones para la aritmética del puntero
+    if (reftyp = typByte) or (reftyp.copyOf = typByte) then begin
+      DefPointerToByte(etyp);
+    end;
+    //Definir para otros tipos
+
+
   end else begin
     GenError(ER_IDE_TYP_EXP);
     exit;
@@ -2115,6 +2143,10 @@ end;
 function TCompiler.hexFilePath: string;
 begin
   Result := ExtractFileDir(mainFile) + DirectorySeparator + hexFile;
+end;
+function TCompiler.mainFilePath: string;
+begin
+  Result := mainFile;
 end;
 function TCompiler.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}

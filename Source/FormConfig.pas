@@ -104,6 +104,7 @@ type
     procedure TreeView1KeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
   private
+    FViewPanAssem: boolean;
     FViewPanMsg: boolean;
     FViewStatusbar: Boolean;
     FViewSynTree: boolean;
@@ -111,6 +112,7 @@ type
     ItemIni   : TTreeNode;
     procedure cfgFilePropertiesChanges;
     procedure FillTree;
+    procedure SetViewPanAssem(AValue: boolean);
     procedure SetViewPanMsg(AValue: boolean);
     procedure SetViewStatusbar(AValue: Boolean);
     procedure SetViewSynTree(AValue: boolean);
@@ -127,6 +129,7 @@ type
     property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
     property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
     property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
+    property ViewPanAssem: boolean read FViewPanAssem write SetViewPanAssem;
     property ViewSynTree: boolean read FViewSynTree write SetViewSynTree;
   public  //Configuraciones de entorno
     StateToolbar: TStyleToolbar;
@@ -353,8 +356,9 @@ begin
   s:=cfgFile.Asoc_Bol('VerPanMensaj', @FViewPanMsg  , true);
   s:=cfgFile.Asoc_Bol('VerStatusbar', @ViewStatusbar, true);
   s:=cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);
-  s:=cfgFile.Asoc_Bol('ViewSynTree',  @FViewSynTree, true);
-  s:=cfgFile.Asoc_Int('SynTreeWidth', @SynTreeWidth, 130);
+  s:=cfgFile.Asoc_Bol('ViewSynTree',  @FViewSynTree , true);
+  s:=cfgFile.Asoc_Int('SynTreeWidth', @SynTreeWidth , 130);
+  s:=cfgFile.Asoc_Bol('ViewPanAssem', @FViewPanAssem, true);
   s:=cfgFile.Asoc_Enum('viewMode',  @viewMode   , SizeOf(TTreeViewMode), 0);
   //Configuraciones del Panel de mensajes
   s:=cfgFile.Asoc_TCol('MessPanBack',@MessPanBack, colMessPanBack, clWindow);
@@ -461,6 +465,12 @@ begin
   if FViewSynTree = AValue then Exit;
   FViewSynTree := AValue;
   cfgFilePropertiesChanges;
+end;
+procedure TConfig.SetViewPanAssem(AValue: boolean);
+begin
+  if FViewPanAssem = AValue then Exit;
+  FViewPanAssem := AValue;
+  cfgFilePropertiesChanges
 end;
 procedure TConfig.SetViewToolbar(AValue: boolean);
 begin

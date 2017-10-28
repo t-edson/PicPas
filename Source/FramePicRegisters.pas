@@ -180,27 +180,27 @@ begin
 
 end;
 procedure TfraPicRegisters.Frame1Paint(Sender: TObject);
-var
-  bordlat, separ: Integer;
+//var
+//  bordlat, separ: Integer;
 begin
   if pic = nil then exit;
   ////////////////////////
   //Espaciado entre bancos
-  if width < 200 then begin
-    //Ancho reducido
-    separ := width div 24;  //espacio lateral
-    bordlat := width div 24;
-  end else begin
-    //Ancho grande
-    if (pic.NumPages=1) then begin
-      //Es una sola página. Puede quedar mal proporcionada
-      separ := width div 4;  //espacio lateral
-      bordlat := width div 4;
-    end else begin
-      separ := width div 18;  //espacio lateral
-      bordlat := width div 18;
-    end;
-  end;
+//  if width < 200 then begin
+//    //Ancho reducido
+//    separ := width div 24;  //espacio lateral
+//    bordlat := width div 24;
+//  end else begin
+//    //Ancho grande
+//    if (pic.NumPages=1) then begin
+//      //Es una sola página. Puede quedar mal proporcionada
+//      separ := width div 4;  //espacio lateral
+//      bordlat := width div 4;
+//    end else begin
+//      separ := width div 18;  //espacio lateral
+//      bordlat := width div 18;
+//    end;
+//  end;
 //  bordSup := (height-label1.Height) div 15;  //espacio superior
 //  ancPag := (width - bordlat * 2 - separ * (pic.NumPages-1)) div pic.NumPages;
 //  altur := (height-label1.Height) - 2* bordSup;

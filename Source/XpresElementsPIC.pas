@@ -137,17 +137,23 @@ type
 
   //Categorías de tipos
   TxpCatType = (
-    tctAtomic,  //tipo básico
-    tctArray,   //arreglo de otro tipo
-    tctRecord   //registro de varios campos
+    tctAtomic,  //Tipo básico
+    tctArray,   //Arreglo de otro tipo
+    tctPointer, //Puntero de otro tipo (Puntero corto, hasta la dirección $FF)
+    tctRecord   //Registro de varios campos
   );
 
   TxpEleType= class;
 
+  TxpOperation = class;
+  {A las ROP binarias, se les envía la referencia a la operación, para que puedan
+  acceder a información adicionald e la ROP. También se usa el parámetro "Opt", para
+  que se pueda identificar mejor a las ROB, y no confundirlas con las ROU}
+  TProcBinaryROB = procedure(Opt: TxpOperation; SetRes: boolean) of object;
   //Tipo operación
   TxpOperation = class
-    OperatType : TxpEleType;   //tipo de Operando sobre el cual se aplica la operación.
-    proc       : TProcExecOperat;  //Procesamiento de la operación
+    OperatType : TxpEleType;      //Tipo del Operando, sobre el cual se aplica la operación.
+    proc       : TProcBinaryROB;  //Procesamiento de la operación
   end;
 
   TxpOperations = specialize TFPGObjectList<TxpOperation>; //lista de operaciones
@@ -167,7 +173,7 @@ type
                                     operador unario PRE. }
     OperationPost: TProcExecOperat; {Operación asociada al Operador. Usado cuando es un
                                     operador unario POST }
-    function CreateOperation(OperandType: TxpEleType; proc: TProcExecOperat
+    function CreateOperation(OperandType: TxpEleType; proc: TProcBinaryROB
       ): TxpOperation;  //Crea operación
     function FindOperation(typ0: TxpEleType): TxpOperation;  //Busca una operación para este operador
     constructor Create;
@@ -187,23 +193,21 @@ type
     OperationLoad: TProcExecOperat; {Evento. Es llamado cuando se pide evaluar una
                                  expresión de un solo operando de este tipo. Es un caso
                                  especial que debe ser tratado por la implementación}
-    OnGetItem    : TTypFieldProc;  {Es llamado cuando se pide leer un ítem de un
-                                   arreglo. Debe devolver una expresión con el resultado
-                                   dal ítem leído.}
-    OnSetItem    : TTypFieldProc;  {Es llamado cuando se pide escribir un ítem a un
-                                   arreglo.}
+    OnGetItem    : TTypFieldProc;  {Es llamado cuando se pide acceder a un ítem de un
+                                   arreglo (lectura o escritura). Debe devolver una
+                                   expresión con el resultado dal ítem leído.}
     OnClearItems : TTypFieldProc;  {Usado para la rutina que limpia los ítems de
                                    un arreglo.}
     {Estos eventos NO se generan automáticamente en TCompilerBase, sino que es la
     implementación del tipo, la que deberá llamarlos. Son como una ayuda para facilitar
     la implementación. OnPush y OnPop, son útiles para cuando la implementación va a
     manejar pila.}
-    OnSaveToStk: procedure of object;  //Salva datos en reg. de Pila
-    OnLoadToReg: TProcLoadOperand; {Se usa cuando se solicita cargar un operando
+    OnSaveToStk : procedure of object;  //Salva datos en reg. de Pila
+    OnLoadToReg : TProcLoadOperand; {Se usa cuando se solicita cargar un operando
                                  (de este tipo) en la pila. }
-    OnDefineRegister : procedure of object; {Se usa cuando se solicita descargar un operando
+    OnDefRegister: procedure of object; {Se usa cuando se solicita descargar un operando
                                  (de este tipo) de la pila. }
-    OnGlobalDef: TProcDefineVar; {Es llamado cada vez que se encuentra la
+    OnGlobalDef : TProcDefineVar; {Es llamado cada vez que se encuentra la
                                   declaración de una variable (de este tipo) en el ámbito global.}
   public
     copyOf  : TxpEleType;  //Indica que es una copia de otro tipo
@@ -218,8 +222,7 @@ type
   public  //Campos de operadores
     Operators: TxpOperators;      //Operadores soportados
     operAsign: TxpOperator;       //Se guarda una referencia al operador de aignación
-    function CreateBinaryOperator(txt: string; prec: byte; OpName: string
-      ): TxpOperator;
+    function CreateBinaryOperator(txt: string; prec: byte; OpName: string): TxpOperator;
     function CreateUnaryPreOperator(txt: string; prec: byte; OpName: string;
       proc: TProcExecOperat): TxpOperator;
     function CreateUnaryPostOperator(txt: string; prec: byte; OpName: string;
@@ -390,11 +393,11 @@ type
   end;
 
   { TXpTreeElements }
-  {Árbol de elementos. Se usa para el árbol de sinatxis y de directivas. Aquí es
+  {Árbol de elementos. Se usa para el árbol de sintaxis y de directivas. Aquí es
   donde se guardará la referencia a todas los elementos (variables, constantes, ..)
   creados.
-  Este árbol se usa también como un equivalente al NameSpace, porque se usa para
-  buscar los nombres de los elementos, en una estructura en arbol.}
+  Este árbol se usa también como para resolver nombres de elementos, en una estructura
+  en arbol.}
   TXpTreeElements = class
   private
     //Variables de estado para la búsqueda con FindFirst() - FindNext()
@@ -425,6 +428,7 @@ type
     function FindFirst(const name: string): TxpElement;
     function FindNextFunc: TxpEleFun;
     function FindVar(varName: string): TxpEleVar;
+    function FindType(typName: string): TxpEleType;
     function GetElementBodyAt(posXY: TPoint): TxpEleBody;
     function GetElementCalledAt(const srcPos: TSrcPos): TxpElement;
     function GetELementDeclaredAt(const srcPos: TSrcPos): TxpElement;
@@ -734,6 +738,9 @@ begin
     end else begin
       Result := ADRR_ERROR;
     end;
+  end else if typ.catType = tctPointer then begin
+    //Los punteros cortos son como bytes
+    Result := adrByte0.AbsAdrr;
   end else begin
     //No soportado
     Result := ADRR_ERROR;
@@ -864,7 +871,7 @@ end;
 
 { TxpOperator }
 function TxpOperator.CreateOperation(OperandType: TxpEleType;
-  proc: TProcExecOperat): TxpOperation;
+  proc: TProcBinaryROB): TxpOperation;
 var
   r: TxpOperation;
 begin
@@ -1063,7 +1070,7 @@ end;
 procedure TxpEleType.DefineRegister;
 {Define los registros que va a usar el tipo de dato.}
 begin
-  if OnDefineRegister<>nil then OnDefineRegister;
+  if OnDefRegister<>nil then OnDefRegister;
 end;
 constructor TxpEleType.Create;
 begin
@@ -1421,6 +1428,22 @@ begin
   end;
   exit(nil);
 end;
+function TXpTreeElements.FindType(typName: string): TxpEleType;
+{Busca un tipo con el nombre indicado en el espacio de nombres actual}
+var
+  ele : TxpElement;
+  uName: String;
+begin
+  uName := upcase(typName);
+  for ele in curNode.elements do begin
+    if (ele.idClass = eltType) and (upCase(ele.name) = uName) then begin
+      Result := TxpEleType(ele);
+      exit;
+    end;
+  end;
+  exit(nil);
+end;
+
 function TXpTreeElements.GetElementBodyAt(posXY: TPoint): TxpEleBody;
 {Busca el elemento del arbol, dentro del nodo principal, y sus nodos hijos, en que
 cuerpo (nodo Body) se encuentra la coordenada del cursor "posXY".

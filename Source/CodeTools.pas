@@ -5,7 +5,7 @@ interface
 uses
   Classes, SysUtils, LCLType, SynEdit, SynEditHighlighter, MisUtils,
   SynFacilCompletion, SynFacilHighlighter, XpresBas, XpresElementsPIC,
-  FrameEditView, FrameSyntaxTree, Parser;
+  FrameEditView, FrameSyntaxTree, Parser, XpresParserPIC;
 
 type
 
@@ -22,6 +22,7 @@ type
       lex: TSynFacilComplet; out curX: integer);
     procedure GoToDeclaration;
     procedure KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure FieldsComplet(ident: string; opEve: TFaOpenEvent; tokPos: TSrcPos);
     constructor Create(fraEdit0: TfraEditView; cxp0: TCompiler;
       fraSynTree0: TfraSyntaxTree);
   end;
@@ -139,6 +140,51 @@ begin
       ed.SynEdit.SelectWord;
       ed.Copy;
     end;
+  end;
+end;
+//Opciones para completado de código
+procedure TCodeTool.FieldsComplet(ident: string; opEve: TFaOpenEvent;
+  tokPos: TSrcPos);
+{LLena un objeto opEve, con los campos del identificador "ident", de acuerdo a su tipo.}
+{Se solicita lista de campos de un identificador, para el completado de código en el
+editor.}
+var
+  ele: TxpElement;
+  xVar: TxpEleVar;
+begin
+  opEve.ClearItems;  //limpia primero
+  //Asegurarse que "synTree" está actualizado.
+  cxp.Compile(fraEdit.ActiveEditor.NomArc, false);  //Solo primera pasada
+  if cxp.HayError then begin
+    //Basta que haya compilado hasta donde se encuentra el identificador, para que funciones.
+//    MsgErr('Compilation error.');  //tal vez debería dar más información sobre el error
+//    exit;
+  end;
+  ele := cxp.TreeElems.GetElementCalledAt(tokPos);
+  if ele = nil then begin
+    //No identifica a este elemento
+    exit;
+  end;
+  if ele.idClass = eltVar then begin
+    //Es una variable, vemos el tipo
+    xVar := TxpEleVar(ele);
+    if xVar.typ = typByte then begin
+      opEve.AddItem('bit0', 11);
+      opEve.AddItem('bit1', 11);
+      opEve.AddItem('bit2', 11);
+      opEve.AddItem('bit3', 11);
+      opEve.AddItem('bit4', 11);
+      opEve.AddItem('bit5', 11);
+      opEve.AddItem('bit6', 11);
+      opEve.AddItem('bit7', 11);
+    end;
+    if xVar.typ = typWord then begin
+      opEve.AddItem('high', 11);
+      opEve.AddItem('low' , 11);
+    end;
+  end else begin
+    //No implementado en otro elemento
+    exit;
   end;
 end;
 constructor TCodeTool.Create(fraEdit0: TfraEditView; cxp0 : TCompiler;

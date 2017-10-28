@@ -7,12 +7,12 @@ unit FormPrincipal;
 {$define }
 interface
 uses
-  Classes, SysUtils, SynEdit, Forms, Controls, Dialogs, Menus, ComCtrls,
-  ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, SynFacilHighlighter,
-  SynFacilUtils, MisUtils, XpresBas, Pic16Utils, Parser, FormPICExplorer,
-  Globales, FrameSyntaxTree, FormConfig, PicPasProject, FrameEditView,
-  FrameMessagesWin, XpresElementsPIC, CodeTools, ParserAsm, ParserDirec,
-  FrameCfgExtTool, FormDebugger, FormRAMExplorer;
+  Classes, SysUtils, SynEdit, SynEditTypes, Forms, Controls, Dialogs, Menus,
+  ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc,
+  SynFacilHighlighter, SynFacilUtils, SynFacilCompletion, MisUtils, XpresBas,
+  Pic16Utils, Parser, FormPICExplorer, Globales, FrameSyntaxTree, FormConfig,
+  PicPasProject, FrameEditView, FrameMessagesWin, XpresElementsPIC, CodeTools,
+  ParserAsm, ParserDirec, FrameCfgExtTool, FormDebugger, FormRAMExplorer;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -21,9 +21,9 @@ type
     acArcSave: TAction;
     acArcNewFile: TAction;
     acArcQuit: TAction;
-    acBusFind: TAction;
-    acBusFindNxt: TAction;
-    acBusReplac: TAction;
+    acSearFind: TAction;
+    acSearFindNxt: TAction;
+    acSearReplac: TAction;
     acEdCopy: TEditCopy;
     acEdCut: TEditCut;
     acEdPaste: TEditPaste;
@@ -33,7 +33,9 @@ type
     acArcNewProj: TAction;
     acArcCloseProj: TAction;
     acArcCloseFile: TAction;
-    acViewAsmDbg: TAction;
+    acSearFindPrv: TAction;
+    acToolASMDebug: TAction;
+    acViewAsmPan: TAction;
     acToolRamExp: TAction;
     acToolExt4: TAction;
     acToolExt5: TAction;
@@ -52,6 +54,7 @@ type
     acViewStatbar: TAction;
     acViewSynTree: TAction;
     edAsm: TSynEdit;
+    FindDialog1: TFindDialog;
     ImgActions32: TImageList;
     ImgActions16: TImageList;
     MainMenu1: TMainMenu;
@@ -90,6 +93,9 @@ type
     MenuItem42: TMenuItem;
     MenuItem43: TMenuItem;
     MenuItem44: TMenuItem;
+    MenuItem45: TMenuItem;
+    MenuItem46: TMenuItem;
+    MenuItem47: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -109,6 +115,7 @@ type
     mnRecents: TMenuItem;
     panMessages: TPanel;
     PopupEdit: TPopupMenu;
+    ReplaceDialog1: TReplaceDialog;
     splSynTree: TSplitter;
     Splitter2: TSplitter;
     splEdPas: TSplitter;
@@ -128,6 +135,7 @@ type
     ToolButton19: TToolButton;
     ToolButton2: TToolButton;
     ToolButton20: TToolButton;
+    ToolButton21: TToolButton;
     ToolButton3: TToolButton;
     ToolButton4: TToolButton;
     ToolButton5: TToolButton;
@@ -143,6 +151,10 @@ type
     procedure acArcNewFileExecute(Sender: TObject);
     procedure acArcNewProjExecute(Sender: TObject);
     procedure acArcQuitExecute(Sender: TObject);
+    procedure acSearFindExecute(Sender: TObject);
+    procedure acSearFindNxtExecute(Sender: TObject);
+    procedure acSearFindPrvExecute(Sender: TObject);
+    procedure acSearReplacExecute(Sender: TObject);
     procedure acEdiRedoExecute(Sender: TObject);
     procedure acEdiSelecAllExecute(Sender: TObject);
     procedure acEdiUndoExecute(Sender: TObject);
@@ -150,6 +162,7 @@ type
     procedure acEdSelecAllExecute(Sender: TObject);
     procedure acEdUndoExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
+    procedure acToolASMDebugExecute(Sender: TObject);
     procedure acToolInstCountExecute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
     procedure acToolExt1Execute(Sender: TObject);
@@ -160,11 +173,12 @@ type
     procedure acToolFindDecExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
     procedure acToolRamExpExecute(Sender: TObject);
-    procedure acViewAsmDbgExecute(Sender: TObject);
+    procedure acViewAsmPanExecute(Sender: TObject);
     procedure acViewSynTreeExecute(Sender: TObject);
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
     procedure acViewMsgPanExecute(Sender: TObject);
+    procedure FindDialog1Find(Sender: TObject);
     procedure fraEdit_ChangeEditorState(ed: TSynEditor);
     procedure DoSelectSample(Sender: TObject);
     procedure editChangeFileInform;
@@ -175,6 +189,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure ReplaceDialog1Replace(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
   private
     tic         : integer;  //Contador para temporización
@@ -188,6 +203,8 @@ type
     procedure ConfigExtTool_RequirePar(var comLine: string);
     procedure cxp_AfterCompile;
     procedure cxp_RequireFileString(FilePath: string; var strList: TStrings);
+    procedure fraEdit_RequireFieldsComplet(ident: string;
+      opEve: TFaOpenEvent; tokPos: TSrcPos);
     procedure fraMessagesStatisDBlClick;
     procedure fraSynTreeSelecFileExplorer;
     procedure fraEdit_RequireSynEditConfig(ed: TsynEdit);
@@ -205,7 +222,13 @@ type
 
 var
   frmPrincipal: TfrmPrincipal;
-
+var
+  MSG_MODIF   : string;
+  MSG_SAVED   : string;
+  MSG_NOFILES : string;
+  MSG_NOFOUND_: string;
+  MSG_REPTHIS : string;
+  MSG_N_REPLAC: string;
 implementation
 {$R *.lfm}
 { TfrmPrincipal }
@@ -259,6 +282,13 @@ begin
     strList := ed.SynEdit.Lines;
   end;
 end;
+procedure TfrmPrincipal.fraEdit_RequireFieldsComplet(ident: string;
+  opEve: TFaOpenEvent; tokPos: TSrcPos);
+{Este evento se puede enlazar directamente a @CT.FieldsComplet, pero así es más seguro
+porque CT, puede crearse después}
+begin
+  ct.FieldsComplet(ident, opEve, tokPos);
+end;
 procedure TfrmPrincipal.fraMessagesStatisDBlClick;
 //Doble clcik en la sección de estadísticas
 begin
@@ -276,6 +306,9 @@ procedure TfrmPrincipal.ConfigExtTool_RequirePar(var comLine: string);
 {Se pide reemplazar parámetros en línea de comandos de Herramienta externa.}
 begin
   comLine := StringReplace(comLine, '$(hexFile)', cxp.hexFilePath, [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(mainFile)', cxp.mainFilePath, [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(mainPath)', ExtractFileDir(cxp.mainFilePath), [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(picModel)', cxp.PicName, [rfReplaceAll, rfIgnoreCase]);
 end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 var
@@ -295,11 +328,12 @@ begin
   fraEditView1.OnChangeEditorState := @fraEdit_ChangeEditorState;
   fraEditView1.OnSelectEditor := @fraEdit_SelectEditor;
   fraEditView1.OnRequireSynEditConfig := @fraEdit_RequireSynEditConfig;
+  fraEditView1.OnRequireFieldsComplet := @fraEdit_RequireFieldsComplet;
   //COnfigura Árbol de sintaxis
   fraSynTree.OnSelectElemen := @fraSynTreeSelectElemen;
   fraSynTree.OnOpenFile := @fraSynTreeOpenFile;
   fraSynTree.OnSelecFileExplorer := @fraSynTreeSelecFileExplorer;
-  //carga un resaltador a la ventana de ensamblador
+  //Carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
   synFile := rutSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
@@ -308,12 +342,13 @@ begin
   end;
   CT := TCodeTool.Create(fraEditView1, cxp, fraSynTree);
   cxp.OnRequireFileString := @cxp_RequireFileString;
-  cxp.OnAfterCompile := @cxp_AfterCompile;
+  cxp.OnAfterCompile      := @cxp_AfterCompile;
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
   Hay: Boolean;
   SR: TSearchRec;
+  srcFile: String;
 begin
   fraSynTree.Align := alLeft;
   fraSynTree.Visible := true;
@@ -328,9 +363,27 @@ begin
   Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
   Config.fraCfgExtTool.OnReplaceParams := @ConfigExtTool_RequirePar;
+  //Verifica si se llamó por línea de comando
+  if Paramcount>0 then begin
+    //Hay línea de comando
+    srcFile := ParamStr(1);  //Lee archivo fuente
+    {Es facil compilar por línea de comando en una aplicación para windows. Lo difícil
+    es mostrar mensajes en la consola, proque no hay un terminal asociado. Usar writeln()
+    generaría error y debugln(), solo funciona cuando se compila como aplicación de
+    consola. Quizá lo mejor sería crear otro modo de compilación que sesa de consola,
+    para que funcione bien la compilación por línea de comando.'}
+    cxp.Compile(srcFile, true);
+    if cxp.HayError then begin
+      MsgBox('Compilation with errors.')
+    end else begin
+      MsgBox('Compilation successful.');
+    end;
+    self.Close;
+  end;
+  //Termina configuración
   fraEditView1.InitMenuRecents(mnRecents, Config.fraCfgSynEdit.ArcRecientes);  //inicia el menú "Recientes"
   ChangeAppearance;   //primera actualización
-  //carga lista de ejemplos
+  //Carga lista de ejemplos
   Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin
      //encontró archivo
@@ -340,7 +393,6 @@ begin
   //Inicia encabezado
   //Carga último archivo
   if Config.LoadLast then fraEditView1.LoadLastFileEdited;
-//  if FileExists('SinNombre.pas') then fraEditView1.LoadFile('SinNombre.pas');
 end;
 procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
 //Se ha seleccionado un archivo de ejemplo.
@@ -391,9 +443,9 @@ begin
       ed := fraEditView1.ActiveEditor;
       //Actualiza Barra de estado
       if ed.Modified then
-        StatusBar1.Panels[0].Text := '(*)Modified'
+        StatusBar1.Panels[0].Text := MSG_MODIF
       else
-        StatusBar1.Panels[0].Text := 'Saved';
+        StatusBar1.Panels[0].Text := MSG_SAVED;
       //Actualiza cursor
       StatusBar1.Panels[1].Text := Format('%d,%d', [ed.SynEdit.CaretX, ed.SynEdit.CaretY]);
     end;
@@ -534,20 +586,29 @@ begin
   end else begin
     SetStateActionsProject(true);
   end;
-
+  //Visibilidad del explorador de código
   fraSynTree.Visible := Config.ViewSynTree;
-  fraSynTree.Width := Config.SynTreeWidth;
+  fraSynTree.Width   := Config.SynTreeWidth;
   splSynTree.Visible := Config.ViewSynTree;
+  acViewSynTree.Checked := Config.ViewSynTree;
 
+  //Visibilidad de La Barra de Estado
   StatusBar1.Visible := Config.ViewStatusbar;
-  acViewStatbar.Checked := Config.ViewStatusbar;
+  acViewStatbar.Checked:= Config.ViewStatusbar;
 
-  ToolBar1.Visible := Config.ViewToolbar;
+  //Visibilidad de la Barra de Herramientas
+  ToolBar1.Visible   := Config.ViewToolbar;
   acViewToolbar.Checked:= Config.ViewToolbar;
 
+  //Visibilidad del Panel de Mensajes
   panMessages.Visible:= Config.ViewPanMsg;
-  Splitter2.Visible := Config.ViewPanMsg;
+  Splitter2.Visible  := Config.ViewPanMsg;
   acViewMsgPan.Checked:= Config.ViewPanMsg;
+
+  //Visibilidad del Visor de Ensamblador
+  edAsm.Visible      := Config.ViewPanAssem;
+  splEdPas.Visible   := Config.ViewPanAssem;
+  acViewAsmPan.Checked:= Config.ViewPanAssem;
 
   case Config.StateToolbar of
   stb_SmallIcon: begin
@@ -635,7 +696,7 @@ begin
   if curProj= nil then begin
     //Modo de archivos. Actualiza nombre de archivo
     if fraEditView1.Count = 0 then begin
-      Caption := NOM_PROG + ' - ' + VER_PROG  + ' - No files.';
+      Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' +MSG_NOFILES;
     end else begin  //Hay varios
       if ed.NomArc='' then
         Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.Caption
@@ -650,10 +711,83 @@ begin
      fraSynTree.LocateFile(ed.NomArc);
   end;
 end;
+procedure TfrmPrincipal.FindDialog1Find(Sender: TObject);
+var
+  encon  : integer;
+  buscado : string;
+  opciones: TSynSearchOptions;
+  curEdit: TSynEdit;
+begin
+  if fraEditView1.ActiveEditor = nil then exit;
+  curEdit := fraEditView1.ActiveEditor.SynEdit;
+  buscado := FindDialog1.FindText;
+  opciones := [];
+  if not(frDown in FindDialog1.Options) then opciones += [ssoBackwards];
+  if frMatchCase in FindDialog1.Options then opciones += [ssoMatchCase];
+  if frWholeWord in FindDialog1.Options then opciones += [ssoWholeWord];
+  if frEntireScope in FindDialog1.Options then opciones += [ssoEntireScope];
+  encon := curEdit.SearchReplace(buscado,'',opciones);
+  if encon = 0 then
+     MsgBox(MSG_NOFOUND_, [buscado]);
+end;
+procedure TfrmPrincipal.ReplaceDialog1Replace(Sender: TObject);
+var
+  encon, r : integer;
+  buscado : string;
+  opciones: TSynSearchOptions;
+  curEdit: TSynEdit;
+begin
+  if fraEditView1.ActiveEditor = nil then exit;
+  curEdit := fraEditView1.ActiveEditor.SynEdit;
+  buscado := ReplaceDialog1.FindText;
+  opciones := [ssoFindContinue];
+  if not(frDown in ReplaceDialog1.Options) then opciones += [ssoBackwards];
+  if frMatchCase in ReplaceDialog1.Options then opciones += [ssoMatchCase];
+  if frWholeWord in ReplaceDialog1.Options then opciones += [ssoWholeWord];
+  if frEntireScope in ReplaceDialog1.Options then opciones += [ssoEntireScope];
+  if frReplaceAll in ReplaceDialog1.Options then begin
+    //se ha pedido reemplazar todo
+    encon := curEdit.SearchReplace(buscado,ReplaceDialog1.ReplaceText,
+                              opciones+[ssoReplaceAll]);  //reemplaza
+    MsgBox(MSG_N_REPLAC, [IntToStr(encon)]);
+    exit;
+  end;
+  //reemplazo con confirmación
+  ReplaceDialog1.CloseDialog;
+  encon := curEdit.SearchReplace(buscado,'',opciones);  //búsqueda
+  while encon <> 0 do begin
+      //pregunta
+      r := Application.MessageBox(pChar(MSG_REPTHIS), '', MB_YESNOCANCEL);
+      if r = IDCANCEL then exit;
+      if r = IDYES then begin
+        curEdit.TextBetweenPoints[curEdit.BlockBegin,curEdit.BlockEnd] := ReplaceDialog1.ReplaceText;
+      end;
+      //busca siguiente
+      encon := curEdit.SearchReplace(buscado,'',opciones);  //búsca siguiente
+  end;
+  MsgBox(MSG_NOFOUND_, [buscado]);
+end;
 /////////////////// Acciones de Archivo /////////////////////
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
 begin
   fraEditView1.NewFile;
+  with fraEditView1.ActiveEditor.SynEdit.Lines do begin
+    Add('////////////////////////////////////////////');
+    Add('// New program created in ' + DateToStr(now) + '}');
+    Add('////////////////////////////////////////////');
+    Add('{$FREQUENCY 4 MHZ }');
+    Add('{$PROCESSOR PIC16F84A}');
+    Add('program NewProgram;');
+    Add('uses PIC16F84A;');
+    Add('  ');
+    Add('//Declarations here');
+    Add('  ');
+    Add('begin');
+    Add('  ');
+    Add('  //Code here');
+    Add('  ');
+    Add('end.');
+  end;
   fraEditView1.SetFocus;
 end;
 procedure TfrmPrincipal.acArcNewProjExecute(Sender: TObject);
@@ -724,6 +858,29 @@ begin
   if fraEditView1.ActiveEditor= nil then exit;
   fraEditView1.ActiveEditor.SelectAll;
 end;
+//////////// Acciones de Búsqueda ////////////////
+procedure TfrmPrincipal.acSearFindExecute(Sender: TObject);
+begin
+  FindDialog1.Execute;
+end;
+procedure TfrmPrincipal.acSearFindNxtExecute(Sender: TObject);
+begin
+  FindDialog1Find(self);
+end;
+procedure TfrmPrincipal.acSearFindPrvExecute(Sender: TObject);
+begin
+  if frDown in FindDialog1.Options then begin
+    FindDialog1.Options := FindDialog1.Options - [frDown];  //Quita
+    FindDialog1Find(self);
+    FindDialog1.Options := FindDialog1.Options + [frDown];  //Restaura
+  end else begin
+    FindDialog1Find(self);
+  end;
+end;
+procedure TfrmPrincipal.acSearReplacExecute(Sender: TObject);
+begin
+  ReplaceDialog1.Execute;
+end;
 //////////// Acciones de Ver ///////////////
 procedure TfrmPrincipal.acViewStatbarExecute(Sender: TObject);
 begin
@@ -740,6 +897,10 @@ end;
 procedure TfrmPrincipal.acViewSynTreeExecute(Sender: TObject);
 begin
   Config.ViewSynTree := not Config.ViewSynTree;
+end;
+procedure TfrmPrincipal.acViewAsmPanExecute(Sender: TObject);
+begin
+  Config.ViewPanAssem := not Config.ViewPanAssem;
 end;
 //////////// Acciones de Herramientas ///////////////
 procedure TfrmPrincipal.acToolCompilExecute(Sender: TObject);
@@ -792,6 +953,10 @@ begin
   edAsm.Lines.Add('    END');
   edAsm.EndUpdate;
 end;
+procedure TfrmPrincipal.acToolASMDebugExecute(Sender: TObject);
+begin
+  frmDebugger.Exec(cxp);
+end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin
   frmPICExplorer.Show;
@@ -799,10 +964,6 @@ end;
 procedure TfrmPrincipal.acToolRamExpExecute(Sender: TObject);
 begin
    frmRAMExplorer.Exec(cxp.pic);
-end;
-procedure TfrmPrincipal.acViewAsmDbgExecute(Sender: TObject);
-begin
-  frmDebugger.Exec(cxp);
 end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin

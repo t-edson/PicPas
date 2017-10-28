@@ -29,6 +29,7 @@ type
     chkShowTBar: TCheckBox;
     Label3: TLabel;
     Label4: TLabel;
+    Label6: TLabel;
     txtName: TEdit;
     txtComLine: TEdit;
     txtPath: TFileNameEdit;
@@ -50,6 +51,7 @@ type
     NoEvents: boolean;   //bandera
     procedure ControlsToListBox;
     procedure EstadoCampos(estado: boolean);
+    procedure fraCfgExtToolPaint(Sender: TObject);
     procedure ListBoxToControls;
   public
     ExternTools: TStringList;  //Lista de archivos recientes
@@ -99,15 +101,17 @@ procedure TfraCfgExtTool.Execute(const tool: TExternTool);
 {Ejecutar la herramienta externa indicada. }
 var
   p: TProcess;
-  ComLine: string;
+  ComLine, Path: string;
 begin
   p := TProcess.Create(nil); //Crea proceso
   if tool.WaitOnExit then p.Options:= p.Options + [poWaitOnExit];
+  Path := tool.path;
   ComLine := tool.ComLine;
   if OnReplaceParams <> nil then begin
+    OnReplaceParams(Path);  //Reemplaza parámetros
     OnReplaceParams(ComLine);  //Reemplaza parámetros
   end;
-  p.CommandLine := tool.path + ' ' + ComLine;
+  p.CommandLine := Path + ' ' + ComLine;
 //  p.Executable:=path;
 //  p.Parameters.Clear;
 //  p.Parameters.Add(ComLine);
@@ -168,6 +172,10 @@ begin
   chkWaitExit.Enabled := estado;
   chkShowTBar.Enabled := estado;
   butTest.Enabled := estado;
+end;
+procedure TfraCfgExtTool.fraCfgExtToolPaint(Sender: TObject);
+begin
+  ListBox1Click(self);  //Inicia
 end;
 procedure TfraCfgExtTool.ListBoxToControls;
 {Mueve el contendio de curTool, a los controles}
@@ -236,6 +244,7 @@ procedure TfraCfgExtTool.Init(section: string; cfgFile: TMiConfigXML);
 begin
 //  cfgFile.Asoc_StrList(section+ '/extern_tools', @ExternTools);
   cfgFile.Asoc_StrList_TListBox(section+ '/extern_tools', @ExternTools, ListBox1);
+  self.OnPaint := @fraCfgExtToolPaint;
 end;
 constructor TfraCfgExtTool.Create(AOwner: TComponent);
 begin

@@ -1,7 +1,7 @@
 object Config: TConfig
-  Left = 190
+  Left = 319
   Height = 380
-  Top = 152
+  Top = 176
   Width = 535
   BorderStyle = bsDialog
   Caption = 'Configuración'
@@ -9,6 +9,7 @@ object Config: TConfig
   ClientWidth = 535
   OnCreate = FormCreate
   OnShow = FormShow
+  Position = poScreenCenter
   LCLVersion = '1.6.2.0'
   object Panel1: TPanel
     Left = 0
@@ -57,10 +58,10 @@ object Config: TConfig
     Height = 330
     Top = 0
     Width = 399
-    ActivePage = tabEditor
+    ActivePage = tabEnviron
     Align = alClient
     ShowTabs = False
-    TabIndex = 3
+    TabIndex = 0
     TabOrder = 1
     object tabEnviron: TTabSheet
       Caption = 'Enviroment'
@@ -72,7 +73,7 @@ object Config: TConfig
         Top = 80
         Width = 122
         Caption = 'Load last file edited'
-        TabOrder = 0
+        TabOrder = 2
       end
       object lblSplitCol: TLabel
         Left = 232
@@ -89,7 +90,7 @@ object Config: TConfig
         Width = 122
         Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
         ItemHeight = 16
-        TabOrder = 1
+        TabOrder = 6
       end
       object lblPanelCol: TLabel
         Left = 232
@@ -106,7 +107,7 @@ object Config: TConfig
         Width = 122
         Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
         ItemHeight = 16
-        TabOrder = 2
+        TabOrder = 5
       end
       object cmbThemes: TComboBox
         Left = 216
@@ -114,7 +115,7 @@ object Config: TConfig
         Top = 32
         Width = 152
         ItemHeight = 15
-        TabOrder = 3
+        TabOrder = 1
         Text = 'cmbThemes'
       end
       object Label3: TLabel
@@ -145,7 +146,7 @@ object Config: TConfig
           'qu - Quechua'
           'de - German'
         )
-        TabOrder = 4
+        TabOrder = 0
         Text = 'ComboBox1'
       end
       object RadioGroup1: TRadioGroup
@@ -168,7 +169,7 @@ object Config: TConfig
           'Small Icons'
           'Big Icons'
         )
-        TabOrder = 5
+        TabOrder = 4
       end
       object Label1: TLabel
         Left = 16
@@ -184,7 +185,7 @@ object Config: TConfig
         Top = 256
         Width = 296
         Enabled = False
-        TabOrder = 6
+        TabOrder = 7
         Text = '{AppPath}/units/'
       end
       object butSaveCurThem: TButton
@@ -194,7 +195,7 @@ object Config: TConfig
         Width = 152
         Caption = '&Save current config.'
         OnClick = butSaveCurThemClick
-        TabOrder = 7
+        TabOrder = 3
       end
       object Label4: TLabel
         Left = 216
@@ -364,7 +365,7 @@ object Config: TConfig
           'Hide for one file'
           'Hide always'
         )
-        TabOrder = 0
+        TabOrder = 4
       end
       object chkAutSynChk: TCheckBox
         Left = 16
@@ -372,7 +373,7 @@ object Config: TConfig
         Top = 232
         Width = 164
         Caption = 'Automatic Syntax checking'
-        TabOrder = 1
+        TabOrder = 5
       end
       object Label6: TLabel
         Left = 16
@@ -388,7 +389,7 @@ object Config: TConfig
         Top = 18
         Width = 100
         ItemHeight = 15
-        TabOrder = 2
+        TabOrder = 0
         Text = 'cmbFontName'
       end
       object Label7: TLabel
@@ -404,7 +405,7 @@ object Config: TConfig
         Height = 23
         Top = 16
         Width = 50
-        TabOrder = 3
+        TabOrder = 1
       end
       object chkViewVScroll: TCheckBox
         Left = 16
@@ -412,7 +413,7 @@ object Config: TConfig
         Top = 64
         Width = 132
         Caption = 'Barra de desplaz &Vert.'
-        TabOrder = 4
+        TabOrder = 2
       end
       object chkViewHScroll: TCheckBox
         Left = 208
@@ -420,7 +421,7 @@ object Config: TConfig
         Top = 64
         Width = 139
         Caption = 'Barra de desplaz &Horiz.'
-        TabOrder = 5
+        TabOrder = 3
       end
     end
     object tabEdiColor: TTabSheet
