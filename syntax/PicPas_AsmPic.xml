@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <Language name="ASM PIC" ext="xpr" ColorBlock="Block">
-  <Attribute Name="Directive" ForeCol="#FF00FF" Bold="False" Italic="False" Underline="False"/>
-  <Attribute Name="Label"     ForeCol="#007000" Bold="False" Italic="False" Underline="False"/>
   <Attribute Name="Keyword"   ForeCol="#00FF00" Bold="True" Italic="False" Underline="False"/>
   <Attribute Name="Comment"   ForeCol="#808080" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Number"    ForeCol="#FF00FF" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="String"    ForeCol="#00FF00" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Directive" ForeCol="#FF00FF" Bold="False" Italic="False" Underline="False"/>
+  <Attribute Name="Label"     ForeCol="#007000" Bold="False" Italic="False" Underline="False"/>
   <Identifiers CharsStart= "A..Za..z" Content = "A..Za..z0..9_"> 
     <Keyword> 
   ADDWF    ANDWF    CLRF    CLRW    COMF 
