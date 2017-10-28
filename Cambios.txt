@@ -1,3 +1,111 @@
+PicPas 0.8.0
+============
+Se configura para ignorar la carga de un archivo reciente que no se encuentra. ANtes se 
+mostraba un mensaje de error.
+Se agregan resaltadores de sintaxis en el editor, para archivos con extensión *.ASM y *.C.
+Se mejora la configuración de herramientas externas.
+Se habilita la compilación por línea de comandos, pero con mensajes de la GUI, no por 
+consola.
+Se corrige la actualziación del campo "Element Type" en la ventana de propiedades del 
+Explorador de código.
+Se definen los operadores "^" y "@" en la sintaxis del lexer.
+Se incluye el campo TOPerand.Indirect, para manejar asignaciones a variables 
+dereferenciadas.
+Se incluye soporte básico para la declaracción del tipo puntero.
+Se implementan operaciones básicas con punteros cortos.
+Se elimina la bandera TCompilerbase.inSetItem, y se elimina el modo de trabajo mediante 
+los métodos getItem() y setItem(), y reemplazándolo por un nuevo método: item().
+Se convierte la propiedad TCompilerBase.catOperation en función INLINE.
+Se modifica el campo TxpOperation.proc, para que incluya como parámetro a la operación que 
+hace la llamada.
+Se cambiar de nombre a las rutinas de operación y los métodos SetROPResult*.
+Se crean los métodos SetROUResult*, para fijar el resultado en el caso de expresiones 
+Unarias.
+Se elimina el campo TCompilerBase.operType y algunos métodos no usados de la unidad 
+GenCodPic (OperandsUseHW, OperandsUseW, OperandsUseRT).
+Se cambia el nombre del método CreateSysEleType() a CreateSysType().
+Se cambia de nombre al evento TxpEleType.OnDefineRegister por OnDefRegister.
+Se habilitan los diálogos para Búsqueda y Reemplazo.
+Se corrige la marca de "Check" en el menú para mostrar el explorador de código.
+Se corrige el Orden de tabulación en algunas pestañas de la ventana de configuración.
+Se corrige la traducción de algunos ítems del menú "Herramientas".
+Se incluye la edición sícncrona de los editores, usando el plugin SynPluginSyncroEdit, y 
+se eliminan los métodos TSynEditor.ExploreForSyncro() y TSynEditor.ExploreLine().
+Se activa la opción de mostrar/ocultar el editor de ensamblador, con acceso a la tecla F4.
+Se define al símbolo '.', como un operador en la definición de sintaxis.
+Se crea el evento TfraEditView.OnRequireFieldsComplet.
+Se activa el autocompletado dinámico usando para los campos de los tipos byte y word.
+
+
+PENDIENTES
+Terminar de implementar los arreglos y punteros.
+
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absolute a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
+
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema, como delay_ms().
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar las funciones de búsqueda y reemplazo de texto.
+
+
+PicPas 0.7.9
+============
+* Se cambia la definición del método TProcExecOperat, para que incluya el parámetro 
+SetRes. No se detectó un retardo adicional motorio, en la compilación, como consecuencia 
+del nuevo parámetro.
+* Se corrigió el error del uso adicional de RAM, para la operación Oper_dword_add_dword,
+cuando llama a Oper_dword_aadd_dword.
+* Se modificó FreeStkRegisterByte(), para que no use devuelva el registro de la pila, y 
+trabaje como las otras funciones similares.
+* Se cambia el nombre de TOperand.eleTyp a TOperand.Typ y se convierte en propiedad.
+* Se restringe la escritura en TOperand.Typ y se crean los métodos TOperand.SetAsConst(),
+TOperand.SetAsVariab(), TOperand.SetAsExpre() y TOperand.SetAsNull(), para fijar el tipo.
+* Se restringe la escritura en TOperand.CatOp poniéndo al campo como propiedad, y se 
+actualiza el código en varios puntos para que usen SetAsVariab().
+* Se restringe la escritura en TOperand.rVar poniéndo al campo como propiedad.
+* Se elimina TGenCodPic.SetResult() y se crean TGenCodPic.SetResultConst(), 
+TGenCodPic.SetResultVariab() y TGenCodPic.SetResultExpres().
+* Se cambia de nombre a las rutinas de tipo TGenCodPic.SetResult*, que se aplican a ROP, 
+por el nombre TGenCodPic.SetROPResult*.
+* Se mejora el patrón de pruebas, para los bancos.
+* Se incluye patrón de pruebas para las funciones del sistema, y se corrige algunos códigos
+geenrador por las funciones del sistema.
+* Se agrega el método TOperand.Boffs(), para acceder a la dirección del tipo bit/boolean.
+* Se modifica la ventana de depuración para mostrar lso comentarios y etiquetas.
+* Se pasa a usar la versión 1.3.2 de la librería T-Xpres.
+* Se modifica TGenCod.expr_start, para que incluya información de ubicación del código 
+fuente en la memoria flash, para facilitar la depuración.
+* Se crea el Frame FramePICDiagram.pas para las opciones gráficas de la simulación.
+* Se crea la acción para agregar "Watch" pormenú contextual en el simulador.
+* Se crean las directivas SET_UNIMP_BITS y MAP_PORT_TO_PIN.
+* Se reemplaza la llamada a FindOperator(), por Typ.operAsign en 
+TCompilerBase.CaptureParamsFinal().
+* Se crean los eventos TxpEleType.OnGetItem, OnSetItem y OnClearItems.
+* Se mueven las rutinas de eventos de tipos (OnLoadToReg, OnDefineRegister, ...) y campos
+de tipos (type helpers), a la unidad GenCodPic.
+* Se implementan prototipos de arreglos del tipo char y word.
+* Se crea el campo TCompilerBase.inSetItem, para reconocer el modo [] de los arreglos.
+
+
+
+
 PicPas 0.7.8
 ============
 Se corrigen algunas advertencias, generadas por el compilador.
@@ -33,40 +141,10 @@ Se corrige un error en la rutina delay_ms(), cuando trabajaba con 12MHz y se imp
 para 16MHz y 20MHz.
 Se implementan los métodos setitem() y getitem() para los arreglos de bytes, como primer 
 paso al uso de la sintaxis común de corchetes.
-Se corrige la lectura de temas parala versión Linux.
+Se corrige la lectura de temas para la versión Linux.
 Se implementan las funciones Inc() y Dec() para el tipo Char y DWord.
 Se crea el registro FSR como registro auxiliar, y se usa en la rutina delay_ms() y en 
 la rutina de multiplicación de 8 bits.
-
-
-PENDIENTES
-Resolver el problema de uso adicional de RAM, para la operación Oper_dword_add_dword,
-cuando llama a Oper_dword_aadd_dword.
-
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absoulte a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
-
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema.
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Incluir punteros, arreglos y registros.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar las funciones de búsqueda y reemplazo de texto.
 
 
 PicPas 0.7.7
