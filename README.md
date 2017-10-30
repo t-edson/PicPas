@@ -1,5 +1,10 @@
-PicPas 0.7.8
+PicPas 0.8.1
 =============
+
+# Donation Button
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=59LH5AHNQ8XZW)
+
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "Título de la imagen")
