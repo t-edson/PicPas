@@ -29,13 +29,14 @@ TOperType = (operUnary,  //Operación Unaria
              operBinary  //Operación Binaria
              );
 { TOperand }
-//Operando
+//Objeto Operando. Para información sobre operandos, ver la documentación técnica.
 TOperand = object
 private
-  FCat : TCatOperan;  //Categoría del operando
-  FTyp : TxpEleType;  //Tipo del operando, cuando no es de categoría coVariab
-  FVar : TxpEleVar;   //Referencia a la varaible, cuando es de categoría coVariab
-  FVal : TConsValue;  //Valores constantes, cuando el operando es constante
+  FSto   : TStoOperand; //Almacenamiento del operando
+  FTyp   : TxpEleType;  //Tipo del operando, cuando no es de categoría stVariab
+  FVar   : TxpEleVar;   //Referencia a variable
+  FVarOff: TxpEleVar;   //Referencia a variable
+  FVal   : TConsValue;  //Valores constantes, cuando el operando es constante
   function GetTyp: TxpEleType;
   procedure SetvalBool(AValue: boolean);
   procedure SetvalFloat(AValue: extended);
@@ -44,18 +45,20 @@ public  //Campos generales
   txt     : string;   //Texto del operando o expresión, tal como aparece en la fuente
   Inverted: boolean; {Este campo se usa para cuando el operando es de tipo Bit o Boolean.
                       Indica que la lógica debe leerse de forma invertida.}
-  Indirect: boolean; {Usada para cuando es variable. Indica que la variables, realmente,
-                      es un puntero a una dirección, algo como variable^}
-  {"Cat", "Typ" y "rVar" se consideran de solo lectura. Para cambiarlos, se han definido
+  {"Sto", "Typ" y "rVar" se consideran de solo lectura. Para cambiarlos, se han definido
   los métodos: SetAsConst(), SetAsVariab(), SetAsExpres() y SetAsNull, que ofrecen una
   forma más sencilla y segura que cambiar "Cat", "Typ", y rVar" individualmente (que es
   como se hacía en versiones anteriores).}
-  property Cat : TCatOperan read FCat;   //Categoría de operando
+  property Sto : TStoOperand read FSto;  //Alamcenamiento de operando
   property Typ : TxpEleType read GetTyp; //Tipo del operando
   property rVar: TxpEleVar  read FVar;   //Referencia a la variable.
+  property rVarOff: TxpEleVar read FVarOff;   //Referencia a la variable.
   procedure SetAsConst(xtyp: TxpEleType);
   procedure SetAsVariab(xvar: TxpEleVar);
   procedure SetAsExpres(xtyp: TxpEleType);
+  procedure SetAsVarRef(VarBase, VarOff: TxpEleVar);
+  procedure SetAsVarRef(VarBase: TxpEleVar; ValOff: integer);
+  procedure SetAsExpRef(VarBase: TxpEleVar; Etyp: TxpEleType);
   procedure SetAsNull;
   function catOpStr: string;
   function catOpChr: char;
@@ -203,8 +206,7 @@ public
   func0  : TxpEleFun;   //función interna para almacenar parámetros
   p1, p2 : ^TOperand;   //Pasa los operandos de la operación actual
   res    : TOperand;    //resultado de la evaluación de la última expresión.
-  function catOperation: TCatOperation; inline;
-  function CatOperationToStr(Op: string=','): string;
+  function stoOperation: TStoOperandsROB; inline;
 public  //Manejo de errores y advertencias
   HayError: boolean;
   OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
@@ -234,21 +236,6 @@ implementation
 uses Graphics;
 
 {TCompilerBase}
-function TCompilerBase.CatOperationToStr(Op: string=','): string;
-{Devuelve una cadena descriptiva de la variable global "catOperation"}
-begin
-  case catOperation of
-  coConst_Const  : exit('Constant'+ Op +'Constant');
-  coConst_Variab : exit('Constant'+ Op +'Variable');
-  coConst_Expres : exit('Constant'+ Op +'Expression');
-  coVariab_Const : exit('Variable'+ Op +'Constant');
-  coVariab_Variab: exit('Variable'+ Op +'Variable');
-  coVariab_Expres: exit('Variable'+ Op +'Expression');
-  coExpres_Const : exit('Expression'+ Op +'Constant');
-  coExpres_Variab: exit('Expression'+ Op +'Variable');
-  coExpres_Expres: exit('Expression'+ Op +'Expression');
-  end;
-end;
 function TCompilerBase.EOExpres: boolean; inline;
 //Indica si se ha llegado al final de una expresión.
 begin
@@ -532,7 +519,6 @@ begin
     end else begin
       //Crea un operando-variable para generar código de asignación
       Op1.SetAsVariab(par.pvar); //Apunta a la variable
-      Op1.Indirect := false;
       if FirstPass then par.pvar.AddCaller;   //se está usando
       //op := Op1.FindOperator(':=');  //busca la operación
       op := Op1.Typ.operAsign;
@@ -745,7 +731,6 @@ begin
   //cIn.SkipWhites;
   ProcComments;
   Result.Inverted := false;   //inicia campo
-  Result.Indirect := false;
   if cIn.tokType = tnNumber then begin  //constantes numéricas
     {$IFDEF LogExpres} Result.txt:= cIn.tok; {$ENDIF}   //toma el texto
     TipDefecNumber(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
@@ -829,7 +814,7 @@ begin
        Exit;       //error
     end;
 {  end else if (cIn.tokType = tkString) then begin  //constante cadena
-    Result.Cat:=coConst;     //constante es Mono Operando
+    Result.Sto:=stConst;     //constante es Mono Operando
     TipDefecString(Result, cIn.tok); //encuentra tipo de número, tamaño y valor
     if pErr.HayError then exit;  //verifica
     if Result.typ = nil then begin
@@ -923,7 +908,7 @@ begin
    {Llama al evento asociado con p1 como operando. }
    p1 := @Op1; {Solo hay un parámetro}
    {Ejecuta la operación. El resultado debe dejarse en "res"}
-   opr.OperationPre(true);  //Llama normalmente
+   opr.OperationPre(opr, true);  //Llama normalmente
    //Completa campos de "res", si es necesario
    {$IFDEF LogExpres}
    LogExpLevel('Oper('+ opr.txt + ' ' + Op1.catOpChr+ ') -> ' + res.catOpChr);
@@ -946,39 +931,18 @@ begin
    {Llama al evento asociado con p1 como operando. }
    p1 := @Op1; {Solo hay un parámetro}
    {Ejecuta la operación. El resultado debe dejarse en "res"}
-   opr.OperationPost(true);  //Llama normalmente
+   opr.OperationPost(opr, true);  //Llama normalmente
    //Completa campos de "res", si es necesario
    {$IFDEF LogExpres}
    LogExpLevel('Oper('+Op1.catOpChr+ ' ' +opr.txt +') -> ' + res.catOpChr);
    res.txt := Op1.txt + opr.txt;   //indica que es expresión
    {$ENDIF}
 end;
-function TCompilerBase.catOperation: TCatOperation;
+function TCompilerBase.stoOperation: TStoOperandsROB;
 begin
-  //Combinación de categorías de los operandos
-  //Junta categorías de operandos
-  Result := TCatOperation((Ord(p1^.Cat) << 2) or ord(p2^.Cat));
+  //Combinación de los almacenamientos de los operandos
+  Result := TStoOperandsROB((Ord(p1^.Sto) << 3) or ord(p2^.Sto));
 end;
-//procedure TCompilerBase.Oper(var Op1: TOperand);
-//{Ejecuta una operación con un solo operando, que puede ser una constante, una variable
-//o la llamada a una función.
-//El resultado debe devolverse en "res".
-//La implementación debe decidir, qué hacer cuando se encuentra un solo operando como
-//expresión. En algunos casos puede ser inválido.
-//}
-//begin
-//  {$IFDEF LogExpres}
-//  LogExpLevel('Eval('+Op1.catOpChr+')');
-//  {$ENDIF}
-//  ClearError;
-//  {Llama al evento asociado con p1 como operando. }
-//  p1 := @Op1; {Solo hay un parámetro}
-//  {Ejecuta la operación. El resultado debe dejarse en "res"}
-//  if Op1.typ.OperationLoad <> nil then Op1.typ.OperationLoad();
-//  //Completa campos de "res", si es necesario
-////   res.txt := Op1.catOpChr + opr.txt + Op2.txt;   //texto de la expresión
-////   res.uop := opr;   //última operación ejecutada
-//end;
 function TCompilerBase.GetOperandPrec(pre: integer): TOperand;
 //Toma un operando realizando hasta encontrar un operador de precedencia igual o menor
 //a la indicada
@@ -1271,10 +1235,15 @@ end;
 function TOperand.offs: TVarOffs;
 {Dirección de memoria, cuando es de tipo Char, Byte, Bit o Boolean.}
 begin
-  if (Typ = typBit) or (Typ = typBool) then begin
-    Result := rVar.adrBit.offs;
-  end else begin  //Char o byte
-    Result := rVar.adrByte0.offs;
+  if FSto = stVarRefVar then begin
+    //Caso especial, de stVarRefVar
+    if FVar = nil then
+      Result := FVarOff.offs
+    else
+      Result := FVar.offs;
+  end else begin
+    //Para todos los otros casos, esto debe funcionar, según la docuemntación.
+    Result := FVar.offs;
   end;
 end;
 function TOperand.Boffs: TVarOffs;
@@ -1299,12 +1268,18 @@ begin
   Result := rVar.adrByte3.offs;
 end;
 function TOperand.bank: TVarBank;
-{Banco, cuando es de tipo Byte.}
+{Banco, del operando. Se supone que si se pide el banoo es porque es stVariab, o también
+puede se el caso stVarRefVar. }
 begin
-  if (Typ = typBit) or (Typ = typBool) then begin
-    Result := rVar.adrBit.bank;
-  end else begin  //Char o byte
-    Result := rVar.adrByte0.bank;
+  if FSto = stVarRefVar then begin
+    //Caso especial, de stVarRefVar
+    if FVar = nil then
+      Result := FVarOff.bank
+    else
+      Result := FVar.bank;
+  end else begin
+    //Para todos los otros casos, esto debe funcionar, según la docuemntación.
+    Result := FVar.bank;
   end;
 end;
 function TOperand.Lbank: TVarBank;
@@ -1319,7 +1294,7 @@ begin
 end;
 procedure TOperand.Invert;
 begin
-  if Cat = coConst then begin
+  if Sto = stConst then begin
     //Para constantes, no se puede negar la lógica, sino el valor
     valBool := not valBool;
   end else begin
@@ -1390,10 +1365,32 @@ begin
   end;
 end;
 function TOperand.GetTyp: TxpEleType;
+{Devuelve el tipo de la variable referenciada. }
 begin
-  if Cat = coVariab then begin
-    Result := rVar.typ;
+  if Sto = stVariab then begin
+    Result := FVar.typ;
+  end else if Sto = stVarRefVar then begin
+    //Variable referenciada por variables.
+    //Se implementa de acuerdo a la Doc. Técnica - Sección "Operandos sVarRef"
+    if FVar = nil then begin
+      //Debe ser puntero. Devuelve el tipo original.
+      Result := FVarOff.typ.refType;
+    end else begin
+      //Debe ser arreglo
+      Result := FVar.typ;
+    end;
+  end else if Sto = stVarRefExp then begin
+    //Variable referenciada por expresión.
+    //Se implementa de acuerdo a la Doc. Técnica - Sección "Operandos sExpRef"
+    if FVar = nil then begin
+      //Debe ser puntero.
+      Result := FTyp.refType;
+    end else begin
+      //Debe ser arreglo
+      Result := FVar.typ;
+    end;
   end else begin
+    //Constante o expresión
     Result := FTyp;
   end;
 end;
@@ -1414,46 +1411,66 @@ end;
 procedure TOperand.SetAsConst(xtyp: TxpEleType);
 {Fija la categoría del Operando como Constante, del tipo indicado}
 begin
-  FCat := coConst;
+  FSto := stConst;
   FTyp := xtyp;
 end;
 procedure TOperand.SetAsVariab(xvar: TxpEleVar);
 {Fija la categoría del Operando como Variable, del tipo de la variable}
 begin
-  FCat := coVariab;
+  FSto := stVariab;
   FVar := xvar;  //No hace falta actualziar el tipo
 end;
 procedure TOperand.SetAsExpres(xtyp: TxpEleType);
 {Fija la categoría del Operando como Expresión, del tipo indicado}
 begin
-  FCat := coExpres;
+  FSto := stExpres;
   FTyp := xtyp;
+end;
+procedure TOperand.SetAsVarRef(VarBase, VarOff: TxpEleVar);
+{Fija el operando como de tipo stVarRefVar.}
+begin
+  FSto := stVarRefVar;
+  FVar := VarBase;
+  FVarOff := VarOff;
+end;
+procedure TOperand.SetAsVarRef(VarBase: TxpEleVar; ValOff: integer);
+{Versión de SetAsVarRef(), con desplazamiento constante.}
+begin
+  FSto := stVarRefVar;
+  FVar := VarBase;
+  Fval.ValInt := ValOff;
+end;
+procedure TOperand.SetAsExpRef(VarBase: TxpEleVar; Etyp: TxpEleType);
+begin
+  FSto := stVarRefExp;
+  FVar := VarBase;
+  FTyp := Etyp;
 end;
 procedure TOperand.SetAsNull;
 {Configura al operando como de tipo Null}
 begin
   {Se pone como constante, que es el tipo más simple, además se protege, pro si era
   variable}
-  FCat := coConst;
+  FSto := stConst;
   FTyp := typNull;   //Este es el tipo NULO
 end;
 function TOperand.catOpStr: string;
 {Categoría en cadena.}
 begin
-  case Cat of
-  coConst : exit('Constant');
-  coVariab: exit('Variable');
-  coExpres: exit('Expression');
+  case Sto of
+  stConst : exit('Constant');
+  stVariab: exit('Variable');
+  stExpres: exit('Expression');
   end;
 end;
 function TOperand.catOpChr: char;
 {Categoría en caracter.}
 begin
   Result := ' ';
-  case Cat of
-  coConst : exit('k');
-  coVariab: exit('v');
-  coExpres: exit('X');
+  case Sto of
+  stConst : exit('k');
+  stVariab: exit('v');
+  stExpres: exit('X');
   end;
 end;
 procedure TOperand.LoadToReg;

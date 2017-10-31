@@ -16,48 +16,6 @@ uses
 const
   ADRR_ERROR = $FFFF;
 type
-  {Estos tipos están relacionados con el hardware, y tal vez deberían estar declarados
-  en otra unidad. Pero se ponen aquí porque son pocos.
-  La idea es que sean simples contenedores de direcciones físicas. En un inicio se pensó
-  declararlos como RECORD por velocidad (para no usar memoria dinámica), pero dado que no
-  se tienen requerimientos altos de velocidad en PicPas, se declaran como clases. }
-  //Tipo de registro
-  TPicRegType = (prtWorkReg,   //de trabajo
-                 prtAuxReg,    //auxiliar
-                 prtStkReg     //registro de pila
-  );
-  { TPicRegister }
-  {Objeto que sirve para modelar a un registro del PIC (una dirección de memoria, usada
-   para un fin particular)}
-  TPicRegister = class
-  public
-    offs   : byte;      //Desplazamiento en memoria
-    bank   : byte;      //Banco del registro
-    assigned: boolean;  //indica si tiene una dirección física asignada
-    used   : boolean;   //Indica si está usado.
-    typ    : TPicRegType; //Tipo de registro
-    function AbsAdrr: word;  //Diección absoluta
-    procedure Assign(srcReg: TPicRegister);
-  end;
-  TPicRegister_list = specialize TFPGObjectList<TPicRegister>; //lista de registros
-
-  { TPicRegisterBit }
-  {Objeto que sirve para modelar a un bit del PIC (una dirección de memoria, usada
-   para un fin particular)}
-  TPicRegisterBit = class
-  public
-    offs   : byte;      //Desplazamiento en memoria
-    bank   : byte;      //Banco del registro
-    bit    : byte;      //bit del registro
-    assigned: boolean;  //indica si tiene una dirección física asignada
-    used   : boolean;   //Indica si está usado.
-    typ    : TPicRegType; //Tipo de registro
-    function AbsAdrr: word;  //Diección absoluta
-    procedure Assign(srcReg: TPicRegisterBit);
-  end;
-  TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros
-
-type
   //Tipos de elementos del lenguaje
   TxpIDClass = (eltNone,  //sin tipo
                  eltMain,  //programa principal
@@ -135,25 +93,29 @@ type
     constructor Create; override;
   end;
 
-  //Categorías de tipos
-  TxpCatType = (
-    tctAtomic,  //Tipo básico
-    tctArray,   //Arreglo de otro tipo
-    tctPointer, //Puntero de otro tipo (Puntero corto, hasta la dirección $FF)
-    tctRecord   //Registro de varios campos
-  );
-
   TxpEleType= class;
 
+  TxpOperator = class;
   TxpOperation = class;
-  {A las ROP binarias, se les envía la referencia a la operación, para que puedan
-  acceder a información adicionald e la ROP. También se usa el parámetro "Opt", para
-  que se pueda identificar mejor a las ROB, y no confundirlas con las ROU}
+
+  {Evento que llama a una ROB. A las ROP binarias, se les envía la referencia a la
+  operación, para que puedan acceder a información adicional de la ROP. También se usa
+  el parámetro "Opt", para que se pueda identificar mejor a las ROB, y no confundirlas
+  con las ROU}
   TProcBinaryROB = procedure(Opt: TxpOperation; SetRes: boolean) of object;
+
+  {Evento que llama a una Rutina de Operación (ROP).
+  El parámetro "SetRes", se usa para cuando se quiere indicar si se usará la ROP, en
+  modo normal (TRUE) o si solo se quiere usar la ROP, como generador de código}
+  TProcExecOperat = procedure(Opr: TxpOperator; SetRes: boolean) of object;
+
+  { TxpOperation }
   //Tipo operación
   TxpOperation = class
-    OperatType : TxpEleType;      //Tipo del Operando, sobre el cual se aplica la operación.
-    proc       : TProcBinaryROB;  //Procesamiento de la operación
+    parent    : TxpOperator;     //Referencia al operador que lo contiene
+    ToType    : TxpEleType;      //Tipo del Operando, sobre el cual se aplica la operación.
+    proc      : TProcBinaryROB;  //Procesamiento de la operación
+    function OperationString: string;
   end;
 
   TxpOperations = specialize TFPGObjectList<TxpOperation>; //lista de operaciones
@@ -165,10 +127,11 @@ type
     Operations: TxpOperations;  //operaciones soportadas. Debería haber tantos como
                                 //Num. Operadores * Num.Tipos compatibles.
   public
-    txt  : string;    //cadena del operador '+', '-', '++', ...
-    prec : byte;      //precedencia
-    name : string;    //nombre de la operación (suma, resta)
-    kind : TxpOperatorKind;   //Tipo de operador
+    txt    : string;     //Cadena del operador '+', '-', '++', ...
+    parent : TxpEleType; //Referencia al tipo que lo contiene
+    prec   : byte;       //Precedencia
+    name   : string;     //Nombre de la operación (suma, resta)
+    kind   : TxpOperatorKind;   //Tipo de operador
     OperationPre: TProcExecOperat;  {Operación asociada al Operador. Usado cuando es un
                                     operador unario PRE. }
     OperationPost: TProcExecOperat; {Operación asociada al Operador. Usado cuando es un
@@ -176,6 +139,7 @@ type
     function CreateOperation(OperandType: TxpEleType; proc: TProcBinaryROB
       ): TxpOperation;  //Crea operación
     function FindOperation(typ0: TxpEleType): TxpOperation;  //Busca una operación para este operador
+    function OperationString: string;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -297,19 +261,21 @@ type
     una parte de otra variable, que si tiene almacenamiento físico.}
     IsTmp      : boolean;
     //Campos para guardar las direcciones físicas asignadas en RAM.
-    adrBit : TPicRegisterBit;  //Dirección física, cuando es de tipo Bit/Boolean
-    adrByte0: TPicRegister;   //Dirección física, cuando es de tipo Byte/Char/Word/DWord
-    adrByte1: TPicRegister;   //Dirección física, cuando es de tipo Word/DWord
-    adrByte2: TPicRegister;   //Dirección física, cuando es de tipo DWord
-    adrByte3: TPicRegister;   //Dirección física, cuando es de tipo DWord
+    adrBit  : TPicRegisterBit; //Dirección física, cuando es de tipo Bit/Boolean
+    adrByte0: TPicRegister;    //Dirección física, cuando es de tipo Byte/Char/Word/DWord
+    adrByte1: TPicRegister;    //Dirección física, cuando es de tipo Word/DWord
+    adrByte2: TPicRegister;    //Dirección física, cuando es de tipo DWord
+    adrByte3: TPicRegister;    //Dirección física, cuando es de tipo DWord
+    function bank: TVarBank;   //Banco de la dirección de la variable
+    function offs: TVarOffs;    //Dirección relativa de inicio
     function AbsAddr : word;   //Devuelve la dirección absoluta de la variable
     function AbsAddrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
     function AbsAddrH: word;   //Devuelve la dirección absoluta de la variable (HIGH)
     function AbsAddrE: word;   //Devuelve la dirección absoluta de la variable (HIGH)
     function AbsAddrU: word;   //Devuelve la dirección absoluta de la variable (HIGH)
-    function AddrString: string;  //Devuelve la dirección física como cadena
-    function BitMask: byte;  //Máscara de bit, de acuerdo al valor del campo "bit".
-    procedure ResetAddress;  //Limpia las direcciones físicas
+    function AddrString: string; //Devuelve la dirección física como cadena
+    function BitMask: byte;    //Máscara de bit, de acuerdo al valor del campo "bit".
+    procedure ResetAddress;    //Limpia las direcciones físicas
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -451,32 +417,12 @@ var
 
 implementation
 
-{ TPicRegister }
-function TPicRegister.AbsAdrr: word;
+{ TxpOperation }
+function TxpOperation.OperationString: string;
+{Devuelve una cadena que representa a la operación, sobre los tipos.
+ Algo como: byte + byte}
 begin
-  Result := bank * $80 + offs;
-end;
-procedure TPicRegister.Assign(srcReg: TPicRegister);
-begin
-  offs    := srcReg.offs;
-  bank    := srcReg.bank;
-  assigned:= srcReg.assigned;
-  used    := srcReg.used;
-  typ     := srcReg.typ;
-end;
-{ TPicRegisterBit }
-function TPicRegisterBit.AbsAdrr: word;
-begin
-  Result := bank * $80 + offs;
-end;
-procedure TPicRegisterBit.Assign(srcReg: TPicRegisterBit);
-begin
-  offs    := srcReg.offs;
-  bank    := srcReg.bank;
-  bit     := srcReg.bit;
-  assigned:= srcReg.assigned;
-  used    := srcReg.used;
-  typ     := srcReg.typ;
+  Result := parent.parent.name + ' ' + parent.txt + ' ' + ToType.name;
 end;
 
 { TxpElement }
@@ -709,6 +655,25 @@ procedure TxpEleVar.Settyp(AValue: TxpEleType);
 begin
   ftyp := AValue;
 end;
+function TxpEleVar.bank: TVarBank;
+{Devuelve el banco de memoria en donde se ubica la variable actual. Asumiendo que toda
+la variables se ubica en el mismo banco.}
+begin
+  if (Typ = typBit) or (Typ = typBool) then begin
+    Result := adrBit.bank;
+  end else begin  //Char o byte
+    Result := adrByte0.bank;
+  end;
+end;
+function TxpEleVar.offs: TVarOffs;
+{Devuelve la dirección de inicio, en donde empieza a almacenarse la variable.}
+begin
+  if (Typ = typBit) or (Typ = typBool) then begin
+    Result := adrBit.offs;
+  end else begin  //Char o byte
+    Result := adrByte0.offs;
+  end;
+end;
 procedure TxpEleVar.SetHavAdicPar(AValue: boolean);
 begin
   adicPar.isAbsol := Avalue;  //De momento, es el único parámetro adicional
@@ -877,8 +842,9 @@ var
 begin
   //agrega
   r := TxpOperation.Create;
-  r.OperatType:=OperandType;
+  r.ToType:=OperandType;
   r.proc:=proc;
+  r.parent := self;
   //agrega
   operations.Add(r);
   Result := r;
@@ -891,10 +857,14 @@ var
 begin
   Result := nil;
   for r in Operations do begin
-    if r.OperatType = typ0 then begin
+    if r.ToType = typ0 then begin
       exit(r);
     end;
   end;
+end;
+function TxpOperator.OperationString: string;
+begin
+  Result := parent.name + ' ' + self.txt;  //Post?
 end;
 constructor TxpOperator.Create;
 begin
@@ -921,10 +891,11 @@ begin
   end;
   //Crea y configura objeto
   r := TxpOperator.Create;
-  r.txt:=txt;
-  r.prec:=prec;
-  r.name:=OpName;
-  r.kind:=opkBinary;
+  r.txt    := txt;
+  r.prec   := prec;
+  r.name   := OpName;
+  r.kind   := opkBinary;
+  r.parent := self;;
   //Agrega operador
   Operators.Add(r);
   Result := r;
@@ -1562,4 +1533,4 @@ initialization
 finalization
   nullOper.Free;
 end.
-
+//1512

@@ -462,8 +462,8 @@ begin
   bnkExp := CurrBank;   //Guarda el banco inicial
   if not CaptureStr('then') then exit; //toma "then"
   //Aquí debe estar el cuerpo del "if"
-  case res.Cat of
-  coConst: begin  //la condición es fija
+  case res.Sto of
+  stConst: begin  //la condición es fija
     if res.valBool then begin
       //Es verdadero, siempre se ejecuta
       if not CompileNoConditionBody(true) then exit;
@@ -500,7 +500,7 @@ begin
       end;
     end;
   end;
-  coVariab, coExpres:begin
+  stVariab, stExpres:begin
     Cod_JumpIfTrue;
     _GOTO_PEND(jFALSE);  //salto pendiente
     //Compila la parte THEN
@@ -538,16 +538,16 @@ end;
 procedure TCompiler.Cod_JumpIfTrue;
 {Codifica una instrucción de salto, si es que el resultado de la última expresión es
 verdadera. Se debe asegurar que la expresión es de tipo booleana y que es de categoría
-coVariab o coExpres.}
+stVariab o stExpres.}
 begin
-  if res.Cat = coVariab then begin
+  if res.Sto = stVariab then begin
     //Las variables booleanas, pueden estar invertidas
     if res.Inverted then begin
       _BTFSC(res.offs, res.bit);  //verifica condición
     end else begin
       _BTFSS(res.offs, res.bit);  //verifica condición
     end;
-  end else if res.Cat = coExpres then begin
+  end else if res.Sto = stExpres then begin
     //Los resultados de expresión, pueden optimizarse
     if InvertedFromC then begin
       //El resultado de la expresión, está en Z, pero a partir una copia negada de C
@@ -580,8 +580,8 @@ begin
   cIn.SkipWhites;
   if not CaptureStr('until') then exit; //toma "until"
   if not GetExpressionBool then exit;
-  case res.Cat of
-  coConst: begin  //la condición es fija
+  case res.Sto of
+  stConst: begin  //la condición es fija
     if res.valBool then begin
       //lazo nulo
     end else begin
@@ -589,7 +589,7 @@ begin
       _GOTO(l1);
     end;
   end;
-  coVariab, coExpres: begin
+  stVariab, stExpres: begin
     Cod_JumpIfTrue;
     _GOTO(l1);
     //sale cuando la condición es verdadera
@@ -609,8 +609,8 @@ begin
   bnkExp2 := CurrBank;   //Guarda el banco antes de la expresión
   if not CaptureStr('do') then exit;  //toma "do"
   //Aquí debe estar el cuerpo del "while"
-  case res.Cat of
-  coConst: begin  //la condición es fija
+  case res.Sto of
+  stConst: begin  //la condición es fija
     if res.valBool then begin
       //Lazo infinito
       if not CompileNoConditionBody(true) then exit;
@@ -623,7 +623,7 @@ begin
       if not VerifyEND then exit;
     end;
   end;
-  coVariab, coExpres: begin
+  stVariab, stExpres: begin
     Cod_JumpIfTrue;
     _GOTO_PEND(dg);  //salto pendiente
     if not CompileConditionalBody(bnkEND) then exit;
@@ -646,7 +646,7 @@ var
   bnkFOR: byte;
 begin
   Op1 :=  GetOperand;
-  if Op1.Cat <> coVariab then begin
+  if Op1.Sto <> stVariab then begin
     GenError(ER_VARIAB_EXPEC);
     exit;
   end;
@@ -673,7 +673,7 @@ begin
   cIn.SkipWhites;
   if not CaptureStr('do') then exit;  //toma "do"
   //Aquí debe estar el cuerpo del "for"
-  if (res.Cat = coConst) or (res.Cat = coVariab) then begin
+  if (res.Sto = stConst) or (res.Sto = stVariab) then begin
     //Es un for con valor final de tipo constante
     //Se podría optimizar, si el valor inicial es también constante
     l1 := _PC;        //guarda dirección de inicio
@@ -861,7 +861,7 @@ begin
     //Debe seguir una expresiócons constante, que no genere consódigo
     GetExpressionE(0);
     if HayError then exit;
-    if res.Cat <> coConst then begin
+    if res.Sto <> stConst then begin
       GenError(ER_CON_EXP_EXP);
     end;
     //Hasta aquí todo bien, crea la(s) constante(s).
@@ -974,7 +974,7 @@ begin
     //Puede ser variable
     GetOperandIdent(Op);
     if HayError then exit;
-    if Op.Cat <> coVariab then begin
+    if Op.Sto <> stVariab then begin
       GenError(ER_EXP_VAR_IDE);
       cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
       exit;
@@ -1011,8 +1011,8 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.Cat of
-  coVariab: begin
+  case Op^.Sto of
+  stVariab: begin
     xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
     //Se devuelve una constante, byte
     res.SetAsConst(typByte);
@@ -1030,8 +1030,8 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.Cat of
-  coVariab: begin
+  case Op^.Sto of
+  stVariab: begin
     xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
     //Se devuelve una constante, byte
     res.SetAsConst(typByte);
@@ -1048,8 +1048,8 @@ var
 begin
   cIn.Next;  //Toma identificador de campo
   Op := OpPtr;
-  case Op^.Cat of
-  coVariab: begin
+  case Op^.Sto of
+  stVariab: begin
     //Se devuelve una constante, byte
     res.SetAsConst(typByte);
     res.valInt := 0;  //por ahora siempre inicia en 0
@@ -1082,7 +1082,7 @@ begin
 //    //Puede ser variable
 //    GetOperandIdent(Op);
 //    if HayError then exit;
-//    if Op.catOp <> coVariab then begin
+//    if Op.catOp <> stVariab then begin
 //      GenError(ER_EXP_VAR_IDE);
 //      cIn.Next;  //Pasa con o sin error, porque esta rutina es "Pasa siempre."
 //      exit;
@@ -1145,7 +1145,6 @@ var
   etyp, systyp, itemTyp, reftyp: TxpEleType;
   srcpos: TSrcPos;
   nEle: integer;
-  opr: TxpOperator;
 begin
   ProcComments;
   if cIn.tokType <> tnIdentif then begin

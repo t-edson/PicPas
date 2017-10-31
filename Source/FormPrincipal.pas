@@ -321,12 +321,12 @@ begin
   fraMessages.Parent := panMessages;  //Ubica
   fraMessages.Align := alClient;
   fraMessages.OnDblClickMessage := @fraMessagesDblClickMessage;
-  fraMessages.OnStatisDBlClick := @fraMessagesStatisDBlClick;
+  fraMessages.OnStatisDBlClick  := @fraMessagesStatisDBlClick;
   //configura panel de edición
   fraEditView1 := TfraEditView.Create(self);
   fraEditView1.Parent := self;
-  fraEditView1.OnChangeEditorState := @fraEdit_ChangeEditorState;
-  fraEditView1.OnSelectEditor := @fraEdit_SelectEditor;
+  fraEditView1.OnChangeEditorState    := @fraEdit_ChangeEditorState;
+  fraEditView1.OnSelectEditor         := @fraEdit_SelectEditor;
   fraEditView1.OnRequireSynEditConfig := @fraEdit_RequireSynEditConfig;
   fraEditView1.OnRequireFieldsComplet := @fraEdit_RequireFieldsComplet;
   //COnfigura Árbol de sintaxis

@@ -35,30 +35,61 @@ type  //tipos enumerados
     ValStr  : string;   //Para alojar a los valores t_string
   end;
 
-  //Categoría de Operando
-  TCatOperan = (
-    coConst =%00,  //Constante. Inlcuyendo expresiones de constantes evaluadas.
-    coVariab=%01,  //Variable. Variable única.
-    coExpres=%10   //Expresión. Algo que requiere cálculo (incluyendo a una función).
+  //Almacenamiento de Operando
+  TStoOperand = (
+    stConst =%000,   {El operando es una Constante y por lo tanto su valor se almacena
+                      directamente en el operando sin usar memoria del PIC. Incluyendo
+                      expresiones de constantes evaluadas.}
+    stVariab=%001,   {El operando es una Variable simple (atómica), y tampoco ocupa
+                      espacio en la memoria física, sino que solo se guarda su dirección
+                      (y número de bit para el caso de los tipos boolean o bit).}
+    stExpres=%010,   {El operando es una Expresión, por lo general es el resultado de
+                      algún cálculo entre variables y constantes. (incluyendo el resulatdo
+                      de a una función). Se valor está siempre en los RT}
+    stVarRefVar=%011,{El operando es la referencia a una variable, y esta referencai se
+                      calcula en base a otras variables. No ocupa espacio a memoria,
+                      porque su dirección real, se puede calcular, con parámetros
+                      constantes (dirección, desplazamiento, y número de bit).}
+    stVarRefExp=%100 {El operando es la referencia a una variable, y esta referencia se
+                      encuentra en los RT. Para obtener^la dirección real de la variable
+                      se debe calcular primero la dirección, usando el valor de los RT y
+                      el desplazamiento, y número de bit}
   );
-  {Categoría de operación. Se construye para poder representar dos valores de TCatOperan
-   en una solo valor byte (juntando sus bits), para facilitar el uso de un CASE ... OF}
-  TCatOperation =(
-    coConst_Const  = %0000,
-    coConst_Variab = %0001,
-    coConst_Expres = %0010,
-    coVariab_Const = %0100,
-    coVariab_Variab= %0101,
-    coVariab_Expres= %0110,
-    coExpres_Const = %1000,
-    coExpres_Variab= %1001,
-    coExpres_Expres= %1010
+  {Almacenamiento combinado para una ROB. Se construye para poder representar dos valores
+  de TStoOperand en una solo valor byte (juntando sus bits), para facilitar el uso de un
+  CASE ... OF}
+  TStoOperandsROB =(
+    stConst_Const      = %000000,
+    stConst_Variab     = %000001,
+    stConst_Expres     = %000010,
+    stConst_VarRefVar  = %000011,
+    stConst_VarRefExp  = %000100,
+
+    stVariab_Const     = %001000,
+    stVariab_Variab    = %001001,
+    stVariab_Expres    = %001010,
+    stVariab_VarRefVar = %001011,
+    stVariab_VarRefExp = %001100,
+
+    stExpres_Const     = %010000,
+    stExpres_Variab    = %010001,
+    stExpres_Expres    = %010010,
+    stExpres_VarRefVar = %010011,
+    stExpres_VarRefExp = %010100,
+
+    stVarRefVar_Const     = %011000,
+    stVarRefVar_Variab    = %011001,
+    stVarRefVar_Expres    = %011010,
+    stVarRefVar_VarRefVar = %011011,
+    stVarRefVar_VarRefExp = %011100,
+
+    stVarRefExp_Const     = %100000,
+    stVarRefExp_Variab    = %100001,
+    stVarRefExp_Expres    = %100010,
+    stVarRefExp_VarRefVar = %100011,
+    stVarRefExp_VarRefExp = %100100
   );
 
-  {Evento que llama a una Rutina de Operación (ROP).
-  El parámetro "SetRes", se usa para cuando se quiere indicar si se usará la ROP, en
-  modo normal (TRUE) o si solo se quiere usar la ROP, como generador de código}
-  TProcExecOperat = procedure(SetRes: boolean) of object;
 
   TProcDefineVar = procedure(const varName, varInitVal: string) of object;
   {Evento para cargar un  operando en la pila.
@@ -80,7 +111,87 @@ type  //tipos enumerados
   end;
   TTypFields = specialize TFPGObjectList<TTypField>;
 
+type
+  {Estos tipos están relacionados con el hardware, y tal vez deberían estar declarados
+  en otra unidad. Pero se ponen aquí porque son pocos.
+  La idea es que sean simples contenedores de direcciones físicas. En un inicio se pensó
+  declararlos como RECORD por velocidad (para no usar memoria dinámica), pero dado que no
+  se tienen requerimientos altos de velocidad en PicPas, se declaran como clases. }
+  //Tipo de registro
+  TPicRegType = (prtWorkReg,   //de trabajo
+                 prtAuxReg,    //auxiliar
+                 prtStkReg     //registro de pila
+  );
+  { TPicRegister }
+  {Objeto que sirve para modelar a un registro del PIC (una dirección de memoria, usada
+   para un fin particular)}
+  TPicRegister = class
+  public
+    offs   : byte;      //Desplazamiento en memoria
+    bank   : byte;      //Banco del registro
+    assigned: boolean;  //indica si tiene una dirección física asignada
+    used   : boolean;   //Indica si está usado.
+    typ    : TPicRegType; //Tipo de registro
+    function AbsAdrr: word;  //Diección absoluta
+    procedure Assign(srcReg: TPicRegister);
+  end;
+  TPicRegister_list = specialize TFPGObjectList<TPicRegister>; //lista de registros
+
+  { TPicRegisterBit }
+  {Objeto que sirve para modelar a un bit del PIC (una dirección de memoria, usada
+   para un fin particular)}
+  TPicRegisterBit = class
+  public
+    offs   : byte;      //Desplazamiento en memoria
+    bank   : byte;      //Banco del registro
+    bit    : byte;      //bit del registro
+    assigned: boolean;  //indica si tiene una dirección física asignada
+    used   : boolean;   //Indica si está usado.
+    typ    : TPicRegType; //Tipo de registro
+    function AbsAdrr: word;  //Diección absoluta
+    procedure Assign(srcReg: TPicRegisterBit);
+  end;
+  TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros
+
+  //Categorías de tipos
+  TxpCatType = (
+    tctAtomic,  //Tipo básico
+    tctArray,   //Arreglo de otro tipo
+    tctPointer, //Puntero de otro tipo (Puntero corto, hasta la dirección $FF)
+    tctRecord   //Registro de varios campos
+  );
+
+
 implementation
 
-end.
+{ TPicRegister }
+function TPicRegister.AbsAdrr: word;
+begin
+  Result := bank * $80 + offs;
+end;
+procedure TPicRegister.Assign(srcReg: TPicRegister);
+begin
+  offs    := srcReg.offs;
+  bank    := srcReg.bank;
+  assigned:= srcReg.assigned;
+  used    := srcReg.used;
+  typ     := srcReg.typ;
+end;
 
+{ TPicRegisterBit }
+function TPicRegisterBit.AbsAdrr: word;
+begin
+  Result := bank * $80 + offs;
+end;
+procedure TPicRegisterBit.Assign(srcReg: TPicRegisterBit);
+begin
+  offs    := srcReg.offs;
+  bank    := srcReg.bank;
+  bit     := srcReg.bit;
+  assigned:= srcReg.assigned;
+  used    := srcReg.used;
+  typ     := srcReg.typ;
+end;
+
+end.
+//193
