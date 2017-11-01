@@ -17,8 +17,9 @@ Dos registros adicionales  H y L de 8 bits cada uno (Creados a demanda).
 Los resultados de una expresión se dejarán en:
 
 1. En Bit Z o C, de STATUS -> Si el resultado es de tipo bit o boolean.
-2. El acumulador W         -> Si el resultado es de tipo byte.
+2. El acumulador W         -> Si el resultado es de tipo byte o char.
 3. Los registros (H,w)     -> Si el resultado es tipo word.
+4. Los registros (U,E,H,w) -> Si el resultado es tipo dword.
 
 Opcionalmente, si estos registros ya están ocupados, se guardan primero en la pila, o se
 usan otros registros auxiliares.
@@ -32,18 +33,11 @@ Por normas de Xpres, se debe considerar que:
 * Todas las operaciones recibe sus dos parámetros en las variables p1 y p2^.
 * El resultado de cualquier expresión se debe dejar indicado en el objeto "res".
 * Los valores enteros y enteros sin signo se cargan en valInt
-* Los valores booleanos se cargan en valBool
-* Los valores string se cargan en valStr
-* Las variables están mapeadas en el arreglo vars[]
-* Cada variable, de cualquier tipo, ocupa una celda de vars[]
+* Los valores booleanos se cargan en "valBool"
+* Los valores string se cargan en "valStr"
 
-Los procedimientos de operaciones, deben actualizar en el acumulador:
-
-* El tipo de resultado (para poder evaluar la expresión completa como si fuera un
-operando nuevo)
-* La categoría del operador (constante, expresión, etc), para poder optimizar la generación
-de código.
-* El estado del registro (usado o libre)
+Las rutinas de operación, deben devolver su resultado en "res".
+Para mayor información, consultar la doc. técnica.
  }
 unit GenCod;
 {$mode objfpc}{$H+}
@@ -4107,9 +4101,38 @@ begin
       exit;
     end;
   end;
+//  stVarRefVar: begin
+//    if (res.Typ = typByte) or (res.Typ = typChar) then begin
+//      _BANKSEL(res.bank);
+//      _INCF(res.offs, toF);
+//    end else if res.Typ = typWord then begin
+//      _BANKSEL(res.bank);
+//      _INCF(res.Loffs, toF);
+//      _BTFSC(STATUS, _Z);
+//      _INCF(res.Hoffs, toF);
+//    end else if res.Typ = typDWord then begin
+//      _BANKSEL(res.bank);
+//      _INCF(res.Loffs, toF);
+//      _BTFSC(STATUS, _Z);
+//      _INCF(res.Hoffs, toF);
+//      _BTFSC(STATUS, _Z);
+//      _INCF(res.Eoffs, toF);
+//      _BTFSC(STATUS, _Z);
+//      _INCF(res.Uoffs, toF);
+//    end else if res.Typ.catType = tctPointer then begin
+//      //Es puntero corto
+//      _BANKSEL(res.bank);
+//      _INCF(res.offs, toF);
+//    end else begin
+//      GenError('Invalid parameter type: %s', [res.Typ.name]);
+//      exit;
+//    end;
+//  end;
   stExpres: begin  //se asume que ya está en (_H,w)
     GenError('Cannot increase an expression.'); exit;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   res.SetAsNull;  //No es función
   //Verifica fin de parámetros
@@ -4156,6 +4179,8 @@ begin
   stExpres: begin  //se asume que ya está en (_H,w)
     GenError('Cannot decrease an expression.'); exit;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   res.SetAsNull;  //No es función
   //Verifica fin de parámetros
@@ -4195,6 +4220,8 @@ begin
       GenError('Cannot convert to ordinal.'); exit;
     end;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -4232,6 +4259,8 @@ begin
       GenError('Cannot convert to char.'); exit;
     end;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -4276,6 +4305,8 @@ begin
       GenError('Cannot convert to bit.'); exit;
     end;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -4355,6 +4386,8 @@ begin
       GenError('Cannot convert to byte.'); exit;
     end;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -4436,6 +4469,8 @@ begin
       GenError('Cannot convert expression to word.'); exit;
     end;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -4529,6 +4564,8 @@ begin
       GenError('Cannot convert expression to Dword.'); exit;
     end;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -4559,6 +4596,8 @@ begin
   stExpres: begin  //se asume que ya está en (w)
     GenError('PORT variable expected.'); exit;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -4588,6 +4627,8 @@ begin
   stExpres: begin  //se asume que ya está en (w)
     GenError('PORT variable expected.'); exit;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;
@@ -4610,6 +4651,8 @@ begin
   stVariab, stExpres: begin  //se asume que ya está en (w)
     GenError('A constant expected.'); exit;
   end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
   end;
   if not CaptureTok(')') then exit;
 end;

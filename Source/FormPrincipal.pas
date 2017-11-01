@@ -9,7 +9,7 @@ interface
 uses
   Classes, SysUtils, SynEdit, SynEditTypes, Forms, Controls, Dialogs, Menus,
   ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc,
-  SynFacilHighlighter, SynFacilUtils, SynFacilCompletion, MisUtils, XpresBas,
+  SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
   Pic16Utils, Parser, FormPICExplorer, Globales, FrameSyntaxTree, FormConfig,
   PicPasProject, FrameEditView, FrameMessagesWin, XpresElementsPIC, CodeTools,
   ParserAsm, ParserDirec, FrameCfgExtTool, FormDebugger, FormRAMExplorer;
@@ -203,8 +203,7 @@ type
     procedure ConfigExtTool_RequirePar(var comLine: string);
     procedure cxp_AfterCompile;
     procedure cxp_RequireFileString(FilePath: string; var strList: TStrings);
-    procedure fraEdit_RequireFieldsComplet(ident: string;
-      opEve: TFaOpenEvent; tokPos: TSrcPos);
+    procedure fraEdit_RequireSetCompletion(ed: TSynEditor);
     procedure fraMessagesStatisDBlClick;
     procedure fraSynTreeSelecFileExplorer;
     procedure fraEdit_RequireSynEditConfig(ed: TsynEdit);
@@ -282,12 +281,64 @@ begin
     strList := ed.SynEdit.Lines;
   end;
 end;
-procedure TfrmPrincipal.fraEdit_RequireFieldsComplet(ident: string;
-  opEve: TFaOpenEvent; tokPos: TSrcPos);
-{Este evento se puede enlazar directamente a @CT.FieldsComplet, pero así es más seguro
-porque CT, puede crearse después}
+procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
+{Se produjo una modificación en el editor "ed"}
 begin
-  ct.FieldsComplet(ident, opEve, tokPos);
+  if not cxp.Compiling then begin
+    //En compilación no se activa la verificación automática de sintaxis
+    ticSynCheck := 0;  //reinicia cuenta
+  end;
+  acArcSave.Enabled := ed.Modified;
+  acEdUndo.Enabled  := ed.CanUndo;
+  acEdRedo.Enabled  := ed.CanRedo;
+  //Para estas acciones no es necesario controlarlas, porque son acciones pre-determinadas
+//  acEdiCortar.Enabled := edit.canCopy;
+//  acEdiCopiar.Enabled := edit.canCopy;
+//  acEdiPegar.Enabled  := edit.CanPaste;
+  ed.ClearMarkErr;  //Quita la marca de error que pudiera haber
+end;
+procedure TfrmPrincipal.fraEdit_SelectEditor;
+{Se ha cambiado el estado de los editores: Se ha cambaido la selección, se ha
+agregado o eliminado alguno.}
+var
+  ed: TSynEditor;
+begin
+  //Se trata de realizar solo las tareas necesarias. Para no cargar el proceso.
+  if fraEditView1.Count = 0 then begin
+    //No hay ventanas de edición abiertas
+//    fraEditView1.Visible := false;
+    acArcSaveAs.Enabled := false;
+    acEdSelecAll.Enabled := false;
+
+    acArcSave.Enabled := false;
+    acEdUndo.Enabled  := false;
+    acEdRedo.Enabled  := false;
+
+    StatusBar1.Panels[3].Text := '';
+    StatusBar1.Panels[4].Text := '';
+  end else begin
+    //Hay ventanas de edición abiertas
+    ed := fraEditView1.ActiveEditor;
+    acArcSaveAs.Enabled := true;
+    acEdSelecAll.Enabled := true;
+
+    fraEdit_ChangeEditorState(ed);  //Actualiza botones
+
+    StatusBar1.Panels[3].Text := ed.CodArc;  //Codificación
+    StatusBar1.Panels[4].Text := ed.NomArc;  //Nombre de archivo
+  end;
+  editChangeFileInform;
+end;
+procedure TfrmPrincipal.fraEdit_RequireSynEditConfig(ed: TsynEdit);
+{Se pide actualizar la configuración de un editor.}
+begin
+  ed.PopupMenu := PopupEdit;
+  Config.ConfigEditor(ed);
+end;
+procedure TfrmPrincipal.fraEdit_RequireSetCompletion(ed: TSynEditor);
+{SOlicita configurar el completado de código al resaltador}
+begin
+  ct.SetCompletion(ed);
 end;
 procedure TfrmPrincipal.fraMessagesStatisDBlClick;
 //Doble clcik en la sección de estadísticas
@@ -328,7 +379,7 @@ begin
   fraEditView1.OnChangeEditorState    := @fraEdit_ChangeEditorState;
   fraEditView1.OnSelectEditor         := @fraEdit_SelectEditor;
   fraEditView1.OnRequireSynEditConfig := @fraEdit_RequireSynEditConfig;
-  fraEditView1.OnRequireFieldsComplet := @fraEdit_RequireFieldsComplet;
+  fraEditview1.OnRequireSetCompletion := @fraEdit_RequireSetCompletion;
   //COnfigura Árbol de sintaxis
   fraSynTree.OnSelectElemen := @fraSynTreeSelectElemen;
   fraSynTree.OnOpenFile := @fraSynTreeOpenFile;
@@ -452,7 +503,7 @@ begin
   end;
   if Config.AutSynChk and (ticSynCheck = 5) then begin
     //Se cumplió el tiempo para iniciar la verificación automática de sintaxis
-    debugln('--Verif. Syntax.' + TimeToStr(now));
+//    debugln('--Verif. Syntax.' + TimeToStr(now));
     if fraEditView1.Count>0 then begin
       //Hay archivo abiertos
       ed := fraEditView1.ActiveEditor;
@@ -503,60 +554,6 @@ begin
   end;
   //Pasa evento a COde Tool
   CT.KeyDown(Sender, Key, Shift);
-end;
-procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
-{Se produjo una modificación en el editor "ed"}
-begin
-  if not cxp.Compiling then begin
-    //En compilación no se activa la verificación automática de sintaxis
-    ticSynCheck := 0;  //reinicia cuenta
-  end;
-  acArcSave.Enabled := ed.Modified;
-  acEdUndo.Enabled  := ed.CanUndo;
-  acEdRedo.Enabled  := ed.CanRedo;
-  //Para estas acciones no es necesario controlarlas, porque son acciones pre-determinadas
-//  acEdiCortar.Enabled := edit.canCopy;
-//  acEdiCopiar.Enabled := edit.canCopy;
-//  acEdiPegar.Enabled  := edit.CanPaste;
-  ed.ClearMarkErr;  //Quita la marca de error que pudiera haber
-end;
-procedure TfrmPrincipal.fraEdit_SelectEditor;
-{Se ha cambiado el estado de los editores: Se ha cambaido la selección, se ha
-agregado o eliminado alguno.}
-var
-  ed: TSynEditor;
-begin
-  //Se trata de realizar solo las tareas necesarias. Para no cargar el proceso.
-  if fraEditView1.Count = 0 then begin
-    //No hay ventanas de edición abiertas
-//    fraEditView1.Visible := false;
-    acArcSaveAs.Enabled := false;
-    acEdSelecAll.Enabled := false;
-
-    acArcSave.Enabled := false;
-    acEdUndo.Enabled  := false;
-    acEdRedo.Enabled  := false;
-
-    StatusBar1.Panels[3].Text := '';
-    StatusBar1.Panels[4].Text := '';
-  end else begin
-    //Hay ventanas de edición abiertas
-    ed := fraEditView1.ActiveEditor;
-    acArcSaveAs.Enabled := true;
-    acEdSelecAll.Enabled := true;
-
-    fraEdit_ChangeEditorState(ed);  //Actualiza botones
-
-    StatusBar1.Panels[3].Text := ed.CodArc;  //Codificación
-    StatusBar1.Panels[4].Text := ed.NomArc;  //Nombre de archivo
-  end;
-  editChangeFileInform;
-end;
-procedure TfrmPrincipal.fraEdit_RequireSynEditConfig(ed: TsynEdit);
-{Se pide actualizar la configuración de un editor.}
-begin
-  ed.PopupMenu := PopupEdit;
-  Config.ConfigEditor(ed);
 end;
 procedure TfrmPrincipal.fraMessagesDblClickMessage(const srcPos: TSrcPos);
 begin

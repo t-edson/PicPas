@@ -377,6 +377,7 @@ type
     AllVars    : TxpEleVars;
     AllFuncs   : TxpEleFuns;
     OnAddElement: procedure(xpElem: TxpElement) of object;  //Evento
+    OnFindElement: procedure(elem: TxpElement) of object;
     procedure Clear;
     procedure RefreshAllVars;
     procedure RefreshAllFuncs;
@@ -396,6 +397,7 @@ type
     function FindVar(varName: string): TxpEleVar;
     function FindType(typName: string): TxpEleType;
     function GetElementBodyAt(posXY: TPoint): TxpEleBody;
+    function GetElementAt(posXY: TPoint): TxpElement;
     function GetElementCalledAt(const srcPos: TSrcPos): TxpElement;
     function GetELementDeclaredAt(const srcPos: TSrcPos): TxpElement;
   public  //constructor y destructror
@@ -601,21 +603,21 @@ begin
     //en los bordes.
     if y1 = y2 then begin
       //Es rango es de una sola fila
-      if (posXY.X > srcDec.col) and (posXY.X < srcEnd.col) then begin
+      if (posXY.X >= srcDec.col) and (posXY.X <= srcEnd.col) then begin
         exit(true)
       end else begin
         exit(false);
       end;
     end else if posXY.y = y1 then begin
       //Está en el límite superior
-      if posXY.X > srcDec.col then begin
+      if posXY.X >= srcDec.col then begin
         exit(true)
       end else begin
         exit(false);
       end;
     end else if posXY.y = y2 then begin
       //Está en el límite inferior
-      if posXY.X < srcEnd.col then begin
+      if posXY.X <= srcEnd.col then begin
         exit(true)
       end else begin
         exit(false);
@@ -1318,6 +1320,9 @@ begin
     end;
     //Verifica ahora este elemento
     elem := curFindNode.elements[curFindIdx];
+    //Genera evento para indicar que está buscando
+    if OnFindElement<>nil then OnFindElement(elem);
+    //Compara
     if UpCase(elem.name) = tmp then begin
       //Encontró en "curFindIdx"
       Result := elem;
@@ -1414,9 +1419,8 @@ begin
   end;
   exit(nil);
 end;
-
 function TXpTreeElements.GetElementBodyAt(posXY: TPoint): TxpEleBody;
-{Busca el elemento del arbol, dentro del nodo principal, y sus nodos hijos, en que
+{Busca en el árbol de sintaxis, dentro del nodo principal, y sus nodos hijos, en qué
 cuerpo (nodo Body) se encuentra la coordenada del cursor "posXY".
 Si no encuentra, devuelve NIL.}
 var
@@ -1436,7 +1440,7 @@ var
             exit;
           end;
         end else begin
-          //No es un body, puede ser un eleemnto con nodos hijos
+          //No es un body, puede ser un elemento con nodos hijos
           if ele.elements<>nil then
             ExploreForBody(ele);  //recursivo
         end;
@@ -1449,6 +1453,40 @@ begin
   ExploreForBody(main);
   Result := res;
 end;
+function TXpTreeElements.GetElementAt(posXY: TPoint): TxpElement;
+{Busca en el árbol de sintaxis, en qué nodo Body se encuentra la coordenada del
+cursor "posXY". Si no encuentra, devuelve NIL.}
+var
+  res: TxpEleBody;
+
+  procedure ExploreFor(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      //Explora a todos sus elementos
+      for ele in nod.elements do begin
+//debugln('nod='+ele.Path);
+        if ele.elements<>nil then begin
+          //Tiene nodos interiors.
+          ExploreFor(ele);  //Explora primero en los nodos hijos
+          if res<>nil then exit;  //encontró
+        end;
+        //No encontró en los hijos, busca en el mismo nodo
+        if ele.posXYin(posXY) then begin
+          res := TxpEleBody(ele);   //guarda referencia
+          if res<>nil then exit;  //encontró
+        end;
+      end;
+    end;
+  end;
+begin
+  //Realiza una búsqueda recursiva.
+  res := nil;   //Por defecto
+  ExploreFor(main);
+  Result := res;
+end;
+
 function TXpTreeElements.GetElementCalledAt(const srcPos: TSrcPos): TxpElement;
 {Explora los elementos, para ver si alguno es llamado desde la posición indicada.
 Si no lo encuentra, devueleve NIL.}

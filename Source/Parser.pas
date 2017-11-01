@@ -537,7 +537,7 @@ begin
 end;
 procedure TCompiler.Cod_JumpIfTrue;
 {Codifica una instrucción de salto, si es que el resultado de la última expresión es
-verdadera. Se debe asegurar que la expresión es de tipo booleana y que es de categoría
+verdadera. Se debe asegurar que la expresión es de tipo booleana y de almacenamiento
 stVariab o stExpres.}
 begin
   if res.Sto = stVariab then begin
@@ -2206,7 +2206,7 @@ begin
       if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
       FirstPass := true;
       CompileUnit(TreeElems.main);
-      consoleTickCount('** First Pass.');
+//      consoleTickCount('** First Pass.');
     end else begin
       //Debe ser un programa
       {Se hace una primera pasada para ver, a modo de exploración, para ver qué
@@ -2218,7 +2218,7 @@ begin
       FirstPass := true;
       CompileProgram;  //puede dar error
       if HayError then exit;
-      consoleTickCount('** First Pass.');
+//      consoleTickCount('** First Pass.');
       if Link then begin
 //        debugln('*** Compiling/Linking: Pass 2.');
         {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,

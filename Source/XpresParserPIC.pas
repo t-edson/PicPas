@@ -33,7 +33,7 @@ TOperType = (operUnary,  //Operación Unaria
 TOperand = object
 private
   FSto   : TStoOperand; //Almacenamiento del operando
-  FTyp   : TxpEleType;  //Tipo del operando, cuando no es de categoría stVariab
+  FTyp   : TxpEleType;  //Tipo del operando, cuando no es stVariab
   FVar   : TxpEleVar;   //Referencia a variable
   FVarOff: TxpEleVar;   //Referencia a variable
   FVal   : TConsValue;  //Valores constantes, cuando el operando es constante
@@ -60,8 +60,8 @@ public  //Campos generales
   procedure SetAsVarRef(VarBase: TxpEleVar; ValOff: integer);
   procedure SetAsExpRef(VarBase: TxpEleVar; Etyp: TxpEleType);
   procedure SetAsNull;
-  function catOpStr: string;
-  function catOpChr: char;
+  function StoOpStr: string;
+  function StoOpChr: char;
   procedure LoadToReg; inline;  //Pone el operador en registros de Trabajo
   procedure DefineRegister; inline;
   function FindOperator(const oper: string): TxpOperator; //devuelve el objeto operador
@@ -782,7 +782,7 @@ begin
         end;
         xfun.procCall(xfun);  //Para que devuelva el tipo y codifique el _CALL o lo implemente
         //Puede devolver typNull, si no es una función.
-        Result := res;  //copia tipo y categoría y otros campso relevantes
+        Result := res;  //copia tipo, almacenamiento y otros campos relevantes
         {$IFDEF LogExpres} Result.txt:= tmp; {$ENDIF}    //toma el texto
         exit;
       end;
@@ -869,8 +869,8 @@ begin
    LogExpLevel('-- Op1='+Op1.txt+', Op2='+Op2.txt+' --');
    {$ENDIF}
    //Busca si hay una operación definida para: <tipo de Op1>-opr-<tipo de Op2>
-//debugln('Op1: cat=%s, typ=%s',[Op1.catOpStr, Op1.Typ.name]);
-//debugln('Op2: cat=%s, typ=%s',[Op2.catOpStr, Op2.Typ.name]);
+//debugln('Op1: cat=%s, typ=%s',[Op1.StoOpStr, Op1.Typ.name]);
+//debugln('Op2: cat=%s, typ=%s',[Op2.StoOpStr, Op2.Typ.name]);
    Operation := opr.FindOperation(Op2.Typ);
    if Operation = nil then begin
       tmp := '(' + Op1.Typ.name + ') '+ opr.txt;
@@ -1335,7 +1335,7 @@ begin
 end;
 procedure TOperand.CopyConsValTo(var c: TxpEleCon);
 begin
-  //hace una copia selectiva por velocidad, de acuerdo a la categoría
+  //hace una copia selectiva por velocidad, de acuerdo al grupo
   case Typ.grp of
   t_boolean : c.val.ValBool:=Fval.ValBool;
   t_integer,
@@ -1409,19 +1409,19 @@ begin
   Fval.ValInt:=AValue;
 end;
 procedure TOperand.SetAsConst(xtyp: TxpEleType);
-{Fija la categoría del Operando como Constante, del tipo indicado}
+{Fija el almacenamiento del Operando como Constante, del tipo indicado}
 begin
   FSto := stConst;
   FTyp := xtyp;
 end;
 procedure TOperand.SetAsVariab(xvar: TxpEleVar);
-{Fija la categoría del Operando como Variable, del tipo de la variable}
+{Fija el almacenamiento del Operando como Variable, del tipo de la variable}
 begin
   FSto := stVariab;
   FVar := xvar;  //No hace falta actualziar el tipo
 end;
 procedure TOperand.SetAsExpres(xtyp: TxpEleType);
-{Fija la categoría del Operando como Expresión, del tipo indicado}
+{Fija el almacenamiento del Operando como Expresión, del tipo indicado}
 begin
   FSto := stExpres;
   FTyp := xtyp;
@@ -1454,17 +1454,17 @@ begin
   FSto := stConst;
   FTyp := typNull;   //Este es el tipo NULO
 end;
-function TOperand.catOpStr: string;
-{Categoría en cadena.}
+function TOperand.StoOpStr: string;
+{Devuelve lmacenamiento como cadena.}
 begin
   case Sto of
   stConst : exit('Constant');
-  stVariab: exit('Variable');
+  stVariab, stVarRefVar, stVarRefExp: exit('Variable');
   stExpres: exit('Expression');
   end;
 end;
-function TOperand.catOpChr: char;
-{Categoría en caracter.}
+function TOperand.StoOpChr: char;
+{Devuelve lmacenamiento como caracter.}
 begin
   Result := ' ';
   case Sto of

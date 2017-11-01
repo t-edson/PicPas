@@ -3,32 +3,54 @@ unit CodeTools;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, LCLType, SynEdit, SynEditHighlighter, MisUtils,
-  SynFacilCompletion, SynFacilHighlighter, XpresBas, XpresElementsPIC,
-  FrameEditView, FrameSyntaxTree, Parser, XpresParserPIC;
+  Classes, SysUtils, LCLType, LCLProc, SynEdit, SynEditHighlighter, LazUTF8,
+  MisUtils, SynFacilCompletion, SynFacilHighlighter, SynFacilBasic, XpresBas,
+  XpresElementsPIC, FrameEditView, FrameSyntaxTree, Parser, XpresParserPIC,
+  Globales;
 
 type
-
   { TCodeTool }
-
   TCodeTool = class
   private
     //Referencias importantes
     fraEdit   : TfraEditView;
     cxp       : TCompiler;
     fraSynTree: TfraSyntaxTree;
+    opEve0: TFaOpenEvent;   //Para pasar parámetro a cxpTreeElemsFindElement´()
+    procedure cxpTreeElemsFindElement(elem: TxpElement);
   public
     procedure ReadCurIdentif(out tok: string; out tokType: integer; out
       lex: TSynFacilComplet; out curX: integer);
     procedure GoToDeclaration;
     procedure KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+  private  //Completado de código
+    procedure AddListUnits(OpEve: TFaOpenEvent);
     procedure FieldsComplet(ident: string; opEve: TFaOpenEvent; tokPos: TSrcPos);
+    procedure Fill_IFtemplate(opEve: TFaOpenEvent);
+    procedure Fill_THENtemplate(opEve: TFaOpenEvent);
+    procedure Fill_templates(opEve: TFaOpenEvent);
+    procedure Fill_SpecialIdentif(opEve: TFaOpenEvent; hl: TSynFacilComplet;
+      tokName: string; idIcon: integer);
+    procedure GeneralIdentifierCompletion(opEve: TFaOpenEvent; curEnv: TFaCursorEnviron;
+      out Cancel: boolean);
+    procedure OpenAfterDot1(opEve: TFaOpenEvent; curEnv: TFaCursorEnviron; out
+      Cancel: boolean);
+    procedure OpenAfterDot2(opEve: TFaOpenEvent; curEnv: TFaCursorEnviron; out
+      Cancel: boolean);
+  public
+    procedure SetCompletion(ed: TSynEditor);
+  public  //Inicialización
     constructor Create(fraEdit0: TfraEditView; cxp0: TCompiler;
       fraSynTree0: TfraSyntaxTree);
   end;
 
 implementation
 
+procedure TCodeTool.cxpTreeElemsFindElement(elem: TxpElement);
+begin
+  debugln('comparando: ' + elem.name);
+  opEve0.AddItem(elem.name, 5);
+end;
 procedure TCodeTool.ReadCurIdentif(out tok: string; out tokType: integer;
                                    out lex: TSynFacilComplet; out curX: integer);
 {Da infomación sobre el token actual. Si no encuentra información, devuelve cadena
@@ -142,7 +164,29 @@ begin
     end;
   end;
 end;
-//Opciones para completado de código
+//Completado de código
+procedure TCodeTool.AddListUnits(OpEve: TFaOpenEvent);
+{Agrega la lista de unidades disponibles, a la lista Items[] de un Evento de apertura.}
+var
+  directorio, nomArc: String;
+  SearchRec: TSearchRec;
+begin
+  if OpEve=nil then exit;
+  directorio := rutUnits;
+  if FindFirst(directorio + '\*.pas', faDirectory, SearchRec) = 0 then begin
+    repeat
+      nomArc := SysToUTF8(SearchRec.Name);
+      if SearchRec.Attr and faDirectory = faDirectory then begin
+        //directorio
+      end else begin //archivo
+        //Argega nombre de archivo
+        nomArc := copy(nomArc, 1, length(nomArc)-4);
+        opEve.AddItem(nomArc, -1);
+      end;
+    until FindNext(SearchRec) <> 0;
+    FindClose(SearchRec);
+  end;
+end;
 procedure TCodeTool.FieldsComplet(ident: string; opEve: TFaOpenEvent;
   tokPos: TSrcPos);
 {LLena un objeto opEve, con los campos del identificador "ident", de acuerdo a su tipo.}
@@ -194,6 +238,173 @@ begin
     //No implementado en otro elemento
     exit;
   end;
+end;
+procedure TCodeTool.Fill_IFtemplate(opEve: TFaOpenEvent);
+begin
+  //Platillas IF
+  opEve.AddItem('if ... then ...;|if \_ then\n\n\uend;', 5);
+  opEve.AddItem('if ... then ... else ...;|if \_ then\n\n\uelse\n\n\uend;', 5);
+  opEve.AddItem('if ... then ... elsif ...;|if \_ then\n\n\uelsif  then\n\n\uelse\n\n\uend;', 5);
+end;
+procedure TCodeTool.Fill_THENtemplate(opEve: TFaOpenEvent);
+begin
+  //Platillas THEN
+  opEve.AddItem('then ...;|then\n\u  \_\n\uend;', 5);
+  opEve.AddItem('then ... else ...;|then\n\u  \_\n\uelse\n\n\uend;', 5);
+  opEve.AddItem('then ... elsif ...;|then\n\u  \_\n\uelsif  then\n\n\uelse\n\n\uend;', 5);
+end;
+procedure TCodeTool.Fill_templates(opEve: TFaOpenEvent);
+begin
+  //Platillas generales
+  opEve.AddItem('absolute \_$00;', 5);
+  opEve.AddItem('begin ... end; |begin\n  \_\n\uend;', 5);
+  opEve.AddItem('while ... |while \_ do\n\n\uend;', 5);
+  opEve.AddItem('repeat ... |repeat \n\t\_\n\uuntil;', 5);
+  opEve.AddItem('for i:=0 to ... |for i:=0 to \_ do\n\n\uend;', 5);
+  opEve.AddItem('asm', 5);
+  opEve.AddItem('asm ... end |asm \n\t\_\n\uend', 5);
+  opEve.AddItem('delay_ms', 5);
+  opEve.AddItem('delay_ms(100);', 5);
+  opEve.AddItem('inc(\_);', 5);
+  opEve.AddItem('dec(\_);', 5);
+  opEve.AddItem('chr(\_);', 5);
+  opEve.AddItem('chr(65);', 5);
+  opEve.AddItem('ord(\_);', 5);
+  opEve.AddItem('ord(''A'');', 5);
+  opEve.AddItem('SetAsInput(\_);', 5);
+  opEve.AddItem('SetAsOutput(\_);', 5);
+  opEve.AddItem('SetBank(\_);', 5);
+end;
+procedure TCodeTool.Fill_SpecialIdentif(opEve: TFaOpenEvent; hl: TSynFacilComplet;
+                                            tokName: string; idIcon: integer);
+var
+  SpecIdent: TArrayTokSpec;
+  tipTok, i: Integer;
+begin
+  SpecIdent := TSynFacilComplet2(hl).SpecIdentif;  //Accede a campo protegido
+  tipTok := hl.GetAttribIDByName(tokName);   //tipo de atributo
+  for i:= 0 to high(SpecIdent) do begin
+    if SpecIdent[i].tTok = tipTok then begin
+      opEve.AddItem(SpecIdent[i].orig, idIcon);
+    end;
+  end;
+end;
+procedure TCodeTool.GeneralIdentifierCompletion(opEve: TFaOpenEvent;
+  curEnv: TFaCursorEnviron; out Cancel: boolean);
+{La idea de este métod es implementar el completado de un identifcador, en cualquier
+parte en que se encuentre el cursor.}
+var
+  curPos: TPoint;
+  ed: TSynEditor;
+  ele: TxpElement;
+begin
+  ed := fraEdit.ActiveEditor;
+  if ed = nil then exit;
+//  ident := curEnv.tok_2^.txt;
+  //LLena
+  opEve.Clear;  //limpia primero
+  //Asegurarse que "synTree" está actualizado.
+  cxp.Compile(ed.NomArc, false);  //Solo primera pasada
+  if cxp.HayError then begin
+    //Basta que haya compilado hasta donde se encuentra el identificador, para que funciones.
+//    MsgErr('Compilation error.');  //tal vez debería dar más información sobre el error
+//    exit;
+  end;
+  //Identifica la zona en qee se encuentra el identificador
+  {Calcula las coordenadas actuales del cursor. En X, retrocede 1, porque si hay un error
+  con el identificador actual (lo que es normal porque se está empezando a escribir), el
+  bloque actual terminará antes}
+  curPos.x := ed.SynEdit.CaretX - 1;
+  curPos.y := ed.SynEdit.CaretY;
+//  eleBod := cxp.TreeElems.GetElementBodyAt(curPos);
+//  if eleBod = nil then begin
+//    //No identifica a un Body
+////    exit;
+//  end;
+//  MsgBox(eleBod.Path);
+  //Elementos comunes
+  Fill_IFtemplate(opEve);
+  Fill_THENtemplate(opEve);
+  Fill_templates(opEve);
+  //Carga palabras reservadas de la sintaxis
+  Fill_SpecialIdentif(opEve, ed.hl, 'Keyword', 2);
+  Fill_SpecialIdentif(opEve, ed.hl, 'Boolean', 4);
+  //Carga identificadores accesibles desde la posición actual
+  ele := cxp.TreeElems.GetElementAt(curPos);
+  if ele = nil then begin
+    //No identifica la posición actual
+    exit;
+  end;
+  cxp.TreeElems.curNode := ele;  //Se posiciona en ese nodo
+  //Realiza la búsqueda con FindFirst, usando evento OnFindElement
+  opEve0 := opEve;      //Para que el evento identifique al opEve
+  cxp.TreeElems.OnFindElement := @cxpTreeElemsFindElement;
+  cxp.TreeElems.FindFirst('#');  //Nunca lo va a encontrar pero va a explorar todo el árbol
+  cxp.TreeElems.OnFindElement := nil;
+
+  //Deja el filtro
+  Cancel := false;
+end;
+procedure TCodeTool.OpenAfterDot1(opEve: TFaOpenEvent;
+  curEnv: TFaCursorEnviron; out Cancel: boolean);
+var
+  ident: String;
+  tokPos: TSrcPos;
+begin
+  if fraEdit.ActiveEditor=nil then exit;
+  ident := curEnv.tok_2^.txt;
+  //Calcula la posición del elemento
+  tokPos.row := fraEdit.ActiveEditor.SynEdit.CaretY;
+  tokPos.col := curEnv.tok_2^.posIni+1;
+  tokPos.fil := fraEdit.ActiveEditor.NomArc;
+  //Dispara evento
+  FieldsComplet(ident, opEve, tokPos);
+  Cancel := false;
+end;
+procedure TCodeTool.OpenAfterDot2(opEve: TFaOpenEvent;
+  curEnv: TFaCursorEnviron; out Cancel: boolean);
+var
+  ident: String;
+  tokPos: TSrcPos;
+begin
+  if fraEdit.ActiveEditor=nil then exit;
+  ident := curEnv.tok_3^.txt;
+  //Calcula la posición del elemento
+  tokPos.row := fraEdit.ActiveEditor.SynEdit.CaretY;
+  tokPos.col := curEnv.tok_3^.posIni+1;
+  tokPos.fil := fraEdit.ActiveEditor.NomArc;
+  //Dispara evento
+  FieldsComplet(ident, opEve, tokPos);
+  Cancel := false;
+end;
+procedure TCodeTool.SetCompletion(ed: TSynEditor);
+var
+  opEve: TFaOpenEvent;
+begin
+  //Llena eventos de apertura para la sección de unidades
+  //Configura eventos de apertura para nombres de unidades.
+  opEve := ed.hl.FindOpenEvent('unit1');
+  opEve.ClearItems;
+  AddListUnits(opEve);  //Configura unidades disponibles
+
+  opEve := ed.hl.FindOpenEvent('unit2');
+  opEve.ClearItems;
+  AddListUnits(opEve);  //Configura unidades disponibles
+
+  opEve := ed.hl.FindOpenEvent('unit3');
+  opEve.ClearItems;
+  AddListUnits(opEve);  //Configura unidades disponibles
+
+  //Configura eventos, para "después del punto."
+  opEve := ed.hl.FindOpenEvent('AfterDot1');
+  opEve.OnLoadItems := @OpenAfterDot1;
+  opEve := ed.hl.FindOpenEvent('AfterDot2');
+  opEve.OnLoadItems := @OpenAfterDot2;
+
+  //Configura completado dinámico, en cualquier punto del programa
+  opEve := ed.hl.FindOpenEvent('BE4');
+  opEve.OnLoadItems := @GeneralIdentifierCompletion;
+
 end;
 constructor TCodeTool.Create(fraEdit0: TfraEditView; cxp0 : TCompiler;
                              fraSynTree0: TfraSyntaxTree);

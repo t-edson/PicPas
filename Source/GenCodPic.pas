@@ -371,8 +371,8 @@ procedure TGenCodPic.GenerateROBdetComment;
 Rutinas de Operación binaria, que es cuando está definido operType, p1, y p2.}
 begin
   if incDetComm then begin
-    PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.Typ.name + ',' +
-                                p2^.catOpChr + ':' + p2^.Typ.name + ')', false);
+    PutTopComm('      ;Oper(' + p1^.StoOpChr + ':' + p1^.Typ.name + ',' +
+                                p2^.StoOpChr + ':' + p2^.Typ.name + ')', false);
   end;
 end;
 procedure TGenCodPic.GenerateROUdetComment;
@@ -380,7 +380,7 @@ procedure TGenCodPic.GenerateROUdetComment;
 Rutinas de Operación unaria, que es cuando está definido operType, y p1.}
 begin
   if incDetComm then begin
-    PutTopComm('      ;Oper(' + p1^.catOpChr + ':' + p1^.Typ.name + ')', false);
+    PutTopComm('      ;Oper(' + p1^.StoOpChr + ':' + p1^.Typ.name + ')', false);
   end;
 end;
 //Funciones auxiliares privadas

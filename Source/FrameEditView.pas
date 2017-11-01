@@ -7,7 +7,7 @@ uses
   ComCtrls, ExtCtrls, Graphics, LCLProc, Menus, LCLType, StdCtrls, strutils,
   fgl, SynEdit, SynEditMiscClasses, SynEditKeyCmds, SynPluginMultiCaret,
   SynEditMarkupHighAll, SynEditTypes, SynPluginSyncroEdit, Globales, SynFacilUtils,
-  SynFacilCompletion, SynFacilHighlighter, MisUtils, XpresBas;
+  SynFacilBasic, SynFacilCompletion, SynFacilHighlighter, MisUtils, XpresBas;
 type
   { TMarkup }
   {Marcador para resltar errores de sintaxis en SynEdit}
@@ -17,9 +17,13 @@ type
   end;
 
   { TSynFacilComplet2 }
-  //Versión personalizada de  TSynFacilComplet
+  {Versión personalizada de  TSynFacilComplet, que define palabras claves y
+   hace público el campo SpecIdentifiers}
   TSynFacilComplet2 = class(TSynFacilComplet)
     function IsKeyword(const AKeyword: string): boolean; override;
+  public
+    property SpecIdentif: TArrayTokSpec read SpecIdentifiers;
+//    SpecIdentifiers: TArrayTokSpec;
   end;
 
   { TSynEditor }
@@ -84,12 +88,7 @@ type
     xIniTabs : integer;  //Coordenada inicial desde donde se dibujan las lenguetas
     tabDrag  : integer;
     tabSelec : integer;
-    procedure AddListUnits(OpEve: TFaOpenEvent);
     procedure ConfigureSyntax(ed: TSynEditor; Complete: boolean = true);
-    procedure OpenAfterDot1(opEve: TFaOpenEvent; curEnv: TFaCursorEnviron;
-                           out Cancel: boolean);
-    procedure OpenAfterDot2(opEve: TFaOpenEvent; curEnv: TFaCursorEnviron;
-                           out Cancel: boolean);
     procedure MakeActiveTabVisible;
     procedure Panel1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure Panel1DragOver(Sender, Source: TObject; X, Y: Integer;
@@ -143,6 +142,7 @@ type
     OnRequireSynEditConfig: procedure(ed: TsynEdit) of object;
     OnRequireFieldsComplet: procedure(ident: string; opEve: TFaOpenEvent;
                                       tokPos: TSrcPos) of object;
+    OnRequireSetCompletion: procedure(ed: TSynEditor) of object;
   public  //Administración de archivos
     tmpPath: string;  //ruta usada para crear archivos temporales para los editores
     property Modified: boolean read GetModified;
@@ -271,8 +271,8 @@ begin
 end;
 procedure TSynEditor.edKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
-var
-  lexState: TFaLexerState;
+//var
+//  lexState: TFaLexerState;
 begin
 //  if (Shift = [ssCtrl]) and (Key = VK_J) then begin
 //    //Exploramos el texto usando el resaltador
@@ -1061,68 +1061,8 @@ begin
   ed := ActiveEditor;
   ed.SelectAll;
 end;
-procedure TfraEditView.OpenAfterDot1(opEve: TFaOpenEvent;
-  curEnv: TFaCursorEnviron; out Cancel: boolean);
-var
-  ident: String;
-  tokPos: TSrcPos;
-begin
-  if ActiveEditor=nil then exit;
-  ident := curEnv.tok_2^.txt;
-  //Calcula la posición del elemento
-  tokPos.row := ActiveEditor.SynEdit.CaretY;
-  tokPos.col := curEnv.tok_2^.posIni+1;
-  tokPos.fil := ActiveEditor.NomArc;
-  //Dispara evento
-  OnRequireFieldsComplet(ident, opEve, tokPos);
-  Cancel := false;
-end;
-procedure TfraEditView.OpenAfterDot2(opEve: TFaOpenEvent;
-  curEnv: TFaCursorEnviron; out Cancel: boolean);
-var
-  ident: String;
-  tokPos: TSrcPos;
-begin
-  if ActiveEditor=nil then exit;
-  ident := curEnv.tok_3^.txt;
-  //Calcula la posición del elemento
-  tokPos.row := ActiveEditor.SynEdit.CaretY;
-  tokPos.col := curEnv.tok_3^.posIni+1;
-  tokPos.fil := ActiveEditor.NomArc;
-  //Dispara evento
-  OnRequireFieldsComplet(ident, opEve, tokPos);
-//debugln('OpenAfterDot2:' + ident);
-//  opEve.AddAvail('alfa');  //NNO DESTRUYE ÍTEMS
-//  opEve.AddAvail('unicorn');
-//  opEve.AddAvail('usame');
-//  opEve.AddAvail('beta');
-  Cancel := false;
-end;
-procedure TfraEditView.AddListUnits(OpEve: TFaOpenEvent);
-{Agrega la lista de unidades disponibles, a la lista Items[] de un Evento de apertura.}
-var
-  directorio, nomArc: String;
-  SearchRec: TSearchRec;
-begin
-  if OpEve=nil then exit;
-  directorio := rutUnits;
-  if FindFirst(directorio + '\*.pas', faDirectory, SearchRec) = 0 then begin
-    repeat
-      nomArc := SysToUTF8(SearchRec.Name);
-      if SearchRec.Attr and faDirectory = faDirectory then begin
-        //directorio
-      end else begin //archivo
-        //Argega nombre de archivo
-        nomArc := copy(nomArc, 1, length(nomArc)-4);
-        opEve.AddItem(nomArc, -1);
-      end;
-    until FindNext(SearchRec) <> 0;
-    FindClose(SearchRec);
-  end;
-end;
 procedure TfraEditView.ConfigureSyntax(ed: TSynEditor; Complete: boolean = true);
 var
-  opEve: TFaOpenEvent;
   synFile: String;
   ext: string;
 begin
@@ -1138,24 +1078,7 @@ begin
       ed.LoadSyntaxFromFile(synFile);
       if Complete then begin
         //Configura eventos de apertura para nombres de unidades.
-        opEve := ed.hl.FindOpenEvent('unit1');
-        opEve.ClearItems;
-        AddListUnits(opEve);  //Configura unidades disponibles
-
-        opEve := ed.hl.FindOpenEvent('unit2');
-        opEve.ClearItems;
-        AddListUnits(opEve);  //Configura unidades disponibles
-
-        opEve := ed.hl.FindOpenEvent('unit3');
-        opEve.ClearItems;
-        AddListUnits(opEve);  //Configura unidades disponibles
-
-        //Configura eventos de apertura para nombres de unidades.
-        opEve := ed.hl.FindOpenEvent('AfterDot1');
-        opEve.OnLoadItems := @OpenAfterDot1;
-        opEve := ed.hl.FindOpenEvent('AfterDot2');
-        opEve.OnLoadItems := @OpenAfterDot2;
-
+        if OnRequireSetCompletion<>nil then OnRequireSetCompletion(ed);
       end;
     end;
   '.ASM': begin
@@ -1170,7 +1093,7 @@ begin
         //Configura eventos de apertura.
      end;
    end;
- '.C': begin
+  '.C': begin
      //Es C
      synFile := rutSyntax + DirectorySeparator + 'PicPas_C.xml';
      if not FileExists(synFile) then begin
@@ -1180,9 +1103,8 @@ begin
      ed.LoadSyntaxFromFile(synFile);
      if Complete then begin
         //Configura eventos de apertura.
-
       end;
-    end;
+   end;
   end;
 end;
 //Administración de archivos
@@ -1484,4 +1406,4 @@ begin
 end;
 
 end.
-//92
+//1482
