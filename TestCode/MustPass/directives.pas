@@ -5,24 +5,24 @@ procedure proc1;
 begin
   x := 1;
 end; 
-procedure proc2;
-begin
-  x := 1;
-end; 
 begin
 //Prueba de funciones
-  {$MSGBOX abs(-1)}
-  {$MSGBOX sgn(-1000)}
-  {$MSGBOX sin(3.1415)}
-  {$MSGBOX cos(0)}
-  {$MSGBOX tan(0)}
-  {$MSGBOX log(2.718)}
-  {$MSGBOX round(3.5)}
-  {$MSGBOX round(2.1)}
-  {$MSGBOX trunc(2.9)}
-  {$MSGBOX length('Hola mundo')}
-  {$MSGBOX length('tú')}
-  {$MSGBOX Upcase('Hola mundo')}
+  {$IF abs(-1) <> 1}
+  {$MSGERR 'Error'}
+  {$ENDIF}
+  {$IF sgn(-1000) <> -1}
+  {$MSGERR 'Error'}
+  {$ENDIF}
+  {$IF abs(sin(3.14159)) > 0.0001 }  {$MSGERR 'Error'}  {$ENDIF}
+  {$IF cos(0)<>1} {$MSGERR 'Error'}  {$ENDIF}
+  {$IF tan(0)<>0} {$MSGERR 'Error'}  {$ENDIF}
+  {$IF abs(log(2.7182)-1) > 0.0001 } {$MSGERR 'Error'}  {$ENDIF}
+  {$IF round(3.5) <> 4 } {$MSGERR 'Error'}  {$ENDIF}
+  {$IF round(2.1) <> 2 } {$MSGERR 'Error'}  {$ENDIF}
+  {$IF round(2.9) <> 3 } {$MSGERR 'Error'}  {$ENDIF}
+  {$IF length('Hola') <> 4 } {$MSGERR 'Error'}  {$ENDIF}
+  {$IF length('tú') <> 3 } {$MSGERR 'Error'}  {$ENDIF}
+  {$IF Upcase('Hola') <> 'HOLA' } {$MSGERR 'Error'}  {$ENDIF}
 
 //Define características del hardware
 {$SET PIC_MODEL='MIPIC'}

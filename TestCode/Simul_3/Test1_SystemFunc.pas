@@ -54,12 +54,18 @@ begin
   if vbyte  = 66  then good else bad end;
   vbyte := 34+Ord('B');
   if vbyte  = 100  then good else bad end;
+  vbyte := (vbyte + 1)+Ord('A');
+  if vbyte  = 166  then good else bad end;
+  
 
   /////// Chr() function
   vbyte := 65;
   vchar := Chr(vbyte);
   if vchar = 'A'  then good else bad end;
   vchar := Chr(66);
+  if vchar  = 'B'  then good else bad end;
+  vbyte := 1;
+  vchar := Chr(65+vbyte);
   if vchar  = 'B'  then good else bad end;
 
   /////// Bit() function
@@ -78,6 +84,35 @@ begin
   vbit := bit(vbyte+1);
   if vbit  = 1  then good else bad end;
   if bit(2) and 1 = 1 then good else bad end;
+  
+  vbool := true;
+  if bit(vbool) = 1 then good else bad end;
+  if bit(not vbool) = 0 then good else bad end;
+  if bit(not vbool) and bit(vbool) = 0 then good else bad end;
+  if bit(not vbool) or bit(vbool) = 1 then good else bad end;
+
+  /////// Boolean() function
+  vbool := boolean(65);
+  if vbool  then good else bad end;
+  vbool := boolean(0);
+  if not vbool then good else bad end;
+
+  vbyte := 65;
+  vbool := boolean(vbyte);
+  if vbool then good else bad end;
+  
+  vbyte := 0;
+  vbool := boolean(vbyte);
+  if not vbool then good else bad end;
+  vbool := boolean(vbyte+1);
+  if vbool then good else bad end;
+  if boolean(2) and true then good else bad end;
+  
+  vbit := 1;
+  if boolean(vbit) then good else bad end;
+  if not boolean(not vbit) then good else bad end;
+  if not (boolean(not vbit) and boolean(vbit) ) then good else bad end;
+  if boolean(not vbit) or boolean(vbit) then good else bad end;
   
   /////// Byte() function
   vbyte := byte(65);  //byte of byte

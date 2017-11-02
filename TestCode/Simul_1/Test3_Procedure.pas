@@ -181,4 +181,9 @@ begin
 	//Función con parámetros REGISTER
   xbyte :=  fun7(1);
   if xbyte = 2 then bien else mal end;
+  
+  //Función con llamada recursiva
+  xbyte := func2(func2(200));
+  if xbyte = 202 then bien else mal end;
+  
 end.

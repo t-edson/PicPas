@@ -18,7 +18,7 @@ type  //tipos equivalentes
 	byte1  = byte;
   char1  = char;
 	word1  = word;
-  dword1 = dword;
+  dword1 = dword; 
 var  //variables de tipos equivalentes
   vbit1  : bit1;
   vbool1 : bool1;
@@ -26,25 +26,32 @@ var  //variables de tipos equivalentes
   vchar1 : char1;
 	vword1 : word1;
   vdword1: dword1;
+type   //Tipos punteros
+  byteptr = ^byte;
 type  //Tipos arreglos
   Tachar = array[3] of char;
   Tabyte = array[3] of byte;
   Taword = array[3] of word;
-var
+var  //Variables arreglos
   achar: Tachar;
   abyte: Tabyte;
   aword: Taword;
+var  //Variables para punteros
+  ptrByte1, ptrByte2: byteptr;
+  m, n : byte;
    
-//  procedure proc1(x, y: byte1): word1;
-//  begin
-//    exit(x+y);
-//  end; 
+  procedure proc1(x, y: byte1): word1;
+  begin
+    exit(x+y);
+  end; 
   
 begin
   SetAsOutput(pinLed);
   pinLed := 0;
 
+  //////////////////////////////////////////////////////
 	//////////////  Existencia básica de tipos ///////////////////
+  //////////////////////////////////////////////////////
   vbit := 1;
   if vbit = 1 then good else bad end;
   vbool := true;
@@ -90,19 +97,104 @@ begin
   // NO IMPLEMENTADO
   
   //////////////////////////////////////////////////////
+  //////////////// Punteros a byte /////////////////////
+  //////////////////////////////////////////////////////
+  ptrByte1 := 0;    //asignación constante
+  if ptrByte1 = 0 then good else bad end;
+  ptrByte2 := 255;  //asignación constante
+  if ptrByte2 = 255 then good else bad end;
+  m := 5;
+  ptrByte1 := m;    //asignación byte 
+  if ptrByte1 = 5 then good else bad end;
+  
+  ptrByte1 := $85;
+  ptrByte2 := ptrByte1;    //asignación punteros
+  if ptrByte2 = $85 then good else bad end;
+
+  //Aritmética de punteros
+  ptrByte2 := ptrByte1+$10;    //asignación expresión de punteros
+  if ptrByte2 = $95 then good else bad end;
+  
+  ptrByte2 := ptrByte1-$10;    //asignación expresión de punteros
+  if ptrByte2 = $75 then good else bad end;
+
+  inc(ptrByte2); 
+  dec(ptrByte2); 
+  if ptrByte2 = $75 then good else bad end;
+  
+  //Acceso a variables
+  m := $23;
+  ptrByte1 := @m;
+
+  n := $12;
+  ptrByte2 := @n;
+
+  if ptrByte1^ = $23 then good else bad end;
+  ptrByte1^ := $FF;
+  if m = $ff then good else bad end;
+
+  m := $23;  
+  ptrByte2^ := ptrByte1^;
+  if n = $23 then good else bad end;
+
+  ptrByte1 := @m;
+  n := ptrByte1^;
+  if m = n then good else bad end;
+
+  //Operaciones con dereferencia stVarRefVar
+  m := $12;
+  if ptrByte1^ = $12 then good else bad end;
+  if ptrByte1^ + 1 = $13 then good else bad end;
+  if ptrByte1^ - 1 = $11 then good else bad end;
+  if ptrByte1^ + ptrByte1^ = $24 then good else bad end;
+  if $0f and ptrByte1^  = $02 then good else bad end;
+  
+  //Pendientes
+//  delay_ms(ptrByte1^);
+//  Inc(ptrByte1^);
+//  Dec(ptrByte1^);
+//  ptrByte1^.bit7 := 0;
+//  chr(ptrByte1^);
+//  bit(ptrByte1^);
+//  word(ptrByte1^);
+//  dword(ptrByte1^);
+
+  //Operaciones con dereferencia stVarRefExp
+  //Se asume para esta prueba que "n", está ubicado después de "m"
+  //De otar forma no funcionará, porque ptrByte1+1, fallaría
+  n := $12;  
+  if (ptrByte1+1)^ = $12 then good else bad end;
+  if (ptrByte1+1)^ + 1 = $13 then good else bad end;
+  if (ptrByte1+1)^ - 1 = $11 then good else bad end;
+  {Expresión muy compleja stVarRefExp + stVarRefExp. No implementada por ahora.
+ //  if (ptrByte1+1)^ + (ptrByte1+1)^ = $24 then good else bad end;  
+  }
+  if $0f and (ptrByte1+1)^  = $02 then good else bad end;
+  
+  //Pendientes
+//  delay_ms((ptrByte1+1)^);
+//  Inc((ptrByte1+1)^);
+//  Dec((ptrByte1+1)^);
+//  (ptrByte1+1)^.bit7 := 0;
+//  chr((ptrByte1+1)^);
+//  bit((ptrByte1+1)^);
+//  word((ptrByte1+1)^);
+//  dword((ptrByte1+1)^);
+
+  //////////////////////////////////////////////////////
   ////////// Pruebas básicas a tipos  //////////////////
   //////////////////////////////////////////////////////
-  achar[0] := 'a';
+//  achar[0] := 'a';
 //  if 'a' = achar[0] then good else bad end;
-  vbyte := 1;
-  achar[vbyte] := 'a';
+//  vbyte := 1;
+//  achar[vbyte] := 'a';
 //  if achar[vbyte] = 'a' then good else bad end;
-
-  abyte[0] := 1;
-  vbyte := 1;
-  abyte[vbyte] := 1;
-  
-  vbyte := 1;
-  aword[0] := word(5000);
-  aword[vbyte] := word(5000);
+//
+//  abyte[0] := 1;
+//  vbyte := 1;
+//  abyte[vbyte] := 1;
+//  
+//  vbyte := 1;
+//  aword[0] := word(5000);
+//  aword[vbyte] := word(5000);
 end.

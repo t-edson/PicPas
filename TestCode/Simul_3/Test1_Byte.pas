@@ -546,9 +546,4 @@ begin
   pinLed := 1;
   delay_ms(70);
   pinLed := 0;
-  delay_ms(50);
-  pinLed := 1;
-  delay_ms(120);
-  pinLed := 0;
- 
 end.

@@ -24,6 +24,7 @@ begin
 end;
 var 
   a, b: bit;
+  vbyte: byte;
 begin
   SetAsOutput(pinLed);
   pinLed := 0;
@@ -118,6 +119,9 @@ begin
   if not a and b = 0 then bien else mal end;  //lógica invertida
   if (not a and not b) = 1 then bien  else mal end;  //lógica invertida
 
+  if a and a = a then bien  else mal end;  //lógica invertida
+  if a and not a = 0 then bien  else mal end;  //lógica invertida
+
   //////////////////////////////////////////////////////////
 	//////////////  Operación lógica OR ///////////////////
   //////////////////////////////////////////////////////////
@@ -154,6 +158,9 @@ begin
   if a or not b = 1 then bien else mal end;  //lógica invertida
   if not a or b = 1 then bien else mal end;  //lógica invertida
   if (not a or not b) = 1 then bien  else mal end;  //lógica invertida
+
+  if a or a = a then bien  else mal end;  //lógica invertida
+  if a or not a = 1 then bien  else mal end;  //lógica invertida
 
   //////////////////////////////////////////////////////////
 	//////////////  Operación lógica XOR ///////////////////
@@ -195,7 +202,31 @@ begin
   //////////////////////////////////////////////////////////
 	//////////////// Operaciones Mixtas // //////////////////
   //////////////////////////////////////////////////////////
+  //Operaciones con la misma variable
+  a := 0;
+  a := a;
+  if (a=a) and (a=0) then bien else mal end;
+  a := 1;
+  a := a;
+  if (a=a) and (a=1) then bien else mal end;
+   
+  a := 0;
+  a := not a;
+  if (a=1) then bien else mal end;
 
+  vbyte.bit7 := 0; 
+  vbyte.bit7 := vbyte.bit7;
+  if (vbyte.bit7=vbyte.bit7) and (vbyte.bit7=0) then bien else mal end;
+
+  vbyte.bit7 := 1; 
+  vbyte.bit7 := vbyte.bit7;
+  if (vbyte.bit7=1) then bien else mal end;
+
+  vbyte.bit7 := 0; 
+  vbyte.bit7 := not vbyte.bit7;
+  if vbyte.bit7 = 1 then bien else mal end;
+  
+  //Oepraciones con dos variables    
   a := 0; b := 0;
   if (a = 0) and (b = 0) then bien else mal end;
   if (not a and not b) = 1 then bien else mal end;
