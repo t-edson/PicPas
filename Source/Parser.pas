@@ -28,6 +28,7 @@ type
     procedure CompileLastEnd;
     procedure CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
     function GetExpressionBool: boolean;
+    function getParamType: TxpEleType;
     function GetTypeVarDeclar: TxpEleType;
     function IsUnit: boolean;
     procedure array_length(const OpPtr: pointer);
@@ -143,6 +144,41 @@ begin
     if cIn.tok <> ',' then break; //sale
     cIn.Next;  //toma la coma
   until false;
+end;
+function TCompiler.getParamType: TxpEleType;
+{Lee el tipo que acompaña a una declaración de parámetro de un procedimeinto.
+<<<< Es muy similar a GetTypeVarDeclaration(), y tal vez debería unificarse >>>}
+var
+  typName: String;
+  typ: TxpEleType;
+  ele: TxpElement;
+begin
+  ProcComments;
+  typName := cIn.tok;   //lee tipo de parámetro
+  //Primero verifica si es un tipo del sistema
+  typ := FindSysEleType(typName);  //tipos básicos
+  if typ <> nil then begin
+    //Es un tipo del sistema
+  end else begin
+    //No es un tipo delñ sistema, debe ser otro tipo
+    ele := TreeElems.FindFirst(typName);  //identifica elemento
+    if ele = nil then begin
+      //No identifica a este elemento
+      GenError('Unknown identifier: %s', [typName]);
+      exit(nil);
+    end;
+    if ele.idClass = eltType then begin
+      //Es un tipo
+      typ := TxpEleType(ele);
+      if FirstPass then typ.AddCaller;   //lleva la cuenta
+//      if typ.copyOf<>nil then typ := typ.copyOf;
+    end else begin
+      GenError(ER_IDE_TYP_EXP);
+      exit(nil);
+    end;
+  end;
+  cIn.Next;
+  Result := typ;
 end;
 procedure TCompiler.ProcComments;
 {Procesa comentarios, directivas y bloques ASM. Los bloques ASM, se processan también
@@ -265,7 +301,6 @@ end;
 procedure TCompiler.CaptureDecParams(fun: TxpEleFun);
 //Lee la declaración de parámetros de una función.
 var
-  parType: String;
   typ: TxpEleType;
   xvar: TxpEleVar;
   IsRegister: Boolean;
@@ -293,20 +328,8 @@ begin
         exit;
       end;
       if not CaptureTok(':') then exit;
-      cIn.SkipWhites;
-
-      if (cIn.tokType <> tnType) then begin
-        GenError(ER_IDE_TYP_EXP);
-        exit;
-      end;
-      parType := cIn.tok;   //lee tipo de parámetro
-      cIn.Next;
-      //Valida el tipo
-      typ := FindSysEleType(parType);  //Solo acepta tipos básicos
-      if typ = nil then begin
-        GenError(ER_UNDEF_TYPE_, [parType]);
-        exit;
-      end;
+      typ := getParamType;  //lee tipo
+      if HayError then exit;
       //Ya tiene los nombres y el tipo
       //Crea el parámetro como una varaible local
       for i:= 0 to high(itemList) do begin
@@ -543,8 +566,10 @@ begin
   if res.Sto = stVariab then begin
     //Las variables booleanas, pueden estar invertidas
     if res.Inverted then begin
+      _BANKSEL(res.bank);
       _BTFSC(res.offs, res.bit);  //verifica condición
     end else begin
+      _BANKSEL(res.bank);
       _BTFSS(res.offs, res.bit);  //verifica condición
     end;
   end else if res.Sto = stExpres then begin
@@ -693,6 +718,7 @@ begin
     if Op1.Typ = typByte then begin
       _INCF(Op1.offs, toF);
     end else if Op1.Typ = typWord then begin
+      _BANKSEL(oP1.bank);
       _INCF(Op1.Loffs, toF);
       _BTFSC(STATUS, _Z);
       _INCF(Op1.Hoffs, toF);
@@ -1260,28 +1286,24 @@ VAR
 }
 var
   systyp: TxpEleType;
-  typName, varType: String;
+  typName: String;
   typ: TxpEleType;
   ele: TxpElement;
 begin
   Result := nil;
   ProcComments;
-  if (cIn.tokType = tnType) then begin
+  typName := cIn.tok;   //Nombre de tipo
+  //Primero verifica si es un tipo del sistema
+  systyp := FindSysEleType(typName);  //tipos básicos
+  if systyp<>nil then begin
     //Caso normal. Es un tipo del sistema
-    systyp := FindSysEleType(cIn.tok); //Busca elemento
-    if systyp = nil then begin
-      //Esto no debería pasar, porque el lexer indica que es un tipo del sistema.
-      GenError(ER_NOT_IMPLEM_, [typName]);
-      exit(nil);
-    end;
     cIn.Next;   //lo toma
     ProcComments;
-    Result := systyp;  //devuelve la referencia
-    exit;
+    exit(systyp);  //devuelve la referencia
   end else if cIn.tokType = tnIdentif then begin
     //Puede ser identificador de tipo
     {Se pensó usar GetOperandIdent(), para identificar al tipo, pero no está preparado
-    para procesar tipos y no se espera tanat flexibilidad. Así que se hace "a mano".}
+    para procesar tipos y no se espera tanta flexibilidad. Así que se hace "a mano".}
     ele := TreeElems.FindFirst(cIn.tok);
     if ele = nil then begin
       //No identifica a este elemento
@@ -1289,12 +1311,13 @@ begin
       exit(nil);
     end;
     if ele.idClass = eltType then begin
+      typ := TxpEleType(ele);
+      if FirstPass then typ.AddCaller;   //lleva la cuenta
       cIn.Next;   //lo toma
       ProcComments;
-      Result := TxpEleType(ele);  //devuelve la referencia
-      exit;
+      exit(typ);
     end else begin
-      GenError('A type identifier expected.');
+      GenError(ER_IDE_TYP_EXP);
       exit(nil);
     end;
 //  end else if cIn.tokL = 'array' then begin
@@ -1303,15 +1326,6 @@ begin
 //    {%H-}exit;  //puede salir con error
   end else begin
     GenError(ER_IDE_TYP_EXP);
-    exit(nil);
-  end;
-  varType := cIn.tok;   //lee tipo
-  cIn.Next;
-  ProcComments;
-  //Valida el tipo
-  typ := FindSysEleType(varType);
-  if typ = nil then begin
-    GenError(ER_UNDEF_TYPE_, [varType]);
     exit(nil);
   end;
 end;

@@ -1101,7 +1101,7 @@ procedure TGenCodPic.SetROUResultExpres_bit(Inverted: boolean);
 {Define el resultado como una expresión de tipo Bit, y se asegura de reservar el registro
 Z, para devolver la salida. Se debe usar solo para operaciones unarias.}
 begin
-  GenerateROBdetComment;
+  GenerateROUdetComment;
   //Se van a usar los RT. Verificar si los RT están ocupadoa
   if (p1^.Sto = stExpres) then begin
     //Alguno de los operandos de la operación actual, está usando algún RT

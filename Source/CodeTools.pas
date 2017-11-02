@@ -5,9 +5,8 @@ interface
 uses
   Classes, SysUtils, LCLType, LCLProc, SynEdit, SynEditHighlighter, LazUTF8,
   MisUtils, SynFacilCompletion, SynFacilHighlighter, SynFacilBasic, XpresBas,
-  XpresElementsPIC, FrameEditView, FrameSyntaxTree, Parser, XpresParserPIC,
+  XpresElementsPIC, FrameEditView, FrameSyntaxTree, Parser,
   Globales;
-
 type
   { TCodeTool }
   TCodeTool = class
@@ -17,13 +16,13 @@ type
     cxp       : TCompiler;
     fraSynTree: TfraSyntaxTree;
     opEve0: TFaOpenEvent;   //Para pasar parámetro a cxpTreeElemsFindElement´()
-    procedure cxpTreeElemsFindElement(elem: TxpElement);
   public
     procedure ReadCurIdentif(out tok: string; out tokType: integer; out
       lex: TSynFacilComplet; out curX: integer);
     procedure GoToDeclaration;
     procedure KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private  //Completado de código
+    procedure cxpTreeElemsFindElement(elem: TxpElement);
     procedure AddListUnits(OpEve: TFaOpenEvent);
     procedure FieldsComplet(ident: string; opEve: TFaOpenEvent; tokPos: TSrcPos);
     procedure Fill_IFtemplate(opEve: TFaOpenEvent);
@@ -46,11 +45,6 @@ type
 
 implementation
 
-procedure TCodeTool.cxpTreeElemsFindElement(elem: TxpElement);
-begin
-  debugln('comparando: ' + elem.name);
-  opEve0.AddItem(elem.name, 5);
-end;
 procedure TCodeTool.ReadCurIdentif(out tok: string; out tokType: integer;
                                    out lex: TSynFacilComplet; out curX: integer);
 {Da infomación sobre el token actual. Si no encuentra información, devuelve cadena
@@ -165,6 +159,23 @@ begin
   end;
 end;
 //Completado de código
+procedure TCodeTool.cxpTreeElemsFindElement(elem: TxpElement);
+var
+  xfun: TxpEleFun;
+begin
+  if elem.idClass = eltFunc then begin
+    //Es función
+    xfun := TxpEleFun(elem);
+    if high(xfun.pars) = -1 then begin
+      //Sin parámetros
+      opEve0.AddItem(elem.name+'', 5);
+    end else begin
+      opEve0.AddItem(elem.name+'(\_)', 5);
+    end;
+  end else begin
+    opEve0.AddItem(elem.name, 5);
+  end;
+end;
 procedure TCodeTool.AddListUnits(OpEve: TFaOpenEvent);
 {Agrega la lista de unidades disponibles, a la lista Items[] de un Evento de apertura.}
 var
@@ -292,7 +303,10 @@ end;
 procedure TCodeTool.GeneralIdentifierCompletion(opEve: TFaOpenEvent;
   curEnv: TFaCursorEnviron; out Cancel: boolean);
 {La idea de este métod es implementar el completado de un identifcador, en cualquier
-parte en que se encuentre el cursor.}
+parte en que se encuentre el cursor.
+Pero actualmente solo se aplica para cualquier bloque que no sea el bloque principal
+(Cuerpo del programa principal o cuerpo de procedimientos). EL completado del blqoue
+MAIN, se está haciendo, todavía, con el archivo XML.}
 var
   curPos: TPoint;
   ed: TSynEditor;

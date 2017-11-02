@@ -150,6 +150,7 @@ type
       procedure fun_Ord(fun: TxpEleFun);
       procedure fun_Chr(fun: TxpEleFun);
       procedure fun_Bit(fun: TxpEleFun);
+      procedure fun_Bool(fun: TxpEleFun);
       procedure fun_SetAsInput(fun: TxpEleFun);
       procedure fun_SetAsOutput(fun: TxpEleFun);
       procedure fun_Word(fun: TxpEleFun);
@@ -423,7 +424,19 @@ begin
       if IsTheSameBitVar(p1^.rVar, p2^.rVar) then begin
         //Es la misma variable: a AND a
         //Optimiza devolviendo la misma variable
-        SetROBResultVariab(p1^.rVar, p1^.Inverted);
+        if p1^.Inverted and p2^.Inverted then begin
+          //not a and not a = not a
+          SetROBResultVariab(p1^.rVar, p1^.Inverted);
+        end else if p1^.Inverted then begin
+          //not a and a = 0
+          SetROBResultConst_bit(false);
+        end else if p2^.Inverted then begin
+          //a and not a = 0
+          SetROBResultConst_bit(false);
+        end else begin  //Caso normal
+          //a and a = a
+          SetROBResultVariab(p1^.rVar, p1^.Inverted);
+        end;
       end else begin
         if p1^.Inverted and p2^.Inverted then begin
           //Por La ley de Morgan, se convierten em OR
@@ -569,9 +582,20 @@ begin
     end;
     stVariab_Variab:begin
       if IsTheSameBitVar(p1^.rVar, p2^.rVar) then begin
-        //Es la misma variable: a OR a
-        //Optimiza devolviendo la misma variable
-        SetROBResultVariab(p1^.rVar, p1^.Inverted);
+        //Es la misma variable: a OR a. Optimiza
+        if p1^.Inverted and p2^.Inverted then begin
+          //not a or not a = not a
+          SetROBResultVariab(p1^.rVar, p1^.Inverted);
+        end else if p1^.Inverted then begin
+          //not a or a = 1
+          SetROBResultConst_bit(true);
+        end else if p2^.Inverted then begin
+          //a or not a = 1
+          SetROBResultConst_bit(true);
+        end else begin  //Caso normal
+          //a and a = a
+          SetROBResultVariab(p1^.rVar, p1^.Inverted);
+        end;
       end else begin
         if p1^.Inverted and p2^.Inverted then begin
           //Por La ley de Morgan, se convierten em AND
@@ -4265,7 +4289,9 @@ begin
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.fun_Bit(fun: TxpEleFun);
-{Convierte byte a bit}
+{Convierte byte, o boolean a bit}
+var
+  tmpVar: TxpEleVar;
 begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
@@ -4286,23 +4312,83 @@ begin
   end;
   stVariab: begin
     if res.Typ = typByte then begin
-      SetResultExpres(typBit); //No se puede usar SetROBResultExpres_bit, porque no hay p1 y p2;
+      //No se usa SetROUResultExpres_bit(true), porque no se tiene el operando en p1^
+      SetResultExpres(typBit);
       res.Inverted := true;
       //Se asumirá que cualquier valor diferente de cero, devuelve 1
       _MOVF(res.Loffs, toW);    //el resultado aparecerá en Z, invertido
       {Notar que se ha usado res.Loff, para apuntar a la dirección de la variable byte.
       Si se hubeise usado solo res.off, apuntaría a una dirección del tipo bit}
+    end else if res.Typ = typBool then begin
+      //Sigue siendo variable
+      tmpVar := CreateTmpVar('', typBit);   //crea variable temporal
+      tmpVar.adrBit.Assign(res.rVar.adrBit); //apunta al mismo bit
+      SetResultVariab(tmpVar, res.Inverted);   //mantiene lógica
     end else begin
       GenError('Cannot convert to bit.'); exit;
     end;
   end;
   stExpres: begin  //se asume que ya está en (w)
     if res.Typ = typByte then begin
-      SetResultExpres(typBit); //No se puede usar SetROBResultExpres_bit, porque no hay p1 y p2;
+      SetResultExpres(typBit); //No se usa SetROUResultExpres_bit, porque no se tiene el operando en p1^
       res.Inverted := true;
       _ADDLW(0);   //el resultado aparecerá en Z, invertido
     end else begin
       GenError('Cannot convert to bit.'); exit;
+    end;
+  end;
+  else
+    genError('Not implemented "%s" for this operand.', [fun.name]);
+  end;
+  if not CaptureTok(')') then exit;
+end;
+procedure TGenCod.fun_Bool(fun: TxpEleFun);
+{Convierte byte, o bit a boolean}
+var
+  tmpVar: TxpEleVar;
+begin
+  if not CaptureTok('(') then exit;
+  res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
+  if HayError then exit;   //aborta
+  case res.Sto of  //el parámetro debe estar en "res"
+  stConst : begin
+    if res.Typ = typByte then begin
+      if res.valInt= 0 then begin
+        SetResultConst(typBool);  //No se usa SetROBResultConst_bit, porque no estamos en ROP
+        res.valBool := false;
+      end else begin
+        SetResultConst(typBool);  //No se usa SetROBResultConst_bit, porque no estamos en ROP
+        res.valBool := true;
+      end;
+    end else begin
+      GenError('Cannot convert to boolean.'); exit;
+    end;
+  end;
+  stVariab: begin
+    if res.Typ = typByte then begin
+      //No se usa SetROUResultExpres_bool(true), porque no se tiene el operando en p1^
+      SetResultExpres(typBool);
+      res.Inverted := true;
+      //Se asumirá que cualquier valor diferente de cero, devuelve 1
+      _MOVF(res.Loffs, toW);    //el resultado aparecerá en Z, invertido
+      {Notar que se ha usado res.Loff, para apuntar a la dirección de la variable byte.
+      Si se hubeise usado solo res.off, apuntaría a una dirección del tipo bit}
+    end else if res.Typ = typBit then begin
+      //Sigue siendo variable
+      tmpVar := CreateTmpVar('', typBool);   //crea variable temporal
+      tmpVar.adrBit.Assign(res.rVar.adrBit); //apunta al mismo bit
+      SetResultVariab(tmpVar, res.Inverted);   //mantiene lógica
+    end else begin
+      GenError('Cannot convert to boolean.'); exit;
+    end;
+  end;
+  stExpres: begin  //se asume que ya está en (w)
+    if res.Typ = typByte then begin
+      SetResultExpres(typBool); //No se usa SetROUResultExpres_bit, porque no se tiene el operando en p1^
+      res.Inverted := true;
+      _ADDLW(0);   //el resultado aparecerá en Z, invertido
+    end else begin
+      GenError('Cannot convert to boolean.'); exit;
     end;
   end;
   else
@@ -4953,6 +5039,7 @@ begin
   f := CreateSysFunction('Ord'      , @callParam, @fun_Ord);
   f := CreateSysFunction('Chr'      , @callParam, @fun_Chr);
   f := CreateSysFunction('Bit'      , @callParam, @fun_Bit);
+  f := CreateSysFunction('Boolean'  , @callParam, @fun_Bool);
   f := CreateSysFunction('Byte'     , @callParam, @fun_Byte);
   f := CreateSysFunction('Word'     , @callParam, @fun_Word);
   f := CreateSysFunction('DWord'    , @callParam, @fun_DWord);

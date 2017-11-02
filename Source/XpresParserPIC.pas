@@ -136,7 +136,7 @@ protected  //Eventos del compilador
   procedure CaptureParamsFinal(fun: TxpEleFun);
   function CaptureTok(tok: string): boolean;
   function CaptureStr(str: string): boolean;
-  procedure CaptureParams;
+  procedure CaptureParams(func0: TxpEleFun);
   //Manejo del cuerpo del programa
   function CreateBody: TxpEleBody;
   //Manejo de Unidades
@@ -203,7 +203,7 @@ public
   ejecProg: boolean;    //Indica que se está ejecutando un programa o compilando
   DetEjec: boolean;     //para detener la ejecución (en intérpretes)
 
-  func0  : TxpEleFun;   //función interna para almacenar parámetros
+//  func0  : TxpEleFun;   //función interna para almacenar parámetros
   p1, p2 : ^TOperand;   //Pasa los operandos de la operación actual
   res    : TOperand;    //resultado de la evaluación de la última expresión.
   function stoOperation: TStoOperandsROB; inline;
@@ -452,10 +452,10 @@ begin
   cin.Next;
   exit(true);
 end;
-procedure TCompilerBase.CaptureParams;
+procedure TCompilerBase.CaptureParams(func0: TxpEleFun);
 //Lee los parámetros de una función en la función interna funcs[0]
 begin
-  func0.ClearParams;
+  //func0.ClearParams;
   if EOBlock or EOExpres then begin
     //no tiene parámetros
   end else begin
@@ -613,6 +613,7 @@ var
   xfun    : TxpEleFun;
   Found   : Boolean;
   caller  : TxpEleCaller;
+  func0   : TxpEleFun;   //función interna para almacenar parámetros
 begin
 //cIn.ShowCurContInformat;
 //debugln(' ++CurNode:' + TreeElems.curNode.Path);
@@ -667,47 +668,58 @@ begin
     posPar := cIn.PosAct;   //guarda porque va a pasar otra vez por aquí
     posFlash := pic.iFlash; //guarda posición, antes del código de evaluación.
     RTstate0 := RTstate;    //guarda porque se va a alterar con CaptureParams().
-    CaptureParams;  //primero lee parámetros
-    if HayError then exit;
-    //Aquí se identifica la función exacta, que coincida con sus parámetros
-    xfun := TxpEleFun(ele);
-    //Primero vemos si la primera función encontrada, coincide:
-    if func0.SameParams(xfun) then begin
-      //Coincide
-      Found := true;
-    end else begin
-      //No es, es una pena. Ahora tenemos que seguir buscando en el árbol de sintaxis.
-      repeat
-        //Usar FindNextFunc, es la forma es eficiente, porque retoma la búsqueda anterior.
-        xfun := TreeElems.FindNextFunc;
-      until (xfun = nil) or func0.SameParams(xfun);
-      Found := (xfun <> nil);
-    end;
-    if Found then begin
-      //Ya se identificó a la función que cuadra con los parámetros
-      {$IFDEF LogExpres} Op.txt:= cIn.tok; {$ENDIF}   //toma el texto
-      {Ahora que ya sabe cúal es la función referenciada, captura de nuevo los
-      parámetros, pero asignándola al parámetro que corresponde.}
-      cIn.PosAct := posPar;
-      pic.iFlash := posFlash;
-      RTstate := RTstate0;
-      xfun.procParam(xfun);  //antes de leer los parámetros
-      if high(func0.pars)+1>0 then
-        CaptureParamsFinal(xfun);  //evalúa y asigna
-//if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
-      if FirstPass then begin
-        //Se hace después de leer parámetros, para tener información del banco.
-        caller := xfun.AddCaller;
-        caller.curPos := posCall;  //corrige posición de llamada, sino estaría
+    {Crea func0 localmente, para permitir la recursividad en las llamadas a las funciones.
+    Adicionalmenet, deberái plantearse otor método en la exploración de parámetros, tal
+    vez la creeación de un árbol de funciones sobrecargdas. Y así se podría incluso
+    implementar más fácilmente la adpatación de parámetros como byte->word.}
+    try
+      func0 := TxpEleFun.Create;  //crea la función 0, para uso interno
+      CaptureParams(func0);  //primero lee parámetros
+      if HayError then begin
+        exit;
       end;
-      xfun.procCall(xfun); //codifica el "CALL"
-      RTstate := xfun.typ;  //para indicar que los RT están ocupados
-      Op.SetAsExpres(xfun.typ);
-      exit;
-    end else begin
-      //Encontró la función, pero no coincidió con los parámetros
-      GenError('Type parameters error on %s', [ele.name + '()']);
-      exit;
+      //Aquí se identifica la función exacta, que coincida con sus parámetros
+      xfun := TxpEleFun(ele);
+      //Primero vemos si la primera función encontrada, coincide:
+      if func0.SameParams(xfun) then begin
+        //Coincide
+        Found := true;
+      end else begin
+        //No es, es una pena. Ahora tenemos que seguir buscando en el árbol de sintaxis.
+        repeat
+          //Usar FindNextFunc, es la forma es eficiente, porque retoma la búsqueda anterior.
+          xfun := TreeElems.FindNextFunc;
+        until (xfun = nil) or func0.SameParams(xfun);
+        Found := (xfun <> nil);
+      end;
+      if Found then begin
+        //Ya se identificó a la función que cuadra con los parámetros
+        {$IFDEF LogExpres} Op.txt:= cIn.tok; {$ENDIF}   //toma el texto
+        {Ahora que ya sabe cúal es la función referenciada, captura de nuevo los
+        parámetros, pero asignándola al parámetro que corresponde.}
+        cIn.PosAct := posPar;
+        pic.iFlash := posFlash;
+        RTstate := RTstate0;
+        xfun.procParam(xfun);  //antes de leer los parámetros
+        if high(func0.pars)+1>0 then
+          CaptureParamsFinal(xfun);  //evalúa y asigna
+  //if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
+        if FirstPass then begin
+          //Se hace después de leer parámetros, para tener información del banco.
+          caller := xfun.AddCaller;
+          caller.curPos := posCall;  //corrige posición de llamada, sino estaría
+        end;
+        xfun.procCall(xfun); //codifica el "CALL"
+        RTstate := xfun.typ;  //para indicar que los RT están ocupados
+        Op.SetAsExpres(xfun.typ);
+        exit;
+      end else begin
+        //Encontró la función, pero no coincidió con los parámetros
+        GenError('Type parameters error on %s', [ele.name + '()']);
+        exit;
+      end;
+    finally
+      func0.Destroy;
     end;
 //  end else if DefinedMacro(cIn.tok) then begin  //verifica macro
 //    //Es una macro
@@ -762,9 +774,10 @@ begin
     Result.valInt := ord(cIn.tok[2]);
     cIn.Next;    //Pasa al siguiente
   end else if (cIn.tokType = tnSysFunct) or //función del sistema
-              (cIn.tokL = 'bit') or   //"bit" es de tipo "tnType"
-              (cIn.tokL = 'byte') or   //"byte" es de tipo "tnType"
-              (cIn.tokL = 'word') or   //"word" es de tipo "tnType"
+              (cIn.tokL = 'bit') or    //"bit" es de tipo "tnType"
+              (cIn.tokL = 'boolean') or //"boolean" es de tipo "tnType"
+              (cIn.tokL = 'byte') or    //"byte" es de tipo "tnType"
+              (cIn.tokL = 'word') or    //"word" es de tipo "tnType"
               (cIn.tokL = 'dword') then begin  //"dword" es de tipo "tnType"
     {Se sabe que es función, pero no se tiene la función exacta porque puede haber
      versiones, sobrecargadas de la misma función.}
@@ -1187,7 +1200,6 @@ begin
   listTypSys := TxpEleTypes.Create(true);
   //inicia la sintaxis
   xLex := TSynFacilSyn.Create(nil);   //crea lexer
-  func0 := TxpEleFun.Create;  //crea la función 0, para uso interno
 
   cIn := TContexts.Create(xLex); //Crea lista de Contextos
   ejecProg := false;
@@ -1218,7 +1230,6 @@ end;
 destructor TCompilerBase.Destroy;
 begin
   cIn.Destroy; //Limpia lista de Contextos
-  func0.Destroy;
   xLex.Free;
   listTypSys.Destroy;
   listFunSys.Destroy;
