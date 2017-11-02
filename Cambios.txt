@@ -1,3 +1,67 @@
+PicPas 0.8.1
+============
+Se agregan más funciones al autocompletado.
+Se amplia el enumerado TCatOperan, creando nuevas categorías, las que a partir de ahora
+se pasan a llamar "Almacenamiento".
+Se crea el parámetro TxpOperation.Parent y TxpOperator.Parent, para tener la referencia 
+completa a los tipos y el operador en la clase el parámetro Opt (de tipo TxpOperation) de
+las ROB.
+Se crea el método: TxpOperation.OperationString() y se elimina el método TCompilerBase.CatOperationToStr().
+Se incluye el caso ELSE para todas las ROB, como medida de seguridad.
+Se cambia de nombre a los elementos de TCatOperan, y se cambia de nombre a TCatOperan, por
+TStoOperand y a TCatOperation por TStoOperandsROB.
+Se crea el parámetro Opr: TxpOperator, en las ROU.
+Se cambia de nombre al campo TOperand.Cat por TOperand.Sto, y se actualizan las referencias
+en el código fuente y en la documentación.
+Se desaparece el campo "TOPerand.Indirect" y el codigo asociadao.
+Se crean los métodos TGenCodPic.SetResultNull(), TGenCodPic.SetResultVarRef() y 
+TGenCodPic.SetResultExpRef().
+Se crean los métodos TGenCodPic.SetROUResultVarRef() y TGenCodPic.SetROUResultExpRef().
+Se mueven las rutinas de configuración de autocompletado, de la unidad FrameEditView, a la
+unidad CodeTools.
+Se mueve mucho del procesamiento del autocompletado, definido en el archivo XML, a 
+procesamiento por código en la unidad CodeTools, y se implementa pro primera vez, la 
+exploración del árbol de sintaxis para el llenado dinámico de la lista de completado.
+Se corrige el algoritmo de simplifiación de las ROB TGenCod.ROB_bit_or_bit() y 
+TGenCod.ROB_bit_and_bit(), para el caso en que p1 y p2 son la misma varaible.
+Se agrega la función del sistema de sistema Boolean().
+Se amplía el patrón de pruebas Test2_bit.pas, para verifiaciones adicionales.
+Se agrega instrucciones de cambio de banco en TCompiler.Cod_JumpIfTrue;
+Se corrige TCompilerBase.GetOperandIdent(), para llamadas recursivas de funciones.
+Se reordena y amplía la documentación técnica
+
+PENDIENTES
+Definir que todos los bytes de una variable se ubiquen en el mismo banco.
+Analizar si no conviene definir TxpEleVar.adrByte0 como de tipo bit y así simplificar varios métodos por el tema de la comparación.
+Terminar de implementar los arreglos y punteros.
+Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
+se puede reemplazar por SetROUResultExpres_bit().
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absolute a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
+
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
+(tal vez se podría detectar siempre la última instrucción compilada).
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema, como delay_ms().
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Implementar la reutilización de variables usadas como parámetros.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+Activar las funciones de búsqueda y reemplazo de texto.
+
+
+
 PicPas 0.8.0
 ============
 Se configura para ignorar la carga de un archivo reciente que no se encuentra. ANtes se 
@@ -35,34 +99,6 @@ Se activa la opción de mostrar/ocultar el editor de ensamblador, con acceso a la
 Se define al símbolo '.', como un operador en la definición de sintaxis.
 Se crea el evento TfraEditView.OnRequireFieldsComplet.
 Se activa el autocompletado dinámico usando para los campos de los tipos byte y word.
-
-
-PENDIENTES
-Terminar de implementar los arreglos y punteros.
-
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absolute a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
-
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema, como delay_ms().
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar las funciones de búsqueda y reemplazo de texto.
 
 
 PicPas 0.7.9

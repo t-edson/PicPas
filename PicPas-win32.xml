@@ -9,9 +9,9 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="189"/>
-  <ViewPanAssem Val="False"/>
-  <viewMode Val="1"/>
+  <SynTreeWidth Val="226"/>
+  <ViewPanAssem Val="True"/>
+  <viewMode Val="2"/>
   <MessPanBack Val="-2147483643"/>
   <MessPanText Val="536870912"/>
   <MessPanErr Val="255"/>
@@ -24,7 +24,7 @@
   <VerBarDesV Val="True"/>
   <VerBarDesH Val="False"/>
   <TabEdiState Val="0"/>
-  <AutSynChk Val="True"/>
+  <AutSynChk Val="False"/>
   <Edit>
     <cTxtNor Val="0"/>
     <cFonEdi Val="16777215"/>
@@ -41,11 +41,11 @@
     <VerMarPle Val="True"/>
     <cFonPan Val="16777215"/>
     <cTxtPan Val="0"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.0\temp\NewFile1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.0\temp\NewFile2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.0\samples\DigitalInput.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.0\samples\BlinkLed.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.0\samples\Multiplicacion_ASM.pas
+    <recient Val="C:\Users\Usuario\Desktop\Compativa Compiladores II\Digital_Clock_Test_PIC16F84A_PICPAS.pas
+C:\Users\Usuario\Desktop\Compativa Compiladores II\Digital_Clock_Test_PIC16F877A_PICPAS.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.1\TestCode\Simul_1\Test3_Procedure.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.1\TestCode\Simul_1\Test1_HelloWorld.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.1\TestCode\Simul_1\Test2_Bit.pas
 "/>
   </Edit>
   <IncHeadMpu Val="True"/>
