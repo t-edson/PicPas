@@ -2,7 +2,7 @@
 *  (C) AguHDz 20-OCT-2017
 *  Ultima Actualizacion: 01-NOV-2017
 *
-*  Compilador PicPas v.0.8.0 (https://github.com/t-edson/PicPas)
+*  Compilador PicPas v.0.8.1 (https://github.com/t-edson/PicPas)
 *
 *  Microcontrolador: PIC16F84A
 *
