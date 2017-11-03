@@ -353,11 +353,11 @@ var
 begin
   decimal := 0;
   while(bcdByte>$09) do
-    bcdByte := bcdByte - $10;
-    decimal := decimal + 10; 
+    bcdByte -= $10;
+    decimal += 10; 
   end;
-  decimal := decimal + bcdByte;    // Suma el resto <= $09.
-  exit(decimal);                   // Devuelve valor en formato decimal.
+  decimal += bcdByte;    // Suma el resto <= $09.
+  exit(decimal);         // Devuelve valor en formato decimal.
 end;
 
 //****************************************************************************
@@ -373,11 +373,11 @@ var
 begin
   bcdByte := 0;
   while(decimalByte>9) do
-    BCDByte     := bcdByte     + $10;
-    decimalByte := decimalByte - 10; 
+    BCDByte     += $10;
+    decimalByte -= 10; 
   end;
-  bcdByte := bcdByte + decimalByte;    // Suma el resto <= 9.
-  exit(bcdByte);                       // Devuelve valor en formato BCD.
+  bcdByte += decimalByte;    // Suma el resto <= 9.
+  exit(bcdByte);             // Devuelve valor en formato BCD.
 end;
 
 //****************************************************************************
@@ -495,7 +495,7 @@ begin
   // Devuelve 0 si (DS1307_timeAno%4)!=0, y 1 si (DS1307_timeAno%4)==0
   dato := DS1307_Ano;
   while(dato >= 4) do
-    dato := dato - 4;
+    dato -= 4;
   end;
   if(dato = 0) then
     exit(true);
