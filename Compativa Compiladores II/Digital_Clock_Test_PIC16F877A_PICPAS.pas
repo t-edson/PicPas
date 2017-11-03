@@ -2,7 +2,7 @@
 *  (C) AguHDz 20-OCT-2017
 *  Ultima Actualizacion: 01-NOV-2017
 *
-*  Compilador PicPas v.0.8.1 (https://github.com/t-edson/PicPas)
+*  Compilador PicPas v.0.8.0 (https://github.com/t-edson/PicPas)
 *
 *  Microcontrolador: PIC16F877A
 *
@@ -276,8 +276,8 @@ begin
     SetAsOutput(LCD_EN);
 
     delay_ms(200);   // Espera para asegurar tensión estable tras inicio.
-    LCD_RS = LOW_ST;
-    LCD_EN = LOW_ST;
+    LCD_RS := LOW_ST;
+    LCD_EN := LOW_ST;
 
     // INICIALIZACION POR SOFTWARE DE DISPLAY LCD.
     // Los tiempos de espera y secuencia de datos son los indicados en todos los
@@ -422,7 +422,7 @@ begin
   DS1307_Segundo   := BCDToDecimal(I2C_readByte(true));  // ASK = 1
   DS1307_Minuto    := BCDToDecimal(I2C_readByte(true));
   DS1307_Hora      := BCDToDecimal(I2C_readByte(true));
-  //DS1307_DiaSemana := BCDToDecimal(DS1307_DiaSemana);  // Valor 1...7 (igual en decimal que en BCD)
+  DS1307_DiaSemana := I2C_readByte(true);  // Valor 1...7 (igual en decimal que en BCD)
   DS1307_Dia       := BCDToDecimal(I2C_readByte(true));
   DS1307_Mes       := BCDToDecimal(I2C_readByte(true));
   DS1307_Ano       := BCDToDecimal(I2C_readByte(false)); // ASK = 0
