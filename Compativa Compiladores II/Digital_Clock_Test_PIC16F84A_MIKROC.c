@@ -1,6 +1,6 @@
 /*
-*  Código de comparación adaptado por Tito Hinostroza, para compilar con
-*  MikroC. Se han tenido que cambiar los tipos boolean a "unsigned char"
+*  Código adaptado por Tito Hinostroza, para compilar con MikroC. 
+*  Se han tenido que cambiar los tipos boolean a "unsigned char"
 *  en los puntos donde devuelven valores de funciones.
 *
 *  (C) AguHDz 20-OCT-2017
