@@ -7,7 +7,7 @@ PicPas 0.8.1
 
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "Título de la imagen")
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "PicPas IDE")
 
 PicPas is a Pascal compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
 
@@ -55,11 +55,34 @@ end.
 
 PicPas has not special libraries yet, so the special register names, must be defined in the program, or a unit containing this definitions can be created.
 
-## Debugger Simulator
+## IDE
+
+PicPas includes an IDE integrated to the compiler, to help on developing the programs.
+
+Some features of the IDE are:
+
+•	Cross-platform.
+•	Multiple editors windows.
+•	Syntax highlighting, code folding, word, and line highlighting for Pascal and ASM.
+•	Code completion, and templates for the common strutures IF, REPEAT, WHILE, …
+•	Shows the assembler code and the resources used.
+•	Support for themes (skins).
+•	Code tools for completion and navigation.
+•	Check syntax in ¡¡¡REAL TIME!!!.
+•	Several setting options.
+•	Translated to english/spanish and german.
+
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/06/PicPas-0.7_en.png "PicPas with dark skin")
+
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/PicPas-Linux.jpg "PicPas for Ubuntu")
+
+
+
+## Debugger/Simulator
 
 PicPas includes a graphical debugger/simulator for instructions of the Mid-Range core:
 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/PicPas-simulator.png "Título de la imagen")
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/PicPas-simulator.png "PicPas debugger-simulator")
 
 To control the execution, the following keys can be used:
 
