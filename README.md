@@ -55,6 +55,20 @@ end.
 
 PicPas has not special libraries yet, so the special register names, must be defined in the program, or a unit containing this definitions can be created.
 
+## Debugger Simulator
+
+PicPas includes a graphical debugger/simulator for instructions of the Mid-Range core:
+
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/PicPas-simulator.png "Título de la imagen")
+
+To control the execution, the following keys can be used:
+
+F5 -> Set a breakpoint in the current position of  the assembler code.
+F6 -> Reste the device.
+F7 -> Step by step into subroutine.
+F8 -> Step by step over subroutine.
+F9 -> Run the program in real time.
+
 ## Language Reference
 
 ### Program structure
