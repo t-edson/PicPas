@@ -62,14 +62,23 @@ PicPas includes an IDE integrated to the compiler, to help on developing the pro
 Some features of the IDE are:
 
 •	Cross-platform.
+
 •	Multiple editors windows.
+
 •	Syntax highlighting, code folding, word, and line highlighting for Pascal and ASM.
-•	Code completion, and templates for the common strutures IF, REPEAT, WHILE, …
+
+•	Code completion, and templates for the common structures IF, REPEAT, WHILE, …
+
 •	Shows the assembler code and the resources used.
+
 •	Support for themes (skins).
+
 •	Code tools for completion and navigation.
+
 •	Check syntax in ¡¡¡REAL TIME!!!.
+
 •	Several setting options.
+
 •	Translated to english/spanish and german.
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/06/PicPas-0.7_en.png "PicPas with dark skin")
