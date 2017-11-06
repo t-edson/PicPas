@@ -28,12 +28,27 @@ Se agrega la función del sistema de sistema Boolean().
 Se amplía el patrón de pruebas Test2_bit.pas, para verifiaciones adicionales.
 Se agrega instrucciones de cambio de banco en TCompiler.Cod_JumpIfTrue;
 Se corrige TCompilerBase.GetOperandIdent(), para llamadas recursivas de funciones.
+Se implementan las operaciones += y -= para bytes.
 Se reordena y amplía la documentación técnica
+Se cambia cambia el método de asignación de nombres de variables (en la RAM) para los parámetros
+de los procediemientos. Ahora se usa la notación <nombre_funcion>_<nombre_parámetro>.
+Se crea la lista TxpElement.lstCalled;
+Se separa la creción de variables, en el enalzado, creando primero las de las funciones, 
+para poder implementar más adelante, la optimización de RAM.
+Se habilita la aritmética de punteros para punteros a cualquier tipo.
+Se elimina el método TOperand.LoadToReg y se crea como TCompilerBase.LoadToRT.
+Se implementan algunas operaciones con punteros a word.
+Se activa la optimización de uso de variables, para parámetros y var. locales de 
+procedimeintos.
+
 
 PENDIENTES
 Definir que todos los bytes de una variable se ubiquen en el mismo banco.
-Analizar si no conviene definir TxpEleVar.adrByte0 como de tipo bit y así simplificar varios métodos por el tema de la comparación.
-Terminar de implementar los arreglos y punteros.
+Analizar si no conviene definir TxpEleVar.adrByte0 como de tipo bit y así simplificar varios 
+métodos por el tema de la comparación. O mejor implementar que sea el tipo quien defina la 
+creación de registros, en la variable, como debe ser para implementar tipos personalizados. 
+Implementar punteros para otros tipos, además de byte.
+Terminar de implementar los arreglos.
 Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
 se puede reemplazar por SetROUResultExpres_bit().
 Revisar también la posible optimización para variables no usadas:
@@ -59,7 +74,6 @@ Incluir el tipo integer con signo.
 Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
 y más de una página de ROM.
 Activar las funciones de búsqueda y reemplazo de texto.
-
 
 
 PicPas 0.8.0

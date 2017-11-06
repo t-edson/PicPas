@@ -9,7 +9,7 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="226"/>
+  <SynTreeWidth Val="235"/>
   <ViewPanAssem Val="True"/>
   <viewMode Val="2"/>
   <MessPanBack Val="-2147483643"/>
@@ -41,11 +41,11 @@
     <VerMarPle Val="True"/>
     <cFonPan Val="16777215"/>
     <cTxtPan Val="0"/>
-    <recient Val="C:\Users\Usuario\Desktop\Compativa Compiladores II\Digital_Clock_Test_PIC16F84A_PICPAS.pas
-C:\Users\Usuario\Desktop\Compativa Compiladores II\Digital_Clock_Test_PIC16F877A_PICPAS.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.1\TestCode\Simul_1\Test3_Procedure.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.1\TestCode\Simul_1\Test1_HelloWorld.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.1\TestCode\Simul_1\Test2_Bit.pas
+    <recient Val="C:\Users\Usuario\Desktop\Compativa Compiladores II\Digital_Clock_Test_PIC16F877A_PICPAS.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.1\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.1\temp\NewFile2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.2\TestCode\Simul_1\Test4_Asm.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.2\TestCode\Simul_1\Test3_Structs2.pas
 "/>
   </Edit>
   <IncHeadMpu Val="True"/>
@@ -61,6 +61,7 @@ D:\Proyectos_Software\Lazarus\PicPas-0.8.1\TestCode\Simul_1\Test2_Bit.pas
   <OptBnkAftIF Val="True"/>
   <OptBnkBefPro Val="True"/>
   <OptBnkAftPro Val="True"/>
+  <ReuProcVar Val="True"/>
   <ExternTool>
     <extern_tools Val="Editor	                        	notepad	$(MainFile)	F	V					
 "/>
