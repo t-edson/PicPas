@@ -37,6 +37,7 @@ type
     chkLoadLast: TCheckBox;
     chkOptBnkBefPro: TCheckBox;
     chkOptBnkAftPro: TCheckBox;
+    chkReuProcVar: TCheckBox;
     chkShowErrMsg: TCheckBox;
     chkIncComment2: TCheckBox;
     chkExcUnused: TCheckBox;
@@ -160,6 +161,7 @@ type
     OptBnkAftIF : boolean;
     OptBnkBefPro: boolean;
     OptBnkAftPro: boolean;
+    ReuProcVar: boolean;
     procedure ConfigEditor(ed: TSynEdit);
   public
     fraCfgSynEdit: TfraCfgSynEdit;
@@ -412,6 +414,7 @@ begin
   cfgFile.Asoc_Bol('OptBnkAftIF' , @OptBnkAftIF , chkOptBnkAftIF , true);
   cfgFile.Asoc_Bol('OptBnkBefPro', @OptBnkBefPro, chkOptBnkBefPro, true);
   cfgFile.Asoc_Bol('OptBnkAftPro', @OptBnkAftPro, chkOptBnkAftPro, true);
+  cfgFile.Asoc_Bol('ReuProcVar'  , @ReuProcVar, chkReuProcVar, false);
   //Configuración de Herramienta Externa
   fraCfgExtTool.Init('ExternTool', cfgFile);
   //////////////////////////////////////////////////

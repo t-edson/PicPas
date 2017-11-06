@@ -58,10 +58,10 @@ object Config: TConfig
     Height = 330
     Top = 0
     Width = 399
-    ActivePage = tabEnviron
+    ActivePage = tabCompiler
     Align = alClient
     ShowTabs = False
-    TabIndex = 0
+    TabIndex = 7
     TabOrder = 1
     object tabEnviron: TTabSheet
       Caption = 'Enviroment'
@@ -583,6 +583,14 @@ object Config: TConfig
           Caption = 'After Procedures'
           TabOrder = 2
         end
+      end
+      object chkReuProcVar: TCheckBox
+        Left = 8
+        Height = 19
+        Top = 224
+        Width = 163
+        Caption = 'Reuse Procedures Variables'
+        TabOrder = 3
       end
     end
     object tabExtTool: TTabSheet

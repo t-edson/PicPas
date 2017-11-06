@@ -76,9 +76,10 @@ type
       procedure ROB_bit_dif_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_div_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_mul_byte(Opt: TxpOperation; SetRes: boolean);
+      procedure ROU_addr_word(Opr: TxpOperator; SetRes: boolean);
       procedure ROU_not_bit(Opr: TxpOperator; SetRes: boolean);
       procedure ROU_not_byte(Opr: TxpOperator; SetRes: boolean);
-      procedure Oper_addr_byte(Opr: TxpOperator; SetRes: boolean);
+      procedure ROU_addr_byte(Opr: TxpOperator; SetRes: boolean);
 
       procedure ROB_word_and_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_word_umulword_word(Opt: TxpOperation; SetRes: boolean);
@@ -94,6 +95,8 @@ type
     protected //Operaciones con byte
       procedure opers_byte(Opt: TxpOperation; const InstLW, InstWF: TPIC16Inst);
       procedure ROB_byte_asig_byte(Opt: TxpOperation; SetRes: boolean);
+      procedure ROB_byte_aadd_byte(Opt: TxpOperation; SetRes: boolean);
+      procedure ROB_byte_asub_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_sub_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_add_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_add_word(Opt: TxpOperation; SetRes: boolean);
@@ -134,10 +137,10 @@ type
       procedure ROB_char_asig_char(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_char_equal_char(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_char_difer_char(Opt: TxpOperation; SetRes: boolean);
-    private  //Operaciones con punteros
-      procedure ROB_pbyte_add_byte(Opt: TxpOperation; SetRes: boolean);
-      procedure ROB_pbyte_sub_byte(Opt: TxpOperation; SetRes: boolean);
-      procedure ROU_ptrDerefByte(Opr: TxpOperator; SetRes: boolean);
+    protected //Operaciones con punteros
+      procedure ROB_pointer_add_byte(Opt: TxpOperation; SetRes: boolean);
+      procedure ROB_pointer_sub_byte(Opt: TxpOperation; SetRes: boolean);
+      procedure ROU_derefPointer(Opr: TxpOperator; SetRes: boolean);
     private  //Funciones internas.
       procedure codif_1mseg;
       procedure codif_delay_ms(fun: TxpEleFun);
@@ -164,7 +167,7 @@ type
     public
       procedure StartSyntax;
       procedure DefCompiler;
-      procedure DefPointerToByte(etyp: TxpEleType);
+      procedure DefPointerArithmetic(etyp: TxpEleType);
     end;
 
 implementation
@@ -936,7 +939,7 @@ begin
     genError('Not implemented: "%s"', [Opr.OperationString]);
   end;
 end;
-procedure TGenCod.Oper_addr_byte(Opr: TxpOperator; SetRes: boolean);
+procedure TGenCod.ROU_addr_byte(Opr: TxpOperator; SetRes: boolean);
 {Devuelve la dirección de una variable.}
 begin
   case p1^.Sto of
@@ -998,12 +1001,12 @@ var
 begin
   //Simplifcamos el caso en que p2, sea de tipo p2^
   if not ChangePointerToExpres(p2^) then exit;
-  //Caso especial de asignación
+  //Realiza la asignación
   if p1^.Sto = stVariab then begin
+    SetResultNull;  //Fomalmente,  una aisgnación no devuelve valores en Pascal
     //Asignación a una variable
     case p2^.Sto of
     stConst : begin
-      SetROBResultExpres_byte(Opt);  //Realmente, el resultado no es importante
       if p2^.valInt=0 then begin
         //caso especial
         _BANKSEL(p1^.bank);  //verifica banco destino
@@ -1015,14 +1018,12 @@ begin
       end;
     end;
     stVariab: begin
-      SetROBResultExpres_byte(Opt);  //Realmente, el resultado no es importante
       _BANKSEL(p2^.bank);  //verifica banco fuente
       _MOVF(p2^.offs, toW);
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVWF(p1^.offs);
     end;
     stExpres: begin  //ya está en w
-      SetROBResultExpres_byte(Opt);  //Realmente, el resultado no es importante
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVWF(p1^.offs);
     end;
@@ -1032,7 +1033,7 @@ begin
   end else if p1^.Sto = stVarRefExp then begin
     {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
     cuando el valor del puntero es una expresión. Algo así como (ptr + 1)^}
-    SetROBResultExpres_byte(Opt);  //Realmente, el resultado no es importante
+    SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
     case p2^.Sto of
     stConst : begin
       _MOVWF(FSR.offs);  //direcciona
@@ -1074,9 +1075,9 @@ begin
     end;
   end else if p1^.Sto = stVarRefVar then begin
     //Asignación a una variable
+    SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
     case p2^.Sto of
     stConst : begin
-      SetROBResultExpres_byte(Opt);  //Realmente, el resultado no es importante
       //Caso especial de asignación a puntero derefrrenciado: variable^
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.offs, toW);
@@ -1091,7 +1092,6 @@ begin
       end;
     end;
     stVariab: begin
-      SetROBResultExpres_byte(Opt);  //Realmente, el resultado no es importante
       //Caso especial de asignación a puntero derefrrenciado: variable^
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.offs, toW);
@@ -1102,7 +1102,6 @@ begin
       _MOVWF(0);
     end;
     stExpres: begin  //ya está en w
-      SetROBResultExpres_byte(Opt);  //Realmente, el resultado no es importante
       //Caso especial de asignación a puntero derefrrenciado: variable^
       aux := GetAuxRegisterByte;
       _BANKSEL(aux.bank);
@@ -1115,6 +1114,256 @@ begin
       _BANKSEL(aux.bank);  //Salva W (p2)
       _MOVF(aux.offs, toW);
       _MOVWF(0);
+      aux.used := false;
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else begin
+    GenError('Cannot assign to this Operand.'); exit;
+  end;
+end;
+procedure TGenCod.ROB_byte_aadd_byte(Opt: TxpOperation; SetRes: boolean);
+var
+  aux: TPicRegister;
+  rVar: TxpEleVar;
+begin
+  //Simplifcamos el caso en que p2, sea de tipo p2^
+  if not ChangePointerToExpres(p2^) then exit;
+  //Caso especial de asignación
+  if p1^.Sto = stVariab then begin
+    SetResultNull;  //Fomalmente,  una aisgnación no devuelve valores en Pascal
+    //Asignación a una variable
+    case p2^.Sto of
+    stConst : begin
+      if p2^.valInt=0 then begin
+        //Caso especial. No hace nada
+      end else begin
+        _MOVLW(p2^.valInt);
+        _BANKSEL(p1^.bank);  //verifica banco destino
+        _ADDWF(p1^.offs, toF);
+      end;
+    end;
+    stVariab: begin
+      _BANKSEL(p2^.bank);  //verifica banco fuente
+      _MOVF(p2^.offs, toW);
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _ADDWF(p1^.offs, toF);
+    end;
+    stExpres: begin  //ya está en w
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _ADDWF(p1^.offs, toF);
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else if p1^.Sto = stVarRefExp then begin
+    {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
+    cuando el valor del puntero es una expresión. Algo así como (ptr + 1)^}
+    SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
+    case p2^.Sto of
+    stConst : begin
+      //Asignación normal
+      if p2^.valInt=0 then begin
+        //Caso especial. No hace nada
+      end else begin
+        _MOVWF(FSR.offs);  //direcciona
+        _MOVLW(p2^.valInt);
+        _ADDWF(0, toF);
+      end;
+    end;
+    stVariab: begin
+      _MOVWF(FSR.offs);  //direcciona
+      //Asignación normal
+      _BANKSEL(p2^.bank);  //verifica banco fuente
+      _MOVF(p2^.offs, toW);
+      _ADDWF(0, toF);
+    end;
+    stExpres: begin
+      //La dirección está en la pila y la expresión en W
+      aux := GetAuxRegisterByte;
+      _BANKSEL(aux.bank);
+      _MOVWF(aux.offs);   //Salva W (p2)
+      //Apunta con p1
+      rVar := GetVarByteFromStk;
+      _BANKSEL(rVar.adrByte0.bank);
+      _MOVF(rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+      _MOVWF(FSR.offs);  //direcciona
+      //Asignación normal
+      _BANKSEL(aux.bank);  //verifica banco fuente
+      _MOVF(aux.offs, toW);
+      _ADDWF(0, toF);
+      aux.used := false;
+      exit;
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else if p1^.Sto = stVarRefVar then begin
+    //Asignación a una variable
+    SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
+    case p2^.Sto of
+    stConst : begin
+      //Asignación normal
+      if p2^.valInt=0 then begin
+        //Caso especial. No hace nada
+      end else begin
+        //Caso especial de asignación a puntero dereferenciado: variable^
+        _BANKSEL(p1^.bank);  //verifica banco destino
+        _MOVF(p1^.offs, toW);
+        _MOVWF(FSR.offs);  //direcciona
+        _MOVLW(p2^.valInt);
+        _ADDWF(0, toF);
+      end;
+    end;
+    stVariab: begin
+      //Caso especial de asignación a puntero derefrrenciado: variable^
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toW);
+      _MOVWF(FSR.offs);  //direcciona
+      //Asignación normal
+      _BANKSEL(p2^.bank);  //verifica banco fuente
+      _MOVF(p2^.offs, toW);
+      _ADDWF(0, toF);
+    end;
+    stExpres: begin  //ya está en w
+      //Caso especial de asignación a puntero derefrrenciado: variable^
+      aux := GetAuxRegisterByte;
+      _BANKSEL(aux.bank);
+      _MOVWF(aux.offs);   //Salva W (p2)
+      //Apunta con p1
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toW);
+      _MOVWF(FSR.offs);  //direcciona
+      //Asignación normal
+      _BANKSEL(aux.bank);  //Salva W (p2)
+      _MOVF(aux.offs, toW);
+      _ADDWF(0, toF);
+      aux.used := false;
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else begin
+    GenError('Cannot assign to this Operand.'); exit;
+  end;
+end;
+procedure TGenCod.ROB_byte_asub_byte(Opt: TxpOperation; SetRes: boolean);
+var
+  aux: TPicRegister;
+  rVar: TxpEleVar;
+begin
+  //Simplifcamos el caso en que p2, sea de tipo p2^
+  if not ChangePointerToExpres(p2^) then exit;
+  //Caso especial de asignación
+  if p1^.Sto = stVariab then begin
+    SetResultNull;  //Fomalmente,  una aisgnación no devuelve valores en Pascal
+    //Asignación a una variable
+    case p2^.Sto of
+    stConst : begin
+      if p2^.valInt=0 then begin
+        //Caso especial. No hace nada
+      end else begin
+        _MOVLW(p2^.valInt);
+        _BANKSEL(p1^.bank);  //verifica banco destino
+        _SUBWF(p1^.offs, toF);
+      end;
+    end;
+    stVariab: begin
+      _BANKSEL(p2^.bank);  //verifica banco fuente
+      _MOVF(p2^.offs, toW);
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _SUBWF(p1^.offs, toF);
+    end;
+    stExpres: begin  //ya está en w
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _SUBWF(p1^.offs, toF);
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else if p1^.Sto = stVarRefExp then begin
+    {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
+    cuando el valor del puntero es una expresión. Algo así como (ptr + 1)^}
+    SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
+    case p2^.Sto of
+    stConst : begin
+      //Asignación normal
+      if p2^.valInt=0 then begin
+        //Caso especial. No hace nada
+      end else begin
+        _MOVWF(FSR.offs);  //direcciona
+        _MOVLW(p2^.valInt);
+        _SUBWF(0, toF);
+      end;
+    end;
+    stVariab: begin
+      _MOVWF(FSR.offs);  //direcciona
+      //Asignación normal
+      _BANKSEL(p2^.bank);  //verifica banco fuente
+      _MOVF(p2^.offs, toW);
+      _SUBWF(0, toF);
+    end;
+    stExpres: begin
+      //La dirección está en la pila y la expresión en W
+      aux := GetAuxRegisterByte;
+      _BANKSEL(aux.bank);
+      _MOVWF(aux.offs);   //Salva W (p2)
+      //Apunta con p1
+      rVar := GetVarByteFromStk;
+      _BANKSEL(rVar.adrByte0.bank);
+      _MOVF(rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+      _MOVWF(FSR.offs);  //direcciona
+      //Asignación normal
+      _BANKSEL(aux.bank);  //verifica banco fuente
+      _MOVF(aux.offs, toW);
+      _SUBWF(0, toF);
+      aux.used := false;
+      exit;
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else if p1^.Sto = stVarRefVar then begin
+    //Asignación a una variable
+    SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
+    case p2^.Sto of
+    stConst : begin
+      //Asignación normal
+      if p2^.valInt=0 then begin
+        //Caso especial. No hace nada
+      end else begin
+        //Caso especial de asignación a puntero dereferenciado: variable^
+        _BANKSEL(p1^.bank);  //verifica banco destino
+        _MOVF(p1^.offs, toW);
+        _MOVWF(FSR.offs);  //direcciona
+        _MOVLW(p2^.valInt);
+        _SUBWF(0, toF);
+      end;
+    end;
+    stVariab: begin
+      //Caso especial de asignación a puntero derefrrenciado: variable^
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toW);
+      _MOVWF(FSR.offs);  //direcciona
+      //Asignación normal
+      _BANKSEL(p2^.bank);  //verifica banco fuente
+      _MOVF(p2^.offs, toW);
+      _SUBWF(0, toF);
+    end;
+    stExpres: begin  //ya está en w
+      //Caso especial de asignación a puntero derefrrenciado: variable^
+      aux := GetAuxRegisterByte;
+      _BANKSEL(aux.bank);
+      _MOVWF(aux.offs);   //Salva W (p2)
+      //Apunta con p1
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toW);
+      _MOVWF(FSR.offs);  //direcciona
+      //Asignación normal
+      _BANKSEL(aux.bank);  //Salva W (p2)
+      _MOVF(aux.offs, toW);
+      _SUBWF(0, toF);
       aux.used := false;
     end;
     else
@@ -2266,82 +2515,150 @@ begin
 end;
 //////////// Operaciones con Word
 procedure TGenCod.ROB_word_asig_word(Opt: TxpOperation; SetRes: boolean);
+var
+  aux: TPicRegister;
 begin
-  if p1^.Sto <> stVariab then begin  //validación
-    GenError('Only variables can be assigned.'); exit;
-  end;
-  case p2^.Sto of
-  stConst : begin
-    SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-    _BANKSEL(p1^.bank);
-    if p2^.LByte = 0 then begin  //optimiza
-      _CLRF(p1^.Loffs);
-    end else begin
-      _MOVLW(p2^.LByte);
-      _MOVWF(p1^.Loffs);
+  //Simplifcamos el caso en que p2, sea de tipo p2^
+  if not ChangePointerToExpres(p2^) then exit;
+  //Realiza la asignación
+  if p1^.Sto = stVariab then begin
+    case p2^.Sto of
+    stConst : begin
+      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
+      _BANKSEL(p1^.bank);
+      if p2^.LByte = 0 then begin  //optimiza
+        _CLRF(p1^.Loffs);
+      end else begin
+        _MOVLW(p2^.LByte);
+        _MOVWF(p1^.Loffs);
+      end;
+      if p2^.HByte = 0 then begin  //optimiza
+        _CLRF(p1^.Hoffs);
+      end else begin
+        _MOVLW(p2^.HByte);
+        _MOVWF(p1^.Hoffs);
+      end;
     end;
-    if p2^.HByte = 0 then begin  //optimiza
-      _CLRF(p1^.Hoffs);
-    end else begin
-      _MOVLW(p2^.HByte);
+    stVariab: begin
+      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
+      _BANKSEL(p2^.bank);
+      _MOVF(p2^.Loffs, toW);
+      _BANKSEL(p1^.bank);
+      _MOVWF(p1^.Loffs);
+      _BANKSEL(p2^.bank);
+      _MOVF(p2^.Hoffs, toW);
+      _BANKSEL(p1^.bank);
       _MOVWF(p1^.Hoffs);
     end;
-  end;
-  stVariab: begin
-    SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.Loffs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Loffs);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.Hoffs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Hoffs);
-  end;
-  stExpres: begin   //se asume que se tiene en (H,w)
-    SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Loffs);
-    _BANKSEL(H.bank);
-    _MOVF(H.offs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Hoffs);
-  end;
-  else
-    GenError('No soportado'); exit;
+    stExpres: begin   //se asume que se tiene en (H,w)
+      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
+      _BANKSEL(p1^.bank);
+      _MOVWF(p1^.Loffs);
+      _BANKSEL(H.bank);
+      _MOVF(H.offs, toW);
+      _BANKSEL(p1^.bank);
+      _MOVWF(p1^.Hoffs);
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else if p1^.Sto = stVarRefVar then begin
+    //Asignación a una variable
+    SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
+    case p2^.Sto of
+    stConst : begin
+      //Caso especial de asignación a puntero derefrrenciado: variable^
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toW);
+      _MOVWF(FSR.offs);  //direcciona byte bajo
+      //Asignación normal
+      if p2^.LByte=0 then begin
+        //caso especial
+        _CLRF(0);
+      end else begin
+        _MOVLW(p2^.LByte);
+        _MOVWF(0);
+      end;
+      _INCF(FSR.offs, toF);  //direcciona byte alto
+      if p2^.HByte=0 then begin
+        //caso especial
+        _CLRF(0);
+      end else begin
+        _MOVLW(p2^.HByte);
+        _MOVWF(0);
+      end;
+    end;
+    stVariab: begin
+      //Caso especial de asignación a puntero dereferenciado: variable^
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toW);
+      _MOVWF(FSR.offs);  //direcciona byte bajo
+      //Asignación normal
+      _BANKSEL(p2^.bank);  //verifica banco fuente
+      _MOVF(p2^.Loffs, toW);
+      _MOVWF(0);
+      _INCF(FSR.offs, toF);  //direcciona byte alto
+      _MOVF(p2^.Hoffs, toW);
+      _MOVWF(0);
+    end;
+    stExpres: begin  //ya está en H,w
+      //Caso especial de asignación a puntero dereferenciado: variable^
+      aux := GetAuxRegisterByte;
+      _BANKSEL(aux.bank);
+      _MOVWF(aux.offs);   //Salva W (p2.L)
+      //Apunta con p1
+      _BANKSEL(p1^.bank);  //verifica banco destino
+      _MOVF(p1^.offs, toW);
+      _MOVWF(FSR.offs);  //direcciona a byte bajo
+      //Asignación normal
+      _BANKSEL(aux.bank);
+      _MOVF(aux.offs, toW);   //recupero p2.L
+      _MOVWF(0);          //escribe
+      _BANKSEL(H.bank);
+      _MOVF(H.offs, toW);   //recupero p2.H
+      _INCF(FSR.offs, toF);   //apunta a byte alto
+      _MOVWF(0);          //escribe
+      aux.used := false;
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else begin
+    GenError('Cannot assign to this Operand.'); exit;
   end;
 end;
 procedure TGenCod.ROB_word_asig_byte(Opt: TxpOperation; SetRes: boolean);
 begin
-  if p1^.Sto <> stVariab then begin  //validación
-    GenError('Only variables can be assigned.'); exit;
-  end;
-  case p2^.Sto of
-  stConst : begin
-    SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-    if p2^.valInt = 0 then begin
-      //caso especial
-      _CLRF(p1^.Loffs);
+  if p1^.Sto = stVariab then begin
+    case p2^.Sto of
+    stConst : begin
+      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
+      if p2^.valInt = 0 then begin
+        //caso especial
+        _CLRF(p1^.Loffs);
+        _CLRF(p1^.Hoffs);
+      end else begin;
+        _CLRF(p1^.Hoffs);
+        _MOVLW(p2^.valInt);
+        _MOVWF(p1^.Loffs);
+      end;
+    end;
+    stVariab: begin
+      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
       _CLRF(p1^.Hoffs);
-    end else begin;
-      _CLRF(p1^.Hoffs);
-      _MOVLW(p2^.valInt);
+      _MOVF(p2^.Loffs, toW);
       _MOVWF(p1^.Loffs);
     end;
-  end;
-  stVariab: begin
-    SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-    _CLRF(p1^.Hoffs);
-    _MOVF(p2^.Loffs, toW);
-    _MOVWF(p1^.Loffs);
-  end;
-  stExpres: begin   //se asume que está en w
-    SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-    _CLRF(p1^.Hoffs);
-    _MOVWF(p1^.offs);
-  end;
-  else
-    GenError('No soportado'); exit;
+    stExpres: begin   //se asume que está en w
+      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
+      _CLRF(p1^.Hoffs);
+      _MOVWF(p1^.offs);
+    end;
+    else
+      GenError('No soportado'); exit;
+    end;
+  end else begin
+    GenError('Cannot assign to this Operand.'); exit;
   end;
 end;
 procedure TGenCod.ROB_word_equal_word(Opt: TxpOperation; SetRes: boolean);
@@ -2349,6 +2666,11 @@ var
   tmp: TPicRegister;
   sale: integer;
 begin
+  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+    GenError('Too complex pointer expression.'); exit;
+  end;
+  if not ChangePointerToExpres(p1^) then exit;
+  if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin  //compara constantes. Caso especial
     SetROBResultConst_bool(p1^.valInt = p2^.valInt);
@@ -2647,6 +2969,11 @@ procedure TGenCod.ROB_word_add_word(Opt: TxpOperation; SetRes: boolean);
 var
   aux: TPicRegister;
 begin
+  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+    GenError('Too complex pointer expression.'); exit;
+  end;
+  if not ChangePointerToExpres(p1^) then exit;
+  if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin
     if p1^.valInt+p2^.valInt <256 then begin
@@ -2887,6 +3214,11 @@ procedure TGenCod.ROB_word_sub_word(Opt: TxpOperation; SetRes: boolean);
 var
   aux: TPicRegister;
 begin
+  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+    GenError('Too complex pointer expression.'); exit;
+  end;
+  if not ChangePointerToExpres(p1^) then exit;
+  if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin
     if p1^.valInt-p2^.valInt < 0 then begin
@@ -3181,6 +3513,27 @@ begin
   end;
   else
     genError('Cannot Compile: "%s"', [Opt.OperationString]);
+  end;
+end;
+procedure TGenCod.ROU_addr_word(Opr: TxpOperator; SetRes: boolean);
+{Devuelve la dirección de una variable.}
+begin
+  case p1^.Sto of
+  stConst : begin
+    genError('Cannot obtain address of constant.');
+  end;
+  stVariab: begin
+    //Es una variable normal
+    //La dirección de una variable es constante
+    SetResultConst(typByte);
+    //No se usa p1^.offs, porque solo retorna 7 bits;
+    res.valInt := p1^.rVar.AbsAddr and $ff;
+  end;
+  stExpres: begin  //ya está en STATUS.Z
+    genError('Cannot obtain address of an expression.');
+  end;
+  else
+    genError('Cannot obtain address of this operand.');
   end;
 end;
 
@@ -3850,7 +4203,7 @@ begin
   ROB_byte_difer_byte(Opt, SetRes); //es lo mismo
 end;
 //////////// Operaciones con punteros
-procedure TGenCod.ROB_pbyte_add_byte(Opt: TxpOperation; SetRes: boolean);
+procedure TGenCod.ROB_pointer_add_byte(Opt: TxpOperation; SetRes: boolean);
 {Implementa la suma de un puntero (a cualquier tipo) y un byte.}
 var
   ptrType: TxpEleType;
@@ -3875,12 +4228,12 @@ begin
   stExpres: res.SetAsExpres(ptrType);  //Cambia tipo a la expresión
   end;
 end;
-procedure TGenCod.ROB_pbyte_sub_byte(Opt: TxpOperation; SetRes: boolean);
+procedure TGenCod.ROB_pointer_sub_byte(Opt: TxpOperation; SetRes: boolean);
 {Implementa la resta de un puntero (a cualquier tipo) y un byte.}
 var
   ptrType: TxpEleType;
 begin
-  //La explicación es la misma que para la rutina ROB_pbyte_add_byte
+  //La explicación es la misma que para la rutina ROB_pointer_add_byte
   ptrType := p1^.Typ;
   ROB_byte_sub_byte(Opt, SetRes);
   case res.Sto of
@@ -3888,7 +4241,7 @@ begin
   stExpres: res.SetAsExpres(ptrType);
   end;
 end;
-procedure TGenCod.ROU_ptrDerefByte(Opr: TxpOperator; SetRes: boolean);
+procedure TGenCod.ROU_derefPointer(Opr: TxpOperator; SetRes: boolean);
 {Implementa el operador de dereferencia "^", para cualquier tipo de dato}
 begin
   case p1^.Sto of
@@ -3898,15 +4251,10 @@ begin
 //  end;
   stVariab: begin
     //La dereferencia de una variable puntero a byte es un stVarRefVar.
-//    tmpVar := CreateTmpVar('', typByte);  //Crea una variable byte
-//    tmpVar.adrByte0.Assign(p1^.rVar.adrByte0);     //Copia direccción física
-//    SetROUResultVariab(tmpVar, false);
     SetROUResultVarRef(nil, p1^.rVar);
   end;
   stExpres: begin
-    //La expresión Esta en W, pero es una dirección, no un valor
-//    res.SetAsExpres(typByte);  //Devuelve expresión byte
-//    res.Indirect := true;      //Pero indirecto
+    //La expresión Esta en RT, pero es una dirección, no un valor
     SetROUResultExpRef(nil, p1^.Typ);
   end;
   else
@@ -4025,7 +4373,7 @@ begin
   GetExpressionE(0, pexPARSY);  //captura parámetro
   if HayError then exit;   //aborta
   //Se terminó de evaluar un parámetro
-  res.LoadToReg;   //Carga en registro de trabajo
+  LoadToRT(res);   //Carga en registro de trabajo
   if HayError then exit;
   if res.Typ = typByte then begin
     //El parámetro byte, debe estar en W
@@ -4085,7 +4433,7 @@ begin
   if curFunTyp <> res.Typ then begin
     GenError('Expected a "%s" expression.', [curFunTyp.name]);
   end;
-  res.LoadToReg;
+  LoadToRT(res);
   res.SetAsNull;  //No es función
   CodifRETURN(curBlk);  //Codifica salto
 end;
@@ -4785,6 +5133,7 @@ begin
   //símbolos especiales
   xLex.AddSymbSpec('+',  tnOperator);
   xLex.AddSymbSpec('+=', tnOperator);
+  xLex.AddSymbSpec('-=', tnOperator);
   xLex.AddSymbSpec('-',  tnOperator);
   xLex.AddSymbSpec('*',  tnOperator);
   xLex.AddSymbSpec('/',  tnOperator);
@@ -4893,10 +5242,15 @@ begin
   opr.CreateOperation(typBool,@ROB_bool_dif_bool);
   //////////////////////////////////////////
   //////// Operaciones con Byte ////////////
+  //////////////////////////////////////////
   {Los operadores deben crearse con su precedencia correcta}
-
   opr:=typByte.CreateBinaryOperator(':=',2,'asig');  //asignación
   opr.CreateOperation(typByte,@ROB_byte_asig_byte);
+  opr:=typByte.CreateBinaryOperator('+=',2,'aadd');  //asignación-suma
+  opr.CreateOperation(typByte,@ROB_byte_aadd_byte);
+  opr:=typByte.CreateBinaryOperator('-=',2,'asub');  //asignación-resta
+  opr.CreateOperation(typByte,@ROB_byte_asub_byte);
+
   opr:=typByte.CreateBinaryOperator('+',4,'add');  //suma
   opr.CreateOperation(typByte,@ROB_byte_add_byte);
   opr.CreateOperation(typWord,@ROB_byte_add_word);
@@ -4918,8 +5272,7 @@ begin
   opr.CreateOperation(typBit,@ROB_byte_xor_bit);
 
   opr:=typByte.CreateUnaryPreOperator('NOT', 6, 'not', @ROU_not_byte);
-
-  opr:=typByte.CreateUnaryPreOperator('@', 6, 'addr', @Oper_addr_byte);
+  opr:=typByte.CreateUnaryPreOperator('@', 6, 'addr', @ROU_addr_byte);
 
   opr:=typByte.CreateBinaryOperator('=',3,'equal');
   opr.CreateOperation(typByte,@ROB_byte_equal_byte);
@@ -4979,6 +5332,8 @@ begin
   opr:=typWord.CreateBinaryOperator('UMULWORD',5,'umulword');  //suma
   opr.CreateOperation(typWord,@ROB_word_umulword_word);
 
+  opr:=typWord.CreateUnaryPreOperator('@', 6, 'addr', @ROU_addr_word);
+
   //////////////////////////////////////////
   //////// Operaciones con DWord ////////////
   {Los operadores deben crearse con su precedencia correcta}
@@ -5000,8 +5355,8 @@ begin
 //  opr.CreateOperation(typByte,@ROB_word_add_byte);
 
 end;
-procedure TGenCod.DefPointerToByte(etyp: TxpEleType);
-{Configura ls operaciones a un tipo, que debe ser un puntero a un byte.}
+procedure TGenCod.DefPointerArithmetic(etyp: TxpEleType);
+{Configura ls operaciones que definen la aritmética de punteros.}
 var
   opr: TxpOperator;
 begin
@@ -5009,17 +5364,15 @@ begin
   opr:=etyp.CreateBinaryOperator(':=',2,'asig');
   opr.CreateOperation(typByte, @ROB_byte_asig_byte);
   opr.CreateOperation(etyp   , @ROB_byte_asig_byte);
-  //Agrega a los bytes, la posibilidad de leer punteros
-  typByte.operAsign.CreateOperation(etyp   , @ROB_byte_asig_byte);
+  //Agrega a los bytes, la posibilidad de ser asignados por punteros
+  typByte.operAsign.CreateOperation(etyp, @ROB_byte_asig_byte);
 
   opr:=etyp.CreateBinaryOperator('=',3,'equal');  //asignación
   opr.CreateOperation(typByte, @ROB_byte_equal_byte);
   opr:=etyp.CreateBinaryOperator('+',4,'add');  //suma
-  opr.CreateOperation(typByte, @ROB_pbyte_add_byte);
+  opr.CreateOperation(typByte, @ROB_pointer_add_byte);
   opr:=etyp.CreateBinaryOperator('-',4,'add');  //resta
-  opr.CreateOperation(typByte, @ROB_pbyte_sub_byte);
-  //Fija operador de dereferencia
-  opr:=etyp.CreateUnaryPostOperator('^',6,'deref', @ROU_ptrDerefByte);  //dereferencia
+  opr.CreateOperation(typByte, @ROB_pointer_sub_byte);
 end;
 procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}

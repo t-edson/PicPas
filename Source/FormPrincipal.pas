@@ -920,6 +920,7 @@ begin
   cxp.SetProIniBnk := not Config.OptBnkBefPro;
   cxp.SetProEndBnk := not Config.OptBnkAftPro;
   cxp.OptBnkAftIF  := Config.OptBnkAftIF;
+  cxp.ReuProcVar   := Config.ReuProcVar;
   ticSynCheck := 1000; //Desactiva alguna Verif. de sintaxis, en camino.
   cxp.Compiling := true;   //Activa bandera
   cxp.Compile(filName);

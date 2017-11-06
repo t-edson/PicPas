@@ -40,6 +40,14 @@ type
   end;
   TxpListCallers = specialize TFPGObjectList<TxpEleCaller>;
 
+  //Datos de las llamadas que se hacen a otro elemento
+//  TxpEleCalled = class
+//    curPos: TSrcPos;    //Posición desde donde es llamado
+//    curBnk: byte;       //banco RAM, desde donde se llama
+//    called: TxpElement; //función que llama a esta función
+//  end;
+  TxpListCalled = specialize TFPGObjectList<TxpElement>;
+
   { TxpElement }
   //Clase base para todos los elementos
   TxpElement = class
@@ -47,9 +55,11 @@ type
     function AddElement(elem: TxpElement): TxpElement;
   public  //Gestion de llamadas al elemento
     lstCallers: TxpListCallers;  //Lista de funciones que llaman a esta función.
+    lstCalled : TxpListCalled;   //Lista de funciones que son llamadas (Se llena en el enlazado)
     OnAddCaller: function(elem: TxpElement): TxpEleCaller of object;
     function AddCaller: TxpEleCaller;
-    function nCalled: integer;  //número de llamadas
+    procedure AddCalled(elem: TxpElement);
+    function nCalled: integer; virtual; //número de llamadas
     function IsCalledBy(callElem: TxpElement): boolean; //Identifica a un llamador
     function IsCAlledAt(callPos: TSrcPos): boolean;
     function IsDeclaredAt(decPos: TSrcPos): boolean;
@@ -167,7 +177,7 @@ type
     la implementación. OnPush y OnPop, son útiles para cuando la implementación va a
     manejar pila.}
     OnSaveToStk : procedure of object;  //Salva datos en reg. de Pila
-    OnLoadToReg : TProcLoadOperand; {Se usa cuando se solicita cargar un operando
+    OnLoadToRT : TProcLoadOperand; {Se usa cuando se solicita cargar un operando
                                  (de este tipo) en la pila. }
     OnDefRegister: procedure of object; {Se usa cuando se solicita descargar un operando
                                  (de este tipo) de la pila. }
@@ -276,6 +286,7 @@ type
     function AddrString: string; //Devuelve la dirección física como cadena
     function BitMask: byte;    //Máscara de bit, de acuerdo al valor del campo "bit".
     procedure ResetAddress;    //Limpia las direcciones físicas
+    //procedure SetRAMusedAsShared;
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -324,6 +335,7 @@ type
     {Indica si la función es una ISR. Se espera que solo exista una.}
     IsInterrupt : boolean;
     ///////////////
+    function nCalled: integer; override; //número de llamadas
     procedure ClearParams;
     procedure CreateParam(parName: string; typ0: TxpEleType; pvar: TxpEleVar);
     function SameParams(Fun2: TxpEleFun): boolean;
@@ -468,7 +480,7 @@ var
 begin
   elem := LastNode;   //Debe ser el último
   if elem.idClass <> eltBody then begin
-    exit(nil);  //No deberría pasar
+    exit(nil);  //No debería pasar
   end;
   //Devuelve referencia
   Result := TxpEleBody(elem);
@@ -490,6 +502,10 @@ begin
   end else begin
     Result := nil;
   end;
+end;
+procedure TxpElement.AddCalled(elem: TxpElement);
+begin
+  lstCalled.Add(elem);
 end;
 function TxpElement.nCalled: integer;
 begin
@@ -583,9 +599,11 @@ constructor TxpElement.Create;
 begin
   idClass := eltNone;
   lstCallers:= TxpListCallers.Create(true);
+  lstCalled := TxpListCalled.Create(false);  //solo guarda referencias
 end;
 destructor TxpElement.Destroy;
 begin
+  lstCalled.Destroy;
   lstCallers.Destroy;
   elements.Free;  //por si contenía una lista
   inherited Destroy;
@@ -1059,6 +1077,11 @@ begin
   Operators.Destroy;
   fields.Destroy;
   inherited;
+end;
+function TxpEleFun.nCalled: integer;
+begin
+  if IsInterrupt then exit(1);   //Los INTERRUPT son llamados implícitamente
+  Result := inherited nCalled;
 end;
 { TxpEleFun }
 procedure TxpEleFun.ClearParams;

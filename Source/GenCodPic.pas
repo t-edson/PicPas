@@ -69,8 +69,8 @@ type
     procedure GenerateROBdetComment;
     procedure GenerateROUdetComment;
   protected  //Rutinas de gestión de memoria de bajo nivel
-    procedure AssignRAM(reg: TPicRegister; regName: string);  //Asigna a una dirección física
-    procedure AssignRAMbit(reg: TPicRegisterBit; regName: string);  //Asigna a una dirección física
+    procedure AssignRAM(reg: TPicRegister; regName: string; shared: boolean);  //Asigna a una dirección física
+    procedure AssignRAMbit(reg: TPicRegisterBit; regName: string; shared: boolean);  //Asigna a una dirección física
     function CreateRegisterByte(RegType: TPicRegType): TPicRegister;
     function CreateRegisterBit(RegType: TPicRegType): TPicRegisterBit;
   protected  //Variables temporales
@@ -104,9 +104,11 @@ type
   protected  //Rutinas de gestión de memoria para variables
     {Estas rutinas estarían mejor ubicadas en TCompilerBase, pero como dependen del
     objeto "pic", se colocan mejor aquí.}
-    procedure AssignRAMinBit(absAdd, absBit: integer; var reg: TPicRegisterBit; regName: string);
-    procedure AssignRAMinByte(absAdd: integer; var reg: TPicRegister; regName: string);
-    procedure CreateVarInRAM(nVar: TxpEleVar);
+    procedure AssignRAMinBit(absAdd, absBit: integer; var reg: TPicRegisterBit;
+      regName: string; shared: boolean = false);
+    procedure AssignRAMinByte(absAdd: integer; var reg: TPicRegister;
+      regName: string; shared: boolean = false);
+    procedure CreateVarInRAM(nVar: TxpEleVar; shared: boolean = false);
   protected  //Métodos para fijar el resultado
     //Métodos básicos
     procedure SetResultNull;
@@ -191,10 +193,11 @@ type
     function _PC: word;
     function _CLOCK: integer;
   public  //Opciones de compilación
-    incDetComm: boolean;   //Incluir Comentarios detallados.
+    incDetComm  : boolean;   //Incluir Comentarios detallados.
     SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
     SetProEndBnk: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
     OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
+    ReuProcVar  : boolean; //Reusar variables locales de procedimientos
   public  //Acceso a registro de trabajo
     property ProplistRegAux: TPicRegister_list read listRegAux;
     property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
@@ -203,11 +206,11 @@ type
     property U_register: TPicRegister read U;
   protected  //Funciones de tipos
     ///////////////// Tipo Bit ////////////////
-    procedure bit_LoadToReg(const OpPtr: pointer);
+    procedure bit_LoadToRT(const OpPtr: pointer);
     procedure bit_DefineRegisters;
     procedure bit_SaveToStk;
     //////////////// Tipo Byte /////////////
-    procedure byte_LoadToReg(const OpPtr: pointer);
+    procedure byte_LoadToRT(const OpPtr: pointer);
     procedure byte_DefineRegisters;
     procedure byte_SaveToStk;
     procedure byte_GetItem(const OpPtr: pointer);
@@ -223,13 +226,13 @@ type
     procedure byte_bit6(const OpPtr: pointer);
     procedure byte_bit7(const OpPtr: pointer);
     //////////////// Tipo Word /////////////
-    procedure word_LoadToReg(const OpPtr: pointer);
+    procedure word_LoadToRT(const OpPtr: pointer);
     procedure word_DefineRegisters;
     procedure word_SaveToStk;
     procedure word_Low(const OpPtr: pointer);
     procedure word_High(const OpPtr: pointer);
     //////////////// Tipo DWord /////////////
-    procedure dword_LoadToReg(const OpPtr: pointer);
+    procedure dword_LoadToRT(const OpPtr: pointer);
     procedure dword_DefineRegisters;
     procedure dword_SaveToStk;
     procedure dword_Extra(const OpPtr: pointer);
@@ -412,13 +415,13 @@ begin
     exit(false);
 end;
 //Rutinas de gestión de memoria de bajo nivel
-procedure TGenCodPic.AssignRAM(reg: TPicRegister; regName: string);
+procedure TGenCodPic.AssignRAM(reg: TPicRegister; regName: string; shared: boolean);
 //Asocia a una dirección física de la memoria del PIC.
 //Si encuentra error, devuelve el mensaje de error en "MsjError"
 begin
   {Esta dirección física, la mantendrá este registro hasta el final de la compilación
   y en teoría, hasta el final de la ejecución de programa en el PIC.}
-  if not pic.GetFreeByte(reg.offs, reg.bank) then begin
+  if not pic.GetFreeByte(reg.offs, reg.bank, shared) then begin
     GenError('No enough RAM');
     exit;
   end;
@@ -426,9 +429,9 @@ begin
   reg.assigned := true;  //marca como que ya tiene memoria asignada
   reg.used := false;  //aún no se usa
 end;
-procedure TGenCodPic.AssignRAMbit(reg: TPicRegisterBit; regName: string);
+procedure TGenCodPic.AssignRAMbit(reg: TPicRegisterBit; regName: string; shared: boolean);
 begin
-  if not pic.GetFreeBit(reg.offs, reg.bank, reg.bit) then begin
+  if not pic.GetFreeBit(reg.offs, reg.bank, reg.bit, shared) then begin
     GenError('No enough RAM');
     exit;
   end;
@@ -531,7 +534,7 @@ begin
   reg := CreateRegisterByte(prtAuxReg);
   if reg = nil then exit(nil);  //hubo errir
   regName := 'aux'+IntToSTr(listRegAux.Count);
-  AssignRAM(reg, regName);   //Asigna memoria. Puede generar error.
+  AssignRAM(reg, regName, false);   //Asigna memoria. Puede generar error.
   if HayError then exit;
   reg.used := true;  //marca como usado
   Result := reg;   //Devuelve la referencia
@@ -556,7 +559,7 @@ begin
   reg := CreateRegisterBit(prtAuxReg);
   if reg = nil then exit(nil);  //hubo errir
   regName := 'aux'+IntToSTr(listRegAuxBit.Count);
-  AssignRAMbit(reg, regName);   //Asigna memoria. Puede generar error.
+  AssignRAMbit(reg, regName, false);   //Asigna memoria. Puede generar error.
   if HayError then exit;
   Result := reg;   //Devuelve la referencia
 end;
@@ -582,7 +585,7 @@ begin
     reg0.typ := prtStkReg;   //asigna tipo
     listRegStk.Add(reg0);    //agrega a lista
     regName := 'stk'+IntToSTr(listRegStk.Count);
-    AssignRAM(reg0, regName);   //Asigna memoria. Puede generar error.
+    AssignRAM(reg0, regName, false);   //Asigna memoria. Puede generar error.
     if HayError then exit(nil);
   end;
   Result := listRegStk[stackTop];  //toma registro
@@ -611,7 +614,7 @@ begin
     reg0.typ := prtStkReg;    //asigna tipo
     listRegStkBit.Add(reg0);  //agrega a lista
     regName := 'stk'+IntToSTr(listRegStkBit.Count);
-    AssignRAMbit(reg0, regName);   //Asigna memoria. Puede generar error.
+    AssignRAMbit(reg0, regName, false);   //Asigna memoria. Puede generar error.
     if HayError then exit(nil);
   end;
   Result := listRegStkBit[stackTopBit];  //toma registro
@@ -723,13 +726,13 @@ begin
 end;
 ////Rutinas de gestión de memoria para variables
 procedure TGenCodPic.AssignRAMinBit(absAdd, absBit: integer;
-  var reg: TPicRegisterBit; regName: string);
+  var reg: TPicRegisterBit; regName: string; shared: boolean = false);
 {Aeigna RAM a un registro o lo coloca en la dirección indicada.}
 begin
   //Obtiene los valores de: offs, bnk, y bit, para el alamacenamiento.
   if absAdd=-1 then begin
     //Caso normal, sin dirección absoluta.
-    AssignRAMbit(reg, regName);
+    AssignRAMbit(reg, regName, shared);
     reg.used := true;
     //Puede salir con error
   end else begin
@@ -743,13 +746,13 @@ begin
   end;
 end;
 procedure TGenCodPic.AssignRAMinByte(absAdd: integer; var reg: TPicRegister;
-  regName: string);
+  regName: string; shared: boolean = false);
 {Asigna RAM a un registro o lo coloca en la dirección indicada.}
 begin
   //Obtiene los valores de: offs, bnk, y bit, para el alamacenamiento.
   if absAdd=-1 then begin
     //Caso normal, sin dirección absoluta.
-    AssignRAM(reg, regName);
+    AssignRAM(reg, regName, shared);
     reg.used := true;
     //Puede salir con error
   end else begin
@@ -761,7 +764,7 @@ begin
     pic.SetNameRAM(reg.offs, reg.bank, regName);
   end;
 end;
-procedure TGenCodPic.CreateVarInRAM(nVar: TxpEleVar);
+procedure TGenCodPic.CreateVarInRAM(nVar: TxpEleVar; shared: boolean = false);
 {Rutina para asignar espacio físico a una variable. La variable, es creada en memoria
 con lso parámetros que posea en ese momento. Si está definida como ABSOLUTE, se le
 creará en la posicón indicada. }
@@ -788,19 +791,19 @@ begin
   end;
   //Asigna espacio, de acuerdo al tipo
   if typ = typBit then begin
-    AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
+    AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName, shared);
   end else if typ = typBool then begin
-    AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName);
+    AssignRAMinBit(absAdd, absBit, nVar.adrBit, varName, shared);
   end else if typ = typByte then begin
-    AssignRAMinByte(absAdd, nVar.adrByte0, varName);
+    AssignRAMinByte(absAdd, nVar.adrByte0, varName, shared);
   end else if typ = typChar then begin
-    AssignRAMinByte(absAdd, nVar.adrByte0, varName);
+    AssignRAMinByte(absAdd, nVar.adrByte0, varName, shared);
   end else if typ = typWord then begin
     //Registra variable en la tabla
     if absAdd = -1 then begin  //Variable normal
       //Los 2 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
-      AssignRAMinByte(-1, nVar.adrByte0, varName+'@0');
-      AssignRAMinByte(-1, nVar.adrByte1, varName+'@1');
+      AssignRAMinByte(-1, nVar.adrByte0, varName+'@0', shared);
+      AssignRAMinByte(-1, nVar.adrByte1, varName+'@1', shared);
     end else begin             //Variable absoluta
       //Las variables absolutas se almacenarán siempre consecutivas
       AssignRAMinByte(absAdd  , nVar.adrByte0, varName+'@0');
@@ -810,10 +813,10 @@ begin
     //Registra variable en la tabla
     if absAdd = -1 then begin  //Variable normal
       //Los 4 bytes, no necesariamente serán consecutivos (se toma los que estén libres)}
-      AssignRAMinByte(-1, nVar.adrByte0, varName+'@0');
-      AssignRAMinByte(-1, nVar.adrByte1, varName+'@1');
-      AssignRAMinByte(-1, nVar.adrByte2, varName+'@2');
-      AssignRAMinByte(-1, nVar.adrByte3, varName+'@3');
+      AssignRAMinByte(-1, nVar.adrByte0, varName+'@0', shared);
+      AssignRAMinByte(-1, nVar.adrByte1, varName+'@1', shared);
+      AssignRAMinByte(-1, nVar.adrByte2, varName+'@2', shared);
+      AssignRAMinByte(-1, nVar.adrByte3, varName+'@3', shared);
     end else begin             //Variable absoluta
       //Las variables absolutas se almacenarán siempre consecutivas
       AssignRAMinByte(absAdd  , nVar.adrByte0, varName+'@0');
@@ -844,7 +847,7 @@ begin
   end else if typ.catType = tctPointer then begin
     //Es un puntero a algún tipo.
     //Los punteros cortos, se manejan como bytes
-    AssignRAMinByte(absAdd, nVar.adrByte0, varName);
+    AssignRAMinByte(absAdd, nVar.adrByte0, varName, shared);
   end else begin
     GenError('Not implemented.', [varName]);
   end;
@@ -1172,51 +1175,34 @@ function TGenCodPic.ChangePointerToExpres(var ope: TOperand): boolean;
 {Convierte un operando de tipo puntero dereferenciado (x^), en una expresión en los RT,
 para que pueda ser evaluado, sin problemas, por las ROP.
 Si hay error devuelve false.}
-var
-  varPtr: TxpEleVar;
 begin
   Result := true;
   if ope.Sto = stVarRefVar then begin
     //Se tiene una variable puntero dereferenciada: x^
-    varPtr := ope.rVarOff;  //Guarda referencia a la variable puntero
     {Convierte en expresión, verificando los RT}
     if RTstate<>nil then begin
       //Si se usan RT en la operación anterior. Hay que salvar en pila
       RTstate.SaveToStk;  //Se guardan por tipo
       if HayError then exit(false);
     end;
-    if ope.Typ = typByte then begin
-      //El tipo al que apunta es un byte
-      ope.SetAsExpres(typByte);
-      InvertedFromC:=false;
-      RTstate := typByte;
-      //Mueve a W
-      _BANKSEL(varPtr.bank);
-      _MOVF(varPtr.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona
-      _MOVF(0, toW);  //deje en W
-    end else begin
-      //Es otro tipo
-      GenError('Not implemented.');
-      exit(false);
-    end;
+    //Llama a rutina que mueve el operando a RT
+    LoadToRT(ope);
+    if HayError then exit(false);  //Por si no está implementado
+    //COnfigura después SetAsExpres(), para que LoadToRT(), sepa el almacenamiento de "op"
+    ope.SetAsExpres(ope.Typ);  //"ope.Typ" es el tipo al que apunta
+    InvertedFromC:=false;
+    RTstate := ope.Typ;
   end else if ope.Sto = stVarRefExp then begin
     //Es una expresión.
     {Se asume que el operando tiene su resultado en los RT. SI estuvieran en la pila
     no se aplicaría.}
-    if ope.Typ = typByte then begin
-      //Es un byte
-      ope.SetAsExpres(typByte);
-      InvertedFromC:=false;
-      RTstate := typByte;
-      //Mueve a W
-      _MOVWF(FSR.offs);  //direcciona
-      _MOVF(0, toW);  //deje en W
-    end else begin
-      //Es otro tipo
-      GenError('Not implemented.');
-      exit(false);
-    end;
+    //Llama a rutina que mueve el operando a RT
+    LoadToRT(ope);
+    if HayError then exit(false);  //Por si no está implementado
+    //COnfigura después SetAsExpres(), para que LoadToRT(), sepa el almacenamiento de "op"
+    ope.SetAsExpres(ope.Typ);  //"ope.Typ" es el tipo al que apunta
+    InvertedFromC:=false;
+    RTstate := ope.Typ;
   end;
 end;
 //Rutinas generales para la codificación
@@ -1560,7 +1546,7 @@ begin
   exit(true);
 end;
 ///////////////// Tipo Bit ////////////////
-procedure TGenCodPic.bit_LoadToReg(const OpPtr: pointer);
+procedure TGenCodPic.bit_LoadToRT(const OpPtr: pointer);
 {Carga operando a registros Z.}
 var
   Op: ^TOperand;
@@ -1599,6 +1585,9 @@ begin
       //No hay mada que hacer
     end;
   end;
+  else
+    //Almacenamiento no implementado
+    GenError('Not implemented.');
   end;
 end;
 procedure TGenCodPic.bit_DefineRegisters;
@@ -1620,10 +1609,11 @@ begin
   stk.used := true;
 end;
 //////////////// Tipo Byte /////////////
-procedure TGenCodPic.byte_LoadToReg(const OpPtr: pointer);
+procedure TGenCodPic.byte_LoadToRT(const OpPtr: pointer);
 {Carga operando a registros de trabajo.}
 var
   Op: ^TOperand;
+  varPtr: TxpEleVar;
 begin
   Op := OpPtr;
   case Op^.Sto of  //el parámetro debe estar en "res"
@@ -1636,6 +1626,26 @@ begin
   end;
   stExpres: begin  //ya está en w
   end;
+  stVarRefVar: begin
+    //Se tiene una variable puntero dereferenciada: x^
+    varPtr := Op^.rVarOff;  //Guarda referencia a la variable puntero
+    //Mueve a W
+    _BANKSEL(varPtr.bank);
+    _MOVF(varPtr.offs, toW);
+    _MOVWF(FSR.offs);  //direcciona
+    _MOVF(0, toW);  //deje en W
+  end;
+  stVarRefExp: begin
+    //Es una expresión derefernciada (x+a)^.
+    {Se asume que el operando tiene su resultado en los RT. Si estuvieran en la pila
+    no se aplicaría.}
+    //Mueve a W
+    _MOVWF(FSR.offs);  //direcciona
+    _MOVF(0, toW);  //deje en W
+  end;
+  else
+    //Almacenamiento no implementado
+    GenError('Not implemented.');
   end;
 end;
 procedure TGenCodPic.byte_DefineRegisters;
@@ -1675,14 +1685,14 @@ begin
       end;
     stVariab: begin
         SetResultExpres(arrVar.typ.refType, true);  //Es array de bytes, o Char, devuelve Byte o Char
-        idx.LoadToReg;   //Lo deja en W
+        LoadToRT(idx);   //Lo deja en W
         _ADDLW(arrVar.adrByte0.AbsAdrr);   //agrega OFFSET
         _MOVWF(04);     //direcciona con FSR
         _MOVF(0, toW);  //lee indexado en W
     end;
     stExpres: begin
         SetResultExpres(arrVar.typ.refType, false);  //Es array de bytes, o Char, devuelve Byte o Char
-        idx.LoadToReg;   //Lo deja en W
+        LoadToRT(idx);   //Lo deja en W
         _ADDLW(arrVar.adrByte0.AbsAdrr);   //agrega OFFSET
         _MOVWF(04);     //direcciona con FSR
         _MOVF(0, toW);  //lee indexado en W
@@ -1724,7 +1734,7 @@ begin
           _CLRF(idxTar);
         end else begin
           //Sabemos que hay una expresión byte
-          value.LoadToReg; //Carga resultado en W
+          LoadToRT(value); //Carga resultado en W
           _MOVWF(idxTar);  //Mueve a arreglo
         end;
       end;
@@ -1949,10 +1959,11 @@ begin
   byte_bit(OpPtr, 7);
 end;
 //////////////// Tipo DWord /////////////
-procedure TGenCodPic.word_LoadToReg(const OpPtr: pointer);
+procedure TGenCodPic.word_LoadToRT(const OpPtr: pointer);
 {Carga el valor de una expresión a los registros de trabajo.}
 var
   Op: ^TOperand;
+  varPtr: TxpEleVar;
 begin
   Op := OpPtr;
   case Op^.Sto of  //el parámetro debe estar en "Op^"
@@ -1978,13 +1989,43 @@ begin
   end;
   stExpres: begin  //se asume que ya está en (H,w)
   end;
+  stVarRefVar: begin
+    //Se tiene una variable puntero dereferenciada: x^
+    varPtr := Op^.rVarOff;  //Guarda referencia a la variable puntero
+    //Mueve a W
+    _BANKSEL(varPtr.bank);
+//    _MOVF(varPtr.offs, toW);
+    _INCF(varPtr.offs, toW);  //varPtr.offs+1 -> W  (byte alto)
+    _MOVWF(FSR.offs);  //direcciona byte alto
+    _MOVF(0, toW);  //deje en W
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);  //Guarda byte alto
+    _DECF(FSR.offs,toF);
+    _MOVF(0, toW);  //deje en W byte bajo
+  end;
+  stVarRefExp: begin
+    //Es una expresión derefernciada (x+a)^.
+    {Se asume que el operando tiene su resultado en los RT. Si estuvieran en la pila
+    no se aplicaría.}
+    //Mueve a W
+    _MOVWF(FSR.offs);  //direcciona byte bajo
+    _INCF(FSR.offs,toF);  //apunta a byte alto
+    _MOVF(0, toW);  //deje en W
+    _BANKSEL(H.bank);
+    _MOVWF(H.offs);  //Guarda byte alto
+    _DECF(FSR.offs,toF);
+    _MOVF(0, toW);  //deje en W byte bajo
+  end;
+  else
+    //Almacenamiento no implementado
+    GenError('Not implemented.');
   end;
 end;
 procedure TGenCodPic.word_DefineRegisters;
 begin
   //Aparte de W, solo se requiere H
   if not H.assigned then begin
-    AssignRAM(H, '_H');
+    AssignRAM(H, '_H', false);
   end;
 end;
 procedure TGenCodPic.word_SaveToStk;
@@ -2110,7 +2151,7 @@ begin
           //El valor a asignar es variable o expresión
           typWord.DefineRegister;   //Para usar H
           //Sabemos que hay una expresión word
-          value.LoadToReg; //Carga resultado en H,W
+          LoadToRT(value); //Carga resultado en H,W
           _MOVWF(idxTar);  //Byte bajo
           _MOVF(H.offs, toW);
           _MOVWF(idxTar+1);  //Byte alto
@@ -2303,7 +2344,7 @@ begin
   end;
 end;
 //////////////// Tipo DWord /////////////
-procedure TGenCodPic.dword_LoadToReg(const OpPtr: pointer);
+procedure TGenCodPic.dword_LoadToRT(const OpPtr: pointer);
 {Carga el valor de una expresión a los registros de trabajo.}
 var
   Op: ^TOperand;
@@ -2361,19 +2402,22 @@ begin
   end;
   stExpres: begin  //se asume que ya está en (U,E,H,w)
   end;
+  else
+    //Almacenamiento no implementado
+    GenError('Not implemented.');
   end;
 end;
 procedure TGenCodPic.dword_DefineRegisters;
 begin
   //Aparte de W, se requieren H, E y U
   if not H.assigned then begin
-    AssignRAM(H, '_H');
+    AssignRAM(H, '_H', false);
   end;
   if not E.assigned then begin
-    AssignRAM(E, '_E');
+    AssignRAM(E, '_E', false);
   end;
   if not U.assigned then begin
-    AssignRAM(U, '_U');
+    AssignRAM(U, '_U', false);
   end;
 end;
 procedure TGenCodPic.dword_SaveToStk;
@@ -2595,20 +2639,20 @@ begin
   typNull := CreateSysType('null',t_boolean,-1);
   ///////////////// Tipo Bit ////////////////
   typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
-  typBit.OnLoadToReg  := @bit_LoadToReg;
+  typBit.OnLoadToRT  := @bit_LoadToRT;
   typBit.OnDefRegister:= @bit_DefineRegisters;
   typBit.OnSaveToStk  := @bit_SaveToStk;
 //  opr:=typBit.CreateUnaryPreOperator('@', 6, 'addr', @Oper_addr_bit);
 
   ///////////////// Tipo Booleano ////////////////
   typBool := CreateSysType('boolean',t_boolean,-1);   //de 1 bit
-  typBool.OnLoadToReg  := @bit_LoadToReg;  //es lo mismo
+  typBool.OnLoadToRT  := @bit_LoadToRT;  //es lo mismo
   typBool.OnDefRegister:= @bit_DefineRegisters;  //es lo mismo
   typBool.OnSaveToStk  := @bit_SaveToStk;  //es lo mismo
 
   //////////////// Tipo Byte /////////////
   typByte := CreateSysType('byte',t_uinteger,1);   //de 1 byte
-  typByte.OnLoadToReg  := @byte_LoadToReg;
+  typByte.OnLoadToRT  := @byte_LoadToRT;
   typByte.OnDefRegister:= @byte_DefineRegisters;
   typByte.OnSaveToStk  := @byte_SaveToStk;
   //typByte.OnReadFromStk :=
@@ -2637,8 +2681,8 @@ begin
   //////////////// Tipo Char /////////////
   //Tipo caracter
   typChar := CreateSysType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como número
-  typChar.OnLoadToReg  :=@byte_LoadToReg;  //Es lo mismo
-  typChar.OnDefRegister:=@byte_DefineRegisters;  //Es lo mismo
+  typChar.OnLoadToRT  := @byte_LoadToRT;  //Es lo mismo
+  typChar.OnDefRegister:= @byte_DefineRegisters;  //Es lo mismo
   typChar.OnSaveToStk  := @byte_SaveToStk; //Es lo mismo
   typChar.OnGetItem    := @byte_GetItem;   //Es lo mismo
 //  typChar.OnSetItem    := @byte_SetItem;
@@ -2647,8 +2691,8 @@ begin
   //////////////// Tipo Word /////////////
   //Tipo numérico de dos bytes
   typWord := CreateSysType('word',t_uinteger,2);   //de 2 bytes
-  typWord.OnLoadToReg  :=@word_LoadToReg;
-  typWord.OnDefRegister:=@word_DefineRegisters;
+  typWord.OnLoadToRT  := @word_LoadToRT;
+  typWord.OnDefRegister:= @word_DefineRegisters;
   typWord.OnSaveToStk  := @word_SaveToStk;
   typWord.OnGetItem    := @word_GetItem;   //Es lo mismo
 //  typWord.OnSetItem    := @word_SetItem;
@@ -2660,8 +2704,8 @@ begin
   //////////////// Tipo DWord /////////////
   //Tipo numérico de cuatro bytes
   typDWord := CreateSysType('dword',t_uinteger,4);  //de 4 bytes
-  typDWord.OnLoadToReg := @dword_LoadToReg;
-  typDWord.OnDefRegister := @dword_DefineRegisters;
+  typDWord.OnLoadToRT := @dword_LoadToRT;
+  typDWord.OnDefRegister:= @dword_DefineRegisters;
   typDWord.OnSaveToStk := @dword_SaveToStk;
 
   typDWord.CreateField('Low',   @dword_Low);

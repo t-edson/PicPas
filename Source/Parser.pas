@@ -147,7 +147,8 @@ begin
 end;
 function TCompiler.getParamType: TxpEleType;
 {Lee el tipo que acompaña a una declaración de parámetro de un procedimeinto.
-<<<< Es muy similar a GetTypeVarDeclaration(), y tal vez debería unificarse >>>}
+Es muy similar a GetTypeVarDeclaration (excepto porque aquí se verifican los tipos
+copias), y tal vez debería unificarse.}
 var
   typName: String;
   typ: TxpEleType;
@@ -171,7 +172,7 @@ begin
       //Es un tipo
       typ := TxpEleType(ele);
       if FirstPass then typ.AddCaller;   //lleva la cuenta
-//      if typ.copyOf<>nil then typ := typ.copyOf;
+      if typ.copyOf<>nil then typ := typ.copyOf;
     end else begin
       GenError(ER_IDE_TYP_EXP);
       exit(nil);
@@ -342,14 +343,14 @@ begin
           end;
           {Crea como variable absoluta a una posición cualquiera porque esta variable,
           no debería estar mapeada.}
-          xvar := AddVariable(itemList[i], typ, srcPosArray[i]);
+          xvar := AddVariable({fun.name + '_' + }itemList[i], typ, srcPosArray[i]);
           xvar.IsParameter := true;  //Marca bandera
           xvar.IsRegister := true;
           //CreateVarInRAM(xvar);  //Crea la variable
           if HayError then exit;
         end else begin
           //Parámetro normal
-          xvar := AddVariable(itemList[i], typ, srcPosArray[i]);
+          xvar := AddVariable({fun.name + '_' + }itemList[i], typ, srcPosArray[i]);
           xvar.IsParameter := true;  //Marca bandera
           xvar.IsRegister := false;
           //CreateVarInRAM(xvar);  //Crea la variable
@@ -1242,16 +1243,13 @@ begin
     //Encontró un tipo
     cIn.Next;   //lo toma
     etyp := AddType(typName, srcpos);  //Crae el elemento tipo
-    if HayError then exit;        //Sale para ver otros errores
+    if HayError then exit;       //Sale para ver otros errores
     etyp.catType := tctPointer;  //Tipo puntero
-    etyp.refType := reftyp;      //EL tipo a donde apunta
+    etyp.refType := reftyp;      //El tipo a donde apunta
     etyp.InInterface := IsInterface; //No debería ser necesario
     //Fija operaciones para la aritmética del puntero
-    if (reftyp = typByte) or (reftyp.copyOf = typByte) then begin
-      DefPointerToByte(etyp);
-    end;
-    //Definir para otros tipos
-
+    DefPointerArithmetic(etyp);
+    etyp.CreateUnaryPostOperator('^',6,'deref', @ROU_derefPointer);  //dereferencia
 
   end else begin
     GenError(ER_IDE_TYP_EXP);
@@ -1400,8 +1398,8 @@ Conviene separar el procesamiento del enzabezado, para poder usar esta rutina, t
 en el procesamiento de unidades.}
 var
   srcPos: TSrcPos;
-  procName, parType: String;
-  typ: TxpEleType;
+  procName: String;
+  typ   : TxpEleType;
 begin
   //Toma información de ubicación, al inicio del procedimiento
   cIn.SkipWhites;
@@ -1431,14 +1429,17 @@ begin
     cIn.Next;
     cIn.SkipWhites;
     //Es función
-    parType := cIn.tok;   //lee tipo de parámetro
-    cIn.Next;
-    //Valida el tipo
-    typ := FindSysEleType(parType);
-    if typ = nil then begin
-      GenError(ER_UNDEF_TYPE_, [parType]);
-      exit;
-    end;
+    typ := getParamType;  //lee tipo
+    if HayError then exit;
+
+//    parType := cIn.tok;   //lee tipo de parámetro
+//    cIn.Next;
+//    //Valida el tipo
+//    typ := FindSysEleType(parType);
+//    if typ = nil then begin
+//      GenError(ER_UNDEF_TYPE_, [parType]);
+//      exit;
+//    end;
     //Fija el tipo de la función
     fun.typ := typ;
   end;
@@ -1963,7 +1964,7 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
   begin
     Result := 0;
     for fun in TreeElems.AllFuncs do begin
-      if (fun.nCalled = 0) and not fun.IsInterrupt then begin
+      if fun.nCalled = 0 then begin
         inc(Result);   //Lleva la cuenta
         //Si no se usa la función, tampoco sus elementos locales
         fun.SetElementsUnused;
@@ -2016,15 +2017,64 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
       end;
     end;
   end;
+  procedure UpdateFunLstCalled;
+  {Actualiza la lista lstCalled de las funciones, para saber, a que fúnciones llama
+   cada función.}
+  var
+    fun    : TxpEleFun;
+    itCall : TxpEleCaller;
+  begin
+    for fun in TreeElems.AllFuncs do begin
+      if fun.nCalled = 0 then continue;  //No usada
+      //Procesa las llamadas hechas desde otras funciones, para llenar
+      //su lista "lstCalled", y así saber a quienes llama
+      for itCall in fun.lstCallers do begin
+        //Agrega la referencia de la llamada a la función
+        //Notar que lo que se agrega es un TxpEleBoby o TxpEleMain
+        itCall.caller.AddCalled(fun);
+      end;
+    end;
+    {También se debería actualizar una lista (algo como fun.lstCalledAll) que contenga
+     la totalidad de llamadas a todas las funciones, no em forma de árbol, como lo tiene
+     lstCalled. Esta lista deberá servir para validar las llamadas recursivas y podrí
+     usarse para mejorar el algoritmo de detección de variables locales que se pueden
+     compartir.}
+  end;
+  procedure AssignRAMtoVar(xvar: TxpEleVar; shared: boolean = false);
+  var
+    posAct : TPosCont;
+    adicVarDec: TAdicVarDec;
+    IsBit  : boolean;
+  begin
+//debugln('  Asignando espacio a %s', [xvar.name]);
+    if xvar.adicPar.isAbsol then begin
+//debugln('Abs: xvar=%s at %d', [xvar.name, xvar.adicPar.absAddr]);
+      {Tiene declaración absoluta. Mejor compilamos de nuevo la declaración, porque
+      puede haber referencia a variables que han cambiado de ubicación, por
+      optimización.
+      Se podría hacer una verificación, para saber si la referencia es a direcciones
+      absolutas, en lugar de a variables (o a varaibles temporales), y así evitar
+      tener que compilar de nuevo, la declaración.}
+      posAct := cIn.PosAct;   //guarda posición actual
+      cIn.PosAct := xVar.adicPar.srcDec;  //Posiciona en la declaración adicional
+      TreeElems.curNode := xvar.Parent;   {Posiciona el árbol, tal cual estaría en la
+                                           primera pasada, para una correcta resolución
+                                           de nombres}
+      adicVarDec := GetAdicVarDeclar(IsBit);
+      //No debería dar error, porque ya pasó la primera pasada
+      xvar.adicPar := adicVarDec;
+      cIn.PosAct := posAct;
+    end;
+    CreateVarInRAM(xVar, shared);  //Crea la variable
+    xvar.typ.DefineRegister;  //Asegura que se dispondrá de los RT necesarios
+    //Puede salir error
+  end;
 var
   elem   : TxpElement;
   bod    : TxpEleBody;
   xvar   : TxpEleVar;
   fun    : TxpEleFun;
   iniMain, noUsed, noUsedPrev, xxx: integer;
-  adicVarDec: TAdicVarDec;
-  posAct: TPosCont;
-  IsBit: boolean;
 begin
   ExprLevel := 0;
   pic.ClearMemFlash;
@@ -2033,44 +2083,65 @@ begin
   pic.MsjError := '';
   //Verifica las constantes usadas. Solo en el nodo principal, para no sobrecargar emnsajes.
   for elem in TreeElems.main.elements do if elem.idClass =  eltCons then begin
-      if elem.nCalled = 0 then begin
-        GenWarnPos(WA_UNUSED_CON_, [elem.name], elem.srcDec);
-      end;
+    if elem.nCalled = 0 then begin
+      GenWarnPos(WA_UNUSED_CON_, [elem.name], elem.srcDec);
+    end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
   //Explora las funciones, para identifcar a las no usadas
   TreeElems.RefreshAllFuncs;
   noUsed := 0;
-  repeat
+  repeat  //Explora en varios niveles
     noUsedPrev := noUsed;   //valor anterior
     noUsed := RemoveUnusedFunctions;
   until noUsed = noUsedPrev;
-  //Reserva espacio para las variables usadas
+  //Asigna memoria, primero a las variables locales (y parámetros) de las funciones
+  UpdateFunLstCalled;   //Actualiza lista "lstCalled" de las funciones usadas
+  for fun in TreeElems.AllFuncs do if fun.nCalled > 0 then begin
+    //Explora solo a las funciones terminales
+    if fun.BodyNode.lstCalled.Count <> 0 then continue;
+DebugLn('función terminal :' + fun.name);
+//    DebugLn('Llamadas que hace función  :' + fun.name);
+//    if fun.BodyNode.lstCalled.Count = 0 then begin
+//      DebugLn(' <ninguna> ');
+//    end;
+//    for elem in fun.BodyNode.lstCalled do begin
+//      DebugLn('  -->' + elem.name);
+//    end;
+    //Los parámetros y variables locales aparecen como elementos de la función
+    for elem in fun.elements do if elem.idClass = eltVar then begin
+      xvar := TxpEleVar(elem);
+      if xvar.nCalled>0 then begin
+        //Asigna una dirección válida para esta variable
+        AssignRAMtoVar(xvar, true);
+        if HayError then exit;
+      end;
+    end;
+    if ReuProcVar then pic.SetSharedUnused;   //limpia las posiciones usadas
+  end;
+  if ReuProcVar then pic.SetSharedUsed;  //Ahora marca como usados, porque ya se creó la zona de bytes comaprtidos
+
+  for fun in TreeElems.AllFuncs do if fun.nCalled > 0 then begin
+    //Explora solo a las funciones que no son terminales
+    if fun.BodyNode.lstCalled.Count = 0 then continue;
+    //Los parámetros y variables locales aparecen como elementos de la función
+    for elem in fun.elements do if elem.idClass = eltVar then begin
+      xvar := TxpEleVar(elem);
+      if xvar.nCalled>0 then begin
+        //Asigna una dirección válida para esta variable
+        AssignRAMtoVar(xvar);
+        if HayError then exit;
+      end;
+    end;
+  end;
+
+  //Reserva espacio para las variables adicionales usadas
   TreeElems.RefreshAllVars;
   for xvar in TreeElems.AllVars do begin
+    if xvar.Parent.idClass = eltFunc then continue;  //Las variables de funciones ya se crearon
     if xvar.nCalled>0 then begin
       //Asigna una dirección válida para esta variable
-      if xvar.adicPar.isAbsol then begin
-//        debugln('Abs: xvar=%s at %d', [xvar.name, xvar.adicPar.absAddr]);
-        {Tiene declaración absoluta. Mejor compilamos de nuevo la declaración, porque
-        puede haber referencia a variables que han cambiado de ubicación, por
-        optimización.
-        Se podría hacer una verificación, para saber si la referencia es a direcciones
-        absolutas, en lugar de a variables (o a varaibles temporales), y así evitar
-        tener que compilar de nuevo, la declaración.}
-        posAct := cIn.PosAct;   //guarda posición actual
-        cIn.PosAct := xVar.adicPar.srcDec;  //Posiciona en la declaración adicional
-        TreeElems.curNode := xvar.Parent;   {Posiciona el árbol, tal cual estaría en la
-                                             primera pasada, para una correcta resolución
-                                             de nombres}
-        adicVarDec := GetAdicVarDeclar(IsBit);
-        //No debería dar error, porque ya pasó la primera pasada
-        xvar.adicPar := adicVarDec;
-        cIn.PosAct := posAct;
-      end;
-      CreateVarInRAM(xVar);  //Crea la variable
-      xvar.typ.DefineRegister;  //Asegura que se dispondrá de los RT necesarios
-//debugln('  Defined in %s', [xvar.AddrString]);
+      AssignRAMtoVar(xvar);
       if HayError then exit;
     end else begin
       xvar.ResetAddress;
@@ -2220,7 +2291,7 @@ begin
       if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
       FirstPass := true;
       CompileUnit(TreeElems.main);
-//      consoleTickCount('** First Pass.');
+      consoleTickCount('** First Pass.');
     end else begin
       //Debe ser un programa
       {Se hace una primera pasada para ver, a modo de exploración, para ver qué
@@ -2232,7 +2303,7 @@ begin
       FirstPass := true;
       CompileProgram;  //puede dar error
       if HayError then exit;
-//      consoleTickCount('** First Pass.');
+      consoleTickCount('** First Pass.');
       if Link then begin
 //        debugln('*** Compiling/Linking: Pass 2.');
         {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,

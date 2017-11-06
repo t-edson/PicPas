@@ -62,7 +62,6 @@ public  //Campos generales
   procedure SetAsNull;
   function StoOpStr: string;
   function StoOpChr: char;
-  procedure LoadToReg; inline;  //Pone el operador en registros de Trabajo
   procedure DefineRegister; inline;
   function FindOperator(const oper: string): TxpOperator; //devuelve el objeto operador
   procedure Invert;  //Invierte la lógica del operando
@@ -155,6 +154,7 @@ public
   listTypSys : TxpEleTypes;  //lista de tipos del sistema
   pic        : TPIC16;       //Objeto PIC de la serie 16.
 protected
+  procedure LoadToRT(Op: TOperand);
   function GetExpression(const prec: Integer): TOperand;
   //LLamadas a las rutinas de operación
   procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
@@ -474,7 +474,7 @@ begin
         cIn.Next;   //toma separador
         cIn.SkipWhites;
       end else begin
-        //no sigue separador de parámetros,
+        //No sigue separador de parámetros,
         //debe terminar la lista de parámetros
         //¿Verificar EOBlock or EOExpres ?
         break;
@@ -491,7 +491,7 @@ CaptureParams. }
 var
   i: Integer;
   par: TxpParFunc;
-  Op1: TOperand;
+  Op1, Op2: TOperand;
   op: TxpOperator;
 begin
   if EOBlock or EOExpres then exit;  //sin parámetros
@@ -504,7 +504,7 @@ begin
     RTstate := nil;
     //Evalúa parámetro
     Inc(ExprLevel);    //cuenta el anidamiento
-    res := GetExpression(0);  //llama como sub-expresión
+    Op2 := GetExpression(0);  //llama como sub-expresión
     Dec(ExprLevel);
     if HayError then exit;   //aborta
     if cIn.tok = ',' then begin
@@ -515,14 +515,13 @@ begin
     if par.pvar.IsRegister then begin
       {Cuando es parámetro registro, no se asigna, se deja en el registro(s) de
        trabajo.}
-      res.LoadToReg;
+      LoadToRT(Op2);
     end else begin
       //Crea un operando-variable para generar código de asignación
       Op1.SetAsVariab(par.pvar); //Apunta a la variable
       if FirstPass then par.pvar.AddCaller;   //se está usando
-      //op := Op1.FindOperator(':=');  //busca la operación
       op := Op1.Typ.operAsign;
-      Oper(Op1, op, res);   //Codifica la asignación
+      Oper(Op1, op, Op2);   //Codifica la asignación
     end;
   end;
   if not CaptureTok(')') then exit;
@@ -1096,6 +1095,16 @@ begin
   if ExprLevel = 0 then debugln('');
   {$ENDIF}
 end;
+procedure TCompilerBase.LoadToRT(Op: TOperand);
+{Carga un operando a los Registros de Trabajo}
+begin
+  if Op.Typ.OnLoadToRT=nil then begin
+    //No implementado
+    GenError('Not implemented.');
+  end else begin
+    Op.Typ.OnLoadToRT(@Op);
+  end;
+end;
 //Manejo de mensjes, errores y advertencias
 procedure TCompilerBase.ClearError;
 {Limpia la bandera de errores. Tomar en cuenta que solo se debe usar para iniciar el
@@ -1483,10 +1492,6 @@ begin
   stVariab: exit('v');
   stExpres: exit('X');
   end;
-end;
-procedure TOperand.LoadToReg;
-begin
-  if Typ.OnLoadToReg<> nil then Typ.OnLoadToReg(@self);
 end;
 procedure TOperand.DefineRegister;
 begin
