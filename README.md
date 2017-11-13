@@ -86,7 +86,6 @@ Some features of the IDE are:
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/PicPas-Linux.jpg "PicPas for Ubuntu")
 
 
-
 ## Debugger/Simulator
 
 PicPas includes a graphical debugger/simulator for instructions of the Mid-Range core:
@@ -100,6 +99,31 @@ F6 -> Reste the device.
 F7 -> Step by step into subroutine.
 F8 -> Step by step over subroutine.
 F9 -> Run the program in real time.
+
+
+## Optimization Comparison
+
+PisPas has been compared in two code optimization competition against the best profesional compilers for PIC microcontrollers, obtaining the first place in both.
+
+
+Firts competition compiling a simple light sequence:
+https://github.com/AguHDz/PicPas-Librerias_y_Programas/tree/master/Comparacion%20PicPas-Otros%20Compiladores
+
+Result:
+
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/08/21106414_961808527291234_7715586770614634466_n.jpg "PicPas comparison 1")
+
+
+Second competition
+
+A digital clock using I2C and the DS1307:
+https://www.facebook.com/groups/electronicaymicrocontroladores/permalink/1812269192135162/
+
+Result 
+
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/23172519_996093467196073_6412663861585566494_n.jpg "PicPas comparison 2")
+
+
 
 ## Language Reference
 
@@ -122,29 +146,6 @@ begin
   //Main program body
 end.
 ```
-
-### Optimization Comparison
-
-PisPas has been compared in two code optimization competition against the best profesional compilers for PIC microcontrollers, obtaining the first place in both.
-
-
-Firts competition compiling a simple light sequence:
-
-https://github.com/AguHDz/PicPas-Librerias_y_Programas/tree/master/Comparacion%20PicPas-Otros%20Compiladores
-
-Result:
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/08/21106414_961808527291234_7715586770614634466_n.jpg "PicPas comparison 1")
-
-
-Second competition
-
-A digital clock using I2C and the DS1307:
-
-https://www.facebook.com/groups/electronicaymicrocontroladores/permalink/1812269192135162/
-
-Result 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/23172519_996093467196073_6412663861585566494_n.jpg "PicPas comparison 2")
-
 
 ### Unit structure
 
@@ -774,7 +775,7 @@ PicPas has been compiled, using the version 1.6.2 of Lazarus. Tested in Windows 
 
 To have more information about the compiler, check the Technical Documentation (Only in spanish by now).
 
-## Libaries
+## Libraries
 
 PicPas is a new project and it's still in development and there are not dedicated libraries for the compiler. 
 
