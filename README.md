@@ -106,7 +106,9 @@ F9 -> Run the program in real time.
 PisPas has been compared in two code optimization competition against the best profesional compilers for PIC microcontrollers, obtaining the first place in both.
 
 
-Firts competition compiling a simple light sequence:
+Firts competition
+
+Compiling a simple light sequence:
 https://github.com/AguHDz/PicPas-Librerias_y_Programas/tree/master/Comparacion%20PicPas-Otros%20Compiladores
 
 Result:
@@ -116,7 +118,7 @@ Result:
 
 Second competition
 
-A digital clock using I2C and the DS1307:
+Compiling a digital clock using I2C and the DS1307:
 https://www.facebook.com/groups/electronicaymicrocontroladores/permalink/1812269192135162/
 
 Result 
