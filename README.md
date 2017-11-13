@@ -2,7 +2,7 @@
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7LKYWG9LXNQ9C&lc=ES&item_name=Tito%20Hinostroza&item_number=2153&no_note=0&cn=Dar%20instrucciones%20especiales%20al%20vendedor%3a&no_shipping=2&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted)
 
-PicPas 0.8.1
+PicPas 0.8.2
 ============
 
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
@@ -37,9 +37,9 @@ As an example the following code, is to blink a LED on port B:
 
 ```
 {Sample program to blink a Led on PORTB.7}
-{$FREQUENCY 8 MHZ }
-{$PROCESSOR PIC16F84A}
 program BlinkLed;
+{$PROCESSOR PIC16F84A}
+{$FREQUENCY 8MHZ}
 var
   PORTB : BYTE absolute $06;
   TRISB : BYTE absolute $86;
@@ -419,6 +419,45 @@ The address in ORG, can be absolute or relative.
 
 WARNING: Changing the PC pointer with ORG, can generate errors in the compilation or in the code compiled.
 
+## Pointers
+
+Pointers are supported in PicPas, only for addresses going from $00 to $FF (1 byte size), thus they can cover only the RAM memory in banks 0 and 1.
+
+Pointers must be declared usin first, a type declaration in the common Pascal style:
+
+```
+type
+  ptrByte: ^Byte;
+  ptrByte: ^Word;
+var
+  pbyte: ptrByte;
+  pword: ptrWord;
+```
+
+Pointers can be assigned like variables or using addresses form others varaibles:
+
+```
+type
+  ptrByte: ^Byte;
+var
+  pbyte: ptrByte;
+  m    : byte;
+begin
+  pbyte := @m;    //Assign address
+  pbyte^ := $ff;  //Write value
+  //Now “m” is  $ff
+end.
+```
+The operator "@" return the address of a variable.
+
+Pointers support some basic operations:
+
+Assign   :	p1 := p2;
+Compare  : 	if p1 = p2 then ...
+Increment:	Inc(p);
+Decrement:	Dec(p);
+Add      :	p1 + p2 + 1
+Subtrac  :	p1 - 5
 
 ## Directives
 
