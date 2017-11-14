@@ -154,7 +154,7 @@ public
   listTypSys : TxpEleTypes;  //lista de tipos del sistema
   pic        : TPIC16;       //Objeto PIC de la serie 16.
 protected
-  procedure LoadToRT(Op: TOperand);
+  procedure LoadToRT(Op: TOperand; modReturn: boolean = false);
   function GetExpression(const prec: Integer): TOperand;
   //LLamadas a las rutinas de operación
   procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
@@ -1095,14 +1095,16 @@ begin
   if ExprLevel = 0 then debugln('');
   {$ENDIF}
 end;
-procedure TCompilerBase.LoadToRT(Op: TOperand);
-{Carga un operando a los Registros de Trabajo}
+procedure TCompilerBase.LoadToRT(Op: TOperand; modReturn: boolean = false);
+{Carga un operando a los Registros de Trabajo (RT).
+El parámetrto "modReturn", indica que se quiere generar un RETURN, dejando en ls RT
+el valor de la expresión.}
 begin
   if Op.Typ.OnLoadToRT=nil then begin
     //No implementado
     GenError('Not implemented.');
   end else begin
-    Op.Typ.OnLoadToRT(@Op);
+    Op.Typ.OnLoadToRT(@Op, modReturn);
   end;
 end;
 //Manejo de mensjes, errores y advertencias

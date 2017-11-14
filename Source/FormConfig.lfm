@@ -585,12 +585,20 @@ object Config: TConfig
         end
       end
       object chkReuProcVar: TCheckBox
-        Left = 8
+        Left = 16
         Height = 19
-        Top = 224
+        Top = 216
         Width = 163
         Caption = 'Reuse Procedures Variables'
         TabOrder = 3
+      end
+      object chkOptRetProc: TCheckBox
+        Left = 16
+        Height = 19
+        Top = 248
+        Width = 190
+        Caption = 'Optimize RETURN in procedures'
+        TabOrder = 4
       end
     end
     object tabExtTool: TTabSheet

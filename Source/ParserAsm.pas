@@ -35,12 +35,12 @@ type
     procedure AddLabel(name: string; addr: integer);
     procedure AddUJump(name: string; addr: integer; idInst: TPIC16Inst);
     function CaptureAddress(const idInst: TPIC16Inst; var a: word): boolean;
-    function CaptureBitVar(var f, b: byte): boolean;
+    function CaptureBitVar(out f, b: byte): boolean;
     function CaptureByte(out k: byte): boolean;
     function CaptureComma: boolean;
-    function CaptureDestinat(var d: TPIC16destin): boolean;
+    function CaptureDestinat(out d: TPIC16destin): boolean;
     function CaptureNbit(var b: byte): boolean;
-    function CaptureRegister(var f: byte): boolean;
+    function CaptureRegister(out f: byte): boolean;
     procedure EndASM;
     procedure GenErrorAsm(msg: string);
     procedure GenErrorAsm(msg: string; const Args: array of const);
@@ -288,7 +288,7 @@ begin
     exit(false);
   end;
 end;
-function TParserAsm.CaptureDestinat(var d: TPIC16destin): boolean;
+function TParserAsm.CaptureDestinat(out d: TPIC16destin): boolean;
 {Captura el destino de una instrucción y devuelve en "d". Si no encuentra devuelve error}
 var
   dest: String;
@@ -349,7 +349,7 @@ begin
     exit;
   end;
 end;
-function TParserAsm.CaptureBitVar(var f, b: byte): boolean;
+function TParserAsm.CaptureBitVar(out f, b: byte): boolean;
 {Captura una variable de tipo Bit. Si no encuentra, devuelve FALSE (no genera error).}
 var
   ele: TxpElement;
@@ -372,7 +372,7 @@ begin
   b := xvar.adrBit.bit;
   exit(true);
 end;
-function TParserAsm.CaptureRegister(var f: byte): boolean;
+function TParserAsm.CaptureRegister(out f: byte): boolean;
 {Captura la referencia a un registro y devuelve en "f". Si no encuentra devuelve error}
 var
   n: integer;
@@ -489,7 +489,7 @@ begin
   end;
 end;
 function TParserAsm.CaptureAddress(const idInst: TPIC16Inst; var a: word): boolean;
-{Captura una dirección a una instrucción y devuelve en "a". Si no encuentra geenra
+{Captura una dirección a una instrucción y devuelve en "a". Si no encuentra genera
 error y devuelve FALSE.}
 var
   dir: integer;
@@ -497,6 +497,7 @@ var
   ele: TxpElement;
   xfun: TxpEleFun;
 begin
+  Result := false;
   skipWhites;
   if lexAsm.GetToken = '$' then begin
     //Es una dirección relativa
@@ -685,7 +686,7 @@ procedure TParserAsm.ProcASM(const AsmLin: string);
       //Definitivamente es una etiqueta
       if IsLabel(lbl, d) then begin
         GenErrorAsm(ER_DUPLIC_LBL_, [lbl]);
-        exit;
+        exit(false);
       end;
       AddLabel(lbl, pic.iFlash);
       lexAsm.Next;

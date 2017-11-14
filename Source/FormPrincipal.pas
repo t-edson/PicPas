@@ -4,7 +4,6 @@ Compilador en Pascal para micorocntroladores PIC de la serie 16.
                                         Por Tito Hinostroza   22/08/2015 }
 unit FormPrincipal;
 {$mode objfpc}{$H+}
-{$define }
 interface
 uses
   Classes, SysUtils, SynEdit, SynEditTypes, Forms, Controls, Dialogs, Menus,
@@ -43,7 +42,7 @@ type
     acToolExt3: TAction;
     acToolExt1: TAction;
     acToolFindDec: TAction;
-    acToolInstCount: TAction;
+    acToolListRep: TAction;
     acToolConfig: TAction;
     acToolCompil: TAction;
     acToolPICExpl: TAction;
@@ -163,7 +162,7 @@ type
     procedure acEdUndoExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
     procedure acToolASMDebugExecute(Sender: TObject);
-    procedure acToolInstCountExecute(Sender: TObject);
+    procedure acToolListRepExecute(Sender: TObject);
     procedure acToolConfigExecute(Sender: TObject);
     procedure acToolExt1Execute(Sender: TObject);
     procedure acToolExt2Execute(Sender: TObject);
@@ -767,14 +766,14 @@ end;
 /////////////////// Acciones de Archivo /////////////////////
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
 begin
-  fraEditView1.NewFile;
+  fraEditView1.NewPasFile;
   with fraEditView1.ActiveEditor.SynEdit.Lines do begin
     Add('////////////////////////////////////////////');
     Add('// New program created in ' + DateToStr(now) + '}');
     Add('////////////////////////////////////////////');
-    Add('{$FREQUENCY 4 MHZ }');
-    Add('{$PROCESSOR PIC16F84A}');
     Add('program NewProgram;');
+    Add('{$PROCESSOR PIC16F84A}');
+    Add('{$FREQUENCY 4MHZ}');
     Add('uses PIC16F84A;');
     Add('  ');
     Add('//Declarations here');
@@ -795,7 +794,7 @@ begin
   end;
   curProj := TPicPasProject.Create;
   curProj.Open;
-  fraEditView1.NewFile;
+  fraEditView1.NewPasFile;
 end;
 procedure TfrmPrincipal.acArcOpenExecute(Sender: TObject);
 begin
@@ -918,9 +917,10 @@ begin
   fraMessages.InitCompilation(cxp, true);  //Limpia mensajes
   cxp.incDetComm   := Config.IncComment2;   //Visualización de mensajes
   cxp.SetProIniBnk := not Config.OptBnkBefPro;
-  cxp.SetProEndBnk := not Config.OptBnkAftPro;
+  cxp.OptBnkAftPro := Config.OptBnkAftPro;
   cxp.OptBnkAftIF  := Config.OptBnkAftIF;
-  cxp.ReuProcVar   := Config.ReuProcVar;
+  cxp.OptReuProVar := Config.ReuProcVar;
+  cxp.OptRetProc   := Config.OptRetProc;
   ticSynCheck := 1000; //Desactiva alguna Verif. de sintaxis, en camino.
   cxp.Compiling := true;   //Activa bandera
   cxp.Compile(filName);
@@ -967,53 +967,16 @@ procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
   Config.Mostrar;
 end;
-procedure TfrmPrincipal.acToolInstCountExecute(Sender: TObject);
+procedure TfrmPrincipal.acToolListRepExecute(Sender: TObject);
 {Muestra un conteo de instrucciones.}
 var
-  nCALL, nGOTO, nBSF, nBCF, nMOVLW, nMOVWF, nRETURN, nBTFSS, nBTFSC: Integer;
-  curInst: TPIC16Inst;
-  i: word;
-  tmp: String;
+  edit: TSynEditor;
 begin
-  nCALL := 0;
-  nGOTO := 0;
-  nBSF := 0;
-  nBCF := 0;
-  nMOVLW := 0;
-  nMOVWF := 0;
-  nRETURN := 0;
-  nBTFSS := 0;
-  nBTFSC := 0;
-  for i:=0 to high(cxp.pic.flash) do begin
-    if cxp.pic.flash[i].used then begin
-       cxp.pic.PCH := hi(i);
-       cxp.pic.PCL := lo(i);
-       curInst := cxp.pic.CurInstruction;
-       case curInst of
-       CALL: Inc(nCALL);
-       GOTO_: Inc(nGOTO);
-       BSF  : Inc(nBSF);
-       BCF  : Inc(nBCF);
-       MOVLW: Inc(nMOVLW);
-       MOVWF: Inc(nMOVWF);
-       RETURN:Inc(nRETURN);
-       BTFSS: Inc(nBTFSS);
-       BTFSC: Inc(nBTFSC);
-       end;
-    end;
-  end;
-  //Muestra resumen
-  tmp := 'INSTRUCCIONES: ' + LineEnding;
-  tmp := tmp + 'MOVLW ->' + IntToStr(nMOVLW) + LineEnding;
-  tmp := tmp + 'MOVWF ->' + IntToStr(nMOVWF) + LineEnding;
-  tmp := tmp + 'CALL  ->' + IntToStr(nCALL)  + LineEnding;
-  tmp := tmp + 'GOTO  ->' + IntToStr(nGOTO)  + LineEnding;
-  tmp := tmp + 'BSF   ->' + IntToStr(nBSF)   + LineEnding;
-  tmp := tmp + 'BCF   ->' + IntToStr(nBCF)   + LineEnding;
-  tmp := tmp + 'RETURN->' + IntToStr(nRETURN)+ LineEnding;
-  tmp := tmp + 'BTFSS ->' + IntToStr(nBTFSS) + LineEnding;
-  tmp := tmp + 'BTFSC ->' + IntToStr(nBTFSC) + LineEnding;
-  MsgBox(tmp);
+  fraEditView1.NewLstFile;
+  edit := fraEditView1.ActiveEditor;
+  edit.SynEdit.BeginUpdate;
+  cxp.GenerateListReport(edit.SynEdit.Lines);
+  edit.SynEdit.EndUpdate;
 end;
 procedure TfrmPrincipal.acToolExt1Execute(Sender: TObject);
 begin

@@ -84,6 +84,7 @@ type
     procedure ProcCLEAR_STATE_RAM;
     procedure ProcSET_STATE_RAM;
     function read_CURRBANK: Single;
+    function read_CURRBLOCK: String;
     function read_PIC_FREQUEN: Single;
     function read_PIC_IFLASH: Single;
     function read_PIC_MAXFLASH: Single;
@@ -1496,6 +1497,21 @@ procedure TParserDirec.write_CURRBANK(AValue: Single);
 begin
   CurrBank := Round(AValue);
 end;
+function TParserDirec.read_CURRBLOCK: String;
+var
+  parentNod: TxpEleCodeCont;
+begin
+  if TreeElems.curNode.idClass = eltBody then begin
+    //Solo aquí puede haber bloques
+    parentNod := TreeElems.CurCodeContainer; //Se supone que nunca debería fallar
+    if parentNod.CurrBlock = nil then
+      exit('')
+    else
+      exit(parentNod.CurrBlock.idStr);
+  end else begin
+    Result := '';
+  end;
+end;
 procedure TParserDirec.ClearMacros;
 var
   dvar: TDirVar;
@@ -1556,6 +1572,11 @@ begin
   dvar :=  TDirVar.Create;
   dvar.nomb := 'CURRBANK';
   dvar.ReflectToNumber(@read_CURRBANK, @write_CURRBANK);
+  varsList.Add(dvar);
+  //CurrBlock
+  dvar :=  TDirVar.Create;
+  dvar.nomb := 'CURRBLOCK';
+  dvar.ReflectToString(@read_CURRBLOCK, nil);
   varsList.Add(dvar);
 end;
 constructor TParserDirec.Create;

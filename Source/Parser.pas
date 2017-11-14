@@ -10,7 +10,7 @@ uses
 type
  { TCompiler }
   TCompiler = class(TParserDirec)
-  private  //Funciones básicas
+  private   //Funciones básicas
     function AddType(typName: string; srcPos: TSrcPos): TxpEleType;
     function AddVariable(varName: string; eleTyp: TxpEleType; srcPos: TSrcPos
       ): TxpEleVar;
@@ -43,12 +43,12 @@ type
     procedure CompileWHILE;
     procedure Tree_AddElement(elem: TxpElement);
     function VerifyEND: boolean;
-  protected   //Métodos OVERRIDE
+  protected //Métodos OVERRIDE
     procedure ProcComments; override;
     procedure TipDefecNumber(var Op: TOperand; toknum: string); override;
     procedure TipDefecString(var Op: TOperand; tokcad: string); override;
     procedure TipDefecBoolean(var Op: TOperand; tokcad: string); override;
-  private  //Rutinas para la compilación y enlace
+  private   //Rutinas para la compilación y enlace
     procedure CompileProcBody(fun: TxpEleFun);
   private //Compilación de secciones
     procedure CompileGlobalConstDeclar;
@@ -78,6 +78,7 @@ type
     function RAMusedStr: string;
     function FLASHusedStr: string;
     procedure GetResourcesUsed(out ramUse, romUse, stkUse: single);
+    procedure GenerateListReport(lins: TStrings);
   public //Inicialización
     constructor Create; override;
     destructor Destroy; override;
@@ -828,16 +829,39 @@ begin
 end;
 //Rutinas para la compilación y enlace
 procedure TCompiler.CompileProcBody(fun: TxpEleFun);
-{Compila la declaración de un procedimiento}
+{Compila el cuerpo de un procedimiento}
 begin
-  BankChanged := false;  //Inicia bandera
-  StartCodeSub(fun);  //inicia codificación de subrutina
+  BankChanged := false; //Inicia bandera  ¿Se usa realmente BankChanged?
+  StartCodeSub(fun);    //Inicia codificación de subrutina
   CompileInstruction;
   if HayError then exit;
-  if fun.IsInterrupt then _RETFIE else _RETURN();  //instrucción de salida
+  if fun.IsInterrupt then begin
+    //Las interrupciones terminan así
+    _RETFIE
+  end else begin
+    //Para los procedimeintos, podemos terminar siemrpe con un RETURN u optimizar,
+    if OptRetProc then begin
+      //Verifica es que ya se ha incluido exit().
+      if fun.ObligatoryExit<>nil then begin
+        //Ya tiene un exit() obligatorio y en el final (al menos eso se espera)
+        //No es necesario incluir el RETURN().
+      end else begin
+        //No hay un exit(), seguro
+        _RETURN();  //instrucción de salida
+      end;
+    end else begin
+      _RETURN();  //instrucción de salida
+    end;
+  end;
   EndCodeSub;  //termina codificación
-  fun.BankChanged := BankChanged;
-  fun.srcSize := pic.iFlash - fun.adrr;   //calcula tamaño
+  {Fija banco al terminar de codificar. Si no se modificó el banco en la compilación
+  (como en un procedimiento vacío) CurrBank, contiene el banco que se fijó antes de
+  llamar a CompileProcBody(), que es:
+    Siemrpe 0 -> en la primera pasada.
+    Un valor calculado -> en la segund pasada.}
+  fun.finBnk := CurrBank;  //Banco al terminar de codificar
+  //Calcula tamaño
+  fun.srcSize := pic.iFlash - fun.adrr;
 end;
 function TCompiler.OpenContextFrom(filePath: string): boolean;
 {Abre un contexto con el archivo indicado. Si lo logra abrir, devuelve TRUE.}
@@ -1468,7 +1492,7 @@ begin
   se codifican al inicio de la memoria FLASH, y las variables y registros se ubican al
   inicio de la memeoria RAM, ya que lo que importa es simplemente recabar información
   del procedimiento, y no tanto codificarlo. }
-  ResetFlashAndRAM;   //Limpia RAM y FLASH
+  ResetFlashAndRAM;   //Limpia RAM y FLASH, y fija CurrBank
   if IsImplementation then begin
     //Se compila para implementación.
     {Este proceso es más complejo. La idea es compilar el enzabezado de cualquier función,
@@ -1542,7 +1566,7 @@ begin
   TreeElems.CloseElement;  //Cierra Nodo Body
   TreeElems.CloseElement; //cierra espacio de nombres de la función
   bod.srcEnd := cIn.ReadSrcPos;  //Fin de cuerpo
-  fun.adrReturn := pic.iFlash-1;  //Guarda dirección del RETURN
+//  fun.adrReturn := pic.iFlash-1;  //Guarda dirección del RETURN
   if not CaptureTok(';') then exit;
   ProcComments;  //Quita espacios. Puede salir con error
 end;
@@ -1554,7 +1578,15 @@ procedure TCompiler.CompileInstruction;
  3. Una expresión
  La instrucción, no incluye al delimitador.
  }
+var
+  curCodCon: TxpEleCodeCont;
 begin
+  if TreeElems.curNode.idClass <> eltBody then begin
+    //No debería pasar, porque las instrucciones solo pueden estar en eltBody
+    GenError('Syntax error.');
+    exit;
+  end;
+  curCodCon := TreeElems.CurCodeContainer;
   ProcComments;
   if cIn.tokL='begin' then begin
     //es bloque
@@ -1568,17 +1600,25 @@ begin
     //es una instrucción
     if cIn.tokType = tnStruct then begin
       if cIn.tokl = 'if' then begin
+        curCodCon.OpenBlock(sbiIF);
         cIn.Next;         //pasa "if"
         CompileIF;
+        curCodCon.CloseBlock;
       end else if cIn.tokl = 'while' then begin
+        curCodCon.OpenBlock(sbiWHILE);
         cIn.Next;         //pasa "while"
         CompileWHILE;
+        curCodCon.CloseBlock;
       end else if cIn.tokl = 'repeat' then begin
+        curCodCon.OpenBlock(sbiREPEAT);
         cIn.Next;         //pasa "until"
         CompileREPEAT;
+        curCodCon.CloseBlock;
       end else if cIn.tokl = 'for' then begin
+        curCodCon.OpenBlock(sbiFOR);
         cIn.Next;         //pasa "until"
         CompileFOR;
+        curCodCon.CloseBlock;
       end else begin
         GenError(ER_UNKN_STRUCT);
         exit;
@@ -2018,11 +2058,12 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
     end;
   end;
   procedure UpdateFunLstCalled;
-  {Actualiza la lista lstCalled de las funciones, para saber, a que fúnciones llama
+  {Actualiza la lista lstCalled de las funciones, para saber, a qué fúnciones llama
    cada función.}
   var
     fun    : TxpEleFun;
     itCall : TxpEleCaller;
+    whoCalls: TxpEleBody;
   begin
     for fun in TreeElems.AllFuncs do begin
       if fun.nCalled = 0 then continue;  //No usada
@@ -2030,15 +2071,24 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
       //su lista "lstCalled", y así saber a quienes llama
       for itCall in fun.lstCallers do begin
         //Agrega la referencia de la llamada a la función
-        //Notar que lo que se agrega es un TxpEleBoby o TxpEleMain
-        itCall.caller.AddCalled(fun);
+        if itCall.caller.idClass <> eltBody then begin
+          //Según diseño, itCall.caller debe ser TxpEleBody
+          GenError('Design error.');
+          exit;
+        end;
+        whoCalls := TxpEleBody(itCall.caller);
+        //Se agregan todas las llamadas (así sean al mismo porcedimiento) pero luego
+        //AddCalled(), los filtra.
+        whoCalls.Parent.AddCalled(fun);  //Agrega al procediminto
       end;
     end;
-    {También se debería actualizar una lista (algo como fun.lstCalledAll) que contenga
-     la totalidad de llamadas a todas las funciones, no em forma de árbol, como lo tiene
-     lstCalled. Esta lista deberá servir para validar las llamadas recursivas y podrí
-     usarse para mejorar el algoritmo de detección de variables locales que se pueden
-     compartir.}
+    {Actualizar la lista fun.lstCalledAll con la totalidad de llamadas a todas
+     las funciones, sean de forma directa o indirectamente.}
+     for fun in TreeElems.AllFuncs do begin
+       fun.lstCalledAll.Clear;  //Por si acaso
+       //Agrega todas las llamadas
+       fun.AddCalledAll_FromList(fun.lstCalled);
+     end;
   end;
   procedure AssignRAMtoVar(xvar: TxpEleVar; shared: boolean = false);
   var
@@ -2095,19 +2145,14 @@ begin
     noUsedPrev := noUsed;   //valor anterior
     noUsed := RemoveUnusedFunctions;
   until noUsed = noUsedPrev;
+  ///////////////////////////////////////////////////////////////////////////////
   //Asigna memoria, primero a las variables locales (y parámetros) de las funciones
+  ///////////////////////////////////////////////////////////////////////////////
   UpdateFunLstCalled;   //Actualiza lista "lstCalled" de las funciones usadas
+  //Explora primero a las funciones terminales
   for fun in TreeElems.AllFuncs do if fun.nCalled > 0 then begin
-    //Explora solo a las funciones terminales
-    if fun.BodyNode.lstCalled.Count <> 0 then continue;
-DebugLn('función terminal :' + fun.name);
-//    DebugLn('Llamadas que hace función  :' + fun.name);
-//    if fun.BodyNode.lstCalled.Count = 0 then begin
-//      DebugLn(' <ninguna> ');
-//    end;
-//    for elem in fun.BodyNode.lstCalled do begin
-//      DebugLn('  -->' + elem.name);
-//    end;
+    if not fun.IsTerminal2 then continue;
+DebugLn('función terminal: %s con %d var.loc.', [fun.name, fun.nLocalVars]);
     //Los parámetros y variables locales aparecen como elementos de la función
     for elem in fun.elements do if elem.idClass = eltVar then begin
       xvar := TxpEleVar(elem);
@@ -2117,13 +2162,12 @@ DebugLn('función terminal :' + fun.name);
         if HayError then exit;
       end;
     end;
-    if ReuProcVar then pic.SetSharedUnused;   //limpia las posiciones usadas
+    if OptReuProVar then pic.SetSharedUnused;   //limpia las posiciones usadas
   end;
-  if ReuProcVar then pic.SetSharedUsed;  //Ahora marca como usados, porque ya se creó la zona de bytes comaprtidos
-
+  if OptReuProVar then pic.SetSharedUsed;  //Ahora marca como usados, porque ya se creó la zona de bytes comaprtidos
+  //Explora solo a las funciones que no son terminales
   for fun in TreeElems.AllFuncs do if fun.nCalled > 0 then begin
-    //Explora solo a las funciones que no son terminales
-    if fun.BodyNode.lstCalled.Count = 0 then continue;
+    if fun.IsTerminal2 then continue;
     //Los parámetros y variables locales aparecen como elementos de la función
     for elem in fun.elements do if elem.idClass = eltVar then begin
       xvar := TxpEleVar(elem);
@@ -2452,6 +2496,137 @@ begin
   //Calcula STACK
   stkUse := 0;  //calor por defecto
   { TODO : Por implementar }
+end;
+procedure TCompiler.GenerateListReport(lins: TStrings);
+{Genera un reporte detallado de la compialción}
+var
+  curInst, opc: TPIC16Inst;
+  i: word;
+  OpCodeCoun: array[low(TPIC16Inst)..high(TPIC16Inst)] of integer;
+  tmpList: TStringList;
+  txt, OpCode, Times, state: String;
+
+  fun: TxpEleFun;
+  caller : TxpEleCaller;
+  called : TxpElement;
+  exitCall: TxpExitCall;
+begin
+  ////////////////////////////////////////////////////////////
+  //////////// Reporte de uso de memeoria  ///////////
+  ////////////////////////////////////////////////////////////
+  lins.Add(RAMusedStr);
+  lins.Add(FLASHusedStr);
+  ////////////////////////////////////////////////////////////
+  //////////// Reporte de cuenta de instrucciones  ///////////
+  ////////////////////////////////////////////////////////////
+  //Limpia contadores
+  for opc := low(TPIC16Inst) to high(TPIC16Inst) do begin
+    OpCodeCoun[opc] := 0;
+  end;
+  //Cuenta apariciones
+  for i:=0 to high(cxp.pic.flash) do begin
+    if cxp.pic.flash[i].used then begin
+       cxp.pic.PCH := hi(i);
+       cxp.pic.PCL := lo(i);
+       curInst := cxp.pic.CurInstruction;
+       Inc(OpCodeCoun[curInst]);  //Acumula
+    end;
+  end;
+  //Carga en lista para ordenar
+  tmpList:= TStringList.Create;
+  for opc := low(TPIC16Inst) to high(TPIC16Inst) do begin
+    tmpList.Add(Format('%.4d', [OpCodeCoun[Opc]]) + '-' + PIC16InstName[opc]);
+  end;
+  tmpList.Sort;  //Ordena
+  //Muestra lista ordenada
+  lins.Add(';INSTRUCTION COUNTER');
+  lins.Add(';===================');
+  for i:=tmpList.Count-1 downto 0 do begin
+    txt := tmpList[i];
+    OpCode := copy(txt , 6, 10);
+    Times  := copy(txt , 1, 4);
+    if Times = '0000' then continue;
+    lins.Add(copy(OpCode + '    ',1,7) + '->'+ Times);
+  end;
+  tmpList.Destroy;
+
+  ////////////////////////////////////////////////////////////
+  ////////////////// Reporte de Funciones   ///////////
+  ////////////////////////////////////////////////////////////
+  lins.Add('');
+  lins.Add(';PROCEDURE LIST');
+  lins.Add(';===================');
+
+  lins.Add(';NAME                    USED   POSIITON IN SOURCE');
+  lins.Add(';----------------------- ------ -------------------------------');
+  for fun in TreeElems.AllFuncs do begin
+    if fun.nCalled > 0 then begin
+      if fun.nCalled = 0 then
+        state := 'Unused'
+      else
+        state := RightStr('     '+IntToStr(fun.nCalled)+ '', 6);
+
+      lins.Add( copy(fun.name + space(24) , 1, 24) + ' ' +
+                state + ' ' +
+                fun.srcDec.RowColString + ':' + fun.srcDec.fil
+      );
+    end;
+  end;
+
+  ////////////////////////////////////////////////////////////
+  ////////////////// Detalle de Funciones   ///////////
+  ////////////////////////////////////////////////////////////
+  lins.Add('');
+  lins.Add(';PROCEDURE DETAIL');
+  lins.Add(';===================');
+  for fun in TreeElems.AllFuncs do begin
+    if fun.nCalled > 0 then begin
+      lins.Add('------------------------------------');
+      lins.Add('----- PROCEDURE ' + fun.name);
+      lins.Add('------------------------------------');
+      lins.Add('  Caller Procedures:');
+      if fun.lstCallers .Count = 0 then begin
+        lins.Add('    <none>');
+      end else begin
+        for caller in fun.lstCallers do begin
+          lins.Add('    - ' + caller.caller.Parent.name);
+        end;
+      end;
+      lins.Add('');
+
+      lins.Add('  Called Procedures:');
+      if fun.lstCalled.Count = 0 then begin
+        lins.Add('    <none>');
+      end else begin
+        for called in fun.lstCalled do begin
+          lins.Add('    - ' + called.name);
+        end;
+      end;
+      lins.Add('');
+
+      lins.Add('  All Called Procedures:');
+      if fun.lstCalledAll.Count = 0 then begin
+        lins.Add('    <none>');
+      end else begin
+        for called in fun.lstCalledAll do begin
+          lins.Add('    - ' + called.name);
+        end;
+      end;
+      lins.Add('');
+
+      lins.Add('  Exit Instruction Calls:');
+      if fun.lstExitCalls.Count = 0 then begin
+        lins.Add('    <none>');
+      end else begin
+        for exitCall in fun.lstExitCalls do begin
+          lins.Add('    - Exit() in ' +exitCall.srcPos.RowColString);
+        end;
+      end;
+      lins.Add('');
+
+    end;
+  end;
+
 end;
 constructor TCompiler.Create;
 begin

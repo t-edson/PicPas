@@ -38,6 +38,7 @@ type
     chkOptBnkBefPro: TCheckBox;
     chkOptBnkAftPro: TCheckBox;
     chkReuProcVar: TCheckBox;
+    chkOptRetProc: TCheckBox;
     chkShowErrMsg: TCheckBox;
     chkIncComment2: TCheckBox;
     chkExcUnused: TCheckBox;
@@ -156,12 +157,13 @@ type
     ExcUnused : boolean;  //Excluye declaración de variables no usadas
     IncVarName: boolean;  //Reemplaza dirección con etiqueta de variables
     //Configuracions del compilador
-    ShowErMsg : boolean;
-    OptimLev  : TOptimLev;
+    ShowErMsg   : boolean;
+    OptimLev    : TOptimLev;
     OptBnkAftIF : boolean;
     OptBnkBefPro: boolean;
     OptBnkAftPro: boolean;
-    ReuProcVar: boolean;
+    ReuProcVar  : boolean;
+    OptRetProc  : boolean;
     procedure ConfigEditor(ed: TSynEdit);
   public
     fraCfgSynEdit: TfraCfgSynEdit;
@@ -415,6 +417,7 @@ begin
   cfgFile.Asoc_Bol('OptBnkBefPro', @OptBnkBefPro, chkOptBnkBefPro, true);
   cfgFile.Asoc_Bol('OptBnkAftPro', @OptBnkAftPro, chkOptBnkAftPro, true);
   cfgFile.Asoc_Bol('ReuProcVar'  , @ReuProcVar, chkReuProcVar, false);
+  cfgFile.Asoc_Bol('OptRetProc'  , @OptRetProc, chkOptRetProc, true);
   //Configuración de Herramienta Externa
   fraCfgExtTool.Init('ExternTool', cfgFile);
   //////////////////////////////////////////////////

@@ -94,7 +94,7 @@ type  //tipos enumerados
   TProcDefineVar = procedure(const varName, varInitVal: string) of object;
   {Evento para cargar un  operando en la pila.
   "OpPtr" debería ser "TOperand", pero aún no se define "TOperand".}
-  TProcLoadOperand = procedure(const OpPtr: pointer) of object;
+  TProcLoadOperand = procedure(const OpPtr: pointer; modReturn: boolean) of object;
 
   TxpOperatorKind = (
     opkUnaryPre,   //operador Unario Pre

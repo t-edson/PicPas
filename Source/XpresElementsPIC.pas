@@ -15,95 +15,9 @@ uses
   Classes, SysUtils, fgl, XpresTypesPIC, XpresBas, LCLProc;
 const
   ADRR_ERROR = $FFFF;
-type
-  //Tipos de elementos del lenguaje
-  TxpIDClass = (eltNone,  //sin tipo
-                 eltMain,  //programa principal
-                 eltVar,   //variable
-                 eltFunc,  //función
-                 eltCons,  //constante
-                 eltType,  //tipo
-                 eltUnit,  //unidad
-                 eltBody    //cuerpo del programa
-                );
-
-  TxpElement = class;
-  TxpElements = specialize TFPGObjectList<TxpElement>;
-
-  TxpEleBody = class;
-
-  //Datos sobre la llamada a un elemento desde otro elemento
-  TxpEleCaller = class
-    curPos: TSrcPos;    //Posición desde donde es llamado
-    curBnk: byte;       //banco RAM, desde donde se llama
-    caller: TxpElement; //función que llama a esta función
-  end;
-  TxpListCallers = specialize TFPGObjectList<TxpEleCaller>;
-
-  //Datos de las llamadas que se hacen a otro elemento
-//  TxpEleCalled = class
-//    curPos: TSrcPos;    //Posición desde donde es llamado
-//    curBnk: byte;       //banco RAM, desde donde se llama
-//    called: TxpElement; //función que llama a esta función
-//  end;
-  TxpListCalled = specialize TFPGObjectList<TxpElement>;
-
-  { TxpElement }
-  //Clase base para todos los elementos
-  TxpElement = class
-  private
-    function AddElement(elem: TxpElement): TxpElement;
-  public  //Gestion de llamadas al elemento
-    lstCallers: TxpListCallers;  //Lista de funciones que llaman a esta función.
-    lstCalled : TxpListCalled;   //Lista de funciones que son llamadas (Se llena en el enlazado)
-    OnAddCaller: function(elem: TxpElement): TxpEleCaller of object;
-    function AddCaller: TxpEleCaller;
-    procedure AddCalled(elem: TxpElement);
-    function nCalled: integer; virtual; //número de llamadas
-    function IsCalledBy(callElem: TxpElement): boolean; //Identifica a un llamador
-    function IsCAlledAt(callPos: TSrcPos): boolean;
-    function IsDeclaredAt(decPos: TSrcPos): boolean;
-    function FindCalling(callElem: TxpElement): TxpEleCaller; //Identifica a un llamada
-    function RemoveCallsFrom(callElem: TxpElement): integer; //Elimina llamadas
-    procedure ClearCallers;  //limpia lista de llamantes
-    function DuplicateIn(list: TxpElements): boolean; virtual;
-  public
-    name : string;        //Nombre de la variable, constante, unidad, tipo, ...
-    Parent: TxpElement;   //Referencia al padre
-    idClass: TxpIDClass; //No debería ser necesario
-    elements: TxpElements; //Referencia a nombres anidados, cuando sea función
-    function Path: string;
-    function FindIdxElemName(const eName: string; var idx0: integer): boolean;
-    function LastNode: TxpElement;
-    function BodyNode: TxpEleBody;
-    function Index: integer;
-    constructor Create; virtual;
-    destructor Destroy; override;
-  public  //Ubicación física de la declaración del elmento
-    posCtx: TPosCont;  //Ubicación en el código fuente
-    {Datos de la ubicación en el código fuente, donde el elemento es declarado. Guardan
-    parte de la información de posCtx, pero se mantiene, aún después de cerrar los
-    contextos de entrada.}
-    srcDec: TSrcPos;
-    {Posición final de la declaración. Esto es útil en los elementos que TxpEleBody,
-    para delimitar el bloque de código.}
-    srcEnd: TSrcPos;
-    function posXYin(const posXY: TPoint): boolean;
-  end;
-
+type  //TxpElement y clases previas
   TVarOffs = word;
   TVarBank = byte;
-
-  //Clase para modelar al bloque principal
-  { TxpEleMain }
-  TxpEleMain = class(TxpElement)
-    //Como este nodo representa al programa principal, se incluye información física
-    srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
-                        porque el tamaño puede variar al reubicarse.}
-    constructor Create; override;
-  end;
-
-  TxpEleType= class;
 
   TxpOperator = class;
   TxpOperation = class;
@@ -118,6 +32,8 @@ type
   El parámetro "SetRes", se usa para cuando se quiere indicar si se usará la ROP, en
   modo normal (TRUE) o si solo se quiere usar la ROP, como generador de código}
   TProcExecOperat = procedure(Opr: TxpOperator; SetRes: boolean) of object;
+
+  TxpEleType= class;
 
   { TxpOperation }
   //Tipo operación
@@ -154,6 +70,162 @@ type
     destructor Destroy; override;
   end;
   TxpOperators = specialize TFPGObjectList<TxpOperator>; //lista de operadores
+
+
+  //Tipos de elementos del lenguaje
+  TxpIDClass = (eltNone,  //Sin tipo
+                eltCodeCont, //Contenedor de código
+                eltMain,  //Programa principal
+                eltVar,   //Variable
+                eltFunc,  //Función
+                eltCons,  //Constante
+                eltType,  //Tipo
+                eltUnit,  //Unidad
+                eltBody   //Cuerpo del programa
+                );
+
+  TxpElement = class;
+  TxpElements = specialize TFPGObjectList<TxpElement>;
+
+  TxpEleBody = class;
+
+  //Datos sobre la llamada a un elemento desde otro elemento
+  TxpEleCaller = class
+    curPos: TSrcPos;    //Posición desde donde es llamado
+    curBnk: byte;       //banco RAM, desde donde se llama
+    caller: TxpElement; //función que llama a esta función
+  end;
+  TxpListCallers = specialize TFPGObjectList<TxpEleCaller>;
+
+  //Datos de las llamadas que se hacen a otro elemento
+//  TxpEleCalled = class
+//    curPos: TSrcPos;    //Posición desde donde es llamado
+//    curBnk: byte;       //banco RAM, desde donde se llama
+//    called: TxpElement; //función que llama a esta función
+//  end;
+  TxpListCalled = specialize TFPGObjectList<TxpElement>;
+
+  //Identificadores para bloques de sintaxis
+  TxpSynBlockId = (
+    sbiNULL,  //Sin bloque (en el mismo Body)
+    sbiIF,    //bloque IF
+    sbiFOR,   //bloque FOR
+    sbiWHILE, //bloque WHILE
+    sbiREPEAT //bloque REPEAT
+  );
+
+  { TxpSynBlock }
+  //Define un bloque de sintaxis.
+  TxpSynBlock = class
+    id : TxpSynBlockId;
+    function idStr: string;
+  end;
+  TxpSynBlocks = specialize TFPGObjectList<TxpSynBlock>;
+
+  { TxpExitCall }
+  //Clase que representa una llamada a la instrucción exit()
+  TxpExitCall = class
+    srcPos: TSrcPos;    //Posición en el código fuente
+    blkId : TxpSynBlockId; //Identificador del bloque desde donde se hizo la llamada
+    curBnk: byte;       //Banco actual al hacer el RETURN
+    function IsObligat: boolean;
+  end;
+  TxpExitCalls = specialize TFPGObjectList<TxpExitCall>; //lista de variables
+
+  {Descripción de la parte adicional en la declaración de una variable (como si
+  es ABSOLUTE)}
+  TAdicVarDec = record
+    //Por el momento, el único parámetro adicional es ABSOLUTE
+    isAbsol   : boolean;   //Indica si es ABSOLUTE
+    absAddr   : integer;   //dirección ABSOLUTE
+    absBit    : byte;      //bit ABSOLUTE
+    //Posición donde empieza la declaración de parámetros adicionales de la variable
+    srcDec    : TPosCont;
+  end;
+
+  { TxpElement }
+  //Clase base para todos los elementos
+  TxpElement = class
+  private
+    function AddElement(elem: TxpElement): TxpElement;
+  public  //Gestion de llamadas al elemento
+    //Lista de funciones que llaman a esta función.
+    lstCallers: TxpListCallers;
+    OnAddCaller: function(elem: TxpElement): TxpEleCaller of object;
+    function nCalled: integer; virtual; //número de llamadas
+    function AddCaller: TxpEleCaller;
+    function IsCalledBy(callElem: TxpElement): boolean; //Identifica a un llamador
+    function IsCalledAt(callPos: TSrcPos): boolean;
+    function IsDeclaredAt(decPos: TSrcPos): boolean;
+    function FindCalling(callElem: TxpElement): TxpEleCaller; //Identifica a un llamada
+    function RemoveCallsFrom(callElem: TxpElement): integer; //Elimina llamadas
+    procedure ClearCallers;  //limpia lista de llamantes
+    function DuplicateIn(list: TxpElements): boolean; virtual;
+  public  //Gestión de los elementos llamados
+    //Lista de funciones que son llamadas directamente (Se llena en el enlazado)
+    lstCalled : TxpListCalled;
+    //Lista de funciones que son llamadas dirceta o indirectamente (Se llena en el enlazado)
+    lstCalledAll: TxpListCalled;
+    {Se está asumiendo que solo los TxpEleCodeCont, puden llamar a otros elementos,
+    peor podría considerarse también que elementos, como las variables, pueden llamar
+    también a otros elementos (como las referencias absolute).}
+    procedure AddCalled(elem: TxpElement);
+    procedure AddCalledAll(elem: TxpElement);
+    procedure AddCalledAll_FromList(lstCalled0: TxpListCalled);
+  public
+    name : string;        //Nombre de la variable, constante, unidad, tipo, ...
+    Parent: TxpElement;   //Referencia al padre
+    idClass: TxpIDClass; //No debería ser necesario
+    elements: TxpElements; //Referencia a nombres anidados, cuando sea función
+    function Path: string;
+    function FindIdxElemName(const eName: string; var idx0: integer): boolean;
+    function LastNode: TxpElement;
+    function Index: integer;
+  public  //Ubicación física de la declaración del elmento
+    posCtx: TPosCont;  //Ubicación en el código fuente
+    {Datos de la ubicación en el código fuente, donde el elemento es declarado. Guardan
+    parte de la información de posCtx, pero se mantiene, aún después de cerrar los
+    contextos de entrada.}
+    srcDec: TSrcPos;
+    {Posición final de la declaración. Esto es útil en los elementos que TxpEleBody,
+    para delimitar el bloque de código.}
+    srcEnd: TSrcPos;
+    function posXYin(const posXY: TPoint): boolean;
+  public  //Inicialización
+    constructor Create; virtual;
+    destructor Destroy; override;
+  end;
+
+type //Clases de elementos
+
+  { TxpEleCodeCont }
+  {Clase que define a un elemento que puede servir como contenedor general de código,
+  como el programa principal, un procedimeinto o una unidad}
+  TxpEleCodeCont = class(TxpElement)
+  public
+    {Banco de RAM, que tiene la función al ejecutar la útlima instrucción. No es
+     necesariamente el banco con el que termina siempre, la función, porque puede haber
+     instrucciones exit(), antes. Para mejor precisión sobre el banco de salida, se debe
+     usar ExitBank()}
+    finBnk: byte;
+    function BodyNode: TxpEleBody;
+  public //Manejo de llamadas a exit()
+    lstExitCalls: TxpExitCalls;
+    procedure AddExitCall(srcPos: TSrcPos; blkId: TxpSynBlockId; curBnk: byte);
+    function ObligatoryExit: TxpExitCall;
+    function ExitBank: byte;
+  public //Información sobre bloques de sintaxis
+    {TxpEleBody, almacena bloques de sintaxis para llevar el control de la ubicación
+     de las instrucciones, con respecto a los bloques.}
+    blocks : TxpSynBlocks;
+    procedure OpenBlock(blkId: TxpSynBlockId);
+    procedure CloseBlock;
+    function CurrBlock: TxpSynBlock;
+    function CurrBlockID: TxpSynBlockId;
+  public //Inicialización
+    constructor Create; override;
+    destructor Destroy; override;
+  end;
 
   { TxpEleType }
   {Clase para modelar a los tipos definidos por el usuario y a los tipos del sistema.
@@ -231,17 +303,6 @@ type
   end;
   TxpEleCons = specialize TFPGObjectList<TxpEleCon>; //lista de constantes
 
-  {Descripción de la parte adicional en la declaración de una variable (como si
-  es ABSOLUTE)}
-  TAdicVarDec = record
-    //Por el momento, el único parámetro adicional es ABSOLUTE
-    isAbsol   : boolean;   //Indica si es ABSOLUTE
-    absAddr   : integer;   //dirección ABSOLUTE
-    absBit    : byte;      //bit ABSOLUTE
-    //Posición donde empieza la declaración de parámetros adicionales de la variable
-    srcDec    : TPosCont;
-  end;
-
   { TxpEleVar }
   //Clase para modelar a las variables
   TxpEleVar = class(TxpElement)
@@ -299,23 +360,28 @@ type
     pvar: TxpEleVar; //referencia a la variable que se usa para el parámetro
   end;
 
+  //Clase para modelar al bloque principal
+  { TxpEleMain }
+  TxpEleMain = class(TxpEleCodeCont)
+    //Como este nodo representa al programa principal, se incluye información física
+    srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
+                        porque el tamaño puede variar al reubicarse.}
+    constructor Create; override;
+  end;
+
   TxpEleFun = class;
   { TxpEleFun }
   //Clase para almacenar información de las funciones
-  TProcExecFunction = procedure(fun: TxpEleFun) of object;  //con índice de función
-  TxpEleFun = class(TxpElement)
+  TProcExecFunction = procedure(fun: TxpEleFun) of object;
+  TxpEleFun = class(TxpEleCodeCont)
   public
-    typ: TxpEleType;  //Referencia al tipo
-    pars: array of TxpParFunc;  //parámetros de entrada
-    adrr: integer;     //Dirección física, en donde se compila
-    adrReturn: integer;  //Dirección física del RETURN final de la función.
+    typ    : TxpEleType;   //Referencia al tipo
+    pars   : array of TxpParFunc;  //parámetros de entrada
+    adrr   : integer;     //Dirección física, en donde se compila
     srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
                         porque el tamaño puede variar al reubicarse.}
-    //Banco de RAM, al iniciar la eejcución de la subrutina.
+    //Banco de RAM, al iniciar la ejecución de la subrutina.
     iniBnk: byte;
-    {Bsndera que indica si se produce cambio de banco desde dentro del código de la
-    función.}
-    BankChanged: boolean;
     {Referencia a la función que implemanta, la rutina de porcesamiento que se debe
     hacer, antes de empezar a leer los parámetros de la función.}
     procParam: TProcExecFunction;
@@ -335,32 +401,38 @@ type
     {Indica si la función es una ISR. Se espera que solo exista una.}
     IsInterrupt : boolean;
     ///////////////
-    function nCalled: integer; override; //número de llamadas
     procedure ClearParams;
     procedure CreateParam(parName: string; typ0: TxpEleType; pvar: TxpEleVar);
     function SameParams(Fun2: TxpEleFun): boolean;
     function ParamTypesList: string;
     function DuplicateIn(list: TxpElements): boolean; override;
     procedure SetElementsUnused;
+  public  //Manejo de referencias
+    function nCalled: integer; override; //número de llamadas
+    function nLocalVars: integer;
+    function IsTerminal: boolean;
+    function IsTerminal2: boolean;
+  public //Inicialización
     constructor Create; override;
+    destructor Destroy; override;
   end;
   TxpEleFuns = specialize TFPGObjectList<TxpEleFun>;
 
   { TxpEleUnit }
   //Clase para modelar a las constantes
-  TxpEleUnit = class(TxpElement)
+  TxpEleUnit = class(TxpEleCodeCont)
   public
     srcFile: string;   //El archivo en donde está físicamente la unidad.
     constructor Create; override;
   end;
   TxpEleUnits = specialize TFPGObjectList<TxpEleUnit>; //lista de constantes
 
-  //Clase para modelar al cuerpo principal del programa
-
   { TxpEleBody }
+  //Clase para modelar al cuerpo principal del programa
   TxpEleBody = class(TxpElement)
     adrr   : integer;  //dirección física
     constructor Create; override;
+    destructor Destroy; override;
   end;
 
   { TxpEleDIREC }
@@ -394,6 +466,7 @@ type
     procedure RefreshAllVars;
     procedure RefreshAllFuncs;
     function CurNodeName: string;
+    function CurCodeContainer: TxpEleCodeCont;
     function LastNode: TxpElement;
     function BodyNode: TxpEleBody;
     //funciones para llenado del arbol
@@ -431,6 +504,29 @@ var
 
 implementation
 
+{ TxpExitCall }
+function TxpExitCall.IsObligat: boolean;
+{Indica si el exit se encuentra dentro de código obligatorio}
+begin
+  {Para detectar si el exit() está en código obligatorio, se verifica si se enceuntra
+  directamente en el Body, y no dentro de bloques de tipo
+  IF, WHILE, FOR, REPEAT. Este método no es del todo preciso si se considera que puede
+  haber también código obligatorio, también dentro de bloques REPEAT o códigos IF
+  definido en tiempo de compialción.}
+  Result := (blkId = sbiNULL);
+end;
+{ TxpSynBlock }
+function TxpSynBlock.idStr: string;
+begin
+  case id of
+  sbiIF    : Result := 'sbiIF';
+  sbiFOR   : Result := 'sbiFOR';
+  sbiWHILE : Result := 'sbiWHILE';
+  sbiREPEAT: Result := 'sbiREPEAT';
+  else
+    Result := '';
+  end;
+end;
 { TxpOperation }
 function TxpOperation.OperationString: string;
 {Devuelve una cadena que representa a la operación, sobre los tipos.
@@ -438,7 +534,6 @@ function TxpOperation.OperationString: string;
 begin
   Result := parent.parent.name + ' ' + parent.txt + ' ' + ToType.name;
 end;
-
 { TxpElement }
 function TxpElement.AddElement(elem: TxpElement): TxpElement;
 {Agrega un elemento hijo al elemento actual. Devuelve referencia. }
@@ -472,19 +567,6 @@ begin
   if elements.Count = 0 then exit(nil);
   Result := elements[elements.Count-1];
 end;
-function TxpElement.BodyNode: TxpEleBody;
-{Devuelve la referecnia al cuerpo del programa. Aplicable a nodos de tipo función o
-"Main". Si no lo encuentra, devuelve NIL.}
-var
-  elem: TxpElement;
-begin
-  elem := LastNode;   //Debe ser el último
-  if elem.idClass <> eltBody then begin
-    exit(nil);  //No debería pasar
-  end;
-  //Devuelve referencia
-  Result := TxpEleBody(elem);
-end;
 function TxpElement.Index: integer;
 {Devuelve la ubicación del elemento, dentro de su nodo padre.}
 begin
@@ -503,10 +585,6 @@ begin
     Result := nil;
   end;
 end;
-procedure TxpElement.AddCalled(elem: TxpElement);
-begin
-  lstCalled.Add(elem);
-end;
 function TxpElement.nCalled: integer;
 begin
   Result := lstCallers.Count;
@@ -522,7 +600,7 @@ begin
   end;
   exit(false);
 end;
-function TxpElement.IsCAlledAt(callPos: TSrcPos): boolean;
+function TxpElement.IsCalledAt(callPos: TSrcPos): boolean;
 {Indica si el elemento es llamado, desde la posición indicada.}
 var
   cal : TxpEleCaller;
@@ -583,6 +661,35 @@ begin
   end;
   exit(false);
 end;
+//Gestión de los elementos llamados
+procedure TxpElement.AddCalled(elem: TxpElement);
+begin
+  if lstCalled.IndexOf(elem) = -1 then begin
+    lstCalled.Add(elem);
+  end;
+end;
+procedure TxpElement.AddCalledAll(elem: TxpElement);
+{Agrega referencia a procedimiento llamado.}
+begin
+  //Solo agrega una vez el elemento
+  if lstCalledAll.IndexOf(elem) = -1 then begin
+    lstCalledAll.Add(elem);
+  end;
+end;
+procedure TxpElement.AddCalledAll_FromList(lstCalled0: TxpListCalled);
+{Agrega referencia a procedimiento llamado, a partir de una lista, de forma recursiva}
+var
+  elem: TxpElement;
+begin
+  if lstCalled0.Count = 0 then exit;
+  for elem in lstCalled0 do begin
+    AddCalledAll(elem);  //Agrega elemento
+    if elem.lstCalled.Count <> 0 then begin  //Tiene otros elementos
+      AddCalledAll_FromList(elem.lstCalled);
+    end;
+  end;
+end;
+
 function TxpElement.Path: string;
 {Devuelve una cadena, que indica la ruta del elemento, dentro del árbol de sintaxis.}
 var
@@ -600,9 +707,11 @@ begin
   idClass := eltNone;
   lstCallers:= TxpListCallers.Create(true);
   lstCalled := TxpListCalled.Create(false);  //solo guarda referencias
+  lstCalledAll:= TxpListCalled.Create(false);
 end;
 destructor TxpElement.Destroy;
 begin
+  lstCalledAll.Destroy;
   lstCalled.Destroy;
   lstCallers.Destroy;
   elements.Free;  //por si contenía una lista
@@ -649,12 +758,123 @@ begin
     exit(false);
   end;
 end;
-{ TxpEleMain }
-constructor TxpEleMain.Create;
+{ TxpEleCodeCont }
+function TxpEleCodeCont.BodyNode: TxpEleBody;
+{Devuelve la referencia al cuerpo del programa. Si no lo encuentra, devuelve NIL.}
+var
+  elem: TxpElement;
 begin
-  inherited;
-  idClass:=eltMain;
-  Parent := nil;  //la raiz no tiene padre
+  elem := LastNode;   //Debe ser el último
+  if elem = nil then exit(nil);
+  if elem.idClass <> eltBody then begin
+    exit(nil);  //No debería pasar
+  end;
+  //Devuelve referencia
+  Result := TxpEleBody(elem);
+end;
+procedure TxpEleCodeCont.AddExitCall(srcPos: TSrcPos; blkId: TxpSynBlockId; curBnk: byte);
+var
+  exitCall: TxpExitCall;
+begin
+  exitCall := TxpExitCall.Create;
+  exitCall.srcPos := srcPos;
+  {Se guarda el ID, en lugar de la referencia al bloque, porque en el modo de trabajo
+   actual, los bloques se crean y destruyen, dinámicamente}
+  exitCall.blkId  := blkId;
+  exitCall.curBnk := curBnk;
+  lstExitCalls.Add(exitCall);
+end;
+function TxpEleCodeCont.ObligatoryExit: TxpExitCall;
+{Devuelve la referencia de una llamada a exit(), dentro de código obligatorio del Body.
+Esto ayuda a sabe si ya el usuario incluyó la salida dentro del código y no es necesario
+agregar un RETURN al final.
+Si no encuentra ninguna llamada a exit() en código obligatorio, devuelve NIL.
+Según la docuemnatción, el exit() en código obligatorio, solo debe estar al final del
+código del procedimiento. Si estuviera antes, dejaría código "no-ejecutable".}
+var
+  exitCall: TxpExitCall;
+begin
+  if lstExitCalls.Count = 0 then exit(nil);  //No incluye exit()
+  for exitCall in lstExitCalls do begin
+    //Basta detectar un exit(), porque no se espera que haya más.
+    if exitCall.IsObligat then begin
+      exit(exitCall);  //tiene una llamada en código obligatorio
+    end;
+  end;
+  //No se encontró ningún exit en el mismo "body"
+  exit(nil);
+end;
+function TxpEleCodeCont.ExitBank: byte;
+{Devuelve el banco de RAM, que deja el bloque de código, después de ejecutarse.}
+var
+  exitCall: TxpExitCall;
+  bank1: Byte;
+begin
+  if lstExitCalls.Count = 0 then begin
+    //No hay instrucciones exit()
+    //Se asume que el banco de salida, será el que deje la última instrucción
+    if idClass = eltFunc then begin //Este contenedor es una función
+      Result := finBnk;
+    end else begin  //Debe ser el bloque Main
+      Result := 255;
+    end;
+  end else if (lstExitCalls.Count = 1) and  lstExitCalls[0].IsObligat then begin
+    //Hay una instrucción exit() y está en código obligatorio
+    Result := lstExitCalls[0].curBnk;
+  end else begin
+    //Hay al menos una instrucción exit y no es de ejecución obligatoria
+    bank1 := finBnk;  //Es el banco al final
+    for exitCall in lstExitCalls do begin
+      if exitCall.curBnk <> bank1 then begin
+        //No sale en el mismo banco
+        Result := 255;
+        exit;
+      end;
+    end;
+    //Todos salen por el mismo banco
+    Result := bank1;
+  end;
+end;
+procedure TxpEleCodeCont.OpenBlock(blkId: TxpSynBlockId);
+{Abre un bloque de sintaxis en este nodo TxpEleCodeCont..
+Los bloques de sintaxis se van creando como en una pila LIFO}
+var
+  blk: TxpSynBlock;
+begin
+  blk := TxpSynBlock.Create;
+  blk.id := blkId;
+  blocks.Add(blk);
+end;
+procedure TxpEleCodeCont.CloseBlock;
+{Quita el último bloque de sintaxis agregado.}
+begin
+  if blocks.Count=0 then exit;
+  blocks.Delete(blocks.Count-1);  //quita el último
+end;
+function TxpEleCodeCont.CurrBlock: TxpSynBlock;
+{Devuelve la referencia al último bloque agregado. Si no se ha agregado algún bloque,
+devuelve NIL}
+begin
+  if blocks.Count=0 then exit(nil);
+  exit(blocks[blocks.Count-1])
+end;
+function TxpEleCodeCont.CurrBlockID: TxpSynBlockId;
+begin
+  if blocks.Count=0 then exit(sbiNULL);
+  Result := CurrBlock.id;
+end;
+constructor TxpEleCodeCont.Create;
+begin
+  inherited Create;
+  idClass:=eltCodeCont;
+  blocks := TxpSynBlocks.Create(true);
+  lstExitCalls:= TxpExitCalls.Create(true);
+end;
+destructor TxpEleCodeCont.Destroy;
+begin
+  lstExitCalls.Destroy;
+  blocks.Destroy;
+  inherited Destroy;
 end;
 { TxpEleCon }
 constructor TxpEleCon.Create;
@@ -1078,10 +1298,12 @@ begin
   fields.Destroy;
   inherited;
 end;
-function TxpEleFun.nCalled: integer;
+{ TxpEleMain }
+constructor TxpEleMain.Create;
 begin
-  if IsInterrupt then exit(1);   //Los INTERRUPT son llamados implícitamente
-  Result := inherited nCalled;
+  inherited;
+  idClass:=eltMain;
+  Parent := nil;  //la raiz no tiene padre
 end;
 { TxpEleFun }
 procedure TxpEleFun.ClearParams;
@@ -1171,12 +1393,63 @@ begin
     end;
   end;
 end;
+function TxpEleFun.nCalled: integer;
+begin
+  if IsInterrupt then exit(1);   //Los INTERRUPT son llamados implícitamente
+  Result := inherited nCalled;
+end;
+function TxpEleFun.nLocalVars: integer;
+{Devuelve el número de variables locales de la función.}
+var
+  elem : TxpElement;
+begin
+  Result := 0;
+  for elem in elements do begin
+    if elem.idClass = eltVar then inc(Result);
+  end;
+end;
+function TxpEleFun.IsTerminal: boolean;
+{Indica si la función ya no llama a otras funciones. Par que funcione, se debe haber
+llenado primero, "lstCalled".}
+begin
+  Result := (lstCalled.Count = 0);
+end;
+function TxpEleFun.IsTerminal2: boolean;
+{Indica si la función es Terminal, en el sentido que cumple:
+- Tiene variables locales.
+- No llama a otras funciones o las funciones a las que llama no tienen variables locales.
+Donde "Variables" locales, se refiere también a parámetros del procedimiento.}
+var
+  called   : TxpElement;
+  nCallesFuncWithLocals: Integer;
+begin
+  if nLocalVars = 0 then exit(false);
+  //Tiene variables locales
+  //Verifica llamada a funciones
+  nCallesFuncWithLocals := 0;
+  for called in lstCalledAll do begin
+    if called.idClass = eltFunc then begin
+      if TxpEleFun(called).nLocalVars > 0 then inc(nCallesFuncWithLocals);
+    end;
+  end;
+  if nCallesFuncWithLocals = 0 then begin
+    //Todas las funciones a las que llama, no tiene variables locales
+    exit(true);
+  end else begin
+    exit(false);
+  end;
+end;
+
+//Inicialización
 constructor TxpEleFun.Create;
 begin
   inherited;
   idClass:=eltFunc;
 end;
-
+destructor TxpEleFun.Destroy;
+begin
+  inherited Destroy;
+end;
 { TxpEleUnit }
 constructor TxpEleUnit.Create;
 begin
@@ -1189,6 +1462,11 @@ begin
   inherited;
   idClass := eltBody;
 end;
+destructor TxpEleBody.Destroy;
+begin
+  inherited Destroy;
+end;
+
 { TxpEleDIREC }
 constructor TxpEleDIREC.Create;
 begin
@@ -1254,13 +1532,33 @@ function TXpTreeElements.CurNodeName: string;
 begin
   Result := curNode.name;
 end;
+function TXpTreeElements.CurCodeContainer: TxpEleCodeCont;
+{Devuelve una referencia al Contenedor de Cñodigo actual. Si no lo identifica,
+devuelve NIL}
+begin
+  case curNode.idClass of
+  eltFunc, eltMain, eltUnit: begin
+    {Este es un caso directo, porque estamos directamente en un contenedor de código.
+    No es común proque en este ámbito solo están las declaraciones, no el código}
+    exit( TxpEleCodeCont(curNode) );
+  end;
+  eltBody: begin
+    {Este es el caso mas común porque aquí si estamos dentro de un bloque que incluye
+    código.}
+    //Se supone que nunca debería fallar, porque un Body siempre pertenece a un CodeCont
+    exit( TxpEleCodeCont(curNode.Parent) );
+  end;
+  else
+    exit(nil);
+  end;
+end;
 function TXpTreeElements.LastNode: TxpElement;
 {Devuelve una referencia al último nodo de "main"}
 begin
   Result := main.LastNode;
 end;
 function TXpTreeElements.BodyNode: TxpEleBody;
-{Devuelve la referecnia al cuerpo principal del programa.}
+{Devuelve la referencia al cuerpo principal del programa.}
 begin
   Result := main.BodyNode;
 end;
@@ -1509,7 +1807,6 @@ begin
   ExploreFor(main);
   Result := res;
 end;
-
 function TXpTreeElements.GetElementCalledAt(const srcPos: TSrcPos): TxpElement;
 {Explora los elementos, para ver si alguno es llamado desde la posición indicada.
 Si no lo encuentra, devueleve NIL.}
@@ -1569,7 +1866,6 @@ begin
   ExploreForDec(main);
   Result := res;
 end;
-
 //constructor y destructor
 constructor TXpTreeElements.Create;
 begin

@@ -45,7 +45,7 @@ interface
 uses
   Classes, SysUtils, SynEditHighlighter, Graphics, LCLType, LCLProc,
   SynFacilBasic, XpresTypesPIC, XPresParserPIC, XpresElementsPIC, GenCodPic,
-  Pic16Utils, MisUtils;
+  Pic16Utils, MisUtils, XpresBas;
 type
     { TGenCod }
     TGenCod = class(TGenCodPic)
@@ -197,17 +197,13 @@ begin
   fun.iniBnk := CurrBank;   //fija el banco inicial
   //Por ahora, no se implementa paginación, pero despuñes habría que considerarlo.
   _CALL(fun.adrr);  //codifica el salto
-  //Verifica las opciones de cambio de banco
-  if SetProEndBnk then begin
+  //Verifica la optimizaicón de cambio de banco
+  if OptBnkAftPro then begin
+    //Se debe optimizar, fijando el banco que deja la función
+    CurrBank := fun.ExitBank;
+  end else begin
     //Se debe incluir siempre instrucciones de cambio de banco
     _BANKRESET;
-  end else begin
-    //Se incluye solo, si el banco pudo haber cambiado
-    if fun.BankChanged then begin
-      //Ha habido cambios de banco dentro del procedimiento
-      _BANKRESET;   //Por seguridad restauramos
-      {Un análisis más fino podría determinar si se puede predecir el banco de salida.}
-    end;
   end;
 end;
 procedure TGenCod.CopyInvert_C_to_Z;
@@ -4389,53 +4385,58 @@ begin
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.fun_Exit(fun: TxpEleFun);
-{Se debe dejar en los registros de trabajo, el valro del parámetro indicado.}
-  procedure CodifRETURN(curBlk: TxpElement);
-  begin
-    //Codifica el salto de salida
-    if curBlk.idClass = eltFunc then begin
-      //En la primera pasada, no está definido "adrrEnd".
-  //    adrReturn := abs(TxpEleFun(curBlk).adrReturn);  //protege
-  //    if pic.iFlash = adrReturn then begin
-  //      //No es necesario incluir salto, proque ya está al final
-  //    end else begin
-        _RETURN;
-  //    end;
-    end else begin
-      GenError('Internal: No implemented.');
-    end;
-  end;
+{Se debe dejar en los registros de trabajo, el valor del parámetro indicado.}
 var
   curFunTyp: TxpEleType;
-  curBlk: TxpElement;
+  parentNod: TxpEleCodeCont;
   curFun: TxpEleFun;
+  posExit: TSrcPos;
 //  adrReturn: word;
 begin
-  curBlk := TreeElems.curNode.Parent;  //El curNode, debe ser de tipo "Body".
-  if curBlk.idClass = eltMain then begin  //En el programa principal
+  //TreeElems.curNode, debe ser de tipo "Body".
+  parentNod := TreeElems.CurCodeContainer;  //Se supone que nunca debería fallar
+  posExit := cIn.ReadSrcPos;  //Guarda para el AddExitCall()
+  if parentNod.idClass = eltMain then begin
+    //Es el cuerpo del programa principal
     _SLEEP;   //Así se termina un programa en PicPas
-    exit;
+  end else if parentNod.idClass = eltFunc then begin
+    //Es el caso común, un exit() en procedimientos.
+    //"parentNod" debe ser de tipo TxpEleFun
+    curFun := TxpEleFun(parentNod);
+    if curFun.IsInterrupt then begin
+      GenError('Cannot use exit() in an INTERRUPT.');
+      exit;
+    end;
+    //Codifica el retorno
+    curFunTyp := curFun.typ;
+    if curFunTyp = typNull then begin
+      //No retorna valores. Es solo procedimiento
+      _RETURN;
+      //No hay nada, más que hacer
+    end else begin
+      //Se espera el valor devuelto
+      if not CaptureTok('(') then exit;
+      GetExpressionE(0, pexPARSY);  //captura parámetro
+      if HayError then exit;   //aborta
+      //Verifica fin de parámetros
+      if not CaptureTok(')') then exit;
+      //El resultado de la expresión está en "res".
+      if curFunTyp <> res.Typ then begin
+        GenError('Expected a "%s" expression.', [curFunTyp.name]);
+        exit;
+      end;
+      LoadToRT(res, true);  //Carga expresión en RT y genera RETURN o RETLW
+    end;
+  end else begin
+    //Faltaría implementar en cuerpo de TxpEleUni
+    GenError('Syntax error.');
   end;
-  //curBlk debe ser de tipo TxpEleFun
-  curFun := TxpEleFun(curBlk);
-  curFunTyp := curFun.typ;
-  if curFunTyp = typNull then begin
-    //No lleva parámetros,
-    CodifRETURN(curBlk);
-    exit;  //No hay nada, más que hacer
+  //Lleva el registro de las llamadas a exit()
+  if FirstPass then begin
+    //CurrBank debe ser el banco con el que se llamó al RETURN.
+    parentNod.AddExitCall(posExit, parentNod.CurrBlockID, CurrBank);
   end;
-  if not CaptureTok('(') then exit;
-  GetExpressionE(0, pexPARSY);  //captura parámetro
-  if HayError then exit;   //aborta
-  //Verifica fin de parámetros
-  if not CaptureTok(')') then exit;
-  //El resultado de la expresión está en "res".
-  if curFunTyp <> res.Typ then begin
-    GenError('Expected a "%s" expression.', [curFunTyp.name]);
-  end;
-  LoadToRT(res);
   res.SetAsNull;  //No es función
-  CodifRETURN(curBlk);  //Codifica salto
 end;
 procedure TGenCod.fun_Inc(fun: TxpEleFun);
 begin

@@ -195,9 +195,10 @@ type
   public  //Opciones de compilación
     incDetComm  : boolean;   //Incluir Comentarios detallados.
     SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
-    SetProEndBnk: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
+    OptBnkAftPro: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
     OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
-    ReuProcVar  : boolean; //Reusar variables locales de procedimientos
+    OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
+    OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
   public  //Acceso a registro de trabajo
     property ProplistRegAux: TPicRegister_list read listRegAux;
     property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
@@ -206,11 +207,11 @@ type
     property U_register: TPicRegister read U;
   protected  //Funciones de tipos
     ///////////////// Tipo Bit ////////////////
-    procedure bit_LoadToRT(const OpPtr: pointer);
+    procedure bit_LoadToRT(const OpPtr: pointer; modReturn: boolean);
     procedure bit_DefineRegisters;
     procedure bit_SaveToStk;
     //////////////// Tipo Byte /////////////
-    procedure byte_LoadToRT(const OpPtr: pointer);
+    procedure byte_LoadToRT(const OpPtr: pointer; modReturn: boolean);
     procedure byte_DefineRegisters;
     procedure byte_SaveToStk;
     procedure byte_GetItem(const OpPtr: pointer);
@@ -226,13 +227,13 @@ type
     procedure byte_bit6(const OpPtr: pointer);
     procedure byte_bit7(const OpPtr: pointer);
     //////////////// Tipo Word /////////////
-    procedure word_LoadToRT(const OpPtr: pointer);
+    procedure word_LoadToRT(const OpPtr: pointer; modReturn: boolean);
     procedure word_DefineRegisters;
     procedure word_SaveToStk;
     procedure word_Low(const OpPtr: pointer);
     procedure word_High(const OpPtr: pointer);
     //////////////// Tipo DWord /////////////
-    procedure dword_LoadToRT(const OpPtr: pointer);
+    procedure dword_LoadToRT(const OpPtr: pointer; modReturn: boolean);
     procedure dword_DefineRegisters;
     procedure dword_SaveToStk;
     procedure dword_Extra(const OpPtr: pointer);
@@ -1242,7 +1243,7 @@ begin
   BankChanged := true;   //Se asume que hubo cambio
 end;
 function TGenCodPic._BANKSEL(targetBank: byte): byte;
-{Verifica si se está en el banco deseado, de no ser así geenra las instrucciones
+{Verifica si se está en el banco deseado, de no ser así genera las instrucciones
  para el cambio de banco.
  Devuelve el número de instrucciones generado.}
 var
@@ -1546,7 +1547,7 @@ begin
   exit(true);
 end;
 ///////////////// Tipo Bit ////////////////
-procedure TGenCodPic.bit_LoadToRT(const OpPtr: pointer);
+procedure TGenCodPic.bit_LoadToRT(const OpPtr: pointer; modReturn: boolean);
 {Carga operando a registros Z.}
 var
   Op: ^TOperand;
@@ -1589,6 +1590,7 @@ begin
     //Almacenamiento no implementado
     GenError('Not implemented.');
   end;
+  if modReturn then _RETURN;  //codifica instrucción
 end;
 procedure TGenCodPic.bit_DefineRegisters;
 begin
@@ -1609,7 +1611,7 @@ begin
   stk.used := true;
 end;
 //////////////// Tipo Byte /////////////
-procedure TGenCodPic.byte_LoadToRT(const OpPtr: pointer);
+procedure TGenCodPic.byte_LoadToRT(const OpPtr: pointer; modReturn: boolean);
 {Carga operando a registros de trabajo.}
 var
   Op: ^TOperand;
@@ -1618,13 +1620,16 @@ begin
   Op := OpPtr;
   case Op^.Sto of  //el parámetro debe estar en "res"
   stConst : begin
-    _MOVLW(Op^.valInt);
+    if modReturn then _RETLW(Op^.valInt)
+    else _MOVLW(Op^.valInt);
   end;
   stVariab: begin
     _BANKSEL(Op^.bank);
     _MOVF(Op^.offs, toW);
+    if modReturn then _RETURN;
   end;
   stExpres: begin  //ya está en w
+    if modReturn then _RETURN;
   end;
   stVarRefVar: begin
     //Se tiene una variable puntero dereferenciada: x^
@@ -1634,6 +1639,7 @@ begin
     _MOVF(varPtr.offs, toW);
     _MOVWF(FSR.offs);  //direcciona
     _MOVF(0, toW);  //deje en W
+    if modReturn then _RETURN;
   end;
   stVarRefExp: begin
     //Es una expresión derefernciada (x+a)^.
@@ -1642,6 +1648,7 @@ begin
     //Mueve a W
     _MOVWF(FSR.offs);  //direcciona
     _MOVF(0, toW);  //deje en W
+    if modReturn then _RETURN;
   end;
   else
     //Almacenamiento no implementado
@@ -1959,7 +1966,7 @@ begin
   byte_bit(OpPtr, 7);
 end;
 //////////////// Tipo DWord /////////////
-procedure TGenCodPic.word_LoadToRT(const OpPtr: pointer);
+procedure TGenCodPic.word_LoadToRT(const OpPtr: pointer; modReturn: boolean);
 {Carga el valor de una expresión a los registros de trabajo.}
 var
   Op: ^TOperand;
@@ -1978,7 +1985,8 @@ begin
       _MOVWF(H.offs);
     end;
     //byte bajo
-    _MOVLW(Op^.LByte);
+    if modReturn then _RETLW(Op^.LByte)
+    else _MOVLW(Op^.LByte);
   end;
   stVariab: begin
     _BANKSEL(Op^.bank);
@@ -1986,8 +1994,10 @@ begin
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
     _MOVF(Op^.Loffs, toW);
+    if modReturn then _RETURN;
   end;
   stExpres: begin  //se asume que ya está en (H,w)
+    if modReturn then _RETURN;
   end;
   stVarRefVar: begin
     //Se tiene una variable puntero dereferenciada: x^
@@ -2002,6 +2012,7 @@ begin
     _MOVWF(H.offs);  //Guarda byte alto
     _DECF(FSR.offs,toF);
     _MOVF(0, toW);  //deje en W byte bajo
+    if modReturn then _RETURN;
   end;
   stVarRefExp: begin
     //Es una expresión derefernciada (x+a)^.
@@ -2015,6 +2026,7 @@ begin
     _MOVWF(H.offs);  //Guarda byte alto
     _DECF(FSR.offs,toF);
     _MOVF(0, toW);  //deje en W byte bajo
+    if modReturn then _RETURN;
   end;
   else
     //Almacenamiento no implementado
@@ -2344,7 +2356,7 @@ begin
   end;
 end;
 //////////////// Tipo DWord /////////////
-procedure TGenCodPic.dword_LoadToRT(const OpPtr: pointer);
+procedure TGenCodPic.dword_LoadToRT(const OpPtr: pointer; modReturn: boolean);
 {Carga el valor de una expresión a los registros de trabajo.}
 var
   Op: ^TOperand;
@@ -2380,7 +2392,8 @@ begin
       _MOVWF(H.offs);
     end;
     //byte 0
-    _MOVLW(Op^.LByte);
+    if modReturn then _RETLW(Op^.LByte)
+    else _MOVLW(Op^.LByte);
   end;
   stVariab: begin
     _BANKSEL(Op^.bank);
@@ -2399,8 +2412,10 @@ begin
     _MOVWF(H.offs);
 
     _MOVF(Op^.Loffs, toW);
+    if modReturn then _RETURN;
   end;
   stExpres: begin  //se asume que ya está en (U,E,H,w)
+    if modReturn then _RETURN;
   end;
   else
     //Almacenamiento no implementado
@@ -2639,20 +2654,20 @@ begin
   typNull := CreateSysType('null',t_boolean,-1);
   ///////////////// Tipo Bit ////////////////
   typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
-  typBit.OnLoadToRT  := @bit_LoadToRT;
+  typBit.OnLoadToRT  :=  @bit_LoadToRT;
   typBit.OnDefRegister:= @bit_DefineRegisters;
   typBit.OnSaveToStk  := @bit_SaveToStk;
 //  opr:=typBit.CreateUnaryPreOperator('@', 6, 'addr', @Oper_addr_bit);
 
   ///////////////// Tipo Booleano ////////////////
   typBool := CreateSysType('boolean',t_boolean,-1);   //de 1 bit
-  typBool.OnLoadToRT  := @bit_LoadToRT;  //es lo mismo
+  typBool.OnLoadToRT   := @bit_LoadToRT;  //es lo mismo
   typBool.OnDefRegister:= @bit_DefineRegisters;  //es lo mismo
   typBool.OnSaveToStk  := @bit_SaveToStk;  //es lo mismo
 
   //////////////// Tipo Byte /////////////
   typByte := CreateSysType('byte',t_uinteger,1);   //de 1 byte
-  typByte.OnLoadToRT  := @byte_LoadToRT;
+  typByte.OnLoadToRT   := @byte_LoadToRT;
   typByte.OnDefRegister:= @byte_DefineRegisters;
   typByte.OnSaveToStk  := @byte_SaveToStk;
   //typByte.OnReadFromStk :=
@@ -2681,7 +2696,7 @@ begin
   //////////////// Tipo Char /////////////
   //Tipo caracter
   typChar := CreateSysType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como número
-  typChar.OnLoadToRT  := @byte_LoadToRT;  //Es lo mismo
+  typChar.OnLoadToRT   := @byte_LoadToRT;  //Es lo mismo
   typChar.OnDefRegister:= @byte_DefineRegisters;  //Es lo mismo
   typChar.OnSaveToStk  := @byte_SaveToStk; //Es lo mismo
   typChar.OnGetItem    := @byte_GetItem;   //Es lo mismo
@@ -2691,7 +2706,7 @@ begin
   //////////////// Tipo Word /////////////
   //Tipo numérico de dos bytes
   typWord := CreateSysType('word',t_uinteger,2);   //de 2 bytes
-  typWord.OnLoadToRT  := @word_LoadToRT;
+  typWord.OnLoadToRT   := @word_LoadToRT;
   typWord.OnDefRegister:= @word_DefineRegisters;
   typWord.OnSaveToStk  := @word_SaveToStk;
   typWord.OnGetItem    := @word_GetItem;   //Es lo mismo
@@ -2704,9 +2719,9 @@ begin
   //////////////// Tipo DWord /////////////
   //Tipo numérico de cuatro bytes
   typDWord := CreateSysType('dword',t_uinteger,4);  //de 4 bytes
-  typDWord.OnLoadToRT := @dword_LoadToRT;
+  typDWord.OnLoadToRT   := @dword_LoadToRT;
   typDWord.OnDefRegister:= @dword_DefineRegisters;
-  typDWord.OnSaveToStk := @dword_SaveToStk;
+  typDWord.OnSaveToStk  := @dword_SaveToStk;
 
   typDWord.CreateField('Low',   @dword_Low);
   typDWord.CreateField('High',  @dword_High);

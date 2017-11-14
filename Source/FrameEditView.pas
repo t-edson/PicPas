@@ -151,7 +151,8 @@ type
     procedure Undo;
     procedure Redo;
     procedure SelectAll;
-    procedure NewFile;
+    procedure NewPasFile;
+    procedure NewLstFile;
     function LoadFile(fileName: string): boolean;
     function SelectOrLoad(fileName: string): boolean;
     function SelectOrLoad(const srcPos: TSrcPos; highlightLine: boolean): boolean;
@@ -1081,7 +1082,7 @@ begin
         if OnRequireSetCompletion<>nil then OnRequireSetCompletion(ed);
       end;
     end;
-  '.ASM': begin
+  '.ASM','.LST': begin
       //Es Ensamblador
       synFile := rutSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
       if not FileExists(synFile) then begin
@@ -1108,7 +1109,7 @@ begin
   end;
 end;
 //Administración de archivos
-procedure TfraEditView.NewFile;
+procedure TfraEditView.NewPasFile;
 {Abre una nueva ventana de edición.}
 var
   ed: TSynEditor;
@@ -1117,6 +1118,16 @@ begin
   ed.NomArc := tmpPath + DirectorySeparator + ed.Caption;
   ConfigureSyntax(ed);
   AgregArcReciente(ed.NomArc);
+end;
+procedure TfraEditView.NewLstFile;
+{Abre una nueva ventana de edición.}
+var
+  ed: TSynEditor;
+begin
+  ed := AddEdit('.lst');
+  ed.NomArc := tmpPath + DirectorySeparator + ed.Caption;
+  ConfigureSyntax(ed);
+//  AgregArcReciente(ed.NomArc);
 end;
 function TfraEditView.LoadFile(fileName: string): boolean;
 //Carga un archivo en el editor. Si encuentra algún error. Devuelve FALSE.
@@ -1354,7 +1365,7 @@ end;
 //Menú
 procedure TfraEditView.mnNewTabClick(Sender: TObject);
 begin
-  NewFile;
+  NewPasFile;
   SetFocus;
 end;
 procedure TfraEditView.UpDown1Click(Sender: TObject; Button: TUDBtnType);

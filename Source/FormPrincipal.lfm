@@ -1957,11 +1957,11 @@ object frmPrincipal: TfrmPrincipal
       ImageIndex = 22
       OnExecute = acToolConfigExecute
     end
-    object acToolInstCount: TAction
+    object acToolListRep: TAction
       Category = 'Tool'
-      Caption = '&Instructions Counter'
+      Caption = '&List Report'
       ImageIndex = 18
-      OnExecute = acToolInstCountExecute
+      OnExecute = acToolListRepExecute
     end
     object acArcNewProj: TAction
       Category = 'Arc'
@@ -3047,7 +3047,7 @@ object frmPrincipal: TfrmPrincipal
         }
       end
       object MenuItem44: TMenuItem
-        Action = acToolInstCount
+        Action = acToolListRep
         Bitmap.Data = {
           36040000424D3604000000000000360000002800000010000000100000000100
           2000000000000004000064000000640000000000000000000000FFFFFF00FFFF
