@@ -15,6 +15,9 @@ begin
   label5.Caption      := trans('To reference the output *.hex file, use $(hexFile)',
                                'Para referirse al archivo de salida, usar $(hexFile)', '',
                                '');
+  label6.Caption      := trans('To reference the source file, use ${mainFile}',
+                               'Para referirse al archivo fuente, usar $(mainFile)', '',
+                               '');
   chkWaitExit.Caption := trans('&Wait on exit'    , '&Esperar a terminar'   ,'Tukurinanta &Suyariy',
                               '');
   chkShowTBar.Caption := trans('&Show in Toolbar' , '&Mostrar en la barra de Herram.' ,'',
