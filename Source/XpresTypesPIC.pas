@@ -148,7 +148,7 @@ type
     assigned: boolean;  //indica si tiene una dirección física asignada
     used   : boolean;   //Indica si está usado.
     typ    : TPicRegType; //Tipo de registro
-    function AbsAdrr: word;  //Diección absoluta
+    function AbsAdrr: word;  //Dirección absoluta
     procedure Assign(srcReg: TPicRegisterBit);
   end;
   TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros

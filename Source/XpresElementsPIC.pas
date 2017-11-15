@@ -162,6 +162,8 @@ type  //TxpElement y clases previas
     procedure ClearCallers;  //limpia lista de llamantes
     function DuplicateIn(list: TxpElements): boolean; virtual;
   public  //Gestión de los elementos llamados
+    curNesting: Integer;   //Nivel de anidamiento de llamadas
+    maxNesting: Integer;   //Máximo nivel de anidamiento
     //Lista de funciones que son llamadas directamente (Se llena en el enlazado)
     lstCalled : TxpListCalled;
     //Lista de funciones que son llamadas dirceta o indirectamente (Se llena en el enlazado)
@@ -172,6 +174,7 @@ type  //TxpElement y clases previas
     procedure AddCalled(elem: TxpElement);
     procedure AddCalledAll(elem: TxpElement);
     procedure AddCalledAll_FromList(lstCalled0: TxpListCalled);
+    procedure UpdateCalledAll;
   public
     name : string;        //Nombre de la variable, constante, unidad, tipo, ...
     Parent: TxpElement;   //Referencia al padre
@@ -192,6 +195,7 @@ type  //TxpElement y clases previas
     srcEnd: TSrcPos;
     function posXYin(const posXY: TPoint): boolean;
   public  //Inicialización
+    procedure Clear; virtual;
     constructor Create; virtual;
     destructor Destroy; override;
   end;
@@ -223,6 +227,7 @@ type //Clases de elementos
     function CurrBlock: TxpSynBlock;
     function CurrBlockID: TxpSynBlockId;
   public //Inicialización
+    procedure Clear; override;
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -681,6 +686,9 @@ procedure TxpElement.AddCalledAll_FromList(lstCalled0: TxpListCalled);
 var
   elem: TxpElement;
 begin
+  inc(curNesting);    //incrementa el anidamiento
+  if curNesting>maxNesting then maxNesting := curNesting;
+
   if lstCalled0.Count = 0 then exit;
   for elem in lstCalled0 do begin
     AddCalledAll(elem);  //Agrega elemento
@@ -688,6 +696,17 @@ begin
       AddCalledAll_FromList(elem.lstCalled);
     end;
   end;
+  dec(curNesting);    //incrementa el anidamiento
+end;
+procedure TxpElement.UpdateCalledAll;
+{Actualiza la lista "lstCalledAll", usando AddCalledAll_FromList().}
+begin
+  lstCalledAll.Clear;  //Por si acaso
+  curNesting := 0;     //Inicia
+  maxNesting := 0;     //Inicia
+  AddCalledAll_FromList(lstCalled);
+  {Falta actualizar maxNesting, con las llamadas a funciones del sistema y
+   llamadas de interrupciones.}
 end;
 
 function TxpElement.Path: string;
@@ -701,21 +720,6 @@ begin
     Result := '\' + ele.name + Result;
     ele := ele.Parent;
   end;
-end;
-constructor TxpElement.Create;
-begin
-  idClass := eltNone;
-  lstCallers:= TxpListCallers.Create(true);
-  lstCalled := TxpListCalled.Create(false);  //solo guarda referencias
-  lstCalledAll:= TxpListCalled.Create(false);
-end;
-destructor TxpElement.Destroy;
-begin
-  lstCalledAll.Destroy;
-  lstCalled.Destroy;
-  lstCallers.Destroy;
-  elements.Free;  //por si contenía una lista
-  inherited Destroy;
 end;
 function TxpElement.posXYin(const posXY: TPoint): boolean;
 {Indica si la coordeda del cursor, se encuentra dentro de las coordenadas del elemento.}
@@ -757,6 +761,31 @@ begin
     //Esta fuera del rango
     exit(false);
   end;
+end;
+//Inicialización
+procedure TxpElement.Clear;
+{Inicializa los campos del objeto. Este método es usado, solamente, para el Nodo Main,
+porque los otors nodos son eliminados de la memoria al iniciar el árbol}
+begin
+  elements.Clear;
+  lstCallers.Clear;
+  lstCalled.Clear;
+  lstCalledAll.Clear;
+end;
+constructor TxpElement.Create;
+begin
+  idClass := eltNone;
+  lstCallers:= TxpListCallers.Create(true);
+  lstCalled := TxpListCalled.Create(false);  //solo guarda referencias
+  lstCalledAll:= TxpListCalled.Create(false);
+end;
+destructor TxpElement.Destroy;
+begin
+  lstCalledAll.Destroy;
+  lstCalled.Destroy;
+  lstCallers.Destroy;
+  elements.Free;  //por si contenía una lista
+  inherited Destroy;
 end;
 { TxpEleCodeCont }
 function TxpEleCodeCont.BodyNode: TxpEleBody;
@@ -862,6 +891,13 @@ function TxpEleCodeCont.CurrBlockID: TxpSynBlockId;
 begin
   if blocks.Count=0 then exit(sbiNULL);
   Result := CurrBlock.id;
+end;
+//Inicialización
+procedure TxpEleCodeCont.Clear;
+begin
+  inherited Clear;
+  blocks.Clear;
+  lstExitCalls.Clear;
 end;
 constructor TxpEleCodeCont.Create;
 begin
@@ -1477,6 +1513,8 @@ end;
 procedure TXpTreeElements.Clear;
 begin
   main.elements.Clear;  //esto debe hacer un borrado recursivo
+  main.Clear;
+
   curNode := main;      //retorna al nodo principal
   //ELimina lista internas
   AllVars.Clear;

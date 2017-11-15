@@ -2084,11 +2084,14 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
     end;
     {Actualizar la lista fun.lstCalledAll con la totalidad de llamadas a todas
      las funciones, sean de forma directa o indirectamente.}
-     for fun in TreeElems.AllFuncs do begin
-       fun.lstCalledAll.Clear;  //Por si acaso
-       //Agrega todas las llamadas
-       fun.AddCalledAll_FromList(fun.lstCalled);
-     end;
+    for fun in TreeElems.AllFuncs do begin
+      fun.UpdateCalledAll;
+    end;
+    //Actualiza el programa principal
+    TreeElems.main.UpdateCalledAll;
+    if TreeElems.main.maxNesting>8 then begin
+      GenError('Not enough stack.');
+    end;
   end;
   procedure AssignRAMtoVar(xvar: TxpEleVar; shared: boolean = false);
   var
@@ -2149,6 +2152,7 @@ begin
   //Asigna memoria, primero a las variables locales (y parámetros) de las funciones
   ///////////////////////////////////////////////////////////////////////////////
   UpdateFunLstCalled;   //Actualiza lista "lstCalled" de las funciones usadas
+  if HayError then exit;
   //Explora primero a las funciones terminales
   for fun in TreeElems.AllFuncs do if fun.nCalled > 0 then begin
     if not fun.IsTerminal2 then continue;
@@ -2482,20 +2486,21 @@ var
   usedRAM, totRAM: Word;
 begin
   //Calcula RAM
-  ramUse := 0;  //calor por defecto
+  ramUse := 0;  //valor por defecto
   totRAM := pic.TotalMemRAM;
   if totRAM = 0 then exit;  //protección
   usedRAM := pic.UsedMemRAM;
   ramUse := usedRAM/ totRAM;
   //Calcula ROM
-  romUse:= 0;  //calor por defecto
+  romUse:= 0;  //valor por defecto
   totROM := pic.MaxFlash;
   if totROM = 0 then exit; //protección
   usedROM := pic.UsedMemFlash;
   romUse := usedROM/totROM;
   //Calcula STACK
-  stkUse := 0;  //calor por defecto
-  { TODO : Por implementar }
+  TreeElems.main.UpdateCalledAll;   //Debe haberse llenado TreeElems.main.lstCalled
+  //No considera el anidamiento por interrupciones
+  stkUse := TreeElems.main.maxNesting/8;
 end;
 procedure TCompiler.GenerateListReport(lins: TStrings);
 {Genera un reporte detallado de la compialción}
@@ -2626,6 +2631,22 @@ begin
 
     end;
   end;
+  //Detalles del programa principal
+
+  lins.Add('------------------------------------');
+  lins.Add('----- Main Program');
+  lins.Add('------------------------------------');
+  lins.Add('  Called Procedures:');
+  if TreeElems.main.lstCalled.Count = 0 then begin
+    lins.Add('    <none>');
+  end else begin
+    for called in TreeElems.main.lstCalled do begin
+      lins.Add('    - ' + called.name);
+    end;
+  end;
+  lins.Add('');
+  //Muestra el máximo nivel de anidamiento.
+  lins.Add('Max. Nesting = ' + IntToSTr(TreeElems.main.maxNesting));
 
 end;
 constructor TCompiler.Create;

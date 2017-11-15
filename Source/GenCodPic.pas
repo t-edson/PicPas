@@ -147,16 +147,15 @@ type
     procedure ChangeResultBitToBool;
     procedure ChangeResultCharToByte;
     function ChangePointerToExpres(var ope: TOperand): boolean;
-  protected  //Instrucciones
-    procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin
-      );
+  protected  //Instrucciones que no manejan el cambio de banco
+    procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin);
     procedure CodAsmK(const inst: TPIC16Inst; const k: byte);
+    function  _BANKSEL(targetBank: byte): byte;
+    procedure _BANKRESET;
     procedure _ADDLW(const k: word);
     procedure _ADDWF(const f: byte; d: TPIC16destin);
     procedure _ANDLW(const k: word);
     procedure _ANDWF(const f: byte; d: TPIC16destin);
-    function  _BANKSEL(targetBank: byte): byte;
-    procedure _BANKRESET;
     procedure _BCF(const f, b: byte);
     procedure _BSF(const f, b: byte);
     procedure _BTFSC(const f, b: byte);
@@ -192,6 +191,44 @@ type
     procedure _XORWF(const f: byte; d: TPIC16destin);
     function _PC: word;
     function _CLOCK: integer;
+//  protected  //Instrucciones que manejan el cambio de banco
+//    procedure zADDLW(const k: word);
+//    procedure zADDWF(const f: byte; d: TPIC16destin);
+//    procedure zANDLW(const k: word);
+//    procedure zANDWF(const f: byte; d: TPIC16destin);
+//    procedure zBCF(const f, b: byte);
+//    procedure zBSF(const f, b: byte);
+//    procedure zBTFSC(const f, b: byte);
+//    procedure zBTFSS(const f, b: byte);
+//    procedure zCALL(const a: word);
+//    procedure zCLRF(const f: byte);
+//    procedure zCLRW;
+//    procedure zCLRWDT;
+//    procedure zCOMF(const f: byte; d: TPIC16destin);
+//    procedure zDECF(const f: byte; d: TPIC16destin);
+//    procedure zDECFSZ(const f: byte; d: TPIC16destin);
+//    procedure zGOTO(const a: word);
+//    procedure zGOTO_PEND(out igot: integer);
+//    procedure zLABEL(igot: integer);
+//    procedure zINCF(const f: byte; d: TPIC16destin);
+//    procedure zINCFSZ(const f: byte; d: TPIC16destin);
+//    procedure zIORLW(const k: word);
+//    procedure zIORWF(const f: byte; d: TPIC16destin);
+//    procedure zMOVF(const f: byte; d: TPIC16destin);
+//    procedure zMOVLW(const k: word);
+//    procedure zMOVWF(const f: byte);
+//    procedure zNOP;
+//    procedure zRETFIE;
+//    procedure zRETLW(const k: word);
+//    procedure zRETURN;
+//    procedure zRLF(const f: byte; d: TPIC16destin);
+//    procedure zRRF(const f: byte; d: TPIC16destin);
+//    procedure zSLEEP;
+//    procedure zSUBLW(const k: word);
+//    procedure zSUBWF(const f: byte; d: TPIC16destin);
+//    procedure zSWAPF(const f: byte; d: TPIC16destin);
+//    procedure zXORLW(const k: word);
+//    procedure zXORWF(const f: byte; d: TPIC16destin);
   public  //Opciones de compilación
     incDetComm  : boolean;   //Incluir Comentarios detallados.
     SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
@@ -1220,14 +1257,6 @@ begin
   pic.codAsmFB(inst, f, b);
 end;}
 //rutinas que facilitan la codifición de instrucciones
-procedure TGenCodPic._ADDWF(const f: byte; d: TPIC16destin); inline;
-begin
-  pic.codAsmFD(ADDWF, f,d);
-end;
-procedure TGenCodPic._ANDWF(const f: byte; d: TPIC16destin); inline;
-begin
-  pic.codAsmFD(ANDWF, f,d);
-end;
 procedure TGenCodPic._BANKRESET;
 {Reinicia el banco al banco 0, independientemente de donde se pueda encontrar antes.
 Siempre genera dos instrucciones. Se usa cuando no se puede predecir exactamente, en que
@@ -1326,6 +1355,14 @@ begin
     BankChanged := true;
     exit(nInst);
   end;
+end;
+procedure TGenCodPic._ADDWF(const f: byte; d: TPIC16destin); inline;
+begin
+  pic.codAsmFD(ADDWF, f,d);
+end;
+procedure TGenCodPic._ANDWF(const f: byte; d: TPIC16destin); inline;
+begin
+  pic.codAsmFD(ANDWF, f,d);
 end;
 procedure TGenCodPic._CLRF(const f: byte); inline;
 begin
