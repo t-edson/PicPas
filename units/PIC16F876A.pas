@@ -6,7 +6,7 @@
 *  Ultima Actualizacion: 23-JUN-2017
 }
  
-unit PIC16F877A;
+unit PIC16F876A;
  
 interface
 var
