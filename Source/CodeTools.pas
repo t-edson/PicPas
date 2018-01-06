@@ -316,7 +316,7 @@ begin
   if ed = nil then exit;
 //  ident := curEnv.tok_2^.txt;
   //LLena
-  opEve.Clear;  //limpia primero
+  opEve.ClearItems;  //limpia primero
   //Asegurarse que "synTree" está actualizado.
   cxp.Compile(ed.NomArc, false);  //Solo primera pasada
   if cxp.HayError then begin
