@@ -1,4 +1,4 @@
-{Description of the unit.}
+{Unit for test. Must compile OK.}
 unit unit_dummy;
 interface
   

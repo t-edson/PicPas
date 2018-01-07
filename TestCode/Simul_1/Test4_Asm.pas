@@ -12,7 +12,7 @@ var
 var
   abyte: byte absolute $20;
 const
-	CBYTE = 3; 
+	CBYTE = 3;
 
   procedure bien;
   begin

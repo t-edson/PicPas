@@ -387,20 +387,20 @@ begin
   //coConst
   if not a = $00 then good else bad end;
 
-//  //////////////////////////////////////////////////////////
-//	///////////////////  Desplaz. Derecha ////////////////////
-//  //////////////////////////////////////////////////////////
-//  //coConst_Const
-//  if 1>>0 = 1 then good else bad end;  
-//  if 2>>2 = 0 then good else bad end;  
-//  //coVariab_Const
-//  a := $ff;
-//  if a>>0 = $ff then good else bad end;
-//  if a>>1 = $7f then good else bad end;
-//  if a>>2 = $3f then good else bad end;
-//  if a>>3 = $1f then good else bad end;
-//  if a>>7 = $1 then good else bad end;
-//  if a>>8 = $0 then good else bad end;
+  //////////////////////////////////////////////////////////
+	///////////////////  Desplaz. Derecha ////////////////////
+  //////////////////////////////////////////////////////////
+  //coConst_Const
+  if 1>>0 = 1 then good else bad end;  
+  if 2>>2 = 0 then good else bad end;  
+  //coVariab_Const
+  a := $ff;
+  if a>>0 = $ff then good else bad end;
+  if a>>1 = $7f then good else bad end;
+  if a>>2 = $3f then good else bad end;
+  if a>>3 = $1f then good else bad end;
+  if a>>7 = $1 then good else bad end;
+  if a>>8 = $0 then good else bad end;
 //  //coVariab_Variab
 //  a := $ff; 
 //  b := 0;
