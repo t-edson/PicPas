@@ -137,6 +137,8 @@
 	  
          "{$PROCESSOR PIC12F629}"
          "{$PROCESSOR PIC12F675}"
+         "{$PROCESSOR PIC12F629A}"
+         "{$PROCESSOR PIC12F675A}"
 
          "{$PROCESSOR PIC16C63}"
          "{$PROCESSOR PIC16CR63}"
