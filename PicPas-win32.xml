@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
-  <language Val="es - Español"/>
+  <language Val="en - English"/>
   <StateStatusbar Val="1"/>
   <chkLoadLast Val="True"/>
   <SplitterCol Val="536870912"/>
@@ -9,8 +9,8 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="235"/>
-  <ViewPanAssem Val="True"/>
+  <SynTreeWidth Val="225"/>
+  <ViewPanAssem Val="False"/>
   <viewMode Val="2"/>
   <MessPanBack Val="-2147483643"/>
   <MessPanText Val="536870912"/>
@@ -41,11 +41,11 @@
     <VerMarPle Val="True"/>
     <cFonPan Val="16777215"/>
     <cTxtPan Val="0"/>
-    <recient Val="C:\Users\Usuario\Desktop\Compativa Compiladores II\Digital_Clock_Test_PIC16F877A_PICPAS.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.1\temp\NewFile1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.1\temp\NewFile2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.2\TestCode\Simul_1\Test4_Asm.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.2\TestCode\Simul_1\Test3_Structs2.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.3\TestCode\Simul_3\Word2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.3\TestCode\Simul_3\Word1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.3\TestCode\Simul_3\types.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.3\TestCode\Simul_3\Test1_SystemFunc.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.3\TestCode\Simul_3\Test1_Byte.pas
 "/>
   </Edit>
   <IncHeadMpu Val="True"/>
@@ -62,6 +62,7 @@ D:\Proyectos_Software\Lazarus\PicPas-0.8.2\TestCode\Simul_1\Test3_Structs2.pas
   <OptBnkBefPro Val="True"/>
   <OptBnkAftPro Val="True"/>
   <ReuProcVar Val="True"/>
+  <OptRetProc Val="True"/>
   <ExternTool>
     <extern_tools Val="Editor	                        	notepad	$(MainFile)	F	V					
 "/>

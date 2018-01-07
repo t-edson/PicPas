@@ -1,3 +1,79 @@
+PicPas 0.8.3
+============
+* Se crean unidades nuevas (y se corrigen algunas) en la carpeta /units. Colaboración de 
+https://github.com/alexpseletr.
+* Se agrega soporte a los PIC12F629A y PIC12F675A. Colaboración de 
+https://github.com/alexpseletr.
+* Se corrige el error que se producía cuando se presionaba Ctrl+Tab y el editor de ensamblador
+estaba oculto.
+* Se incluye la directiva {$PROCESSOR <pic_model>} al inicio de las unidades qeu definen a los
+modelos de PIC.
+
+PicPas 0.8.2
+============
+Se incluye el parámetro "modReturn" en el evento TxpEleType.OnLoadToRT, para permitir codificar
+adicionalmente la instrucción RETURN y poder optimizar el caso de RETURN y constantes.
+Se reordena y mejora TGenCod.fun_Exit(), para considerar el caso de las interrupciones.
+Se crean las clases TxpSynBlock y TxpSynBlocks (en la unidad XpresElementsPIC), como 
+contenedores para controlar los bloquqes de sintaxis que se van abriendo en el código fuente.
+Se crea la lista TxpEleBody.lstExitCalls para almacenar las llamadas a exit() desde dentro de 
+los elementos TxpEleBody().
+Se crea la lista TxpEleBody.blocks para almacenar los bloques de sintaxis, y se crean también 
+diversos métodos en TxpEleBody, para la administración de bloques.
+Se elimina el campo TxpEleFun.BankChanged y se crea el campo TxpEleFun.finBnk
+Se elimna la acción "Instrucción Counter" desde el menú principal y se crea la acción "List 
+Report", con un reporte detallado de la compialción.
+Se crea la lista TxpElement.lstCalledAll.
+Se crea el enumerado eltCodeCont y la clase TxpEleCodeCont, como ancestro de TxpEleMain, 
+TxpElefunc y TxpEleUni, para unificar comportamientos.
+Se modifica el código que antes hacía asceso a TxpEleBody, para que ahora se aplique a 
+TxpEleCodeCont.
+Se incluye, en el patrón de pruebas de banco RAM, la verificación del banco  al final de 
+llamadas a procedimientos.
+Se crean el método TxpElement.UpdateCalledAll y los campos curNesting y maxNesting.
+Se habilita la opción de mostrar el nivel de anidamiento usado (USo de pila), en la IDE.
+
+PENDIENTES
+Terminar de implementar los arreglos.
+Resolver el bug que genera error en:
+var
+  a,b, x: byte;
+begin
+  a := 1;  b := 2;
+  x := byte(a*b) + byte(a*b);
+end.
+
+Implementar el paso de parámetros usando punteros y por referencia.
+Mejorar el cálculo del uso de la pila de llamadas, ya que no considera las funciones del sistema.
+Agregar patrones de prueba para las optimizaciones.
+Implementar la reutilización de variables usadas como parámetros, convirtiendo a REGISTER 
+el último parámetro.
+Definir que todos los bytes de una variable se ubiquen en el mismo banco.
+Analizar si no conviene definir TxpEleVar.adrByte0 como de tipo bit y así simplificar varios 
+métodos por el tema de la comparación. O mejor implementar que sea el tipo quien defina la 
+creación de registros, en la variable, como debe ser para implementar tipos personalizados. 
+Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
+se puede reemplazar por SetROUResultExpres_bit().
+Revisar también la posible optimización para variables no usadas:
+var
+  a: byte;  
+  b: byte absolute a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
+
+Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
+se hace con las funciones en TCompiler.CompileLinkProgram().
+Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema, como delay_ms().
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+
 PicPas 0.8.1
 ============
 Se agregan más funciones al autocompletado.
@@ -41,39 +117,6 @@ Se implementan algunas operaciones con punteros a word.
 Se activa la optimización de uso de variables, para parámetros y var. locales de 
 procedimeintos.
 
-
-PENDIENTES
-Definir que todos los bytes de una variable se ubiquen en el mismo banco.
-Analizar si no conviene definir TxpEleVar.adrByte0 como de tipo bit y así simplificar varios 
-métodos por el tema de la comparación. O mejor implementar que sea el tipo quien defina la 
-creación de registros, en la variable, como debe ser para implementar tipos personalizados. 
-Implementar punteros para otros tipos, además de byte.
-Terminar de implementar los arreglos.
-Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
-se puede reemplazar por SetROUResultExpres_bit().
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absolute a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
-
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
-Optimizar el caso para cuando la instrucción exit(), se encuentre al final del código
-(tal vez se podría detectar siempre la última instrucción compilada).
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema, como delay_ms().
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Implementar la reutilización de variables usadas como parámetros.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
-Activar las funciones de búsqueda y reemplazo de texto.
 
 
 PicPas 0.8.0
