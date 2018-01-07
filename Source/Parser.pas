@@ -2299,6 +2299,7 @@ var
 begin
   mode := modPicPas;   //Por defecto en sintaxis nueva
   mainFile := NombArc;
+  hexfile:= StringReplace(ExtractFileName(NombArc),'.pas','.hex', [rfReplaceAll]);
   //se pone en un "try" para capturar errores y para tener un punto salida de salida
   //único
   if ejecProg then begin
@@ -2651,7 +2652,7 @@ begin
 end;
 constructor TCompiler.Create;
 begin
-  hexFile := 'output.hex';
+ // hexFile := 'output.hex';
   inherited Create;
   cIn.OnNewLine:=@cInNewLine;
   mode := modPicPas;   //Por defecto en sintaxis nueva

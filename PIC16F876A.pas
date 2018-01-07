@@ -6,7 +6,7 @@
 *  Ultima Actualizacion: 23-JUN-2017
 }
  
-unit PIC16F877A;
+unit PIC16F876A;
  
 interface
 var
@@ -50,19 +50,6 @@ var
   PORTC_RC2         : bit  absolute PORTC.2;
   PORTC_RC1         : bit  absolute PORTC.1;
   PORTC_RC0         : bit  absolute PORTC.0;
-  PORTD             : byte absolute $0008;
-  PORTD_RD7         : bit  absolute PORTD.7;
-  PORTD_RD6         : bit  absolute PORTD.6;
-  PORTD_RD5         : bit  absolute PORTD.5;
-  PORTD_RD4         : bit  absolute PORTD.4;
-  PORTD_RD3         : bit  absolute PORTD.3;
-  PORTD_RD2         : bit  absolute PORTD.2;
-  PORTD_RD1         : bit  absolute PORTD.1;
-  PORTD_RD0         : bit  absolute PORTD.0;
-  PORTE             : byte absolute $0009;
-  PORTE_RE2         : bit  absolute PORTE.2;
-  PORTE_RE1         : bit  absolute PORTE.1;
-  PORTE_RE0         : bit  absolute PORTE.0;
   PCLATH            : byte absolute $000A;
   INTCON            : byte absolute $000B;
   INTCON_GIE        : bit  absolute INTCON.7;
@@ -167,12 +154,6 @@ var
   TRISA             : byte absolute $0085;
   TRISB             : byte absolute $0086;
   TRISC             : byte absolute $0087;
-  TRISD             : byte absolute $0088;
-  TRISE             : byte absolute $0089;
-  TRISE_IBF         : bit  absolute TRISE.7;
-  TRISE_OBF         : bit  absolute TRISE.6;
-  TRISE_IBOV        : bit  absolute TRISE.5;
-  TRISE_PSPMODE     : bit  absolute TRISE.4;
   PIE1              : byte absolute $008C;
   PIE1_PSPIE        : bit  absolute PIE1.7;
   PIE1_ADIE         : bit  absolute PIE1.6;
@@ -331,6 +312,6 @@ begin
    EECON1_WREN:= 0;
 end;
 
-end;
+
 
 end.

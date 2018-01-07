@@ -86,5 +86,28 @@ var
   {$define _HS_OSC      =     0x3FFE}
   {$define _RC_OSC      =     0x3FFF}
  
+
 implementation
+
+
+procedure WriteEEPROM(direccion , valor: byte);
+begin
+  EEADR       := direccion;
+  EEDATA      := valor;
+  EECON1_WREN := 1;
+  EECON2      := $55;
+  EECON2      := $AA;
+  EECON1_WR   := 1;
+  EECON1_WREN := 0;
+  repeat until (EECON1_WR = 0);
+end;
+ 
+procedure EEPROM_Read(addr:byte):byte;
+begin
+   EEADR:=addr;
+   EECON1_RD:=1;
+   exit(EEDATA);   
+end; 
+
+
 end.
