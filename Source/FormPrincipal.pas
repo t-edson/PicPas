@@ -538,7 +538,7 @@ begin
         fraEditView1.SelectNextEditor;
       end else begin
         //Debe haber solo una ventana
-        edAsm.SetFocus;
+        if edAsm.Visible then edAsm.SetFocus;
       end;
     end else if edAsm.Focused then begin
       fraEditView1.SetFocus;
