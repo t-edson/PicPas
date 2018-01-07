@@ -296,7 +296,7 @@ begin
   Result := inherited SaveAsDialog(SaveDialog1);
   if Result then exit;
   //Se ha cambiado el nombre del archivo. Actualiza.
-  Caption := ExtractFileName(NomArc);
+  Caption := ExtractFileName(FileName);
 end;
 function TSynEditor.SaveQuery(SaveDialog1: TSaveDialog): boolean;
 {Versión de SaveQuery(), que verifica si el editor tiene nombre.}
@@ -308,14 +308,14 @@ var
 begin
   Result := false;
   if SynEdit.Modified then begin
-    resp := MessageDlg('', Format(MSG_MODIFSAV, [ExtractFileName(NomArc)]),
+    resp := MessageDlg('', Format(MSG_MODIFSAV, [ExtractFileName(FileName)]),
                        mtConfirmation, [mbYes, mbNo, mbCancel],0);
     if resp = mrCancel then begin
       Result := true;   //Sale con "true"
       Exit;
     end;
     if resp = mrYes then begin  //guardar
-      if NomArc='' then begin
+      if FileName='' then begin
         //Es un archivo nuevo
         SaveAsDialog(SaveDialog1);
       end else begin
@@ -898,7 +898,7 @@ begin
   end;
 
   ed.Caption := NewName(ext);   //Pone nombre diferente
-  ed.NomArc := '';  //Pone sin nombre para saber que no se ha guardado
+  ed.FileName := '';  //Pone sin nombre para saber que no se ha guardado
   if OnRequireSynEditConfig<>nil then  //Configura
     OnRequireSynEditConfig(ed.SynEdit);
   editors.Add(ed);   //agrega a la lista
@@ -965,7 +965,7 @@ var
 begin
   for i:=0 to editors.Count-1 do begin
     ed := editors[i];
-    if Upcase(ed.NomArc) = UpCase(filname) then exit(i);
+    if Upcase(ed.FileName) = UpCase(filname) then exit(i);
   end;
   exit(-1);
 end;
@@ -1067,7 +1067,7 @@ var
   synFile: String;
   ext: string;
 begin
-  ext := ExtractFileExt(ed.NomArc);
+  ext := ExtractFileExt(ed.FileName);
   case Upcase(ext) of
   '.PAS': begin
       //Es Pascal
@@ -1115,9 +1115,9 @@ var
   ed: TSynEditor;
 begin
   ed := AddEdit('.pas');
-  ed.NomArc := tmpPath + DirectorySeparator + ed.Caption;
+  ed.FileName := tmpPath + DirectorySeparator + ed.Caption;
   ConfigureSyntax(ed);
-  AgregArcReciente(ed.NomArc);
+  AgregArcReciente(ed.FileName);
 end;
 procedure TfraEditView.NewLstFile;
 {Abre una nueva ventana de edición.}
@@ -1125,7 +1125,7 @@ var
   ed: TSynEditor;
 begin
   ed := AddEdit('.lst');
-  ed.NomArc := tmpPath + DirectorySeparator + ed.Caption;
+  ed.FileName := tmpPath + DirectorySeparator + ed.Caption;
   ConfigureSyntax(ed);
 //  AgregArcReciente(ed.NomArc);
 end;
@@ -1199,14 +1199,14 @@ procedure TfraEditView.SaveFile;
 //Guarda el editor actual
 begin
   if ActiveEditor=nil then exit;
-  if ActiveEditor.NomArc='' then begin
+  if ActiveEditor.FileName='' then begin
     //Es un archivo nuevo
     ActiveEditor.SaveAsDialog(SaveDialog1);
   end else begin
     ActiveEditor.SaveFile;
   end;
   //Actualiza por si acaso, era un archivo nuevo
-  AgregArcReciente(ActiveEditor.NomArc);
+  AgregArcReciente(ActiveEditor.FileName);
 end;
 procedure TfraEditView.SaveAll;
 {Guarda todas las ventanas abiertas en el editor.}
@@ -1216,9 +1216,9 @@ begin
   for i:=0 to editors.Count-1 do begin
     if editors[i].Modified then begin
       //Actualiza por si acaso, era un archivo nuevo
-      AgregArcReciente(editors[i].NomArc);
+      AgregArcReciente(editors[i].FileName);
     end;
-    if editors[i].NomArc<>'' then begin
+    if editors[i].FileName<>'' then begin
       //No deberái pasar que el archivo esté sin nombre.
       editors[i].SaveFile;
     end;
