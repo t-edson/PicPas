@@ -4,8 +4,8 @@ unit FrameMessagesWin;
 interface
 uses
   Classes, SysUtils, FileUtil, LazFileUtils, Forms, Controls, Grids, Graphics,
-  ExtCtrls, StdCtrls, Parser, Globales, UtilsGrilla, BasicGrilla, MisUtils,
-  XpresBas;
+  ExtCtrls, StdCtrls, Menus, Clipbrd, Parser, Globales, UtilsGrilla,
+  BasicGrilla, MisUtils, XpresBas;
 type
 
   { TUtilGrillaFil2 }
@@ -30,16 +30,21 @@ type
     lblROM: TLabel;
     lblSTACK: TLabel;
     lblErrors: TLabel;
+    mnCopyRow: TMenuItem;
+    mnClearAll: TMenuItem;
     panStatis: TPanel;
     Panel2: TPanel;
     grilla: TStringGrid;
     PanGrilla: TPanel;
+    PopupMenu1: TPopupMenu;
     Splitter1: TSplitter;
     Splitter2: TSplitter;
     procedure chkErrorsChange(Sender: TObject);
     procedure chkInformChange(Sender: TObject);
     procedure chkWarnsChange(Sender: TObject);
     procedure grillaDblClick(Sender: TObject);
+    procedure mnClearAllClick(Sender: TObject);
+    procedure mnCopyRowClick(Sender: TObject);
     procedure PanGrillaResize(Sender: TObject);
     procedure panStatisDblClick(Sender: TObject);
     procedure panStatisPaint(Sender: TObject);
@@ -251,6 +256,17 @@ begin
   if arc<>'' then begin
     if OnDblClickMessage<>nil then OnDblClickMessage(srcPos);
   end;
+end;
+procedure TfraMessagesWin.mnCopyRowClick(Sender: TObject);
+{Copia la fila seleccionada al portapapeles.}
+begin
+  if grilla.Row = -1 then exit;
+  Clipboard.AsText := grilla.Cells[2, grilla.Row];
+end;
+procedure TfraMessagesWin.mnClearAllClick(Sender: TObject);
+{Limpia la lista de mensajes.}
+begin
+  grilla.RowCount := 1;   //Limpia Grilla
 end;
 procedure TfraMessagesWin.PanGrillaResize(Sender: TObject);
 begin

@@ -153,6 +153,7 @@ object fraMessagesWin: TfraMessagesWin
       Width = 420
       Anchors = [akTop, akLeft, akRight, akBottom]
       Options = [goFixedVertLine, goFixedHorzLine, goRangeSelect, goSmoothScroll]
+      PopupMenu = PopupMenu1
       ScrollBars = ssAutoVertical
       TabOrder = 0
       OnDblClick = grillaDblClick
@@ -160,7 +161,7 @@ object fraMessagesWin: TfraMessagesWin
   end
   object ImgMessages: TImageList
     left = 192
-    top = 56
+    top = 48
     Bitmap = {
       4C69030000001000000010000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -260,5 +261,17 @@ object fraMessagesWin: TfraMessagesWin
       EF100000000000000000000000000000000000000000000000002727E7201F1F
       DF18000000000000000000000000
     }
+  end
+  object PopupMenu1: TPopupMenu
+    left = 280
+    top = 48
+    object mnCopyRow: TMenuItem
+      Caption = '&Copy Row'
+      OnClick = mnCopyRowClick
+    end
+    object mnClearAll: TMenuItem
+      Caption = 'Clear &All'
+      OnClick = mnClearAllClick
+    end
   end
 end
