@@ -1,4 +1,4 @@
-
+{$PROCESSOR PIC12F675A}
 unit PIC12F675A;
  
 interface

@@ -5,7 +5,7 @@
 *  (C) AguHDz 04-JUN-2017
 *  Ultima Actualizacion: 23-JUN-2017
 }
- 
+{$PROCESSOR PIC16F873A}
 unit PIC16F873A;
  
 interface
@@ -292,7 +292,7 @@ begin
    EEADR:=addr;
    EECON1_EEPGD:=0;
    EECON1_RD:=1;
-   Result:=EEDATA;
+   exit(EEDATA);
 end;
 
 procedure EEPROM_Write(addr,data:byte);
@@ -306,12 +306,8 @@ begin
    EECON2:=$AA;
    EECON1_WR:= 1;
    INTCON_GIE := 1;
-   While EECON1_WR do
-      begin
-      end;
+   While EECON1_WR =1 do end;
    EECON1_WREN:= 0;
 end;
-
-
 
 end.

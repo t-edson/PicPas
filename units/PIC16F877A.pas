@@ -5,7 +5,7 @@
 *  (C) AguHDz 04-JUN-2017
 *  Ultima Actualizacion: 23-JUN-2017
 }
- 
+{$PROCESSOR PIC16F877A}
 unit PIC16F877A;
  
 interface
@@ -325,12 +325,8 @@ begin
    EECON2:=$AA;
    EECON1_WR:= 1;
    INTCON_GIE := 1;
-   While (EECON1_WR =1)do
-      begin
-      end;
+   While EECON1_WR =1 do end;
    EECON1_WREN:= 0;
-end;
-
 end;
 
 end.

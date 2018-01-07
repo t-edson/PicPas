@@ -5,10 +5,8 @@
 *  (C) AguHDz 05-JUN-2017
 *  Ultima Actualizacion: 23-JUN-2017
 }
+{$PROCESSOR PIC16F84A}
 unit PIC16F84A;
-{$IFDEF aaa}
-{$MSGBOX $FREQUENCY}
-{$ENDIF}
 interface
 var
 // DEFINICION DE BYTES Y BITS DE ZONA MEMORIA SFR.
@@ -89,6 +87,12 @@ var
 
 implementation
 
+procedure EEPROM_Read(addr:byte):byte;
+begin
+   EEADR:=addr;
+   EECON1_RD:=1;
+   exit(EEDATA);   
+end; 
 
 procedure WriteEEPROM(direccion , valor: byte);
 begin
@@ -102,12 +106,4 @@ begin
   repeat until (EECON1_WR = 0);
 end;
  
-procedure EEPROM_Read(addr:byte):byte;
-begin
-   EEADR:=addr;
-   EECON1_RD:=1;
-   exit(EEDATA);   
-end; 
-
-
 end.
