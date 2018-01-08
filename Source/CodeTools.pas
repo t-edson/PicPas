@@ -305,7 +305,7 @@ procedure TCodeTool.GeneralIdentifierCompletion(opEve: TFaOpenEvent;
 {La idea de este métod es implementar el completado de un identifcador, en cualquier
 parte en que se encuentre el cursor.
 Pero actualmente solo se aplica para cualquier bloque que no sea el bloque principal
-(Cuerpo del programa principal o cuerpo de procedimientos). EL completado del blooue
+(Cuerpo del programa principal o cuerpo de procedimientos). EL completado del blqoue
 MAIN, se está haciendo, todavía, con el archivo XML.}
 var
   curPos: TPoint;
@@ -314,8 +314,8 @@ var
 begin
   ed := fraEdit.ActiveEditor;
   if ed = nil then exit;
+//  ident := curEnv.tok_2^.txt;
   //LLena
-  opEve.ClearAvails;
   opEve.ClearItems;  //limpia primero
   //Asegurarse que "synTree" está actualizado.
   cxp.Compile(ed.FileName, false);  //Solo primera pasada

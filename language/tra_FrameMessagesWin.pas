@@ -9,5 +9,5 @@ lblInform.Caption  := Trans('Information', 'Información' ,'','Information');
 lblWarns.Caption   := Trans('Warnings'   , 'Advertencias','','Warnungen');
 lblErrors.Caption  := Trans('Errors'     , 'Errores'     ,'','Fehler');
 PanGrilla.Caption  := Trans('<< No messages >>', '<< Sin mensajes >>', '','<<Keine Meldungen>>');
-mnClearAll.Caption := Trans('Clear &All', 'Limpiar &Todo', '','');
-mnCopyRow.Caption  := Trans('&Copy Row' , '&Copiar fila', '','');
+//mnClearAll.Caption := Trans('Clear &All', 'Limpiar &Todo', '','');
+//mnCopyRow.Caption  := Trans('&Copy Row' , '&Copiar fila', '','');
