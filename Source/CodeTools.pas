@@ -98,7 +98,7 @@ begin
   if tok='' then exit;  //No encontró token
   if tokType <> lex.tnIdentif then exit;  //No es identificador
   //Asegurarse que "synTree" está actualizado.
-  cxp.Compile(fraEdit.ActiveEditor.NomArc, false);  //Solo primera pasada
+  cxp.Compile(fraEdit.ActiveEditor.FileName, false);  //Solo primera pasada
   if cxp.HayError then begin
     //Basta que haya compilado hasta donde se encuentra el identifiacdor, para que funciones.
 //    MsgErr('Compilation error.');  //tal vez debería dar más información sobre el error
@@ -106,7 +106,7 @@ begin
   end;
   callPos.col := curX;
   callPos.row := ed.SynEdit.CaretY;
-  callPos.fil := ed.NomArc;
+  callPos.fil := ed.FileName;
   ele := cxp.TreeElems.GetElementCalledAt(callPos);
   if ele = nil then begin
     //No lo ubica, puede ser que esté en la sección de declaración
@@ -209,7 +209,7 @@ var
 begin
   opEve.ClearItems;  //limpia primero
   //Asegurarse que "synTree" está actualizado.
-  cxp.Compile(fraEdit.ActiveEditor.NomArc, false);  //Solo primera pasada
+  cxp.Compile(fraEdit.ActiveEditor.FileName, false);  //Solo primera pasada
   if cxp.HayError then begin
     //Basta que haya compilado hasta donde se encuentra el identificador, para que funciones.
 //    MsgErr('Compilation error.');  //tal vez debería dar más información sobre el error
@@ -318,7 +318,7 @@ begin
   opEve.ClearAvails;
   opEve.ClearItems;  //limpia primero
   //Asegurarse que "synTree" está actualizado.
-  cxp.Compile(ed.NomArc, false);  //Solo primera pasada
+  cxp.Compile(ed.FileName, false);  //Solo primera pasada
   if cxp.HayError then begin
     //Basta que haya compilado hasta donde se encuentra el identificador, para que funciones.
 //    MsgErr('Compilation error.');  //tal vez debería dar más información sobre el error
@@ -370,7 +370,7 @@ begin
   //Calcula la posición del elemento
   tokPos.row := fraEdit.ActiveEditor.SynEdit.CaretY;
   tokPos.col := curEnv.tok_2^.posIni+1;
-  tokPos.fil := fraEdit.ActiveEditor.NomArc;
+  tokPos.fil := fraEdit.ActiveEditor.FileName;
   //Dispara evento
   FieldsComplet(ident, opEve, tokPos);
   Cancel := false;
@@ -386,7 +386,7 @@ begin
   //Calcula la posición del elemento
   tokPos.row := fraEdit.ActiveEditor.SynEdit.CaretY;
   tokPos.col := curEnv.tok_3^.posIni+1;
-  tokPos.fil := fraEdit.ActiveEditor.NomArc;
+  tokPos.fil := fraEdit.ActiveEditor.FileName;
   //Dispara evento
   FieldsComplet(ident, opEve, tokPos);
   Cancel := false;

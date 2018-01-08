@@ -261,8 +261,8 @@ var
 begin
   //Ubica el archivo actual en el explorador.
   ed := fraEditView1.ActiveEditor;
-  if (ed<>nil) and (ed.NomArc<>'') then begin
-     fraSynTree.LocateFile(ed.NomArc);
+  if (ed<>nil) and (ed.FileName<>'') then begin
+     fraSynTree.LocateFile(ed.FileName);
   end;
 end;
 procedure TfrmPrincipal.cxp_RequireFileString(FilePath: string; var strList: TStrings);
@@ -324,7 +324,7 @@ begin
     fraEdit_ChangeEditorState(ed);  //Actualiza botones
 
     StatusBar1.Panels[3].Text := ed.CodArc;  //Codificación
-    StatusBar1.Panels[4].Text := ed.NomArc;  //Nombre de archivo
+    StatusBar1.Panels[4].Text := ed.FileName;  //Nombre de archivo
   end;
   editChangeFileInform;
 end;
@@ -442,7 +442,7 @@ begin
   end;
   //Inicia encabezado
   //Carga último archivo
-  if Config.LoadLast then fraEditView1.LoadLastFileEdited;
+  if Config.LoadLast then fraEditView1.LoadListFiles(Config.filesClosed);
 end;
 procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
 //Se ha seleccionado un archivo de ejemplo.
@@ -457,6 +457,8 @@ begin
   fraEditView1.LoadFile(SamFil);
 end;
 procedure TfrmPrincipal.FormCloseQuery(Sender: TObject; var CanClose: boolean);
+var
+  lstClosedFiles: string;
 begin
   if curProj<>nil then begin
     if not curProj.Close then begin
@@ -465,7 +467,12 @@ begin
     end;
     curProj.Destroy;
   end;
-  if fraEditView1.CloseAll then CanClose := false;   //cancela
+  if fraEditView1.CloseAll(lstClosedFiles) then begin
+     CanClose := false;   //cancela
+  end else begin
+    //Se va a cerrar. Guarda la lista de archivos quee staban abiertos
+    Config.filesClosed := lstClosedFiles;
+  end;
 end;
 procedure TfrmPrincipal.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
@@ -512,7 +519,7 @@ begin
         exit;
       end;
       fraMessages.InitCompilation(cxp, false);  //Limpia mensajes
-      cxp.Compile(ed.NomArc, false);
+      cxp.Compile(ed.FileName, false);
       //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
       MarkErrors;  //Resalta errores, si están en el editor actual
       fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
@@ -694,17 +701,17 @@ begin
     if fraEditView1.Count = 0 then begin
       Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' +MSG_NOFILES;
     end else begin  //Hay varios
-      if ed.NomArc='' then
+      if ed.FileName='' then
         Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.Caption
       else
-        Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.NomArc;
+        Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.FileName;
     end;
   end else begin
     //Hay un proyecto abierto
     Caption := NOM_PROG + ' - ' + VER_PROG  + ' - Project: ' + curProj.name;
   end;
-  if (ed<>nil) and (ed.NomArc<>'') then begin
-     fraSynTree.LocateFile(ed.NomArc);
+  if (ed<>nil) and (ed.FileName<>'') then begin
+     fraSynTree.LocateFile(ed.FileName);
   end;
 end;
 procedure TfrmPrincipal.FindDialog1Find(Sender: TObject);
@@ -906,7 +913,7 @@ var
 begin
   if fraEditView1.ActiveEditor=nil then exit;
   self.SetFocus;
-  filName := fraEditView1.ActiveEditor.NomArc;
+  filName := fraEditView1.ActiveEditor.FileName;
   if filName='' then begin
     //No tiene nombre. No debería pasar, porque "fraEditView1" debe generar nombres.
     if fraEditView1.SaveAsDialog then begin
@@ -1019,7 +1026,7 @@ begin
      for f:=1 to fraMessages.grilla.RowCount -1 do begin
        if fraMessages.IsErroridx(f) then begin
          fraMessages.GetErrorIdx(f, msg, filname, row, col);  //obtiene información del error
-         if (msg<>'') and (filname = ed.NomArc) then begin
+         if (msg<>'') and (filname = ed.FileName) then begin
            //Hay error en el archivo actual
            ed.MarkError(Point(col, row));
          end;
@@ -1027,7 +1034,7 @@ begin
      end;
 
 //     fraMessages.GetFirstError(msg, filname, row, col);
-//     if (msg<>'') and (filname = ed.NomArc) then begin
+//     if (msg<>'') and (filname = ed.FileName) then begin
 //       //Hay error en el archivo actual
 //       ed.MarkError(Point(col, row));
 //     end;

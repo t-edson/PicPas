@@ -144,9 +144,11 @@ type
     MessPanText: TColor;  //Color del texto del panel de mensajes
     MessPanErr : TColor;  //Color del texto de error del panel de mensajes
     MessPanSel : TColor;  //Color del fonde de la selección del panel de mensajes
-    PanelsCol : TColor;  //Color de los panels del Panel de Mensages
+    PanelsCol : TColor;   //Color de los panels del Panel de Mensages
     SplitterCol: TColor;  //Color de separadores
-    LoadLast   : boolean;  //Cargar el último archivo editado
+    LoadLast   : boolean; //Cargar el último archivo editado
+    filesClosed: string;  {Lista de archivos cargados. Usado para restaurar los archivos
+                          abiertos al abrir nuevamente el programa.}
   public  //Configuraciones para ensamblador
     IncHeadMpu: boolean;  //Incluye encabezado con información del MPU
     IncVarDec : boolean;  //Incluye declaración de varaibles
@@ -350,9 +352,10 @@ var
   s: TParElem;
 begin
   //Configuraciones de Entorno
-  s:=cfgFile.Asoc_Str('language'   , @language, ComboBox1, 'en - English');
+  s:=cfgFile.Asoc_Str ('language'   , @language, ComboBox1, 'en - English');
   s:=cfgFile.Asoc_Enum('StateStatusbar', @StateToolbar, SizeOf(TStyleToolbar), RadioGroup1, 1);
   s:=cfgFile.Asoc_Bol ('chkLoadLast',@LoadLast   , chkLoadLast   , true);
+  s:=cfgFile.Asoc_Str ('filesClosed', @filesClosed, '');
   s:=cfgFile.Asoc_TCol('SplitterCol',@SplitterCol, colSplitCol, clDefault);
   s.categ := 1;   //marca como propiedad de tipo "Tema"
   s:=cfgFile.Asoc_TCol('MessPanPan', @PanelsCol , colMessPanPan , clDefault);
