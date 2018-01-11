@@ -8,6 +8,11 @@ https://github.com/alexpseletr.
 estaba oculto.
 * Se incluye la directiva {$PROCESSOR <pic_model>} al inicio de las unidades qeu definen a los
 modelos de PIC.
+* Se incluye un menú contextual en la lista de mensajes de la pantalla principal.
+* Se implementa la opción de recuperar el estado de los archivos abiertos en el editor.
+* Se modifica la unidad FrameRamExplorer para mostrar las zonas usadas de RAM.
+* Se actualiza a la versión 1.2 de PicUtils y se corrige así, un error en el cálculo de la 
+memoria RAM disponible del dispositivo.
 
 PicPas 0.8.2
 ============
@@ -15,14 +20,14 @@ Se incluye el parámetro "modReturn" en el evento TxpEleType.OnLoadToRT, para per
 adicionalmente la instrucción RETURN y poder optimizar el caso de RETURN y constantes.
 Se reordena y mejora TGenCod.fun_Exit(), para considerar el caso de las interrupciones.
 Se crean las clases TxpSynBlock y TxpSynBlocks (en la unidad XpresElementsPIC), como 
-contenedores para controlar los bloquqes de sintaxis que se van abriendo en el código fuente.
+contenedores para controlar los bloques de sintaxis que se van abriendo en el código fuente.
 Se crea la lista TxpEleBody.lstExitCalls para almacenar las llamadas a exit() desde dentro de 
 los elementos TxpEleBody().
 Se crea la lista TxpEleBody.blocks para almacenar los bloques de sintaxis, y se crean también 
 diversos métodos en TxpEleBody, para la administración de bloques.
 Se elimina el campo TxpEleFun.BankChanged y se crea el campo TxpEleFun.finBnk
 Se elimna la acción "Instrucción Counter" desde el menú principal y se crea la acción "List 
-Report", con un reporte detallado de la compialción.
+Report", con un reporte detallado de la compilación.
 Se crea la lista TxpElement.lstCalledAll.
 Se crea el enumerado eltCodeCont y la clase TxpEleCodeCont, como ancestro de TxpEleMain, 
 TxpElefunc y TxpEleUni, para unificar comportamientos.

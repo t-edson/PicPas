@@ -534,16 +534,22 @@ The devices supported by now are:
  
 #### $FREQUENCY
 
-Specify the clock frequency, in MHz or KHz. It's used for the delay routines Example:
+Specify the clock frequency, in MHz or KHz. Example:
 
 ```
-{$FREQUENCY 1000Mhz}
+{$FREQUENCY 10Mhz}
 ```
 
-The frequencies supported by now are:
+Frequency information is used for:
 
-1MHz, 2Mhz, 4Mhz, 8MHz, 10MHz o 12MHz.
+* The compiler, when needed to generate delays.
+* The simulator, for Real Time simulation.
 
+If delays are used in the program, only some frequencies are supported. They are:
+
+1MHz, 2Mhz, 4Mhz, 8MHz, 10MHz, 12MHz, 16MHz or 20MHz.
+
+If frequency is not specified, the default value is 4MHz.
 
 #### $MODE
 
