@@ -804,7 +804,7 @@ begin
 end;
 procedure TGenCodPic.CreateVarInRAM(nVar: TxpEleVar; shared: boolean = false);
 {Rutina para asignar espacio físico a una variable. La variable, es creada en memoria
-con lso parámetros que posea en ese momento. Si está definida como ABSOLUTE, se le
+con los parámetros que posea en ese momento. Si está definida como ABSOLUTE, se le
 creará en la posicón indicada. }
 var
   varName: String;

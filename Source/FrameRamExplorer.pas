@@ -7,9 +7,10 @@ uses
 type
   //Define a un bloque de RAM, que servirá para dibujo
   TRamBlock = record
-    add1, add2: word;   //direcciones de memoria
-    blkType: TPIC16CellState;   //tipo de blqoue
-    mapped: boolean;        //indica si el bloque está mapeado
+    add1, add2: word;      //Direcciones de memoria
+    blkType: TPIC16CellState; //Tipo de blqoue
+    mapped : boolean;        //Indica si el bloque está mapeado
+    used   : boolean;        //Indica si el bloque está usado
   end;
 
   { TfraRamExplorer }
@@ -22,12 +23,16 @@ type
   private
     blockSta: array of TRamBlock;
     blockMap: array of TRamBlock;
+    blockUse: array of TRamBlock;
     procedure SepararEnBloquesEstado(dir1, dir2: word);
     procedure SepararEnBloquesMapeado(dir1, dir2: word);
+    procedure SplitInUsedRAM(dir1, dir2: word);
     procedure DibBancoRAM(const marcoRam: TRect; bnk: TRAMBank; selected: boolean);
     procedure DibBar(const x1, x2: integer; y1, y2: integer; lbl: string);
-    procedure DibBloque(const marcoRam: TRect; ancMargenDir: integer; dirIni,
+    procedure DrawBlockTxt(const marcoRam: TRect; ancMargenDir: integer; dirIni,
       dirFin: integer; lbl: string);
+    procedure DrawBlock(const marcoRam: TRect; ancMargenDir: integer; dirIni,
+      dirFin: integer);
     procedure panGraphPaint(Sender: TObject);
   public
     pic: TPIC16;
@@ -44,7 +49,7 @@ begin
   if OnCloseFrame<>nil then OnCloseFrame;
 end;
 procedure TfraRamExplorer.SepararEnBloquesEstado(dir1, dir2: word);
-{Explora la memoria RAM, entre las direcciones dir, y dir2, y almacena los bloques
+{Explora la memoria RAM, entre las direcciones dir1, y dir2, y almacena los bloques
 encontrados (de distinto campo "state"), en el arreglo "blockSta".
 }
 var
@@ -85,7 +90,7 @@ begin
   blockSta[n].blkType := tipBloque;
 end;
 procedure TfraRamExplorer.SepararEnBloquesMapeado(dir1, dir2: word);
-{Explora la memoria RAM, entre las direcciones dir, y dir2, y almacena los bloques
+{Explora la memoria RAM, entre las direcciones dir1, y dir2, y almacena los bloques
 encontrados (de acuerdo a si están mapeados), en el arreglo "blockMap".
 }
 var
@@ -125,6 +130,47 @@ begin
   blockMap[n].add2 := pos2;
   blockMap[n].mapped:= mapeado;
 end;
+procedure TfraRamExplorer.SplitInUsedRAM(dir1, dir2: word);
+{Explora la memoria RAM, entre las direcciones dir1, y dir2, y almacena los bloques
+encontrados (de acuerdo a si están usados o no), en el arreglo "blockUse".
+}
+var
+  n: Integer;
+  i, pos1, pos2: Word;
+  used: boolean;
+begin
+  setlength(blockUse, 1);  //abre un bloque
+  n := high(blockUse);  //índice actual
+  for i := dir1 to dir2 do begin
+    if i = dir1 then begin
+      //Define el bloque inicial
+      used := (pic.ram[i].used<>0);
+      pos1 := i;
+      pos2 := i;
+    end else begin
+      if (pic.ram[i].used<>0) = used then begin
+        //Es del bloque anterior
+        pos2 := i;   //actualiza límite
+      end else begin
+        //Es otro tipo de bloque.
+        //Cierra el anterior
+        blockUse[n].add1 := pos1;
+        blockUse[n].add2 := pos2;
+        blockUse[n].used:= used;
+        n := n + 1;
+        setlength(blockUse, n+1);
+        //Define nuevo blqoue
+        used := (pic.ram[i].used<>0);
+        pos1 := i;
+        pos2 := i;
+      end;
+    end;
+  end;
+  //Cierra el último bloque
+  blockUse[n].add1 := pos1;
+  blockUse[n].add2 := pos2;
+  blockUse[n].used:= used;
+end;
 
 procedure TfraRamExplorer.DibBar(const x1, x2: integer; y1, y2: integer;
                                  lbl: string);
@@ -137,7 +183,13 @@ var
 begin
   alto := y2 - y1;
   cv := panGraph.Canvas;
-  cv.Rectangle(x1, y1, x2, y2+1);  //Corrige y2, porque Rectangle, dibuja hasta un pincel antes
+  if (cv.Brush.Color = clNone) and (cv.Brush.Style = bsSolid) then begin
+    //Sin fondo
+    cv.Frame(x1, y1, x2, y2+1);  //Corrige y2, porque Rectangle, dibuja hasta un pincel antes
+  end else begin
+    //Con fondo
+    cv.Rectangle(x1, y1, x2, y2+1); //Corrige y2, porque Rectangle, dibuja hasta un pincel antes
+  end;
   //////// Escribe etiqueta centrada /////////////
   ancho := x2 - x1;
   altTxt := cv.TextHeight(lbl);
@@ -158,7 +210,7 @@ begin
   cv.Brush.Style := bsClear;  //texto sin fondo
   cv.TextRect(Arect, xt, yt, lbl, TextStyle);
 end;
-procedure TfraRamExplorer.DibBloque(const marcoRam: TRect;
+procedure TfraRamExplorer.DrawBlockTxt(const marcoRam: TRect;
                                  ancMargenDir: integer;
                                  dirIni, dirFin: integer; lbl: string);
 {Dibuja un bloque de un banco de RAM (definida en el área marcoRam), pone etiqueta
@@ -197,6 +249,26 @@ begin
     end;
   end;
 end;
+procedure TfraRamExplorer.DrawBlock(const marcoRam: TRect;
+  ancMargenDir: integer; dirIni, dirFin: integer);
+{Similar a DrawBlockTxt(), pero no pone las etiquetas de dirección, ni la etiqueta
+central.}
+var
+  cv: TCanvas;
+  x1, x2: LongInt;
+  altoByte: Double;
+  y1, y2: integer;
+begin
+  x1 := marcoRam.Left;
+  x2 := marcoRam.Right;
+  altoByte := (marcoRam.Bottom - marcoRam.Top)/$80;
+  y1 := round(marcoRam.Top + (dirIni and $7F) * altoByte);
+  y2 := round(marcoRam.Top + ((dirFin and $7F)+1) * altoByte);
+  //Dibuja barra de fondo
+  cv := panGraph.Canvas;
+  cv.Rectangle(x1+ancMargenDir,
+               y1, x2, y2+1);  //Corrige y2, porque Rectangle, dibuja hasta un pincel antes
+end;
 procedure TfraRamExplorer.DibBancoRAM(const marcoRam: TRect; bnk: TRAMBank;
                                  selected: boolean);
 {Dibuja el banco de RAM completo, en el área "marcoRam", separando por bloques
@@ -213,6 +285,20 @@ begin
   if ancMargenDir>(marcoRam.Right - marcoRam.Left)*0.5 then begin
     ancMargenDir := 0;
   end;
+  //Limpia fondo
+//  DrawBlock(marcoRam, ancMargenDir, blockSta[i].add1, blockSta[i].add2);  //dibuja;
+
+  //Dibuja primero los bloques de memoria usadas
+  SplitInUsedRAM(0+bnk.AddrStart, $7F+bnk.AddrStart);
+  cv.Pen.Color := $80FF80;
+  cv.Brush.Style := bsSolid;
+  for i:=0 to high(blockUse) do begin
+    if blockUse[i].used then begin
+      cv.Brush.Color := $80FF80;
+      DrawBlock(marcoRam, ancMargenDir, blockUse[i].add1, blockUse[i].add2);  //dibuja;
+    end;
+  end;
+  //Dibuja zonas de la RAM
   //Verifica si está seleccionada
   if selected then begin
     cv.Pen.Width := 2;
@@ -228,12 +314,13 @@ begin
     //Crea etiqueta
     case blockSta[i].blkType of
     cs_impleSFR: begin
-  //    cv.Brush.Color := $FF9090;
-      cv.Brush.Color := clWhite;
+      cv.Brush.Color := $FF9090;
+  //    cv.Brush.Color := clWhite;
       lbl := 'SFR';
     end;
     cs_impleGPR: begin
       cv.Brush.Color := clWhite;
+      cv.Brush.Color := clNone;
       lbl := 'GPR';
     end;
     cs_unimplem: begin
@@ -255,12 +342,13 @@ begin
              lbl := 'GPR';
              cv.Brush.Style := bsSolid;
           end;
-          DibBloque(marcoRam, ancMargenDir,
+          DrawBlockTxt(marcoRam, ancMargenDir,
                     blockMap[j].add1, blockMap[j].add2, lbl);  //dibuja;
         end;
     end else begin
+        //Dibuja el bloque de forma normal.
         cv.Brush.Style := bsSolid;
-        DibBloque(marcoRam, ancMargenDir,
+        DrawBlockTxt(marcoRam, ancMargenDir,
                 blockSta[i].add1, blockSta[i].add2, lbl);  //dibuja;
     end;
   end;

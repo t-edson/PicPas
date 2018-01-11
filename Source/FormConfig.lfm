@@ -58,10 +58,10 @@ object Config: TConfig
     Height = 330
     Top = 0
     Width = 399
-    ActivePage = tabCompiler
+    ActivePage = tabEnviron
     Align = alClient
     ShowTabs = False
-    TabIndex = 7
+    TabIndex = 0
     TabOrder = 1
     object tabEnviron: TTabSheet
       Caption = 'Enviroment'
@@ -145,6 +145,8 @@ object Config: TConfig
           'es - Español'
           'qu - Quechua'
           'de - German'
+          'uk - Ukrainian'
+          'ru - Russian'
         )
         TabOrder = 0
         Text = 'ComboBox1'

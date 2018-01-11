@@ -4257,11 +4257,11 @@ begin
     genError('Not implemented: "%s"', [Opr.OperationString]);
   end;
 end;
-/////////////funciones del sistema
+///////////// Funciones del sistema
 procedure TGenCod.codif_1mseg;
-//Codifica rutina de reatrdo de 1mseg.
+//Codifica rutina de retardo de 1mseg.
 begin
-  PutFwdComm(';inicio rutina 1 mseg.');
+  PutFwdComm(';1 msec routine.');
   if _CLOCK = 1000000 then begin
     _MOVLW(62);  //contador de iteraciones
     _ADDLW(255);  //lazo de 4 ciclos

@@ -39,7 +39,7 @@ var
 //const
 // TestRec: TTranslation = (en: 'Something'; es: 'algo'; );
 
-function Trans(const strEn, strEs, strQu, strDe: string): string;
+function Trans(const strEn, strEs, strQu, strDe, strUk, strRu: string): string;
 //////////////////////////////////////////////////////
 function LeerParametros: boolean;
 function NombDifArc(nomBase: String): String;
@@ -49,26 +49,48 @@ const
   WA_DIR_NOEXIST = 'Directory: %s no found. It will be created';
   ER_CANN_READDI = 'Cannot read or create directories.';
 
-function Trans(const strEn, strEs, strQu, strDe: string): string;
+function Trans(const strEn, strEs, strQu, strDe, strUk, strRu: string): string;
+  function ClearLangId(str: string): string;
+  {Limpia la cadena del caracter identificador de lenguaje, de la forma:
+  #en=
+  que se puede usar al inicio de una cadena.}
+  begin
+     if str='' then exit('');
+     if length(str)<4 then exit(str);
+     if (str[1] = '#') and (str[4] = '=') then begin
+       delete(str, 1, 4);
+       exit(str);
+     end else begin
+       exit(str);
+     end;
+  end;
 begin
-  case curLanguage of
+  case LowerCase(curLanguage) of
   'en': begin
-     Result := strEn;
+     Result := ClearLangId(strEn);
   end;
   'es': begin
-     Result := strEs;
-     if Result = '' then Result := strEn;
+     Result := ClearLangId(strEs);
+     if Result = '' then Result := ClearLangId(strEn);
   end;
   'qu': begin
-     Result := strQu;
+     Result := ClearLangId(strQu);
      if Result = '' then Result := strEs;
   end;  //por defecto
   'de': begin
-     Result := strDe;
-     if Result = '' then Result := strEn;
+     Result := ClearLangId(strDe);
+     if Result = '' then Result := ClearLangId(strEn);
+  end;  //por defecto
+  'uk': begin
+     Result := ClearLangId(strUk);
+     if Result = '' then Result := ClearLangId(strEn);
+  end;  //por defecto
+  'ru': begin
+     Result := ClearLangId(strRu);
+     if Result = '' then Result := ClearLangId(strEn);
   end;  //por defecto
   else
-    Result := strEn;
+    Result := ClearLangId(strEn);
   end;
 end;
 function  LeerParametros: boolean;
