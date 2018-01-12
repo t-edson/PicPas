@@ -13,6 +13,7 @@ modelos de PIC.
 * Se modifica la unidad FrameRamExplorer para mostrar las zonas usadas de RAM.
 * Se actualiza a la versión 1.2 de PicUtils y se corrige así, un error en el cálculo de la 
 memoria RAM disponible del dispositivo.
+* Se agregan los idiomas Ruso e Ucraniano para el compilador y la IDE.
 
 PicPas 0.8.2
 ============

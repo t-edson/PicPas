@@ -3,6 +3,9 @@
   <language Val="en - English"/>
   <StateStatusbar Val="1"/>
   <chkLoadLast Val="True"/>
+  <filesClosed Val="/media/sf_D_DRIVE/Proyectos_Software/Lazarus/PicPas-0.8.3/temp/NewFile2.pas
+/media/sf_D_DRIVE/Proyectos_Software/Lazarus/PicPas-0.8.3/temp/NewFile1.pas
+"/>
   <SplitterCol Val="536870912"/>
   <MessPanPan Val="536870912"/>
   <VerPanMensaj Val="True"/>
@@ -11,7 +14,7 @@
   <ViewSynTree Val="True"/>
   <SynTreeWidth Val="130"/>
   <ViewPanAssem Val="True"/>
-  <viewMode Val="0"/>
+  <viewMode Val="1"/>
   <MessPanBack Val="-2147483643"/>
   <MessPanText Val="536870912"/>
   <MessPanErr Val="255"/>
@@ -41,11 +44,8 @@
     <VerMarPle Val="True"/>
     <cFonPan Val="16777215"/>
     <cTxtPan Val="0"/>
-    <recient Val="/home/alex/Backup/documentos/BKP/Codigo_fonte_aplicativos/picpas/PicPas/samples/BlinkLed2.pas
-/home/alex/Backup/documentos/BKP/Codigo_fonte_aplicativos/picpas/PicPas/samples/adc.pas
-/home/alex/Backup/documentos/BKP/Codigo_fonte_aplicativos/picpas/PicPas/samples/BlinkLed.pas
-/home/alex/Backup/documentos/BKP/Codigo_fonte_aplicativos/picpas/PicPas/units/PIC12F675A.pas
-/home/alex/Backup/documentos/BKP/Codigo_fonte_aplicativos/picpas/PicPas/samples/DigitalInput.pas
+    <recient Val="/media/sf_D_DRIVE/Proyectos_Software/Lazarus/PicPas-0.8.3/temp/NewFile2.pas
+/media/sf_D_DRIVE/Proyectos_Software/Lazarus/PicPas-0.8.3/temp/NewFile1.pas
 "/>
   </Edit>
   <IncHeadMpu Val="False"/>
