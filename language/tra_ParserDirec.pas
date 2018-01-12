@@ -13,96 +13,51 @@ procedure SetLanguage;
 begin
 //Messages when compiling Directives
 ER_ERROR_DIREC := trans('Error in directive.'  , 'Error en directiva'      ,'',
-                        'Fehler bei Direktive.',
-                        '#uk=',
-                        '#ru=');
+                        'Fehler bei Direktive.','Помилка директиви.','Ошибка в директиве.');
 ER_UNKNO_DEVIC := trans('Unknown device: %s'   , 'Dispositivo desconocido: %s','',
-                        'Unbekanntes Gerät: %s',
-                        '#uk=',
-                        '#ru=');
+                        'Unbekanntes Gerät: %s','Невизначений прилад: %s','Неизвестное устройство: %s');
 ER_MODE_UNKNOWN:= trans('Mode unknown: %s'     , 'Modo inválido'           , '',
-                        'Unbekannter Modus: %s',
-                        '#uk=',
-                        '#ru=');
+                        'Unbekannter Modus: %s','Невизначений режим: %s','Неизвестный режим: %s');
 ER_UNKNO_DIREC := trans('Unknown directive: %s', 'Directiva desconocida: %s','',
-                        'Unbekannte Direktive: %s',
-                        '#uk=',
-                        '#ru=');
+                        'Unbekannte Direktive: %s','Невизначена директива: %s','Неизвестная директива: %s');
 ER_ERROR_FREQ  := trans('Error in frequency.'  , 'Error en frecuencia.'    , '',
-                        'Fehler bei der Frequenz.',
-                        '#uk=',
-                        '#ru=');
+                        'Fehler bei der Frequenz.','Помилка в частоті.','Ошибка в частоте.');
 ER_TOOHIGHFRE  := trans('Frequency too high for this device.', 'Frecuencia muy alta para este microproc.', '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                                   ,'Частота зависока для цього приладу.','Слишком высокая частота для этого устройства.');
 ER_IDENT_EXPEC := trans('Identifier expected.' , 'Identificador esperado.' , '',
-                        'Bezeichner erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        'Bezeichner erwartet.' ,'Очікується ідентифікатор.','Ожидается идентификатор.');
 ER_EXPEC_EQUAL := trans('Expected "="'         , 'Se esperaba "="'         , '',
-                        '"=" erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        '"=" erwartet.'        , 'Очікується "="','Ожидается "="');
 ER_SYNTAX_ERRO := trans('Syntax error.'        , 'Error de sintaxis.'      , '',
-                        'Syntaxfehler.',
-                        '#uk=',
-                        '#ru=');
+                        'Syntaxfehler.'        , 'Помилка синтаксиса.','Ошибка синтаксиса.');
 ER_SYNTAX_ERR_ := trans('Syntax error: "%s"'   , 'Error de sintaxis: "%s"' , '',
-                        'Syntax-Fehler: "%s"',
-                        '#uk=',
-                        '#ru=');
+                        'Syntax-Fehler: "%s"'  , 'Помилка синтаксиса: "%s"','Ошибка синтаксиса: "%s"');
 ER_EXPECTED_BR := trans('Expected: "}".'       , 'Se esperaba "}".'        , '',
-                        '"}" erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        '"}" erwartet.'        , 'Очікується: "}".','Ожидается: "}".');
 ER_ENDIF_NOFOU := trans('"$ENDIF" not found.'  , 'No se encontró "$ENDIF".', '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                     , '"$ENDIF" не знайдено.','"$ENDIF" не найден.');
 ER_UNEXP_ENDIF := trans('Unexpected "$ENDIF".' , 'No se esperaba "$ENDIF".', '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                     , 'Непередбачений "$ENDIF".','Непредвиденный "$ENDIF".');
 ER_UNEXP_ELSE  := trans('Unexpected "$ELSE".'  , 'No se esperaba "$ELSE".' , '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                     , 'Непередбачений "$ELSE".','Непредвиденный "$ELSE".');
 ER_CONF_UNDEF_ := trans('Undefined Config. Bit: %s', 'Bit de Config. no definido: %s' , '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                       , 'Невизначений біт конфігурації: %s','Неопределённый бит конфигурации: %s');
 ER_INVAL_CBIT_ := trans('Invalid Config. Bit: %s', 'Bit de Config. inválido: %s' , '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                       , 'Помилковий біт конфігурації: %s','Ошибочный бит конфигурации: %s');
 ER_FILE_NO_FND_:= trans('File no found: %s'      , 'Archivo no encontrado: %s' , '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                       , 'Файл не знайдено: %s','Файл не найден: %s');
 ER_ERIN_NUMBER_:= trans('Error in number: %s'    , 'Error en número: %s' , '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                       , 'Помилка в номері: %s','Ошибка в числе: %s');
 ER_UNKNW_IDENT_:= trans('Unknown Identifier: %s' , 'Identificador desconocido: %s' , '',
-                        '',
-                        '#uk=',
-                        '#ru=');
-ER_DIVIDE_ZERO := trans('Cannot divide by zero' , 'No se puede dividir por cero' , '',
-                        '',
-                        '#uk=',
-                        '#ru=');
-ER_EVA_ZER_ZER := trans('Cannot evaluate 0^0'   , 'No se puede evaluar 0^0', '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        ''                       , 'Невідомий ідентифікатор: %s','Неизвестный идентификатор: %s');
+ER_DIVIDE_ZERO := trans('Cannot divide by zero'  , 'No se puede dividir por cero' , '',
+                        ''                       , 'Не можу поділити на нуль','Не могу поделить на ноль');
+ER_EVA_ZER_ZER := trans('Cannot evaluate 0^0'    , 'No se puede evaluar 0^0', '',
+                        ''                       , 'Не можу оцінити 0^0', 'Не могу оценить 0^0');
 ER_OPE_NOT_IMP_ := trans('Operator not implemented: %s', 'Operador no implementado: %s', '',
-                        '',
-                        '#uk=',
-                        '#ru=');
-ER_EXPECT_CAR_ := trans('Expected "%s"'           , 'Se esperaba "%s"'         , '',
-                        '"%s" erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        ''                       , 'Оператор не реалізовано: %s','Оператор не реализован: %s');
+ER_EXPECT_CAR_ := trans('Expected "%s"'          , 'Se esperaba "%s"'         , '',
+                        '"%s" erwartet.'         , 'Очікується "%s"','Ожидается "%s"');
 
 end;
+

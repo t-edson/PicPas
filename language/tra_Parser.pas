@@ -17,167 +17,88 @@ procedure SetLanguage;
 begin
 //Update messages
 ER_NOT_IMPLEM_ := trans('Not implemented: "%s"'      , 'No implementado: "%s"'         ,'',
-                        'Nicht implementiert: "%s"',
-                        '#uk=',
-                        '#ru=');
+                        'Nicht implementiert: "%s"'  ,'Не впроваджено: "%s"','Не реализовано: "%s"');
 ER_IDEN_EXPECT := trans('Identifier expected.'       , 'Identificador esperado.'       ,'',
-                        'Bezeichner erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        'Bezeichner erwartet.'       , 'Очікується ідентифікатор.','Ожидается идентификатор.');
 ER_DUPLIC_IDEN := trans('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"' ,'',
-                        'Doppelter Platzhalter: "%s"',
-                        '#uk=',
-                        '#ru=');
+                        'Doppelter Platzhalter: "%s"','Дубльований ідентифікатор: "%s"','Дублированный идентификатор: "%s"');
 ER_INVAL_FLOAT := trans('Unvalid float number.'      , 'Número decimal no válido.'     ,'',
-                        'Ungültige Gleitkommazahl.',
-                        '#uk=',
-                        '#ru=');
+                        'Ungültige Gleitkommazahl.'  ,'Невірне число з плаваючою комою.','Недопустимое число с плавающей запятой.');
 ER_ERR_IN_NUMB := trans('Error in number.'           , 'Error en número'               ,'',
-                        'Fehler bei Nummer.',
-                        '#uk=',
-                        '#ru=');
+                        'Fehler bei Nummer.'         ,'Помилка в числі.','Ошибка в числе.');
 ER_NOTYPDEFNUM := trans('No type defined to accommodate this number.', 'No hay tipo definido para albergar a este número.','',
-                        'Kein Typ definiert.',
-                        '#uk=',
-                        '#ru=');
+                        'Kein Typ definiert.'        ,'Для типу цього числа не визначено жодного типу','Не определён тип для размещения этого числа');
 ER_UNDEF_TYPE_ := trans('Undefined type "%s"'        , 'Tipo "%s" no definido.'        ,'',
-                        'Undefinierter Typ "%s"',
-                        '#uk=',
-                        '#ru=');
+                        'Undefinierter Typ "%s"'     , 'Невизначений тип "%s"','Неопределённый тип "%s"');
 ER_INV_MEMADDR := trans('Invalid memory address.'    , 'Dirección de memoria inválida.','',
-                        'Ungültige Speicheradresse.',
-                        '#uk=',
-                        '#ru=');
-ER_BIT_VAR_REF := trans('A bit variable reference expected.', 'Se esreraba referencia a una variable bit.','',
-                        'Es wird eine Bitvariablen-referenz erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        'Ungültige Speicheradresse.' , 'Недійсна адреса памʼяті.','Недопустимый адрес памяти.');
+ER_BIT_VAR_REF := trans('A bit variable reference expected.'          , 'Se esreraba referencia a una variable bit.','',
+                        'Es wird eine Bitvariablen-referenz erwartet.', 'Очікується біт-змінна.','Ожидается бит-переменная.');
 ER_INV_MAD_DEV := trans('Invalid memory address for this device.', 'No existe esta dirección de memoria en este dispositivo.','',
-                        'Ungültige Speicheradresse für dieses Gerät.',
-                        '#uk=',
-                        '#ru=');
+                        'Ungültige Speicheradresse für dieses Gerät.','Недійсна адреса памʼяті для цього пристрою.','Недопустимый адрес памяти для этого устройства.');
 ER_EXP_VAR_IDE := trans('Identifier of variable expected.', 'Se esperaba identificador de variable.','',
-                        'Variablenbezeichner erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        'Variablenbezeichner erwartet.'   , 'Очікується фдентифікатор змінної.','Ожидается идентификатор переменной.');
 ER_UNKNOWN_ID_ := trans('Unknown identifier: %s'     , 'Identificador desconocido: %s' ,'',
-                        'Unbekannter Bezeichner: %s',
-                        '#uk=',
-                        '#ru=');
+                        'Unbekannter Bezeichner: %s' , 'Невідомий ідентифікатор: %s','Неизвестный идентификатор: %s');
 ER_IDE_CON_EXP := trans('Identifier of constant expected.', 'Se esperaba identificador de constante','',
-                        'Konstantenbezeichner erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_NUM_ADD_EXP := trans('Numeric address expected.'  , 'Se esperaba dirección numérica.','',
-                        'Numerische Adresse erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        'Konstantenbezeichner erwartet.'  , 'Очікується ідентифікатор константи.','Ожидается идентификатор константы.');
+ER_NUM_ADD_EXP := trans('Numeric address expected.'   , 'Se esperaba dirección numérica.','',
+                        'Numerische Adresse erwartet.', 'Очікується числова адреса.','Ожидается числовой адрес.');
 ER_IDE_TYP_EXP := trans('Identifier of type expected.', 'Se esperaba identificador de tipo.','',
-                        'Typenbezeichner erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_SEM_COM_EXP := trans('":" or "," expected.'       , 'Se esperaba ":" o ",".'        ,'',
-                        '":"oder"," erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_EQU_COM_EXP := trans('"=" or "," expected.', 'Se esperaba "=" o ","','',
-                        '"=" oder "," erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        'Typenbezeichner erwartet.'   , 'Очікується ідентифікатор типу.','Ожидается идентификатор типа.');
+ER_SEM_COM_EXP := trans('":" or "," expected.'        , 'Se esperaba ":" o ",".'        ,'',
+                        '":"oder"," erwartet.'        , '":" або "," очікується.','":" или "," ожидается.');
+ER_EQU_COM_EXP := trans('"=" or "," expected.'        , 'Se esperaba "=" o ","','',
+                        '"=" oder "," erwartet.'      , '"=" або "," очікується.','"=" или "," ожидается.');
 ER_END_EXPECTE := trans('"end" expected.', 'Se esperaba "end".','',
-                        '"End" erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        '"End" erwartet.','"end" очікується.','"end" ожидается.');
 ER_EOF_END_EXP := trans('Unexpected end of file. "end" expected.', 'Inesperado fin de archivo. Se esperaba "end".','',
-                        'Unerwartetes Dateiende. "end" erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_BOOL_EXPECT := trans('Boolean expression expected.', 'Se esperaba expresión booleana.','',
-                        'Bool''scher Ausdruck erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_UNKN_STRUCT := trans('Unknown structure.', 'Estructura desconocida.','',
-                        'Unbekannte Struktur.',
-                        '#uk=',
-                        '#ru=');
-ER_PROG_NAM_EX := trans('Program name expected.', 'Se esperaba nombre de programa.','',
-                        'Name des Programms erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_COMPIL_PROC := trans('There is a compilation in progress.', 'Ya se está compilando un programa actualmente.','',
-                        'Es ist (noch) ein Kompiliervorgang aktiv.',
-                        '#uk=',
-                        '#ru=');
+                        'Unerwartetes Dateiende. "end" erwartet.','Неочікуваний кінець файла. "end" очікується.','Неожиданный конец файла. "end" ожидается.');
+ER_BOOL_EXPECT := trans('Boolean expression expected.'  , 'Se esperaba expresión booleana.','',
+                        'Bool''scher Ausdruck erwartet.','Очікується булевий вираз.','Ожидается булевое выражение.');
+ER_UNKN_STRUCT := trans('Unknown structure.'    , 'Estructura desconocida.','',
+                        'Unbekannte Struktur.'  ,'Невідома структура.','Неизвестная структура.');
+ER_PROG_NAM_EX := trans('Program name expected.'      , 'Se esperaba nombre de programa.','',
+                        'Name des Programms erwartet.','Очікується імʼя програми.','Ожидается имя программы.');
+ER_COMPIL_PROC := trans('There is a compilation in progress.'      , 'Ya se está compilando un programa actualmente.','',
+                        'Es ist (noch) ein Kompiliervorgang aktiv.', 'Триває компіляція.','Происходит компиляция.');
 ER_CON_EXP_EXP := trans('Constant expression expected.', 'Se esperaba una expresión constante','',
-                        'Konstanter Ausdruck erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_NOT_AFT_END := trans('Syntax error. Nothing should be after "END."', 'Error de sintaxis. Nada debe aparecer después de "END."','',
-                        'Syntax-Fehler. Es sollte nichts nach "END." kommen.',
-                        '#uk=',
-                        '#ru=');
-ER_ELS_UNEXPEC := trans('"else" unexpected.', '"else" inesperado', '',
-                        '"else" nicht erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_INST_NEV_EXE:= trans('Instruction will never execute.', 'Esta instrucción no se ejecutará', '',
-                        'Bereich wird niemals ausgeführt.',
-                        '#uk=',
-                        '#ru=');
+                        'Konstanter Ausdruck erwartet.', '', '');
+ER_NOT_AFT_END := trans('Syntax error. Nothing should be after "END."'       , 'Error de sintaxis. Nada debe aparecer después de "END."','',
+                        'Syntax-Fehler. Es sollte nichts nach "END." kommen.', 'Синтаксична помилка. Нічого не повинно бути після "END."','Ошибка синтаксиса. Ничего не должно быть после "END."');
+ER_ELS_UNEXPEC := trans('"else" unexpected.'    , '"else" inesperado', '',
+                        '"else" nicht erwartet.','"else" несподівано.','"else" неожиданно.');
+ER_INST_NEV_EXE:= trans('Instruction will never execute.' , 'Esta instrucción no se ejecutará', '',
+                        'Bereich wird niemals ausgeführt.','Інструкція ніколи не виконуватиметься.','Инструкция никогда не будет выполнена.');
 ER_ONLY_ONE_REG:= trans('Only one REGISTER parameter is allowed.', 'Solo se permite un parámetro REGISTER.', '',
-                        'Nur ein REGISTER Parameter erlaubt.',
-                        '#uk=',
-                        '#ru=');
-ER_VARIAB_EXPEC:= trans('Variable expected.', 'Se esperaba Variable', '',
-                        'Variable erwartet.',
-                        '#uk=',
-                        '#ru=');
+                        'Nur ein REGISTER Parameter erlaubt.'    ,'Дозволено тільки один параметр REGISTER.','Только один параметр REGISTER разрешён.');
+ER_VARIAB_EXPEC:= trans('Variable expected.' , 'Se esperaba Variable', '',
+                        'Variable erwartet.' ,'Змінна очікується.','Переменная ожидается.');
 ER_ONL_BYT_WORD:= trans('Only BYTE or WORD index is allowed in FOR.', 'Solo variables Byte o Word son permitidas.', '',
-                        'In FOR-Schleifen sind nur BYTE oder WORD Indizes erlaubt.',
-                        '#uk=',
-                        '#ru=');
-ER_ASIG_EXPECT := trans('":=" expected.', 'Se esperaba ":="', '',
-                        '":=" erwartet.',
-                        '#uk=',
-                        '#ru=');
-ER_FIL_NOFOUND := trans('File not found: %s', 'Archivo no encontrado: %s', '',
-                        'Datei nicht gefunden: "%s"',
-                        '#uk=',
-                        '#ru=');
+                        'In FOR-Schleifen sind nur BYTE oder WORD Indizes erlaubt.','Для FOR дозволено лише індекс BYTE або WORD.','В FOR допускается только индекс BYTE или WORD.');
+ER_ASIG_EXPECT := trans('":=" expected.' , 'Se esperaba ":="', '',
+                        '":=" erwartet.' , '":=" очікується.', '":=" ожидается.');
+ER_FIL_NOFOUND := trans('File not found: %s'        , 'Archivo no encontrado: %s', '',
+                        'Datei nicht gefunden: "%s"', 'Файл не знайдено: %s','Файл не найден: %s');
 ER_NOTYPDEF_NU := trans('No type defined to allocate this number.', 'No hay tipo para almacenar este número.', '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+                        '','Не визначено тип, щоб виділити цей номер.','Нет определенного типа, чтобы выделить это число.');
 
 WA_UNUSED_CON_ := trans('Unused constant: %s', 'Constante sin usar: %s', '',
-                        'Unbenutzte Konstante:%s',
-                        '#uk=',
-                        '#ru=');
+                        'Unbenutzte Konstante: %s','Невикористана константа: %s','Неиспользованная константа: %s');
 WA_UNUSED_VAR_ := trans('Unused variable: %s', 'Variable sin usar: %s', '',
-                        'Unbenutzte Variable:%s',
-                        '#uk=',
-                        '#ru=');
+                        'Unbenutzte Variable:%s','Невикористана змінна: %s','Неиспользованная переменная: %s');
 WA_UNUSED_PRO_ := trans('Unused procedure: %s', 'Procedimiento sin usar: %s', '',
-                        'Unbenutztes Prozedur:%s',
-                        '#uk=',
-                        '#ru=');
+                        'Unbenutztes Prozedur:%s','Невикористана процедура: %s','Неиспользованная процедура: %s');
 
-MSG_RAM_USED   := trans('RAM Used   = ', 'RAM usada  =', '',
-                        'RAM verwendet =',
-                        '#uk=',
-                        '#ru=');
-MSG_FLS_USED   := trans('Flash Used = ', 'Flash usada=', '',
-                        'Flash verwendet =',
-                        '#uk=',
-                        '#ru=');
-ER_ARR_SIZ_BIG := trans('Array size to big.'       , 'Tamaño de arreglo muy grande', '',
-                        '',
-                        '#uk=',
-                        '#ru=');
-ER_INV_ARR_SIZ := trans('Invalid array size.'      , 'Tamaño de arreglo inválido', '',
-                        '',
-                        '#uk=',
-                        '#ru=');
+MSG_RAM_USED   := trans('RAM Used   = '   , 'RAM usada  =', '',
+                        'RAM verwendet = ','RAM використано   = ','RAM использовано   = ');
+MSG_FLS_USED   := trans('Flash Used = '   , 'Flash usada=', '',
+                        'Flash verwendet =','Flash використано = ','Flash использовано = ');
+ER_ARR_SIZ_BIG := trans('Array size to big.' , 'Tamaño de arreglo muy grande', '',
+                        ''                   ,'Розмір масиву завеликий.','Размер массива слишком велик.');
+ER_INV_ARR_SIZ := trans('Invalid array size.', 'Tamaño de arreglo inválido', '',
+                        ''                   , 'Помилка в розмірі масиву.','Ошибка размера массива.');
 
 end;
+
 
