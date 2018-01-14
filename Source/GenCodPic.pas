@@ -1358,142 +1358,177 @@ begin
 end;
 procedure TGenCodPic._ADDWF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(ADDWF, f,d);
 end;
 procedure TGenCodPic._ANDWF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(ANDWF, f,d);
 end;
 procedure TGenCodPic._CLRF(const f: byte); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(CLRF, f);
 end;
 procedure TGenCodPic._CLRW(); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(CLRW);
 end;
 procedure TGenCodPic._COMF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(COMF, f,d);
 end;
 procedure TGenCodPic._DECF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(DECF, f,d);
 end;
 procedure TGenCodPic._DECFSZ(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(DECFSZ, f,d);
 end;
 procedure TGenCodPic._INCF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(INCF, f,d);
 end;
 procedure TGenCodPic._INCFSZ(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(INCFSZ, f,d);
 end;
 procedure TGenCodPic._IORWF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(IORWF, f,d);
 end;
 procedure TGenCodPic._MOVF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(MOVF, f,d);
 end;
 procedure TGenCodPic._MOVWF(const f: byte); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(MOVWF, f);
 end;
 procedure TGenCodPic._NOP(); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(NOP);
 end;
 procedure TGenCodPic._RLF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(RLF, f,d);
 end;
 procedure TGenCodPic._RRF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(RRF, f,d);
 end;
 procedure TGenCodPic._SUBWF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(SUBWF, f,d);
 end;
 procedure TGenCodPic._SWAPF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(SWAPF, f,d);
 end;
 procedure TGenCodPic._XORWF(const f: byte; d: TPIC16destin); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(XORWF, f,d);
 end;
 procedure TGenCodPic._BCF(const f, b: byte); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(BCF, f, b);
 end;
-procedure TGenCodPic._BSF(const f, b: byte); inline;
+procedure TGenCodPic._BSF(const f, b: byte); //inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(BSF, f, b);
 end;
 procedure TGenCodPic._BTFSC(const f, b: byte); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(BTFSC, f, b);
 end;
 procedure TGenCodPic._BTFSS(const f, b: byte); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(BTFSS, f, b);
 end;
 procedure TGenCodPic._ADDLW(const k: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(ADDLW, k);
 end;
 procedure TGenCodPic._ANDLW(const k: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(ANDLW, k);
 end;
 procedure TGenCodPic._CALL(const a: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(CALL, a);
 end;
 procedure TGenCodPic._CLRWDT(); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(CLRWDT);
 end;
 procedure TGenCodPic._GOTO(const a: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(GOTO_, a);
 end;
 procedure TGenCodPic._IORLW(const k: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(IORLW, k);
 end;
 procedure TGenCodPic._MOVLW(const k: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(MOVLW, k);
 end;
 procedure TGenCodPic._RETFIE(); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(RETFIE);
 end;
 procedure TGenCodPic._RETLW(const k: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(RETLW, k);
 end;
 procedure TGenCodPic._RETURN(); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(RETURN);
 end;
 procedure TGenCodPic._SLEEP(); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(SLEEP);
 end;
 procedure TGenCodPic._SUBLW(const k: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(SUBLW, k);
 end;
 procedure TGenCodPic._XORLW(const k: word); inline;
 begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(XORLW, k);
 end;
 procedure TGenCodPic._GOTO_PEND(out igot: integer);
@@ -1502,10 +1537,11 @@ procedure TGenCodPic._GOTO_PEND(out igot: integer);
 }
 begin
   igot := pic.iFlash;  //guarda posición de instrucción de salto
+  pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(GOTO_, 0);  //pone salto indefinido
 end;
 procedure TGenCodPic._LABEL(igot: integer);
-{Termina de codiricar el GOTO_PEND}
+{Termina de codificar el GOTO_PEND}
 begin
   pic.codGotoAt(igot, _PC);
 end;

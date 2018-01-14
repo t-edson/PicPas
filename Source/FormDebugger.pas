@@ -149,8 +149,7 @@ begin
   end else if ACol = 1 then begin
     //Celda normal
     valp := pic.flash[aRow].value;
-    pic.Decode(valp);   //decodifica instrucción
-    txt := pic.Disassembler(true);
+    txt := pic.Disassembler(valp, 0, true);   //desensambla
     //Escribe texto con alineación
     if StringGrid1.RowHeights[Arow] = defHeight*3 then begin
       //Celda con comentario superior y etiqueta
@@ -253,8 +252,7 @@ begin
   end;
   //Obtiene instrucción seleccionada
   valp := pic.flash[StringGrid1.Row].value;
-  pic.Decode(valp);   //decodifica instrucción
-  txt := pic.Disassembler(true);
+  txt := pic.Disassembler(valp, 0, true);
   //Valida si es instrucción
   a := Explode(' ', txt);
   if (high(a)<>1) and (high(a)<>2) then begin

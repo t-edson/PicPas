@@ -2458,7 +2458,6 @@ begin
 end;
 procedure TCompiler.DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);
 begin
-//  AsmList := TStringList.Create;  //crea lista para almacenar ensamblador
   pic.DumpCode(lins, incAdrr, incCom, incVarNam);
 end;
 function TCompiler.RAMusedStr: string;
