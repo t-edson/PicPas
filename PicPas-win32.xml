@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
-  <language Val="de - German"/>
+  <language Val="es - Español"/>
   <StateStatusbar Val="1"/>
   <chkLoadLast Val="True"/>
-  <filesClosed Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile1.pas
+  <filesClosed Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile2.pas
 "/>
-  <SplitterCol Val="536870912"/>
-  <MessPanPan Val="536870912"/>
+  <SplitterCol Val="2368548"/>
+  <MessPanPan Val="2368548"/>
   <VerPanMensaj Val="True"/>
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="225"/>
+  <SynTreeWidth Val="135"/>
   <ViewPanAssem Val="True"/>
-  <viewMode Val="2"/>
-  <MessPanBack Val="-2147483643"/>
-  <MessPanText Val="536870912"/>
-  <MessPanErr Val="255"/>
-  <MessPanSel Val="-2147483633"/>
-  <CodExplBack Val="-2147483643"/>
-  <CodExplText Val="536870912"/>
+  <viewMode Val="0"/>
+  <MessPanBack Val="2368548"/>
+  <MessPanText Val="16777215"/>
+  <MessPanErr Val="5855743"/>
+  <MessPanSel Val="-2147483629"/>
+  <CodExplBack Val="2434341"/>
+  <CodExplText Val="12632256"/>
   <grpFiltypes Val="0"/>
   <TamLet Val="10"/>
   <TipLet Val="Courier New"/>
@@ -29,9 +29,9 @@ D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile1.pas
   <TabEdiState Val="0"/>
   <AutSynChk Val="False"/>
   <Edit>
-    <cTxtNor Val="0"/>
-    <cFonEdi Val="16777215"/>
-    <cLinAct Val="65535"/>
+    <cTxtNor Val="16777215"/>
+    <cFonEdi Val="2368548"/>
+    <cLinAct Val="4210688"/>
     <Autoindent Val="True"/>
     <MarLinAct Val="False"/>
     <ResPalCur Val="True"/>
@@ -42,10 +42,10 @@ D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile1.pas
     <VerPanVer Val="True"/>
     <VerNumLin Val="True"/>
     <VerMarPle Val="True"/>
-    <cFonPan Val="16777215"/>
-    <cTxtPan Val="0"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile2.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile1.pas
+    <cFonPan Val="2105376"/>
+    <cTxtPan Val="12632256"/>
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile2.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.8.3\units\PIC16F877A.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.8.3\temp\NewFile3.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.8.3\units\PIC12F679.pas

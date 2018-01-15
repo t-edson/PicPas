@@ -15,6 +15,11 @@ modelos de PIC.
 memoria RAM disponible del dispositivo.
 * Se agregan los idiomas Ruso e Ucraniano para el compilador y la IDE.
 
+* Se crea el campo TPIC16FlashCell.curBnk para almacenar información sobre el banco de trabajo 
+actual.
+* Se activa la opción para el campo TPIC16FlashCell.curBnk y poder así desensamblar los OpCode
+con información de banco y tener la dirección del OpCode con 9 bits.
+
 PicPas 0.8.2
 ============
 Se incluye el parámetro "modReturn" en el evento TxpEleType.OnLoadToRT, para permitir codificar
