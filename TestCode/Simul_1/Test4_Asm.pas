@@ -1,6 +1,7 @@
 {Rutina de verificación de las rutinas en ensamblador.}
 {$PROCESSOR PIC16F84}
 {$FREQUENCY 8Mhz}
+{$OUTPUTHEX 'output.hex'}
 {$Mode Pascal}
 uses PIC16F84A;
 var

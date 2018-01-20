@@ -1,6 +1,7 @@
 {Test code for validation of Variable declarations and Function Systems.}
 {$PROCESSOR PIC16F84}
 {$FREQUENCY 8Mhz}
+{$OUTPUTHEX 'output.hex'}
 uses PIC16F84A;
 var  //test pin
   pinLed: bit absolute PORTB.0;
