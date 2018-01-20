@@ -607,6 +607,17 @@ Includes the contents of a external file, into de source code:
 x := {$INCLUDE expression.txt};
 ```
 
+#### $OUTPUTHEX
+
+Defines the name of the output binary file *.hex.
+
+```
+{$OUTPUTHEX myoutput.hex}  // Relative path
+{$OUTPUTHEX d:\temp\myoutput.hex}  //Absolute path
+```
+
+When relative path is used, the file will be created in the same folder the Pascal program is.
+
 #### $DEFINE
 
 Define symbols or macros

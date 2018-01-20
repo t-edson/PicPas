@@ -6,7 +6,7 @@ https://github.com/alexpseletr.
 https://github.com/alexpseletr.
 * Se corrige el error que se producía cuando se presionaba Ctrl+Tab y el editor de ensamblador
 estaba oculto.
-* Se incluye la directiva {$PROCESSOR <pic_model>} al inicio de las unidades qeu definen a los
+* Se incluye la directiva {$PROCESSOR <pic_model>} al inicio de las unidades que definen a los
 modelos de PIC.
 * Se incluye un menú contextual en la lista de mensajes de la pantalla principal.
 * Se implementa la opción de recuperar el estado de los archivos abiertos en el editor.
@@ -19,32 +19,13 @@ memoria RAM disponible del dispositivo.
 actual.
 * Se activa la opción para el campo TPIC16FlashCell.curBnk y poder así desensamblar los OpCode
 con información de banco y tener la dirección del OpCode con 9 bits.
-
-PicPas 0.8.2
-============
-Se incluye el parámetro "modReturn" en el evento TxpEleType.OnLoadToRT, para permitir codificar
-adicionalmente la instrucción RETURN y poder optimizar el caso de RETURN y constantes.
-Se reordena y mejora TGenCod.fun_Exit(), para considerar el caso de las interrupciones.
-Se crean las clases TxpSynBlock y TxpSynBlocks (en la unidad XpresElementsPIC), como 
-contenedores para controlar los bloques de sintaxis que se van abriendo en el código fuente.
-Se crea la lista TxpEleBody.lstExitCalls para almacenar las llamadas a exit() desde dentro de 
-los elementos TxpEleBody().
-Se crea la lista TxpEleBody.blocks para almacenar los bloques de sintaxis, y se crean también 
-diversos métodos en TxpEleBody, para la administración de bloques.
-Se elimina el campo TxpEleFun.BankChanged y se crea el campo TxpEleFun.finBnk
-Se elimna la acción "Instrucción Counter" desde el menú principal y se crea la acción "List 
-Report", con un reporte detallado de la compilación.
-Se crea la lista TxpElement.lstCalledAll.
-Se crea el enumerado eltCodeCont y la clase TxpEleCodeCont, como ancestro de TxpEleMain, 
-TxpElefunc y TxpEleUni, para unificar comportamientos.
-Se modifica el código que antes hacía asceso a TxpEleBody, para que ahora se aplique a 
-TxpEleCodeCont.
-Se incluye, en el patrón de pruebas de banco RAM, la verificación del banco  al final de 
-llamadas a procedimientos.
-Se crean el método TxpElement.UpdateCalledAll y los campos curNesting y maxNesting.
-Se habilita la opción de mostrar el nivel de anidamiento usado (USo de pila), en la IDE.
+* Se crea la directiva $OUTPUTHEX.
 
 PENDIENTES
+-Revisar la impleemntación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
+contiene una sola instrucción, evitando saltos innecesarios. Y se podría implementar esta
+optimización, implementando también la fuuncionalidad de manejo automático de bancos en las 
+instrucciones como _MOVWF().
 Terminar de implementar los arreglos.
 Resolver el bug que genera error en:
 var
@@ -84,6 +65,31 @@ Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse
 Incluir el tipo integer con signo.
 Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
 y más de una página de ROM.
+
+PicPas 0.8.2
+============
+Se incluye el parámetro "modReturn" en el evento TxpEleType.OnLoadToRT, para permitir codificar
+adicionalmente la instrucción RETURN y poder optimizar el caso de RETURN y constantes.
+Se reordena y mejora TGenCod.fun_Exit(), para considerar el caso de las interrupciones.
+Se crean las clases TxpSynBlock y TxpSynBlocks (en la unidad XpresElementsPIC), como 
+contenedores para controlar los bloques de sintaxis que se van abriendo en el código fuente.
+Se crea la lista TxpEleBody.lstExitCalls para almacenar las llamadas a exit() desde dentro de 
+los elementos TxpEleBody().
+Se crea la lista TxpEleBody.blocks para almacenar los bloques de sintaxis, y se crean también 
+diversos métodos en TxpEleBody, para la administración de bloques.
+Se elimina el campo TxpEleFun.BankChanged y se crea el campo TxpEleFun.finBnk
+Se elimna la acción "Instrucción Counter" desde el menú principal y se crea la acción "List 
+Report", con un reporte detallado de la compilación.
+Se crea la lista TxpElement.lstCalledAll.
+Se crea el enumerado eltCodeCont y la clase TxpEleCodeCont, como ancestro de TxpEleMain, 
+TxpElefunc y TxpEleUni, para unificar comportamientos.
+Se modifica el código que antes hacía asceso a TxpEleBody, para que ahora se aplique a 
+TxpEleCodeCont.
+Se incluye, en el patrón de pruebas de banco RAM, la verificación del banco  al final de 
+llamadas a procedimientos.
+Se crean el método TxpElement.UpdateCalledAll y los campos curNesting y maxNesting.
+Se habilita la opción de mostrar el nivel de anidamiento usado (USo de pila), en la IDE.
+
 
 PicPas 0.8.1
 ============
