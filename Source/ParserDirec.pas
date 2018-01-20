@@ -125,6 +125,7 @@ type
     procedure ProcIFDEF(lin: string; negated: boolean);
     procedure ProcIF(lin: string; negated: boolean);
     procedure ProcINCLUDE(lin: string; var ctxChanged: boolean);
+    procedure ProcOUTPUTHEX(lin: string);
     procedure ProcMODE;
     procedure ProcMSGBOX;
     procedure ProcWARNING;
@@ -145,7 +146,9 @@ type
     function DefinedMacro(macName: string): boolean;
     function FindMacro(macName: string): TDirMacro;
   public
-    Compiling : boolean;  //Bandera para el compilado
+    hexFile  : string;  //Nombre de archivo de salida
+    Compiling: boolean;  //Bandera para el compilado
+    function ExpandRelPathTo(BaseFile, FileName: string): string;
     procedure ClearMacros;
     constructor Create; override;
     destructor Destroy; override;
@@ -806,6 +809,26 @@ begin
 //No se encontró
   exit(nil);
 end;
+function TParserDirec.ExpandRelPathTo(BaseFile, FileName: string): string;
+{Convierte una ruta relativa (FileName), a una absoluta, usnado como base la ruta de
+otro archivo (BaseFile)}
+var
+  BasePath: RawByteString;
+begin
+   if pos(DirectorySeparator, FileName)=0 then begin
+     //Ruta relativa. Se completa
+     BasePath := ExtractFileDir(BaseFile);
+     if BasePath = '' then begin
+       //No hay de donde completar, usa la ruta actual
+       Result := ExpandFileName(FileName);
+     end else  begin
+       Result := ExtractFileDir(BaseFile) + DirectorySeparator + FileName;
+     end;
+   end else begin
+     //Tiene "DirectorySeparator", se asume que es ruta absoluta, y no se cambia.
+     Result := FileName;
+   end;
+end;
 function TParserDirec.ScanIFDEF(out tok: string): boolean;
 {Explora el texto, hasta encontrar la directiva $ENDIF o $ELSE.  Si llega al
  final del contexto, sin encontrar alguna de estas directivas, devuelve FALSE.}
@@ -938,6 +961,7 @@ begin
   skipWhites;
   //Toma el restante de la cadena
   filPath := copy(lin, lexDir.GetX);
+  //Completa ruta, si es relativa
   if (pos('/', filPath)=0) and (pos('\', filPath)=0) then begin
     //No incluye información de ruta. Asume que está en la misma ruta.
     filPath := ExtractFileDir(mainFile) + DirectorySeparator + filPath;
@@ -955,6 +979,18 @@ begin
   //cIn.curCon.PreErrorMsg := 'Macro '+mac.name+': ';
   ctxChanged := true;   //Marca bandera para indciar que se ha cambiado de contexto
 
+end;
+procedure TParserDirec.ProcOUTPUTHEX(lin: string);
+var
+  filPath: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  filPath := CogExpresion(0).valStr;
+  if HayError then Exit;
+  filPath := ExpandRelPathTo(mainFile, filPath);  //Completa ruta, si es relativa
+  //Por simplicidad se permite realizar esto en la primera y segunda pasada
+  //Auqnue lo más práctico sería en la segunda pasada donde se genera el HEX final.
+  hexfile := filPath;
 end;
 procedure TParserDirec.ProcDEFINE(lin: string);
 var
@@ -1320,16 +1356,17 @@ begin
   end;
   //sigue identificador
   case UpperCase(lexDir.GetToken) of
-  'PROCESSOR': ProcPROCESSOR;
-  'FREQUENCY': ProcFREQUENCY;
-  'CONFIG'   : ProcCONFIG;
-  'INCLUDE'  : ProcINCLUDE(lin, ctxChanged);
-  'DEFINE'   : ProcDEFINE(lin);
-  'IFDEF'    : ProcIFDEF(lin, false);
-  'IFNDEF'   : ProcIFDEF(lin, true);
-  'IF'       : ProcIF(lin, false);
-  'IFNOT'    : ProcIF(lin, true);
-  'ELSE'     : begin
+  'PROCESSOR' : ProcPROCESSOR;
+  'FREQUENCY' : ProcFREQUENCY;
+  'CONFIG'    : ProcCONFIG;
+  'INCLUDE'   : ProcINCLUDE(lin, ctxChanged);
+  'OUTPUTHEX' : ProcOUTPUTHEX(lin);
+  'DEFINE'    : ProcDEFINE(lin);
+  'IFDEF'     : ProcIFDEF(lin, false);
+  'IFNDEF'    : ProcIFDEF(lin, true);
+  'IF'        : ProcIF(lin, false);
+  'IFNOT'     : ProcIF(lin, true);
+  'ELSE'      : begin
     if WaitForEndIF>0 then begin
       {Estamos dentro de un IF, que se supone dio verdadero, de otra forma, no llegaría
       por aquí. De ser así, el ELSE debe ser falso.}
@@ -1354,9 +1391,9 @@ begin
       exit;
     end;
   end;
-  'ENDIF'    : begin
+  'ENDIF'     : begin
     if WaitForEndIF>0 then begin
-      //Se esperaba el delimitador
+      //Se es peraba el delimitador
       Dec(WaitForEndIF);  //para que ya no siga buscando
     end else begin
       //No se esperaba
@@ -1364,14 +1401,14 @@ begin
       exit;
     end;
   end;
-  'MODE'     : ProcMODE;
-  'MSGBOX'   : ProcMSGBOX;
-  'MSGERR'   : ProcMSGERR;
-  'MSGWAR'   : ProcMSGWAR;
-  'INFO'     : ProcINFO;
-  'WARNING'  : ProcWARNING;
-  'ERROR'    : ProcERROR;
-  'SET'      : ProcSET;
+  'MODE'      : ProcMODE;
+  'MSGBOX'    : ProcMSGBOX;
+  'MSGERR'    : ProcMSGERR;
+  'MSGWAR'    : ProcMSGWAR;
+  'INFO'      : ProcINFO;
+  'WARNING'   : ProcWARNING;
+  'ERROR'     : ProcERROR;
+  'SET'       : ProcSET;
   'CLEAR_STATE_RAM': ProcCLEAR_STATE_RAM;
   'SET_STATE_RAM'  : ProcSET_STATE_RAM;
   'SET_MAPPED_RAM' : ProcSET_MAPPED_RAM;

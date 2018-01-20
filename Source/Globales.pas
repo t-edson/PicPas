@@ -93,7 +93,7 @@ begin
     Result := ClearLangId(strEn);
   end;
 end;
-function  LeerParametros: boolean;
+function LeerParametros: boolean;
 {lee la linea de comandos
  Si hay error devuelve TRUE}
 var

@@ -64,7 +64,6 @@ type
     procedure CompileProgram;
     procedure CompileLinkProgram;
   public
-    hexFile: string;  //Nombre de archivo de salida
     OnAfterCompile: procedure of object;   //Al finalizar la compilación.
     {Indica que TCompiler, va a acceder a un archivo, peor está pregunatndo para ver
      si se tiene un Stringlist, con los datos ya caragdos del archivo, para evitar
@@ -2274,7 +2273,7 @@ DebugLn('función terminal: %s con %d var.loc.', [fun.name, fun.nLocalVars]);
 end;
 function TCompiler.hexFilePath: string;
 begin
-  Result := ExtractFileDir(mainFile) + DirectorySeparator + hexFile;
+  Result := ExpandRelPathTo(mainFile, hexfile); //Convierte a ruta absoluta
 end;
 function TCompiler.mainFilePath: string;
 begin
@@ -2299,7 +2298,8 @@ var
 begin
   mode := modPicPas;   //Por defecto en sintaxis nueva
   mainFile := NombArc;
-  hexfile:= StringReplace(ExtractFileName(NombArc),'.pas','.hex', [rfReplaceAll]);
+  hexfile := ChangeFileExt(NombArc, '.hex');     //Obtiene nombre
+  hexfile := hexFilePath;   //Expande nombre si es necesario
   //se pone en un "try" para capturar errores y para tener un punto salida de salida
   //único
   if ejecProg then begin
@@ -2366,7 +2366,7 @@ begin
     cIn.ClearAll;//es necesario por dejar limpio
     //Genera archivo hexa, en la misma ruta del programa
     if Link then begin
-       pic.GenHex(hexFilePath, ConfigWord);  //CONFIG_NULL;
+       pic.GenHex(hexFile, ConfigWord);  //CONFIG_NULL;
     end;
   finally
     ejecProg := false;
