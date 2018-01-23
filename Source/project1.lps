@@ -36,11 +36,10 @@
       <Unit2>
         <Filename Value="Parser.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="2314"/>
-        <CursorPos X="18" Y="2344"/>
-        <FoldState Value=" TL001O piX!Z41L T4503 T5j002 T8C2W311 TMoW6107183K1C171126 p0sc8104111X131J1]IvB08081L]XL]FuK6[X42]oK1I23]Jt5221 T3j8064 piZj30h5 pkGlM0T[94Kj22E]hjElR0=3]aekS06[I4IjU0{a5]A3l10(1]9Al30,2]9clL0{B2[l4l60J2]?XlC0x[b45kN0~R[,48jG2S0121[f4bpK034 plD]y81 T0jBS2A]d2jPN4B]9GjQa4B]ifiWT2A[r4jJW48]9Zi9D5F]9dj1O5D]jAkFBLH]98k1V2C[j56S4C]IJjUh[{051k7P7A[94jbVB9[a5fh8E]ILj6ZOG]9BkKT5G]RaiLq38 piYjHV9E]9fj4UDA[I4iMcBC[R5UZD9[{{58QB5211[n4Xl3e1F[M4kQSA2 pj4Pe1E T6jY02T[Y4_K01B THsF2/5]HLiiB4Zz"/>
+        <TopLine Value="2327"/>
+        <CursorPos X="24" Y="2336"/>
+        <FoldState Value=" T4503 T5j002 T8C2W311 TMoW6107183K1C1711]T3j8064 piZj30h5 pkGlM0T[94Kj22E3 pjElR0=3]aekS06[I4IjU0{a5]A3l10(1]9Al30,2]9clL0{B2[l4l60J2]?XlC0x[b45kN0~R[,48jG2S01212 T0jBS2A]L2jPN4B]9GjQa4B].fiWT2A]9bjJW48]9Zi9D5F]9dj1O5D]jAkFBLH]98k1V2C[j56S4C]IJjUh[{051k7P7A[94jbVB9[a5fh8E]ILj6ZOG]9BkKT5G]RaiLq38 piYjHV9E]9fj4UDA[I4iMcBC[R5UZD9[{{58QB52118 T6jY02T]LX_K01B THsF2/5]HLiiB4ZU"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -67,10 +66,11 @@
       <Unit4>
         <Filename Value="GenCod.pas"/>
         <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="3"/>
-        <TopLine Value="4828"/>
-        <CursorPos X="19" Y="5026"/>
-        <FoldState Value=" T4i103 T5i50{g T7i7E{d T8i8425 piXif434 TMl5011T]A3l20561212 T0lSN23B31F T6mg01 p0y502N pVi-S01E THpC2M]Pk9lE4{u[A4LpF2F4 pj7l14g3]9ElB4M2 piZjX2m[I4gmP2{O1]AZod2+[945lF2E[;4Hm52{:2]JAn74Q[J42mD[l8mS2{Q[A4HnF2{13[A4lc2b]mmaoC2}9]TiYnA2R4 pj4pB2c[b4FlB2h2]%Fm02{6013F"/>
+        <TopLine Value="1767"/>
+        <CursorPos X="20" Y="1815"/>
+        <FoldState Value=" TL00AI pi9i-R623 pF)G245 T4i103 T5i50{g T7i7E{d T8i8425]nXif434 TMl5011T7H6M p0tc810M2@]B-c01021G1D]DvC211A152]41o]H=H3[u431Q[U4R0M1118]jA[=440Q0L1M[Q4I210A1165]h T3l205]ZkUl50S1]9Ckg0H[94BkU[96Ol00H7 pibjK037]ILkX0{h]SjcmZ0s2]96kK0;2]S7lV0V017]Kfo504[T4LjS0N4 plJm40{$[v4QnD0X]9kDl]b[94Q62N[:4KnT0{V[a4RmC0l]9igk50u3]IHka0;1]!Qn604[94AlG0{26]S8lF0/[b4Jl80\2[t5V0c]9jKkI0^[!4dkZ0{D3]AflA]u[,48n70I2 T0lSN27 piYiZm96]9cVFJD[84iaQ38]\6YoFA]8CiAi5H]Qaj9KA[h4XKc27[Y4i1i5J pkHjAo34]QbLHn8]8ZiMa6[q4elGEA9[I54EG]zj0iNB[-51i0E96[a4i0R1A[a5Yff6[/4i3ECG]a4jSR3I[R4jfI5A[95OI8424222F]FXo7I3E[O5AIC]9k4kFR[{F5UibR18 pjLiY[IB6[}z5OEF7[{y50EL9[{X5OT3[96Fb7[{O6CI38 pigjUI3[I4djFIB]siXjBd2[961I7B[j7BH pj3n0R5B[{95gR65 pk4iPQ4G[+5OI3[_W5j7p25]aEjgIB6[\56CGE[R4l3b8B[_P5gZ3C[\4jEt2I[I58U4E[#95KU3E]R2iXU1D[I53U2H[\4iQ+5G pjDiLU5C[R5YC]RT6mg01 p0y502N pVi-a01E THn52{52 pkVnL4{u1]ALpF2F4]*7l14g3]9ElB4M2[}:5X2m[I4gmP2{O01[w4PtJ2E[v4Hm](:2]VAn74Q[J42mD]e1]JZmS2{Q[A4HnF2{1[*4Hlc2b]mmaoC2}9]TiYnA2R4 pj4pB2c[b4FlB2h2 pkFm02{64i"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -90,7 +90,6 @@
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="4"/>
         <CursorPos X="33" Y="18"/>
-        <FoldState Value=" TL001I T4502 T5806011 T8I297 piXj72b014 TMlL0b0G]S3nf0MC]TdjX07317 THo02J T0o182H]QcqaP36211]U1O T6oO01e-"/>
         <ExtraEditorCount Value="2"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -275,7 +274,6 @@
         <EditorIndex Value="2"/>
         <TopLine Value="972"/>
         <CursorPos Y="988"/>
-        <FoldState Value=" TL002A p0-F016 T4602 T590k TMx8410S1F1F19]ZvT]F4191 T7EGD]e8F2651]G3kW08D piajH0B6 plbmC0(2 pk4lf0n4142]Dj4oH2V[94Uk90F017]pYjO0941L[-4nN0,3 T0kYT1I]zOm5L7F]QXj9d3O[94k096H[t4iI/2C]9ZiOb464B pjAlGNI52[B42kIZ4C[n4iZX4B121125 T6mG[{b50v10122L THmX252 pk8oN491]xUo72601[b4Z[q4K!L031E"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit20>

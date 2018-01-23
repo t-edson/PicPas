@@ -1804,6 +1804,10 @@ begin
     if FirstPass then f_byte_div_byte.AddCaller;
   end;
   stVariab_Const: begin
+    if p2^.valInt = 0 then begin
+      GenError('Cannot divide by zero');
+      exit;
+    end;
     SetROBResultExpres_byte(Opt);
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW);
@@ -1841,6 +1845,10 @@ begin
     if FirstPass then f_byte_div_byte.AddCaller;
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    if p2^.valInt = 0 then begin
+      GenError('Cannot divide by zero');
+      exit;
+    end;
     SetROBResultExpres_byte(Opt);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //p1 -> H
