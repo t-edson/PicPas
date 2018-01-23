@@ -120,7 +120,6 @@ end;
 begin
   LCDInit;
   while true do
-  begin
     LCDWriteChar('H'); 
     LCDWriteChar('e'); 
     LCDWriteChar('l'); 
