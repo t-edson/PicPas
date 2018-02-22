@@ -20,9 +20,14 @@ actual.
 * Se activa la opción para el campo TPIC16FlashCell.curBnk y poder así desensamblar los OpCode
 con información de banco y tener la dirección del OpCode con 9 bits.
 * Se crea la directiva $OUTPUTHEX.
+* Se elimina el campo TGenCodPic.BankChanged.
+* Se simplifica TGenCodPic._BANKSEL() convirtiéndolo en procedmiento.
+* Se simplifica TGenCodPic._BANKSEL() haciendo el procesamiento por bits.
+* Se crea TGenCodPic.GenCodBank()
+* Se crean las instrucciones "k", como kADDLW(), kBCF(), ..., aunque no se usan todavía.
 
 PENDIENTES
--Revisar la impleemntación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
+-Revisar la implementación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
 contiene una sola instrucción, evitando saltos innecesarios. Y se podría implementar esta
 optimización, implementando también la fuuncionalidad de manejo automático de bancos en las 
 instrucciones como _MOVWF().

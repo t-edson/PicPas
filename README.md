@@ -787,6 +787,7 @@ To compile PicPas, it's needed to have the following libraries:
 * PicUtils 
 * Xpres 
 * UtilsGrilla
+* ogEditGraf
 
 All of them, must be availables on the GitHub. Check the versions used.
 
