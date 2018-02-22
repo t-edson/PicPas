@@ -410,25 +410,9 @@ function TCompiler.CompileConditionalBody(out FinalBank: byte): boolean;
 Se usa para bloque que se ejecutarán de forma condicional, es decir, que no se
 garantiza que se ejecute siempre. "FinalBank" indica el banco en el que debería
 terminar el bloque.}
-//var
-//  BankChanged0: Boolean;
 begin
-//  BankChanged0 := BankChanged;  //Guarda
-//  BankChanged := false;         //Inicia para detectar cambios
   Result := CompileStructBody(true);  //siempre genera código
   FinalBank := CurrBank;  //Devuelve banco
-//  //Puede haber generado error.
-//  if BankChanged then begin
-//    {Hubo cambio de banco en este bloque. Deja "BankChanged" en TRUE, como indicación
-//    del cambio.}
-//    {Como es bloque condicional, no se sabe si se ejecutará. Fija el banco actual
-//    como indefinido, para forzar al compilador a fijar el banco en la siguiente
-//    instrucción.}
-//    CurrBank := 255;
-//  end else begin
-//    //No hubo cambio de banco, al menos en este bloque (tal vez no generó código.)
-//    BankChanged := BankChanged0;  //Deja con el valor anterior.
-//  end;
 end;
 function TCompiler.CompileNoConditionBody(GenCode: boolean): boolean;
 {Versión de CompileStructBody(), para bloques no condicionales.
@@ -491,6 +475,7 @@ begin
     if res.valBool then begin
       //Es verdadero, siempre se ejecuta
       if not CompileNoConditionBody(true) then exit;
+      //Compila los ELSIF que pudieran haber
       while cIn.tokL = 'elsif' do begin
         cIn.Next;   //toma "elsif"
         if not GetExpressionBool then exit;
@@ -498,6 +483,7 @@ begin
         //Compila el cuerpo pero sin código
         if not CompileNoConditionBody(false) then exit;
       end;
+      //Compila el ELSE final, si existe.
       if cIn.tokL = 'else' then begin
         //Hay bloque ELSE, pero no se ejecutará nunca
         cIn.Next;   //toma "else"
@@ -587,7 +573,7 @@ begin
       end;
     end else begin
       //El resultado de la expresión, está en Z. Caso normal
-      if res.Inverted then begin //_Lógica invertida
+      if res.Inverted then begin //Lógica invertida
         _BTFSC(Z.offs, Z.bit);   //verifica condición
       end else begin
         _BTFSS(Z.offs, Z.bit);   //verifica condición
@@ -830,7 +816,6 @@ end;
 procedure TCompiler.CompileProcBody(fun: TxpEleFun);
 {Compila el cuerpo de un procedimiento}
 begin
-  BankChanged := false; //Inicia bandera  ¿Se usa realmente BankChanged?
   StartCodeSub(fun);    //Inicia codificación de subrutina
   CompileInstruction;
   if HayError then exit;
@@ -1642,13 +1627,11 @@ var
 begin
   p := pic.iFlash;
   CurrBank0      := CurrBank;      //Guarda estado
-  BankChanged0   := BankChanged;   //Guarda estado
   InvertedFromC0 := InvertedFromC; //Guarda estado
 
   CompileInstruction;  //Compila solo para mantener la sintaxis
 
   InvertedFromC := InvertedFromC0; //Restaura
-  BankChanged   := BankChanged0;   //Restaura
   CurrBank      := CurrBank0;      //Restaura
   pic.iFlash := p;     //Elimina lo compilado
   //puede salir con error
@@ -1683,13 +1666,11 @@ var
 begin
   p := pic.iFlash;
   CurrBank0      := CurrBank;      //Guarda estado
-  BankChanged0   := BankChanged;   //Guarda estado
   InvertedFromC0 := InvertedFromC; //Guarda estado
 
   CompileCurBlock;  //Compila solo para mantener la sintaxis
 
   InvertedFromC := InvertedFromC0; //Restaura
-  BankChanged   := BankChanged0;   //Restaura
   CurrBank      := CurrBank0;      //Restaura
   pic.iFlash := p;     //Elimina lo compilado
   //puede salir con error

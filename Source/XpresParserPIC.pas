@@ -67,7 +67,7 @@ public  //Campos generales
   procedure Invert;  //Invierte la lógica del operando
 public  //Campos acceso cuando sea variable.
   function VarName: string; inline; //nombre de la variable, cuando sea de categ. coVariab
-  function offs: TVarOffs; //dirección de la variable
+  function offs : TVarOffs; //dirección de la variable
   function Boffs: TVarOffs; inline; //dirección del byte del bit
   function Loffs: TVarOffs; inline; //dirección del byte bajo
   function Hoffs: TVarOffs; inline; //dirección del byte alto
