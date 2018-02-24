@@ -968,7 +968,8 @@ var
   Op: TOperand;
 begin
   Result.srcDec  := cIn.PosAct;  //Posición de inicio de posibles parámetros adic.
-  Result.isAbsol := false; //bandera
+  Result.isAbsol := false;       //Bandera
+  Result.absVar := nil;          //Por defecto
   if (cIn.tokL <> 'absolute') and (cIn.tok <> '@') then begin
     exit;  //no es variable absoluta
   end;
@@ -1007,7 +1008,7 @@ begin
     end;
   end else if cIn.tokType = tnIdentif then begin
     //Puede ser variable
-    GetOperandIdent(Op);
+    GetOperandIdent(Op); //
     if HayError then exit;
     if Op.Sto <> stVariab then begin
       GenError(ER_EXP_VAR_IDE);
@@ -1016,6 +1017,16 @@ begin
     end;
     //Mapeado a variable. Notar que puede ser una variable temporal, si se usa: <var_byte>.0
     xvar := Op.rVar;
+    if Op.rVarBase=nil then begin
+      Result.absVar := Op.rVar;  //Guarda referencia
+    end else begin
+      {Es un caso como "<Variab.Base>.0", conviene devolver la referencia a <Variab.Base>,
+      en lugar de a la variable "<Variab.Base>.0", considerando que:
+      * GetOperandIdent() usa <Variab.Base>, para registrar la llamada.
+      * Esta referencia se usará luego para ver variables no usadas en
+        TCompiler.CompileLinkProgram().}
+      Result.absVar := Op.rVarBase;  //Guarda referencia
+    end;
     //Ya tiene la variable en "xvar".
     if xvar.typ.IsBitSize then begin //boolean o bit
       IsBit := true;  //Es una dirección de bit
@@ -1376,7 +1387,12 @@ begin
       end;
     end;
     if HayError then exit;
-    //reserva espacio para las variables
+    {Elimina la llamada agregada a la variable, porque se van a agregar llamadas más
+    específicas desde la(s) varaible(s) declaradas.}
+    if adicVarDec.absVar<>nil then begin
+      adicVarDec.absVar.RemoveLastCaller;
+    end;
+    //Reserva espacio para las variables
     for i := 0 to high(varNames) do begin
       xvar := AddVariable(varNames[i], typEleDec, srcPosArray[i]);
       if HayError then break;        //Sale para ver otros errores
@@ -1390,6 +1406,10 @@ begin
       se hace en la primera pasada, y es necesario que estas variables sean válidas.
       * Para tener en la primera pasada, un código más similar al código final.}
       CreateVarInRAM(xvar);  //Crea la variable
+      //Agrega la llamada, específica, desde esta variable.
+      if adicVarDec.absVar<>nil then begin
+        adicVarDec.absVar.AddCaller(xvar);
+      end
     end;
   end else begin
     GenError(ER_SEM_COM_EXP);
@@ -1976,9 +1996,10 @@ procedure TCompiler.CompileLinkProgram;
 ubicar a los diversos elementos que deben compilarse.
 Se debe llamar después de compilar con CompileProgram.
 Esto es lo más cercano a un enlazador, que hay en PicPas.}
-  function RemoveUnusedFunctions: integer;
-  {Explora las funciones, para quitar las referencias de llamadas inexistentes.
-  Devuelve la cantidad de funciones no usadas.}
+  function RemoveUnusedFuncReferences: integer;
+  {Explora las funciones, para quitarle las referencias de funciones no usadas.
+  Devuelve la cantidad de funciones no usadas.
+  Para que esta función trabaje bien, debe estar actualizada "TreeElems.AllFuncs". }
   var
     fun, fun2: TxpEleFun;
   begin
@@ -1996,6 +2017,42 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
         //Incluyendo a funciones del sistema
         for fun2 in listFunSys do begin
           fun2.RemoveCallsFrom(fun.BodyNode);
+        end;
+      end;
+    end;
+  end;
+  function RemoveUnusedVarReferences: integer;
+  {Explora las variables de todo el programa, de modo que a cada una:
+  * Le quita las referencias hechas por variables no usadas.
+  Devuelve la cantidad de variables no usadas.
+  Para que esta función trabaje bien, debe estar actualizada "TreeElems.AllVars" y
+  "TreeElems.AllFuncs", e inclusive "TreeElems.AllVars" debe estar ya filtrada
+  con las funciones no usadas. }
+  var
+    xvar, xvar2: TxpEleVar;
+    fun: TxpEleFun;
+  begin
+    Result := 0;
+    //Quita las referencias de las varaibles no usadas
+    for xvar in TreeElems.AllVars do begin
+      if xvar.nCalled = 0 then begin
+        //Esta es una variable no usada
+        inc(Result);   //Lleva la cuenta
+        //Quita las llamadas que hace a otras funciones
+        for xvar2 in TreeElems.AllVars do begin
+          xvar2.RemoveCallsFrom(xvar);
+//          debugln('Eliminando llamada a %s desde: %s', [xvar2.name, xvar.name]);
+        end;
+      end;
+    end;
+    //Ahora quita las referencias de funciones no usadas
+    for fun in TreeElems.AllFuncs do begin
+      if fun.nCalled = 0 then begin
+        //Esta es una función no usada
+        inc(Result);   //Lleva la cuenta
+        for xvar2 in TreeElems.AllVars do begin
+          xvar2.RemoveCallsFrom(fun.BodyNode);
+//          debugln('Eliminando llamada a %s desde: %s', [xvar2.name, xvar.name]);
         end;
       end;
     end;
@@ -2114,8 +2171,8 @@ begin
   ResetFlashAndRAM;
   ClearError;
   pic.MsjError := '';
-  //Verifica las constantes usadas. Solo en el nodo principal, para no sobrecargar emnsajes.
-  for elem in TreeElems.main.elements do if elem.idClass =  eltCons then begin
+  //Verifica las constantes usadas. Solo en el nodo principal, para no sobrecargar mensajes.
+  for elem in TreeElems.main.elements do if elem.idClass = eltCons then begin
     if elem.nCalled = 0 then begin
       GenWarnPos(WA_UNUSED_CON_, [elem.name], elem.srcDec);
     end;
@@ -2126,7 +2183,7 @@ begin
   noUsed := 0;
   repeat  //Explora en varios niveles
     noUsedPrev := noUsed;   //valor anterior
-    noUsed := RemoveUnusedFunctions;
+    noUsed := RemoveUnusedFuncReferences;
   until noUsed = noUsedPrev;
   ///////////////////////////////////////////////////////////////////////////////
   //Asigna memoria, primero a las variables locales (y parámetros) de las funciones
@@ -2136,7 +2193,7 @@ begin
   //Explora primero a las funciones terminales
   for fun in TreeElems.AllFuncs do if fun.nCalled > 0 then begin
     if not fun.IsTerminal2 then continue;
-DebugLn('función terminal: %s con %d var.loc.', [fun.name, fun.nLocalVars]);
+    //DebugLn('función terminal: %s con %d var.loc.', [fun.name, fun.nLocalVars]);
     //Los parámetros y variables locales aparecen como elementos de la función
     for elem in fun.elements do if elem.idClass = eltVar then begin
       xvar := TxpEleVar(elem);
@@ -2162,9 +2219,14 @@ DebugLn('función terminal: %s con %d var.loc.', [fun.name, fun.nLocalVars]);
       end;
     end;
   end;
-
-  //Reserva espacio para las variables adicionales usadas
+  ///////////////////////////////////////////////////////////////////////////////
   TreeElems.RefreshAllVars;
+  noUsed := 0;
+  repeat  //Explora en varios niveles
+    noUsedPrev := noUsed;   //valor anterior
+    noUsed := RemoveUnusedVarReferences;
+  until noUsed = noUsedPrev;
+  //Reserva espacio para las variables adicionales usadas
   for xvar in TreeElems.AllVars do begin
     if xvar.Parent.idClass = eltFunc then continue;  //Las variables de funciones ya se crearon
     if xvar.nCalled>0 then begin
@@ -2172,6 +2234,7 @@ DebugLn('función terminal: %s con %d var.loc.', [fun.name, fun.nLocalVars]);
       AssignRAMtoVar(xvar);
       if HayError then exit;
     end else begin
+      //Variable no usada
       xvar.ResetAddress;
       if xvar.Parent = TreeElems.main then begin
         //Genera mensaje solo para variables del programa principal.

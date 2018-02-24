@@ -45,6 +45,8 @@ public  //Campos generales
   txt     : string;   //Texto del operando o expresión, tal como aparece en la fuente
   Inverted: boolean; {Este campo se usa para cuando el operando es de tipo Bit o Boolean.
                       Indica que la lógica debe leerse de forma invertida.}
+  rVarBase: TxpEleVar;  {Referencia a variable base, cuando el operando es de tipo:
+                         <variable>.<campo>.<campo>. }
   {"Sto", "Typ" y "rVar" se consideran de solo lectura. Para cambiarlos, se han definido
   los métodos: SetAsConst(), SetAsVariab(), SetAsExpres() y SetAsNull, que ofrecen una
   forma más sencilla y segura que cambiar "Cat", "Typ", y rVar" individualmente (que es
@@ -599,7 +601,7 @@ parte de GetOperand(), pero se separó porque:
 * Es una rutina larga y se piensa agregar más código, aún.
 * Porque se piensa usarla también, de forma independiente.
 Se declara como procedimiento, en lugar de función, para evitar crear copias del
-operando y mejorar así el desempeñó. Incluso se espera que GetOperand(), se declare
+operando y mejorar así el desempeño. Incluso se espera que GetOperand(), se declare
 luego de la misma forma.}
 var
   ele     : TxpElement;
@@ -624,9 +626,14 @@ begin
   end;
 //debugln(' --Element ' + cIn.tok + ':' + ele.Path);
   if ele.idClass = eltVar then begin
-    //es una variable
-    xvar := TxpEleVar(ele);
-    if FirstPass then xvar.AddCaller;   //lleva la cuenta
+    //Es una variable
+    xvar := TxpEleVar(ele);    //Referencia con tipo
+    if FirstPass then begin
+      //Lleva la cuenta de la llamada.
+      {Notar que se agrega la referencia a la variable, pero que finalmente el operando
+      puede apuntar a otra variable, si es que se tiene la forma: <variable>.<campo> }
+      xvar.AddCaller;
+    end;
     cIn.Next;    //Pasa al siguiente
     if xvar.IsRegister then begin
       //Es una variables REGISTER
@@ -635,13 +642,16 @@ begin
       Op.DefineRegister;
     end else begin
       //Es una variable común
-      Op.SetAsVariab(xvar);   //guarda referencia a la variable (y actualiza el tipo).
+      Op.SetAsVariab(xvar);   //Guarda referencia a la variable (y actualiza el tipo).
       {$IFDEF LogExpres} Op.txt:= xvar.name; {$ENDIF}   //toma el texto
       //Verifica si tiene referencia a campos con "."
       if (cIn.tok = '.') or (cIn.tok = '[') then begin
         IdentifyField(Op);
         Op := res;  //notar que se usa "res".
-        if HayError then exit;;
+        if HayError then exit;
+        {Como este operando es de tipo <variable>.<algo>... , actualizamos el campo
+        "rVarBase", y se hace al final porque los métodos Op.SetAsXXXX() }
+        Op.rVarBase := xvar;    //Fija referencia a la variable base
       end;
     end;
   end else if ele.idClass = eltCons then begin  //es constante
@@ -1435,18 +1445,21 @@ procedure TOperand.SetAsConst(xtyp: TxpEleType);
 begin
   FSto := stConst;
   FTyp := xtyp;
+  rVarBase := nil;  //Inicia a este valor
 end;
 procedure TOperand.SetAsVariab(xvar: TxpEleVar);
 {Fija el almacenamiento del Operando como Variable, del tipo de la variable}
 begin
   FSto := stVariab;
-  FVar := xvar;  //No hace falta actualziar el tipo
+  FVar := xvar;    //No hace falta actualziar el tipo
+  rVarBase := nil;  //Inicia a este valor
 end;
 procedure TOperand.SetAsExpres(xtyp: TxpEleType);
 {Fija el almacenamiento del Operando como Expresión, del tipo indicado}
 begin
   FSto := stExpres;
   FTyp := xtyp;
+  rVarBase := nil;  //Inicia a este valor
 end;
 procedure TOperand.SetAsVarRef(VarBase, VarOff: TxpEleVar);
 {Fija el operando como de tipo stVarRefVar.}
@@ -1454,6 +1467,7 @@ begin
   FSto := stVarRefVar;
   FVar := VarBase;
   FVarOff := VarOff;
+  rVarBase := nil;  //Inicia a este valor
 end;
 procedure TOperand.SetAsVarRef(VarBase: TxpEleVar; ValOff: integer);
 {Versión de SetAsVarRef(), con desplazamiento constante.}
@@ -1461,12 +1475,14 @@ begin
   FSto := stVarRefVar;
   FVar := VarBase;
   Fval.ValInt := ValOff;
+  rVarBase := nil;  //Inicia a este valor
 end;
 procedure TOperand.SetAsExpRef(VarBase: TxpEleVar; Etyp: TxpEleType);
 begin
   FSto := stVarRefExp;
   FVar := VarBase;
   FTyp := Etyp;
+  rVarBase := nil;  //Inicia a este valor
 end;
 procedure TOperand.SetAsNull;
 {Configura al operando como de tipo Null}

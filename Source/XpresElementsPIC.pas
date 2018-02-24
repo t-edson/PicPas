@@ -132,11 +132,14 @@ type  //TxpElement y clases previas
   end;
   TxpExitCalls = specialize TFPGObjectList<TxpExitCall>; //lista de variables
 
+  TxpEleVar = class;
+
   {Descripción de la parte adicional en la declaración de una variable (como si
   es ABSOLUTE)}
   TAdicVarDec = record
     //Por el momento, el único parámetro adicional es ABSOLUTE
     isAbsol   : boolean;   //Indica si es ABSOLUTE
+    absVar    : TxpEleVar; //Referencia a variable, cuando es ABSOLUTE <variable>
     absAddr   : integer;   //dirección ABSOLUTE
     absBit    : byte;      //bit ABSOLUTE
     //Posición donde empieza la declaración de parámetros adicionales de la variable
@@ -151,14 +154,15 @@ type  //TxpElement y clases previas
   public  //Gestion de llamadas al elemento
     //Lista de funciones que llaman a esta función.
     lstCallers: TxpListCallers;
-    OnAddCaller: function(elem: TxpElement): TxpEleCaller of object;
+    OnAddCaller: function(elem: TxpElement; callerElem: TxpElement): TxpEleCaller of object;
     function nCalled: integer; virtual; //número de llamadas
-    function AddCaller: TxpEleCaller;
+    function AddCaller(callerElem: TxpElement = nil): TxpEleCaller;
     function IsCalledBy(callElem: TxpElement): boolean; //Identifica a un llamador
     function IsCalledAt(callPos: TSrcPos): boolean;
     function IsDeclaredAt(decPos: TSrcPos): boolean;
     function FindCalling(callElem: TxpElement): TxpEleCaller; //Identifica a un llamada
     function RemoveCallsFrom(callElem: TxpElement): integer; //Elimina llamadas
+    procedure RemoveLastCaller; //Elimina la última llamada
     procedure ClearCallers;  //limpia lista de llamantes
     function DuplicateIn(list: TxpElements): boolean; virtual;
   public  //Gestión de los elementos llamados
@@ -578,14 +582,16 @@ begin
   Result := Parent.elements.IndexOf(self);  //No es muy rápido
 end;
 //Gestion de llamadas al elemento
-function TxpElement.AddCaller: TxpEleCaller;
-{Agrega información sobre el elemento "llamador", es decir, la función/cuerpo que hace
-referencia a este elemento.}
+function TxpElement.AddCaller(callerElem: TxpElement=nil): TxpEleCaller;
+{Agrega información sobre el elemento "llamador", es decir, el elemento que hace
+referencia a este elemento.
+El elemento llamador es "callerElem". Si no se especifica se asumirá un elemento
+llamador por defecto, que debería ser la función/cuerpo desde donde se hace la llamada.}
 begin
   {Lo maneja a través de evento, para poder acceder a información, del elemento actual
   y datos adicionales, a los que no se tiene acceso desde el contexto de esta clase.}
   if OnAddCaller<>nil then begin
-    Result := OnAddCaller(self);
+    Result := OnAddCaller(self, callerElem);
   end else begin
     Result := nil;
   end;
@@ -647,6 +653,11 @@ begin
     end;
   end;
   Result := n;
+end;
+procedure TxpElement.RemoveLastCaller;
+//Elimina el último elemento llamador agregado.
+begin
+  if lstCallers.Count>0 then lstCallers.Delete(lstCallers.Count-1);
 end;
 procedure TxpElement.ClearCallers;
 begin
@@ -1445,7 +1456,7 @@ begin
   end;
 end;
 function TxpEleFun.IsTerminal: boolean;
-{Indica si la función ya no llama a otras funciones. Par que funcione, se debe haber
+{Indica si la función ya no llama a otras funciones. Para que funcione, se debe haber
 llenado primero, "lstCalled".}
 begin
   Result := (lstCalled.Count = 0);

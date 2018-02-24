@@ -411,7 +411,7 @@ begin
   cfgFile.Asoc_Bol('IncAddress', @IncAddress , chkIncAddress , true);
   cfgFile.Asoc_Bol('IncComment', @IncComment , chkIncComment , false);
   cfgFile.Asoc_Bol('IncComment2',@IncComment2, chkIncComment2, false);
-  cfgFile.Asoc_Bol('ExcUnused' , @ExcUnused  , chkExcUnused  , false);
+  cfgFile.Asoc_Bol('ExcUnused' , @ExcUnused  , chkExcUnused  , true);
   cfgFile.Asoc_Bol('IncVarName', @IncVarName , chkIncVarName , true);
   //Configuraciones del compilador
   cfgFile.Asoc_Bol('ShowErMsg' , @ShowErMsg, chkShowErrMsg, true);

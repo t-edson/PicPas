@@ -47,7 +47,7 @@ type
     procedure PutTopComm(cmt: string; replace: boolean = true); inline;
     procedure PutComm(cmt: string); inline;
     procedure PutFwdComm(cmt: string); inline;
-    function AddCaller(elem: TxpElement): TxpEleCaller;
+    function AddCaller(elem: TxpElement; callerElem: TxpElement): TxpEleCaller;
     function ReportRAMusage: string;
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
@@ -320,14 +320,20 @@ begin
   end;
 end;
 
-function TGenCodPic.AddCaller(elem: TxpElement): TxpEleCaller;
+function TGenCodPic.AddCaller(elem: TxpElement; callerElem: TxpElement): TxpEleCaller;
 {Agrega una llamada a un elemento de la sintaxis.}
 var
   fc: TxpEleCaller;
 begin
   fc:= TxpEleCaller.Create;
   //Carga información del estado actual del parser
-  fc.caller := TreeElems.curNode;
+  if callerElem = nil then begin
+    {Por defecto se toma el nodo actual que es el ceurpo de alguna función o el cuerpo
+    del programa principal.}
+    fc.caller := TreeElems.curNode;
+  end else begin
+    fc.caller := callerElem;
+  end;
   fc.curBnk := CurrBank;
   fc.curPos := cIn.ReadSrcPos;
   elem.lstCallers.Add(fc);
