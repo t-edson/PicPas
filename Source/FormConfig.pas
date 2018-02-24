@@ -306,7 +306,8 @@ begin
     //Actualiza las propiedades leídas del tema, en fraCfgSyntax
     fraCfgSyntax.SetPropertiesForTheme(filTheme);
   end;
-  //Guarda primero, para tener actualizado los archivos de sintaxis, cuando se dispare "OnPropertiesChanges"
+  //Guarda primero, para tener actualizado los archivos de sintaxis, cuando se dispare
+  //"OnPropertiesChanges"
   fraCfgSyntax.SaveChanges;
   //Proceso normal
   cfgFile.WindowToProperties;

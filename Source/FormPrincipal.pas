@@ -211,6 +211,7 @@ type
     procedure fraMessagesDblClickMessage(const srcPos: TSrcPos);
     procedure fraSynTreeOpenFile(filname: string);
     procedure fraSynTreeSelectElemen(var elem: TxpElement);
+    procedure LoadAsmSyntaxEd;
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
     procedure MarkErrors;
     procedure VerificarError;
@@ -360,9 +361,19 @@ begin
   comLine := StringReplace(comLine, '$(mainPath)', ExtractFileDir(cxp.mainFilePath), [rfReplaceAll, rfIgnoreCase]);
   comLine := StringReplace(comLine, '$(picModel)', cxp.PicName, [rfReplaceAll, rfIgnoreCase]);
 end;
-procedure TfrmPrincipal.FormCreate(Sender: TObject);
+procedure TfrmPrincipal.LoadAsmSyntaxEd;
+{Carga archivo de sinatxis para el editor de ASM}
 var
   synFile: String;
+begin
+  synFile := rutSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
+  if FileExists(synFile) then begin
+    hlAssem.LoadFromFile(synFile);
+  end else begin
+    MsgErr('Syntax file not found: ' + synFile);
+  end;
+end;
+procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
@@ -386,10 +397,7 @@ begin
   //Carga un resaltador a la ventana de ensamblador
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
-  synFile := rutSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
-  if FileExists(synFile) then begin
-    hlAssem.LoadFromFile(synFile);
-  end;
+  LoadAsmSyntaxEd;
   CT := TCodeTool.Create(fraEditView1, cxp, fraSynTree);
   cxp.OnRequireFileString := @cxp_RequireFileString;
   cxp.OnAfterCompile      := @cxp_AfterCompile;
@@ -612,7 +620,7 @@ begin
   edAsm.Visible      := Config.ViewPanAssem;
   splEdPas.Visible   := Config.ViewPanAssem;
   acViewAsmPan.Checked:= Config.ViewPanAssem;
-
+  //Tamaño de la Barra de Herramientas
   case Config.StateToolbar of
   stb_SmallIcon: begin
     ToolBar1.ButtonHeight:=22;
@@ -648,6 +656,7 @@ begin
   splEdPas.Color := Config.SplitterCol;
   //Configura editor ASM
   Config.ConfigEditor(edAsm);
+  LoadAsmSyntaxEd;
   //Solicita configura los editores activos
   fraEditView1.UpdateSynEditConfig;
   fraEditView1.TabViewMode := Config.TabEdiMode;
