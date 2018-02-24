@@ -14,7 +14,6 @@ modelos de PIC.
 * Se actualiza a la versión 1.2 de PicUtils y se corrige así, un error en el cálculo de la 
 memoria RAM disponible del dispositivo.
 * Se agregan los idiomas Ruso e Ucraniano para el compilador y la IDE.
-
 * Se crea el campo TPIC16FlashCell.curBnk para almacenar información sobre el banco de trabajo 
 actual.
 * Se activa la opción para el campo TPIC16FlashCell.curBnk y poder así desensamblar los OpCode
@@ -35,8 +34,12 @@ así el problema de detectar variables no usadas porque las variables que la refe
 * Se modifica TCompilerBase.GetOperandIdent(), para que actualice TOperand.rVarBase.
 * Se soluciona el problema de ubicar las variables que no son usadas, cuando estas son referenciadas
 por otras variables o funciones no usadas.
+* Se renombran un par de temas de la IDE y se crea uno nuevo.
+* Se corrige la actualización del resaltado de sintaxis para el editor de ensamblador, cuando
+se cambia desde la ventana de configuración.
 
 PENDIENTES
+-Reemplazar las rutinas del generador de código con las instrucciones "k".
 -Revisar la implementación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
 contiene una sola instrucción, evitando saltos innecesarios. Y se podría implementar esta
 optimización, implementando también la funcionalidad de manejo automático de bancos en las 
