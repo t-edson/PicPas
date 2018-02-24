@@ -7,7 +7,6 @@
 * SERIAL COMMUNICATION RS232 (UART) THROUGH SOFTWARE
 * =================================================================================================== ====================================================================================================
 *
-
 Sending and receiving ASCII characters through RS232 serial port creating a
 * UART through software. Any pin of the I / O ports of the microcontroller
 * is valid to be configured as a Transmission (TX) or Reception (RX) line
@@ -229,5 +228,3 @@ begin
   until false;
  
 end.
-
-
