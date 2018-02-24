@@ -25,11 +25,21 @@ con información de banco y tener la dirección del OpCode con 9 bits.
 * Se simplifica TGenCodPic._BANKSEL() haciendo el procesamiento por bits.
 * Se crea TGenCodPic.GenCodBank()
 * Se crean las instrucciones "k", como kADDLW(), kBCF(), ..., aunque no se usan todavía.
+* Se agrega un parámetro a TxpElement.AddCaller() y al evento TxpElement.OnAddCaller()
+* Se cambia de nombre a por RemoveUnusedFunctions() por RemoveUnusedFuncReferences() en la
+unidad Parser.
+* Se crea RemoveUnusedVarReferences() para quitar referencias no usadas de variables y se soluciona 
+así el problema de detectar variables no usadas porque las variables que la referencian, no se usan.
+* Se crea el campo TOperand.rVarBase, para poder determinar la varaible base, en operandode de tipo
+  <variable>.<campo>.
+* Se modifica TCompilerBase.GetOperandIdent(), para que actualice TOperand.rVarBase.
+* Se soluciona el problema de ubicar las variables que no son usadas, cuando estas son referenciadas
+por otras variables o funciones no usadas.
 
 PENDIENTES
 -Revisar la implementación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
 contiene una sola instrucción, evitando saltos innecesarios. Y se podría implementar esta
-optimización, implementando también la fuuncionalidad de manejo automático de bancos en las 
+optimización, implementando también la funcionalidad de manejo automático de bancos en las 
 instrucciones como _MOVWF().
 Terminar de implementar los arreglos.
 Resolver el bug que genera error en:
@@ -51,13 +61,7 @@ métodos por el tema de la comparación. O mejor implementar que sea el tipo quien
 creación de registros, en la variable, como debe ser para implementar tipos personalizados. 
 Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
 se puede reemplazar por SetROUResultExpres_bit().
-Revisar también la posible optimización para variables no usadas:
-var
-  a: byte;  
-  b: byte absolute a;   //Si "b" no se utiliza, aún se sigue marcando "a", como usado.
 
-Activar la optimización de variables y constantes no llamadas, de la misma forma a como 
-se hace con las funciones en TCompiler.CompileLinkProgram().
 Terminar de implementar la asignación de bancos de RAM, después de los lazos.
 Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
 los lazos y condicionales.
