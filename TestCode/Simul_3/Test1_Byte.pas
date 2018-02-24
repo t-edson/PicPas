@@ -4,6 +4,7 @@ escuchar, una serie de pitidos cortos. Si se escucha un pitido
 largo, es que hubo algún error en el resultado de alguna operación.}
 {$PROCESSOR PIC16F877A}
 {$FREQUENCY 8Mhz}
+{$OUTPUTHEX 'output.hex'}
 uses UnitTest, PIC16F877A;
 var
   a, b: byte;

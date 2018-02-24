@@ -1,6 +1,7 @@
 {Test code for validation of Variable declarations and Function Systems.}
 {$PROCESSOR PIC16F877A}
 {$FREQUENCY 8Mhz}
+{$OUTPUTHEX 'output.hex'}
 uses UnitTest, PIC16F877A;
 var  //simple type declarations
   vbit: bit;

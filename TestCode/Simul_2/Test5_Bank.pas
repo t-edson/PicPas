@@ -1,6 +1,7 @@
 {Programa para la verifiación del manejo de bancos RAM.}
 {$PROCESSOR PIC16C63}
 {$FREQUENCY 8Mhz}
+{$OUTPUTHEX 'output.hex'}
 uses PIC16C63,  //Se requiere un MCU con más de un banco 
      UnitTest;  
 var
