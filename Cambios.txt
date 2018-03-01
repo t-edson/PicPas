@@ -1,3 +1,54 @@
+PicPas 0.8.4
+============
+* Se crea el campo TgenCodPic.lastOpCode, para alamacenar la última instrucción compilada, y se
+modifican las instrucciones "k" para que usen este campo.
+* Se Modifican las clases TPicRegister y TPicRegisterBit, en XpresTypesPIC, para agregar el campo 
+"addr" y convertir los campos "offs" y "bank" en propiedades de solo lectura.
+* Se modifican diversas rutinas afectadas, especialmente de la unidad "GenCodPic", para adaptarse 
+a la nueva definición de TPicRegister y TPicRegisterBit.
+* Se pasa a usar la versión 1.3 de PicUtils.
+* Se simplifica la definición del almacenamiento: stVarRefVar y se actualizan las rutinas 
+aefctadas.
+* Se reemplazan diversas rutinas del generador de código, con instrucciones "k".
+* Se cambia por completo los contenedores de las direcciones de memoria de la clase TxpEleVar,
+y se adaptan diversas rutinas para trabajar con este nuevo tipo de almacenamiento.
+
+PENDIENTES
+-Reemplazar las rutinas del generador de código con las instrucciones "k".
+-Revisar la implementación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
+contiene una sola instrucción, evitando saltos innecesarios. 
+-Terminar de implementar los arreglos.
+-Resolver el bug que genera error en:
+var
+  a,b, x: byte;
+begin
+  a := 1;  b := 2;
+  x := byte(a*b) + byte(a*b);
+end.
+
+-Implementar el paso de parámetros usando punteros y por referencia.
+Mejorar el cálculo del uso de la pila de llamadas, ya que no considera las funciones del sistema.
+Agregar patrones de prueba para las optimizaciones.
+-Implementar la reutilización de variables usadas como parámetros, convirtiendo a REGISTER 
+el último parámetro.
+-Definir que todos los bytes de una variable se ubiquen en el mismo banco.
+
+-Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
+se puede reemplazar por SetROUResultExpres_bit().
+Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+Permitir compilar las funciones, como INLINE.
+Revisar el uso de bancos, para funciones del sistema, como delay_ms().
+Implementar las operaciones pendientes en los Word.
+Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+Terminar de implementar las funcionalidades completas de una unidad.
+Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+Incluir el tipo integer con signo.
+Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+
+
 PicPas 0.8.3
 ============
 * Se crean unidades nuevas (y se corrigen algunas) en la carpeta /units. Colaboración de 
@@ -38,45 +89,6 @@ por otras variables o funciones no usadas.
 * Se corrige la actualización del resaltado de sintaxis para el editor de ensamblador, cuando
 se cambia desde la ventana de configuración.
 
-PENDIENTES
--Reemplazar las rutinas del generador de código con las instrucciones "k".
--Revisar la implementación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
-contiene una sola instrucción, evitando saltos innecesarios. Y se podría implementar esta
-optimización, implementando también la funcionalidad de manejo automático de bancos en las 
-instrucciones como _MOVWF().
-Terminar de implementar los arreglos.
-Resolver el bug que genera error en:
-var
-  a,b, x: byte;
-begin
-  a := 1;  b := 2;
-  x := byte(a*b) + byte(a*b);
-end.
-
-Implementar el paso de parámetros usando punteros y por referencia.
-Mejorar el cálculo del uso de la pila de llamadas, ya que no considera las funciones del sistema.
-Agregar patrones de prueba para las optimizaciones.
-Implementar la reutilización de variables usadas como parámetros, convirtiendo a REGISTER 
-el último parámetro.
-Definir que todos los bytes de una variable se ubiquen en el mismo banco.
-Analizar si no conviene definir TxpEleVar.adrByte0 como de tipo bit y así simplificar varios 
-métodos por el tema de la comparación. O mejor implementar que sea el tipo quien defina la 
-creación de registros, en la variable, como debe ser para implementar tipos personalizados. 
-Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
-se puede reemplazar por SetROUResultExpres_bit().
-
-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema, como delay_ms().
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
 
 PicPas 0.8.2
 ============

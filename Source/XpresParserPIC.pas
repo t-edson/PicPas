@@ -35,7 +35,7 @@ private
   FSto   : TStoOperand; //Almacenamiento del operando
   FTyp   : TxpEleType;  //Tipo del operando, cuando no es stVariab
   FVar   : TxpEleVar;   //Referencia a variable
-  FVarOff: TxpEleVar;   //Referencia a variable
+  //FVarOff: TxpEleVar;   //Referencia a variable
   FVal   : TConsValue;  //Valores constantes, cuando el operando es constante
   function GetTyp: TxpEleType;
   procedure SetvalBool(AValue: boolean);
@@ -54,11 +54,11 @@ public  //Campos generales
   property Sto : TStoOperand read FSto;  //Alamcenamiento de operando
   property Typ : TxpEleType read GetTyp; //Tipo del operando
   property rVar: TxpEleVar  read FVar;   //Referencia a la variable.
-  property rVarOff: TxpEleVar read FVarOff;   //Referencia a la variable.
+  //property rVarOff: TxpEleVar read FVarOff;   //Referencia a la variable.
   procedure SetAsConst(xtyp: TxpEleType);
   procedure SetAsVariab(xvar: TxpEleVar);
   procedure SetAsExpres(xtyp: TxpEleType);
-  procedure SetAsVarRef(VarBase, VarOff: TxpEleVar);
+  procedure SetAsVarRef(VarBase: TxpEleVar);
   procedure SetAsVarRef(VarBase: TxpEleVar; ValOff: integer);
   procedure SetAsExpRef(VarBase: TxpEleVar; Etyp: TxpEleType);
   procedure SetAsNull;
@@ -75,7 +75,8 @@ public  //Campos acceso cuando sea variable.
   function Hoffs: TVarOffs; inline; //dirección del byte alto
   function Eoffs: TVarOffs; inline; //dirección del byte alto
   function Uoffs: TVarOffs; inline; //dirección del byte alto
-  function bank: TVarBank; inline;  //banco
+  function bank : TVarBank; inline;  //banco
+  function addr : TVarOffs; //dirección absoluta de la variable
   function Lbank: TVarBank; inline;  //banco
   function bit : byte; inline;  //posición del bit
 public  //Campos de acceso a los valores constantes
@@ -1269,9 +1270,9 @@ function TOperand.offs: TVarOffs;
 begin
   if FSto = stVarRefVar then begin
     //Caso especial, de stVarRefVar
-    if FVar = nil then
-      Result := FVarOff.offs
-    else
+//    if FVar = nil then
+//      Result := FVarOff.offs
+//    else
       Result := FVar.offs;
   end else begin
     //Para todos los otros casos, esto debe funcionar, según la docuemntación.
@@ -1305,14 +1306,18 @@ puede se el caso stVarRefVar. }
 begin
   if FSto = stVarRefVar then begin
     //Caso especial, de stVarRefVar
-    if FVar = nil then
-      Result := FVarOff.bank
-    else
+//    if FVar = nil then
+//      Result := FVarOff.bank
+//    else
       Result := FVar.bank;
   end else begin
     //Para todos los otros casos, esto debe funcionar, según la docuemntación.
     Result := FVar.bank;
   end;
+end;
+function TOperand.addr: TVarOffs;
+begin
+  Result := FVar.addr;
 end;
 function TOperand.Lbank: TVarBank;
 {Banco del byte bajo, cuando es de tipo Word.}
@@ -1404,13 +1409,7 @@ begin
   end else if Sto = stVarRefVar then begin
     //Variable referenciada por variables.
     //Se implementa de acuerdo a la Doc. Técnica - Sección "Operandos sVarRef"
-    if FVar = nil then begin
-      //Debe ser puntero. Devuelve el tipo original.
-      Result := FVarOff.typ.refType;
-    end else begin
-      //Debe ser arreglo
-      Result := FVar.typ;
-    end;
+    Result := FVar.typ.refType;   //¿No debería ser solo FVar.typ?
   end else if Sto = stVarRefExp then begin
     //Variable referenciada por expresión.
     //Se implementa de acuerdo a la Doc. Técnica - Sección "Operandos sExpRef"
@@ -1461,12 +1460,11 @@ begin
   FTyp := xtyp;
   rVarBase := nil;  //Inicia a este valor
 end;
-procedure TOperand.SetAsVarRef(VarBase, VarOff: TxpEleVar);
+procedure TOperand.SetAsVarRef(VarBase: TxpEleVar);
 {Fija el operando como de tipo stVarRefVar.}
 begin
   FSto := stVarRefVar;
   FVar := VarBase;
-  FVarOff := VarOff;
   rVarBase := nil;  //Inicia a este valor
 end;
 procedure TOperand.SetAsVarRef(VarBase: TxpEleVar; ValOff: integer);

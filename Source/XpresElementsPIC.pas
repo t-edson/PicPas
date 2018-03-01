@@ -340,19 +340,37 @@ type //Clases de elementos
     {Indica si la variables es temporal, es decir que se ha creado solo para acceder a
     una parte de otra variable, que si tiene almacenamiento físico.}
     IsTmp      : boolean;
-    //Campos para guardar las direcciones físicas asignadas en RAM.
-    adrBit  : TPicRegisterBit; //Dirección física, cuando es de tipo Bit/Boolean
-    adrByte0: TPicRegister;    //Dirección física, cuando es de tipo Byte/Char/Word/DWord
-    adrByte1: TPicRegister;    //Dirección física, cuando es de tipo Word/DWord
-    adrByte2: TPicRegister;    //Dirección física, cuando es de tipo DWord
-    adrByte3: TPicRegister;    //Dirección física, cuando es de tipo DWord
+  private //Campos para devolver direcciones como TPicRegister y TPicRegisterBit
+    adrBitTmp  : TPicRegisterBit; //Dirección física, cuando es de tipo Bit/Boolean
+    adrByteTmp : TPicRegister;    //Dirección física, cuando es de tipo Byte/Char/Word/DWord
+  public  //Campos para guardar las direcciones físicas asignadas en RAM.
+    {Direcciones base. La dirección de inicio de la variable debe ser siempre addr0.
+     Se usan addr0 y bit0 para almacenar tipos de 1 bit
+     Se usan addr0 y addr1 para almacenar tipos de 2 bytes
+     Se usan addr0, addr1, addr2 y addr3 para almacenar tipos de 4 bytes.
+     Las direcciones addr0, addr1, addr2 y addr3 son normalmente consecutivas, pero
+     hay excepciones.
+    }
+    addr0: word;   //Dirección base.
+    bit0 : byte;   //Posición de bit base
+    addr1: word;
+    addr2: word;
+    addr3: word;
+    //Devuelve las direcciones como TPicRegister y TPicRegisterBit
+    function adrBit  : TPicRegisterBit; //Dirección física, cuando es de tipo Bit/Boolean
+    function adrByte0: TPicRegister;    //Dirección física, cuando es de tipo Byte/Char/Word/DWord
+    function adrByte1: TPicRegister;    //Dirección física, cuando es de tipo Word/DWord
+    function adrByte2: TPicRegister;    //Dirección física, cuando es de tipo DWord
+    function adrByte3: TPicRegister;    //Dirección física, cuando es de tipo DWord
+    //Estos campos deberían desaparecer
     function bank: TVarBank;   //Banco de la dirección de la variable
     function offs: TVarOffs;    //Dirección relativa de inicio
-    function AbsAddr : word;   //Devuelve la dirección absoluta de la variable
-    function AbsAddrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
-    function AbsAddrH: word;   //Devuelve la dirección absoluta de la variable (HIGH)
-    function AbsAddrE: word;   //Devuelve la dirección absoluta de la variable (HIGH)
-    function AbsAddrU: word;   //Devuelve la dirección absoluta de la variable (HIGH)
+
+    function addr : word;   //Devuelve la dirección absoluta de la variable
+    function addrL: word;   //Devuelve la dirección absoluta de la variable (LOW)
+    function addrH: word;   //Devuelve la dirección absoluta de la variable (HIGH)
+    function addrE: word;   //Devuelve la dirección absoluta de la variable (HIGH)
+    function addrU: word;   //Devuelve la dirección absoluta de la variable (HIGH)
     function AddrString: string; //Devuelve la dirección física como cadena
     function BitMask: byte;    //Máscara de bit, de acuerdo al valor del campo "bit".
     procedure ResetAddress;    //Limpia las direcciones físicas
@@ -942,6 +960,34 @@ procedure TxpEleVar.Settyp(AValue: TxpEleType);
 begin
   ftyp := AValue;
 end;
+
+function TxpEleVar.adrBit: TPicRegisterBit;
+begin
+  adrBitTmp.addr := addr0;
+  adrBitTmp.bit  := bit0;;
+  Result := adrBitTmp;
+end;
+function TxpEleVar.adrByte0: TPicRegister;
+begin
+  adrByteTmp.addr := addr0;
+  Result := adrByteTmp;
+end;
+function TxpEleVar.adrByte1: TPicRegister;
+begin
+  adrByteTmp.addr := addr1;
+  Result := adrByteTmp;
+end;
+function TxpEleVar.adrByte2: TPicRegister;
+begin
+  adrByteTmp.addr := addr2;
+  Result := adrByteTmp;
+end;
+function TxpEleVar.adrByte3: TPicRegister;
+begin
+  adrByteTmp.addr := addr3;
+  Result := adrByteTmp;
+end;
+
 function TxpEleVar.bank: TVarBank;
 {Devuelve el banco de memoria en donde se ubica la variable actual. Asumiendo que toda
 la variables se ubica en el mismo banco.}
@@ -965,59 +1011,50 @@ procedure TxpEleVar.SetHavAdicPar(AValue: boolean);
 begin
   adicPar.isAbsol := Avalue;  //De momento, es el único parámetro adicional
 end;
-function TxpEleVar.AbsAddr: word;
+function TxpEleVar.addr: word;
 {Devuelve la dirección absoluta de la variable. Tener en cuenta que la variable, no
 siempre tiene un solo byte, así que se trata de devolver siempre la dirección del
 byte de menor peso.}
 begin
   if typ.catType = tctAtomic then begin
     //Tipo básico
-    if (typ = typBit) or (typ = typBool) then begin
-      Result := adrBit.AbsAdrr;
-    end else if (typ = typByte) or (typ = typChar) then begin
-      Result := adrByte0.AbsAdrr;
-    end else if (typ = typWord) or (typ = typDWord) then begin
-      Result := adrByte0.AbsAdrr;
-    end else begin
-      Result := ADRR_ERROR;
-    end;
+    Result := addr0;
   end else if typ.catType = tctArray then begin
     //Arreglos
-    if (typ.refType = typByte) or (typ.refType = typChar) then begin
-      Result := adrByte0.AbsAdrr;
-    end else if (typ.refType = typWord) then begin
-      Result := adrByte0.AbsAdrr;
-    end else begin
-      Result := ADRR_ERROR;
-    end;
+    Result := addr0;
   end else if typ.catType = tctPointer then begin
     //Los punteros cortos son como bytes
-    Result := adrByte0.AbsAdrr;
+    Result := addr0;
   end else begin
     //No soportado
     Result := ADRR_ERROR;
   end;
 end;
-function TxpEleVar.AbsAddrL: word;
+function TxpEleVar.addrL: word;
 {Dirección absoluta de la variable de menor pero, cuando es de tipo WORD.}
 begin
   if typ.catType = tctAtomic then begin
-    if (typ = typWord) or (typ = typDWord) then begin
-      Result := adrByte0.AbsAdrr;
-    end else begin
-      Result := ADRR_ERROR;
-    end;
+    Result := addr0;
   end else begin
     //No soportado
     Result := ADRR_ERROR;
   end;
 end;
-function TxpEleVar.AbsAddrH: word;
+function TxpEleVar.addrH: word;
 {Dirección absoluta de la variable de mayor pero, cuando es de tipo WORD.}
 begin
   if typ.catType = tctAtomic then begin
-    if (typ = typWord) or (typ = typDWord) then begin
-      Result := adrByte1.AbsAdrr;
+    Result := addr1;
+  end else begin
+    //No soportado
+    Result := ADRR_ERROR;
+  end;
+end;
+function TxpEleVar.addrE: word;
+begin
+  if typ.catType = tctAtomic then begin
+    if (typ = typDWord) then begin
+      Result := adrByte2.addr;
     end else begin
       Result := ADRR_ERROR;
     end;
@@ -1026,24 +1063,11 @@ begin
     Result := ADRR_ERROR;
   end;
 end;
-function TxpEleVar.AbsAddrE: word;
+function TxpEleVar.addrU: word;
 begin
   if typ.catType = tctAtomic then begin
     if (typ = typDWord) then begin
-      Result := adrByte2.AbsAdrr;
-    end else begin
-      Result := ADRR_ERROR;
-    end;
-  end else begin
-    //No soportado
-    Result := ADRR_ERROR;
-  end;
-end;
-function TxpEleVar.AbsAddrU: word;
-begin
-  if typ.catType = tctAtomic then begin
-    if (typ = typDWord) then begin
-      Result := adrByte3.AbsAdrr;
+      Result := adrByte3.addr;
     end else begin
       Result := ADRR_ERROR;
     end;
@@ -1084,40 +1108,21 @@ begin
 end;
 procedure TxpEleVar.ResetAddress;
 begin
-  adrBit.bank := 0;
-  adrBit.offs := 0;
-  adrBit.bit := 0;
-
-  adrByte0.bank := 0;
-  adrByte0.offs := 0;
-
-  adrByte1.bank := 0;
-  adrByte1.offs := 0;
-
-  adrByte2.bank := 0;
-  adrByte2.offs := 0;
-
-  adrByte3.bank := 0;
-  adrByte3.offs := 0;
+  addr0 := 0;
+  bit0 := 0;
 
 end;
 constructor TxpEleVar.Create;
 begin
   inherited;
   idClass:=eltVar;
-  adrBit:= TPicRegisterBit.Create;  //
-  adrByte0:= TPicRegister.Create;
-  adrByte1:= TPicRegister.Create;
-  adrByte2:= TPicRegister.Create;
-  adrByte3:= TPicRegister.Create;
+  adrBitTmp  := TPicRegisterBit.Create;  //
+  adrByteTmp := TPicRegister.Create;
 end;
 destructor TxpEleVar.Destroy;
 begin
-  adrByte0.Destroy;
-  adrByte1.Destroy;
-  adrByte2.Destroy;
-  adrByte3.Destroy;
-  adrBit.Destroy;
+  adrBitTmp.Destroy;
+  adrByteTmp.Destroy;
   inherited Destroy;
 end;
 

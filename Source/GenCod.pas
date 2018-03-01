@@ -52,6 +52,13 @@ type
     protected
       procedure callParam(fun: TxpEleFun);
       procedure callFunct(fun: TxpEleFun);
+    private  //Accesos a propeidades de p1^ y p2^.
+      function bit1: TPicRegisterBit;
+      function bit2: TPicRegisterBit;
+      function byte1: TPicRegister;
+      function byte2: TPicRegister;
+      function valor1: word;
+      function valor2: word;
     private  //Operaciones con Bit
 //      f_byteXbyte_byte: TxpEleFun;  //índice para función
       f_byte_mul_byte_16: TxpEleFun;  //índice para función
@@ -250,8 +257,32 @@ function IsTheSameBitVar(var1, var2: TxpEleVar): boolean; inline;
 {Indica si dos variables bit son la misma, es decir que apuntan, a la misma dirección
 física}
 begin
-  Result := (var1.adrBit.offs = var2.adrBit.offs) and
-            (var1.adrBit.bit  = var2.adrBit.bit) ;
+  Result := (var1.addr0 = var2.addr0) and (var1.bit0 = var2.bit0);
+end;
+//Accesos a propeidades de p1^ y p2^.
+function TGenCod.valor1: word; inline;
+begin
+  Result := p1^.valInt;
+end;
+function TGenCod.valor2: word; inline;
+begin
+  Result := p2^.valInt;
+end;
+function TGenCod.byte1: TPicRegister; inline;
+begin
+  Result := p1^.rVar.adrByte0;
+end;
+function TGenCod.byte2: TPicRegister; inline;
+begin
+  Result := p2^.rVar.adrByte0;
+end;
+function TGenCod.bit1: TPicRegisterBit; inline;
+begin
+  Result := p1^.rVar.adrBit;
+end;
+function TGenCod.bit2: TPicRegisterBit; inline;
+begin
+  Result := p2^.rVar.adrBit;
 end;
 ////////////operaciones con Bit
 procedure TGenCod.ROB_bit_asig_bit(Opt: TxpOperation; SetRes: boolean);
@@ -267,11 +298,9 @@ begin
     {Actualmente no existen constantes de tipo "Bit", ya que el número menor que se
     reconoce es de typo byte. Por eso se define ROB_bit_asig_byte(). }
     if p2^.valBool then begin
-      _BANKSEL(p1^.bank);
-      _BSF(p1^.offs, p1^.bit);
+      kBSF(bit1);
     end else begin
-      _BANKSEL(p1^.bank);
-      _BCF(p1^.offs, p1^.bit);
+      kBCF(bit1);
     end;
   end;
   stVariab: begin
@@ -280,52 +309,25 @@ begin
       //Es asignación de la misma variable.
       if p2^.Inverted then begin  //Es a := not a
           //verifica error.
-        _MOVLW(p1^.rVar.BitMask);  //carga máscara
-        _BANKSEL(p1^.bank);
-        _XORWF(p1^.offs, toF);
+        kMOVLW(p1^.rVar.BitMask);  //carga máscara
+        kXORWF(byte1, toF);  //Se usa como byte
       end else begin  //Es a := a
         PutTopComm('No code, by optimizing.');
       end;
     end else begin
       //Es asignación de otra variable
-      if p2^.Inverted then begin
-        if p1^.bank = p2^.bank then begin //Están en el mismo banco
-          //No se usa el registro W
-          _BANKSEL(p1^.bank);
-          _BCF(p1^.offs, p1^.bit);
-          _BTFSS(p2^.offs, p2^.bit);
-          _BSF(p1^.offs, p1^.bit);
-        end else begin  //Están en bancos diferentes
-          //No se usa el registro W
-          _BANKSEL(p1^.bank);
-          _BCF(p1^.offs, p1^.bit);
-          _BANKSEL(p2^.bank);
-          _BTFSC(p2^.offs, p2^.bit);
-          _GOTO_PEND(dg);  //salto pendiente
-          _BANKSEL(p1^.bank);  //cantidad de instrucciones
-          _BSF(p1^.offs, p1^.bit);
-          pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-          _BANKRESET;   //porque no se puede predecir el banco en este punto
-        end;
-      end else begin
-        if p1^.bank = p2^.bank then begin //Están en el mismo banco
-          //No se usa el registro W
-          _BANKSEL(p1^.bank);
-          _BCF(p1^.offs, p1^.bit);
-          _BTFSC(p2^.offs, p2^.bit);
-          _BSF(p1^.offs, p1^.bit);
-        end else begin  //Están en bancos diferentes
-          //No se usa el registro W
-          _BANKSEL(p1^.bank);
-          _BCF(p1^.offs, p1^.bit);
-          _BANKSEL(p2^.bank);
-          _BTFSS(p2^.offs, p2^.bit);
-          _GOTO_PEND(dg);  //salto pendiente
-          _BANKSEL(p1^.bank);  //cantidad de instrucciones
-          _BSF(p1^.offs, p1^.bit);
-          pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-          _BANKRESET;   //porque no se puede predecir el banco en este punto
-        end;
+      if p1^.rVar.bank = p2^.rVar.bank then begin //Están en el mismo banco
+        //No se usa el registro W
+        kBCF(bit1);
+        if p2^.Inverted then kBTFSS(bit2) else kBTFSC(bit2);
+        kBSF(bit1);
+        //No hay problema con el banco final, porque es el mismo
+      end else begin  //Están en bancos diferentes
+        //No se usa el registro W
+        kBCF(bit1);
+        if p2^.Inverted then kBTFSS(bit2) else kBTFSC(bit2);
+        kBSF(bit1);
+        CurrBank := 255; //No se puede predecir el banco
       end;
     end;
   end;
@@ -333,16 +335,14 @@ begin
     SetROBResultExpres_bit(Opt, false);  //Realmente, el resultado no es importante
     if p2^.Inverted then begin  //está invertido
       //No se usa el registro W
-      _BANKSEL(p1^.bank);
-      _BCF(p1^.offs, p1^.bit);
-      _BTFSS(Z.offs, Z.bit);
-      _BSF(p1^.offs, p1^.bit);
+      kBCF(bit1);
+      kBTFSS(Z);
+      kBSF(bit1);
     end else begin  //caso normal
       //No se usa el registro W
-      _BANKSEL(p1^.bank);
-      _BCF(p1^.offs, p1^.bit);
-      _BTFSC(Z.offs, Z.bit);
-      _BSF(p1^.offs, p1^.bit);
+      kBCF(bit1);
+      kBTFSC(Z);
+      kBSF(bit1);
     end;
   end;
   else
@@ -360,12 +360,10 @@ begin
     {Esta es la única opción válida, pero solo para los valores 0 y 1}
     if p2^.valInt = 0 then begin
       //No se usa el registro W
-      _BANKSEL(p1^.bank);
-      _BCF(p1^.offs, p1^.bit);
+      kBCF(bit1);
     end else if p2^.valInt = 1 then begin
       //No se usa el registro W
-      _BANKSEL(p1^.bank);
-      _BSF(p1^.offs, p1^.bit);
+      kBSF(bit1);
     end else begin
       GenError('Invalid value for a bit variable.'); exit;
     end;
@@ -452,23 +450,19 @@ begin
         end else if p2^.Inverted then begin
           SetROBResultExpres_bit(Opt, false);  //Fija resultado
           //Mueve p2 a Z
-          _BANKSEL(p2^.bank);
-          _MOVLW(p2^.rVar.BitMask);
-          _ANDWF(p2^.offs, toW);  //Z aparece normal
+          kMOVLW(p2^.rVar.BitMask);
+          kANDWF(byte2, toW);  //Z aparece normal
           //Aplica un AND entre Z y p1,
-          _BANKSEL(p1^.bank);
-          _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
-          _BCF(Z.offs, Z.bit);     //Si es 0, devuelve cero
+          kBTFSS(bit1);   //Si es 1, deja tal cual
+          kBCF(Z);     //Si es 0, devuelve cero
         end else begin  //Caso normal
           SetROBResultExpres_bit(Opt, true);  //Fija resultado, con lógica invertida
           //Mueve p2 a Z
-          _BANKSEL(p2^.bank);
-          _MOVLW(p2^.rVar.BitMask);
-          _ANDWF(p2^.offs, toW);  //Z está invertido
+          kMOVLW(p2^.rVar.BitMask);
+          kANDWF(byte2, toW);  //Z está invertido
           //Aplica un AND entre Z' y p1. Trabajamos con lógica invertida, por optimización
-          _BANKSEL(p1^.bank);
-          _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual (pero sigue con lógica invertida)
-          _BSF(Z.offs, Z.bit);       //Si es 0, devuelve cero (1 porque debe quedar con lógica invertida)
+          kBTFSS(bit1); //Si es 1, deja tal cual (pero sigue con lógica invertida)
+          kBSF(Z);       //Si es 0, devuelve cero (1 porque debe quedar con lógica invertida)
         end;
       end;
     end;
@@ -482,21 +476,18 @@ begin
       end else if p1^.Inverted then begin  //lógica invertida en p1
         SetROBResultExpres_bit(Opt, false); //Fija resultado
         //Aplica un AND entre p1' y Z.
-        _BANKSEL(p1^.bank);
-        _BTFSC(p1^.offs, p1^.bit); //Si es 0, deja tal cual
-        _BCF(Z.offs, Z.bit);      //Si es 1, devuelve cero
+        kBTFSC(bit1); //Si es 0, deja tal cual
+        kBCF(Z);      //Si es 1, devuelve cero
       end else if p2^.Inverted then begin  //lógica invertida en Z
         SetROBResultExpres_bit(Opt, true); //Deja la lógica invertida por optimización
         //Aplica un AND entre p1 y Z'.
-        _BANKSEL(p1^.bank);
-        _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual
-        _BSF(Z.offs, Z.bit);       //Si es 0, devuelve cero (1, porque es lógica es invertida)
+        kBTFSS(bit1); //Si es 1, deja tal cual
+        kBSF(Z);      //Si es 0, devuelve cero (1, porque es lógica es invertida)
       end else begin  //lógica normal
         SetROBResultExpres_bit(Opt, false); //Fija resultado
         //Aplica un AND entre p1 y Z.
-        _BANKSEL(p1^.bank);
-        _BTFSS(p1^.offs, p1^.bit); //Si es 1, deja tal cual
-        _BCF(Z.offs, Z.bit);      //Si es 0, devuelve cero
+        kBTFSS(bit1); //Si es 1, deja tal cual
+        kBCF(Z);      //Si es 0, devuelve cero
       end;
     end;
     stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
@@ -611,23 +602,19 @@ begin
         end else if p2^.Inverted then begin
           SetROBResultExpres_bit(Opt, false);  //Fija resultado
           //Mueve p2 a Z
-          _BANKSEL(p2^.bank);
-          _MOVLW(p2^.rVar.BitMask);
-          _ANDWF(p2^.offs, toW);  //Z aparece normal
+          kMOVLW(p2^.rVar.BitMask);
+          kANDWF(byte2, toW);  //Z aparece normal
           //Aplica un OR entre Z y p1,
-          _BANKSEL(p1^.bank);
-          _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
-          _BSF(Z.offs, Z.bit);     //Si es 1, devuelve uno
+          kBTFSC(bit1);   //Si es 0, deja tal cual
+          kBSF(Z);     //Si es 1, devuelve uno
         end else begin  //Caso normal
           SetROBResultExpres_bit(Opt, true);  //Fija resultado, con lógica invertida
           //Mueve p2 a Z
-          _BANKSEL(p2^.bank);
-          _MOVLW(p2^.rVar.BitMask);
-          _ANDWF(p2^.offs, toW);  //Z está invertido
+          kMOVLW(p2^.rVar.BitMask);
+          kANDWF(byte2, toW);  //Z está invertido
           //Aplica un OR entre p1 y Z'. Trabajamos con lógica invertida, por optimización
-          _BANKSEL(p1^.bank);
-          _BTFSC(p1^.offs, p1^.bit); //Si es 0, deja tal cual (pero sigue con lógica invertida)
-          _BCF(Z.offs, Z.bit);       //Si es 1, devuelve 1 (0 porque debe quedar con lógica invertida)
+          kBTFSC(bit1); //Si es 0, deja tal cual (pero sigue con lógica invertida)
+          kBCF(Z);       //Si es 1, devuelve 1 (0 porque debe quedar con lógica invertida)
         end;
       end;
     end;
@@ -641,21 +628,18 @@ begin
       end else if p1^.Inverted then begin  //lógica invertida
         SetROBResultExpres_bit(Opt, false);  //Fija resultado
         //Aplica un OR entre p1' y Z.
-        _BANKSEL(p1^.bank);
-        _BTFSS(p1^.offs, p1^.bit);   //Si es 1, deja tal cual
-        _BSF(Z.offs, Z.bit);     //Si es 0, devuelve uno
+        kBTFSS(bit1);   //Si es 1, deja tal cual
+        kBSF(Z);     //Si es 0, devuelve uno
       end else if p2^.Inverted then begin  //lógica invertida en Z
         SetROBResultExpres_bit(Opt, true); //Deja la lógica invertida por optimización
         //Aplica un OR entre p1 y Z.
-        _BANKSEL(p1^.bank);
-        _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
-        _BCF(Z.offs, Z.bit);     //Si es 1, devuelve uno (0 porque es lógica invertida)
+        kBTFSC(bit1);   //Si es 0, deja tal cual
+        kBCF(Z);     //Si es 1, devuelve uno (0 porque es lógica invertida)
       end else begin   //lógica normal
         SetROBResultExpres_bit(Opt, false);  //Fija resultado
         //Aplica un OR entre p1 y Z.
-        _BANKSEL(p1^.bank);
-        _BTFSC(p1^.offs, p1^.bit);   //Si es 0, deja tal cual
-        _BSF(Z.offs, Z.bit);     //Si es 1, devuelve uno
+        kBTFSC(bit1);   //Si es 0, deja tal cual
+        kBSF(Z);     //Si es 1, devuelve uno
       end;
     end;
     stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
@@ -756,42 +740,33 @@ begin
           if p1^.bit = p2^.bit then begin
             //Están en el mismo bit, se puede optimizar
             SetROBResultExpres_bit(Opt, true);  //Fija resultado
-            _BANKSEL(p2^.bank);
-            _MOVF(p2^.offs, toW);  //mueve a W
-            _BANKSEL(p1^.bank);
-            _XORWF(p1^.offs, toW);      //APlica XOR,
-            _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
+            kMOVF(byte2, toW);  //mueve a W
+            kXORWF(byte1, toW);      //APlica XOR,
+            kANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
           end else if p1^.bit = p2^.bit +1 then begin
             //p1 está a un bit a la izquierda, se puede optimizar
             SetROBResultExpres_bit(Opt, true);  //Fija resultado
-            _BANKSEL(p2^.bank);
-            _RLF(p2^.offs, toW);  //alinea y mueve a W
-            _BANKSEL(p1^.bank);
-            _XORWF(p1^.offs, toW);      //APlica XOR,
-            _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
+            kRLF(byte2, toW);  //alinea y mueve a W
+            kXORWF(byte1, toW);      //APlica XOR,
+            kANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
           end else if p1^.bit = p2^.bit-1 then begin
             //p1 está a un bit a la derecha, se puede optimizar
             SetROBResultExpres_bit(Opt, true);  //Fija resultado
-            _BANKSEL(p2^.bank);
-            _RRF(p2^.offs, toW);  //alinea y mueve a W
-            _BANKSEL(p1^.bank);
-            _XORWF(p1^.offs, toW);      //APlica XOR,
-            _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
+            kRRF(byte2, toW);  //alinea y mueve a W
+            kXORWF(byte1, toW);      //APlica XOR,
+            kANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
           end else if abs(p1^.bit - p2^.bit) = 4 then begin
             //p1 está a un nibble de distancia, se puede optimizar
             SetROBResultExpres_bit(Opt, true);  //Fija resultado
-            _BANKSEL(p2^.bank);
-            _SWAPF(p2^.offs, toW);  //alinea y mueve a W
-            _BANKSEL(p1^.bank);
-            _XORWF(p1^.offs, toW);      //APlica XOR,
-            _ANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
+            kSWAPF(byte2, toW);  //alinea y mueve a W
+            kXORWF(byte1, toW);      //APlica XOR,
+            kANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
           end else begin
             //La forma larga
             SetROBResultExpres_bit(Opt, false);  //Fija resultado,
             //Mueve p2 a Z
-            _BANKSEL(p2^.bank);
-            _MOVLW(p2^.rVar.BitMask);
-            _ANDWF(p2^.offs, toW);  //Z está invertido
+            kMOVLW(p2^.rVar.BitMask);
+            kANDWF(byte2, toW);  //Z está invertido
             //Aplica un XOR entre p1 y Z'.
             _BANKSEL(p1^.bank);
             _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es que se necesita
@@ -825,7 +800,7 @@ begin
         SetROBResultExpres_bit(Opt, false);  //Fija resultado
         //Aplica un XOR entre p1 y Z.
         _BANKSEL(p1^.bank);
-        _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
+        _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es se necesita
         _BTFSC(p1^.offs, p1^.bit);  //Si es 0, deja tal cual
         _ANDWF(Z.offs, toW);         //Si es 1, invierte
       end;
@@ -947,7 +922,7 @@ begin
     //La dirección de una variable es constante
     SetResultConst(typByte);
     //No se usa p1^.offs, porque solo retorna 7 bits;
-    res.valInt := p1^.rVar.AbsAddr and $ff;
+    res.valInt := p1^.rVar.addr and $ff;
   end;
   stExpres: begin  //ya está en STATUS.Z
     genError('Cannot obtain address of an expression.');
@@ -1005,23 +980,18 @@ begin
     stConst : begin
       if p2^.valInt=0 then begin
         //caso especial
-        _BANKSEL(p1^.bank);  //verifica banco destino
-        _CLRF(p1^.offs);
+        kCLRF(byte1);
       end else begin
-        _MOVLW(p2^.valInt);
-        _BANKSEL(p1^.bank);  //verifica banco destino
-        _MOVWF(p1^.offs);
+        kMOVLW(valor2);
+        kMOVWF(byte1);
       end;
     end;
     stVariab: begin
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVWF(p1^.offs);
+      kMOVF(byte2, toW);
+      kMOVWF(byte1);
     end;
     stExpres: begin  //ya está en w
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVWF(p1^.offs);
+      kMOVWF(byte1);
     end;
     else
       GenError('No soportado'); exit;
@@ -1032,37 +1002,33 @@ begin
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
     case p2^.Sto of
     stConst : begin
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
       if p2^.valInt=0 then begin
         //caso especial
-        _CLRF(0);
+        kCLRF(INDF);
       end else begin
-        _MOVLW(p2^.valInt);
-        _MOVWF(0);
+        kMOVLW(valor2);
+        kMOVWF(INDF);
       end;
     end;
     stVariab: begin
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
-      _MOVWF(0);
+      kMOVF(byte2, toW);
+      kMOVWF(INDF);
     end;
     stExpres: begin
       //La dirección está en la pila y la expresión en W
       aux := GetAuxRegisterByte;
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);   //Salva W (p2)
+      kMOVWF(aux);   //Salva W (p2)
       //Apunta con p1
       rVar := GetVarByteFromStk;
-      _BANKSEL(rVar.adrByte0.bank);
-      _MOVF(rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(rVar.adrByte0, toW);  //Opera directamente al dato que había en la pila. Deja en W
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(aux.bank);  //verifica banco fuente
-      _MOVF(aux.offs, toW);
-      _MOVWF(0);
+      kMOVF(aux, toW);
+      kMOVWF(INDF);
       aux.used := false;
       exit;
     end;
@@ -1074,42 +1040,36 @@ begin
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
     case p2^.Sto of
     stConst : begin
-      //Caso especial de asignación a puntero derefrrenciado: variable^
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona
+      //Caso especial de asignación a puntero desreferenciado: variable^
+      kMOVF(byte1, toW);
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
       if p2^.valInt=0 then begin
         //caso especial
-        _CLRF(0);
+        kCLRF(INDF);
       end else begin
-        _MOVLW(p2^.valInt);
-        _MOVWF(0);
+        kMOVLW(valor2);
+        kMOVWF(INDF);
       end;
     end;
     stVariab: begin
       //Caso especial de asignación a puntero derefrrenciado: variable^
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(byte1, toW);
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
-      _MOVWF(0);
+      kMOVF(byte2, toW);
+      kMOVWF(INDF);
     end;
     stExpres: begin  //ya está en w
       //Caso especial de asignación a puntero derefrrenciado: variable^
       aux := GetAuxRegisterByte;
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);   //Salva W (p2)
+      kMOVWF(aux);   //Salva W (p2)
       //Apunta con p1
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(byte1, toW);
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(aux.bank);  //Salva W (p2)
-      _MOVF(aux.offs, toW);
-      _MOVWF(0);
+      kMOVF(aux, toW);
+      kMOVWF(INDF);
       aux.used := false;
     end;
     else
@@ -3531,7 +3491,7 @@ begin
     //La dirección de una variable es constante
     SetResultConst(typByte);
     //No se usa p1^.offs, porque solo retorna 7 bits;
-    res.valInt := p1^.rVar.AbsAddr and $ff;
+    res.valInt := p1^.rVar.addr and $ff;
   end;
   stExpres: begin  //ya está en STATUS.Z
     genError('Cannot obtain address of an expression.');
@@ -4246,16 +4206,23 @@ begin
   end;
 end;
 procedure TGenCod.ROU_derefPointer(Opr: TxpOperator; SetRes: boolean);
-{Implementa el operador de dereferencia "^", para cualquier tipo de dato}
+{Implementa el operador de desreferencia "^", para Opr que se supone debe ser
+ categoria "tctPointer", es decir, puntero a algún tipo de dato.}
+var
+  tmpVar: TxpEleVar;
 begin
   case p1^.Sto of
-//  stConst : begin
-//    {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
-//    SetROBResultConst_bit(not p1^.valBool);
-//  end;
+  stConst : begin
+    //Caso especial. Cuando se tenga algo como: TPunteroAByte($FF)^
+    //Se asume que devuelve una variable de tipo Byte.
+    tmpVar := CreateTmpVar('', typByte);
+    tmpVar.addr0 := p1^.valInt;  //Fija dirección de constante
+    SetROUResultVariab(tmpVar);
+  end;
   stVariab: begin
-    //La dereferencia de una variable puntero a byte es un stVarRefVar.
-    SetROUResultVarRef(nil, p1^.rVar);
+    //Caso común: ptrWord^
+    //La desreferencia de una variable "tctPointer" es un stVarRefVar.
+    SetROUResultVarRef(p1^.rVar);
   end;
   stExpres: begin
     //La expresión Esta en RT, pero es una dirección, no un valor
@@ -4587,7 +4554,7 @@ begin
     if res.Typ = typChar then begin
       //Sigue siendo variable
       tmpVar := CreateTmpVar('', typByte);   //crea variable temporal Byte
-      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al mismo byte
+      tmpVar.addr0 := res.rVar.addr0; //apunta al mismo byte
       SetResultVariab(tmpVar);  //Actualiza "res"
     end else begin
       GenError('Cannot convert to ordinal.'); exit;
@@ -4626,7 +4593,7 @@ begin
     if res.Typ = typByte then begin
       //Sigue siendo variable
       tmpVar := CreateTmpVar('', typChar);   //crea variable temporal
-      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al mismo byte
+      tmpVar.addr0 := res.rVar.addr0; //apunta al mismo byte
       SetResultVariab(tmpVar);
     end else begin
       GenError('Cannot convert to char.'); exit;
@@ -4679,7 +4646,8 @@ begin
     end else if res.Typ = typBool then begin
       //Sigue siendo variable
       tmpVar := CreateTmpVar('', typBit);   //crea variable temporal
-      tmpVar.adrBit.Assign(res.rVar.adrBit); //apunta al mismo bit
+      tmpVar.addr0 := res.rVar.addr0; //Apunta al mismo byte
+      tmpVar.bit0  := res.rVar.bit0;  //Apunta al mismo bit
       SetResultVariab(tmpVar, res.Inverted);   //mantiene lógica
     end else begin
       GenError('Cannot convert to bit.'); exit;
@@ -4733,7 +4701,8 @@ begin
     end else if res.Typ = typBit then begin
       //Sigue siendo variable
       tmpVar := CreateTmpVar('', typBool);   //crea variable temporal
-      tmpVar.adrBit.Assign(res.rVar.adrBit); //apunta al mismo bit
+      tmpVar.addr0 := res.rVar.addr0; //Apunta al mismo byte
+      tmpVar.bit0  := res.rVar.bit0;  //Apunta al mismo bit
       SetResultVariab(tmpVar, res.Inverted);   //mantiene lógica
     end else begin
       GenError('Cannot convert to boolean.'); exit;
@@ -4789,19 +4758,19 @@ begin
     end else if res.Typ = typChar then begin
       //Crea varaible que apunte al byte bajo
       tmpVar := CreateTmpVar('', typByte);   //crea variable temporal Byte
-      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al mismo byte
+      tmpVar.addr0 := res.rVar.addr0;  //apunta al mismo byte
       SetResultVariab(tmpVar);
     end else if res.Typ = typByte then begin
       //Es lo mismo
     end else if res.Typ = typWord then begin
       //Crea varaible que apunte al byte bajo
       tmpVar := CreateTmpVar('', typByte);   //crea variable temporal Byte
-      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al byte bajo
+      tmpVar.addr0 := res.rVar.addr0;  //apunta al mismo byte
       SetResultVariab(tmpVar);
     end else if res.Typ = typDWord then begin
       //CRea varaible que apunte al byte bajo
       tmpVar := CreateTmpVar('', typByte);   //crea variable temporal Byte
-      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al byte bajo
+      tmpVar.addr0 := res.rVar.addr0;  //apunta al mismo byte
       SetResultVariab(tmpVar);
     end else begin
       GenError('Cannot convert to byte.'); exit;
@@ -4874,8 +4843,8 @@ begin
     end else if res.Typ = typDWord then begin
       //Crea varaible que apunte al word bajo
       tmpVar := CreateTmpVar('', typWord);   //crea variable temporal Word
-      tmpVar.adrByte0.Assign(res.rVar.adrByte0); //apunta al byte L
-      tmpVar.adrByte1.Assign(res.rVar.adrByte1); //apunta al byte H
+      tmpVar.addr0 := res.rVar.addr0; //apunta al byte L
+      tmpVar.addr1 := res.rVar.addr1; //apunta al byte H
       SetResultVariab(tmpVar);
     end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
       SetResultExpres(typWord);  //Devolvemo expresión
@@ -5445,4 +5414,4 @@ begin
   end;
 end;
 end.
-//4700
+//5448

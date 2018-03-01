@@ -46,12 +46,12 @@ type  //tipos enumerados
     stExpres=%010,   {El operando es una Expresión, por lo general es el resultado de
                       algún cálculo entre variables y constantes. (incluyendo el resulatdo
                       de a una función). Se valor está siempre en los RT}
-    stVarRefVar=%011,{El operando es la referencia a una variable, y esta referencai se
+    stVarRefVar=%011,{El operando es la referencia a una variable, y esta referencia se
                       calcula en base a otras variables. No ocupa espacio a memoria,
                       porque su dirección real, se puede calcular, con parámetros
                       constantes (dirección, desplazamiento, y número de bit).}
     stVarRefExp=%100 {El operando es la referencia a una variable, y esta referencia se
-                      encuentra en los RT. Para obtener^la dirección real de la variable
+                      encuentra en los RT. Para obtener la dirección real de la variable
                       se debe calcular primero la dirección, usando el valor de los RT y
                       el desplazamiento, y número de bit}
   );
@@ -126,13 +126,17 @@ type
   {Objeto que sirve para modelar a un registro del PIC (una dirección de memoria, usada
    para un fin particular)}
   TPicRegister = class
+  private
+    function Getbank: byte;
+    function Getoffs: byte;
   public
-    offs   : byte;      //Desplazamiento en memoria
-    bank   : byte;      //Banco del registro
+    addr   : word;      //Dirección absoluta: $000 a $1FF
     assigned: boolean;  //indica si tiene una dirección física asignada
     used   : boolean;   //Indica si está usado.
     typ    : TPicRegType; //Tipo de registro
-    function AbsAdrr: word;  //Diección absoluta
+  public
+    property offs: byte read Getoffs;   //Desplazamiento en memoria
+    property bank: byte read Getbank;   //Banco del registro
     procedure Assign(srcReg: TPicRegister);
   end;
   TPicRegister_list = specialize TFPGObjectList<TPicRegister>; //lista de registros
@@ -141,14 +145,18 @@ type
   {Objeto que sirve para modelar a un bit del PIC (una dirección de memoria, usada
    para un fin particular)}
   TPicRegisterBit = class
+  private
+    function Getbank: byte;
+    function Getoffs: byte;
   public
-    offs   : byte;      //Desplazamiento en memoria
-    bank   : byte;      //Banco del registro
+    addr   : word;      //Dirección absoluta: $000 a $1FF
     bit    : byte;      //bit del registro
     assigned: boolean;  //indica si tiene una dirección física asignada
     used   : boolean;   //Indica si está usado.
     typ    : TPicRegType; //Tipo de registro
-    function AbsAdrr: word;  //Dirección absoluta
+  public
+    property offs: byte read Getoffs;   //Desplazamiento en memoria
+    property bank: byte read Getbank;   //Banco del registro
     procedure Assign(srcReg: TPicRegisterBit);
   end;
   TPicRegisterBit_list = specialize TFPGObjectList<TPicRegisterBit>; //lista de registros
@@ -165,28 +173,37 @@ type
 implementation
 
 { TPicRegister }
-function TPicRegister.AbsAdrr: word;
+function TPicRegister.Getbank: byte;
 begin
-  Result := bank * $80 + offs;
+  Result := addr >> 7;
+end;
+function TPicRegister.Getoffs: byte;
+begin
+  Result := addr and $7F;  //devuelve dirección
+  //Tal vez sería mejor:
+  //Result := hi(addr << 1);  //devuelve dirección
 end;
 procedure TPicRegister.Assign(srcReg: TPicRegister);
 begin
-  offs    := srcReg.offs;
-  bank    := srcReg.bank;
+  addr    := srcReg.addr;
   assigned:= srcReg.assigned;
   used    := srcReg.used;
   typ     := srcReg.typ;
 end;
-
 { TPicRegisterBit }
-function TPicRegisterBit.AbsAdrr: word;
+function TPicRegisterBit.Getbank: byte;
 begin
-  Result := bank * $80 + offs;
+  Result := addr >> 7;
+end;
+function TPicRegisterBit.Getoffs: byte;
+begin
+  Result := addr and $7F;  //devuelve dirección
+  //Tal vez sería mejor:
+  //Result := hi(addr << 1);  //devuelve dirección
 end;
 procedure TPicRegisterBit.Assign(srcReg: TPicRegisterBit);
 begin
-  offs    := srcReg.offs;
-  bank    := srcReg.bank;
+  addr    := srcReg.addr;
   bit     := srcReg.bit;
   assigned:= srcReg.assigned;
   used    := srcReg.used;

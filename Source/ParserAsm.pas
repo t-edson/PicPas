@@ -268,7 +268,7 @@ begin
       //Para varaibles, se toma la dirección
       xvar := TxpEleVar(ele);
       if FirstPass then xvar.AddCaller;  //lleva la cuenta
-      n := xvar.AbsAddr;
+      n := xvar.addr;
       k := GetFaddress(n);
       lexAsm.Next;
       exit(true);
@@ -422,7 +422,7 @@ begin
       xvar := TxpEleVar(ele);
       if FirstPass then xvar.AddCaller;  //lleva la cuenta
       if xvar.typ.IsByteSize then begin
-        n := xvar.AbsAddr;
+        n := xvar.addr;
         f := GetFaddress(n);
         lexAsm.Next;
         Result := true;
@@ -442,7 +442,7 @@ begin
              exit(false);
           end;
         end else begin
-           n := xvar.AbsAddr;
+           n := xvar.addr;
            f := GetFaddress(n);
         end;
         exit(true);
@@ -467,7 +467,7 @@ begin
              exit(false);
           end;
         end else begin
-           n := xvar.AbsAddr;
+           n := xvar.addr;
            f := GetFaddress(n);
         end;
         exit(true);

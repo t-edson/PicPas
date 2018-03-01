@@ -1030,12 +1030,12 @@ begin
     //Ya tiene la variable en "xvar".
     if xvar.typ.IsBitSize then begin //boolean o bit
       IsBit := true;  //Es una dirección de bit
-      Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
+      Result.absAddr := xvar.addr;  //debe ser absoluta
       Result.absBit := xvar.adrBit.bit;
     end else begin
       //Es cualquier otra variable, que no sea bit. Se intentará
       IsBit := false;  //Es una dirección normal (byte)
-      Result.absAddr := xvar.AbsAddr;  //debe ser absoluta
+      Result.absAddr := xvar.addr;  //debe ser absoluta
     end;
     if Result.absAddr = ADRR_ERROR then begin
       //No se puede obtener la dirección.
@@ -2452,20 +2452,20 @@ begin
       if ExcUnused and (v.nCalled = 0) then continue;
       if v.nCalled = 0 then subUsed := '; <Unused>' else subUsed := '';
       if v.typ.IsBitSize then begin
-        lins.Add('#define ' + v.name + ' ' + AdrStr(v.AbsAddr) + ',' +
+        lins.Add('#define ' + v.name + ' ' + AdrStr(v.addr) + ',' +
                                              IntToStr(v.adrBit.bit)+ subUsed);
       end else if v.typ.IsByteSize then begin
-        lins.Add(v.name + ' EQU ' +  AdrStr(v.AbsAddr)+ subUsed);
+        lins.Add(v.name + ' EQU ' +  AdrStr(v.addr)+ subUsed);
       end else if v.typ.IsWordSize then begin
-        lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAddrL)+ subUsed);
-        lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAddrH)+ subUsed);
+        lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.addrL)+ subUsed);
+        lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.addrH)+ subUsed);
       end else if v.typ.IsDWordSize then begin
-        lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.AbsAddrL)+ subUsed);
-        lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.AbsAddrH)+ subUsed);
-        lins.Add(v.name+'@2' + ' EQU ' +  AdrStr(v.AbsAddrE)+ subUsed);
-        lins.Add(v.name+'@3' + ' EQU ' +  AdrStr(v.AbsAddrU)+ subUsed);
+        lins.Add(v.name+'@0' + ' EQU ' +  AdrStr(v.addrL)+ subUsed);
+        lins.Add(v.name+'@1' + ' EQU ' +  AdrStr(v.addrH)+ subUsed);
+        lins.Add(v.name+'@2' + ' EQU ' +  AdrStr(v.addrE)+ subUsed);
+        lins.Add(v.name+'@3' + ' EQU ' +  AdrStr(v.addrU)+ subUsed);
       end else begin
-        lins.Add('"' + v.name + '"->' +  AdrStr(v.AbsAddr) + subUsed);
+        lins.Add('"' + v.name + '"->' +  AdrStr(v.addr) + subUsed);
       end;
     end;
     end;
@@ -2476,12 +2476,12 @@ begin
     for reg in listRegAux do begin
       if not reg.assigned then continue;  //puede haber registros de trabajo no asignados
       nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
-      adStr := '0x' + IntToHex(reg.AbsAdrr, 3);
+      adStr := '0x' + IntToHex(reg.addr, 3);
       lins.Add(nam + ' EQU ' +  adStr);
     end;
     for rbit in listRegAuxBit do begin
       nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
-      adStr := '0x' + IntToHex(rbit.AbsAdrr, 3);
+      adStr := '0x' + IntToHex(rbit.addr, 3);
       lins.Add('#define' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
     end;
   end;
@@ -2489,12 +2489,12 @@ begin
     lins.Add(';------ Stack Registers ------');
     for reg in listRegStk do begin
       nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
-      adStr := '0x' + IntToHex(reg.AbsAdrr, 3);
+      adStr := '0x' + IntToHex(reg.addr, 3);
       lins.Add(nam + ' EQU ' +  adStr);
     end;
     for rbit in listRegStkBit do begin
       nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
-      adStr := '0x' + IntToHex(rbit.AbsAdrr, 3);
+      adStr := '0x' + IntToHex(rbit.addr, 3);
       lins.Add('#define ' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
     end;
   end;

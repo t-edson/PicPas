@@ -239,11 +239,11 @@ begin
         maxBytes := v.typ.arrSize * v.typ.refType.size-1;
         //if maxBytes > 10 then
         for i:=1 to maxBytes do begin
-           AddWatch(v.adrByte0.AbsAdrr + i);
+           AddWatch(v.adrByte0.addr + i);
         end;
       end else if v.typ.catType = tctPointer then begin
         //Puntero corto
-         AddWatch(v.adrByte0.AbsAdrr);
+         AddWatch(v.adrByte0.addr);
       end else begin
 
       end;
