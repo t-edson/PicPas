@@ -12,9 +12,21 @@ aefctadas.
 * Se reemplazan diversas rutinas del generador de código, con instrucciones "k".
 * Se cambia por completo los contenedores de las direcciones de memoria de la clase TxpEleVar,
 y se adaptan diversas rutinas para trabajar con este nuevo tipo de almacenamiento.
+* Se implementa la operación MOD para bytes.
+* Se crea ún nuevo patrón de pruebas para los tipos Byte, incluyendo la operación MOD.
 
 PENDIENTES
--Reemplazar las rutinas del generador de código con las instrucciones "k".
+-Revisar el uso de bancos, para funciones del sistema, como delay_ms() y las llamadas que se
+hacen para algunas operacionas como DIV. Se sugiere primero eliminar TxpElement.AddCaller() 
+y definir un método como TCOmpilerBase.AddCallerTo() para realizar el mismo trabajo, de modo 
+que se pueda tener acceso a las variables de entorno del compilador como FirstPass y se evita el
+uso confuso de eventos, y se simplifica el código.
+
+-Reemplazar todas las rutinas del generador de código con las instrucciones "k" e ir 
+desapareciendo campos auxiliares de TOperand, como .bank o .offs.
+
+-Revisar el manejo de bancos en el generador de código, cuando se usan instrucciones condicionales
+como BTFSS o DECFSZ, en los algoritmos.
 -Revisar la implementación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
 contiene una sola instrucción, evitando saltos innecesarios. 
 -Terminar de implementar los arreglos.
@@ -27,25 +39,24 @@ begin
 end.
 
 -Implementar el paso de parámetros usando punteros y por referencia.
-Mejorar el cálculo del uso de la pila de llamadas, ya que no considera las funciones del sistema.
-Agregar patrones de prueba para las optimizaciones.
+-Mejorar el cálculo del uso de la pila de llamadas, ya que no considera las funciones del sistema.
+-Agregar patrones de prueba para las optimizaciones.
 -Implementar la reutilización de variables usadas como parámetros, convirtiendo a REGISTER 
 el último parámetro.
 -Definir que todos los bytes de una variable se ubiquen en el mismo banco.
 
 -Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
 se puede reemplazar por SetROUResultExpres_bit().
-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
 los lazos y condicionales.
-Permitir compilar las funciones, como INLINE.
-Revisar el uso de bancos, para funciones del sistema, como delay_ms().
-Implementar las operaciones pendientes en los Word.
-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
-Terminar de implementar las funcionalidades completas de una unidad.
-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
-Incluir el tipo integer con signo.
-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+-Permitir compilar las funciones, como INLINE.
+-Implementar las operaciones pendientes en los Word.
+-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+-Terminar de implementar las funcionalidades completas de una unidad.
+-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+-Incluir el tipo integer con signo.
+-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
 y más de una página de ROM.
 
 

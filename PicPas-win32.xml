@@ -3,7 +3,8 @@
   <language Val="es - Español"/>
   <StateStatusbar Val="1"/>
   <chkLoadLast Val="True"/>
-  <filesClosed Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_1\nuevo-0.pas
+  <filesClosed Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_3\Test3_Byte2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_3\Test3_Byte1.pas
 "/>
   <SplitterCol Val="32768"/>
   <MessPanPan Val="32768"/>
@@ -11,7 +12,7 @@
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="203"/>
+  <SynTreeWidth Val="247"/>
   <ViewPanAssem Val="True"/>
   <viewMode Val="2"/>
   <MessPanBack Val="-2147483643"/>
@@ -43,11 +44,11 @@
     <VerMarPle Val="True"/>
     <cFonPan Val="16777215"/>
     <cTxtPan Val="0"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_3\Test1_Byte.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_3\Test3_Byte1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_3\Test3_Byte2.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_3\types.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_3\Test1_Byte.pas
 D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_3\dWord1.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_2\Test5_Bank.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_1\Test4_Asm.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.4\TestCode\Simul_1\Test3_Structs2.pas
 "/>
   </Edit>
   <IncHeadMpu Val="False"/>
