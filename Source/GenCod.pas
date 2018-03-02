@@ -57,6 +57,7 @@ type
       function bit2: TPicRegisterBit;
       function byte1: TPicRegister;
       function byte2: TPicRegister;
+      procedure ROB_byte_mod_byte(Opt: TxpOperation; SetRes: boolean);
       function valor1: word;
       function valor2: word;
     private  //Operaciones con Bit
@@ -199,7 +200,7 @@ begin
   SetResultExpres(fun.typ);  //actualiza "RTstate"
 end;
 procedure TGenCod.callFunct(fun: TxpEleFun);
-{Rutina genérica para llamara a una función definida por el usuario}
+{Rutina genérica para llamar a una función definida por el usuario.}
 begin
   fun.iniBnk := CurrBank;   //fija el banco inicial
   //Por ahora, no se implementa paginación, pero despuñes habría que considerarlo.
@@ -1728,7 +1729,7 @@ begin
       GenError('Cannot divide by zero');
       exit;
     end;
-    SetROBResultConst_word(p1^.valInt div p2^.valInt);  //puede generar error
+    SetROBResultConst_byte(p1^.valInt div p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
   stConst_Variab: begin
@@ -1842,6 +1843,132 @@ begin
     _MOVF(E.offs, toW);  //p2 -> E
 
     _CALL(f_byte_div_byte.adrr);
+    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
+    {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
+    variable) temporal, si se tuviera una rutina de multiplicación que compilara a
+    partir de la direccion de una variable (en este caso de la pila, que se puede
+    modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
+    if FirstPass then f_byte_div_byte.AddCaller;
+  end;
+  else
+    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+  end;
+end;
+procedure TGenCod.ROB_byte_mod_byte(Opt: TxpOperation; SetRes: boolean);
+var
+  rVar: TxpEleVar;
+begin
+  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+    GenError('Too complex pointer expression.'); exit;
+  end;
+  if not ChangePointerToExpres(p1^) then exit;
+  if not ChangePointerToExpres(p2^) then exit;
+  case stoOperation of
+  stConst_Const : begin  //producto de dos constantes. Caso especial
+    if p2^.valInt = 0 then begin
+      GenError('Cannot divide by zero');
+      exit;
+    end;
+    SetROBResultConst_byte(p1^.valInt mod p2^.valInt);  //puede generar error
+    exit;  //sale aquí, porque es un caso particular
+  end;
+  stConst_Variab: begin
+    if p1^.valInt=0 then begin  //caso especial
+      SetROBResultConst_byte(0);
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kMOVLW(p1^.valInt);
+    kMOVWF(H);
+    kMOVF(byte2, toW);
+    _CALL(f_byte_div_byte.adrr);
+    //¿Y el banco de salida?
+    kMOVF(U, toW);  //Resultado en W
+    if FirstPass then f_byte_div_byte.AddCaller;
+  end;
+  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+    if p1^.valInt=0 then begin  //caso especial
+      SetROBResultConst_byte(0);
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kMOVWF(E);  //guarda divisor
+    kMOVLW(p1^.valInt);
+    kMOVWF(H);  //dividendo
+
+    kMOVF(E, toW);  //divisor
+    _CALL(f_byte_div_byte.adrr);
+    kMOVF(U, toW);  //Resultado en W
+    if FirstPass then f_byte_div_byte.AddCaller;
+  end;
+  stVariab_Const: begin
+    if p2^.valInt = 0 then begin
+      GenError('Cannot divide by zero');
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kMOVF(byte1, toW);
+    kMOVWF(H);
+    kMOVLW(p2^.valInt);
+    _CALL(f_byte_div_byte.adrr);
+    kMOVF(U, toW);  //Resultado en W
+    if FirstPass then f_byte_div_byte.AddCaller;
+  end;
+  stVariab_Variab:begin
+    SetROBResultExpres_byte(Opt);
+    kMOVF(byte1, toW);
+    kMOVWF(H);
+    kMOVF(byte2, toW);
+    _CALL(f_byte_div_byte.adrr);
+    kMOVF(U, toW);  //Resultado en W
+    if FirstPass then f_byte_div_byte.AddCaller;
+  end;
+  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    //guarda divisor
+    kMOVWF(E);
+    //p1 -> H
+    kMOVF(byte1, toW); //p1 -> W
+    kMOVWF(H);  //dividendo
+
+    kMOVF(E, toW);  //divisor
+    _CALL(f_byte_div_byte.adrr);
+    kMOVF(U, toW);  //Resultado en W
+    if FirstPass then f_byte_div_byte.AddCaller;
+  end;
+  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    if p2^.valInt = 0 then begin
+      GenError('Cannot divide by zero');
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kMOVWF(H);  //p1 -> H
+    kMOVLW(p2^.valInt); //p2 -> W
+    _CALL(f_byte_div_byte.adrr);
+    kMOVF(U, toW);  //Resultado en W
+    if FirstPass then f_byte_div_byte.AddCaller;
+  end;
+  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kMOVWF(H);  //p1 -> H
+    kMOVF(byte2, toW); //p2 -> W
+    _CALL(f_byte_div_byte.adrr);
+    kMOVF(U, toW);  //Resultado en W
+    if FirstPass then f_byte_div_byte.AddCaller;
+  end;
+  stExpres_Expres:begin
+    SetROBResultExpres_byte(Opt);
+    //la expresión p1 debe estar salvada y p2 en el acumulador
+    rVar := GetVarByteFromStk;
+    //guarda divisor
+    kMOVWF(E);
+    //pila -> H
+    kMOVF(rVar.adrByte0, toW); //p1 -> W
+    kMOVWF(H);  //dividendo
+    //divisor -> W
+    kMOVF(E, toW);  //p2 -> E
+    _CALL(f_byte_div_byte.adrr);
+    kMOVF(U, toW);  //Resultado en W
     FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
     {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
     variable) temporal, si se tuviera una rutina de multiplicación que compilara a
@@ -5238,6 +5365,8 @@ begin
   opr.CreateOperation(typByte,@ROB_byte_mul_byte);
   opr:=typByte.CreateBinaryOperator('DIV',5,'div');  //byte / byte ->byte
   opr.CreateOperation(typByte,@ROB_byte_div_byte);
+  opr:=typByte.CreateBinaryOperator('MOD',5,'mod');  //byte mod byte ->byte
+  opr.CreateOperation(typByte,@ROB_byte_mod_byte);
 
   opr:=typByte.CreateBinaryOperator('AND',5,'and');  //suma
   opr.CreateOperation(typByte,@ROB_byte_and_byte);

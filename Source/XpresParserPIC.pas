@@ -710,14 +710,14 @@ begin
         cIn.PosAct := posPar;
         pic.iFlash := posFlash;
         RTstate := RTstate0;
-        xfun.procParam(xfun);  //antes de leer los parámetros
+        xfun.procParam(xfun);  //Antes de leer los parámetros
         if high(func0.pars)+1>0 then
           CaptureParamsFinal(xfun);  //evalúa y asigna
-  //if RTstate = nil then debugln('RTstate=NIL') else debugln('RTstate='+RTstate.name);
         if FirstPass then begin
           //Se hace después de leer parámetros, para tener información del banco.
           caller := xfun.AddCaller;
-          caller.curPos := posCall;  //corrige posición de llamada, sino estaría
+          caller.curPos := posCall;  {Corrige posición de llamada, sino estaría apuntando
+                                      al final de los parámetros}
         end;
         xfun.procCall(xfun); //codifica el "CALL"
         RTstate := xfun.typ;  //para indicar que los RT están ocupados
