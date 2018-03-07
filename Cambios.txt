@@ -22,6 +22,10 @@ y definir un método como TCOmpilerBase.AddCallerTo() para realizar el mismo trab
 que se pueda tener acceso a las variables de entorno del compilador como FirstPass y se evita el
 uso confuso de eventos, y se simplifica el código.
 
+-Revisar si conviene crear el almacenamiento VarRefVarOff, para expresiones de tipo:
+  (p+5)^
+  a[5]
+
 -Reemplazar todas las rutinas del generador de código con las instrucciones "k" e ir 
 desapareciendo campos auxiliares de TOperand, como .bank o .offs.
 
