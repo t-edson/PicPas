@@ -115,7 +115,8 @@ procedure TfrmDebugger.StringGrid1DrawCell(Sender: TObject; aCol,
 var
   txt, comm, lab: String;           // texto de la celda
   cv: TCanvas;           //referencia al lienzo
-  valp: word;
+  valOp: word;
+  bnkOp: Byte;
 begin
   cv := StringGrid1.Canvas;  //referencia al Lienzo
 
@@ -148,8 +149,9 @@ begin
     cv.TextOut(aRect.Left + 2, aRect.Top + 2, txt);
   end else if ACol = 1 then begin
     //Celda normal
-    valp := pic.flash[aRow].value;
-    txt := pic.Disassembler(valp, 0, true);   //desensambla
+    valOp := pic.flash[aRow].value;
+    bnkOp := pic.flash[aRow].curBnk;
+    txt := pic.Disassembler(valOp, bnkOp, true);   //desensambla
     //Escribe texto con alineación
     if StringGrid1.RowHeights[Arow] = defHeight*3 then begin
       //Celda con comentario superior y etiqueta

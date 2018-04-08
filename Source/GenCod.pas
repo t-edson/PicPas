@@ -287,8 +287,6 @@ begin
 end;
 ////////////operaciones con Bit
 procedure TGenCod.ROB_bit_asig_bit(Opt: TxpOperation; SetRes: boolean);
-var
-  dg: integer;
 begin
   if p1^.Sto <> stVariab then begin  //validación
     GenError('Only variables can be assigned.'); exit;

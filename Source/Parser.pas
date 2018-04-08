@@ -1642,7 +1642,7 @@ procedure TCompiler.CompileInstructionDummy;
 {Compila una instrucción pero sin generar código. }
 var
   p: Integer;
-  BankChanged0, InvertedFromC0: Boolean;
+  InvertedFromC0: Boolean;
   CurrBank0: Byte;
 begin
   p := pic.iFlash;
@@ -1681,7 +1681,7 @@ procedure TCompiler.CompileCurBlockDummy;
 {Compila un bloque pero sin geenrar código.}
 var
   p: Integer;
-  BankChanged0, InvertedFromC0: Boolean;
+  InvertedFromC0: Boolean;
   CurrBank0: Byte;
 begin
   p := pic.iFlash;
