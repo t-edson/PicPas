@@ -6,13 +6,52 @@ object fraPICDiagram: TfraPICDiagram
   ClientHeight = 317
   ClientWidth = 378
   TabOrder = 0
-  DesignLeft = 323
-  DesignTop = 196
+  DesignLeft = 550
+  DesignTop = 250
   object PaintBox1: TPaintBox
     Left = 0
     Height = 317
     Top = 0
     Width = 378
     Align = alClient
+  end
+  object PopupMenu1: TPopupMenu
+    Images = frmDebugger.ImageList16
+    left = 72
+    top = 128
+    object MenuItem1: TMenuItem
+      Action = frmDebugger.acGenReset
+    end
+    object MenuItem2: TMenuItem
+      Action = frmDebugger.acGenRun
+    end
+    object MenuItem5: TMenuItem
+      Action = frmDebugger.acGenStep
+    end
+    object MenuItem3: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem4: TMenuItem
+      Action = acGenAddLogTog
+    end
+    object MenuItem6: TMenuItem
+      Action = acGenDelObject
+    end
+  end
+  object ActionList1: TActionList
+    Images = frmDebugger.ImageList16
+    left = 168
+    top = 194
+    object acGenAddLogTog: TAction
+      Category = 'Gen'
+      Caption = 'Add LogicToggle'
+      OnExecute = acGenAddLogTogExecute
+    end
+    object acGenDelObject: TAction
+      Category = 'Gen'
+      Caption = '&Delete'
+      ImageIndex = 10
+      OnExecute = acGenDelObjectExecute
+    end
   end
 end

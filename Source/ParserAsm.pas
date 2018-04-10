@@ -242,7 +242,7 @@ begin
     end;
     if ele.idClass = eltCons then begin
       xcon := TxpEleCon(ele);
-      if FirstPass then xcon.AddCaller;  //lleva la cuenta
+      AddCallerTo(xcon);  //lleva la cuenta
       if (xcon.typ = typByte) or (xcon.typ = typChar) then begin
         k := xcon.val.ValInt;
         lexAsm.Next;
@@ -267,7 +267,7 @@ begin
     end else if ele.idClass = eltVar then begin
       //Para varaibles, se toma la dirección
       xvar := TxpEleVar(ele);
-      if FirstPass then xvar.AddCaller;  //lleva la cuenta
+      AddCallerTo(xvar);  //lleva la cuenta
       n := xvar.addr;
       k := GetFaddress(n);
       lexAsm.Next;
@@ -367,7 +367,7 @@ begin
   if not xvar.typ.IsBitSize then exit(false);
   //Es variable bit o boolean
   lexAsm.Next;   //toma identificador
-  if FirstPass then xvar.AddCaller;  //lleva la cuenta
+  AddCallerTo(xvar);  //lleva la cuenta
   f := GetFaddress(xvar.adrBit.offs);
   b := xvar.adrBit.bit;
   exit(true);
@@ -420,7 +420,7 @@ begin
     end;
     if ele.idClass = eltVar then begin
       xvar := TxpEleVar(ele);
-      if FirstPass then xvar.AddCaller;  //lleva la cuenta
+      AddCallerTo(xvar);  //lleva la cuenta
       if xvar.typ.IsByteSize then begin
         n := xvar.addr;
         f := GetFaddress(n);
@@ -548,7 +548,7 @@ begin
     if (ele <> nil) and (ele.idClass = eltFunc) then begin
       //Es un identificador de función del árbol de sintaxis
       xfun := TxpEleFun(ele);
-      if FirstPass then xfun.AddCaller;  //lleva la cuenta
+      AddCallerTo(xfun);  //lleva la cuenta
       a := xfun.adrr;   //lee su dirección
       lexAsm.Next;
       Result := true;

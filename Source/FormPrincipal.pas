@@ -216,6 +216,7 @@ type
     procedure MarkErrors;
     procedure VerificarError;
   public
+    frmDebug: TfrmDebugger;
     procedure SetLanguage(idLang: string);
   end;
 
@@ -343,7 +344,7 @@ end;
 procedure TfrmPrincipal.fraMessagesStatisDBlClick;
 //Doble clcik en la sección de estadísticas
 begin
-//  frmDebugger.Exec(cxp);
+
 end;
 procedure TfrmPrincipal.cxp_AfterCompile;
 {Se genera después de realizar la compilación.}
@@ -401,6 +402,9 @@ begin
   CT := TCodeTool.Create(fraEditView1, cxp, fraSynTree);
   cxp.OnRequireFileString := @cxp_RequireFileString;
   cxp.OnAfterCompile      := @cxp_AfterCompile;
+  //Crea dinámicamente para poder inciailizarlo con comodidad
+  frmDebug:= TfrmDebugger.Create(self);
+  frmDebug.pic := cxp.pic;
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
@@ -489,6 +493,7 @@ begin
 end;
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
 begin
+  frmDebug.Destroy;
   CT.Destroy;
   hlAssem.Free;
 end;
@@ -969,7 +974,7 @@ begin
 end;
 procedure TfrmPrincipal.acToolASMDebugExecute(Sender: TObject);
 begin
-  frmDebugger.Exec(cxp);
+  frmDebug.Exec;
 end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin

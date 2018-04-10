@@ -154,9 +154,7 @@ type  //TxpElement y clases previas
   public  //Gestion de llamadas al elemento
     //Lista de funciones que llaman a esta función.
     lstCallers: TxpListCallers;
-    OnAddCaller: function(elem: TxpElement; callerElem: TxpElement): TxpEleCaller of object;
     function nCalled: integer; virtual; //número de llamadas
-    function AddCaller(callerElem: TxpElement = nil): TxpEleCaller;
     function IsCalledBy(callElem: TxpElement): boolean; //Identifica a un llamador
     function IsCalledAt(callPos: TSrcPos): boolean;
     function IsDeclaredAt(decPos: TSrcPos): boolean;
@@ -600,20 +598,6 @@ begin
   Result := Parent.elements.IndexOf(self);  //No es muy rápido
 end;
 //Gestion de llamadas al elemento
-function TxpElement.AddCaller(callerElem: TxpElement=nil): TxpEleCaller;
-{Agrega información sobre el elemento "llamador", es decir, el elemento que hace
-referencia a este elemento.
-El elemento llamador es "callerElem". Si no se especifica se asumirá un elemento
-llamador por defecto, que debería ser la función/cuerpo desde donde se hace la llamada.}
-begin
-  {Lo maneja a través de evento, para poder acceder a información, del elemento actual
-  y datos adicionales, a los que no se tiene acceso desde el contexto de esta clase.}
-  if OnAddCaller<>nil then begin
-    Result := OnAddCaller(self, callerElem);
-  end else begin
-    Result := nil;
-  end;
-end;
 function TxpElement.nCalled: integer;
 begin
   Result := lstCallers.Count;

@@ -48,21 +48,11 @@ type
     procedure PutTopComm(cmt: string; replace: boolean = true); inline;
     procedure PutComm(cmt: string); inline;
     procedure PutFwdComm(cmt: string); inline;
-    function AddCaller(elem: TxpElement; callerElem: TxpElement): TxpEleCaller;
     function ReportRAMusage: string;
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
     function ValidateDWordRange(n: Int64): boolean;
     procedure ExchangeP1_P2;
-  protected  //Variables de expresión.
-    {Estas variables, se inician al inicio de cada expresión y su valor es válido
-    hasta el final de la expresión.}
-    CurrBank  : Byte;    //Banco RAM actual
-    //Variables de estado de las expresiones booleanas
-    InvertedFromC: boolean; {Indica que el resultado de una expresión Booleana o Bit, se
-                             ha obtenido, en la última subexpresion, copaindo el bit C al
-                             bit Z, con inversión lógica. Se usa para opciones de
-                             optimziación de código.}
   protected
     procedure GenerateROBdetComment;
     procedure GenerateROUdetComment;
@@ -320,26 +310,6 @@ begin
     dicSet('Not implemented.', 'No implementado');
   end;
   end;
-end;
-
-function TGenCodPic.AddCaller(elem: TxpElement; callerElem: TxpElement): TxpEleCaller;
-{Agrega una llamada a un elemento de la sintaxis.}
-var
-  fc: TxpEleCaller;
-begin
-  fc:= TxpEleCaller.Create;
-  //Carga información del estado actual del parser
-  if callerElem = nil then begin
-    {Por defecto se toma el nodo actual que es el ceurpo de alguna función o el cuerpo
-    del programa principal.}
-    fc.caller := TreeElems.curNode;
-  end else begin
-    fc.caller := callerElem;
-  end;
-  fc.curBnk := CurrBank;
-  fc.curPos := cIn.ReadSrcPos;
-  elem.lstCallers.Add(fc);
-  Result := fc;
 end;
 { TGenCodPic }
 procedure TGenCodPic.ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);

@@ -171,7 +171,7 @@ begin
     if ele.idClass = eltType then begin
       //Es un tipo
       typ := TxpEleType(ele);
-      if FirstPass then typ.AddCaller;   //lleva la cuenta
+      AddCallerTo(typ);   //lleva la cuenta
       if typ.copyOf<>nil then typ := typ.copyOf;
     end else begin
       GenError(ER_IDE_TYP_EXP);
@@ -721,8 +721,7 @@ end;
 procedure TCompiler.Tree_AddElement(elem: TxpElement);
 begin
   if FirstPass then begin
-    //Configura evento
-    elem.OnAddCaller := @AddCaller;
+    //Caso normal. Solo aquí dede modificarse el árbol de sintaxis.
   end else begin
     //Solo se permiet agregar elementos en la primera pasada
     GenError('Internal Error: Syntax Tree modified on linking.');
@@ -1329,7 +1328,7 @@ begin
     end;
     if ele.idClass = eltType then begin
       typ := TxpEleType(ele);
-      if FirstPass then typ.AddCaller;   //lleva la cuenta
+      AddCallerTo(typ);   //lleva la cuenta
       cIn.Next;   //lo toma
       ProcComments;
       exit(typ);
@@ -1408,7 +1407,7 @@ begin
       CreateVarInRAM(xvar);  //Crea la variable
       //Agrega la llamada, específica, desde esta variable.
       if adicVarDec.absVar<>nil then begin
-        adicVarDec.absVar.AddCaller(xvar);
+        AddCallerTo(adicVarDec.absVar, xvar);
       end
     end;
   end else begin

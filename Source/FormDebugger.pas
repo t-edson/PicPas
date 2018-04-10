@@ -3,7 +3,7 @@ unit FormDebugger;
 interface
 uses
   Classes, SysUtils, Types, FileUtil, Forms, Controls, Graphics, Dialogs,
-  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, Parser,
+  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, LCLType, Parser,
   FrameRamExplorer, FrameRomExplorer, FramePicRegisters, FrameRegWatcher,
   Pic16Utils, MisUtils, FramePICDiagram;
 type
@@ -70,6 +70,7 @@ type
     procedure acGenRunExecute(Sender: TObject);
     procedure acGenSetPCExecute(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure PopupMenu1Popup(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
   private
@@ -89,7 +90,7 @@ type
       aRect: TRect; aState: TGridDrawState);
   public
     pic: TPIC16;
-    procedure Exec(cxp: TCompiler);
+    procedure Exec;
   end;
 
 var
@@ -317,6 +318,7 @@ begin
   if StringGrid1.Row=-1 then exit;
   pic.PCL := StringGrid1.Row and $FF;
   pic.PCH := StringGrid1.Row >> 8;
+  StringGrid1.Invalidate;
 end;
 procedure TfrmDebugger.acGenExecHerExecute(Sender: TObject);
 {Ejecuta una instrucción hasta la dirección seleccionada.}
@@ -368,12 +370,11 @@ begin
   pic.Exec();
   RefreshScreen;
 end;
-procedure TfrmDebugger.Exec(cxp: TCompiler);
+procedure TfrmDebugger.Exec;
 {Inicia el prcceso de depuración, mostrando la ventana.}
 var
   i: Integer;
 begin
-  pic := cxp.pic;
   StringGrid1.DefaultDrawing:=false;
   StringGrid1.OnDrawCell := @StringGrid1DrawCell;
 
@@ -387,6 +388,7 @@ begin
   fraRegWat.pic := pic;
   fraRegWat.cxp:= cxp;
   fraRegWat.Refrescar;
+
   fraPicDia.pic:= pic;
   fraPicDia.Refrescar;
   pic.AddBreakopint(0);
@@ -460,6 +462,13 @@ begin
 //  ToolBar1.ButtonWidth:=38;
 //  ToolBar1.Height:=42;
 //  ToolBar1.Images:=ImgActions32;
+end;
+procedure TfrmDebugger.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key = VK_DELETE then begin
+    MsgBox('Hola');
+  end;
 end;
 
 end.

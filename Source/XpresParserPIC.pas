@@ -100,9 +100,20 @@ end;
 { TCompilerBase }
 {Clase base para crear al objeto compilador}
 TCompilerBase = class
+protected  //Variables de expresión.
+  {Estas variables, se inician al inicio de cada expresión y su valor es válido
+  hasta el final de la expresión.}
+  CurrBank  : Byte;    //Banco RAM actual
+  //Variables de estado de las expresiones booleanas
+  InvertedFromC: boolean; {Indica que el resultado de una expresión Booleana o Bit, se
+                           ha obtenido, en la última subexpresion, copaindo el bit C al
+                           bit Z, con inversión lógica. Se usa para opciones de
+                           optimziación de código.}
 protected
   procedure IdentifyField(xOperand: TOperand);
   procedure LogExpLevel(txt: string);
+  function AddCallerTo(elem: TxpElement; callerElem: TxpElement = nil): TxpEleCaller;
+  function AddCallerTo(elem: TxpElement; const curPos: TSrcPos): TxpEleCaller;
 protected  //Eventos del compilador
   OnExprStart: procedure of object;  {Se genera al iniciar la
                                       evaluación de una expresión.}
@@ -522,7 +533,7 @@ begin
     end else begin
       //Crea un operando-variable para generar código de asignación
       Op1.SetAsVariab(par.pvar); //Apunta a la variable
-      if FirstPass then par.pvar.AddCaller;   //se está usando
+      AddCallerTo(par.pvar);  //Agrega la llamada
       op := Op1.Typ.operAsign;
       Oper(Op1, op, Op2);   //Codifica la asignación
     end;
@@ -614,7 +625,6 @@ var
   RTstate0: TxpEleType;
   xfun    : TxpEleFun;
   Found   : Boolean;
-  caller  : TxpEleCaller;
   func0   : TxpEleFun;   //función interna para almacenar parámetros
 begin
 //cIn.ShowCurContInformat;
@@ -629,12 +639,10 @@ begin
   if ele.idClass = eltVar then begin
     //Es una variable
     xvar := TxpEleVar(ele);    //Referencia con tipo
-    if FirstPass then begin
-      //Lleva la cuenta de la llamada.
-      {Notar que se agrega la referencia a la variable, pero que finalmente el operando
-      puede apuntar a otra variable, si es que se tiene la forma: <variable>.<campo> }
-      xvar.AddCaller;
-    end;
+    //Lleva la cuenta de la llamada.
+    {Notar que se agrega la referencia a la variable, pero que finalmente el operando
+    puede apuntar a otra variable, si es que se tiene la forma: <variable>.<campo> }
+    AddCallerTo(xvar);
     cIn.Next;    //Pasa al siguiente
     if xvar.IsRegister then begin
       //Es una variables REGISTER
@@ -658,7 +666,7 @@ begin
   end else if ele.idClass = eltCons then begin  //es constante
     //es una constante
     xcon := TxpEleCon(ele);
-    if FirstPass then xcon.AddCaller;//lleva la cuenta
+    AddCallerTo(xcon);//lleva la cuenta
     cIn.Next;    //Pasa al siguiente
     Op.SetAsConst(xcon.typ); //fija como constante
     Op.GetConsValFrom(xcon);  //lee valor
@@ -713,12 +721,9 @@ begin
         xfun.procParam(xfun);  //Antes de leer los parámetros
         if high(func0.pars)+1>0 then
           CaptureParamsFinal(xfun);  //evalúa y asigna
-        if FirstPass then begin
-          //Se hace después de leer parámetros, para tener información del banco.
-          caller := xfun.AddCaller;
-          caller.curPos := posCall;  {Corrige posición de llamada, sino estaría apuntando
+        //Se hace después de leer parámetros, para tener información del banco.
+        AddCallerTo(xfun, posCall);  {Corrige posición de llamada, sino estaría apuntando
                                       al final de los parámetros}
-        end;
         xfun.procCall(xfun); //codifica el "CALL"
         RTstate := xfun.typ;  //para indicar que los RT están ocupados
         Op.SetAsExpres(xfun.typ);
@@ -798,10 +803,10 @@ begin
       if (Upcase(xfun.name) = tmp) then begin
         {Encontró. Llama a la función de procesamiento, quien se encargará de
         extraer los parámetros y analizar la sintaxis.}
-        if FirstPass and (xfun.compile<>nil) then begin
+        if xfun.compile<>nil then begin
           {LLeva la cuenta de llamadas, solo cuando hay subrutinas. Para funciones
            INLINE, no vale la pena, gastar recursos.}
-          xfun.AddCaller;
+          AddCallerTo(xfun);
         end;
         xfun.procCall(xfun);  //Para que devuelva el tipo y codifique el _CALL o lo implemente
         //Puede devolver typNull, si no es una función.
@@ -876,6 +881,45 @@ procedure TCompilerBase.LogExpLevel(txt: string);
 {Genera una cadena de registro , considerando el valor de "ExprLevel"}
 begin
   debugln(space(3*ExprLevel)+ txt );
+end;
+function TCompilerBase.AddCallerTo(elem: TxpElement; callerElem: TxpElement=nil): TxpEleCaller;
+{Agregar una llamada a un elemento de la sintaxis.
+Agrega información sobre el elemento "llamador", es decir, el elemento que hace
+referencia a este elemento.
+El elemento llamador es "callerElem". Si no se especifica se asumirá un elemento
+llamador por defecto, que debería ser la función/cuerpo desde donde se hace la llamada.
+Devuelve la referencia al elemento llamador, cuando es efectiva al agregación.}
+var
+  fc: TxpEleCaller;
+begin
+  if not FirstPass then begin
+    //Solo se agregan llamadas en la primera pasada
+    Result := nil;
+    exit;
+  end;
+  fc:= TxpEleCaller.Create;
+  //Carga información del estado actual del parser
+  if callerElem = nil then begin
+    {Por defecto se toma el nodo actual que es el ceurpo de alguna función o el cuerpo
+    del programa principal.}
+    fc.caller := TreeElems.curNode;
+  end else begin
+    fc.caller := callerElem;
+  end;
+  fc.curBnk := CurrBank;
+  fc.curPos := cIn.ReadSrcPos;
+  elem.lstCallers.Add(fc);
+  Result := fc;
+end;
+function TCompilerBase.AddCallerTo(elem: TxpElement; const curPos: TSrcPos): TxpEleCaller;
+{Versión de AddCallerTo() que agrega además la posición de la llamada, en lugar de usar
+la posición actual.}
+var
+  caller: TxpEleCaller;
+begin
+  caller := AddCallerTo(elem);
+  if caller = nil then exit;
+  caller.curPos := curPos;  //Corrige posición de llamada
 end;
 procedure TCompilerBase.Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
 {Ejecuta una operación con dos operandos y un operador. "opr" es el operador de Op1.

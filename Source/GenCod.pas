@@ -1603,7 +1603,7 @@ begin
     _MOVWF(E.offs);
     _MOVLW(p1^.valInt);
     _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    AddCallerTo(f_byte_mul_byte_16);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_word(opt);
@@ -1611,7 +1611,7 @@ begin
     _MOVWF(E.offs);
     _MOVLW(p1^.valInt);
     _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    AddCallerTo(f_byte_mul_byte_16);
   end;
   stVariab_Const: begin
     SetROBResultExpres_word(opt);
@@ -1621,7 +1621,7 @@ begin
     _MOVWF(E.offs);
     _MOVLW(p2^.valInt);
     _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    AddCallerTo(f_byte_mul_byte_16);
   end;
   stVariab_Variab:begin
     SetROBResultExpres_word(Opt);
@@ -1632,7 +1632,7 @@ begin
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    AddCallerTo(f_byte_mul_byte_16);
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_word(Opt);
@@ -1641,7 +1641,7 @@ begin
     _BANKSEL(p1^.bank);
     _MOVF(p1^.offs, toW); //p1 -> W
     _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    AddCallerTo(f_byte_mul_byte_16);
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_word(Opt);
@@ -1649,7 +1649,7 @@ begin
     _MOVWF(E.offs);  //p1 -> E
     _MOVLW(p2^.valInt); //p2 -> W
     _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    AddCallerTo(f_byte_mul_byte_16);
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_word(Opt);
@@ -1658,7 +1658,7 @@ begin
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW); //p2 -> W
     _CALL(f_byte_mul_byte_16.adrr);
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    AddCallerTo(f_byte_mul_byte_16);
   end;
   stExpres_Expres:begin
     SetROBResultExpres_word(Opt);
@@ -1674,7 +1674,7 @@ begin
     variable) temporal, si se tuviera una rutina de multiplicación que compilara a
     partir de la direccion de una variable (en este caso de la pila, que se puede
     modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
-    if FirstPass then f_byte_mul_byte_16.AddCaller;
+    AddCallerTo(f_byte_mul_byte_16);
   end;
   else
     genError('Cannot Compile: "%s"', [Opt.OperationString]);
@@ -1742,7 +1742,7 @@ begin
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _CALL(f_byte_div_byte.adrr);
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     if p1^.valInt=0 then begin  //caso especial
@@ -1760,7 +1760,7 @@ begin
     _BANKSEL(E.bank);
     _MOVF(E.offs, toW);  //divisor
     _CALL(f_byte_div_byte.adrr);
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Const: begin
     if p2^.valInt = 0 then begin
@@ -1774,7 +1774,7 @@ begin
     _MOVWF(H.offs);
     _MOVLW(p2^.valInt);
     _CALL(f_byte_div_byte.adrr);
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Variab:begin
     SetROBResultExpres_byte(Opt);
@@ -1785,7 +1785,7 @@ begin
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW);
     _CALL(f_byte_div_byte.adrr);
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -1801,7 +1801,7 @@ begin
     _BANKSEL(E.bank);
     _MOVF(E.offs, toW);  //divisor
     _CALL(f_byte_div_byte.adrr);
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     if p2^.valInt = 0 then begin
@@ -1813,7 +1813,7 @@ begin
     _MOVWF(H.offs);  //p1 -> H
     _MOVLW(p2^.valInt); //p2 -> W
     _CALL(f_byte_div_byte.adrr);
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -1822,7 +1822,7 @@ begin
     _BANKSEL(p2^.bank);
     _MOVF(p2^.offs, toW); //p2 -> W
     _CALL(f_byte_div_byte.adrr);
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stExpres_Expres:begin
     SetROBResultExpres_byte(Opt);
@@ -1846,7 +1846,7 @@ begin
     variable) temporal, si se tuviera una rutina de multiplicación que compilara a
     partir de la direccion de una variable (en este caso de la pila, que se puede
     modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   else
     genError('Cannot Compile: "%s"', [Opt.OperationString]);
@@ -1882,7 +1882,7 @@ begin
     _CALL(f_byte_div_byte.adrr);
     //¿Y el banco de salida?
     kMOVF(U, toW);  //Resultado en W
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     if p1^.valInt=0 then begin  //caso especial
@@ -1897,7 +1897,7 @@ begin
     kMOVF(E, toW);  //divisor
     _CALL(f_byte_div_byte.adrr);
     kMOVF(U, toW);  //Resultado en W
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Const: begin
     if p2^.valInt = 0 then begin
@@ -1910,7 +1910,7 @@ begin
     kMOVLW(p2^.valInt);
     _CALL(f_byte_div_byte.adrr);
     kMOVF(U, toW);  //Resultado en W
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Variab:begin
     SetROBResultExpres_byte(Opt);
@@ -1919,7 +1919,7 @@ begin
     kMOVF(byte2, toW);
     _CALL(f_byte_div_byte.adrr);
     kMOVF(U, toW);  //Resultado en W
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -1932,7 +1932,7 @@ begin
     kMOVF(E, toW);  //divisor
     _CALL(f_byte_div_byte.adrr);
     kMOVF(U, toW);  //Resultado en W
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     if p2^.valInt = 0 then begin
@@ -1944,7 +1944,7 @@ begin
     kMOVLW(p2^.valInt); //p2 -> W
     _CALL(f_byte_div_byte.adrr);
     kMOVF(U, toW);  //Resultado en W
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -1952,7 +1952,7 @@ begin
     kMOVF(byte2, toW); //p2 -> W
     _CALL(f_byte_div_byte.adrr);
     kMOVF(U, toW);  //Resultado en W
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   stExpres_Expres:begin
     SetROBResultExpres_byte(Opt);
@@ -1972,7 +1972,7 @@ begin
     variable) temporal, si se tuviera una rutina de multiplicación que compilara a
     partir de la direccion de una variable (en este caso de la pila, que se puede
     modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
-    if FirstPass then f_byte_div_byte.AddCaller;
+    AddCallerTo(f_byte_div_byte);
   end;
   else
     genError('Cannot Compile: "%s"', [Opt.OperationString]);
@@ -5489,7 +5489,6 @@ begin
   f := CreateSysFunction('delay_ms', nil, @fun_delay_ms);
   f.adrr:=$0;
   f.compile := @codif_delay_ms;  //rutina de compilación
-  f.OnAddCaller := @AddCaller;  //Para que lleve la cuenta de las llamadas a subrutinas
   //Funciones INLINE
   f := CreateSysFunction('exit'     , nil, @fun_Exit);
   f := CreateSysFunction('Inc'      , nil, @fun_Inc);
@@ -5509,17 +5508,14 @@ begin
   f_byte_mul_byte_16 := CreateSysFunction('byte_mul_byte_16', nil, nil);
   f_byte_mul_byte_16.adrr:=$0;
   f_byte_mul_byte_16.compile := @mul_byte_16;
-  f_byte_mul_byte_16.OnAddCaller := @AddCaller;  //Para que lleve la cuenta de las llamadas a subrutinas
   //Multiplicación byte DIV, MOD byte a byte
   f_byte_div_byte := CreateSysFunction('byte_div_byte', nil, nil);
   f_byte_div_byte.adrr:=$0;
   f_byte_div_byte.compile := @byte_div_byte;
-  f_byte_div_byte.OnAddCaller := @AddCaller;  //Para que lleve la cuenta de las llamadas a subrutinas
   //Multiplicación word por word a word
   f_word_mul_word_16 := CreateSysFunction('word_mul_word_16', nil, nil);
   f_word_mul_word_16.adrr:=$0;
   f_word_mul_word_16.compile := @word_mul_word_16;
-  f_word_mul_word_16.OnAddCaller := @AddCaller;  //Para que lleve la cuenta de las llamadas a subrutinas
 end;
 procedure SetLanguage(lang: string);
 begin
@@ -5541,4 +5537,4 @@ begin
   end;
 end;
 end.
-//5448
+
