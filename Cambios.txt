@@ -1,6 +1,6 @@
 PicPas 0.8.4
 ============
-* Se crea el campo TgenCodPic.lastOpCode, para alamacenar la última instrucción compilada, y se
+* Se crea el campo TgenCodPic.lastOpCode, para almacenar la última instrucción compilada, y se
 modifican las instrucciones "k" para que usen este campo.
 * Se Modifican las clases TPicRegister y TPicRegisterBit, en XpresTypesPIC, para agregar el campo 
 "addr" y convertir los campos "offs" y "bank" en propiedades de solo lectura.
@@ -14,6 +14,14 @@ aefctadas.
 y se adaptan diversas rutinas para trabajar con este nuevo tipo de almacenamiento.
 * Se implementa la operación MOD para bytes.
 * Se crea ún nuevo patrón de pruebas para los tipos Byte, incluyendo la operación MOD.
+* Se modifica la ventana de depuración para que muestre el desensambaldo de forma similar a como
+se muestra en la ventana principal.
+* Se mueve AddCaller() de TGenCodPic a TCompilerBase, y usa en lugar del evento 
+TxpElement.AddCaller() que es eliminado.
+* Se pasa a usar la versión 1.7 de la librería ogMotEdicion.
+* Se activa un menú contextual en el editor gráfico de la ventana de depuración.
+* Se crea el objeto gráfico TOgLogicState, en la ventana de depuración. Pero no es aún funcional.
+* Se compila una versión del binario para Mac (Colaboración de https://github.com/cuistax).
 
 PENDIENTES
 -Revisar el uso de bancos, para funciones del sistema, como delay_ms() y las llamadas que se
