@@ -1,0 +1,10 @@
+PicPas 0.8.4 for Mac OS X
+-------------------------
+
+This is an EXPERIMENTAL build of PicPas for the Mac OS X platform.
+
+To install the application, simply open PicPas-Mac.dmg and drag the 
+PicPas-darwin icon onto your Applications folder.
+
+Code samples are not included into the application bundle, they can be
+downloaded from the PicPas GitHub repository. 
