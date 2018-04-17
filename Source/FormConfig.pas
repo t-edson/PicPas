@@ -251,7 +251,7 @@ begin
   //Lee lista de temas
   cmbThemes.Items.Clear;
   cmbThemes.Items.Add(LABEL_THEM_NONE);
-  Hay := FindFirst(rutThemes + DirectorySeparator + '*.theme',faAnyFile - faDirectory, SR) = 0;
+  Hay := FindFirst(patThemes + DirectorySeparator + '*.theme',faAnyFile - faDirectory, SR) = 0;
   while Hay do begin
      //Encontró archivo, lee sus extensiones
      cmbThemes.Items.Add(ExtractFileNameWithoutExt(SR.name));
@@ -293,7 +293,7 @@ var
 begin
   //Verifica primero si hay tema, para cargarlo antes que nada
   if cmbThemes.ItemIndex > 0 then begin
-    filTheme := rutThemes + DirectorySeparator + cmbThemes.Text + '.theme';
+    filTheme := patThemes + DirectorySeparator + cmbThemes.Text + '.theme';
     //Lee de archivo, solo las propiedades marcadas con categoría 1.
     if not cfgFile.FileToPropertiesCat(filTheme, 1) then begin
       MsgErr(cfgFile.MsjErr);
@@ -326,7 +326,7 @@ var
 begin
   themeName := InputBox('New theme', 'Theme name:', '');
   if themeName = '' then exit;
-  filTem := rutThemes + DirectorySeparator + themeName + '.theme';
+  filTem := patThemes + DirectorySeparator + themeName + '.theme';
   if FileExists(filTem) then begin
     if MsgYesNo('Theme exists. Overwrite?') <> 1 then exit;
   end;
@@ -403,7 +403,7 @@ begin
   //Configuraciones del Editor-Colores
   fraCfgSynEdit.Iniciar('Edit', cfgFile);
   //Configuración del Editor-Sintaxis
-  fraCfgSyntax.LoadSyntaxFiles(rutSyntax);
+  fraCfgSyntax.LoadSyntaxFiles(patSyntax);
 
   //Configuraciones de Ensamblador
   cfgFile.Asoc_Bol('IncHeadMpu', @IncHeadMpu , chkIncHeadMpu , false);

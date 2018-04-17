@@ -1875,14 +1875,20 @@ begin
       if OpenContextFrom(uPath) then begin
         uni.srcFile := uPath;   //Gaurda el archivo fuente
       end else begin
-        //No lo encontró, busca en la carpeta de librerías
-        uPath := rutUnits + DirectorySeparator + uName;
+        //No lo encontró, busca en la carpeta de dispositivos
+        uPath := patDevices + DirectorySeparator + uName;
         if OpenContextFrom(uPath) then begin
           uni.srcFile := uPath;   //Gaurda el archivo fuente
         end else begin
-          //No lo encuentra
-          GenError(ER_FIL_NOFOUND, [uName]);
-          exit;
+           //No lo encontró, busca en la carpeta de librerías
+           uPath := patUnits + DirectorySeparator + uName;
+           if OpenContextFrom(uPath) then begin
+             uni.srcFile := uPath;   //Gaurda el archivo fuente
+           end else begin
+             //No lo encuentra
+             GenError(ER_FIL_NOFOUND, [uName]);
+             exit;
+           end;
         end;
       end;
       //Aquí ya se puede realizar otra exploración, como si fuera el archivo principal

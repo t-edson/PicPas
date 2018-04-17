@@ -183,7 +183,8 @@ var
   SearchRec: TSearchRec;
 begin
   if OpEve=nil then exit;
-  directorio := rutUnits;
+  //Directorio /units
+  directorio := patUnits;
   if FindFirst(directorio + '\*.pas', faDirectory, SearchRec) = 0 then begin
     repeat
       nomArc := SysToUTF8(SearchRec.Name);
@@ -197,6 +198,22 @@ begin
     until FindNext(SearchRec) <> 0;
     FindClose(SearchRec);
   end;
+  //Directorio /devices
+  directorio := patDevices;
+  if FindFirst(directorio + '\*.pas', faDirectory, SearchRec) = 0 then begin
+    repeat
+      nomArc := SysToUTF8(SearchRec.Name);
+      if SearchRec.Attr and faDirectory = faDirectory then begin
+        //directorio
+      end else begin //archivo
+        //Argega nombre de archivo
+        nomArc := copy(nomArc, 1, length(nomArc)-4);
+        opEve.AddItem(nomArc, -1);
+      end;
+    until FindNext(SearchRec) <> 0;
+    FindClose(SearchRec);
+  end;
+
 end;
 procedure TCodeTool.FieldsComplet(ident: string; opEve: TFaOpenEvent;
   tokPos: TSrcPos);

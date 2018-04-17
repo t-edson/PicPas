@@ -149,7 +149,7 @@ var
   r: TExternTool;
 begin
   r.name := PRE_TOOL_NAME + IntToStr(ListBox1.Count+1);
-  r.path := rutApp;
+  r.path := patApp;
   r.ComLine := '';
   r.ShowInTbar := false;
   r.WaitOnExit := false;

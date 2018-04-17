@@ -15,12 +15,13 @@ var
    //Variables globales
    MsjError    : String;    //Bandera - Mensaje de error
    //Rutas sin "/" final
-   rutApp     : string;     //ruta de la aplicación
-   rutSamples : string;     //ruta de la carpeta de scripts
-   rutUnits   : string;     //ruta para guardar las sintaxis
-   rutTemp    : string;     //ruta para los archivos temporales
-   rutSyntax  : string;     //ruta de los archivos de sintaxis
-   rutThemes  : string;     //ruta de los archivos de temas
+   patApp     : string;     //ruta de la aplicación
+   patSamples : string;     //ruta de la carpeta de scripts
+   patUnits   : string;     //ruta para guardar las sintaxis
+   patDevices : string;     //ruta para guardar las sintaxis
+   patTemp    : string;     //ruta para los archivos temporales
+   patSyntax  : string;     //ruta de los archivos de sintaxis
+   patThemes  : string;     //ruta de los archivos de temas
 
    archivoEnt  : string;    //archivo de entrada
    MostrarError: Boolean;   //Bandera para mostrar mensajesde error.
@@ -168,34 +169,39 @@ End;
 
 initialization
   //inicia directorios de la aplicación
-  rutApp :=  ExtractFilePath(Application.ExeName);  //incluye el '\' final
-  rutSamples := rutApp + 'samples';
-  rutUnits   := rutApp + 'units';
-  rutTemp    := rutApp + 'temp';
-  rutSyntax  := rutApp + 'syntax';
-  rutThemes  := rutApp + 'themes';
+  patApp :=  ExtractFilePath(Application.ExeName);  //incluye el '\' final
+  patSamples := patApp + 'samples';
+  patUnits   := patApp + 'units';
+  patDevices := patApp + 'devices';
+  patTemp    := patApp + 'temp';
+  patSyntax  := patApp + 'syntax';
+  patThemes  := patApp + 'themes';
   archivoEnt := '';    //archivo de entrada
   //verifica existencia de carpetas de trabajo
   try
-    if not DirectoryExists(rutSamples) then begin
-      msgexc(WA_DIR_NOEXIST, [rutSamples]);
-      CreateDir(rutSamples);
+    if not DirectoryExists(patSamples) then begin
+       msgexc(WA_DIR_NOEXIST, [patSamples]);
+       CreateDir(patSamples);
     end;
-    if not DirectoryExists(rutUnits) then begin
-       msgexc(WA_DIR_NOEXIST, [rutUnits]);
-       CreateDir(rutUnits);
-     end;
-    if not DirectoryExists(rutTemp) then begin
-       msgexc(WA_DIR_NOEXIST, [rutTemp]);
-       CreateDir(rutTemp);
+    if not DirectoryExists(patUnits) then begin
+       msgexc(WA_DIR_NOEXIST, [patUnits]);
+       CreateDir(patUnits);
     end;
-    if not DirectoryExists(rutSyntax) then begin
-       msgexc(WA_DIR_NOEXIST, [rutSyntax]);
-       CreateDir(rutSyntax);
+    if not DirectoryExists(patDevices) then begin
+       msgexc(WA_DIR_NOEXIST, [patDevices]);
+       CreateDir(patDevices);
     end;
-    if not DirectoryExists(rutThemes) then begin
-       msgexc(WA_DIR_NOEXIST, [rutThemes]);
-      CreateDir(rutThemes);
+    if not DirectoryExists(patTemp) then begin
+       msgexc(WA_DIR_NOEXIST, [patTemp]);
+       CreateDir(patTemp);
+    end;
+    if not DirectoryExists(patSyntax) then begin
+       msgexc(WA_DIR_NOEXIST, [patSyntax]);
+       CreateDir(patSyntax);
+    end;
+    if not DirectoryExists(patThemes) then begin
+       msgexc(WA_DIR_NOEXIST, [patThemes]);
+      CreateDir(patThemes);
     end;
 
   except
@@ -205,10 +211,11 @@ initialization
 finalization
   //Por algún motivo, la unidad HeapTrc indica que hay gotera de memoria si no se liberan
   //estas cadenas:
-  rutApp :=  '';
-  rutSamples := '';
-  rutUnits := '';
-  rutTemp := '';
-  rutSyntax := '';
+  patApp :=  '';
+  patSamples := '';
+  patUnits := '';
+  patDevices := '';
+  patTemp := '';
+  patSyntax := '';
 end.
 

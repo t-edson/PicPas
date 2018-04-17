@@ -337,7 +337,7 @@ begin
   Config.ConfigEditor(ed);
 end;
 procedure TfrmPrincipal.fraEdit_RequireSetCompletion(ed: TSynEditor);
-{SOlicita configurar el completado de código al resaltador}
+{Solicita configurar el completado de código al resaltador.}
 begin
   ct.SetCompletion(ed);
 end;
@@ -367,7 +367,7 @@ procedure TfrmPrincipal.LoadAsmSyntaxEd;
 var
   synFile: String;
 begin
-  synFile := rutSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
+  synFile := patSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
   if FileExists(synFile) then begin
     hlAssem.LoadFromFile(synFile);
   end else begin
@@ -421,7 +421,7 @@ begin
   splEdPas.Align := alRight;
   fraEditView1.Align := alClient;
   fraSynTree.Init(cxp.TreeElems);
-  fraEditView1.tmpPath := rutTemp;   //fija ruta de trabajo
+  fraEditView1.tmpPath := patTemp;   //fija ruta de trabajo
   Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
   Config.fraCfgExtTool.OnReplaceParams := @ConfigExtTool_RequirePar;
@@ -446,7 +446,7 @@ begin
   fraEditView1.InitMenuRecents(mnRecents, Config.fraCfgSynEdit.ArcRecientes);  //inicia el menú "Recientes"
   ChangeAppearance;   //primera actualización
   //Carga lista de ejemplos
-  Hay := FindFirst(rutSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
+  Hay := FindFirst(patSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin
      //encontró archivo
     AddItemToMenu(mnSamples, '&'+ChangeFileExt(SR.name,''),@DoSelectSample);
@@ -463,7 +463,7 @@ var
   it: TMenuItem;
 begin
   it := TMenuItem(Sender);
-  SamFil := rutSamples + DirectorySeparator + it.Caption + '.pas';
+  SamFil := patSamples + DirectorySeparator + it.Caption + '.pas';
   SamFil := StringReplace(SamFil,'&','',[rfReplaceAll]);
   //Carga archivo
   fraEditView1.LoadFile(SamFil);
