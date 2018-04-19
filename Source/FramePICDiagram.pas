@@ -18,7 +18,7 @@ type
     procedure DibState(const xc, yc: Single; const pin: TPICpin);
   public
     procedure DibCuerpo;
-    procedure Dibujar; override;
+    procedure Draw; override;
     constructor Create(mGraf: TMotGraf); override;
   end;
 
@@ -31,7 +31,7 @@ type
     procedure DibState(const xc, yc: Single; const pin: TPICpin);
   public
     //procedure SetState(Value: boolean);
-    procedure Dibujar; override;
+    procedure Draw; override;
     constructor Create(mGraf: TMotGraf); override;
   end;
 
@@ -100,7 +100,7 @@ begin
   height := nPinsSide * SEP_PIN;
   //Dibuja borde y fondo
   v2d.FijaLapiz(psSolid, 1, clGray);
-  v2d.FijaRelleno(clGray);
+  v2d.SetBrush(clGray);
   v2d.RectangR(x, y, x+Width, y+Height);
   //Dibuja pines de la izquierda
   ypin := y+SEP_PIN/2;   //posición inicial
@@ -132,14 +132,14 @@ begin
     ypin := ypin + SEP_PIN;
   end;
 end;
-procedure TPicObject.Dibujar;
+procedure TPicObject.Draw;
 var
   ancho: Single;
 begin
   if pic= nil then begin
     //Cuando no se ha iniciado el PIC
     v2d.FijaLapiz(psSolid, 1, clBlack);
-    v2d.FijaRelleno(clGray);
+    v2d.SetBrush(clGray);
     v2d.RectangR(x, y, x+Width, y+Height);
   end else begin
     //Caso normal
@@ -187,12 +187,12 @@ begin
     end;
   end;
 end;
-procedure TOgLogicState.Dibujar;
+procedure TOgLogicState.Draw;
 begin
   //Cuando no se ha iniciado el PIC
   v2d.FijaLapiz(psSolid, 1, clBlack);
-  if FState then v2d.FijaRelleno(clRed)
-  else v2d.FijaRelleno(clGray);
+  if FState then v2d.SetBrush(clRed)
+  else v2d.SetBrush(clGray);
   //v2d.RectangR(x, y, x+Width, y+Height);
   ptos[0].x := x;
   ptos[0].y := y;
@@ -213,10 +213,10 @@ begin
   setlength(ptos, 5);
   Width  := 30;
   Height := 20;
-  pc_SUP_CEN.Visible := false;
-  pc_INF_CEN.Visible := false;
-  pc_CEN_IZQ.Visible := false;
-  pc_CEN_DER.Visible := false;
+  pcTOP_CEN.Visible := false;
+  pcBOT_CEN.Visible := false;
+  pcCEN_LEF.Visible := false;
+  pcCEN_RIG.Visible := false;
   SizeLocked := true;
 end;
 { TfraPICDiagram }
@@ -235,10 +235,10 @@ var
   LogInp: TOgLogicState;
 begin
   if motEdi.seleccion.Count <> 1 then exit;  //Hay más de uno
-  if motEdi.Seleccionado.LoSelecciona(X,Y) then begin
+  if motEdi.Selected.LoSelecciona(X,Y) then begin
     //Click sobre un objeto seleccionado
-    if motEdi.Seleccionado is TOgLogicState then begin
-      LogInp := TOgLogicState(motEdi.Seleccionado);
+    if motEdi.Selected is TOgLogicState then begin
+      LogInp := TOgLogicState(motEdi.Selected);
       LogInp.FState := true;
       Refrescar;
       //MsgBox('TOggle');
@@ -251,9 +251,9 @@ var
   LogInp: TOgLogicState;
 begin
   if motEdi.seleccion.Count <> 1 then exit;  //Hay más de uno
-  if motEdi.Seleccionado.LoSelecciona(X,Y) then begin
-    if motEdi.Seleccionado is TOgLogicState then begin
-      LogInp := TOgLogicState(motEdi.Seleccionado);
+  if motEdi.Selected.LoSelecciona(X,Y) then begin
+    if motEdi.Selected is TOgLogicState then begin
+      LogInp := TOgLogicState(motEdi.Selected);
       LogInp.FState := false;
       //MsgBox('Up');
     end;
@@ -273,7 +273,7 @@ begin
   //agrega objeto
   ogPic := TPicObject.Create(motEdi.v2d);
   ogPic.Highlight := false;
-  motEdi.AgregarObjGrafico(ogPic);
+  motEdi.AddGraphObject(ogPic);
   OnKeyDown := @fraPICDiagramKeyDown;
   motEdi.OnMouseDownLeft := @motEdi_MouseDown;
   motEdi.OnMouseUp       := @motEdi_MouseUp;
@@ -297,7 +297,7 @@ var
 begin
   logTog := TOgLogicState.Create(motEdi.v2d);
   logTog.Highlight := false;
-  motEdi.AgregarObjGrafico(logTog);
+  motEdi.AddGraphObject(logTog);
   logTog.Selec;
   Refrescar;
 end;
@@ -308,7 +308,7 @@ begin
     MsgExc('Cannot delete PIC device.');
     ogPic.Deselec;
   end;
-  motEdi.ElimSeleccion;
+  motEdi.DeleteSelected;
 end;
 
 end.
