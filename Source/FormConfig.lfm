@@ -10,7 +10,7 @@ object Config: TConfig
   OnCreate = FormCreate
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.6.2.0'
+  LCLVersion = '1.8.0.6'
   object Panel1: TPanel
     Left = 0
     Height = 50
@@ -143,10 +143,11 @@ object Config: TConfig
         Items.Strings = (
           'en - English'
           'es - Español'
-          'qu - Quechua'
           'de - German'
           'uk - Ukrainian'
           'ru - Russian'
+          'fr - French'
+          'qu - Quechua'
         )
         TabOrder = 0
         Text = 'ComboBox1'
@@ -622,7 +623,6 @@ object Config: TConfig
       Top = 1
       Width = 134
       Align = alClient
-      DefaultItemHeight = 18
       Images = ImageList1
       ReadOnly = True
       ScrollBars = ssAutoBoth
