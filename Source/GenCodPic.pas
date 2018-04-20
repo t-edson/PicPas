@@ -18,8 +18,7 @@ type
   TGenCodPic = class(TCompilerBase)
   private
     linRep : string;   //línea para generar de reporte
-    function GetIdxParArray(out WithBrack: boolean; out par: TOperand
-      ): boolean;
+    function GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
     function GetValueToAssign(WithBrack: boolean; arrVar: TxpEleVar; out
       value: TOperand): boolean;
     procedure ProcByteUsed(offs, bnk: byte; regPtr: TPIC16RamCellPtr);

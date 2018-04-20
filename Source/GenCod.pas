@@ -58,6 +58,9 @@ type
       function byte1: TPicRegister;
       function byte2: TPicRegister;
       procedure ROB_byte_mod_byte(Opt: TxpOperation; SetRes: boolean);
+      procedure ROB_byte_mul_word(Opt: TxpOperation; SetRes: boolean);
+      procedure ROB_word_mul_byte(Opt: TxpOperation; SetRes: boolean);
+      procedure ROB_word_mul_word(Opt: TxpOperation; SetRes: boolean);
       function valor1: word;
       function valor2: word;
     private  //Operaciones con Bit
@@ -1575,7 +1578,11 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const:begin  //producto de dos constantes. Caso especial
-    SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+    if p1^.valInt*p2^.valInt < $100 then begin
+      SetROBResultConst_byte((p1^.valInt*p2^.valInt) and $FF);  //puede generar error
+    end else begin
+      SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+    end;
     exit;  //sale aquí, porque es un caso particular
   end;
   stConst_Variab: begin
@@ -1676,6 +1683,126 @@ begin
     modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
     AddCallerTo(f_byte_mul_byte_16);
   end;
+  else
+    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+  end;
+end;
+procedure TGenCod.ROB_byte_mul_word(Opt: TxpOperation; SetRes: boolean);
+begin
+  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+    GenError('Too complex pointer expression.'); exit;
+  end;
+  if not ChangePointerToExpres(p1^) then exit;
+  if not ChangePointerToExpres(p2^) then exit;
+  case stoOperation of
+  stConst_Const:begin  //producto de dos constantes. Caso especial
+    if p1^.valInt*p2^.valInt < $100 then begin
+      SetROBResultConst_byte((p1^.valInt*p2^.valInt) and $FF);  //puede generar error
+    end else if p1^.valInt*p2^.valInt < $10000 then begin
+      SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+    end else begin
+      SetROBResultConst_dword((p1^.valInt*p2^.valInt) and $FFFFFFFF);  //puede generar error
+    end;
+    exit;  //sale aquí, porque es un caso particular
+  end;
+//  stConst_Variab: begin
+//    if p1^.valInt=0 then begin  //caso especial
+//      SetROBResultConst_byte(0);
+//      exit;
+//    end else if p1^.valInt=1 then begin  //caso especial
+//      SetROBResultVariab(p2^.rVar);
+//      exit;
+//    end else if p1^.valInt=2 then begin
+//      SetROBResultExpres_word(Opt);
+//      _BANKSEL(H.bank);
+//      _CLRF(H.offs);
+//      _BCF(STATUS, _C);
+//      _BANKSEL(P2^.bank);
+//      _RLF(p2^.offs, toW);
+//      _BANKSEL(H.bank);
+//      _RLF(H.offs, toF);
+//      exit;
+//    end;
+//    SetROBResultExpres_word(Opt);
+//    _BANKSEL(p2^.bank);
+//    _MOVF(p2^.offs, toW);
+//    _BANKSEL(E.bank);
+//    _MOVWF(E.offs);
+//    _MOVLW(p1^.valInt);
+//    _CALL(f_byte_mul_byte_16.adrr);
+//    AddCallerTo(f_byte_mul_byte_16);
+//  end;
+//  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+//    SetROBResultExpres_word(opt);
+//    _BANKSEL(E.bank);
+//    _MOVWF(E.offs);
+//    _MOVLW(p1^.valInt);
+//    _CALL(f_byte_mul_byte_16.adrr);
+//    AddCallerTo(f_byte_mul_byte_16);
+//  end;
+//  stVariab_Const: begin
+//    SetROBResultExpres_word(opt);
+//    _BANKSEL(p1^.bank);
+//    _MOVF(p1^.offs, toW);
+//    _BANKSEL(E.bank);
+//    _MOVWF(E.offs);
+//    _MOVLW(p2^.valInt);
+//    _CALL(f_byte_mul_byte_16.adrr);
+//    AddCallerTo(f_byte_mul_byte_16);
+//  end;
+//  stVariab_Variab:begin
+//    SetROBResultExpres_word(Opt);
+//    _BANKSEL(p1^.bank);
+//    _MOVF(p1^.offs, toW);
+//    _BANKSEL(E.bank);
+//    _MOVWF(E.offs);
+//    _BANKSEL(p2^.bank);
+//    _MOVF(p2^.offs, toW);
+//    _CALL(f_byte_mul_byte_16.adrr);
+//    AddCallerTo(f_byte_mul_byte_16);
+//  end;
+//  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+//    SetROBResultExpres_word(Opt);
+//    _BANKSEL(E.bank);
+//    _MOVWF(E.offs);  //p2 -> E
+//    _BANKSEL(p1^.bank);
+//    _MOVF(p1^.offs, toW); //p1 -> W
+//    _CALL(f_byte_mul_byte_16.adrr);
+//    AddCallerTo(f_byte_mul_byte_16);
+//  end;
+//  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+//    SetROBResultExpres_word(Opt);
+//    _BANKSEL(E.bank);
+//    _MOVWF(E.offs);  //p1 -> E
+//    _MOVLW(p2^.valInt); //p2 -> W
+//    _CALL(f_byte_mul_byte_16.adrr);
+//    AddCallerTo(f_byte_mul_byte_16);
+//  end;
+//  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+//    SetROBResultExpres_word(Opt);
+//    _BANKSEL(E.bank);
+//    _MOVWF(E.offs);  //p1 -> E
+//    _BANKSEL(p2^.bank);
+//    _MOVF(p2^.offs, toW); //p2 -> W
+//    _CALL(f_byte_mul_byte_16.adrr);
+//    AddCallerTo(f_byte_mul_byte_16);
+//  end;
+//  stExpres_Expres:begin
+//    SetROBResultExpres_word(Opt);
+//    //la expresión p1 debe estar salvada y p2 en el acumulador
+//    rVar := GetVarByteFromStk;
+//    _BANKSEL(E.bank);
+//    _MOVWF(E.offs);  //p2 -> E
+//    _BANKSEL(rVar.adrByte0.bank);
+//    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
+//    _CALL(f_byte_mul_byte_16.adrr);
+//    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
+//    {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
+//    variable) temporal, si se tuviera una rutina de multiplicación que compilara a
+//    partir de la direccion de una variable (en este caso de la pila, que se puede
+//    modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
+//    AddCallerTo(f_byte_mul_byte_16);
+//  end;
   else
     genError('Cannot Compile: "%s"', [Opt.OperationString]);
   end;
@@ -3460,6 +3587,246 @@ MUL16LOOP := _PC;
    SYSTMP01.used := false;
    SYSTMP02.used := false;
    EndCodeSub;  //termina codificación
+end;
+procedure TGenCod.ROB_word_mul_byte(Opt: TxpOperation; SetRes: boolean);
+begin
+   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+     GenError('Too complex pointer expression.'); exit;
+   end;
+   if not ChangePointerToExpres(p1^) then exit;
+   if not ChangePointerToExpres(p2^) then exit;
+   case stoOperation of
+   stConst_Const:begin  //producto de dos constantes. Caso especial
+     if p1^.valInt*p2^.valInt < $100 then begin
+       SetROBResultConst_byte((p1^.valInt*p2^.valInt) and $FF);  //puede generar error
+     end else if p1^.valInt*p2^.valInt < $10000 then begin
+       SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+     end else begin
+       SetROBResultConst_dword((p1^.valInt*p2^.valInt) and $FFFFFFFF);  //puede generar error
+     end;
+     exit;  //sale aquí, porque es un caso particular
+   end;
+ //  stConst_Variab: begin
+ //    if p1^.valInt=0 then begin  //caso especial
+ //      SetROBResultConst_byte(0);
+ //      exit;
+ //    end else if p1^.valInt=1 then begin  //caso especial
+ //      SetROBResultVariab(p2^.rVar);
+ //      exit;
+ //    end else if p1^.valInt=2 then begin
+ //      SetROBResultExpres_word(Opt);
+ //      _BANKSEL(H.bank);
+ //      _CLRF(H.offs);
+ //      _BCF(STATUS, _C);
+ //      _BANKSEL(P2^.bank);
+ //      _RLF(p2^.offs, toW);
+ //      _BANKSEL(H.bank);
+ //      _RLF(H.offs, toF);
+ //      exit;
+ //    end;
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(p2^.bank);
+ //    _MOVF(p2^.offs, toW);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);
+ //    _MOVLW(p1^.valInt);
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+ //    SetROBResultExpres_word(opt);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);
+ //    _MOVLW(p1^.valInt);
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stVariab_Const: begin
+ //    SetROBResultExpres_word(opt);
+ //    _BANKSEL(p1^.bank);
+ //    _MOVF(p1^.offs, toW);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);
+ //    _MOVLW(p2^.valInt);
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stVariab_Variab:begin
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(p1^.bank);
+ //    _MOVF(p1^.offs, toW);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);
+ //    _BANKSEL(p2^.bank);
+ //    _MOVF(p2^.offs, toW);
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);  //p2 -> E
+ //    _BANKSEL(p1^.bank);
+ //    _MOVF(p1^.offs, toW); //p1 -> W
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);  //p1 -> E
+ //    _MOVLW(p2^.valInt); //p2 -> W
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);  //p1 -> E
+ //    _BANKSEL(p2^.bank);
+ //    _MOVF(p2^.offs, toW); //p2 -> W
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stExpres_Expres:begin
+ //    SetROBResultExpres_word(Opt);
+ //    //la expresión p1 debe estar salvada y p2 en el acumulador
+ //    rVar := GetVarByteFromStk;
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);  //p2 -> E
+ //    _BANKSEL(rVar.adrByte0.bank);
+ //    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
+ //    {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
+ //    variable) temporal, si se tuviera una rutina de multiplicación que compilara a
+ //    partir de la direccion de una variable (en este caso de la pila, que se puede
+ //    modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+   else
+     genError('Cannot Compile: "%s"', [Opt.OperationString]);
+   end;
+end;
+procedure TGenCod.ROB_word_mul_word(Opt: TxpOperation; SetRes: boolean);
+begin
+   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+     GenError('Too complex pointer expression.'); exit;
+   end;
+   if not ChangePointerToExpres(p1^) then exit;
+   if not ChangePointerToExpres(p2^) then exit;
+   case stoOperation of
+   stConst_Const:begin  //producto de dos constantes. Caso especial
+     if p1^.valInt*p2^.valInt < $100 then begin
+       SetROBResultConst_byte((p1^.valInt*p2^.valInt) and $FF);  //puede generar error
+     end else if p1^.valInt*p2^.valInt < $10000 then begin
+       SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+     end else begin
+       SetROBResultConst_dword((p1^.valInt*p2^.valInt) and $FFFFFFFF);  //puede generar error
+     end;
+     exit;  //sale aquí, porque es un caso particular
+   end;
+ //  stConst_Variab: begin
+ //    if p1^.valInt=0 then begin  //caso especial
+ //      SetROBResultConst_byte(0);
+ //      exit;
+ //    end else if p1^.valInt=1 then begin  //caso especial
+ //      SetROBResultVariab(p2^.rVar);
+ //      exit;
+ //    end else if p1^.valInt=2 then begin
+ //      SetROBResultExpres_word(Opt);
+ //      _BANKSEL(H.bank);
+ //      _CLRF(H.offs);
+ //      _BCF(STATUS, _C);
+ //      _BANKSEL(P2^.bank);
+ //      _RLF(p2^.offs, toW);
+ //      _BANKSEL(H.bank);
+ //      _RLF(H.offs, toF);
+ //      exit;
+ //    end;
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(p2^.bank);
+ //    _MOVF(p2^.offs, toW);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);
+ //    _MOVLW(p1^.valInt);
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+ //    SetROBResultExpres_word(opt);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);
+ //    _MOVLW(p1^.valInt);
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stVariab_Const: begin
+ //    SetROBResultExpres_word(opt);
+ //    _BANKSEL(p1^.bank);
+ //    _MOVF(p1^.offs, toW);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);
+ //    _MOVLW(p2^.valInt);
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stVariab_Variab:begin
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(p1^.bank);
+ //    _MOVF(p1^.offs, toW);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);
+ //    _BANKSEL(p2^.bank);
+ //    _MOVF(p2^.offs, toW);
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);  //p2 -> E
+ //    _BANKSEL(p1^.bank);
+ //    _MOVF(p1^.offs, toW); //p1 -> W
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);  //p1 -> E
+ //    _MOVLW(p2^.valInt); //p2 -> W
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+ //    SetROBResultExpres_word(Opt);
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);  //p1 -> E
+ //    _BANKSEL(p2^.bank);
+ //    _MOVF(p2^.offs, toW); //p2 -> W
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+ //  stExpres_Expres:begin
+ //    SetROBResultExpres_word(Opt);
+ //    //la expresión p1 debe estar salvada y p2 en el acumulador
+ //    rVar := GetVarByteFromStk;
+ //    _BANKSEL(E.bank);
+ //    _MOVWF(E.offs);  //p2 -> E
+ //    _BANKSEL(rVar.adrByte0.bank);
+ //    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
+ //    _CALL(f_byte_mul_byte_16.adrr);
+ //    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
+ //    {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
+ //    variable) temporal, si se tuviera una rutina de multiplicación que compilara a
+ //    partir de la direccion de una variable (en este caso de la pila, que se puede
+ //    modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
+ //    AddCallerTo(f_byte_mul_byte_16);
+ //  end;
+   else
+     genError('Cannot Compile: "%s"', [Opt.OperationString]);
+   end;
 end;
 procedure TGenCod.ROB_word_umulword_word(Opt: TxpOperation; SetRes: boolean);
 begin
@@ -5361,6 +5728,8 @@ begin
   opr.CreateOperation(typByte,@ROB_byte_sub_byte);
   opr:=typByte.CreateBinaryOperator('*',5,'mult');  //byte*byte -> word
   opr.CreateOperation(typByte,@ROB_byte_mul_byte);
+  opr.CreateOperation(typWord,@ROB_byte_mul_word);
+
   opr:=typByte.CreateBinaryOperator('DIV',5,'div');  //byte / byte ->byte
   opr.CreateOperation(typByte,@ROB_byte_div_byte);
   opr:=typByte.CreateBinaryOperator('MOD',5,'mod');  //byte mod byte ->byte
@@ -5430,6 +5799,10 @@ begin
 
   opr:=typWord.CreateBinaryOperator('-',4,'subs');  //suma
   opr.CreateOperation(typWord,@ROB_word_sub_word);
+
+  opr:=typWord.CreateBinaryOperator('*',5,'mult');  //byte*byte -> word
+  opr.CreateOperation(typByte,@ROB_word_mul_byte);
+  opr.CreateOperation(typWord,@ROB_word_mul_word);
 
   opr:=typWord.CreateBinaryOperator('AND', 5, 'and');  //AND
   opr.CreateOperation(typByte, @ROB_word_and_byte);
