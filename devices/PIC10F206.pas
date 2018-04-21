@@ -74,6 +74,7 @@ var
 
   // -- RAM to PIN mapping --
 
+  {$MAP_RAM_TO_PIN '006:0-5,1-4,2-3,3-8'} // GPIO
 
 
   // -- Bits Configuration --
