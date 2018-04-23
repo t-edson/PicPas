@@ -9,7 +9,7 @@ uses
   Classes, SysUtils, SynEdit, SynEditTypes, Forms, Controls, Dialogs, Menus,
   ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc,
   SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
-//  GenCod1PICBase,
+//  GenCodBas_PICBase,
   CompilerPIC16, FormPICExplorer, FrameSyntaxTree, FormConfig, Globales,
   PicPasProject, FrameEditView, FrameMessagesWin, XpresElementsPIC, CodeTools,
   ParserAsmPIC16, ParserDirecPIC16, FrameCfgExtTool, FormDebugger, FormRAMExplorer;

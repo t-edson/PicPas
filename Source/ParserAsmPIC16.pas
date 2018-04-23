@@ -5,7 +5,7 @@ unit ParserAsmPIC16;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, fgl, GenCod2PIC16, Pic16Utils, SynFacilHighlighter, Globales,
+  Classes, SysUtils, fgl, GenCod_PIC16, Pic16Utils, SynFacilHighlighter, Globales,
   XpresBas, strutils, XpresElementsPIC;
 
 type

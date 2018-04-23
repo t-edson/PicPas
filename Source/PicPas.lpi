@@ -83,7 +83,6 @@
       <Unit2>
         <Filename Value="CompilerPIC16.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="Parser"/>
       </Unit2>
       <Unit3>
         <Filename Value="FormPICExplorer.pas"/>
@@ -93,11 +92,11 @@
         <ResourceBaseClass Value="Form"/>
       </Unit3>
       <Unit4>
-        <Filename Value="GenCod2PIC16.pas"/>
+        <Filename Value="GenCod_PIC16.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="GenCod1PIC16.pas"/>
+        <Filename Value="GenCodBas_PIC16.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
@@ -240,7 +239,7 @@
         <ResourceBaseClass Value="Frame"/>
       </Unit28>
       <Unit29>
-        <Filename Value="GenCod1PICBase.pas"/>
+        <Filename Value="GenCodBas_PICBase.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit29>
     </Units>

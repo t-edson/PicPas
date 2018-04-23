@@ -6,7 +6,7 @@ interface
 uses
   Classes, SysUtils, lclProc, SynEditHighlighter, types, MisUtils, XpresBas,
   XpresTypesPIC, XpresElementsPIC, Pic16Utils, Pic16Devices, Parser,
-  Globales, GenCod1PIC16, GenCod2PIC16, ParserDirecPIC16, FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
+  Globales, GenCodBas_PIC16, GenCod_PIC16, ParserDirecPIC16, FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
 type
  { TCompiler }
   TCompiler = class(TParserDirec)
