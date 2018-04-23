@@ -3,7 +3,7 @@ unit FormDebugger;
 interface
 uses
   Classes, SysUtils, Types, FileUtil, Forms, Controls, Graphics, Dialogs,
-  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, LCLType, Parser,
+  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, LCLType, CompilerPIC16,
   FrameRamExplorer, FrameRomExplorer, FramePicRegisters, FrameRegWatcher,
   Pic16Utils, MisUtils, FramePICDiagram;
 type
@@ -89,6 +89,7 @@ type
     procedure StringGrid1DrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
   public
+    cxp: TCompiler;
     pic: TPIC16;
     procedure Exec;
   end;

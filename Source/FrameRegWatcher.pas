@@ -3,7 +3,7 @@ unit FrameRegWatcher;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Grids, ExtCtrls, StdCtrls,
-  Buttons, Graphics, LCLType, Menus, Pic16Utils, MisUtils, CibGrillas, Parser,
+  Buttons, Graphics, LCLType, Menus, Pic16Utils, MisUtils, CibGrillas, CompilerPIC16,
   XpresTypesPIC, XpresElementsPIC;
 type
 

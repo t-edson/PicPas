@@ -68,7 +68,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="29">
+    <Units Count="30">
       <Unit0>
         <Filename Value="PicPas.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -81,8 +81,9 @@
         <ResourceBaseClass Value="Form"/>
       </Unit1>
       <Unit2>
-        <Filename Value="Parser.pas"/>
+        <Filename Value="CompilerPIC16.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="Parser"/>
       </Unit2>
       <Unit3>
         <Filename Value="FormPICExplorer.pas"/>
@@ -92,15 +93,15 @@
         <ResourceBaseClass Value="Form"/>
       </Unit3>
       <Unit4>
-        <Filename Value="GenCod.pas"/>
+        <Filename Value="GenCod2PIC16.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="GenCodPic.pas"/>
+        <Filename Value="GenCod1PIC16.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
-        <Filename Value="XpresParserPIC.pas"/>
+        <Filename Value="Parser.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
       <Unit7>
@@ -176,11 +177,11 @@
         <IsPartOfProject Value="True"/>
       </Unit18>
       <Unit19>
-        <Filename Value="ParserAsm.pas"/>
+        <Filename Value="ParserAsmPIC16.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit19>
       <Unit20>
-        <Filename Value="ParserDirec.pas"/>
+        <Filename Value="ParserDirecPIC16.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit20>
       <Unit21>
@@ -238,6 +239,10 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
       </Unit28>
+      <Unit29>
+        <Filename Value="GenCod1PICBase.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit29>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -248,7 +253,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.21;..\..\_Librerias\MisUtils-0.6;..\..\_Librerias\MiConfig 0.4b;..\..\_Librerias\PicUtils-1.3;..\..\_Librerias\Xpres-1.3.2;..\..\_Librerias\UtilsGrilla 0.8;..\..\_Librerias\ogEditGraf-2.2"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.21;..\..\_Librerias\MisUtils-0.6;..\..\_Librerias\MiConfig 0.4b;..\..\_Librerias\PicUtils-1.4;..\..\_Librerias\Xpres-1.3.2;..\..\_Librerias\UtilsGrilla 0.8;..\..\_Librerias\ogEditGraf-2.2"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

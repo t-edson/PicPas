@@ -11,7 +11,7 @@ type
   TfraRomExplorer = class(TFrame)
     Label1: TLabel;
   private
-    procedure DibPaginaROM(x, y, ancho, alto: integer; pag: TFlashPage;
+    procedure DibPaginaROM(x, y, ancho, alto: integer; pag: TPIC16FlashPage;
       dirIni: integer);
     procedure DibBar(const x1, x2: integer; y, alto: integer; dirIni,
       dirFin: integer; lbl: string);
@@ -108,7 +108,7 @@ begin
     Canvas.TextOut(x1, y+alto-altTxt-1, etiqFin);
   end;
 end;
-procedure TfraRomExplorer.DibPaginaROM(x, y, ancho, alto: integer; pag: TFlashPage;
+procedure TfraRomExplorer.DibPaginaROM(x, y, ancho, alto: integer; pag: TPIC16FlashPage;
                                       dirIni: integer);
 begin
   //Dibuja fondo

@@ -27,7 +27,7 @@ type
     procedure SepararEnBloquesEstado(dir1, dir2: word);
     procedure SepararEnBloquesMapeado(dir1, dir2: word);
     procedure SplitInUsedRAM(dir1, dir2: word);
-    procedure DibBancoRAM(const marcoRam: TRect; bnk: TRAMBank; selected: boolean);
+    procedure DibBancoRAM(const marcoRam: TRect; bnk: TPIC16RAMBank; selected: boolean);
     procedure DibBar(const x1, x2: integer; y1, y2: integer; lbl: string);
     procedure DrawBlockTxt(const marcoRam: TRect; ancMargenDir: integer; dirIni,
       dirFin: integer; lbl: string);
@@ -269,7 +269,7 @@ begin
   cv.Rectangle(x1+ancMargenDir,
                y1, x2, y2+1);  //Corrige y2, porque Rectangle, dibuja hasta un pincel antes
 end;
-procedure TfraRamExplorer.DibBancoRAM(const marcoRam: TRect; bnk: TRAMBank;
+procedure TfraRamExplorer.DibBancoRAM(const marcoRam: TRect; bnk: TPIC16RAMBank;
                                  selected: boolean);
 {Dibuja el banco de RAM completo, en el área "marcoRam", separando por bloques
 de acuerdo al campo "state" }

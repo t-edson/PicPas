@@ -28,7 +28,7 @@ type
     StringGrid1: TStringGrid;
     StringGrid2: TStringGrid;
   private
-    procedure DibPaginaROM(x, y, ancho, alto: integer; pag: TFlashPage;
+    procedure DibPaginaROM(x, y, ancho, alto: integer; pag: TPIC16FlashPage;
       dirIni: integer);
     procedure DibBar(const x1, x2: integer; y, alto: integer; dirIni,
       dirFin: integer; lbl: string);
@@ -170,7 +170,7 @@ begin
     Canvas.TextOut(x1, y+alto-altTxt-1, etiqFin);
   end;
 end;
-procedure TfraPicRegisters.DibPaginaROM(x, y, ancho, alto: integer; pag: TFlashPage;
+procedure TfraPicRegisters.DibPaginaROM(x, y, ancho, alto: integer; pag: TPIC16FlashPage;
                                       dirIni: integer);
 begin
   //Dibuja fondo

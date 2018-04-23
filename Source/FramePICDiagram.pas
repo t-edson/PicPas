@@ -15,7 +15,7 @@ type
     pic: TPIC16;   //referencia al PIC
     xpin: Single;  //Posición X del Pin
     nPinsDiag: Integer;  //Número de pines a dibujar
-    procedure DibState(const xc, yc: Single; const pin: TPICpin);
+    procedure DibState(const xc, yc: Single; const pin: TPIC16Pin);
   public
     procedure DibCuerpo;
     procedure Draw; override;
@@ -28,7 +28,7 @@ type
     pic: TPIC16;   //referencia al PIC
     FState: boolean;
     ptos: array of TFPoint;
-    procedure DibState(const xc, yc: Single; const pin: TPICpin);
+    procedure DibState(const xc, yc: Single; const pin: TPIC16Pin);
   public
     //procedure SetState(Value: boolean);
     procedure Draw; override;
@@ -76,7 +76,7 @@ const
   LON_PIN = 15;   //Longitud de pin
 
 { TPicObject }
-procedure TPicObject.DibState(const xc, yc: Single; const pin: TPICpin);
+procedure TPicObject.DibState(const xc, yc: Single; const pin: TPIC16Pin);
 {Dibuja un indicador del estado lógico del PIN}
 begin
   if pin.typ = pptPort then begin
@@ -174,7 +174,7 @@ begin
   Height := 180;
 end;
 { TOgLogicState }
-procedure TOgLogicState.DibState(const xc, yc: Single; const pin: TPICpin);
+procedure TOgLogicState.DibState(const xc, yc: Single; const pin: TPIC16Pin);
 {Dibuja un indicador del estado lógico del PIN}
 begin
   if pin.typ = pptPort then begin

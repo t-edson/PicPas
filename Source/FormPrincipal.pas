@@ -9,9 +9,10 @@ uses
   Classes, SysUtils, SynEdit, SynEditTypes, Forms, Controls, Dialogs, Menus,
   ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc,
   SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
-  Pic16Utils, Parser, FormPICExplorer, Globales, FrameSyntaxTree, FormConfig,
+//  GenCod1PICBase,
+  CompilerPIC16, FormPICExplorer, FrameSyntaxTree, FormConfig, Globales,
   PicPasProject, FrameEditView, FrameMessagesWin, XpresElementsPIC, CodeTools,
-  ParserAsm, ParserDirec, FrameCfgExtTool, FormDebugger, FormRAMExplorer;
+  ParserAsmPIC16, ParserDirecPIC16, FrameCfgExtTool, FormDebugger, FormRAMExplorer;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -191,6 +192,8 @@ type
     procedure ReplaceDialog1Replace(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
   private
+//picbaseline: TGenCod1PICBase;
+    Compiler    : TCompiler;
     tic         : integer;  //Contador para temporización
     ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
     curProj     : TPicPasProject; //Proyecto actual
@@ -198,7 +201,7 @@ type
     fraEditView1: TfraEditView;   //Panel de editores
     fraSynTree  : TfraSyntaxTree; //Árbol de sintaxis
     fraMessages : TfraMessagesWin;
-    CT          : TCodeTool;
+    CodeTool    : TCodeTool;
     procedure ConfigExtTool_RequirePar(var comLine: string);
     procedure cxp_AfterCompile;
     procedure cxp_RequireFileString(FilePath: string; var strList: TStrings);
@@ -223,12 +226,15 @@ type
 var
   frmPrincipal: TfrmPrincipal;
 var
-  MSG_MODIF   : string;
-  MSG_SAVED   : string;
-  MSG_NOFILES : string;
-  MSG_NOFOUND_: string;
-  MSG_REPTHIS : string;
-  MSG_N_REPLAC: string;
+  MSG_MODIFIED : string;
+  MSG_SAVED    : string;
+  MSG_NOFILES  : string;
+  MSG_NOFOUND_ : string;
+  MSG_REPTHIS  : string;
+  MSG_N_REPLAC : string;
+  MSG_SYNFIL_NOF: string;
+  MSG_FILSAVCOMP: string;
+
 implementation
 {$R *.lfm}
 { TfrmPrincipal }
@@ -241,9 +247,9 @@ begin
   fraSynTree.SetLanguage;
   fraEditView1.SetLanguage;
   fraMessages.SetLanguage;
-  Parser.SetLanguage;
-  ParserAsm.SetLanguage;
-  ParserDirec.SetLanguage;
+  CompilerPIC16.SetLanguage;
+  ParserAsmPIC16.SetLanguage;
+  ParserDirecPIC16.SetLanguage;
   {$I ..\language\tra_FormPrincipal.pas}
 end;
 procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
@@ -278,14 +284,14 @@ begin
   if i <> -1 then begin
     //Tiene el archivo abierto. Pasa la referencia.
     ed := fraEditView1.editors[i];
-    if cxp.Compiling then ed.SaveFile;   //En compilación gurada siempre los archivos afectados
+    if Compiler.Compiling then ed.SaveFile;   //En compilación gurada siempre los archivos afectados
     strList := ed.SynEdit.Lines;
   end;
 end;
 procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
 {Se produjo una modificación en el editor "ed"}
 begin
-  if not cxp.Compiling then begin
+  if not Compiler.Compiling then begin
     //En compilación no se activa la verificación automática de sintaxis
     ticSynCheck := 0;  //reinicia cuenta
   end;
@@ -339,7 +345,7 @@ end;
 procedure TfrmPrincipal.fraEdit_RequireSetCompletion(ed: TSynEditor);
 {Solicita configurar el completado de código al resaltador.}
 begin
-  ct.SetCompletion(ed);
+  CodeTool.SetCompletion(ed);
 end;
 procedure TfrmPrincipal.fraMessagesStatisDBlClick;
 //Doble clcik en la sección de estadísticas
@@ -357,10 +363,10 @@ end;
 procedure TfrmPrincipal.ConfigExtTool_RequirePar(var comLine: string);
 {Se pide reemplazar parámetros en línea de comandos de Herramienta externa.}
 begin
-  comLine := StringReplace(comLine, '$(hexFile)', cxp.hexFilePath, [rfReplaceAll, rfIgnoreCase]);
-  comLine := StringReplace(comLine, '$(mainFile)', cxp.mainFilePath, [rfReplaceAll, rfIgnoreCase]);
-  comLine := StringReplace(comLine, '$(mainPath)', ExtractFileDir(cxp.mainFilePath), [rfReplaceAll, rfIgnoreCase]);
-  comLine := StringReplace(comLine, '$(picModel)', cxp.PicName, [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(hexFile)', Compiler.hexFilePath, [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(mainFile)', Compiler.mainFilePath, [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(mainPath)', ExtractFileDir(Compiler.mainFilePath), [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(picModel)', Compiler.PicName, [rfReplaceAll, rfIgnoreCase]);
 end;
 procedure TfrmPrincipal.LoadAsmSyntaxEd;
 {Carga archivo de sinatxis para el editor de ASM}
@@ -371,11 +377,14 @@ begin
   if FileExists(synFile) then begin
     hlAssem.LoadFromFile(synFile);
   end else begin
-    MsgErr('Syntax file not found: ' + synFile);
+    MsgErr(MSG_SYNFIL_NOF, [synFile]);
   end;
 end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
+  //Es necesario crear solo una instancia del compilador.
+  Compiler := TCompiler.Create;  //Crea una instancia del compilador
+//picbaseline := TGenCod1PICBase.Create;
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
   //configura panel de mensajes
@@ -384,14 +393,14 @@ begin
   fraMessages.Align := alClient;
   fraMessages.OnDblClickMessage := @fraMessagesDblClickMessage;
   fraMessages.OnStatisDBlClick  := @fraMessagesStatisDBlClick;
-  //configura panel de edición
+  //Configura panel de edición
   fraEditView1 := TfraEditView.Create(self);
   fraEditView1.Parent := self;
   fraEditView1.OnChangeEditorState    := @fraEdit_ChangeEditorState;
   fraEditView1.OnSelectEditor         := @fraEdit_SelectEditor;
   fraEditView1.OnRequireSynEditConfig := @fraEdit_RequireSynEditConfig;
   fraEditview1.OnRequireSetCompletion := @fraEdit_RequireSetCompletion;
-  //COnfigura Árbol de sintaxis
+  //Configura Árbol de sintaxis
   fraSynTree.OnSelectElemen := @fraSynTreeSelectElemen;
   fraSynTree.OnOpenFile := @fraSynTreeOpenFile;
   fraSynTree.OnSelecFileExplorer := @fraSynTreeSelecFileExplorer;
@@ -399,12 +408,21 @@ begin
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
   LoadAsmSyntaxEd;
-  CT := TCodeTool.Create(fraEditView1, cxp, fraSynTree);
-  cxp.OnRequireFileString := @cxp_RequireFileString;
-  cxp.OnAfterCompile      := @cxp_AfterCompile;
+  CodeTool := TCodeTool.Create(fraEditView1, Compiler, fraSynTree);
+  Compiler.OnRequireFileString := @cxp_RequireFileString;
+  Compiler.OnAfterCompile      := @cxp_AfterCompile;
   //Crea dinámicamente para poder inciailizarlo con comodidad
   frmDebug:= TfrmDebugger.Create(self);
-  frmDebug.pic := cxp.pic;
+  frmDebug.cxp := Compiler;
+  frmDebug.pic := Compiler.pic;
+end;
+procedure TfrmPrincipal.FormDestroy(Sender: TObject);
+begin
+  frmDebug.Destroy;
+  CodeTool.Destroy;
+  hlAssem.Free;
+  Compiler.Destroy;
+//picbaseline.Destroy;
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
@@ -420,7 +438,7 @@ begin
   InicEditorC1(edAsm);
   splEdPas.Align := alRight;
   fraEditView1.Align := alClient;
-  fraSynTree.Init(cxp.TreeElems);
+  fraSynTree.Init(Compiler.TreeElems);
   fraEditView1.tmpPath := patTemp;   //fija ruta de trabajo
   Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
@@ -430,12 +448,12 @@ begin
     //Hay línea de comando
     srcFile := ParamStr(1);  //Lee archivo fuente
     {Es facil compilar por línea de comando en una aplicación para windows. Lo difícil
-    es mostrar mensajes en la consola, proque no hay un terminal asociado. Usar writeln()
+    es mostrar mensajes en la consola, porque no hay un terminal asociado. Usar writeln()
     generaría error y debugln(), solo funciona cuando se compila como aplicación de
-    consola. Quizá lo mejor sería crear otro modo de compilación que sesa de consola,
+    consola. Quizá lo mejor sería crear otro modo de compilación que sea de consola,
     para que funcione bien la compilación por línea de comando.'}
-    cxp.Compile(srcFile, true);
-    if cxp.HayError then begin
+    Compiler.Compile(srcFile, true);
+    if Compiler.HayError then begin
       MsgBox('Compilation with errors.')
     end else begin
       MsgBox('Compilation successful.');
@@ -491,12 +509,6 @@ begin
   Config.SynTreeWidth := fraSynTree.Width;   //Guarda ancho
   Config.SaveToFile;  //guarda la configuración actual
 end;
-procedure TfrmPrincipal.FormDestroy(Sender: TObject);
-begin
-  frmDebug.Destroy;
-  CT.Destroy;
-  hlAssem.Free;
-end;
 procedure TfrmPrincipal.Timer1Timer(Sender: TObject);
 var
   ed: TSynEditor;
@@ -513,7 +525,7 @@ begin
       ed := fraEditView1.ActiveEditor;
       //Actualiza Barra de estado
       if ed.Modified then
-        StatusBar1.Panels[0].Text := MSG_MODIF
+        StatusBar1.Panels[0].Text := MSG_MODIFIED
       else
         StatusBar1.Panels[0].Text := MSG_SAVED;
       //Actualiza cursor
@@ -528,11 +540,11 @@ begin
       ed := fraEditView1.ActiveEditor;
       if (ed.SynEdit.Lines.Count <=1) and  (trim(ed.Text)='') then begin
         //Verifica rápidamente si hay texto en el editor
-         fraMessages.InitCompilation(cxp, false);  //Limpia mensajes
+         fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
         exit;
       end;
-      fraMessages.InitCompilation(cxp, false);  //Limpia mensajes
-      cxp.Compile(ed.FileName, false);
+      fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
+      Compiler.Compile(ed.FileName, false);
       //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
       MarkErrors;  //Resalta errores, si están en el editor actual
       fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
@@ -551,7 +563,7 @@ end;
 procedure TfrmPrincipal.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-  {Realmente, todo este código podrái ir dentro de de CT.KeyDown.}
+  {Realmente, todo este código podrái ir dentro de de CodeTool.KeyDown.}
   if (Shift = [ssCtrl]) and (Key = VK_TAB) then begin
     if fraEditView1.HasFocus then begin
       if fraEditView1.Count>1 then begin
@@ -572,7 +584,7 @@ begin
     Shift := []; Key := 0;  //para qie no pase
   end;
   //Pasa evento a COde Tool
-  CT.KeyDown(Sender, Key, Shift);
+  CodeTool.KeyDown(Sender, Key, Shift);
 end;
 procedure TfrmPrincipal.fraMessagesDblClickMessage(const srcPos: TSrcPos);
 begin
@@ -931,21 +943,21 @@ begin
   if filName='' then begin
     //No tiene nombre. No debería pasar, porque "fraEditView1" debe generar nombres.
     if fraEditView1.SaveAsDialog then begin
-      MsgExc('File must be saved before compiling.');
+      MsgExc(MSG_FILSAVCOMP);
       exit;
     end;
   end;
-  fraMessages.InitCompilation(cxp, true);  //Limpia mensajes
-  cxp.incDetComm   := Config.IncComment2;   //Visualización de mensajes
-  cxp.SetProIniBnk := not Config.OptBnkBefPro;
-  cxp.OptBnkAftPro := Config.OptBnkAftPro;
-  cxp.OptBnkAftIF  := Config.OptBnkAftIF;
-  cxp.OptReuProVar := Config.ReuProcVar;
-  cxp.OptRetProc   := Config.OptRetProc;
+  fraMessages.InitCompilation(Compiler, true);  //Limpia mensajes
+  Compiler.incDetComm   := Config.IncComment2;   //Visualización de mensajes
+  Compiler.SetProIniBnk := not Config.OptBnkBefPro;
+  Compiler.OptBnkAftPro := Config.OptBnkAftPro;
+  Compiler.OptBnkAftIF  := Config.OptBnkAftIF;
+  Compiler.OptReuProVar := Config.ReuProcVar;
+  Compiler.OptRetProc   := Config.OptRetProc;
   ticSynCheck := 1000; //Desactiva alguna Verif. de sintaxis, en camino.
-  cxp.Compiling := true;   //Activa bandera
-  cxp.Compile(filName);
-  cxp.Compiling := false;
+  Compiler.Compiling := true;   //Activa bandera
+  Compiler.Compile(filName);
+  Compiler.Compiling := false;
   if fraMessages.HaveErrors then begin
     fraMessages.EndCompilation;
     VerificarError;
@@ -958,16 +970,16 @@ begin
   edAsm.Lines.Clear;
   if Config.IncHeadMpu then begin
     //Incluye encabezado
-     edAsm.Lines.Add('    list     p='+ cxp.PicNameShort);
-     edAsm.Lines.Add('    #include <p' + cxp.PicNameShort + '.inc>');
+     edAsm.Lines.Add('    list     p='+ Compiler.PicNameShort);
+     edAsm.Lines.Add('    #include <p' + Compiler.PicNameShort + '.inc>');
 //     edAsm.Lines.Add('    __CONFIG        _CP_OFF & _PWRTE_ON & _WDT_OFF & _XT_OSC');
   end;
   if Config.IncVarDec then begin
      edAsm.Lines.Add(';===RAM usage===');
-     cxp.RAMusage(edAsm.Lines, Config.VarDecType, Config.ExcUnused);
+     Compiler.RAMusage(edAsm.Lines, Config.VarDecType, Config.ExcUnused);
   end;
   edAsm.Lines.Add(';===Blocks of Code===');
-  cxp.DumpCode(edAsm.Lines, Config.IncAddress, true, COnfig.IncVarName );
+  Compiler.DumpCode(edAsm.Lines, Config.IncAddress, true, COnfig.IncVarName );
   edAsm.Lines.Add(';--------------------');
   edAsm.Lines.Add('    END');
   edAsm.EndUpdate;
@@ -982,7 +994,7 @@ begin
 end;
 procedure TfrmPrincipal.acToolRamExpExecute(Sender: TObject);
 begin
-   frmRAMExplorer.Exec(cxp.pic);
+   frmRAMExplorer.Exec(Compiler.pic);
 end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin
@@ -996,7 +1008,7 @@ begin
   fraEditView1.NewLstFile;
   edit := fraEditView1.ActiveEditor;
   edit.SynEdit.BeginUpdate;
-  cxp.GenerateListReport(edit.SynEdit.Lines);
+  Compiler.GenerateListReport(edit.SynEdit.Lines);
   edit.SynEdit.EndUpdate;
 end;
 procedure TfrmPrincipal.acToolExt1Execute(Sender: TObject);
@@ -1023,7 +1035,7 @@ procedure TfrmPrincipal.acToolFindDecExecute(Sender: TObject);
 {Ubica la declaración del elemento}
 begin
   if fraEditView1.Count=0 then exit;
-  ct.GoToDeclaration;
+  CodeTool.GoToDeclaration;
 end;
 //Adicionales
 procedure TfrmPrincipal.MarkErrors;
