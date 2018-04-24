@@ -48,7 +48,7 @@ uses
   Pic16Utils, MisUtils, XpresBas;
 type
     { TGenCod }
-    TGenCod = class(TGenCod1PIC16)
+    TGenCod = class(TGenCodBas_PIC16)
     protected
       procedure callParam(fun: TxpEleFun);
       procedure callFunct(fun: TxpEleFun);
