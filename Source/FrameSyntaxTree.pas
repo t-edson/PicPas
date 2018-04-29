@@ -96,6 +96,7 @@ var
 procedure TfraSyntaxTree.SetLanguage;
 begin
   {$I ..\language\tra_FrameSyntaxTree.pas}
+  frmArcExplor1.SetLanguage;
   Refresh;
 end;
 procedure TfraSyntaxTree.frmArcExplor1DoubleClickFile(nod: TExplorNode);

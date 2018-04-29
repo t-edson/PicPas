@@ -3,7 +3,7 @@ unit FormDebugger;
 interface
 uses
   Classes, SysUtils, Types, FileUtil, Forms, Controls, Graphics, Dialogs,
-  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, LCLType, CompilerPIC16,
+  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, LCLType, Compiler_PIC16,
   FrameRamExplorer, FrameRomExplorer, FramePicRegisters, FrameRegWatcher,
   Pic16Utils, MisUtils, FramePICDiagram;
 type
@@ -89,7 +89,7 @@ type
     procedure StringGrid1DrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
   public
-    cxp: TCompiler;
+    cxp: TCompiler_PIC16;
     pic: TPIC16;
     procedure Exec;
   end;
@@ -328,7 +328,7 @@ var
 begin
   if StringGrid1.Row=-1 then exit;
   pc := StringGrid1.Row;
-  pic.ExecTo(pc);  //Ejecuta hasta la sgte. instrucción, salta el CALL
+  pic.ExecTo(pc);  //Ejecuta hasta la sgte. instrucción, salta el i_CALL
   RefreshScreen;
 end;
 procedure TfrmDebugger.acGenClearCCExecute(Sender: TObject);
@@ -357,9 +357,9 @@ procedure TfrmDebugger.acGenStepExecute(Sender: TObject);
 var
   pc: word;
 begin
-  if pic.CurInstruction = CALL then begin
+  if pic.CurInstruction = i_CALL then begin
     pc := pic.PCH<<8 + pic.PCL;
-    pic.ExecTo(pc+1);  //Ejecuta hasta la sgte. instrucción, salta el CALL
+    pic.ExecTo(pc+1);  //Ejecuta hasta la sgte. instrucción, salta el i_CALL
   end else begin
     pic.Exec();
   end;

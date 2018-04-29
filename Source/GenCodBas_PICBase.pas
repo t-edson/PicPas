@@ -4,7 +4,7 @@ unit GenCodBas_PICBase;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicBaseUtils, Parser,
+  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, PicBaseUtils, Parser,
   MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 8;      //tamaño de pila para subrutinas en el PIC
@@ -27,7 +27,7 @@ type
     function GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
     function GetValueToAssign(WithBrack: boolean; arrVar: TxpEleVar; out
       value: TOperand): boolean;
-    procedure ProcByteUsed(offs, bnk: byte; regPtr: TPICBaseRamCellPtr);
+    procedure ProcByteUsed(offs, bnk: byte; regPtr: TPICRamCellPtr);
     procedure word_ClearItems(const OpPtr: pointer);
     procedure word_GetItem(const OpPtr: pointer);
     procedure word_SetItem(const OpPtr: pointer);
@@ -142,7 +142,6 @@ type
     procedure ChangeResultCharToByte;
     function ChangePointerToExpres(var ope: TOperand): boolean;
   protected  //Instrucciones que no manejan el cambio de banco
-    lastOpCode: TPICBaseInst;
     procedure CodAsmFD(const inst: TPICBaseInst; const f: byte; d: TPICBaseDestin);
     procedure CodAsmK(const inst: TPICBaseInst; const k: byte);
       procedure _BANKSEL(targetBank: byte);
@@ -181,8 +180,8 @@ type
     procedure _RETURN;
     procedure _RLF(const f: byte; d: TPICBaseDestin);
     procedure _RRF(const f: byte; d: TPICBaseDestin);
+
     procedure _SLEEP;
-    procedure _SUBLW(const k: word);
     procedure _SUBWF(const f: byte; d: TPICBaseDestin);
     procedure _SWAPF(const f: byte; d: TPICBaseDestin);
     procedure _XORLW(const k: word);
@@ -191,7 +190,6 @@ type
     procedure _IFZERO;
     procedure _IFNZERO;
   protected  //Instrucciones que manejan el cambio de banco
-    procedure kADDLW(const k: word);
     procedure kADDWF(const f: word; d: TPICBaseDestin);
     procedure kANDLW(const k: word);
     procedure kANDWF(const f: TPicRegister; d: TPICBaseDestin);
@@ -222,7 +220,6 @@ type
     procedure kRLF(const f: TPicRegister; d: TPICBaseDestin);
     procedure kRRF(const f: TPicRegister; d: TPICBaseDestin);
     procedure kSLEEP;
-    procedure kSUBLW(const k: word);
     procedure kSUBWF(const f: word; d: TPICBaseDestin);
     procedure kSWAPF(const f: TPicRegister; d: TPICBaseDestin);
     procedure kXORLW(const k: word);
@@ -321,7 +318,7 @@ begin
 end;
 { TGenCodPic }
 procedure TGenCodBas_PICBase.ProcByteUsed(offs, bnk: byte;
-  regPtr: TPICBaseRamCellPtr);
+  regPtr: TPICRamCellPtr);
 begin
   linRep := linRep + regPtr^.name +
             ' DB ' + 'bnk'+ IntToStr(bnk) + ':$' + IntToHex(offs, 3) + LineEnding;
@@ -1301,68 +1298,13 @@ procedure TGenCodBas_PICBase.GenCodBank(targetAdrr: word);
 Se debe usar antes de una instrucción que va a acceder a RAM.}
 var
   targetBank: byte;
-  i, lbl: Integer;
-  opCode: Word;
-  lastOpCode0: TPICBaseInst;
 begin
   if targetAdrr and $03f = $000 then exit;   //Mapeada siempre en los 4 bancos
   if targetAdrr and $03f = $004 then exit;   //Mapeada siempre en los 4 bancos
-  i := pic.iFlash;  //guarda dirección
   targetBank := targetAdrr >> 7;
-  lastOpCode0 := lastOpCode;   //Protege, porque _BANKSEL() puede cambiarlo
   { TODO : Se debería ver un medio rápido para detectar si la variable "targetAdrr" está
   mapeada, también, en otros bancos y así evitar cambios innecesarios de banco. }
   _BANKSEL(targetBank);
-  if (i>0) and (pic.iFlash > i) and (lastOpCode0 in [i_BTFSC, i_BTFSS, i_DECFSZ, i_INCFSZ]) then begin
-    {Se ha generado instrucciones en el cambio de banco. Eso hace que la instrucción
-    que sigue ya no sea "atómica". Hay que ver si es necesario corregir posibles saltos
-    de la instrucción anterior, que ha asumido que esta instrución es atómica (de una
-    sola palabra).
-    Se usa el filtro de "lastOpCode" para evitar decodificar innecesariamente el opCode.
-    Notar que el hecho de usar "lastOpCode" implica que solo se reconcoerán las
-    instrucciones de salto que sean de tipo "k".}
-    opCode := pic.flash[i-1].value;   //Instrucción anterior
-    pic.Decode(opCode);   //decodifica instrucción
-    //Verifica si corresponde a alguna instrucción condicional que debe corregirse.
-    case pic.idIns of
-    i_BTFSC: begin
-      {Es del tipo:
-         BTFSC xxx, bbb
-         <instrucción>
-       Y debe ser convertido en:
-         BTFSS xxx, bbb
-         GOTO  label
-         <cambio de banco>
-         <instrucción>    <-----íFlash
-    label:
-       }
-       pic.iFlash := i - 1;  //retrocede a instrucción BTFSC;
-       CurrBank := pic.flash[i-1].curBnk;    //Empieza de nuevo en este banco, para no perder la secuencia
-       _BTFSS(pic.f_, pic.b_);  //corrige instrucción
-       _GOTO_PEND(lbl);
-       _BANKSEL(targetBank);  //Genera nuevamente instrucciones de cambio de banco
-       pic.codGotoAt(lbl, _PC+1);   //Ua isntrucción despúes
-    end;
-    i_BTFSS: begin
-      pic.iFlash := i - 1;  //retrocede a instrucción BTFSC;
-      CurrBank := pic.flash[i-1].curBnk;    //Empieza de nuevo en este banco, para no perder la secuencia
-      _BTFSC(pic.f_, pic.b_);  //corrige instrucción
-      _GOTO_PEND(lbl);
-      _BANKSEL(targetBank);  //Genera nuevamente instrucciones de banco
-      pic.codGotoAt(lbl, _PC);   //termina de codificar el salto
-    end;
-    i_DECFSZ, i_INCFSZ: begin
-      //Estas instrucciones no se pueden modificar, sino que se debe incluir
-      //saltos adicionales
-      pic.iFlash := i;  //retrocede a inicio de instrucciones de cambio de banco
-      CurrBank := pic.flash[i].curBnk;    //Empieza de nuevo en este banco, para no perder la secuencia
-      _GOTO(_PC+2);
-      _GOTO_PEND(lbl);
-      _BANKSEL(targetBank);  //Genera nuevamente instrucciones de cambio de banco
-      pic.codGotoAt(lbl, _PC);   //termina de codificar el salto
-    end;
-    end;
-  end;
 end;
 
 function TGenCodBas_PICBase._PC: word; inline;
@@ -1386,151 +1328,126 @@ procedure TGenCodBas_PICBase._ANDLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ANDLW, k);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._ADDWF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ADDWF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._ANDWF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ANDWF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._CLRF(const f: byte); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(i_CLRF, f);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._CLRW; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._COMF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_COMF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._DECF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._DECFSZ(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECFSZ, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._INCF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._INCFSZ(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._IORWF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_IORWF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._MOVF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_MOVF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._MOVWF(const f: byte);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(i_MOVWF, f);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._NOP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_NOP);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._RLF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RLF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._RRF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._SUBWF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SUBWF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._SWAPF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SWAPF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._BCF(const f, b: byte); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BCF, f, b);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._BSF(const f, b: byte); //inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BSF, f, b);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._BTFSC(const f, b: byte); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BTFSC, f, b);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._BTFSS(const f, b: byte); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BTFSS, f, b);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._CALL(const a: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_CALL, a);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._CLRWDT; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRWDT);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._GOTO(const a: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_GOTO, a);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._GOTO_PEND(out igot: integer);
 {Escribe una instrucción GOTO, pero sin precisar el destino aún. Devuelve la dirección
@@ -1540,55 +1457,46 @@ begin
   igot := pic.iFlash;  //guarda posición de instrucción de salto
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_GOTO, 0);  //pone salto indefinido
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._IORLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_IORLW, k);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._MOVLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_MOVLW, k);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._RETFIE; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_RETFIE);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._RETLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_RETLW, k);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._RETURN;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_RETURN);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._SLEEP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_SLEEP);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._XORLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._XORWF(const f: byte; d: TPICBaseDestin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f,d);
-  lastOpCode := i_Inval;
 end;
 procedure TGenCodBas_PICBase._IFZERO;
 begin
@@ -1605,169 +1513,144 @@ begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ADDWF, f,d);
-  lastOpCode := i_ADDWF;
 end;
 procedure TGenCodBas_PICBase.kANDLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ANDLW, k);
-  lastOpCode := i_ANDLW;
 end;
 procedure TGenCodBas_PICBase.kANDWF(const f: TPicRegister; d: TPICBaseDestin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ANDWF, f.addr, d);
-  lastOpCode := i_ANDWF;
 end;
 procedure TGenCodBas_PICBase.kCLRF(const f: TPicRegister); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(i_CLRF, f.addr);
-  lastOpCode := i_CLRF;
 end;
 procedure TGenCodBas_PICBase.kCLRW;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
-  lastOpCode := i_CLRW;
 end;
 procedure TGenCodBas_PICBase.kCOMF(const f: word; d: TPICBaseDestin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_COMF, f,d);
-  lastOpCode := i_COMF;
 end;
 procedure TGenCodBas_PICBase.kDECF(const f: word; d: TPICBaseDestin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECF, f,d);
-  lastOpCode := i_DECF;
 end;
 procedure TGenCodBas_PICBase.kDECFSZ(const f: word; d: TPICBaseDestin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECFSZ, f,d);
-  lastOpCode := i_DECFSZ;
 end;
 procedure TGenCodBas_PICBase.kINCF(const f: TPicRegister; d: TPICBaseDestin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCF, f.addr, d);
-  lastOpCode := i_INCF;
 end;
 procedure TGenCodBas_PICBase.kINCFSZ(const f: word; d: TPICBaseDestin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
-  lastOpCode := i_INCFSZ;
 end;
 procedure TGenCodBas_PICBase.kIORWF(const f: word; d: TPICBaseDestin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_IORWF, f,d);
-  lastOpCode := i_IORWF;
 end;
 procedure TGenCodBas_PICBase.kMOVF(const f: TPicRegister; d: TPICBaseDestin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_MOVF, f.addr, d);
-  lastOpCode := i_MOVF;
 end;
 procedure TGenCodBas_PICBase.kMOVWF(const f: TPicRegister); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(i_MOVWF, f.addr);
-  lastOpCode := i_MOVWF;
 end;
 procedure TGenCodBas_PICBase.kNOP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_NOP);
-  lastOpCode := i_NOP;
 end;
 procedure TGenCodBas_PICBase.kRLF(const f: TPicRegister; d: TPICBaseDestin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RLF, f.addr, d);
-  lastOpCode := i_RLF;
 end;
 procedure TGenCodBas_PICBase.kRRF(const f: TPicRegister; d: TPICBaseDestin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f.addr, d);
-  lastOpCode := i_RRF;
 end;
 procedure TGenCodBas_PICBase.kSUBWF(const f: word; d: TPICBaseDestin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SUBWF, f,d);
-  lastOpCode := i_SUBWF;
 end;
 procedure TGenCodBas_PICBase.kSWAPF(const f: TPicRegister; d: TPICBaseDestin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SWAPF, f.addr, d);
-  lastOpCode := i_SWAPF;
 end;
 procedure TGenCodBas_PICBase.kBCF(const f: TPicRegisterBit);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BCF, f.addr, f.bit);
-  lastOpCode := i_BCF;
 end;
 procedure TGenCodBas_PICBase.kBSF(const f: TPicRegisterBit);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BSF, f.addr, f.bit);
-  lastOpCode := i_BSF;
 end;
 procedure TGenCodBas_PICBase.kBTFSC(const f: TPicRegisterBit);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BTFSC, f.addr, f.bit);
-  lastOpCode := i_BTFSC;
 end;
 procedure TGenCodBas_PICBase.kBTFSS(const f: TPicRegisterBit);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BTFSS, f.addr, f.bit);
-  lastOpCode := i_BTFSS;
 end;
 procedure TGenCodBas_PICBase.kCALL(const a: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_CALL, a);
-  lastOpCode := i_CALL;
 end;
 procedure TGenCodBas_PICBase.kCLRWDT; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRWDT);
-  lastOpCode := i_CLRWDT;
 end;
 procedure TGenCodBas_PICBase.kGOTO(const a: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_GOTO, a);
-  lastOpCode := i_GOTO;
 end;
 procedure TGenCodBas_PICBase.kGOTO_PEND(out igot: integer);
 {Escribe una instrucción GOTO, pero sin precisar el destino aún. Devuelve la dirección
@@ -1777,56 +1660,47 @@ begin
   igot := pic.iFlash;  //guarda posición de instrucción de salto
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_GOTO, 0);  //pone salto indefinido
-  lastOpCode := i_GOTO;
 end;
 procedure TGenCodBas_PICBase.kIORLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_IORLW, k);
-  lastOpCode := i_IORLW;
 end;
 procedure TGenCodBas_PICBase.kMOVLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_MOVLW, k);
-  lastOpCode := i_MOVLW;
 end;
 procedure TGenCodBas_PICBase.kRETFIE;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_RETFIE);
-  lastOpCode := i_RETFIE;
 end;
 procedure TGenCodBas_PICBase.kRETLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_RETLW, k);
-  lastOpCode := i_RETLW;
 end;
 procedure TGenCodBas_PICBase.kRETURN; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_RETURN);
-  lastOpCode := i_RETURN;
 end;
 procedure TGenCodBas_PICBase.kSLEEP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_SLEEP);
-  lastOpCode := i_SLEEP;
 end;
 procedure TGenCodBas_PICBase.kXORLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
-  lastOpCode := i_XORLW;
 end;
 procedure TGenCodBas_PICBase.kXORWF(const f: TPicRegister; d: TPICBaseDestin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f.addr, d);
-  lastOpCode := i_XORWF;
 end;
 
 function TGenCodBas_PICBase.PicName: string;
@@ -2429,9 +2303,11 @@ begin
     stVariab: begin
       SetResultExpres(arrVar.typ.refType, true);  //Es array de word, devuelve word
       _BCF(STATUS, _C);
-      _RLF(idx.offs, toW);           //Multiplica Idx por 2
-      _ADDLW(arrVar.addr0+1);   //Agrega OFFSET + 1
+      _RLF(idx.offs, toW);      //Multiplica Idx por 2
       _MOVWF(FSR.offs);     //direcciona con FSR
+      _MOVLW(arrVar.addr0+1);   //Agrega OFFSET + 1
+      _ADDWF(FSR.offs, toF);
+
       _MOVF(0, toW);  //lee indexado en W
       _MOVWF(H.offs);    //byte alto
       _DECF(FSR.offs, toF);
@@ -2441,9 +2317,11 @@ begin
       SetResultExpres(arrVar.typ.refType, false);  //Es array de word, devuelve word
       _MOVWF(FSR.offs);     //idx a  FSR (usa como varaib. auxiliar)
       _BCF(STATUS, _C);
-      _RLF(FSR.offs, toW);         //Multiplica Idx por 2
-      _ADDLW(arrVar.addr0+1);   //Agrega OFFSET + 1
+      _RLF(FSR.offs, toW);      //Multiplica Idx por 2
       _MOVWF(FSR.offs);     //direcciona con FSR
+      _MOVLW(arrVar.addr0+1);   //Agrega OFFSET + 1
+      _ADDWF(FSR.offs, toF);
+
       _MOVF(0, toW);  //lee indexado en W
       _MOVWF(H.offs);    //byte alto
       _DECF(FSR.offs, toF);
@@ -2517,8 +2395,9 @@ begin
           //El valor a escribir, es una constante cualquiera
           _BCF(STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
-          _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
+          _MOVLW(arrVar.addr0);  //Dirección de inicio
+          _ADDWF(FSR.offs, toF);  //Direcciona
           ////// Byte Bajo
           if value.LByte = 0 then begin
             _CLRF($00);
@@ -2539,8 +2418,9 @@ begin
           //Calcula dirfección de byte bajo
           _BCF(STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
-          _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
+          _MOVLW(arrVar.addr0);  //Dirección de inicio
+          _ADDWF(FSR.offs, toF);  //Direcciona
           ////// Byte Bajo
           _MOVF(value.Loffs, toW);
           _MOVWF($00);   //Escribe
@@ -2557,8 +2437,9 @@ begin
           //Calcula dirección de byte bajo
           _BCF(STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
-          _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
+          _MOVLW(arrVar.addr0);  //Dirección de inicio
+          _ADDWF(FSR.offs, toF);  //Direcciona
           ////// Byte Bajo
           _MOVF(aux.offs, toW);
           _MOVWF($00);   //Escribe
@@ -2576,9 +2457,9 @@ begin
         //El valor a asignar, es una constante
         _MOVWF(FSR.offs);   //Salva W.
         _BCF(STATUS, _C);
-        _RLF(FSR.offs, toW);  //idx * 2
-        _ADDLW(arrVar.addr0);  //Dirección de inicio
-        _MOVWF(FSR.offs);  //Direcciona a byte bajo
+        _RLF(FSR.offs, toF);  //idx * 2
+        _MOVLW(arrVar.addr0);
+        _ADDWF(FSR.offs, toF);  //Direcciona a byte bajo
         //Byte bajo
         if value.LByte = 0 then begin
           _CLRF($00);   //Pone a cero
@@ -2597,9 +2478,9 @@ begin
       end else if value.Sto = stVariab then begin
         _MOVWF(FSR.offs);   //Salva W.
         _BCF(STATUS, _C);
-        _RLF(FSR.offs, toW);  //idx * 2
-        _ADDLW(arrVar.addr0);  //Dirección de inicio
-        _MOVWF(FSR.offs);  //Direcciona a byte bajo
+        _RLF(FSR.offs, toF);  //idx * 2
+        _MOVLW(arrVar.addr0);  //Dirección de inicio
+        _ADDWF(FSR.offs, toF);  //Direcciona a byte bajo
         //Byte bajo
         _MOVF(value.Loffs, toW);
         _MOVWF($00);
@@ -2615,9 +2496,9 @@ begin
         rVar := GetVarByteFromStk;  //toma referencia de la pila
         //Calcula dirección de byte bajo
         _BCF(STATUS, _C);
-        _RLF(rVar.adrByte0.offs, toW);  //índice * 2
-        _ADDLW(arrVar.addr0);  //Dirección de inicio
-        _MOVWF(FSR.offs);  //Direcciona
+        _RLF(rVar.adrByte0.offs, toF);  //índice * 2
+        _MOVLW(arrVar.addr0);  //Dirección de inicio
+        _ADDWF(FSR.offs, toF);  //Direcciona
         ////// Byte Bajo
         _MOVF(aux.offs, toW);
         _MOVWF($00);   //Escribe
@@ -3000,7 +2881,6 @@ begin
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPICBase.Create;
-  lastOpCode := i_Inval;
   ///////////Crea tipos
   ClearTypes;
   typNull := CreateSysType('null',t_boolean,-1);

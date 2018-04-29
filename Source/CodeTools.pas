@@ -5,7 +5,7 @@ interface
 uses
   Classes, SysUtils, LCLType, LCLProc, SynEdit, SynEditHighlighter, LazUTF8,
   MisUtils, SynFacilCompletion, SynFacilHighlighter, SynFacilBasic, XpresBas,
-  XpresElementsPIC, FrameEditView, FrameSyntaxTree, CompilerPIC16,
+  XpresElementsPIC, FrameEditView, FrameSyntaxTree, Compiler_PIC16,
   Globales;
 type
   { TCodeTool }
@@ -13,7 +13,7 @@ type
   private
     //Referencias importantes
     fraEdit   : TfraEditView;
-    cxp       : TCompiler;
+    cxp       : TCompiler_PIC16;
     fraSynTree: TfraSyntaxTree;
     opEve0: TFaOpenEvent;   //Para pasar parámetro a cxpTreeElemsFindElement´()
   public
@@ -39,7 +39,7 @@ type
   public
     procedure SetCompletion(ed: TSynEditor);
   public  //Inicialización
-    constructor Create(fraEdit0: TfraEditView; cxp0: TCompiler;
+    constructor Create(fraEdit0: TfraEditView; cxp0: TCompiler_PIC16;
       fraSynTree0: TfraSyntaxTree);
   end;
 
@@ -437,7 +437,7 @@ begin
   opEve.OnLoadItems := @GeneralIdentifierCompletion;
 
 end;
-constructor TCodeTool.Create(fraEdit0: TfraEditView; cxp0 : TCompiler;
+constructor TCodeTool.Create(fraEdit0: TfraEditView; cxp0 : TCompiler_PIC16;
                              fraSynTree0: TfraSyntaxTree);
 begin
   fraEdit    := fraEdit0;

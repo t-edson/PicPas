@@ -3,7 +3,7 @@ unit FramePICDiagram;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ExtCtrls, Graphics, Menus,
-  ActnList, ogMotEdicion, ogMotGraf2D, ogDefObjGraf, Pic16Utils,
+  ActnList, ogMotEdicion, ogMotGraf2D, ogDefObjGraf, PicCore, Pic16Utils,
   MisUtils;
 
 type
@@ -15,20 +15,21 @@ type
     pic: TPIC16;   //referencia al PIC
     xpin: Single;  //Posición X del Pin
     nPinsDiag: Integer;  //Número de pines a dibujar
-    procedure DibState(const xc, yc: Single; const pin: TPIC16Pin);
+    procedure DibState(const xc, yc: Single; const pin: TPICPin);
   public
     procedure DibCuerpo;
     procedure Draw; override;
     constructor Create(mGraf: TMotGraf); override;
   end;
 
+  { TOgLogicState }
   //Define el objeto gráfico LogicState
   TOgLogicState = class(TObjGraf)
   private
     pic: TPIC16;   //referencia al PIC
     FState: boolean;
     ptos: array of TFPoint;
-    procedure DibState(const xc, yc: Single; const pin: TPIC16Pin);
+    procedure DibState(const xc, yc: Single; const pin: TPICPin);
   public
     //procedure SetState(Value: boolean);
     procedure Draw; override;
@@ -76,7 +77,7 @@ const
   LON_PIN = 15;   //Longitud de pin
 
 { TPicObject }
-procedure TPicObject.DibState(const xc, yc: Single; const pin: TPIC16Pin);
+procedure TPicObject.DibState(const xc, yc: Single; const pin: TPICPin);
 {Dibuja un indicador del estado lógico del PIN}
 begin
   if pin.typ = pptPort then begin
@@ -99,7 +100,7 @@ begin
   nPinsSide := nPinsDiag div 2;
   height := nPinsSide * SEP_PIN;
   //Dibuja borde y fondo
-  v2d.FijaLapiz(psSolid, 1, clGray);
+  v2d.SetPen(psSolid, 1, clGray);
   v2d.SetBrush(clGray);
   v2d.RectangR(x, y, x+Width, y+Height);
   //Dibuja pines de la izquierda
@@ -138,7 +139,7 @@ var
 begin
   if pic= nil then begin
     //Cuando no se ha iniciado el PIC
-    v2d.FijaLapiz(psSolid, 1, clBlack);
+    v2d.SetPen(psSolid, 1, clBlack);
     v2d.SetBrush(clGray);
     v2d.RectangR(x, y, x+Width, y+Height);
   end else begin
@@ -161,7 +162,7 @@ begin
       DibCuerpo;
     end else begin
       //Caso de muchos pines
-      v2d.FijaLapiz(psSolid, 1, clBlack);
+      v2d.SetPen(psSolid, 1, clBlack);
       v2d.RectangR(x, y, x+Width, y+Height);
     end;
   end;
@@ -174,7 +175,7 @@ begin
   Height := 180;
 end;
 { TOgLogicState }
-procedure TOgLogicState.DibState(const xc, yc: Single; const pin: TPIC16Pin);
+procedure TOgLogicState.DibState(const xc, yc: Single; const pin: TPICPin);
 {Dibuja un indicador del estado lógico del PIN}
 begin
   if pin.typ = pptPort then begin
@@ -190,7 +191,7 @@ end;
 procedure TOgLogicState.Draw;
 begin
   //Cuando no se ha iniciado el PIC
-  v2d.FijaLapiz(psSolid, 1, clBlack);
+  v2d.SetPen(psSolid, 1, clBlack);
   if FState then v2d.SetBrush(clRed)
   else v2d.SetBrush(clGray);
   //v2d.RectangR(x, y, x+Width, y+Height);

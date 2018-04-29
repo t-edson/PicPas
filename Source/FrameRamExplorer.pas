@@ -3,12 +3,12 @@ unit FrameRamExplorer;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, StdCtrls, LCLProc,
-  LCLIntf, LCLType, ExtCtrls, Buttons, Pic16Utils;
+  LCLIntf, LCLType, ExtCtrls, Buttons, Pic16Utils, PicCore;
 type
   //Define a un bloque de RAM, que servirá para dibujo
   TRamBlock = record
     add1, add2: word;      //Direcciones de memoria
-    blkType: TPIC16CellState; //Tipo de blqoue
+    blkType: TPICCellState; //Tipo de blqoue
     mapped : boolean;        //Indica si el bloque está mapeado
     used   : boolean;        //Indica si el bloque está usado
   end;
@@ -27,7 +27,7 @@ type
     procedure SepararEnBloquesEstado(dir1, dir2: word);
     procedure SepararEnBloquesMapeado(dir1, dir2: word);
     procedure SplitInUsedRAM(dir1, dir2: word);
-    procedure DibBancoRAM(const marcoRam: TRect; bnk: TPIC16RAMBank; selected: boolean);
+    procedure DibBancoRAM(const marcoRam: TRect; bnk: TPICRAMBank; selected: boolean);
     procedure DibBar(const x1, x2: integer; y1, y2: integer; lbl: string);
     procedure DrawBlockTxt(const marcoRam: TRect; ancMargenDir: integer; dirIni,
       dirFin: integer; lbl: string);
@@ -55,7 +55,7 @@ encontrados (de distinto campo "state"), en el arreglo "blockSta".
 var
   n: Integer;
   i, pos1, pos2: Word;
-  tipBloque: TPIC16CellState;
+  tipBloque: TPICCellState;
 begin
   setlength(blockSta, 1);  //abre un bloque
   n := high(blockSta);  //índice actual
@@ -269,7 +269,7 @@ begin
   cv.Rectangle(x1+ancMargenDir,
                y1, x2, y2+1);  //Corrige y2, porque Rectangle, dibuja hasta un pincel antes
 end;
-procedure TfraRamExplorer.DibBancoRAM(const marcoRam: TRect; bnk: TPIC16RAMBank;
+procedure TfraRamExplorer.DibBancoRAM(const marcoRam: TRect; bnk: TPICRAMBank;
                                  selected: boolean);
 {Dibuja el banco de RAM completo, en el área "marcoRam", separando por bloques
 de acuerdo al campo "state" }

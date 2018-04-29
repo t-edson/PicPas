@@ -3,7 +3,7 @@ unit FrameRegWatcher;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Grids, ExtCtrls, StdCtrls,
-  Buttons, Graphics, LCLType, Menus, Pic16Utils, MisUtils, CibGrillas, CompilerPIC16,
+  Buttons, Graphics, LCLType, Menus, Pic16Utils, MisUtils, CibGrillas, Compiler_PIC16,
   XpresTypesPIC, XpresElementsPIC;
 type
 
@@ -35,7 +35,7 @@ type
     function UtilGrillaLeerColorFondo(col, fil: integer): TColor;
   public
     pic: TPIC16;
-    cxp: TCompiler;
+    cxp: TCompiler_PIC16;
     procedure AddWatch(varName: string);
     procedure Refrescar;
     constructor Create(AOwner: TComponent) ; override;

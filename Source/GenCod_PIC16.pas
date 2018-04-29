@@ -44,7 +44,7 @@ unit GenCod_PIC16;
 interface
 uses
   Classes, SysUtils, SynEditHighlighter, Graphics, LCLType, LCLProc,
-  SynFacilBasic, XpresTypesPIC, Parser, XpresElementsPIC, GenCodBas_PIC16,
+  SynFacilBasic, XpresTypesPIC, XpresElementsPIC, GenCodBas_PIC16, Parser,
   Pic16Utils, MisUtils, XpresBas;
 type
     { TGenCod }
@@ -1418,7 +1418,7 @@ begin
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    CodAsmK(ADDLW, p1^.valInt);  //deja en W
+    CodAsmK(i_ADDLW, p1^.valInt);  //deja en W
   end;
   stVariab_Const: begin
     ExchangeP1_P2;
@@ -1438,7 +1438,7 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    CodAsmK(ADDLW, p2^.valInt);  //deja en W
+    CodAsmK(i_ADDLW, p2^.valInt);  //deja en W
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -2116,7 +2116,7 @@ begin
     SetROBResultConst_byte(p1^.valInt and p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
-    opers_byte(Opt, ANDLW, ANDWF);
+    opers_byte(Opt, i_ANDLW, i_ANDWF);
 end;
 procedure TGenCod.ROB_byte_and_bit(Opt: TxpOperation; SetRes: boolean);
 begin
@@ -2136,7 +2136,7 @@ begin
     SetROBResultConst_byte(p1^.valInt or p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
-    opers_byte(Opt, IORLW, IORWF);
+    opers_byte(Opt, i_IORLW, i_IORWF);
 end;
 procedure TGenCod.ROB_byte_or_bit(Opt: TxpOperation; SetRes: boolean);
 begin
@@ -2156,7 +2156,7 @@ begin
     SetROBResultConst_byte(p1^.valInt xor p2^.valInt);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end else  //caso general
-    opers_byte(Opt, XORLW, XORWF);
+    opers_byte(Opt, i_XORLW, i_XORWF);
 end;
 procedure TGenCod.ROB_byte_xor_bit(Opt: TxpOperation; SetRes: boolean);
 begin
@@ -2904,16 +2904,16 @@ begin
       _DECF(p2^.Hoffs, toW); //p2-p1
       _BTFSS(Z.offs, Z.bit);
       {De no ser porque se tiene que devolver siempre, el valor de Z,
-      las 2 instrucciones anteriores, se podrían reemplazar con un DECFSZ,
-      pero DECFSZ, no actualiza Z}
+      las 2 instrucciones anteriores, se podrían reemplazar con un i_DECFSZ,
+      pero i_DECFSZ, no actualiza Z}
       _GOTO_PEND(sale);  //no son iguales
     end else if p1^.HByte = 255 then begin  //caso especial
       _BANKSEL(p2^.bank);  //verifica banco destino
       _INCF(p2^.Hoffs, toW); //p2-p1
       _BTFSS(Z.offs, Z.bit);
       {De no ser porque se tiene que devolver siempre, el valor de Z,
-      las 2 instrucciones anteriores, se podrían reemplazar con un DECFSZ,
-      pero DECFSZ, no actualiza Z}
+      las 2 instrucciones anteriores, se podrían reemplazar con un i_DECFSZ,
+      pero i_DECFSZ, no actualiza Z}
       _GOTO_PEND(sale);  //no son iguales
     end else begin  //caso general
       _MOVLW(p1^.HByte);
@@ -3582,7 +3582,7 @@ MUL16LOOP := _PC;
    _IORWF   (U.offs, toW);
    _BTFSS   (STATUS, 2);
    _GOTO    (MUL16LOOP);  //OP_B>0
-   _MOVF    (SYSTMP00.offs, toW);  //Return RES.LOW to toW
+   _MOVF    (SYSTMP00.offs, toW);  //i_RETURN RES.LOW to toW
    SYSTMP00.used := false;
    SYSTMP01.used := false;
    SYSTMP02.used := false;
@@ -4892,7 +4892,7 @@ begin
         GenError('Expected a "%s" expression.', [curFunTyp.name]);
         exit;
       end;
-      LoadToRT(res, true);  //Carga expresión en RT y genera RETURN o RETLW
+      LoadToRT(res, true);  //Carga expresión en RT y genera i_RETURN o i_RETLW
     end;
   end else begin
     //Faltaría implementar en cuerpo de TxpEleUni
@@ -4900,7 +4900,7 @@ begin
   end;
   //Lleva el registro de las llamadas a exit()
   if FirstPass then begin
-    //CurrBank debe ser el banco con el que se llamó al RETURN.
+    //CurrBank debe ser el banco con el que se llamó al i_RETURN.
     parentNod.AddExitCall(posExit, parentNod.CurrBlockID, CurrBank);
   end;
   res.SetAsNull;  //No es función

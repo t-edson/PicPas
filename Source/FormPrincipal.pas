@@ -9,10 +9,10 @@ uses
   Classes, SysUtils, SynEdit, SynEditTypes, Forms, Controls, Dialogs, Menus,
   ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc,
   SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
-//  GenCodBas_PICBase,
-  CompilerPIC16, FormPICExplorer, FrameSyntaxTree, FormConfig, Globales,
+  GenCodBas_PICBase,
+  Compiler_PIC16, FormPICExplorer, FrameSyntaxTree, FormConfig, Globales,
   PicPasProject, FrameEditView, FrameMessagesWin, XpresElementsPIC, CodeTools,
-  ParserAsmPIC16, ParserDirecPIC16, FrameCfgExtTool, FormDebugger, FormRAMExplorer;
+  ParserAsm_PIC16, ParserDirec_PIC16, FrameCfgExtTool, FormDebugger, FormRAMExplorer;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
@@ -193,7 +193,7 @@ type
     procedure Timer1Timer(Sender: TObject);
   private
 //picbaseline: TGenCod1PICBase;
-    Compiler    : TCompiler;
+    Compiler    : TCompiler_PIC16;
     tic         : integer;  //Contador para temporización
     ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
     curProj     : TPicPasProject; //Proyecto actual
@@ -247,9 +247,9 @@ begin
   fraSynTree.SetLanguage;
   fraEditView1.SetLanguage;
   fraMessages.SetLanguage;
-  CompilerPIC16.SetLanguage;
-  ParserAsmPIC16.SetLanguage;
-  ParserDirecPIC16.SetLanguage;
+  Compiler_PIC16.SetLanguage;
+  ParserAsm_PIC16.SetLanguage;
+  ParserDirec_PIC16.SetLanguage;
   {$I ..\language\tra_FormPrincipal.pas}
 end;
 procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
@@ -383,7 +383,7 @@ end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   //Es necesario crear solo una instancia del compilador.
-  Compiler := TCompiler.Create;  //Crea una instancia del compilador
+  Compiler := TCompiler_PIC16.Create;  //Crea una instancia del compilador
 //picbaseline := TGenCod1PICBase.Create;
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;

@@ -24,7 +24,6 @@ object frmArcExplor: TfrmArcExplor
     Top = 23
     Width = 211
     Align = alClient
-    DefaultItemHeight = 18
     ParentShowHint = False
     RightClickSelect = True
     ShowHint = True

@@ -37,14 +37,20 @@ Para definir el filtro del explorador se puede usar un código similar a este:
 
 }
 unit FrameArcExplor;
-
 {$mode objfpc}{$H+}
-
 interface
-
 uses
-  Classes,  {$IFDEF MSWINDOWS} Windows, {$ENDIF} SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls,
-  LCLType, Menus, Masks, LazUTF8, Dialogs, Graphics, strutils, MisUtils;
+  Classes, Windows, SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls,
+  LCLType, Menus, Masks, LazUTF8, Dialogs, Graphics, Globales, strutils,
+  MisUtils;
+var
+  NEW_FILE_NAME: string;
+  FOLDER_NAME  : string;
+  TXT_EMPTY    : string;
+  TXT_FOLD     : string;
+  TXT_UNFOLD   : string;
+  TXT_NOTDELFOL: string;
+  TXT_DELFILE  : string;
 
 type
   TNodeType = (ntyDrive, ntyFile, ntyFolder);
@@ -150,11 +156,16 @@ type
     function SelectedFile: TExplorNode;
     procedure LocateFileOnTree(arch8: string);
     constructor Create(AOwner: TComponent) ; override;
-    procedure SetLanguage(lang: string);
+    procedure SetLanguage;
   end;
 
 implementation
 {$R *.lfm}
+procedure TfrmArcExplor.SetLanguage;
+//Rutina de traducción
+begin
+  {$I ..\language\tra_FrameArcExplor.pas}
+end;
 procedure TrozaRuta(rut: string; lrut: TStringList); //devuelve una ruta trozada
 begin
   if rut = '' then exit;  //no hay ruta
@@ -366,7 +377,7 @@ begin
     end;
     if (Item0 <> nil) and (Item0.Count=0) then
       //no hubo elementos. Agrega etiqueta
-      TreeView1.Items.AddChild(Item0, dic('<vacía>'));
+      TreeView1.Items.AddChild(Item0, TXT_EMPTY);
   finally
 //    TreeView1.Items.AddChild(Item0, '<error>'); //indica error
     if expandir and (Item0 <> nil) then Item0.Expand(false);
@@ -581,8 +592,8 @@ begin
   TreeView1.OnAdvancedCustomDrawItem := @TreeView1AdvancedCustomDrawItem;
   TreeView1.Options := TreeView1.Options - [tvoThemedDraw];
   //inicia propiedades
-  NewFileName := dic('nuevo.pas');
-  NewFolderName := dic('carpeta');
+  NewFileName := NEW_FILE_NAME;
+  NewFolderName := FOLDER_NAME;
   InternalPopupFolder := false;  //desactiva el menú interno
   InternalPopupFile := false;  //desactiva el menú interno
 end;
@@ -591,16 +602,16 @@ procedure TfrmArcExplor.PopupFolderPopup(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
-  if curNod.Expanded then mnCarExpContr.Caption:=dic('Con&traer')
-  else mnCarExpContr.Caption:=dic('E&xpandir');
+  if curNod.Expanded then mnCarExpContr.Caption:= TXT_FOLD
+  else mnCarExpContr.Caption:= TXT_UNFOLD;
 end;
 procedure TfrmArcExplor.mnCarExpContrClick(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
   curNod.Expanded := not curNod.Expanded;
-  if curNod.Expanded then mnCarExpContr.Caption:=dic('Con&traer')
-  else mnCarExpContr.Caption:=dic('E&xpandir');
+  if curNod.Expanded then mnCarExpContr.Caption:= TXT_FOLD
+  else mnCarExpContr.Caption:= TXT_UNFOLD;
 end;
 procedure TfrmArcExplor.mnCarAbrirExpWinClick(Sender: TObject);
 var
@@ -658,7 +669,7 @@ procedure TfrmArcExplor.mnCarEliminClick(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
-  MsgExc('No se puede eliminar carpetas.');
+  MsgExc(TXT_NOTDELFOL);
 end;
 procedure TfrmArcExplor.mnCarRefrescarClick(Sender: TObject);
 begin
@@ -685,7 +696,7 @@ begin
   if curNod = nil then exit;
   if not curNod.IsFile then exit;  //no es archivo
   //eliminar archivo
-  if MsgYesNo('¿Eliminar archivo "%s"?', [curNod.Text]) <> 1 then exit;
+  if MsgYesNo(TXT_DELFILE, [curNod.Text]) <> 1 then exit;
   try
     archivo := UTF8ToSys(curNod.Path);
     if FileExists(archivo) then
@@ -698,111 +709,6 @@ end;
 procedure TfrmArcExplor.mnArcRefrescarClick(Sender: TObject);
 begin
 
-end;
-{
-procedure TfrmArcExplor.acPArcAbrNueExecute(Sender: TObject);  //Abrir en nueva ventana
-var nod: TTreeNode;
-begin
-  nod := TreeView1.Selected;   //lee seleccionado
-  if nod = nil then exit;     //verifica
-  if not nod.HasChildren then  //solo si es archivo
-    AbrirPreSQL(RutaNod(nod));  //abre en nueva ventana
-end;
-procedure TfrmArcExplor.acPArcNueConExecute(Sender: TObject);  //Nueva consulta
-var nod: TTreeNode;
-  archivo: string;
-begin
-  nod := TreeView1.Selected;   //lee seleccionado
-  if nod = nil then exit;     //verifica
-  if not nod.HasChildren then exit;  //solo permite en carpetas
-  //crea archivo de consultas
-  try
-    archivo := GetNewFileName(RutaNod(nod) + '\consulta.psql');
-    If not FileExists(archivo) then
-       StringToFile('/* Consulta creada ' + DateTimeToStr(Now) + ''#13#10+
-                    '*/'#13#10+
-                    'connect usuario/clave@sid'#13#10+
-                    'set line 500'#13#10+
-                    'set pagesize 5000'#13#10,
-                    archivo);  //crea archivo
-  finally
-  end;
-  if nod.Expanded then ExpandirNodArc(nod, true);   //refresca
-end;
-procedure TfrmArcExplor.acPArcNueEncExecute(Sender: TObject);  //Nuevas definiciones
-var nod: TTreeNode;
-  archivo: string;
-begin
-  nod := TreeView1.Selected;   //lee seleccionado
-  if nod = nil then exit;     //verifica
-  if not nod.HasChildren then exit;  //solo permite en carpetas
-  //crea archivo de definiciones
-  try
-    archivo := GetNewFileName(RutaNod(nod) + '\definiciones.pdef');
-    If not FileExists(archivo) then
-       StringToFile('/* Archivo de definiciones creado ' + DateTimeToStr(Now) + ''#13#10+
-                    '*/'#13#10+
-                    '$DEFINIR def1 COMO cuerpo1 FINDEFINIR'#13#10+
-                    ''#13#10+
-                    '$DEFINIR def2 COMO cuerpo2 FINDEFINIR'#13#10,
-                    archivo);  //crea archivo
-  finally
-  end;
-  if nod.Expanded then ExpandirNodArc(nod, true);   //refresca
-end;
-}
-procedure TfrmArcExplor.SetLanguage(lang: string);
-//Rutina de traducción
-begin
-  case lowerCase(lang) of
-  'es': begin
-      //configura mensajes
-      dicDel('nombre.txt');
-      dicDel('carpeta');
-      dicDel('<vacía>');
-      dicDel('Con&traer');
-      dicDel('E&xpandir');
-      dicDel('No se puede eliminar carpetas.');
-      dicDel('¿Eliminar archivo "%s"?');
-      //fija texto de controles
-//      mnCarExpContr.Caption := 'E&xpandir'
-      mnCarAbrirExpWin.Caption := 'Abrir en Explor. de &Windows';
-      mnCarNueArc.Caption := '&Nuevo Archivo';
-      mnCarNueCar.Caption := 'Nueva &Carpeta';
-      mnCarCamNom.Caption := 'Ca&mbiar Nombre';
-      mnCarElimin.Caption := 'El&iminar';
-      mnCarRefrescar.Caption := '&Refrescar';
-
-      mnArcAbrir.Caption    := '&Abrir';
-      mnArcCamNom.Caption   := 'Ca&mbiar Nombre';
-      mnArcElimin.Caption     := 'El&iminar';
-      mnArcRefrescar.Caption:= '&Refrescar';
-    end;
-  'en': begin
-      //configura mensajes
-      dicSet('nombre.txt','file.txt');
-      dicSet('carpeta','folder');
-      dicSet('<vacía>','<empty>');
-      dicSet('Con&traer','C&ollapse');
-      dicSet('E&xpandir','E&xpand');
-      dicSet('No se puede eliminar carpetas.','Cannot delete folders');
-      dicSet('¿Eliminar archivo "%s"?','Delete file "%s"?');
-      //fija texto de controles
-//      mnCarExpContr.Caption := 'E&xpandir'
-      mnCarAbrirExpWin.Caption := 'Open on &Windows Explorer';
-      mnCarNueArc.Caption := '&New File';
-      mnCarNueCar.Caption := 'New &Folder';
-      mnCarCamNom.Caption := 'Cha&nge Name';
-      mnCarElimin.Caption := '&Delete';
-      mnCarRefrescar.Caption := '&Refresh';
-
-      mnArcAbrir.Caption    := '&Open';
-      mnArcCamNom.Caption   := 'Cha&nge Name';
-      mnArcElimin.Caption     := '&Delete';
-      mnArcRefrescar.Caption:= '&Refresh';
-
-    end;
-  end;
 end;
 
 end.
