@@ -315,6 +315,7 @@ var
 
 
   // -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA
   {$SET_STATE_RAM '008-008:SFR'}  // IOCAF

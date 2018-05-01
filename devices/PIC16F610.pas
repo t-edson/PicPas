@@ -164,7 +164,8 @@ var
   SRCON1_SRCS0      : bit  absolute SRCON1.6;
 
 
-  // -- Define RAM state values --
+// -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA
   {$SET_STATE_RAM '007-007:SFR'}  // PORTC
@@ -188,6 +189,7 @@ var
   {$SET_MAPPED_RAM '082-084:bnk0'} // PCL, STATUS, FSR
   {$SET_MAPPED_RAM '08A-08B:bnk0'} // PCLATH, INTCON
 
+  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 

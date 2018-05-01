@@ -46,7 +46,8 @@ var
   PORTC_RC0    : bit  absolute PORTC.0;
 
 
-  // -- Define RAM state values --
+// -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-007:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
   {$SET_STATE_RAM '008-01F:GPR'} 

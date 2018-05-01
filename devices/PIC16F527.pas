@@ -133,7 +133,8 @@ var
   OPACON_OPA1ON   : bit  absolute OPACON.0;
 
 
-  // -- Define RAM state values --
+// -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-00B:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0
   {$SET_STATE_RAM '00C-01F:GPR'} 

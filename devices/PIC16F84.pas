@@ -84,6 +84,7 @@ var
 
 
   // -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB
   {$SET_STATE_RAM '008-00B:SFR'}  // EEDATA, EEADR, PCLATH, INTCON
@@ -99,6 +100,7 @@ var
   {$SET_MAPPED_RAM '082-084:bnk0'} // PCL, STATUS, FSR
   {$SET_MAPPED_RAM '08A-08B:bnk0'} // PCLATH, INTCON
 
+  {$SET_MAPPED_RAM '08C-0CF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 

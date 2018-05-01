@@ -445,7 +445,8 @@ var
   COG1ASD1_G1ASDSFLT  : bit  absolute COG1ASD1.1;
 
 
-  // -- Define RAM state values --
+// -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA
   {$SET_STATE_RAM '007-00D:SFR'}  // PORTC, IOCAF, IOCCF, PCLATH, INTCON, PIR1, PIR2
@@ -480,6 +481,9 @@ var
   {$SET_MAPPED_RAM '182-184:bnk0'} // PCL, STATUS, FSR
   {$SET_MAPPED_RAM '18A-18B:bnk0'} // PCLATH, INTCON
 
+  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '170-17F:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '1F0-1FF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 

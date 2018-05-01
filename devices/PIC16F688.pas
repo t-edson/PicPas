@@ -220,7 +220,8 @@ var
   ADCON1_ADCS0      : bit  absolute ADCON1.4;
 
 
-  // -- Define RAM state values --
+// -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA
   {$SET_STATE_RAM '007-007:SFR'}  // PORTC
@@ -259,6 +260,9 @@ var
   {$SET_MAPPED_RAM '187-187:bnk1'} // TRISC
   {$SET_MAPPED_RAM '18A-18B:bnk0'} // PCLATH, INTCON
 
+  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '170-17F:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '1F0-1FF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 

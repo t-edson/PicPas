@@ -83,7 +83,8 @@ var
   VRCON_VR0       : bit  absolute VRCON.0;
 
 
-  // -- Define RAM state values --
+// -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-00C:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
   {$SET_STATE_RAM '00D-01F:GPR'} 

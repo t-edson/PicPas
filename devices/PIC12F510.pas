@@ -60,6 +60,7 @@ var
 
 
   // -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-009:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, GPIO, CM1CON0, ADCON0, ADRES
   {$SET_STATE_RAM '00A-01F:GPR'} 

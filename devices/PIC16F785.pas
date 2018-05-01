@@ -285,7 +285,8 @@ var
   OPA2CON           : byte absolute $011d;
 
 
-  // -- Define RAM state values --
+// -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-007:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC
   {$SET_STATE_RAM '00A-00C:SFR'}  // PCLATH, INTCON, PIR1
@@ -323,6 +324,9 @@ var
   {$SET_MAPPED_RAM '185-187:bnk1'} // TRISA, TRISB, TRISC
   {$SET_MAPPED_RAM '18A-18B:bnk0'} // PCLATH, INTCON
 
+  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '170-17F:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '1F0-1FF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 

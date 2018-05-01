@@ -187,7 +187,8 @@ var
   EECON2            : byte absolute $018d;
 
 
-  // -- Define RAM state values --
+// -- Define RAM state values --
+  {$CLEAR_STATE_RAM} 
 
   {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB
   {$SET_STATE_RAM '00A-017:SFR'}  // PCLATH, INTCON, PIR1, PIR2, TMR1L, TMR1H, T1CON, TMR2, T2CON, SSPBUF, SSPCON, CCPR1L, CCPR1H, CCP1CON
@@ -222,6 +223,9 @@ var
   {$SET_MAPPED_RAM '186-186:bnk1'} // TRISB
   {$SET_MAPPED_RAM '18A-18B:bnk0'} // PCLATH, INTCON
 
+  {$SET_MAPPED_RAM '0C0-0FF:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '120-17F:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '1A0-1FF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 
