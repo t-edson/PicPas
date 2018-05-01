@@ -22,25 +22,25 @@ object fraMessagesWin: TfraMessagesWin
     OnPaint = panStatisPaint
     object lblRAM: TLabel
       Left = 8
-      Height = 15
+      Height = 17
       Top = 8
-      Width = 26
+      Width = 32
       Caption = 'RAM'
       ParentColor = False
     end
     object lblROM: TLabel
       Left = 48
-      Height = 15
+      Height = 17
       Top = 8
-      Width = 27
+      Width = 33
       Caption = 'ROM'
       ParentColor = False
     end
     object lblSTACK: TLabel
       Left = 87
-      Height = 15
+      Height = 17
       Top = 8
-      Width = 36
+      Width = 43
       Caption = 'STACK'
       ParentColor = False
     end
@@ -49,17 +49,17 @@ object fraMessagesWin: TfraMessagesWin
     Left = 0
     Height = 101
     Top = 0
-    Width = 109
+    Width = 117
     Align = alLeft
     BevelOuter = bvNone
     ClientHeight = 101
-    ClientWidth = 109
+    ClientWidth = 117
     TabOrder = 1
     object chkInform: TCheckBox
       Left = 8
-      Height = 19
+      Height = 24
       Top = 8
-      Width = 20
+      Width = 24
       Checked = True
       Color = clDefault
       OnChange = chkInformChange
@@ -69,9 +69,9 @@ object fraMessagesWin: TfraMessagesWin
     end
     object chkWarns: TCheckBox
       Left = 8
-      Height = 19
+      Height = 24
       Top = 32
-      Width = 20
+      Width = 24
       Checked = True
       OnChange = chkWarnsChange
       State = cbChecked
@@ -79,41 +79,41 @@ object fraMessagesWin: TfraMessagesWin
     end
     object chkErrors: TCheckBox
       Left = 8
-      Height = 19
+      Height = 24
       Top = 56
-      Width = 20
+      Width = 24
       Checked = True
       OnChange = chkErrorsChange
       State = cbChecked
       TabOrder = 2
     end
     object lblInform: TLabel
-      Left = 25
-      Height = 15
-      Top = 9
-      Width = 63
+      Left = 30
+      Height = 17
+      Top = 10
+      Width = 81
       Caption = '&Information'
       ParentColor = False
     end
     object lblWarns: TLabel
-      Left = 25
-      Height = 15
-      Top = 33
-      Width = 50
+      Left = 30
+      Height = 17
+      Top = 34
+      Width = 63
       Caption = '&Warnings'
       ParentColor = False
     end
     object lblErrors: TLabel
-      Left = 25
-      Height = 15
-      Top = 57
-      Width = 30
+      Left = 30
+      Height = 17
+      Top = 58
+      Width = 42
       Caption = '&Errors'
       ParentColor = False
     end
   end
   object Splitter1: TSplitter
-    Left = 109
+    Left = 117
     Height = 101
     Top = 0
     Width = 5
@@ -129,15 +129,15 @@ object fraMessagesWin: TfraMessagesWin
   object PanGrilla: TPanel
     AnchorSideLeft.Control = Splitter1
     AnchorSideRight.Control = Splitter2
-    Left = 114
+    Left = 122
     Height = 101
     Top = 0
-    Width = 422
+    Width = 414
     Align = alClient
     Anchors = [akLeft, akRight]
     Caption = '<< No messages >>'
     ClientHeight = 101
-    ClientWidth = 422
+    ClientWidth = 414
     TabOrder = 4
     OnResize = PanGrillaResize
     object grilla: TStringGrid
@@ -150,7 +150,7 @@ object fraMessagesWin: TfraMessagesWin
       Left = 1
       Height = 99
       Top = 1
-      Width = 420
+      Width = 412
       Anchors = [akTop, akLeft, akRight, akBottom]
       Options = [goFixedVertLine, goFixedHorzLine, goRangeSelect, goSmoothScroll]
       PopupMenu = PopupMenu1

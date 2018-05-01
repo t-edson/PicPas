@@ -40,7 +40,7 @@ unit FrameArcExplor;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, Windows, SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls,
+  Classes, {$IFDEF MSWINDOWS} Windows, {$ENDIF} SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls,
   LCLType, Menus, Masks, LazUTF8, Dialogs, Graphics, Globales, strutils,
   MisUtils;
 var
