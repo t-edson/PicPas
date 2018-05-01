@@ -224,6 +224,21 @@ public
   p1, p2 : ^TOperand;   //Pasa los operandos de la operación actual
   res    : TOperand;    //resultado de la evaluación de la última expresión.
   function stoOperation: TStoOperandsROB; inline;
+protected //Accesos a propeidades de p1^ y p2^.
+  function value1: word;
+  function value1L: word;
+  function value1H: word;
+  function value2: word;
+  function value2L: word;
+  function value2H: word;
+  function bit1: TPicRegisterBit;
+  function bit2: TPicRegisterBit;
+  function byte1: TPicRegister;
+  function byte1L: TPicRegister;
+  function byte1H: TPicRegister;
+  function byte2: TPicRegister;
+  function byte2L: TPicRegister;
+  function byte2H: TPicRegister;
 public  //Manejo de errores y advertencias
   HayError: boolean;
   OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
@@ -1164,7 +1179,64 @@ begin
     Op.Typ.OnLoadToRT(@Op, modReturn);
   end;
 end;
-//Manejo de mensjes, errores y advertencias
+//Accesos a propiedades de p1^ y p2^.
+function TCompilerBase.value1: word; inline;
+begin
+  Result := p1^.valInt;
+end;
+function TCompilerBase.value1L: word; inline;
+begin
+  Result := p1^.LByte;
+end;
+function TCompilerBase.value1H: word; inline;
+begin
+  Result := p1^.HByte;
+end;
+function TCompilerBase.value2: word; inline;
+begin
+  Result := p2^.valInt;
+end;
+function TCompilerBase.value2L: word; inline;
+begin
+  Result := p2^.LByte;
+end;
+function TCompilerBase.value2H: word; inline;
+begin
+  Result := p2^.HByte;
+end;
+function TCompilerBase.byte1: TPicRegister; inline;
+begin
+  Result := p1^.rVar.adrByte0;
+end;
+function TCompilerBase.byte1L: TPicRegister; inline;
+begin
+  Result := p1^.rVar.adrByte0;
+end;
+function TCompilerBase.byte1H: TPicRegister; inline;
+begin
+  Result := p1^.rVar.adrByte1;
+end;
+function TCompilerBase.byte2: TPicRegister; inline;
+begin
+  Result := p2^.rVar.adrByte0;
+end;
+function TCompilerBase.byte2L: TPicRegister; inline;
+begin
+  Result := p2^.rVar.adrByte0;
+end;
+function TCompilerBase.byte2H: TPicRegister; inline;
+begin
+  Result := p2^.rVar.adrByte1;
+end;
+function TCompilerBase.bit1: TPicRegisterBit; inline;
+begin
+  Result := p1^.rVar.adrBit;
+end;
+function TCompilerBase.bit2: TPicRegisterBit; inline;
+begin
+  Result := p2^.rVar.adrBit;
+end;
+//Manejo de errores y advertencias
 procedure TCompilerBase.ClearError;
 {Limpia la bandera de errores. Tomar en cuenta que solo se debe usar para iniciar el
 procesamiento de errores. Limpiar errores en medio de la compilación, podría hacer que

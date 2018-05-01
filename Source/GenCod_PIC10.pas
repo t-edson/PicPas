@@ -39,16 +39,16 @@ Por normas de Xpres, se debe considerar que:
 Las rutinas de operación, deben devolver su resultado en "res".
 Para mayor información, consultar la doc. técnica.
  }
-unit GenCod_PIC16;
+unit GenCod_PIC10;
 {$mode objfpc}{$H+}
 interface
 uses
   Classes, SysUtils, SynEditHighlighter, Graphics, LCLType, LCLProc,
-  SynFacilBasic, XpresTypesPIC, XpresElementsPIC, Pic16Utils, GenCodBas_PIC16,
+  SynFacilBasic, XpresTypesPIC, XpresElementsPIC, Pic10Utils, GenCodBas_PIC10,
   Parser, MisUtils, XpresBas;
 type
     { TGenCod }
-    TGenCod = class(TGenCodBas_PIC16)
+    TGenCod = class(TGenCodBas_PIC10)
     protected
       procedure callParam(fun: TxpEleFun);
       procedure callFunct(fun: TxpEleFun);
@@ -98,7 +98,7 @@ type
       procedure ROB_bool_equ_bool(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_bool_dif_bool(Opt: TxpOperation; SetRes: boolean);
     protected //Operaciones con byte
-      procedure opers_byte(Opt: TxpOperation; const InstLW, InstWF: TPIC16Inst);
+      procedure opers_byte(Opt: TxpOperation; const InstLW, InstWF: TPIC10Inst);
       procedure ROB_byte_asig_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_aadd_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_asub_byte(Opt: TxpOperation; SetRes: boolean);
@@ -1300,7 +1300,7 @@ begin
     GenError('Cannot assign to this Operand.'); exit;
   end;
 end;
-procedure TGenCod.opers_byte(Opt: TxpOperation; const InstLW, InstWF:TPIC16Inst);
+procedure TGenCod.opers_byte(Opt: TxpOperation; const InstLW, InstWF:TPIC10Inst);
 {Rutina general en operaciones con bytes}
 var
   rVar: TxpEleVar;
@@ -1381,13 +1381,14 @@ begin
       exit;
     end;
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
-    _ADDLW(p1^.valInt);  //deja en W
+    kMOVLW(value1);
+    kADDWF(byte2, toW);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    CodAsmK(i_ADDLW, p1^.valInt);  //deja en W
+    kMOVWF(FSR);   //guarda temporalmente en FSR
+    kMOVLW(value1);
+    kADDWF(FSR, toW);  //deja en W
   end;
   stVariab_Const: begin
     ExchangeP1_P2;
@@ -1407,7 +1408,9 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    CodAsmK(i_ADDLW, p2^.valInt);  //deja en W
+    kMOVWF(FSR);   //guarda temporalmente en FSR
+    kMOVLW(value2);
+    kADDWF(FSR, toW);  //deja en W
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -1465,13 +1468,18 @@ begin
   end;
   stConst_Variab: begin
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
-    _SUBLW(p1^.valInt);   //K - W -> W
+    kMOVLW(value1);
+    kSUBWF(byte2, toW);  //F - W -> W   (value2 - value1)->W
+    kCLRF(FSR);  //Usa temporalmente
+    kSUBWF(FSR, toW);  //Invierte W: 0 - W -> W
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _SUBLW(p1^.valInt);   //K - W -> W
+    kMOVWF(FSR);
+    kMOVLW(value1);
+    kSUBWF(FSR, toW);   //FSR - value1 -> W
+    kCLRF(FSR);  //Usa temporalmente
+    kSUBWF(FSR, toW);  //Invierte W: 0 - W -> W
   end;
   stVariab_Const: begin
     SetROBResultExpres_byte(Opt);
@@ -1493,14 +1501,15 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _SUBLW(p2^.valInt);  //K - W -> W
-    _SUBLW(0);  //K - W -> W   //invierte W
+    kMOVWF(FSR);
+    kMOVLW(value2);
+    kSUBWF(FSR, toW);   //W - value2 -> value2
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _SUBWF(p2^.offs, toW);  //F - W -> W
-    _SUBLW(0);  //K - W -> W   //invierte W
+    kSUBWF(byte2, toW);   //byte2 - W -> W
+    kCLRF(FSR);  //Usa temporalmente
+    kSUBWF(FSR, toW);  //Invierte W: 0 - W -> W
   end;
   stExpres_Expres:begin
     SetROBResultExpres_byte(Opt);
@@ -2166,7 +2175,9 @@ begin
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    _SUBLW(p1^.valInt);  //si iguales _Z=1
+    kMOVWF(FSR);  //byte temporal
+    kMOVLW(value1);
+    kSUBWF(FSR, toW);      //si iguales _Z=1
   end;
   stVariab_Const: begin
     ExchangeP1_P2;  //Convierte a stConst_Variab
@@ -2187,8 +2198,9 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //ReserveW; if HayError then exit;
-    _SUBLW(p2^.valInt);  //si iguales _Z=1
+    kMOVWF(FSR);  //byte temporal
+    kMOVLW(value2);
+    kSUBWF(FSR, toW);      //si iguales _Z=1
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
@@ -2240,25 +2252,18 @@ begin
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
     end else begin
       SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-      _MOVLW(p1^.valInt);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
+      kMOVLW(value1);
+      kSUBWF(byte2, toW);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     end;
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    if p1^.valInt = 0 then begin
-      //0 es mayor que nada
-      SetROBResultConst_bool(false);
-//      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
-    end else begin
-      //Optimiza rutina, usando: A>B  equiv. NOT (B<=A-1)
-      //Se necesita asegurar que p1, es mayo que cero.
-      SetROBResultExpres_bool(Opt, true);  //invierte la lógica
-      //p2, ya está en W
-      _SUBLW(p1^.valInt-1);  //Si p1 > p2: C=0.
-      CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
-    end;
+    kMOVWF(FSR);   //Guarda W temporalmente
+    varStkByte.addr0 := FSR.addr;  //Usa la variable temporal varStkByte para direccionar a FSR
+    p2^.SetAsVariab(varStkByte);  //Convierte Operando a variable
+    {Luego el caso es similar a stConst_Variab y dedemos aegurarnos que
+    en este caso del ROB no se use ni FSR, ni varStkByte.}
+    ROB_byte_great_byte(Opt, true);
   end;
   stVariab_Const: begin
     if p2^.valInt = 255 then begin
@@ -2267,18 +2272,18 @@ begin
       GenWarn('Expression will always be FALSE or TRUE.');
     end else begin
       SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _SUBLW(p2^.valInt);  //Si p1 > p2: C=0.
+      kMOVLW(value2);
+      kMOVWF(FSR);
+      //Ahora es como stVariab_Variab
+      kMOVF(byte1, toW);
+      kSUBWF(FSR, toW);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     end;
   end;
   stVariab_Variab:begin
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.offs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
+    kMOVF(byte1, toW);
+    kSUBWF(byte2, toW);  //Si p1 > p2: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
@@ -2286,29 +2291,27 @@ begin
     tmp := GetAuxRegisterByte;  //Se pide registro auxiliar
     _MOVWF(tmp.offs);    //guarda resultado de expresión
     //Ahora es como stVariab_Variab
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.offs, toW);
-    _BANKSEL(tmp.bank);  //verifica banco destino
-    _SUBWF(tmp.offs, toW);  //Si p1 > tmp: C=0.
+    kMOVF(byte1, toW);
+    kSUBWF(tmp, toW);  //Si p1 > tmp: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     tmp.used := false;  //libera
   end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    if p2^.valInt = 255 then begin
-      //nada es mayor que 255
-      SetROBResultConst_bool(false);
-//      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
-    end else begin
-      SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-  //    p1, ya está en W
-      _SUBLW(p2^.valInt);  //Si p1 > p2: C=0.
-      CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
-    end;
-  end;
+//  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+//    if p2^.valInt = 255 then begin
+//      //nada es mayor que 255
+//      SetROBResultConst_bool(false);
+////      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
+//    end else begin
+//      SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
+//  //    p1, ya está en W
+//      kMOVWF(FSR);
+//      //Ahora es como stVariab_Const
+//
+//    end;
+//  end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
+    kSUBWF(byte2, toW);  //Si p1 > p2: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
   end;
   stExpres_Expres:begin
@@ -2359,7 +2362,7 @@ end;
 procedure TGenCod.CodifShift_by_W(aux: TPicRegister; toRight: boolean);
 {Desplaza el registro "aux", las veces indicadas en el registro W.
 Deja el resultado en W.
-Deja el banco, en el banco de "aux"}
+Deja el banco, en el banco de "aux". Usa FSR como reg. auxiliar.}
 { TODO : Tal vez se pueda optimizar usando una rutina que rote W, las veces indicadas
 en un registro, o se podría generar el código usando la rutina de WHILE. }
 var
@@ -2367,9 +2370,13 @@ var
   dg: integer;
 begin
   _BANKSEL(aux.bank);  //quedará en este banco
-  _ADDLW(1);   //corrige valor inicial
+//  _ADDLW(1);   //corrige valor inicial
+  _MOVWF(FSR.offs);      //W=W+1
+  _INCF(FSR.offs, toW);  //W=W+1
 loop1 := _PC;
-  _ADDLW(255);  //W=W-1  (no hay instrucción DECW)
+//  _ADDLW(255);  //W=W-1
+  _MOVWF(FSR.offs);      //W=W-1
+  _DECF(FSR.offs, toW);  //W=W-1
   _BTFSC(Z.offs, Z.bit);
   _GOTO_PEND(dg);     //Dio, cero, termina
   //Desplaza
@@ -3006,15 +3013,17 @@ procedure TGenCod.ROB_word_great_word(Opt: TxpOperation; SetRes: boolean);
       GenWarn('Expression will always be FALSE or TRUE.');
     end else begin
       //Compara byte alto
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.Hoffs, toW);
-      _SUBLW(p2^.HByte); //p2-p1
+      //_MOVF(p1^.Hoffs, toW);
+      //_SUBLW(p2^.HByte); //p2-p1
+      kMOVLW(p2^.HByte);
+      kSUBWF(byte1H, toW);
       _BTFSS(Z.offs, Z.bit);
       _GOTO_PEND(sale);  //no son iguales
       //Son iguales, comparar el byte bajo
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.Loffs, toW);
-      _SUBLW(p2^.LByte);	//p2-p1
+      //_MOVF(p1^.Loffs, toW);
+      //_SUBLW(p2^.LByte);	//p2-p1
+      kMOVLW(p2^.LByte);
+      kSUBWF(byte1, toW);
   _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
       CopyInvert_C_to_Z;  //Pasa a Z
     end;
@@ -3370,7 +3379,9 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
     SetROBResultExpres_word(Opt);
-    _addlw(p2^.LByte);     //Suma menos peso del dato 2, deja en W
+    //_addlw(p2^.LByte);     //Suma menos peso del dato 2, deja en W
+    kMOVWF(FSR);
+    kADDWF(byte2L, toW);
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
     _btfsc(STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
@@ -3419,23 +3430,39 @@ begin
   end;
   stConst_Variab: begin
     SetROBResultExpres_word(Opt);
-    _movf (p2^.Hoffs,toW);  //p2->w
-    _SUBLW(p1^.HByte);     //p1 - W -W
+    //_movf (p2^.Hoffs,toW);  //p2->w
+    //_SUBLW(p1^.HByte);     //p1 - W -W
+    kMOVLW(value1H);
+    kMOVWF(FSR);
+    kMOVF(byte2H, toW);
+    kSUBWF(FSR, toW);
     _movwf(H.offs);
-    _movf (p2^.Loffs,toW);  //p2-W
-    _SUBLW(p1^.LByte);      //p1-W->w
+    //_movf (p2^.Loffs,toW);  //p2-W
+    //_SUBLW(p1^.LByte);      //p1-W->w
+    kMOVLW(value1L);
+    kMOVWF(FSR);
+    kMOVF(byte2L, toW);
+    kSUBWF(FSR, toW);
     _btfss(STATUS, _C);
     _decf(H.offs,toF);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
     SetROBResultExpres_word(Opt);
     aux := GetAuxRegisterByte;
-    _MOVWF(aux.offs);
-    _movf (H.offs,toW);    //p2->w
-    _SUBLW(p1^.HByte);     //p1 - W -W
+    _MOVWF(aux.offs);         //Salva W
+    //_movf (H.offs,toW);    //p2 -> w
+    //_SUBLW(p1^.HByte);     //p1 - W -W
+    kMOVLW(value1H);
+    kMOVWF(FSR);
+    kMOVF(H, toW);
+    kSUBWF(FSR, toW);
     _movwf(H.offs);
-    _movf (aux.offs,toW);  //p2-W
-    _SUBLW(p1^.LByte);     //p1-W->w
+    //_movf (aux.offs,toW);  //p2-W
+    //_SUBLW(p1^.LByte);     //p1-W->w
+    kMOVLW(value1L);
+    kMOVWF(FSR);
+    kMOVF(aux, toW);
+    kSUBWF(FSR, toW);
     _btfss(STATUS, _C);
     _decf(H.offs,toF);
     aux.used := false;
@@ -3514,11 +3541,13 @@ var
   SYSTMP00, SYSTMP01, SYSTMP02: TPicRegister;
   MUL16LOOP: Word;
 begin
+   //Multiplicaicón; 16bits X 16bits -> 16bits
    //[H_W] = [H_W] x [E_U]
    // RES  =  OP_A x OP_B
    //SYSTMP00 variable temporal. Contiene RES.LOW (resultado.LOW de la multiplicación)
    //SYSTMP01 variable temporal. Contiene OP_A.LOW  (inicialmente W)
    //SYSTMP02 variable temporal. Contiene OP_A.HIGH (inicialmente _H)
+   //FSR se usa  como registro auxiliar.
    //_H contine durante todo el bucle de multiplicación la parte alta de resultado (RES.HIGH)
    StartCodeSub(fun);  //inicia codificación
    typWord.DefineRegister;   //Asegura que exista H,W.
@@ -3538,7 +3567,9 @@ MUL16LOOP := _PC;
    _ADDWF   (SYSTMP00.offs,toF);
    _MOVF    (SYSTMP02.offs,toW);
    _BTFSC   (STATUS,0  );
-   _ADDLW   (1);
+   //_ADDLW   (1);  No existe esta instrucción
+   kMOVWF(FSR);      //W=W+1
+   kINCF(FSR, toW);  //W=W+1
    _ADDWF   (H.offs,toF);
 // END_IF_1:
    _BCF     (STATUS, 0);    //STATUS.C := 0
@@ -4214,7 +4245,8 @@ _LABEL(sale3);
   stConst_Expres: begin  //la expresión p2 se evaluó y está en UEHW
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
     //Compara byte L
-    _SUBLW(p1^.LByte); //p2^.L está en W
+    //_SUBLW(p1^.LByte); //p2^.L está en W
+    kXORLW(value1);  //Debería funcionar igual que SUBLW
     _BTFSS(Z.offs, Z.bit);
     _GOTO_PEND(sale1);  //no son iguales
     //Compara byte H
@@ -4334,36 +4366,39 @@ begin
       SetROBResultConst_dword(p1^.valInt+p2^.valInt);
     end;
   end;
-  stConst_Variab: begin
-    SetROBResultExpres_dword(Opt);
-    aux := GetAuxRegisterByte;  //Pide un registro libre
-    if HayError then exit;
-    _movf   (p2^.Loffs,toW);
-    _ADDLW  (p1^.LByte);  //Cambia C
-    _movwf  (aux.offs);       //Guarda Byte L de resultado
-
-    _movf   (p2^.Hoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
-    _incfsz (p2^.Hoffs,toW);
-    _ADDLW  (p1^.HByte);  //Cambia C
-    _movwf  (H.offs);       //Guarda Byte H de resultado
-
-    _movf   (p2^.Eoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
-    _incfsz (p2^.Eoffs,toW);
-    _ADDLW  (p1^.EByte);  //Cambia C
-    _movwf  (E.offs);       //Guarda Byte E de resultado
-
-    _movf   (p2^.Uoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
-    _incfsz (p2^.Uoffs,toW);
-    _ADDLW  (p1^.UByte);
-    _movwf  (U.offs);       //Guarda Byte U de resultado
-
-    _movf (aux.offs, toW);  //Deja L en W
-
-    aux.used := false;
-  end;
+//  stConst_Variab: begin
+//    SetROBResultExpres_dword(Opt);
+//    aux := GetAuxRegisterByte;  //Pide un registro libre
+//    if HayError then exit;
+//    //_movf   (p2^.Loffs,toW);
+//    //_ADDLW  (p1^.LByte);  //Cambia C
+//    //_movwf  (aux.offs);       //Guarda Byte L de resultado
+//    kMOVLW(value1L);
+//    kMOVWF(aux);
+//    kADDWF(aux, toF);
+//
+//    _movf   (p2^.Hoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+//    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
+//    _incfsz (p2^.Hoffs,toW);
+//    _ADDLW  (p1^.HByte);  //Cambia C
+//    _movwf  (H.offs);       //Guarda Byte H de resultado
+//
+//    _movf   (p2^.Eoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+//    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
+//    _incfsz (p2^.Eoffs,toW);
+//    _ADDLW  (p1^.EByte);  //Cambia C
+//    _movwf  (E.offs);       //Guarda Byte E de resultado
+//
+//    _movf   (p2^.Uoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+//    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
+//    _incfsz (p2^.Uoffs,toW);
+//    _ADDLW  (p1^.UByte);
+//    _movwf  (U.offs);       //Guarda Byte U de resultado
+//
+//    _movf (aux.offs, toW);  //Deja L en W
+//
+//    aux.used := false;
+//  end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
     if SetRes then SetROBResultExpres_dword(Opt); //Se fija aquí el resultado
     //K + WHEU -> WHEU, se puede manejar como asignación con sums
@@ -4523,8 +4558,9 @@ begin
       _movlw (p2^.LByte);
       _addwf (p1^.Loffs,toF);
       _movlw (p2^.HByte);
+      kMOVWF(FSR);  //Salva sin cambiar C
       _btfsc (STATUS,_C);
-      _ADDLW (1);
+      kINCF(FSR, toW);
       _addwf (p1^.Hoffs,toF);
       _btfsc (STATUS,_C);
       _INCF  (p1^.Eoffs,toF);
@@ -4534,16 +4570,19 @@ begin
       _movlw (p2^.LByte);
       _addwf (p1^.Loffs,toF);
       _movlw (p2^.HByte);
+      kMOVWF(FSR);  //Salva sin cambiar C
       _btfsc (STATUS,_C);
-      _ADDLW (1);
+      kINCF(FSR, toW);
       _addwf (p1^.Hoffs,toF);
       _movlw (p2^.EByte);
+      kMOVWF(FSR);  //Salva sin cambiar C
       _btfsc (STATUS,_C);
-      _ADDLW (1);
+      kINCF(FSR, toW);
       _addwf (p1^.Eoffs,toF);
       _movlw (p2^.UByte);
+      kMOVWF(FSR);  //Salva sin cambiar C
       _btfsc (STATUS,_C);
-      _ADDLW (1);
+      kINCF(FSR, toW);
       _addwf (p1^.Uoffs,toF);
     end;
   end;
@@ -4699,59 +4738,65 @@ procedure TGenCod.codif_1mseg;
 begin
   PutFwdComm(';1 msec routine.');
   if _CLOCK = 1000000 then begin
-    _MOVLW(62);  //contador de iteraciones
-    _ADDLW(255);  //lazo de 4 ciclos
-    _BTFSS(STATUS,_Z);
-    _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 1MHz.');
+    _MOVLW(83);
+    _MOVWF(FSR.offs);
+    _DECFSZ(FSR.offs, toF);  //lazo de 3 ciclos
+    _GOTO(_PC-1); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 2000000 then begin
-    _MOVLW(125);  //contador de iteraciones
-    _ADDLW(255);  //lazo de 4 ciclos
-    _BTFSS(STATUS,_Z);
-    _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 2MHz.');
+    _MOVLW(166);
+    _MOVWF(FSR.offs);
+    _DECFSZ(FSR.offs, toF);  //lazo de 3 ciclos
+    _GOTO(_PC-1); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 4000000 then begin
     //rtuina básica para 4MHz
-    _MOVLW(250);  //contador de iteraciones
-    _ADDLW(255);  //lazo de 4 ciclos
-    _BTFSS(STATUS,_Z);
-    _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 4MHz.');
+    _MOVLW(250);
+    _MOVWF(FSR.offs);
+    _NOP;           //Lazo de 4 ciclos
+    _DECFSZ(FSR.offs, toF);
+    _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 8000000 then begin
     _MOVLW(250);
-    _ADDLW(255);   //lazo de 8 ciclos
+    _MOVWF(FSR.offs);
+    _NOP;           //Lazo de 8 ciclos
     _GOTO(_PC+1);  //introduce 4 ciclos más de retardo
     _GOTO(_PC+1);
-    _BTFSS(STATUS,_Z);
-    _GOTO(_PC-4); PutComm(';fin rutina 1 mseg a 8Mhz.');
+    _DECFSZ(FSR.offs, toF);
+    _GOTO(_PC-4); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 10000000 then begin
     _MOVLW(250);
-    _ADDLW(255);   //lazo de 10 ciclos
+    _MOVWF(FSR.offs);
+    _NOP;           //Lazo de 10 ciclos
     _GOTO(_PC+1);  //introduce 6 ciclos más de retardo
     _GOTO(_PC+1);
     _GOTO(_PC+1);
-    _BTFSS(STATUS,_Z);
-    _GOTO(_PC-5); PutComm(';fin rutina 1 mseg a 10MHz.');
+    _DECFSZ(FSR.offs, toF);
+    _GOTO(_PC-5); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 12000000 then begin
     _MOVLW(250);
-    _ADDLW(255);   //lazo de 12 ciclos
+    _MOVWF(FSR.offs);
+    _NOP;           //Lazo de 12 ciclos
     _GOTO(_PC+1);  //introduce 8 ciclos más de retardo
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _GOTO(_PC+1);
-    _BTFSS(STATUS,_Z);
-    _GOTO(_PC-6); PutComm(';fin rutina 1 mseg a 12MHz.');
+    _DECFSZ(FSR.offs, toF);
+    _GOTO(_PC-6); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 16000000 then begin
     _MOVLW(250);
-    _ADDLW(255);   //lazo de 16 ciclos
+    _MOVWF(FSR.offs);
+    _NOP;           //Lazo de 16 ciclos
     _GOTO(_PC+1);  //introduce 12 ciclos más de retardo
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _GOTO(_PC+1);
-    _BTFSS(STATUS,_Z);
-    _GOTO(_PC-8); PutComm(';fin rutina 1 mseg a 12MHz.');
+    _DECFSZ(FSR.offs, toF);
+    _GOTO(_PC-8); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 20000000 then begin
     _MOVLW(250);
-    _ADDLW(255);   //lazo de 20 ciclos
+    _MOVWF(FSR.offs);
+    _NOP;           //Lazo de 20 ciclos
     _GOTO(_PC+1);  //introduce 16 ciclos más de retardo
     _GOTO(_PC+1);
     _GOTO(_PC+1);
@@ -4760,8 +4805,8 @@ begin
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _GOTO(_PC+1);
-    _BTFSS(STATUS,_Z);
-    _GOTO(_PC-10); PutComm(';fin rutina 1 mseg a 12MHz.');
+    _DECFSZ(FSR.offs, toF);
+    _GOTO(_PC-10); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else begin
     GenError('Clock frequency %d not supported for delay_ms().', [_CLOCK]);
   end;
@@ -4776,8 +4821,8 @@ begin
 //  PutLabel('__delay_ms');
   PutTopComm('    ;delay routine.');
   typWord.DefineRegister;   //Se asegura de que se exista y lo marca como "usado".
-  //aux := GetAuxRegisterByte;  //Pide un registro libre
-  aux := FSR;  //Usa el FSR como registro auxiliar
+  aux := GetAuxRegisterByte;  //Pide un registro libre
+  //aux := FSR;  //El FSR se usará en la rutina codif_1mseg()
   if HayError then exit;
   {Esta rutina recibe los milisegundos en los registros en (H,w) o en (w)
   En cualquier caso, siempre usa el registros H , el acumulador "w" y un reg. auxiliar.
@@ -5118,7 +5163,8 @@ begin
     if res.Typ = typByte then begin
       SetResultExpres(typBit); //No se usa SetROUResultExpres_bit, porque no se tiene el operando en p1^
       res.Inverted := true;
-      _ADDLW(0);   //el resultado aparecerá en Z, invertido
+      //_ADDLW(0);   //el resultado aparecerá en Z, invertido
+      _IORLW(0);   //el resultado aparecerá en Z, invertido
     end else begin
       GenError('Cannot convert to bit.'); exit;
     end;
@@ -5173,7 +5219,8 @@ begin
     if res.Typ = typByte then begin
       SetResultExpres(typBool); //No se usa SetROUResultExpres_bit, porque no se tiene el operando en p1^
       res.Inverted := true;
-      _ADDLW(0);   //el resultado aparecerá en Z, invertido
+      //_ADDLW(0);   //el resultado aparecerá en Z, invertido
+      _IORLW(0);   //el resultado aparecerá en Z, invertido
     end else begin
       GenError('Cannot convert to boolean.'); exit;
     end;

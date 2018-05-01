@@ -9,7 +9,7 @@ uses
   Classes, SysUtils, SynEdit, SynEditTypes, Forms, Controls, Dialogs, Menus,
   ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc,
   SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
-  GenCodBas_PICBase,
+  GenCod_PIC10,
   Compiler_PIC16, FormPICExplorer, FrameSyntaxTree, FormConfig, Globales,
   PicPasProject, FrameEditView, FrameMessagesWin, XpresElementsPIC, CodeTools,
   ParserAsm_PIC16, ParserDirec_PIC16, FrameCfgExtTool, FormDebugger, FormRAMExplorer;
@@ -192,7 +192,7 @@ type
     procedure ReplaceDialog1Replace(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
   private
-//picbaseline: TGenCod1PICBase;
+picbaseline: GenCod_PIC10.TGenCod;
     Compiler    : TCompiler_PIC16;
     tic         : integer;  //Contador para temporización
     ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
@@ -384,7 +384,7 @@ procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   //Es necesario crear solo una instancia del compilador.
   Compiler := TCompiler_PIC16.Create;  //Crea una instancia del compilador
-//picbaseline := TGenCod1PICBase.Create;
+//picbaseline := GenCod_PIC10.TGenCod.Create;
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
   //configura panel de mensajes

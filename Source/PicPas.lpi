@@ -68,7 +68,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="30">
+    <Units Count="31">
       <Unit0>
         <Filename Value="PicPas.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -239,9 +239,13 @@
         <ResourceBaseClass Value="Frame"/>
       </Unit28>
       <Unit29>
-        <Filename Value="GenCodBas_PICBase.pas"/>
+        <Filename Value="GenCodBas_PIC10.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit29>
+      <Unit30>
+        <Filename Value="GenCod_PIC10.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit30>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
