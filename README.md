@@ -786,7 +786,7 @@ All of them, must be availables on the GitHub. Check the versions used.
 
 These libraries don't include package. They are only files in folders that need to be included when compiling PicPas.
 
-PicPas has been compiled, using the version 1.6.2 of Lazarus. Tested in Windows and Ubuntu.
+PicPas has been compiled, using the version 1.8.0 of Lazarus. Tested in Windows, Ubuntu and Mac.
 
 To have more information about the compiler, check the Technical Documentation (Only in spanish by now).
 

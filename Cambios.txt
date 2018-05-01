@@ -1,34 +1,34 @@
-PicPas 0.8.4
+PicPas 0.8.5
 ============
-* Se crea el campo TgenCodPic.lastOpCode, para almacenar la última instrucción compilada, y se
-modifican las instrucciones "k" para que usen este campo.
-* Se Modifican las clases TPicRegister y TPicRegisterBit, en XpresTypesPIC, para agregar el campo 
-"addr" y convertir los campos "offs" y "bank" en propiedades de solo lectura.
-* Se modifican diversas rutinas afectadas, especialmente de la unidad "GenCodPic", para adaptarse 
-a la nueva definición de TPicRegister y TPicRegisterBit.
-* Se pasa a usar la versión 1.3 de PicUtils.
-* Se simplifica la definición del almacenamiento: stVarRefVar y se actualizan las rutinas 
-aefctadas.
-* Se reemplazan diversas rutinas del generador de código, con instrucciones "k".
-* Se cambia por completo los contenedores de las direcciones de memoria de la clase TxpEleVar,
-y se adaptan diversas rutinas para trabajar con este nuevo tipo de almacenamiento.
-* Se implementa la operación MOD para bytes.
-* Se crea ún nuevo patrón de pruebas para los tipos Byte, incluyendo la operación MOD.
-* Se modifica la ventana de depuración para que muestre el desensambaldo de forma similar a como
-se muestra en la ventana principal.
-* Se mueve AddCaller() de TGenCodPic a TCompilerBase, y usa en lugar del evento 
-TxpElement.AddCaller() que es eliminado.
-* Se pasa a usar la versión 1.7 de la librería ogMotEdicion.
-* Se activa un menú contextual en el editor gráfico de la ventana de depuración.
-* Se crea el objeto gráfico TOgLogicState, en la ventana de depuración. Pero no es aún funcional.
-* Se compila una versión del binario para Mac (Colaboración de https://github.com/cuistax).
+Se crea la unidad /devices para almacenar las unidades de modelos de microcontroladores.
+Se implementa la búsqueda de unidades en la carpeta /devices para compilación y autocompletado.
+Se cambia de nombre a las variables de rutas para que empiecen con "pat" en lugar de "rut".
+Se incluyen librerías que definen diversos dispositivos que no están definidos internamente.
+Se compila el proyecto con la versión 1.8 de Lazarus.
+Se crea una entrada nueva en los archivos de idioma para ingresar el idioma frances.
+Se cambia el nombre del proyecto a PicPas (antes era Project1).
+Se optimiza la operación <Constante byte>*<Constante byte> para resultado menor a 256.
+Se implementa la operación <Constante byte>*<Constante word>
+Se implementa la operación <Constante word>*<Constante word>
+Se cambia de nombre a la unidad XpresParserPIC for Parser y se eliminan las referencias a TPIC16
+Se cambia de nombre a la unidad GenCodPIC for GenCodBas_PIC16
+Se cambia de nombre a la unidad GenCod for GenCod_PIC16 
+Se cambia de nombre a la unidad Parser for Compiler_PIC16
+Se cambia de nombre a la unidad ParserDirec for ParserDirec_PIC16.
+Se cambia de nombre a la unidad ParserAsm for ParserAsmPIC16 
+Se cambia el nombre de TfrmPrincipal.CT a CodeTool.
+Se cambia el nombre de TfrmPrincipal.cxp a TfrmPrincipal.Compiler.
+Se cambia de nombre a la clase TGenCodPic por TGenCodBas_PICBase.
+Se pasa a usar la versión 2.3 de ogEditGraf.
+Se elimina el campo TGenCodBas_PIC16.lastOpCode
+Se cambia el sistema de traducción de idioma a FrameArcExplor, para que use el mismo que
+usa todo el proyecto.
+Se mueven métodos de GenCod_PIC16 a "Parser" para que sirvan a otros compiladores.
+Se divide la doceumentación técnica en varios archivos más específicos.
 
 PENDIENTES
 -Revisar el uso de bancos, para funciones del sistema, como delay_ms() y las llamadas que se
-hacen para algunas operacionas como DIV. Se sugiere primero eliminar TxpElement.AddCaller() 
-y definir un método como TCOmpilerBase.AddCallerTo() para realizar el mismo trabajo, de modo 
-que se pueda tener acceso a las variables de entorno del compilador como FirstPass y se evita el
-uso confuso de eventos, y se simplifica el código.
+hacen para algunas operacionas como DIV. 
 
 -Revisar si conviene crear el almacenamiento VarRefVarOff, para expresiones de tipo:
   (p+5)^
@@ -70,6 +70,32 @@ los lazos y condicionales.
 -Incluir el tipo integer con signo.
 -Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
 y más de una página de ROM.
+
+
+PicPas 0.8.4
+============
+* Se crea el campo TgenCodPic.lastOpCode, para almacenar la última instrucción compilada, y se
+modifican las instrucciones "k" para que usen este campo.
+* Se Modifican las clases TPicRegister y TPicRegisterBit, en XpresTypesPIC, para agregar el campo 
+"addr" y convertir los campos "offs" y "bank" en propiedades de solo lectura.
+* Se modifican diversas rutinas afectadas, especialmente de la unidad "GenCodPic", para adaptarse 
+a la nueva definición de TPicRegister y TPicRegisterBit.
+* Se pasa a usar la versión 1.3 de PicUtils.
+* Se simplifica la definición del almacenamiento: stVarRefVar y se actualizan las rutinas 
+aefctadas.
+* Se reemplazan diversas rutinas del generador de código, con instrucciones "k".
+* Se cambia por completo los contenedores de las direcciones de memoria de la clase TxpEleVar,
+y se adaptan diversas rutinas para trabajar con este nuevo tipo de almacenamiento.
+* Se implementa la operación MOD para bytes.
+* Se crea ún nuevo patrón de pruebas para los tipos Byte, incluyendo la operación MOD.
+* Se modifica la ventana de depuración para que muestre el desensambaldo de forma similar a como
+se muestra en la ventana principal.
+* Se mueve AddCaller() de TGenCodPic a TCompilerBase, y usa en lugar del evento 
+TxpElement.AddCaller() que es eliminado.
+* Se pasa a usar la versión 1.7 de la librería ogMotEdicion.
+* Se activa un menú contextual en el editor gráfico de la ventana de depuración.
+* Se crea el objeto gráfico TOgLogicState, en la ventana de depuración. Pero no es aún funcional.
+* Se compila una versión del binario para Mac (Colaboración de https://github.com/cuistax).
 
 
 PicPas 0.8.3
