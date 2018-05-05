@@ -1,11 +1,11 @@
 {Unidad que implementa a la clase TParserAsm, que sirve como contenedor para
 implementar las funcionaliddes de procesamiento de bloques ensamblador.
 }
-unit ParserAsm_PIC16;
+unit ParserAsm_PIC10;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, fgl, SynFacilHighlighter, Pic16Utils, GenCod_PIC16, Globales,
+  Classes, SysUtils, fgl, SynFacilHighlighter, Pic10Utils, GenCod_PIC10, Globales,
   XpresBas, strutils, XpresElementsPIC;
 
 type
@@ -20,7 +20,7 @@ type
   TPicUJump = class
     txt: string;   //nombre de la etiqueta
     add: integer;  //dirección
-    idInst: TPIC16Inst;
+    idInst: TPIC10Inst;
   end;
   TPicUJump_list = specialize TFPGObjectList<TPicUJump>;
 
@@ -33,12 +33,12 @@ type
     uJumps : TPicUJump_list; //Lista de instrucciones GOTO o i_CALL, indefinidas
     asmRow : integer;     //número de fila explorada
     procedure AddLabel(name: string; addr: integer);
-    procedure AddUJump(name: string; addr: integer; idInst: TPIC16Inst);
-    function CaptureAddress(const idInst: TPIC16Inst; var a: word): boolean;
+    procedure AddUJump(name: string; addr: integer; idInst: TPIC10Inst);
+    function CaptureAddress(const idInst: TPIC10Inst; var a: word): boolean;
     function CaptureBitVar(out f, b: byte): boolean;
     function CaptureByte(out k: byte): boolean;
     function CaptureComma: boolean;
-    function CaptureDestinat(out d: TPIC16destin): boolean;
+    function CaptureDestinat(out d: TPIC10destin): boolean;
     function CaptureNbit(var b: byte): boolean;
     function CaptureRegister(out f: byte): boolean;
     procedure EndASM;
@@ -138,7 +138,7 @@ begin
   lbl.add := addr;
   labels.Add(lbl);
 end;
-procedure TParserAsm.AddUJump(name: string; addr: integer; idInst: TPIC16Inst);
+procedure TParserAsm.AddUJump(name: string; addr: integer; idInst: TPIC10Inst);
 {Agrega un salto indefinido a la lista}
 var
   jmp: TPicUJump;
@@ -288,7 +288,7 @@ begin
     exit(false);
   end;
 end;
-function TParserAsm.CaptureDestinat(out d: TPIC16destin): boolean;
+function TParserAsm.CaptureDestinat(out d: TPIC10destin): boolean;
 {Captura el destino de una instrucción y devuelve en "d". Si no encuentra devuelve error}
 var
   dest: String;
@@ -488,7 +488,8 @@ begin
     exit;
   end;
 end;
-function TParserAsm.CaptureAddress(const idInst: TPIC16Inst; var a: word): boolean;
+function TParserAsm.CaptureAddress(const idInst: TPIC10Inst; var a: word
+  ): boolean;
 {Captura una dirección a una instrucción y devuelve en "a". Si no encuentra genera
 error y devuelve FALSE.}
 var
@@ -599,10 +600,10 @@ procedure TParserAsm.ProcInstrASM;
 //Procesa una instrucción ASM
 var
   stx: string;
-  idInst: TPIC16Inst;
+  idInst: TPIC10Inst;
   tok: String;
   f : byte;
-  d: TPIC16destin;
+  d: TPIC10destin;
   b: byte;
   a: word;
   k: byte;

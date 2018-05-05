@@ -240,7 +240,7 @@ begin
   if ele.idClass = eltVar then begin
     //Es una variable, vemos el tipo
     xVar := TxpEleVar(ele);
-    if xVar.typ = typByte then begin
+    if xVar.typ = cxp.typByte then begin
       opEve.AddItem('bit0', 11);
       opEve.AddItem('bit1', 11);
       opEve.AddItem('bit2', 11);
@@ -250,11 +250,11 @@ begin
       opEve.AddItem('bit6', 11);
       opEve.AddItem('bit7', 11);
     end;
-    if xVar.typ = typWord then begin
+    if xVar.typ = cxp.typWord then begin
       opEve.AddItem('high', 11);
       opEve.AddItem('low' , 11);
     end;
-    if xVar.typ = typDWord then begin
+    if xVar.typ = cxp.typDWord then begin
       opEve.AddItem('Low', 11);
       opEve.AddItem('High', 11);
       opEve.AddItem('Extra', 11);

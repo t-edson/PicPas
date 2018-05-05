@@ -1,12 +1,12 @@
 {Unidad que implementa a la clase TParserDirec, que sirve como contenedor para
 implementar las funcionaliddes de procesamiento de directivas.
 }
-unit ParserDirec_PIC16;
+unit ParserDirec_PIC10;
 {$mode objfpc}{$H+}
 interface
 uses
   Classes, SysUtils, fgl, math, Graphics, LCLProc, SynFacilHighlighter, XpresBas,
-  XpresElementsPIC, Pic16Devices, ParserAsm_PIC16, Globales, MisUtils;
+  XpresElementsPIC, Pic10Devices, ParserAsm_PIC10, Globales, MisUtils;
 type  //Tipos para manejo de expresiones
   TDirDatType = (ddtNumber, ddtString);
 
@@ -165,7 +165,7 @@ var
   ER_TOOHIGHFRE: String;
 procedure SetLanguage;
 begin
-  ParserAsm_PIC16.SetLanguage;
+  ParserAsm_PIC10.SetLanguage;
 {$I ..\language\tra_ParserDirec.pas}
 end;
 { TDirOperand }

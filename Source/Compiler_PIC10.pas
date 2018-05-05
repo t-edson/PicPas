@@ -1,15 +1,15 @@
 {Unidad con rutinas del analizador sintáctico.
 }
-unit Compiler_PIC16;
+unit Compiler_PIC10;
 {$mode objfpc}{$H+}
 interface
 uses
   Classes, SysUtils, lclProc, SynEditHighlighter, types, MisUtils, XpresBas,
-  XpresTypesPIC, XpresElementsPIC, Pic16Utils, Pic16Devices, Parser,
-  GenCodBas_PIC16, GenCod_PIC16, ParserDirec_PIC16, Globales, FormConfig {Por diseño, parecería que GenCodBas, no debería accederse desde aquí};
+  XpresTypesPIC, XpresElementsPIC, Pic10Utils, Pic10Devices, Parser,
+  GenCodBas_PIC10, GenCod_PIC10, ParserDirec_PIC10, Globales, FormConfig {Por diseño, parecería que GenCodBas, no debería accederse desde aquí};
 type
  { TCompiler }
-  TCompiler_PIC16 = class(TParserDirec)
+  TCompiler_PIC10 = class(TParserDirec)
   private   //Funciones básicas
     function AddType(typName: string; srcPos: TSrcPos): TxpEleType;
     function AddVariable(varName: string; eleTyp: TxpEleType; srcPos: TSrcPos
@@ -101,22 +101,22 @@ var
 //Funciones básicas
 procedure SetLanguage;
 begin
-  ParserDirec_PIC16.SetLanguage;
+  ParserDirec_PIC10.SetLanguage;
 {$I ..\language\tra_Parser.pas}
 end;
-procedure TCompiler_PIC16.cInNewLine(lin: string);
+procedure TCompiler_PIC10.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
 begin
   if Config.IncComment then begin
     pic.addTopComm('    ;'+trim(lin));  //agrega _Línea al código ensmblador
   end;
 end;
-function TCompiler_PIC16.StartOfSection: boolean;
+function TCompiler_PIC10.StartOfSection: boolean;
 begin
   Result := (cIn.tokL ='var') or (cIn.tokL ='const') or
             (cIn.tokL ='type') or (cIn.tokL ='procedure');
 end;
-procedure TCompiler_PIC16.ResetFlashAndRAM;
+procedure TCompiler_PIC10.ResetFlashAndRAM;
 {Reinicia el dispositivo, para empezar a escribir en la posición $000 de la FLASH, y
 en la posición inicial de la RAM.}
 begin
@@ -125,7 +125,7 @@ begin
   CurrBank := 0;
   StartRegs;        //Limpia registros de trabajo, auxiliares, y de pila.
 end;
-procedure TCompiler_PIC16.getListOfIdent(var itemList: TStringDynArray; out srcPosArray: TSrcPosArray);
+procedure TCompiler_PIC10.getListOfIdent(var itemList: TStringDynArray; out srcPosArray: TSrcPosArray);
 {Lee una lista de identificadores separados por comas, hasta encontra un caracter distinto
 de coma. Si el primer elemento no es un identificador o si después de la coma no sigue un
 identificador, genera error.
@@ -157,7 +157,7 @@ begin
     cIn.Next;  //toma la coma
   until false;
 end;
-function TCompiler_PIC16.getParamType: TxpEleType;
+function TCompiler_PIC10.getParamType: TxpEleType;
 {Lee el tipo que acompaña a una declaración de parámetro de un procedimeinto.
 Es muy similar a GetTypeVarDeclaration (excepto porque aquí se verifican los tipos
 copias), y tal vez debería unificarse.}
@@ -193,7 +193,7 @@ begin
   cIn.Next;
   Result := typ;
 end;
-procedure TCompiler_PIC16.ProcComments;
+procedure TCompiler_PIC10.ProcComments;
 {Procesa comentarios, directivas y bloques ASM. Los bloques ASM, se processan también
 como comentarios o directivas, para poder ubicarlos dentro de instrucciones, y poder
 darle mayor poder, en el futuro.
@@ -237,7 +237,7 @@ begin
     cIn.SkipWhites;  //limpia blancos
   end;
 end;
-procedure TCompiler_PIC16.ProcCommentsNoExec;
+procedure TCompiler_PIC10.ProcCommentsNoExec;
 {Similar a ProcComments(), pero no ejecuta directivas o bloques ASM.}
 begin
   cIn.SkipWhites;
@@ -247,7 +247,7 @@ begin
     cIn.SkipWhites;  //limpia blancos
   end;
 end;
-procedure TCompiler_PIC16.CompileLastEnd;
+procedure TCompiler_PIC10.CompileLastEnd;
 {Compila la parte de final de un programa o una unidad}
 begin
   if cIn.Eof then begin
@@ -274,7 +274,7 @@ begin
     exit;       //sale
   end;
 end;
-function TCompiler_PIC16.AddVariable(varName: string; eleTyp: TxpEleType; srcPos: TSrcPos
+function TCompiler_PIC10.AddVariable(varName: string; eleTyp: TxpEleType; srcPos: TSrcPos
   ): TxpEleVar;
 {Crea un elemento variable y lo agrega en el nodo actual del árbol de sintaxis.
 Si no hay errores, devuelve la referencia a la variable. En caso contrario,
@@ -294,7 +294,7 @@ begin
     exit(nil);
   end;
 end;
-function TCompiler_PIC16.AddType(typName: string; srcPos: TSrcPos): TxpEleType;
+function TCompiler_PIC10.AddType(typName: string; srcPos: TSrcPos): TxpEleType;
 {Crea un elemento tipo y lo agrega en el nodo actual del árbol de sintaxis.
 Si no hay errores, devuelve la referencia al tipo. En caso contrario,
 devuelve NIL.}
@@ -311,7 +311,7 @@ begin
     exit(nil);
   end;
 end;
-procedure TCompiler_PIC16.CaptureDecParams(fun: TxpEleFun);
+procedure TCompiler_PIC10.CaptureDecParams(fun: TxpEleFun);
 //Lee la declaración de parámetros de una función.
 var
   typ: TxpEleType;
@@ -388,7 +388,7 @@ begin
     if not CaptureTok(')') then exit;
   end;
 end;
-function TCompiler_PIC16.CompileStructBody(GenCode: boolean): boolean;
+function TCompiler_PIC10.CompileStructBody(GenCode: boolean): boolean;
 {Compila el cuerpo de un THEN, ELSE, WHILE, ... considerando el modo del compilador.
 Si se genera error, devuelve FALSE. }
 begin
@@ -418,7 +418,7 @@ begin
   //Salió sin errores
   exit(true);
 end;
-function TCompiler_PIC16.CompileConditionalBody(out FinalBank: byte): boolean;
+function TCompiler_PIC10.CompileConditionalBody(out FinalBank: byte): boolean;
 {Versión de CompileStructBody(), para bloques condicionales.
 Se usa para bloque que se ejecutarán de forma condicional, es decir, que no se
 garantiza que se ejecute siempre. "FinalBank" indica el banco en el que debería
@@ -427,7 +427,7 @@ begin
   Result := CompileStructBody(true);  //siempre genera código
   FinalBank := CurrBank;  //Devuelve banco
 end;
-function TCompiler_PIC16.CompileNoConditionBody(GenCode: boolean): boolean;
+function TCompiler_PIC10.CompileNoConditionBody(GenCode: boolean): boolean;
 {Versión de CompileStructBody(), para bloques no condicionales.
 Se usa para bloques no condicionales, es decir que se ejecutará siempre (Si GenCode
 es TRUE) o nunca (Si GenCode es FALSE);
@@ -436,7 +436,7 @@ begin
   //"BankChanged" sigue su curso normal
   Result := CompileStructBody(GenCode);
 end;
-function TCompiler_PIC16.VerifyEND: boolean;
+function TCompiler_PIC10.VerifyEND: boolean;
 {Compila la parte final de la estructura, que en el modo PicPas, debe ser el
  delimitador END. Si encuentra error, devuelve FALSE.}
 begin
@@ -446,7 +446,7 @@ begin
     if not CaptureStr('end') then exit(false);
   end;
 end;
-function TCompiler_PIC16.GetExpressionBool: boolean;
+function TCompiler_PIC10.GetExpressionBool: boolean;
 {Lee una expresión booleana. Si hay algún error devuelve FALSE.}
 begin
   GetExpressionE(0);
@@ -458,7 +458,7 @@ begin
   ProcComments;
   exit(true);  //No hay error
 end;
-procedure TCompiler_PIC16.CompileIF;
+procedure TCompiler_PIC10.CompileIF;
 {Compila una extructura IF}
   procedure SetFinalBank(bnk1, bnk2: byte);
   {Fija el valor de CurrBank, de acuerdo a dos bancos finales.}
@@ -558,7 +558,7 @@ begin
   end;
   end;
 end;
-procedure TCompiler_PIC16.Cod_JumpIfTrue;
+procedure TCompiler_PIC10.Cod_JumpIfTrue;
 {Codifica una instrucción de salto, si es que el resultado de la última expresión es
 verdadera. Se debe asegurar que la expresión es de tipo booleana y de almacenamiento
 stVariab o stExpres.}
@@ -594,7 +594,7 @@ begin
     end;
   end;
 end;
-procedure TCompiler_PIC16.CompileREPEAT;
+procedure TCompiler_PIC10.CompileREPEAT;
 {Compila uan extructura WHILE}
 var
   l1: Word;
@@ -621,7 +621,7 @@ begin
   end;
   end;
 end;
-procedure TCompiler_PIC16.CompileWHILE;
+procedure TCompiler_PIC10.CompileWHILE;
 {Compila una extructura WHILE}
 var
   l1: Word;
@@ -661,7 +661,7 @@ begin
   end;
   CurrBank := bnkExp2;  //Este es el banco con que se sale del WHILE
 end;
-procedure TCompiler_PIC16.CompileFOR;
+procedure TCompiler_PIC10.CompileFOR;
 {Compila uan extructura WHILE}
 var
   l1: Word;
@@ -731,7 +731,7 @@ begin
     exit;
   end;
 end;
-procedure TCompiler_PIC16.Tree_AddElement(elem: TxpElement);
+procedure TCompiler_PIC10.Tree_AddElement(elem: TxpElement);
 begin
   if FirstPass then begin
     //Caso normal. Solo aquí dede modificarse el árbol de sintaxis.
@@ -741,7 +741,7 @@ begin
   end;
 end;
 //Métodos OVERRIDE
-procedure TCompiler_PIC16.TipDefecNumber(var Op: TOperand; toknum: string);
+procedure TCompiler_PIC10.TipDefecNumber(var Op: TOperand; toknum: string);
 {Procesa constantes numéricas, ubicándolas en el tipo de dato apropiado (byte, word, ... )
  Si no logra ubicar el tipo de número, o no puede leer su valor, generará  un error.}
 var
@@ -802,7 +802,7 @@ begin
     end;
   end;
 end;
-procedure TCompiler_PIC16.TipDefecString(var Op: TOperand; tokcad: string);
+procedure TCompiler_PIC10.TipDefecString(var Op: TOperand; tokcad: string);
 //Devuelve el tipo de cadena encontrado en un token
 //var
 //  i: Integer;
@@ -817,7 +817,7 @@ begin
   end else
     Op.typ :=nil;  //no hay otro tipo}
 end;
-procedure TCompiler_PIC16.TipDefecBoolean(var Op: TOperand; tokcad: string);
+procedure TCompiler_PIC10.TipDefecBoolean(var Op: TOperand; tokcad: string);
 //Devuelve el tipo de cadena encontrado en un token
 begin
   //convierte valor constante
@@ -825,7 +825,7 @@ begin
   Op.valBool:= (tokcad[1] in ['t','T']);
 end;
 //Rutinas para la compilación y enlace
-procedure TCompiler_PIC16.CompileProcBody(fun: TxpEleFun);
+procedure TCompiler_PIC10.CompileProcBody(fun: TxpEleFun);
 {Compila el cuerpo de un procedimiento}
 begin
   StartCodeSub(fun);    //Inicia codificación de subrutina
@@ -859,7 +859,7 @@ begin
   //Calcula tamaño
   fun.srcSize := pic.iFlash - fun.adrr;
 end;
-function TCompiler_PIC16.OpenContextFrom(filePath: string): boolean;
+function TCompiler_PIC10.OpenContextFrom(filePath: string): boolean;
 {Abre un contexto con el archivo indicado. Si lo logra abrir, devuelve TRUE.}
 var
   strList: TStrings;
@@ -889,7 +889,7 @@ begin
   end;
 end;
 //Compilación de secciones
-procedure TCompiler_PIC16.CompileGlobalConstDeclar;
+procedure TCompiler_PIC10.CompileGlobalConstDeclar;
 var
   consNames: array of string;  //nombre de variables
   cons: TxpEleCon;
@@ -932,7 +932,7 @@ begin
   ProcComments;
   //puede salir con error
 end;
-function TCompiler_PIC16.GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
+function TCompiler_PIC10.GetAdicVarDeclar(out IsBit: boolean): TAdicVarDec;
 {Verifica si lo que sigue es la sintaxis ABSOLUTE ... . Si esa así, procesa el texto,
 pone "IsAbs" en TRUE y actualiza los valores "absAddr" y "absBit". }
   function ReadAddres(tok: string): word;
@@ -1061,7 +1061,7 @@ begin
     exit;
   end;
 end;
-procedure TCompiler_PIC16.array_length(const OpPtr: pointer);
+procedure TCompiler_PIC10.array_length(const OpPtr: pointer);
 //Devuelve la cantidad de elementos de un arreglo
 var
   Op: ^TOperand;
@@ -1080,7 +1080,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TCompiler_PIC16.array_high(const OpPtr: pointer);
+procedure TCompiler_PIC10.array_high(const OpPtr: pointer);
 //Devuelve el índice máximo de un arreglo
 var
   Op: ^TOperand;
@@ -1099,7 +1099,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TCompiler_PIC16.array_low(const OpPtr: pointer);
+procedure TCompiler_PIC10.array_low(const OpPtr: pointer);
 //Devuelve el índice mínimo de un arreglo
 var
   Op: ^TOperand;
@@ -1116,7 +1116,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TCompiler_PIC16.ArrayDeclaration(out itemTyp: TxpEleType; out nEle: integer);
+procedure TCompiler_PIC10.ArrayDeclaration(out itemTyp: TxpEleType; out nEle: integer);
 {Compila una declaración de arreglo.}
 var
   varType: String;
@@ -1194,7 +1194,7 @@ begin
 //  totSize := nEle * itemTyp.size;  //tamaño en bytes
 
 end;
-procedure TCompiler_PIC16.CompileTypeDeclar(IsInterface: boolean; typName: string = '');
+procedure TCompiler_PIC10.CompileTypeDeclar(IsInterface: boolean; typName: string = '');
 {Compila la sección de declaración de un tipo, y genera un elemento TxpEleType, en el
 árbol de sintaxis.
 Si se especifica typName, se obvia la extracción de la parte " nombreTipo = ", y se
@@ -1291,7 +1291,7 @@ begin
   ProcComments;
   //puede salir con error
 end;
-function TCompiler_PIC16.GetTypeVarDeclar: TxpEleType;
+function TCompiler_PIC10.GetTypeVarDeclar: TxpEleType;
 {Extrae la sección de tipo de la declaración de una variable, y devuelve la referencia
 al elemento TxpEleType correspondiente.
 Si encuentra algún problema, genera error, y devuelve NIL.
@@ -1358,7 +1358,7 @@ begin
     exit(nil);
   end;
 end;
-procedure TCompiler_PIC16.CompileVarDeclar(IsInterface: boolean = false);
+procedure TCompiler_PIC10.CompileVarDeclar(IsInterface: boolean = false);
 {Compila la declaración de variables en el nodo actual.
 "IsInterface", indica el valor que se pondrá al as variables, en la bandera "IsInterface" }
 var
@@ -1431,7 +1431,7 @@ begin
   ProcComments;
   //puede salir con error
 end;
-procedure TCompiler_PIC16.CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
+procedure TCompiler_PIC10.CompileProcHeader(out fun: TxpEleFun; ValidateDup: boolean = true);
 {Hace el procesamiento del encabezado de la declaración de una función/procedimiento.
 Devuelve la referencia al objeto TxpEleFun creado, en "fun".
 Conviene separar el procesamiento del enzabezado, para poder usar esta rutina, también,
@@ -1493,7 +1493,7 @@ begin
   end;
   ProcComments;  //Quita espacios. Puede salir con error
 end;
-procedure TCompiler_PIC16.CompileProcDeclar(IsImplementation: boolean);
+procedure TCompiler_PIC10.CompileProcDeclar(IsImplementation: boolean);
 {Compila la declaración de procedimientos. Tanto procedimientos como funciones
  se manejan internamente como funciones.
  IsImplementation, se usa para cuando se está compilando en la sección IMPLEMENTATION.}
@@ -1586,7 +1586,7 @@ begin
   if not CaptureTok(';') then exit;
   ProcComments;  //Quita espacios. Puede salir con error
 end;
-procedure TCompiler_PIC16.CompileInstruction;
+procedure TCompiler_PIC10.CompileInstruction;
 {Compila una única instrucción o un bloque BEGIN ... END. Puede generar Error.
  Una instrucción se define como:
  1. Un bloque BEGIN ... END
@@ -1650,7 +1650,7 @@ begin
     end;
   end;
 end;
-procedure TCompiler_PIC16.CompileInstructionDummy;
+procedure TCompiler_PIC10.CompileInstructionDummy;
 {Compila una instrucción pero sin generar código. }
 var
   p: Integer;
@@ -1669,7 +1669,7 @@ begin
   //puede salir con error
   { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
 end;
-procedure TCompiler_PIC16.CompileCurBlock;
+procedure TCompiler_PIC10.CompileCurBlock;
 {Compila el bloque de código actual hasta encontrar un delimitador de bloque, o fin
 de archivo. }
 begin
@@ -1689,7 +1689,7 @@ begin
     ProcComments;  //Puede haber Directivas o ASM también
   end;
 end ;
-procedure TCompiler_PIC16.CompileCurBlockDummy;
+procedure TCompiler_PIC10.CompileCurBlockDummy;
 {Compila un bloque pero sin geenrar código.}
 var
   p: Integer;
@@ -1708,7 +1708,7 @@ begin
   //puede salir con error
   { TODO : Debe limpiar la memoria flash que ocupó, para dejar la casa limpia. }
 end;
-procedure TCompiler_PIC16.CompileUnit(uni: TxpElement);
+procedure TCompiler_PIC10.CompileUnit(uni: TxpElement);
 {Realiza la compilación de una unidad}
 var
   fun: TxpEleFun;
@@ -1851,7 +1851,7 @@ begin
 //  Cod_EndProgram;
 //debugln('   Fin Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
 end;
-procedure TCompiler_PIC16.CompileUsesDeclaration;
+procedure TCompiler_PIC10.CompileUsesDeclaration;
 {Compila la unidad indicada.}
 var
   uni: TxpEleUnit;
@@ -1917,7 +1917,7 @@ begin
     if not CaptureDelExpres then exit;
   end;
 end;
-procedure TCompiler_PIC16.CompileProgram;
+procedure TCompiler_PIC10.CompileProgram;
 {Compila un programa en el contexto actual. Empieza a codificar el código a partir de
 la posición actual de memoria en el PIC (iFlash).}
 var
@@ -2009,7 +2009,7 @@ begin
   _SLEEP();   //agrega instrucción final
   Cod_EndProgram;
 end;
-procedure TCompiler_PIC16.CompileLinkProgram;
+procedure TCompiler_PIC10.CompileLinkProgram;
 {Genera el código compilado final. Usa la información del árbol de sintaxis, para
 ubicar a los diversos elementos que deben compilarse.
 Se debe llamar después de compilar con CompileProgram.
@@ -2333,7 +2333,7 @@ begin
   {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
   _SLEEP();   //agrega instrucción final
 end;
-function TCompiler_PIC16.IsUnit: boolean;
+function TCompiler_PIC10.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}
 begin
   ProcCommentsNoExec;  //Solo es validación, así que no debe ejecutar nada
@@ -2345,7 +2345,7 @@ begin
   cIn.curCon.SetStartPos;   //retorna al inicio
   exit(false);
 end;
-procedure TCompiler_PIC16.Compile(NombArc: string; Link: boolean = true);
+procedure TCompiler_PIC10.Compile(NombArc: string; Link: boolean = true);
 //Compila el contenido de un archivo.
 var
   p: SizeInt;
@@ -2433,7 +2433,7 @@ function AdrStr(absAdr: word): string;
 begin
   Result := '0x' + IntToHex(AbsAdr, 3);
 end;
-procedure TCompiler_PIC16.RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);
+procedure TCompiler_PIC10.RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);
 {Devuelve una cadena con información sobre el uso de la memoria.}
 var
   adStr: String;
@@ -2510,11 +2510,11 @@ begin
   end;
 //  lins.Add(';-------------------------');
 end;
-procedure TCompiler_PIC16.DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);
+procedure TCompiler_PIC10.DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);
 begin
   pic.DumpCode(lins, incAdrr, incCom, incVarNam);
 end;
-function TCompiler_PIC16.RAMusedStr: string;
+function TCompiler_PIC10.RAMusedStr: string;
 var
   usedRAM, totRAM: Word;
 begin
@@ -2524,7 +2524,7 @@ begin
   Result := MSG_RAM_USED + IntToStr(usedRAM) +'/'+ IntToStr(totRAM) + 'B (' +
         FloatToStrF(100*usedRAM/totRAM, ffGeneral, 1, 3) + '%)';
 end;
-function TCompiler_PIC16.FLASHusedStr: string;
+function TCompiler_PIC10.FLASHusedStr: string;
 var
   totROM: Integer;
   usedROM: Word;
@@ -2534,7 +2534,7 @@ begin
   Result := MSG_FLS_USED + IntToStr(usedROM) +'/'+ IntToStr(totROM) + ' (' +
         FloatToStrF(100*usedROM/totROM, ffGeneral, 1, 3) + '%)';
 end;
-procedure TCompiler_PIC16.GetResourcesUsed(out ramUse, romUse, stkUse: single);
+procedure TCompiler_PIC10.GetResourcesUsed(out ramUse, romUse, stkUse: single);
 var
   totROM, usedROM: Word;
   usedRAM, totRAM: Word;
@@ -2556,12 +2556,12 @@ begin
   //No considera el anidamiento por interrupciones
   stkUse := TreeElems.main.maxNesting/8;
 end;
-procedure TCompiler_PIC16.GenerateListReport(lins: TStrings);
+procedure TCompiler_PIC10.GenerateListReport(lins: TStrings);
 {Genera un reporte detallado de la compialción}
 var
-  curInst, opc: TPIC16Inst;
+  curInst, opc: TPIC10Inst;
   i: word;
-  OpCodeCoun: array[low(TPIC16Inst)..high(TPIC16Inst)] of integer;
+  OpCodeCoun: array[low(TPIC10Inst)..high(TPIC10Inst)] of integer;
   tmpList: TStringList;
   txt, OpCode, Times, state: String;
 
@@ -2579,7 +2579,7 @@ begin
   //////////// Reporte de cuenta de instrucciones  ///////////
   ////////////////////////////////////////////////////////////
   //Limpia contadores
-  for opc := low(TPIC16Inst) to high(TPIC16Inst) do begin
+  for opc := low(TPIC10Inst) to high(TPIC10Inst) do begin
     OpCodeCoun[opc] := 0;
   end;
   //Cuenta apariciones
@@ -2593,8 +2593,8 @@ begin
   end;
   //Carga en lista para ordenar
   tmpList:= TStringList.Create;
-  for opc := low(TPIC16Inst) to high(TPIC16Inst) do begin
-    tmpList.Add(Format('%.4d', [OpCodeCoun[Opc]]) + '-' + PIC16InstName[opc]);
+  for opc := low(TPIC10Inst) to high(TPIC10Inst) do begin
+    tmpList.Add(Format('%.4d', [OpCodeCoun[Opc]]) + '-' + PIC10InstName[opc]);
   end;
   tmpList.Sort;  //Ordena
   //Muestra lista ordenada
@@ -2703,7 +2703,7 @@ begin
   lins.Add('Max. Nesting = ' + IntToSTr(TreeElems.main.maxNesting));
 
 end;
-constructor TCompiler_PIC16.Create;
+constructor TCompiler_PIC10.Create;
 begin
  // hexFile := 'output.hex';
   inherited Create;
@@ -2712,7 +2712,7 @@ begin
   StartSyntax;   //Debe hacerse solo una vez al inicio
   DefCompiler;   //Debe hacerse solo una vez al inicio
 end;
-destructor TCompiler_PIC16.Destroy;
+destructor TCompiler_PIC10.Destroy;
 begin
   inherited Destroy;
 end;

@@ -255,17 +255,17 @@ type //Clases de elementos
     implementación del tipo, la que deberá llamarlos. Son como una ayuda para facilitar
     la implementación. OnPush y OnPop, son útiles para cuando la implementación va a
     manejar pila.}
-    OnSaveToStk : procedure of object;  //Salva datos en reg. de Pila
-    OnLoadToRT : TProcLoadOperand; {Se usa cuando se solicita cargar un operando
+    OnSaveToStk  : procedure of object;  //Salva datos en reg. de Pila
+    OnLoadToRT   : TProcLoadOperand; {Se usa cuando se solicita cargar un operando
                                  (de este tipo) en la pila. }
     OnDefRegister: procedure of object; {Se usa cuando se solicita descargar un operando
                                  (de este tipo) de la pila. }
-    OnGlobalDef : TProcDefineVar; {Es llamado cada vez que se encuentra la
+    OnGlobalDef  : TProcDefineVar; {Es llamado cada vez que se encuentra la
                                   declaración de una variable (de este tipo) en el ámbito global.}
   public
     copyOf  : TxpEleType;  //Indica que es una copia de otro tipo
     grp     : TTypeGroup;  //Grupo del tipo (numérico, cadena, etc)
-    size    : smallint;    //Tamaño en bytes del tipo
+    size    : smallint;    //Tamaño en bytes del tipo (para bits se usa números negativos)
     catType : TxpCatType;
     arrSize : integer;     //Tamaño, cuando es tctArray
     refType : TxpEleType;  //Referencia a otro tipo. Valido cuando es puntero o arreglo.
@@ -516,15 +516,9 @@ type //Clases de elementos
   end;
 
 var
-  ///////////  Tipos del sistema ////////////////
+  // Tipo nulo. Usado para elementos sin tipo.
   typNull : TxpEleType;
-  typBit  : TxpEleType;
-  typBool : TxpEleType;
-  typByte : TxpEleType;
-  typWord : TxpEleType;
-  typDWord: TxpEleType;
-  typChar : TxpEleType;
-  //Operador nulo. Usado como valor cero.
+  // Operador nulo. Usado como valor cero.
   nullOper : TxpOperator;
 
 implementation
@@ -976,20 +970,12 @@ function TxpEleVar.bank: TVarBank;
 {Devuelve el banco de memoria en donde se ubica la variable actual. Asumiendo que toda
 la variables se ubica en el mismo banco.}
 begin
-  if (Typ = typBit) or (Typ = typBool) then begin
-    Result := adrBit.bank;
-  end else begin  //Char o byte
-    Result := adrByte0.bank;
-  end;
+  Result := addr0 >> 7;  //La variable siempre empieza en "addr0"
 end;
 function TxpEleVar.offs: TVarOffs;
 {Devuelve la dirección de inicio, en donde empieza a almacenarse la variable.}
 begin
-  if (Typ = typBit) or (Typ = typBool) then begin
-    Result := adrBit.offs;
-  end else begin  //Char o byte
-    Result := adrByte0.offs;
-  end;
+  Result := addr0 and $7F;  //La variable siempre empieza en "addr0"
 end;
 procedure TxpEleVar.SetHavAdicPar(AValue: boolean);
 begin
@@ -1037,11 +1023,7 @@ end;
 function TxpEleVar.addrE: word;
 begin
   if typ.catType = tctAtomic then begin
-    if (typ = typDWord) then begin
-      Result := adrByte2.addr;
-    end else begin
-      Result := ADRR_ERROR;
-    end;
+    Result := addr2;
   end else begin
     //No soportado
     Result := ADRR_ERROR;
@@ -1050,11 +1032,7 @@ end;
 function TxpEleVar.addrU: word;
 begin
   if typ.catType = tctAtomic then begin
-    if (typ = typDWord) then begin
-      Result := adrByte3.addr;
-    end else begin
-      Result := ADRR_ERROR;
-    end;
+    Result := addr3;
   end else begin
     //No soportado
     Result := ADRR_ERROR;
@@ -1294,25 +1272,25 @@ function TxpEleType.IsBitSize: boolean;
 {Indica si el tipo, tiene 1 bit de tamaño}
 begin
 //  if copyOf<>nil then exit(copyOf.IsBitSize);  //verifica
-  Result := (self = typBit) or (self = typBool);
+  Result := size = -1;
 end;
 function TxpEleType.IsByteSize: boolean;
 {Indica si el tipo, tiene 1 byte de tamaño}
 begin
 //  if copyOf<>nil then exit(copyOf.IsByteSize);  //verifica
-  Result := (self = typByte) or (self = typChar);
+  Result := size = 1;
 end;
 function TxpEleType.IsWordSize: boolean;
 {Indica si el tipo, tiene 2 bytes de tamaño}
 begin
 //  if copyOf<>nil then exit(copyOf.IsWordSize);  //verifica
-  Result := (self = typWord);
+  Result := size = 2;
 end;
 function TxpEleType.IsDWordSize: boolean;
 {Indica si el tipo, tiene 4 bytes de tamaño}
 begin
 //  if copyOf<>nil then exit(copyOf.IsDWordSize);  //verifica
-  Result := (self = typDWord);
+  Result := size = 4;
 end;
 procedure TxpEleType.DefineRegister;
 {Define los registros que va a usar el tipo de dato.}
@@ -1924,8 +1902,11 @@ end;
 initialization
   //crea el operador NULL
   nullOper := TxpOperator.Create;
+  typNull := TxpEleType.Create;
+  typNull.name := 'null';
 
 finalization
+  typNull.Destroy;
   nullOper.Free;
 end.
 //1512

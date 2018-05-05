@@ -4,7 +4,7 @@ unit FrameMessagesWin;
 interface
 uses
   Classes, SysUtils, FileUtil, LazFileUtils, Forms, Controls, Grids, Graphics,
-  ExtCtrls, StdCtrls, Menus, Clipbrd, Compiler_PIC16, Globales, UtilsGrilla,
+  ExtCtrls, StdCtrls, Menus, Clipbrd, Parser, Globales, UtilsGrilla,
   BasicGrilla, MisUtils, XpresBas;
 type
 
@@ -49,7 +49,7 @@ type
     procedure panStatisDblClick(Sender: TObject);
     procedure panStatisPaint(Sender: TObject);
   private
-    cxp: TCompiler_PIC16;
+    cxp: TCompilerBase;
     FBackColor: TColor;
     FBackSelColor: Tcolor;
     FPanelColor: TColor;
@@ -80,7 +80,7 @@ type
     procedure GetErrorIdx(f: integer; out msg: string; out filname: string; out
       row, col: integer);
     function IsErroridx(f: integer): boolean;
-    procedure InitCompilation(cxp0: TCompiler_PIC16; InitMsg: boolean);
+    procedure InitCompilation(cxp0: TCompilerBase; InitMsg: boolean);
     procedure EndCompilation;
     procedure AddError(errTxt: string; fileName: string; row, col: integer);
     procedure AddInformation(infTxt: string);
@@ -396,7 +396,8 @@ begin
   end;
   grilla.EndUpdate;
 end;
-procedure TfraMessagesWin.InitCompilation(cxp0: TCompiler_PIC16; InitMsg: boolean);
+procedure TfraMessagesWin.InitCompilation(cxp0: TCompilerBase; InitMsg: boolean
+  );
 begin
   cxp := cxp0;   //Guarda referencia
   grilla.RowCount := 1;   //Limpia Grilla
@@ -404,7 +405,7 @@ begin
   cxp.OnError := @AddError;
   cxp.OnInfo := @AddInformation;
   timeCnt:=GetTickCount64;
-  if InitMsg then AddInformation(MSG_INICOMP);
+  if InitMsg then AddInformation(cxp.CompilerName + ': ' + MSG_INICOMP);
   HaveErrors := false;  //limpia bandera
 end;
 procedure TfraMessagesWin.EndCompilation;

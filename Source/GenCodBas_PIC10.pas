@@ -206,7 +206,7 @@ type
     procedure kINCF(const f: TPicRegister; d: TPIC10Destin);
     procedure kINCFSZ(const f: word; d: TPIC10Destin);
     procedure kIORLW(const k: word);
-    procedure kIORWF(const f: word; d: TPIC10Destin);
+    procedure kIORWF(const f: TPicRegister; d: TPIC10Destin);
     procedure kMOVF(const f: TPicRegister; d: TPIC10Destin);
     procedure kMOVLW(const k: word);
     procedure kMOVWF(const f: TPicRegister);
@@ -221,13 +221,6 @@ type
     procedure kSWAPF(const f: TPicRegister; d: TPIC10Destin);
     procedure kXORLW(const k: word);
     procedure kXORWF(const f: TPicRegister; d: TPIC10Destin);
-  public  //Opciones de compilación
-    incDetComm  : boolean;   //Incluir Comentarios detallados.
-    SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
-    OptBnkAftPro: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
-    OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
-    OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
-    OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
   public  //Acceso a registro de trabajo
     property ProplistRegAux: TPicRegister_list read listRegAux;
     property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
@@ -273,9 +266,10 @@ type
     procedure dword_Ultra(const OpPtr: pointer);
   public  //Inicialización
     pic        : TPIC10;       //Objeto PIC de la serie 16.
-    function PicName: string;
-    function PicNameShort: string;
+    function PicName: string; override;
+    function PicNameShort: string; override;
     procedure StartRegs;
+    function CompilerName: string; override;
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -403,34 +397,6 @@ begin
   if incDetComm then begin
     PutTopComm('      ;Oper(' + p1^.StoOpChr + ':' + p1^.Typ.name + ')', false);
   end;
-end;
-//Funciones auxiliares privadas
-function OperandUseW(Oper: TOperand): boolean;
-{Indica si el operando está usando el registro W}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typByte) or (Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
-end;
-function OperandUseH(Oper: TOperand): boolean;
-{Indica si el operando está usando el registro H}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
-end;
-function OperandUseHW(Oper: TOperand): boolean;
-{Indica si el operando está usando los registros H,W}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
 end;
 //Rutinas de gestión de memoria de bajo nivel
 procedure TGenCodBas_PIC10.AssignRAM(out addr: word; regName: string; shared: boolean);
@@ -1569,11 +1535,17 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
 end;
-procedure TGenCodBas_PIC10.kIORWF(const f: word; d: TPIC10Destin);
+//procedure TGenCodBas_PIC10.kIORWF(const f: word; d: TPIC10Destin);
+//begin
+//  GenCodBank(f);
+//  pic.flash[pic.iFlash].curBnk := CurrBank;
+//  pic.codAsmFD(i_IORWF, f,d);
+//end;
+procedure TGenCodBas_PIC10.kIORWF(const f: TPicRegister; d: TPIC10Destin);
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_IORWF, f,d);
+  pic.codAsmFD(i_IORWF, f.addr, d);
 end;
 procedure TGenCodBas_PIC10.kMOVF(const f: TPicRegister; d: TPIC10Destin);
 begin
@@ -2884,6 +2856,10 @@ begin
   U := CreateRegisterByte(prtWorkReg);
   //Puede salir con error
 end;
+function TGenCodBas_PIC10.CompilerName: string;
+begin
+  Result := 'PIC10 Compiler'
+end;
 constructor TGenCodBas_PIC10.Create;
 begin
   inherited Create;
@@ -2892,10 +2868,9 @@ begin
   pic := TPIC10.Create;
   ///////////Crea tipos
   ClearTypes;
-  typNull := CreateSysType('null',t_boolean,-1);
   ///////////////// Tipo Bit ////////////////
   typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
-  typBit.OnLoadToRT  :=  @bit_LoadToRT;
+  typBit.OnLoadToRT   :=  @bit_LoadToRT;
   typBit.OnDefRegister:= @bit_DefineRegisters;
   typBit.OnSaveToStk  := @bit_SaveToStk;
 //  opr:=typBit.CreateUnaryPreOperator('@', 6, 'addr', @Oper_addr_bit);

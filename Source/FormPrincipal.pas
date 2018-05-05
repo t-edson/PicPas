@@ -7,15 +7,18 @@ unit FormPrincipal;
 interface
 uses
   Classes, SysUtils, SynEdit, SynEditTypes, Forms, Controls, Dialogs, Menus,
-  ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc,
+  ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc, StdCtrls,
   SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
-  GenCod_PIC10,
-  Compiler_PIC16, FormPICExplorer, FrameSyntaxTree, FormConfig, Globales,
+  Parser,  //Para tener acceso a TCompilerBase
+  Compiler_PIC10,
+  Compiler_PIC16,
+  FormPICExplorer, FrameSyntaxTree, FormConfig, Globales,
   PicPasProject, FrameEditView, FrameMessagesWin, XpresElementsPIC, CodeTools,
-  ParserAsm_PIC16, ParserDirec_PIC16, FrameCfgExtTool, FormDebugger, FormRAMExplorer;
+  FrameCfgExtTool, FormDebugger, FormRAMExplorer;
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
+  published
     acArcOpen: TAction;
     acArcSaveAs: TAction;
     acArcSave: TAction;
@@ -53,6 +56,7 @@ type
     ActionList: TActionList;
     acViewStatbar: TAction;
     acViewSynTree: TAction;
+    ComboBox1: TComboBox;
     edAsm: TSynEdit;
     FindDialog1: TFindDialog;
     ImgActions32: TImageList;
@@ -178,6 +182,7 @@ type
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
     procedure acViewMsgPanExecute(Sender: TObject);
+    procedure ComboBox1Change(Sender: TObject);
     procedure FindDialog1Find(Sender: TObject);
     procedure fraEdit_ChangeEditorState(ed: TSynEditor);
     procedure DoSelectSample(Sender: TObject);
@@ -192,8 +197,9 @@ type
     procedure ReplaceDialog1Replace(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
   private
-picbaseline: GenCod_PIC10.TGenCod;
-    Compiler    : TCompiler_PIC16;
+    Compiler16  : TCompiler_PIC16;
+    Compiler10  : TCompiler_PIC10;
+    Compiler    : TCompilerBase;
     tic         : integer;  //Contador para temporización
     ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
     curProj     : TPicPasProject; //Proyecto actual
@@ -203,8 +209,8 @@ picbaseline: GenCod_PIC10.TGenCod;
     fraMessages : TfraMessagesWin;
     CodeTool    : TCodeTool;
     procedure ConfigExtTool_RequirePar(var comLine: string);
-    procedure cxp_AfterCompile;
-    procedure cxp_RequireFileString(FilePath: string; var strList: TStrings);
+    procedure Compiler16_AfterCompile;
+    procedure Compiler16_RequireFileString(FilePath: string; var strList: TStrings);
     procedure fraEdit_RequireSetCompletion(ed: TSynEditor);
     procedure fraMessagesStatisDBlClick;
     procedure fraSynTreeSelecFileExplorer;
@@ -248,8 +254,9 @@ begin
   fraEditView1.SetLanguage;
   fraMessages.SetLanguage;
   Compiler_PIC16.SetLanguage;
-  ParserAsm_PIC16.SetLanguage;
-  ParserDirec_PIC16.SetLanguage;
+  Compiler_PIC10.SetLanguage;
+  //ParserAsm_PIC16.SetLanguage;
+  //ParserDirec_PIC16.SetLanguage;
   {$I ..\language\tra_FormPrincipal.pas}
 end;
 procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
@@ -273,7 +280,7 @@ begin
      fraSynTree.LocateFile(ed.FileName);
   end;
 end;
-procedure TfrmPrincipal.cxp_RequireFileString(FilePath: string; var strList: TStrings);
+procedure TfrmPrincipal.Compiler16_RequireFileString(FilePath: string; var strList: TStrings);
 {El compilador está solicitando acceder a un STringList, con el contenido de "FilePath",
 para evitar tener que leerlo de disco, y ahcer más rápido el acceso.}
 var
@@ -284,7 +291,7 @@ begin
   if i <> -1 then begin
     //Tiene el archivo abierto. Pasa la referencia.
     ed := fraEditView1.editors[i];
-    if Compiler.Compiling then ed.SaveFile;   //En compilación gurada siempre los archivos afectados
+    if Compiler.Compiling then ed.SaveFile;   //En compilación guarda siempre los archivos afectados
     strList := ed.SynEdit.Lines;
   end;
 end;
@@ -352,7 +359,7 @@ procedure TfrmPrincipal.fraMessagesStatisDBlClick;
 begin
 
 end;
-procedure TfrmPrincipal.cxp_AfterCompile;
+procedure TfrmPrincipal.Compiler16_AfterCompile;
 {Se genera después de realizar la compilación.}
 begin
   //Refresca el árbol de sintaxis, para actualizar la estructura del árbol de sintaxis
@@ -383,8 +390,9 @@ end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   //Es necesario crear solo una instancia del compilador.
-  Compiler := TCompiler_PIC16.Create;  //Crea una instancia del compilador
-//picbaseline := GenCod_PIC10.TGenCod.Create;
+  Compiler16 := TCompiler_PIC16.Create;  //Crea una instancia del compilador
+  Compiler10 := TCompiler_PIC10.Create;
+  Compiler := Compiler16;
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
   //configura panel de mensajes
@@ -408,21 +416,24 @@ begin
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
   LoadAsmSyntaxEd;
-  CodeTool := TCodeTool.Create(fraEditView1, Compiler, fraSynTree);
-  Compiler.OnRequireFileString := @cxp_RequireFileString;
-  Compiler.OnAfterCompile      := @cxp_AfterCompile;
+  CodeTool := TCodeTool.Create(fraEditView1, Compiler16, fraSynTree);
+  //Configura eventos de los compialdores
+  Compiler16.OnRequireFileString := @Compiler16_RequireFileString;
+  Compiler16.OnAfterCompile      := @Compiler16_AfterCompile;
+  Compiler10.OnRequireFileString := @Compiler16_RequireFileString;
+  COmpiler10.OnAfterCompile      := @Compiler16_AfterCompile;
   //Crea dinámicamente para poder inciailizarlo con comodidad
   frmDebug:= TfrmDebugger.Create(self);
-  frmDebug.cxp := Compiler;
-  frmDebug.pic := Compiler.pic;
+  frmDebug.cxp := Compiler16;
+  frmDebug.pic := Compiler16.pic;
 end;
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
 begin
   frmDebug.Destroy;
   CodeTool.Destroy;
   hlAssem.Free;
-  Compiler.Destroy;
-//picbaseline.Destroy;
+  Compiler10.Destroy;
+  Compiler16.Destroy;
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
@@ -438,7 +449,7 @@ begin
   InicEditorC1(edAsm);
   splEdPas.Align := alRight;
   fraEditView1.Align := alClient;
-  fraSynTree.Init(Compiler.TreeElems);
+  fraSynTree.Init(Compiler16.TreeElems);
   fraEditView1.tmpPath := patTemp;   //fija ruta de trabajo
   Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
@@ -452,8 +463,8 @@ begin
     generaría error y debugln(), solo funciona cuando se compila como aplicación de
     consola. Quizá lo mejor sería crear otro modo de compilación que sea de consola,
     para que funcione bien la compilación por línea de comando.'}
-    Compiler.Compile(srcFile, true);
-    if Compiler.HayError then begin
+    Compiler16.Compile(srcFile, true);
+    if Compiler16.HayError then begin
       MsgBox('Compilation with errors.')
     end else begin
       MsgBox('Compilation successful.');
@@ -923,6 +934,13 @@ procedure TfrmPrincipal.acViewMsgPanExecute(Sender: TObject);
 begin
   Config.ViewPanMsg:= not Config.ViewPanMsg;
 end;
+procedure TfrmPrincipal.ComboBox1Change(Sender: TObject);
+begin
+  case ComboBox1.ItemIndex of
+  0: Compiler := Compiler16;
+  1: Compiler := Compiler10;
+  end;
+end;
 procedure TfrmPrincipal.acViewSynTreeExecute(Sender: TObject);
 begin
   Config.ViewSynTree := not Config.ViewSynTree;
@@ -994,7 +1012,7 @@ begin
 end;
 procedure TfrmPrincipal.acToolRamExpExecute(Sender: TObject);
 begin
-   frmRAMExplorer.Exec(Compiler.pic);
+   frmRAMExplorer.Exec(Compiler16.pic);
 end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin

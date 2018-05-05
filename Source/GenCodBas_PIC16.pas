@@ -187,7 +187,7 @@ type
   protected  //Instrucciones "k"
     //Instrucciones equivalentes
     procedure kADDLW(const k: word);
-    procedure kADDWF(const f: word; d: TPIC16destin);
+    procedure kADDWF(const f: TPicRegister; d: TPIC16destin);
     procedure kANDLW(const k: word);
     procedure kANDWF(const f: TPicRegister; d: TPIC16destin);
     procedure kBCF(const f: TPicRegisterBit);
@@ -206,7 +206,7 @@ type
     procedure kINCF(const f: TPicRegister; d: TPIC16destin);
     procedure kINCFSZ(const f: word; d: TPIC16destin);
     procedure kIORLW(const k: word);
-    procedure kIORWF(const f: word; d: TPIC16destin);
+    procedure kIORWF(const f: TPicRegister; d: TPIC16destin);
     procedure kMOVF(const f: TPicRegister; d: TPIC16destin);
     procedure kMOVLW(const k: word);
     procedure kMOVWF(const f: TPicRegister);
@@ -218,7 +218,7 @@ type
     procedure kRRF(const f: TPicRegister; d: TPIC16destin);
     procedure kSLEEP;
     procedure kSUBLW(const k: word);
-    procedure kSUBWF(const f: word; d: TPIC16destin);
+    procedure kSUBWF(const f: TPicRegister; d: TPIC16destin);
     procedure kSWAPF(const f: TPicRegister; d: TPIC16destin);
     procedure kXORLW(const k: word);
     procedure kXORWF(const f: TPicRegister; d: TPIC16destin);
@@ -227,13 +227,6 @@ type
     procedure kSHIFTL(const f: TPicRegister; d: TPIC16destin);
     procedure kIF_BSET(const f: TPicRegisterBit; out igot: integer);
     procedure kEND_BSET(igot: integer);
-  public     //Opciones de compilación
-    incDetComm  : boolean;   //Incluir Comentarios detallados.
-    SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
-    OptBnkAftPro: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
-    OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
-    OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
-    OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
   public     //Acceso a registro de trabajo
     property ProplistRegAux: TPicRegister_list read listRegAux;
     property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
@@ -279,9 +272,10 @@ type
     procedure dword_Ultra(const OpPtr: pointer);
   public     //Inicialización
     pic        : TPIC16;       //Objeto PIC de la serie 16.
-    function PicName: string;
-    function PicNameShort: string;
+    function PicName: string; override;
+    function PicNameShort: string; override;
     procedure StartRegs;
+    function CompilerName: string; override;
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -408,34 +402,6 @@ begin
   if incDetComm then begin
     PutTopComm('      ;Oper(' + p1^.StoOpChr + ':' + p1^.Typ.name + ')', false);
   end;
-end;
-//Funciones auxiliares privadas
-function OperandUseW(Oper: TOperand): boolean;
-{Indica si el operando está usando el registro W}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typByte) or (Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
-end;
-function OperandUseH(Oper: TOperand): boolean;
-{Indica si el operando está usando el registro H}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
-end;
-function OperandUseHW(Oper: TOperand): boolean;
-{Indica si el operando está usando los registros H,W}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
 end;
 //Rutinas de gestión de memoria de bajo nivel
 procedure TGenCodBas_PIC16.AssignRAM(out addr: word; regName: string; shared: boolean);
@@ -1515,11 +1481,17 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;  //Este es el banco esperado
   pic.codAsmK(i_ADDLW, k);
 end;
-procedure TGenCodBas_PIC16.kADDWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas_PIC16.kADDWF(const f: word; d: TPIC16destin); inline;
+//begin
+//  GenCodBank(f);
+//  pic.flash[pic.iFlash].curBnk := CurrBank;
+//  pic.codAsmFD(i_ADDWF, f,d);
+//end;
+procedure TGenCodBas_PIC16.kADDWF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_ADDWF, f,d);
+  pic.codAsmFD(i_ADDWF, f.addr, d);
 end;
 procedure TGenCodBas_PIC16.kANDLW(const k: word); inline;
 begin
@@ -1573,11 +1545,17 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
 end;
-procedure TGenCodBas_PIC16.kIORWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas_PIC16.kIORWF(const f: word; d: TPIC16destin); inline;
+//begin
+//  GenCodBank(f);
+//  pic.flash[pic.iFlash].curBnk := CurrBank;
+//  pic.codAsmFD(i_IORWF, f,d);
+//end;
+procedure TGenCodBas_PIC16.kIORWF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_IORWF, f,d);
+  pic.codAsmFD(i_IORWF, f.addr, d);
 end;
 procedure TGenCodBas_PIC16.kMOVF(const f: TPicRegister; d: TPIC16destin);
 begin
@@ -1608,11 +1586,17 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kSUBWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas_PIC16.kSUBWF(const f: word; d: TPIC16destin); inline;
+//begin
+//  GenCodBank(f);
+//  pic.flash[pic.iFlash].curBnk := CurrBank;
+//  pic.codAsmFD(i_SUBWF, f,d);
+//end;
+procedure TGenCodBas_PIC16.kSUBWF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_SUBWF, f,d);
+  pic.codAsmFD(i_SUBWF, f.addr, d);
 end;
 procedure TGenCodBas_PIC16.kSWAPF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
@@ -2131,47 +2115,47 @@ begin
     res.valInt {%H-}:= xvar.typ.arrSize;  //Devuelve tamaño
     if xvar.typ.arrSize = 0 then exit;  //No hay nada que limpiar
     if xvar.typ.arrSize = 1 then begin  //Es de un solo byte
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
     end else if xvar.typ.arrSize = 2 then begin  //Es de 2 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
     end else if xvar.typ.arrSize = 3 then begin  //Es de 3 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
     end else if xvar.typ.arrSize = 4 then begin  //Es de 4 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
+      _CLRF(xvar.addr0+3);
     end else if xvar.typ.arrSize = 5 then begin  //Es de 5 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
+      _CLRF(xvar.addr0+3);
+      _CLRF(xvar.addr0+4);
     end else if xvar.typ.arrSize = 6 then begin  //Es de 6 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
-      _CLRF(xvar.adrByte0.offs+5);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
+      _CLRF(xvar.addr0+3);
+      _CLRF(xvar.addr0+4);
+      _CLRF(xvar.addr0+5);
     end else if xvar.typ.arrSize = 7 then begin  //Es de 7 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
-      _CLRF(xvar.adrByte0.offs+5);
-      _CLRF(xvar.adrByte0.offs+6);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
+      _CLRF(xvar.addr0+3);
+      _CLRF(xvar.addr0+4);
+      _CLRF(xvar.addr0+5);
+      _CLRF(xvar.addr0+6);
     end else begin
       //Implementa lazo, usando W como índice
       _MOVLW(xvar.adrByte0.offs);  //dirección inicial
@@ -2938,6 +2922,12 @@ begin
   U := CreateRegisterByte(prtWorkReg);
   //Puede salir con error
 end;
+
+function TGenCodBas_PIC16.CompilerName: string;
+begin
+  Result := 'PIC16 Compiler'
+end;
+
 constructor TGenCodBas_PIC16.Create;
 begin
   inherited Create;
@@ -2946,7 +2936,6 @@ begin
   pic := TPIC16.Create;
   ///////////Crea tipos
   ClearTypes;
-  typNull := CreateSysType('null',t_boolean,-1);
   ///////////////// Tipo Bit ////////////////
   typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
   typBit.OnLoadToRT  :=  @bit_LoadToRT;

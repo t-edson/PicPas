@@ -98,7 +98,6 @@ type
       procedure ROB_bool_equ_bool(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_bool_dif_bool(Opt: TxpOperation; SetRes: boolean);
     protected //Operaciones con byte
-      procedure opers_byte(Opt: TxpOperation; const InstLW, InstWF: TPIC16Inst);
       procedure ROB_byte_asig_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_aadd_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_asub_byte(Opt: TxpOperation; SetRes: boolean);
@@ -1051,6 +1050,7 @@ begin
   end;
 end;
 procedure TGenCod.ROB_byte_aadd_byte(Opt: TxpOperation; SetRes: boolean);
+{Operación de asignación suma: +=}
 var
   aux: TPicRegister;
   rVar: TxpEleVar;
@@ -1066,20 +1066,16 @@ begin
       if p2^.valInt=0 then begin
         //Caso especial. No hace nada
       end else begin
-        _MOVLW(p2^.valInt);
-        _BANKSEL(p1^.bank);  //verifica banco destino
-        _ADDWF(p1^.offs, toF);
+        kMOVLW(value2);
+        kADDWF(byte1, toF);
       end;
     end;
     stVariab: begin
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _ADDWF(p1^.offs, toF);
+      kMOVF(byte2, toW);
+      kADDWF(byte1, toF);
     end;
     stExpres: begin  //ya está en w
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _ADDWF(p1^.offs, toF);
+      kADDWF(byte1, toF);
     end;
     else
       GenError('No soportado'); exit;
@@ -1094,31 +1090,27 @@ begin
       if p2^.valInt=0 then begin
         //Caso especial. No hace nada
       end else begin
-        _MOVWF(FSR.offs);  //direcciona
-        _MOVLW(p2^.valInt);
+        kMOVWF(FSR);  //direcciona
+        kMOVLW(value2);
         _ADDWF(0, toF);
       end;
     end;
     stVariab: begin
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
+      kMOVF(byte2, toW);
       _ADDWF(0, toF);
     end;
     stExpres: begin
       //La dirección está en la pila y la expresión en W
       aux := GetAuxRegisterByte;
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);   //Salva W (p2)
+      kMOVWF(aux);   //Salva W (p2)
       //Apunta con p1
       rVar := GetVarByteFromStk;
-      _BANKSEL(rVar.adrByte0.bank);
-      _MOVF(rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(rVar.adrByte0, toW);  //opera directamente al dato que había en la pila. Deja en W
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(aux.bank);  //verifica banco fuente
-      _MOVF(aux.offs, toW);
+      kMOVF(aux, toW);
       _ADDWF(0, toF);
       aux.used := false;
       exit;
@@ -1136,35 +1128,29 @@ begin
         //Caso especial. No hace nada
       end else begin
         //Caso especial de asignación a puntero dereferenciado: variable^
-        _BANKSEL(p1^.bank);  //verifica banco destino
-        _MOVF(p1^.offs, toW);
-        _MOVWF(FSR.offs);  //direcciona
-        _MOVLW(p2^.valInt);
+        kMOVF(byte1, toW);
+        kMOVWF(FSR);  //direcciona
+        kMOVLW(value2);
         _ADDWF(0, toF);
       end;
     end;
     stVariab: begin
       //Caso especial de asignación a puntero derefrrenciado: variable^
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(byte1, toW);
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
+      kMOVF(byte2, toW);
       _ADDWF(0, toF);
     end;
     stExpres: begin  //ya está en w
       //Caso especial de asignación a puntero derefrrenciado: variable^
       aux := GetAuxRegisterByte;
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);   //Salva W (p2)
+      kMOVWF(aux);   //Salva W (p2)
       //Apunta con p1
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(byte1, toW);
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(aux.bank);  //Salva W (p2)
-      _MOVF(aux.offs, toW);
+      kMOVF(aux, toW);
       _ADDWF(0, toF);
       aux.used := false;
     end;
@@ -1191,20 +1177,16 @@ begin
       if p2^.valInt=0 then begin
         //Caso especial. No hace nada
       end else begin
-        _MOVLW(p2^.valInt);
-        _BANKSEL(p1^.bank);  //verifica banco destino
-        _SUBWF(p1^.offs, toF);
+        kMOVLW(value2);
+        kSUBWF(byte1, toF);
       end;
     end;
     stVariab: begin
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _SUBWF(p1^.offs, toF);
+      kMOVF(byte2, toW);
+      kSUBWF(byte1, toF);
     end;
     stExpres: begin  //ya está en w
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _SUBWF(p1^.offs, toF);
+      kSUBWF(byte1, toF);
     end;
     else
       GenError('No soportado'); exit;
@@ -1219,31 +1201,27 @@ begin
       if p2^.valInt=0 then begin
         //Caso especial. No hace nada
       end else begin
-        _MOVWF(FSR.offs);  //direcciona
-        _MOVLW(p2^.valInt);
+        kMOVWF(FSR);  //direcciona
+        kMOVLW(value2);
         _SUBWF(0, toF);
       end;
     end;
     stVariab: begin
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
+      kMOVF(byte2, toW);
       _SUBWF(0, toF);
     end;
     stExpres: begin
       //La dirección está en la pila y la expresión en W
       aux := GetAuxRegisterByte;
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);   //Salva W (p2)
+      kMOVWF(aux);   //Salva W (p2)
       //Apunta con p1
       rVar := GetVarByteFromStk;
-      _BANKSEL(rVar.adrByte0.bank);
-      _MOVF(rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(rVar.adrByte0, toW);  //opera directamente al dato que había en la pila. Deja en W
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(aux.bank);  //verifica banco fuente
-      _MOVF(aux.offs, toW);
+      kMOVF(aux, toW);
       _SUBWF(0, toF);
       aux.used := false;
       exit;
@@ -1261,35 +1239,29 @@ begin
         //Caso especial. No hace nada
       end else begin
         //Caso especial de asignación a puntero dereferenciado: variable^
-        _BANKSEL(p1^.bank);  //verifica banco destino
-        _MOVF(p1^.offs, toW);
-        _MOVWF(FSR.offs);  //direcciona
-        _MOVLW(p2^.valInt);
+        kMOVF(byte1, toW);
+        kMOVWF(FSR);  //direcciona
+        kMOVLW(value2);
         _SUBWF(0, toF);
       end;
     end;
     stVariab: begin
       //Caso especial de asignación a puntero derefrrenciado: variable^
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(byte1, toW);
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.offs, toW);
+      kMOVF(byte2, toW);
       _SUBWF(0, toF);
     end;
     stExpres: begin  //ya está en w
       //Caso especial de asignación a puntero derefrrenciado: variable^
       aux := GetAuxRegisterByte;
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);   //Salva W (p2)
+      kMOVWF(aux);   //Salva W (p2)
       //Apunta con p1
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona
+      kMOVF(byte1, toW);
+      kMOVWF(FSR);  //direcciona
       //Asignación normal
-      _BANKSEL(aux.bank);  //Salva W (p2)
-      _MOVF(aux.offs, toW);
+      kMOVF(aux, toW);
       _SUBWF(0, toF);
       aux.used := false;
     end;
@@ -1298,61 +1270,6 @@ begin
     end;
   end else begin
     GenError('Cannot assign to this Operand.'); exit;
-  end;
-end;
-procedure TGenCod.opers_byte(Opt: TxpOperation; const InstLW, InstWF:TPIC16Inst);
-{Rutina general en operaciones con bytes}
-var
-  rVar: TxpEleVar;
-begin
-  case stoOperation of
-  stConst_Variab: begin
-    SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
-    CodAsmK(InstLW, p1^.valInt);  //deja en W
-  end;
-  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    CodAsmK(InstLW, p1^.valInt);  //deja en W
-  end;
-  stVariab_Const: begin
-    SetROBResultExpres_byte(Opt);
-    _MOVLW(p2^.valInt);
-    _BANKSEL(p1^.bank);
-    CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-  end;
-  stVariab_Variab:begin
-    SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
-    _BANKSEL(p1^.bank);
-    CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-  end;
-  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    _BANKSEL(p1^.bank);
-    CodAsmFD(InstWF, p1^.offs, toW);  //deja en W
-  end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    CodAsmK(InstLW, p2^.valInt);  //deja en W
-  end;
-  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    CodAsmFD(InstWF, p2^.offs, toW);  //deja en W
-  end;
-  stExpres_Expres:begin
-    SetROBResultExpres_byte(Opt);
-    //La expresión p1 debe estar salvada y p2 en el acumulador
-    rVar := GetVarByteFromStk;
-    _BANKSEL(rVar.adrByte0.bank);
-    CodAsmFD(InstWF, rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
-    FreeStkRegisterByte;   //libera pila porque ya se uso
-  end;
-  else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
   end;
 end;
 procedure TGenCod.ROB_byte_add_byte(Opt: TxpOperation; SetRes: boolean);
@@ -1418,8 +1335,7 @@ begin
     SetROBResultExpres_byte(Opt);
     //La expresión p1 debe estar salvada y p2 en el acumulador
     rVar := GetVarByteFromStk;
-    _BANKSEL(rVar.adrByte0.bank);
-    _ADDWF(rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    kADDWF(rVar.adrByte0, toW);  //opera directamente al dato que había en la pila. Deja en W
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
@@ -1506,8 +1422,7 @@ begin
     SetROBResultExpres_byte(Opt);
     //la expresión p1 debe estar salvada y p2 en el acumulador
     rVar := GetVarByteFromStk;
-    _BANKSEL(rVar.adrByte0.bank);
-    _SUBWF(rVar.adrByte0.offs, toW);  //opera directamente al dato que había en la pila. Deja en W
+    kSUBWF(rVar.adrByte0, toW);  //opera directamente al dato que había en la pila. Deja en W
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
@@ -1642,8 +1557,7 @@ begin
     rVar := GetVarByteFromStk;
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p2 -> E
-    _BANKSEL(rVar.adrByte0.bank);
-    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
+    kMOVF(rVar.adrByte0, toW); //p1 -> W
     _CALL(f_byte_mul_byte_16.adrr);
     FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
     {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
@@ -1928,8 +1842,7 @@ begin
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
     //pila -> H
-    _BANKSEL(rVar.adrByte0.bank);
-    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
+    kMOVF(rVar.adrByte0, toW); //p1 -> W
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //dividendo
     //divisor -> W
@@ -2074,18 +1987,90 @@ begin
     genError('Cannot Compile: "%s"', [Opt.OperationString]);
   end;
 end;
+{$I GenCod.inc}
 procedure TGenCod.ROB_byte_and_byte(Opt: TxpOperation; SetRes: boolean);
+var
+  rVar: TxpEleVar;
 begin
   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
   if not ChangePointerToExpres(p2^) then exit;
-  if stoOperation  = stConst_Const then begin  //suma de dos constantes. Caso especial
+
+  case stoOperation of
+  stConst_Const: begin  //suma de dos constantes. Caso especial
     SetROBResultConst_byte(p1^.valInt and p2^.valInt);  //puede generar error
-    exit;  //sale aquí, porque es un caso particular
-  end else  //caso general
-    opers_byte(Opt, i_ANDLW, i_ANDWF);
+  end;
+  stConst_Variab: begin
+    if value1 = 0 then begin  //Caso especial
+      SetROBResultConst_byte(0);  //puede generar error
+      exit;
+    end else if value1 = 255 then begin  //Caso especial
+      SetROBResultVariab(p2^.rVar);  //puede generar error
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kMOVF(byte2, toW);
+    kANDLW(value1);  //leave in W
+  end;
+  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+    if value1 = 0 then begin  //Caso especial
+      SetROBResultConst_byte(0);  //puede generar error
+      exit;
+    end else if value1 = 255 then begin  //Caso especial
+      SetROBResultExpres_byte(Opt);  //No es necesario hacer nada. Ya está en W
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kANDLW(value1);  //leave in W
+  end;
+  stVariab_Const: begin
+    if value2 = 0 then begin  //Caso especial
+      SetROBResultConst_byte(0);  //puede generar error
+      exit;
+    end else if value1 = 255 then begin  //Caso especial
+      SetROBResultVariab(p1^.rVar);  //puede generar error
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kMOVLW(value2);
+    kANDWF(byte1, toW);   //leave in W
+  end;
+  stVariab_Variab:begin
+    SetROBResultExpres_byte(Opt);
+    kMOVF(byte2, toW);
+    kANDWF(byte1, toW);   //leave in W
+  end;
+  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kANDWF(byte1, toW);   //leave in W
+  end;
+  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    if value2 = 0 then begin  //Caso especial
+      SetROBResultConst_byte(0);  //puede generar error
+      exit;
+    end else if value1 = 255 then begin  //Caso especial
+      SetROBResultExpres_byte(Opt);  //No es necesario hacer nada. Ya está en W
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kANDLW(value2);
+  end;
+  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kANDWF(byte2, toW);
+  end;
+  stExpres_Expres:begin
+    SetROBResultExpres_byte(Opt);
+    //p1 está en la pila y p2 en el acumulador
+    rVar := GetVarByteFromStk;
+    kANDWF(rVar.adrByte0, toW);
+    FreeStkRegisterByte;   //libera pila porque ya se uso
+  end;
+  else
+    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+  end;
 end;
 procedure TGenCod.ROB_byte_and_bit(Opt: TxpOperation; SetRes: boolean);
 begin
@@ -2095,17 +2080,88 @@ begin
   ROB_bit_and_byte(Opt, SetRes);
 end;
 procedure TGenCod.ROB_byte_or_byte(Opt: TxpOperation; SetRes: boolean);
+var
+  rVar: TxpEleVar;
 begin
   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
   if not ChangePointerToExpres(p2^) then exit;
-  if stoOperation  = stConst_Const then begin  //suma de dos constantes. Caso especial
+
+  case stoOperation of
+  stConst_Const: begin  //suma de dos constantes. Caso especial
     SetROBResultConst_byte(p1^.valInt or p2^.valInt);  //puede generar error
-    exit;  //sale aquí, porque es un caso particular
-  end else  //caso general
-    opers_byte(Opt, i_IORLW, i_IORWF);
+  end;
+  stConst_Variab: begin
+    if value1 = 0 then begin  //Caso especial
+      SetROBResultVariab(p2^.rVar);
+      exit;
+    end else if value1 = 255 then begin  //Caso especial
+      SetROBResultConst_byte(255);
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kMOVF(byte2, toW);
+    kIORLW(value1);  //leave in W
+  end;
+  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+    if value1 = 0 then begin  //Caso especial
+      SetROBResultExpres_byte(Opt);  //No es necesario hacer nada. Ya está en W
+      exit;
+    end else if value1 = 255 then begin  //Caso especial
+      SetROBResultConst_byte(255);
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kIORLW(value1);  //leave in W
+  end;
+  stVariab_Const: begin
+    if value2 = 0 then begin  //Caso especial
+      SetROBResultVariab(p1^.rVar);
+      exit;
+    end else if value1 = 255 then begin  //Caso especial
+      SetROBResultConst_byte(255);
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kMOVLW(value2);
+    kIORWF(byte1, toW);   //leave in W
+  end;
+  stVariab_Variab:begin
+    SetROBResultExpres_byte(Opt);
+    kMOVF(byte2, toW);
+    kIORWF(byte1, toW);   //leave in W
+  end;
+  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kIORWF(byte1, toW);   //leave in W
+  end;
+  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    if value2 = 0 then begin  //Caso especial
+      SetROBResultExpres_byte(Opt);  //No es necesario hacer nada. Ya está en W
+      exit;
+    end else if value2 = 255 then begin  //Caso especial
+      SetROBResultConst_byte(255);
+      exit;
+    end;
+    SetROBResultExpres_byte(Opt);
+    kIORLW(value2);
+  end;
+  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kIORWF(byte2, toW);
+  end;
+  stExpres_Expres:begin
+    SetROBResultExpres_byte(Opt);
+    //p1 está en la pila y p2 en el acumulador
+    rVar := GetVarByteFromStk;
+    kIORWF(rVar.adrByte0, toW);
+    FreeStkRegisterByte;   //libera pila porque ya se uso
+  end;
+  else
+    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+  end;
 end;
 procedure TGenCod.ROB_byte_or_bit(Opt: TxpOperation; SetRes: boolean);
 begin
@@ -2115,17 +2171,60 @@ begin
   ROB_bit_or_byte(Opt, SetRes);
 end;
 procedure TGenCod.ROB_byte_xor_byte(Opt: TxpOperation; SetRes: boolean);
+var
+  rVar: TxpEleVar;
 begin
   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
   if not ChangePointerToExpres(p2^) then exit;
-  if stoOperation  = stConst_Const then begin  //suma de dos constantes. Caso especial
+
+  case stoOperation of
+  stConst_Const: begin  //suma de dos constantes. Caso especial
     SetROBResultConst_byte(p1^.valInt xor p2^.valInt);  //puede generar error
-    exit;  //sale aquí, porque es un caso particular
-  end else  //caso general
-    opers_byte(Opt, i_XORLW, i_XORWF);
+  end;
+  stConst_Variab: begin
+    SetROBResultExpres_byte(Opt);
+    kMOVF(byte2, toW);
+    kXORLW(value1);  //leave in W
+  end;
+  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kXORLW(value1);  //leave in W
+  end;
+  stVariab_Const: begin
+    SetROBResultExpres_byte(Opt);
+    kMOVLW(value2);
+    kXORWF(byte1, toW);   //leave in W
+  end;
+  stVariab_Variab:begin
+    SetROBResultExpres_byte(Opt);
+    kMOVF(byte2, toW);
+    kXORWF(byte1, toW);   //leave in W
+  end;
+  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kXORWF(byte1, toW);   //leave in W
+  end;
+  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kXORLW(value2);
+  end;
+  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
+    SetROBResultExpres_byte(Opt);
+    kXORWF(byte2, toW);
+  end;
+  stExpres_Expres:begin
+    SetROBResultExpres_byte(Opt);
+    //p1 está en la pila y p2 en el acumulador
+    rVar := GetVarByteFromStk;
+    kXORWF(rVar.adrByte0, toW);
+    FreeStkRegisterByte;   //libera pila porque ya se uso
+  end;
+  else
+    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+  end;
 end;
 procedure TGenCod.ROB_byte_xor_bit(Opt: TxpOperation; SetRes: boolean);
 begin
@@ -2200,8 +2299,7 @@ begin
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
     //la expresión p1 debe estar salvada y p2 en el acumulador
     rVar := GetVarByteFromStk;
-    _BANKSEL(rVar.adrByte0.bank);  //verifica banco destino
-    _SUBWF(rVar.adrByte0.offs, toW);  //compara directamente a lo que había en pila.
+    kSUBWF(rVar.adrByte0, toW);  //compara directamente a lo que había en pila.
     FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
   end;
   else

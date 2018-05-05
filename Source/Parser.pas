@@ -12,7 +12,7 @@ unit Parser;
 interface
 uses
   Classes, SysUtils, Forms, LCLType, lclProc, SynEditHighlighter,
-  SynFacilHighlighter, XpresBas, XpresTypesPIC, XpresElementsPIC, MisUtils;
+  SynFacilHighlighter, XpresBas, XpresTypesPIC, XpresElementsPIC, MisUtils, FormConfig;
 const
   TIT_BODY_ELE = 'Body';
 type
@@ -259,6 +259,37 @@ public  //Manejo de errores y advertencias
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
   procedure GenErrorPos(msg: String; const Args: array of const; srcPos: TSrcPos);
+protected
+  mainFile  : string;  //archivo inicial que se compila
+public     //Opciones de compilación
+  incDetComm  : boolean;   //Incluir Comentarios detallados.
+  SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
+  OptBnkAftPro: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
+  OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
+  OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
+  OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
+public
+  typBit  : TxpEleType;
+  typBool : TxpEleType;
+  typByte : TxpEleType;
+  typChar : TxpEleType;
+  typWord : TxpEleType;
+  typDWord: TxpEleType;
+  Compiling: boolean;  //Bandera para el compilado
+  hexFile  : string;  //Nombre de archivo de salida
+  function ExpandRelPathTo(BaseFile, FileName: string): string;
+  function hexFilePath: string;
+  function mainFilePath: string;
+  function CompilerName: string; virtual; abstract;  //Name of the compiler
+  procedure Compile(NombArc: string; Link: boolean = true); virtual; abstract;
+  procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean); virtual; abstract;
+  procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); virtual; abstract;
+  function PicName: string; virtual; abstract;
+  function PicNameShort: string; virtual; abstract;
+  function RAMusedStr: string; virtual; abstract;
+  function FLASHusedStr: string; virtual; abstract;
+  procedure GetResourcesUsed(out ramUse, romUse, stkUse: single); virtual; abstract;
+  procedure GenerateListReport(lins: TStrings); virtual; abstract;
 public  //Inicialización
   constructor Create; virtual;
   destructor Destroy; override;
@@ -305,14 +336,14 @@ begin
   listTypSys.Clear;
 end;
 function TCompilerBase.CreateSysType(nom0: string; cat0: TTypeGroup; siz0: smallint): TxpEleType;
-{Crea un elemento tipo, del sistema.}
+{Crea un elemento tipo, del sistema. Devuelve referencia al tipo creado.}
 var
   eType: TxpEleType;
 begin
   //Verifica nombre
   if FindSysEleType(nom0) <> nil then begin
     GenError('Duplicated identifier: "%s"', [nom0]);
-    {%H-}exit;  //Devuelve valor indeterminado
+    exit(nil);  //Devuelve tipo nulo
   end;
   //Crea elemento de tipo
   eType := TxpEleType.Create;
@@ -931,12 +962,10 @@ end;
 function TCompilerBase.AddCallerTo(elem: TxpElement; const curPos: TSrcPos): TxpEleCaller;
 {Versión de AddCallerTo() que agrega además la posición de la llamada, en lugar de usar
 la posición actual.}
-var
-  caller: TxpEleCaller;
 begin
-  caller := AddCallerTo(elem);
-  if caller = nil then exit;
-  caller.curPos := curPos;  //Corrige posición de llamada
+  Result := AddCallerTo(elem);
+  if Result = nil then exit;
+  Result.curPos := curPos;  //Corrige posición de llamada
 end;
 procedure TCompilerBase.Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
 {Ejecuta una operación con dos operandos y un operador. "opr" es el operador de Op1.
@@ -1329,6 +1358,34 @@ begin
   GenError(Format(msg, Args), srcPos.fil, srcPos.row, srcPos.col);
 end;
 
+function TCompilerBase.ExpandRelPathTo(BaseFile, FileName: string): string;
+{Convierte una ruta relativa (FileName), a una absoluta, usnado como base la ruta de
+otro archivo (BaseFile)}
+var
+  BasePath: RawByteString;
+begin
+   if pos(DirectorySeparator, FileName)=0 then begin
+     //Ruta relativa. Se completa
+     BasePath := ExtractFileDir(BaseFile);
+     if BasePath = '' then begin
+       //No hay de donde completar, usa la ruta actual
+       Result := ExpandFileName(FileName);
+     end else  begin
+       Result := ExtractFileDir(BaseFile) + DirectorySeparator + FileName;
+     end;
+   end else begin
+     //Tiene "DirectorySeparator", se asume que es ruta absoluta, y no se cambia.
+     Result := FileName;
+   end;
+end;
+function TCompilerBase.hexFilePath: string;
+begin
+  Result := ExpandRelPathTo(mainFile, hexfile); //Convierte a ruta absoluta
+end;
+function TCompilerBase.mainFilePath: string;
+begin
+  Result := mainFile;
+end;
 //Inicialización
 constructor TCompilerBase.Create;
 begin
