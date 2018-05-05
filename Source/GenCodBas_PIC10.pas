@@ -139,7 +139,7 @@ type
     procedure ChangeResultCharToByte;
     function ChangePointerToExpres(var ope: TOperand): boolean;
   protected  //Instrucciones que no manejan el cambio de banco
-    procedure CodAsmFD(const inst: TPIC10Inst; const f: byte; d: TPICBaseDestin);
+    procedure CodAsmFD(const inst: TPIC10Inst; const f: byte; d: TPIC10Destin);
     procedure CodAsmK(const inst: TPIC10Inst; const k: byte);
       procedure _BANKSEL(targetBank: byte);
     procedure GenCodBank(targetAdrr: word);
@@ -148,9 +148,9 @@ type
     function _CLOCK: integer;
     procedure _LABEL(igot: integer);
     //Instrucciones simples
-    procedure _ADDWF(const f: byte; d: TPICBaseDestin);
+    procedure _ADDWF(const f: byte; d: TPIC10Destin);
     procedure _ANDLW(const k: word);
-    procedure _ANDWF(const f: byte; d: TPICBaseDestin);
+    procedure _ANDWF(const f: byte; d: TPIC10Destin);
     procedure _BCF(const f, b: byte);
     procedure _BSF(const f, b: byte);
     procedure _BTFSC(const f, b: byte);
@@ -159,37 +159,37 @@ type
     procedure _CLRF(const f: byte);
     procedure _CLRW;
     procedure _CLRWDT;
-    procedure _COMF(const f: byte; d: TPICBaseDestin);
-    procedure _DECF(const f: byte; d: TPICBaseDestin);
-    procedure _DECFSZ(const f: byte; d: TPICBaseDestin);
+    procedure _COMF(const f: byte; d: TPIC10Destin);
+    procedure _DECF(const f: byte; d: TPIC10Destin);
+    procedure _DECFSZ(const f: byte; d: TPIC10Destin);
     procedure _GOTO(const a: word);
     procedure _GOTO_PEND(out igot: integer);
-    procedure _INCF(const f: byte; d: TPICBaseDestin);
-    procedure _INCFSZ(const f: byte; d: TPICBaseDestin);
+    procedure _INCF(const f: byte; d: TPIC10Destin);
+    procedure _INCFSZ(const f: byte; d: TPIC10Destin);
     procedure _IORLW(const k: word);
-    procedure _IORWF(const f: byte; d: TPICBaseDestin);
-    procedure _MOVF(const f: byte; d: TPICBaseDestin);
+    procedure _IORWF(const f: byte; d: TPIC10Destin);
+    procedure _MOVF(const f: byte; d: TPIC10Destin);
     procedure _MOVLW(const k: word);
     procedure _MOVWF(const f: byte);
     procedure _NOP;
     procedure _RETFIE;
     procedure _RETLW(const k: word);
     procedure _RETURN;
-    procedure _RLF(const f: byte; d: TPICBaseDestin);
-    procedure _RRF(const f: byte; d: TPICBaseDestin);
+    procedure _RLF(const f: byte; d: TPIC10Destin);
+    procedure _RRF(const f: byte; d: TPIC10Destin);
 
     procedure _SLEEP;
-    procedure _SUBWF(const f: byte; d: TPICBaseDestin);
-    procedure _SWAPF(const f: byte; d: TPICBaseDestin);
+    procedure _SUBWF(const f: byte; d: TPIC10Destin);
+    procedure _SWAPF(const f: byte; d: TPIC10Destin);
     procedure _XORLW(const k: word);
-    procedure _XORWF(const f: byte; d: TPICBaseDestin);
+    procedure _XORWF(const f: byte; d: TPIC10Destin);
     //macros
     procedure _IFZERO;
     procedure _IFNZERO;
   protected  //Instrucciones que manejan el cambio de banco
-    procedure kADDWF(const f: TPicRegister; d: TPICBaseDestin);
+    procedure kADDWF(const f: TPicRegister; d: TPIC10Destin);
     procedure kANDLW(const k: word);
-    procedure kANDWF(const f: TPicRegister; d: TPICBaseDestin);
+    procedure kANDWF(const f: TPicRegister; d: TPIC10Destin);
     procedure kBCF(const f: TPicRegisterBit);
     procedure kBSF(const f: TPicRegisterBit);
     procedure kBTFSC(const f: TPicRegisterBit);
@@ -198,29 +198,29 @@ type
     procedure kCLRF(const f: TPicRegister);
     procedure kCLRW;
     procedure kCLRWDT;
-    procedure kCOMF(const f: word; d: TPICBaseDestin);
-    procedure kDECF(const f: word; d: TPICBaseDestin);
-    procedure kDECFSZ(const f: word; d: TPICBaseDestin);
+    procedure kCOMF(const f: word; d: TPIC10Destin);
+    procedure kDECF(const f: word; d: TPIC10Destin);
+    procedure kDECFSZ(const f: word; d: TPIC10Destin);
     procedure kGOTO(const a: word);
     procedure kGOTO_PEND(out igot: integer);
-    procedure kINCF(const f: TPicRegister; d: TPICBaseDestin);
-    procedure kINCFSZ(const f: word; d: TPICBaseDestin);
+    procedure kINCF(const f: TPicRegister; d: TPIC10Destin);
+    procedure kINCFSZ(const f: word; d: TPIC10Destin);
     procedure kIORLW(const k: word);
-    procedure kIORWF(const f: word; d: TPICBaseDestin);
-    procedure kMOVF(const f: TPicRegister; d: TPICBaseDestin);
+    procedure kIORWF(const f: word; d: TPIC10Destin);
+    procedure kMOVF(const f: TPicRegister; d: TPIC10Destin);
     procedure kMOVLW(const k: word);
     procedure kMOVWF(const f: TPicRegister);
     procedure kNOP;
     procedure kRETFIE;
     procedure kRETLW(const k: word);
     procedure kRETURN;
-    procedure kRLF(const f: TPicRegister; d: TPICBaseDestin);
-    procedure kRRF(const f: TPicRegister; d: TPICBaseDestin);
+    procedure kRLF(const f: TPicRegister; d: TPIC10Destin);
+    procedure kRRF(const f: TPicRegister; d: TPIC10Destin);
     procedure kSLEEP;
-    procedure kSUBWF(const f: TPicRegister; d: TPICBaseDestin);
-    procedure kSWAPF(const f: TPicRegister; d: TPICBaseDestin);
+    procedure kSUBWF(const f: TPicRegister; d: TPIC10Destin);
+    procedure kSWAPF(const f: TPicRegister; d: TPIC10Destin);
     procedure kXORLW(const k: word);
-    procedure kXORWF(const f: TPicRegister; d: TPICBaseDestin);
+    procedure kXORWF(const f: TPicRegister; d: TPIC10Destin);
   public  //Opciones de compilación
     incDetComm  : boolean;   //Incluir Comentarios detallados.
     SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
@@ -272,7 +272,7 @@ type
     procedure dword_LowWord(const OpPtr: pointer);
     procedure dword_Ultra(const OpPtr: pointer);
   public  //Inicialización
-    pic        : TPICBase;       //Objeto PIC de la serie 16.
+    pic        : TPIC10;       //Objeto PIC de la serie 16.
     function PicName: string;
     function PicNameShort: string;
     procedure StartRegs;
@@ -1220,7 +1220,7 @@ begin
 end;
 //Rutinas generales para la codificación
 procedure TGenCodBas_PIC10.CodAsmFD(const inst: TPIC10Inst; const f: byte;
-  d: TPICBaseDestin);
+  d: TPIC10Destin);
 begin
   pic.codAsmFD(inst, f, d);
 end;
@@ -1326,12 +1326,12 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ANDLW, k);
 end;
-procedure TGenCodBas_PIC10._ADDWF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._ADDWF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ADDWF, f,d);
 end;
-procedure TGenCodBas_PIC10._ANDWF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._ANDWF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ANDWF, f,d);
@@ -1346,37 +1346,37 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
 end;
-procedure TGenCodBas_PIC10._COMF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._COMF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_COMF, f,d);
 end;
-procedure TGenCodBas_PIC10._DECF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._DECF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECF, f,d);
 end;
-procedure TGenCodBas_PIC10._DECFSZ(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._DECFSZ(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECFSZ, f,d);
 end;
-procedure TGenCodBas_PIC10._INCF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._INCF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCF, f,d);
 end;
-procedure TGenCodBas_PIC10._INCFSZ(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._INCFSZ(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
 end;
-procedure TGenCodBas_PIC10._IORWF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._IORWF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_IORWF, f,d);
 end;
-procedure TGenCodBas_PIC10._MOVF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._MOVF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_MOVF, f,d);
@@ -1391,22 +1391,22 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_NOP);
 end;
-procedure TGenCodBas_PIC10._RLF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._RLF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RLF, f,d);
 end;
-procedure TGenCodBas_PIC10._RRF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._RRF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f,d);
 end;
-procedure TGenCodBas_PIC10._SUBWF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._SUBWF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SUBWF, f,d);
 end;
-procedure TGenCodBas_PIC10._SWAPF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._SWAPF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SWAPF, f,d);
@@ -1490,7 +1490,7 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
 end;
-procedure TGenCodBas_PIC10._XORWF(const f: byte; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10._XORWF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f,d);
@@ -1505,13 +1505,13 @@ begin
 end;
 //Instrucciones que manejan el cambio de banco
 {Estas instrucciones guardan la instrucción compilada en "lastOpCode".}
-//procedure TGenCodBas_PIC10.kADDWF(const f: word; d: TPICBaseDestin);
+//procedure TGenCodBas_PIC10.kADDWF(const f: word; d: TPIC10Destin);
 //begin
 //  GenCodBank(f);
 //  pic.flash[pic.iFlash].curBnk := CurrBank;
 //  pic.codAsmFD(i_ADDWF, f,d);
 //end;
-procedure TGenCodBas_PIC10.kADDWF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kADDWF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1522,7 +1522,7 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ANDLW, k);
 end;
-procedure TGenCodBas_PIC10.kANDWF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kANDWF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1539,43 +1539,43 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
 end;
-procedure TGenCodBas_PIC10.kCOMF(const f: word; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kCOMF(const f: word; d: TPIC10Destin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_COMF, f,d);
 end;
-procedure TGenCodBas_PIC10.kDECF(const f: word; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kDECF(const f: word; d: TPIC10Destin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECF, f,d);
 end;
-procedure TGenCodBas_PIC10.kDECFSZ(const f: word; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kDECFSZ(const f: word; d: TPIC10Destin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECFSZ, f,d);
 end;
-procedure TGenCodBas_PIC10.kINCF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kINCF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCF, f.addr, d);
 end;
-procedure TGenCodBas_PIC10.kINCFSZ(const f: word; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kINCFSZ(const f: word; d: TPIC10Destin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
 end;
-procedure TGenCodBas_PIC10.kIORWF(const f: word; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kIORWF(const f: word; d: TPIC10Destin);
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_IORWF, f,d);
 end;
-procedure TGenCodBas_PIC10.kMOVF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kMOVF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1592,31 +1592,31 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_NOP);
 end;
-procedure TGenCodBas_PIC10.kRLF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kRLF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RLF, f.addr, d);
 end;
-procedure TGenCodBas_PIC10.kRRF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kRRF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f.addr, d);
 end;
-//procedure TGenCodBas_PIC10.kSUBWF(const f: word; d: TPICBaseDestin);
+//procedure TGenCodBas_PIC10.kSUBWF(const f: word; d: TPIC10Destin);
 //begin
 //  GenCodBank(f);
 //  pic.flash[pic.iFlash].curBnk := CurrBank;
 //  pic.codAsmFD(i_SUBWF, f,d);
 //end;
-procedure TGenCodBas_PIC10.kSUBWF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kSUBWF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SUBWF, f.addr, d);
 end;
-procedure TGenCodBas_PIC10.kSWAPF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kSWAPF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1705,7 +1705,7 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
 end;
-procedure TGenCodBas_PIC10.kXORWF(const f: TPicRegister; d: TPICBaseDestin);
+procedure TGenCodBas_PIC10.kXORWF(const f: TPicRegister; d: TPIC10Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -2889,7 +2889,7 @@ begin
   inherited Create;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
-  pic := TPICBase.Create;
+  pic := TPIC10.Create;
   ///////////Crea tipos
   ClearTypes;
   typNull := CreateSysType('null',t_boolean,-1);
