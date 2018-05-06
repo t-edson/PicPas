@@ -826,6 +826,7 @@ begin
   lexAsm.AddIdentSpecList('BCF BSF BTFSC BTFSS', lexAsm.tnKeyword);
   lexAsm.AddIdentSpecList('ADDLW ANDLW CALL CLRWDT GOTO IORLW MOVLW RETFIE', lexAsm.tnKeyword);
   lexAsm.AddIdentSpecList('RETLW RETURN SLEEP SUBLW XORLW', lexAsm.tnKeyword);
+  lexAsm.AddIdentSpecList('OPTION TRIS MOVLB', lexAsm.tnKeyword);
   lexAsm.AddIdentSpecList('ORG', lexAsm.tnKeyword);
   lexAsm.DefTokDelim(';','', lexAsm.tnComment);
   lexAsm.DefTokDelim('''','''', lexAsm.tnString);

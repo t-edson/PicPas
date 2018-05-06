@@ -183,6 +183,7 @@ type
     procedure _SWAPF(const f: byte; d: TPIC10Destin);
     procedure _XORLW(const k: word);
     procedure _XORWF(const f: byte; d: TPIC10Destin);
+    procedure _TRIS(const f: byte);
     //macros
     procedure _IFZERO;
     procedure _IFNZERO;
@@ -1460,6 +1461,11 @@ procedure TGenCodBas_PIC10._XORWF(const f: byte; d: TPIC10Destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f,d);
+end;
+procedure TGenCodBas_PIC10._TRIS(const f: byte);
+begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
+  pic.codAsmF(i_TRIS, f);
 end;
 procedure TGenCodBas_PIC10._IFZERO;
 begin

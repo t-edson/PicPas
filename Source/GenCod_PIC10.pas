@@ -1487,7 +1487,7 @@ LOOP:=_PC;
     _GOTO  (LOOP);
     //Realmente el algortimo es: E*W -> [H:E], pero lo convertimos a: E*W -> [H:W]
     _MOVF(E.offs, toW);
-    _RETURN;
+    _RETLW(0);  //En la mayoría de modelos no existe _RETURN
 end;
 procedure TGenCod.ROB_byte_mul_byte(Opt: TxpOperation; SetRes: boolean);
 var
@@ -1757,7 +1757,7 @@ Arit_DivideBit8 := _PC;
     _decfsz (aux2.offs,toF);
     _goto   (Arit_DivideBit8);
     _movf   (E.offs,toW);    //Devuelve también en (W)
-    _RETURN;
+    _RETLW(0);  //En la mayoría de modelos no existe _RETURN
 //    aux2.used := false;
     aux.used := false;
 end;
@@ -4865,7 +4865,10 @@ end;
 ///////////// Funciones del sistema
 procedure TGenCod.codif_1mseg;
 //Codifica rutina de retardo de 1mseg.
+var
+  aux: TPicRegister;
 begin
+  aux := GetAuxRegisterByte;  //Pide un registro libre
   PutFwdComm(';1 msec routine.');
   if _CLOCK = 1000000 then begin
     _MOVLW(83);
@@ -4874,46 +4877,46 @@ begin
     _GOTO(_PC-1); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 2000000 then begin
     _MOVLW(166);
-    _MOVWF(FSR.offs);
-    _DECFSZ(FSR.offs, toF);  //lazo de 3 ciclos
+    _MOVWF(aux.offs);
+    _DECFSZ(aux.offs, toF);  //lazo de 3 ciclos
     _GOTO(_PC-1); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 4000000 then begin
     //rtuina básica para 4MHz
     _MOVLW(250);
-    _MOVWF(FSR.offs);
+    _MOVWF(aux.offs);
     _NOP;           //Lazo de 4 ciclos
-    _DECFSZ(FSR.offs, toF);
+    _DECFSZ(aux.offs, toF);
     _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 8000000 then begin
     _MOVLW(250);
-    _MOVWF(FSR.offs);
+    _MOVWF(aux.offs);
     _NOP;           //Lazo de 8 ciclos
     _GOTO(_PC+1);  //introduce 4 ciclos más de retardo
     _GOTO(_PC+1);
-    _DECFSZ(FSR.offs, toF);
+    _DECFSZ(aux.offs, toF);
     _GOTO(_PC-4); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 10000000 then begin
     _MOVLW(250);
-    _MOVWF(FSR.offs);
+    _MOVWF(aux.offs);
     _NOP;           //Lazo de 10 ciclos
     _GOTO(_PC+1);  //introduce 6 ciclos más de retardo
     _GOTO(_PC+1);
     _GOTO(_PC+1);
-    _DECFSZ(FSR.offs, toF);
+    _DECFSZ(aux.offs, toF);
     _GOTO(_PC-5); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 12000000 then begin
     _MOVLW(250);
-    _MOVWF(FSR.offs);
+    _MOVWF(aux.offs);
     _NOP;           //Lazo de 12 ciclos
     _GOTO(_PC+1);  //introduce 8 ciclos más de retardo
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _GOTO(_PC+1);
-    _DECFSZ(FSR.offs, toF);
+    _DECFSZ(aux.offs, toF);
     _GOTO(_PC-6); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 16000000 then begin
     _MOVLW(250);
-    _MOVWF(FSR.offs);
+    _MOVWF(aux.offs);
     _NOP;           //Lazo de 16 ciclos
     _GOTO(_PC+1);  //introduce 12 ciclos más de retardo
     _GOTO(_PC+1);
@@ -4921,11 +4924,11 @@ begin
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _GOTO(_PC+1);
-    _DECFSZ(FSR.offs, toF);
+    _DECFSZ(aux.offs, toF);
     _GOTO(_PC-8); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 20000000 then begin
     _MOVLW(250);
-    _MOVWF(FSR.offs);
+    _MOVWF(aux.offs);
     _NOP;           //Lazo de 20 ciclos
     _GOTO(_PC+1);  //introduce 16 ciclos más de retardo
     _GOTO(_PC+1);
@@ -4935,11 +4938,12 @@ begin
     _GOTO(_PC+1);
     _GOTO(_PC+1);
     _GOTO(_PC+1);
-    _DECFSZ(FSR.offs, toF);
+    _DECFSZ(aux.offs, toF);
     _GOTO(_PC-10); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else begin
     GenError('Clock frequency %d not supported for delay_ms().', [_CLOCK]);
   end;
+  aux.used := false;  //libera registro
 end;
 procedure TGenCod.codif_delay_ms(fun: TxpEleFun);
 //Codifica rutina de retardo en milisegundos
@@ -4951,7 +4955,7 @@ begin
 //  PutLabel('__delay_ms');
   PutTopComm('    ;delay routine.');
   typWord.DefineRegister;   //Se asegura de que se exista y lo marca como "usado".
-  aux := GetAuxRegisterByte;  //Pide un registro libre
+  aux := GetAuxRegisterByte;  //Pide un registro libre (En esta familia no se puede, el FSR no es operativo.)
   //aux := FSR;  //El FSR se usará en la rutina codif_1mseg()
   if HayError then exit;
   {Esta rutina recibe los milisegundos en los registros en (H,w) o en (w)
@@ -4967,12 +4971,12 @@ delay:= _PC;
   _GOTO(_PC+2);
   _DECFSZ(H.offs, toF);
   _GOTO(_PC+2);
-  _RETURN();
+  _RETLW(0);  //En la mayoría de modelos no existe _RETURN
   codif_1mseg;   //codifica retardo 1 mseg
   if HayError then exit;
   _GOTO(delay);
   EndCodeSub;  //termina codificación
-  //aux.used := false;  //libera registro
+  aux.used := false;  //libera registro
 end;
 procedure TGenCod.fun_delay_ms(fun: TxpEleFun);
 begin
@@ -5022,7 +5026,7 @@ begin
     curFunTyp := curFun.typ;
     if curFunTyp = typNull then begin
       //No retorna valores. Es solo procedimiento
-      _RETURN;
+      _RETLW(0);  //En la mayoría de modelos no existe _RETURN
       //No hay nada, más que hacer
     end else begin
       //Se espera el valor devuelto
@@ -5620,6 +5624,8 @@ begin
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.fun_SetAsInput(fun: TxpEleFun);
+var
+  b: Byte;
 begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
@@ -5630,14 +5636,23 @@ begin
   end;
   stVariab: begin
     if res.Typ = typByte then begin
-      //Se asume que será algo como PORTA, PORTB, ...
-      _MOVLW($FF);   //todos como entradas
-      _BANKSEL(1);   //los registros TRIS, están en el banco 1
-      _MOVWF(res.offs); //escribe en TRIS
+      //Se asume que será algo como GPIO, PORTA, PORTB, ...
+      if res.offs in [$05, $06, $07, $08, $09] then begin  //GPIO
+        _MOVLW($FF);  //Todo el puerto en entrada
+        _TRIS(res.offs);
+      end else begin
+        GenError('Invalid address for PORT.'); exit;
+      end;
     end else if res.Typ = typBit then begin
-      //Se asume que será algo como PORTA.0, PORTB.0, ...
-      _BANKSEL(1);   //los registros TRIS, están en el banco 1
-      _BSF(res.offs, res.bit); //escribe en TRIS
+      //Se asume que será algo como GPIO, PORTA.0, PORTB.0, ...
+      //Esto solo fincionará para un bit y pone los demás en salida.
+      if res.offs in [$05, $06, $07, $08, $09] then begin  //GPIO
+        b := res.bit;
+        _MOVLW(byte($1 << b));  //Bit en salida
+        _TRIS(res.offs);
+      end else begin
+        GenError('Invalid address for PORT.'); exit;
+      end;
     end else begin
       GenError('Invalid type.'); exit;
     end;
@@ -5652,6 +5667,8 @@ begin
   if not CaptureTok(')') then exit;
 end;
 procedure TGenCod.fun_SetAsOutput(fun: TxpEleFun);
+var
+  b: Byte;
 begin
   if not CaptureTok('(') then exit;
   GetExpressionE(0, pexPARSY);  //captura parámetro
@@ -5662,13 +5679,23 @@ begin
   end;
   stVariab: begin
     if res.Typ = typByte then begin
-      //Se asume que será algo como PORTA, PORTB, ...
-      _BANKSEL(1);   //los registros TRIS, están en el banco 1
-      _CLRF(res.offs); //escribe en TRIS
+      //Se asume que será algo como GPIO, PORTA, PORTB, ...
+      if res.offs in [$05, $06, $07, $08, $09] then begin  //GPIO
+        _MOVLW($00);  //Todo el puerto en salida
+        _TRIS(res.offs);
+      end else begin
+        GenError('Invalid address for PORT.'); exit;
+      end;
     end else if res.Typ = typBit then begin
-      //Se asume que será algo como PORTA.0, PORTB.0, ...
-      _BANKSEL(1);   //los registros TRIS, están en el banco 1
-      _BCF(res.offs, res.bit); //escribe en TRIS
+      //Se asume que será algo como GPIO, PORTA.0, PORTB.0, ...
+      //Esto solo fincionará para un bit y pone los demás en entrada.
+      if res.offs in [$05, $06, $07, $08, $09] then begin  //GPIO
+        b := res.bit;
+        _MOVLW(not byte($1 << b));  //Bit en salida
+        _TRIS(res.offs);
+      end else begin
+        GenError('Invalid address for PORT.'); exit;
+      end;
     end else begin
       GenError('Invalid type.'); exit;
     end;
