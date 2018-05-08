@@ -896,7 +896,8 @@ var
   srcPosArray: TSrcPosArray;
   i: integer;
 begin
-  //procesa lista de constantes a,b,cons ;
+  SetLength(consNames, 0);
+  //Procesa lista de constantes a,b,cons ;
   getListOfIdent(consNames, srcPosArray);
   if HayError then begin  //precisa el error
     GenError(ER_IDE_CON_EXP);
@@ -1370,6 +1371,7 @@ var
   adicVarDec: TAdicVarDec;
   typEleDec: TxpEleType;
 begin
+  SetLength(varNames, 0);
   //Procesa variables a,b,c : int;
   getListOfIdent(varNames, srcPosArray);
   if HayError then begin  //precisa el error

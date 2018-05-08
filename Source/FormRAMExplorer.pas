@@ -3,7 +3,7 @@ unit FormRAMExplorer;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, LCLType,
-  FrameRamExplorer, Pic16Utils;
+  FrameRamExplorer, Parser;
 type
 
   { TfrmRAMExplorer }
@@ -14,8 +14,7 @@ type
   private
     fra: TfraRamExplorer;
   public
-    pic: TPIC16;
-    procedure Exec(pic0: TPIC16);
+    procedure Exec(cxp0: TCompilerBase);
   end;
 
 var
@@ -47,11 +46,10 @@ begin
   end;
 end;
 
-procedure TfrmRAMExplorer.Exec(pic0: TPIC16);
+procedure TfrmRAMExplorer.Exec(cxp0: TCompilerBase);
 begin
-  pic := pic0;
-  fra.pic := pic0;
-  Caption := 'RAM Explorer. PICModel=' + pic0.Model;
+  fra.cxp := cxp0;
+  Caption := 'RAM Explorer. PICModel=' + cxp0.PICName;
   Show;
   self.Width := 600;
   self.Height := 480;

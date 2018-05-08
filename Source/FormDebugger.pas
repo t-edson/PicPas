@@ -91,6 +91,7 @@ type
   public
     cxp: TCompiler_PIC16;
     pic: TPIC16;
+    procedure SetLanguage;
     procedure Exec;
   end;
 
@@ -100,6 +101,10 @@ var
 implementation
 {$R *.lfm}
 { TfrmDebugger }
+procedure TfrmDebugger.SetLanguage;
+begin
+  fraRegWat.SetLanguage;
+end;
 procedure TfrmDebugger.Timer1Timer(Sender: TObject);
 var
   stopped: boolean;
@@ -380,15 +385,14 @@ begin
   StringGrid1.OnDrawCell := @StringGrid1DrawCell;
 
   //Muestra Frames
-  fraRamExp.pic := pic;
+  fraRamExp.cxp := cxp;
   fraRamExp.panGraph.Invalidate;
-  fraRomExp.pic := pic;
+  fraRomExp.cxp := cxp;
   fraRomExp.Invalidate;
   fraPicReg.pic := pic;
   fraPicReg.Invalidate;
-  fraRegWat.pic := pic;
   fraRegWat.cxp:= cxp;
-  fraRegWat.Refrescar;
+  //fraRegWat.Refrescar;
 
   fraPicDia.pic:= pic;
   fraPicDia.Refrescar;

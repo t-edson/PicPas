@@ -39,13 +39,6 @@ type
     //Registros auxiliares
     INDF   : TPicRegister;     //Registro Interno.
     FSR    : TPicRegister;     //Registro Interno.
-    //Listas contenedoras de registros
-    listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
-    listRegStk: TPicRegister_list;  //lista de registros de pila
-    listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
-    listRegStkBit: TPicRegisterBit_list;
-    stackTop: integer;   //índice al límite superior de la pila
-    stackTopBit: integer;   //índice al límite superior de la pila
     procedure PutLabel(lbl: string); inline;
     procedure PutTopComm(cmt: string; replace: boolean = true); inline;
     procedure PutComm(cmt: string); inline;
@@ -223,8 +216,6 @@ type
     procedure kXORLW(const k: word);
     procedure kXORWF(const f: TPicRegister; d: TPIC10Destin);
   public  //Acceso a registro de trabajo
-    property ProplistRegAux: TPicRegister_list read listRegAux;
-    property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
     property H_register: TPicRegister read H;
     property E_register: TPicRegister read E;
     property U_register: TPicRegister read U;
@@ -267,10 +258,18 @@ type
     procedure dword_Ultra(const OpPtr: pointer);
   public  //Inicialización
     pic        : TPIC10;       //Objeto PIC de la serie 16.
-    function PicName: string; override;
-    function PicNameShort: string; override;
     procedure StartRegs;
+    function PICName: string; override;
+    function PICNameShort: string; override;
+    function PICBankSize: word; override; //Size of a RAM banks
+    function PICnBanks: byte; override; //Number of RAM banks
+    function PICCurBank: byte; override; //Current RAM bank
+    function PICBank(i: byte): TPICRAMBank; override; //Return a RAM bank
+    function PICnPages: byte; override; //Number of FLASH pages
+    function PICPage(i: byte): TPICFlashPage; override; //Return a FLASH page
     function CompilerName: string; override;
+    function RAMcell(adr: word): TPICRamCellPtr; override;
+    function RAMmax: integer; override;
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -1690,14 +1689,38 @@ begin
   pic.codAsmFD(i_XORWF, f.addr, d);
 end;
 
-function TGenCodBas_PIC10.PicName: string;
+function TGenCodBas_PIC10.PICName: string;
 begin
   Result := pic.Model;
 end;
-function TGenCodBas_PIC10.PicNameShort: string;
+function TGenCodBas_PIC10.PICNameShort: string;
 {Genera el nombre del PIC, quitándole la parte inicial "PIC".}
 begin
   Result := copy(pic.Model, 4, length(pic.Model));
+end;
+function TGenCodBas_PIC10.PICBankSize: word;
+begin
+  Result := PIC_BANK_SIZE;
+end;
+function TGenCodBas_PIC10.PICnBanks: byte;
+begin
+  Result := pic.NumBanks;
+end;
+function TGenCodBas_PIC10.PICCurBank: byte;
+begin
+  Result := pic.BSR;
+end;
+function TGenCodBas_PIC10.PICBank(i: byte): TPICRAMBank;
+begin
+  Result := pic.banks[i];
+end;
+function TGenCodBas_PIC10.PICnPages: byte;
+begin
+  Result := pic.NumPages;
+end;
+function TGenCodBas_PIC10.PICPage(i: byte): TPICFlashPage;
+begin
+  Result := pic.pages[i];
 end;
 function TGenCodBas_PIC10.GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
 {Extrae el primer parámetro (que corresponde al índice) de las funciones getitem() o
@@ -2865,6 +2888,15 @@ end;
 function TGenCodBas_PIC10.CompilerName: string;
 begin
   Result := 'PIC10 Compiler'
+end;
+function TGenCodBas_PIC10.RAMcell(adr: word): TPICRamCellPtr;
+//Devuelve referencia a una celda de la RAM. Se devuelve puntero por velocidad.
+begin
+  Result := @pic.ram[adr];
+end;
+function TGenCodBas_PIC10.RAMmax: integer;
+begin
+  Result := high(pic.ram);
 end;
 constructor TGenCodBas_PIC10.Create;
 begin

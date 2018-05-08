@@ -253,6 +253,7 @@ begin
   fraSynTree.SetLanguage;
   fraEditView1.SetLanguage;
   fraMessages.SetLanguage;
+  frmDebug.SetLanguage;
   Compiler_PIC16.SetLanguage;
   Compiler_PIC10.SetLanguage;
   //ParserAsm_PIC16.SetLanguage;
@@ -373,7 +374,7 @@ begin
   comLine := StringReplace(comLine, '$(hexFile)', Compiler.hexFilePath, [rfReplaceAll, rfIgnoreCase]);
   comLine := StringReplace(comLine, '$(mainFile)', Compiler.mainFilePath, [rfReplaceAll, rfIgnoreCase]);
   comLine := StringReplace(comLine, '$(mainPath)', ExtractFileDir(Compiler.mainFilePath), [rfReplaceAll, rfIgnoreCase]);
-  comLine := StringReplace(comLine, '$(picModel)', Compiler.PicName, [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(picModel)', Compiler.PICName, [rfReplaceAll, rfIgnoreCase]);
 end;
 procedure TfrmPrincipal.LoadAsmSyntaxEd;
 {Carga archivo de sinatxis para el editor de ASM}
@@ -988,8 +989,8 @@ begin
   edAsm.Lines.Clear;
   if Config.IncHeadMpu then begin
     //Incluye encabezado
-     edAsm.Lines.Add('    list     p='+ Compiler.PicNameShort);
-     edAsm.Lines.Add('    #include <p' + Compiler.PicNameShort + '.inc>');
+     edAsm.Lines.Add('    list     p='+ Compiler.PICNameShort);
+     edAsm.Lines.Add('    #include <p' + Compiler.PICNameShort + '.inc>');
 //     edAsm.Lines.Add('    __CONFIG        _CP_OFF & _PWRTE_ON & _WDT_OFF & _XT_OSC');
   end;
   if Config.IncVarDec then begin
@@ -1012,7 +1013,7 @@ begin
 end;
 procedure TfrmPrincipal.acToolRamExpExecute(Sender: TObject);
 begin
-   frmRAMExplorer.Exec(Compiler16.pic);
+   frmRAMExplorer.Exec(Compiler);
 end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);
 begin

@@ -11,8 +11,8 @@ técnica.
 unit Parser;
 interface
 uses
-  Classes, SysUtils, Forms, LCLType, lclProc, SynEditHighlighter,
-  SynFacilHighlighter, XpresBas, XpresTypesPIC, XpresElementsPIC, MisUtils, FormConfig;
+  Classes, SysUtils, Forms, LCLType, lclProc, SynFacilHighlighter, SynEditHighlighter,
+  XpresBas, XpresTypesPIC, XpresElementsPIC, MisUtils, FormConfig, PicCore;
 const
   TIT_BODY_ELE = 'Body';
 type
@@ -97,7 +97,9 @@ public  //Campos de acceso a los valores constantes
 end;
 
 { TCompilerBase }
-{Clase base para crear al objeto compilador}
+{Clase base para crear a los objetos compiladores.
+Esta clase debe ser el ancestro común de todos los compialdores a usar en PicPas.
+Contiene métodos abstractos que deben ser impleemntados en las clases descendeintes.}
 TCompilerBase = class
 protected  //Variables de expresión.
   {Estas variables, se inician al inicio de cada expresión y su valor es válido
@@ -164,21 +166,21 @@ protected
   function GetOperandPrec(pre: integer): TOperand;
   function GetOperator(const Op: Toperand): TxpOperator;
   procedure GetExpressionE(const prec: Integer; posExpres: TPosExpres = pexINDEP);
-public
-  FirstPass  : boolean;      //Indica que está en la primera pasada.
+public  //Contenedores
   TreeElems  : TXpTreeElements; //Árbol de sintaxis del lenguaje
   TreeDirec  : TXpTreeElements; //Árbol de sinatxis para directivas
   listFunSys : TxpEleFuns;   //lista de funciones del sistema
   listTypSys : TxpEleTypes;  //lista de tipos del sistema
 protected
+  function stoOperation: TStoOperandsROB; inline;
   procedure LoadToRT(Op: TOperand; modReturn: boolean = false);
   function GetExpression(const prec: Integer): TOperand;
   //LLamadas a las rutinas de operación
   procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
   procedure OperPre(var Op1: TOperand; opr: TxpOperator);
   procedure OperPost(var Op1: TOperand; opr: TxpOperator);
-public  //Referencias a los tipos predefinidos de tokens.
-  tnEol     : integer;
+public   //Referencias a los tipos predefinidos de tokens.
+  tnEol       : integer;
   tnSymbol  : integer;
   tnSpace   : integer;
   tnIdentif : integer;
@@ -205,7 +207,7 @@ public  //Referencias a los tipos predefinidos de tokens.
   tkBoolean : TSynHighlighterAttributes;
   tkSysFunct: TSynHighlighterAttributes;
   tkType    : TSynHighlighterAttributes;
-public //Tipos adicionales de tokens
+public   //Tipos adicionales de tokens
   tnStruct   : integer;
   tnDirective: integer;
   tnAsm      : integer;
@@ -213,17 +215,26 @@ public //Tipos adicionales de tokens
   tnBlkDelim : integer;
   tnChar     : integer;
   tnOthers   : integer;
+public   //Tipos de datos a implementar
+  {No es obligatorio implementar todos los tipos de datos, para todos los compiladoreslo }
+  typBit  : TxpEleType;
+  typBool : TxpEleType;
+  typByte : TxpEleType;
+  typChar : TxpEleType;
+  typWord : TxpEleType;
+  typDWord: TxpEleType;
 public
-  xLex   : TSynFacilSyn; //resaltador - lexer
-  cIn    : TContexts;   //entrada de datos
-  //variables públicas del compilador
-  ejecProg: boolean;    //Indica que se está ejecutando un programa o compilando
-  DetEjec: boolean;     //para detener la ejecución (en intérpretes)
+  Compiling: boolean;    //Bandera para el compilado
+  FirstPass: boolean;    //Indica que está en la primera pasada.
+  xLex    : TSynFacilSyn; //Resaltador - lexer
+  cIn     : TContexts;   //Entrada de datos
+  //Variables públicas del compilador
+  ejecProg: boolean;     //Indica que se está ejecutando un programa o compilando
+  DetEjec : boolean;     //Para detener la ejecución (en intérpretes)
 
-//  func0  : TxpEleFun;   //función interna para almacenar parámetros
-  p1, p2 : ^TOperand;   //Pasa los operandos de la operación actual
-  res    : TOperand;    //resultado de la evaluación de la última expresión.
-  function stoOperation: TStoOperandsROB; inline;
+  p1, p2  : ^TOperand;   //Pasa los operandos de la operación actual
+  res     : TOperand;    //resultado de la evaluación de la última expresión.
+  procedure Compile(NombArc: string; Link: boolean = true); virtual; abstract;
 protected //Accesos a propeidades de p1^ y p2^.
   function value1: word;
   function value1L: word;
@@ -239,7 +250,7 @@ protected //Accesos a propeidades de p1^ y p2^.
   function byte2: TPicRegister;
   function byte2L: TPicRegister;
   function byte2H: TPicRegister;
-public  //Manejo de errores y advertencias
+public   //Manejo de errores y advertencias
   HayError: boolean;
   OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
   OnError  : procedure(errTxt: string; fileName: string; row, col: integer) of object;
@@ -259,37 +270,47 @@ public  //Manejo de errores y advertencias
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
   procedure GenErrorPos(msg: String; const Args: array of const; srcPos: TSrcPos);
-protected
-  mainFile  : string;  //archivo inicial que se compila
-public     //Opciones de compilación
+public   //Opciones de compilación
   incDetComm  : boolean;   //Incluir Comentarios detallados.
   SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
   OptBnkAftPro: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
   OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
   OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
   OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
-public
-  typBit  : TxpEleType;
-  typBool : TxpEleType;
-  typByte : TxpEleType;
-  typChar : TxpEleType;
-  typWord : TxpEleType;
-  typDWord: TxpEleType;
-  Compiling: boolean;  //Bandera para el compilado
+protected
+  mainFile : string;  //archivo inicial que se compila
   hexFile  : string;  //Nombre de archivo de salida
   function ExpandRelPathTo(BaseFile, FileName: string): string;
+public   //Información y acceso a memoria
   function hexFilePath: string;
   function mainFilePath: string;
+  function PICName: string; virtual; abstract;
+  function PICNameShort: string; virtual; abstract;
+  function PICBankSize: word; virtual; abstract; //Size of a RAM banks
+  function PICnBanks: byte; virtual; abstract; //Number of RAM banks
+  function PICCurBank: byte; virtual; abstract; //Current RAM bank
+  function PICBank(i: byte): TPICRAMBank; virtual; abstract; //Return a RAM bank
+  function PICnPages: byte; virtual; abstract; //Number of FLASH pages
+  function PICPage(i: byte): TPICFlashPage; virtual; abstract; //Return a FLASH page
   function CompilerName: string; virtual; abstract;  //Name of the compiler
-  procedure Compile(NombArc: string; Link: boolean = true); virtual; abstract;
+  function RAMcell(adr: word): TPICRamCellPtr; virtual; abstract;
+  function RAMmax: integer; virtual; abstract;
   procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean); virtual; abstract;
-  procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); virtual; abstract;
-  function PicName: string; virtual; abstract;
-  function PicNameShort: string; virtual; abstract;
   function RAMusedStr: string; virtual; abstract;
   function FLASHusedStr: string; virtual; abstract;
   procedure GetResourcesUsed(out ramUse, romUse, stkUse: single); virtual; abstract;
+  procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); virtual; abstract;
   procedure GenerateListReport(lins: TStrings); virtual; abstract;
+protected  //Container lists of registers
+  listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
+  listRegStk: TPicRegister_list;  //lista de registros de pila
+  listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
+  listRegStkBit: TPicRegisterBit_list;
+  stackTop: integer;   //índice al límite superior de la pila
+  stackTopBit: integer;   //índice al límite superior de la pila
+public
+  property ProplistRegAux: TPicRegister_list read listRegAux;
+  property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
 public  //Inicialización
   constructor Create; virtual;
   destructor Destroy; override;

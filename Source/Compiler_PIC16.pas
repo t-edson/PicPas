@@ -896,7 +896,8 @@ var
   srcPosArray: TSrcPosArray;
   i: integer;
 begin
-  //procesa lista de constantes a,b,cons ;
+  SetLength(consNames, 0);
+  //Procesa lista de constantes a,b,cons ;
   getListOfIdent(consNames, srcPosArray);
   if HayError then begin  //precisa el error
     GenError(ER_IDE_CON_EXP);
@@ -1370,6 +1371,7 @@ var
   adicVarDec: TAdicVarDec;
   typEleDec: TxpEleType;
 begin
+  SetLength(varNames, 0);
   //Procesa variables a,b,c : int;
   getListOfIdent(varNames, srcPosArray);
   if HayError then begin  //precisa el error
@@ -2485,7 +2487,7 @@ begin
     lins.Add(';------ Work and Aux. Registers ------');
     for reg in listRegAux do begin
       if not reg.assigned then continue;  //puede haber registros de trabajo no asignados
-      nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
+      nam := pic.NameRAM(reg.addr); //debería tener nombre
       adStr := '0x' + IntToHex(reg.addr, 3);
       lins.Add(nam + ' EQU ' +  adStr);
     end;
@@ -2498,7 +2500,7 @@ begin
   if (listRegStk.Count>0) or (listRegStkBit.Count>0) then begin
     lins.Add(';------ Stack Registers ------');
     for reg in listRegStk do begin
-      nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
+      nam := pic.NameRAM(reg.addr); //debería tener nombre
       adStr := '0x' + IntToHex(reg.addr, 3);
       lins.Add(nam + ' EQU ' +  adStr);
     end;

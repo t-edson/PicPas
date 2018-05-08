@@ -1302,6 +1302,7 @@ end;
 procedure TGenCod.ROB_byte_add_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
+  aux: TPicRegister;
 begin
   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
     GenError('Too complex pointer expression.'); exit;
@@ -1330,9 +1331,11 @@ begin
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    kMOVWF(FSR);   //guarda temporalmente en FSR
+    aux := GetAuxRegisterByte;
+    kMOVWF(aux);   //guarda temporalmente en aux
     kMOVLW(value1);
-    kADDWF(FSR, toW);  //deja en W
+    kADDWF(aux, toW);  //deja en W
+    aux.used := false;
   end;
   stVariab_Const: begin
     ExchangeP1_P2;
@@ -1352,9 +1355,11 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    kMOVWF(FSR);   //guarda temporalmente en FSR
+    aux := GetAuxRegisterByte;
+    kMOVWF(aux);   //guarda temporalmente en aux
     kMOVLW(value2);
-    kADDWF(FSR, toW);  //deja en W
+    kADDWF(aux, toW);  //deja en W
+    aux.used := false;
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -1399,6 +1404,7 @@ end;
 procedure TGenCod.ROB_byte_sub_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
+  aux: TPicRegister;
 begin
   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
     GenError('Too complex pointer expression.'); exit;
@@ -1414,16 +1420,20 @@ begin
     SetROBResultExpres_byte(Opt);
     kMOVLW(value1);
     kSUBWF(byte2, toW);  //F - W -> W   (value2 - value1)->W
-    kCLRF(FSR);  //Usa temporalmente
-    kSUBWF(FSR, toW);  //Invierte W: 0 - W -> W
+    aux := GetAuxRegisterByte;
+    kCLRF(aux);  //Usa temporalmente
+    kSUBWF(aux, toW);  //Invierte W: 0 - W -> W
+    aux.used := false;
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    kMOVWF(FSR);
+    aux := GetAuxRegisterByte;
+    kMOVWF(aux);
     kMOVLW(value1);
-    kSUBWF(FSR, toW);   //FSR - value1 -> W
-    kCLRF(FSR);  //Usa temporalmente
-    kSUBWF(FSR, toW);  //Invierte W: 0 - W -> W
+    kSUBWF(aux, toW);   //aux - value1 -> W
+    kCLRF(aux);  //Usa temporalmente
+    kSUBWF(aux, toW);  //Invierte W: 0 - W -> W
+    aux.used := false;
   end;
   stVariab_Const: begin
     SetROBResultExpres_byte(Opt);
@@ -1445,15 +1455,19 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    kMOVWF(FSR);
+    aux := GetAuxRegisterByte;
+    kMOVWF(aux);
     kMOVLW(value2);
-    kSUBWF(FSR, toW);   //W - value2 -> value2
+    kSUBWF(aux, toW);   //W - value2 -> value2
+    aux.used := false;
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
     kSUBWF(byte2, toW);   //byte2 - W -> W
-    kCLRF(FSR);  //Usa temporalmente
-    kSUBWF(FSR, toW);  //Invierte W: 0 - W -> W
+    aux := GetAuxRegisterByte;
+    kCLRF(aux);  //Usa temporalmente
+    kSUBWF(aux, toW);  //Invierte W: 0 - W -> W
+    aux.used := false;
   end;
   stExpres_Expres:begin
     SetROBResultExpres_byte(Opt);
@@ -1739,8 +1753,7 @@ var
 begin
     typDWord.DefineRegister;   //Asegura que exista W,H,E,U
     aux := GetAuxRegisterByte;  //Pide registro auxiliar
-//    aux2 := GetAuxRegisterByte;  //Pide registro auxiliar
-    aux2 := FSR;   //utiliza FSR como registro auxiliar
+    aux2 := GetAuxRegisterByte;  //Pide registro auxiliar
     _MOVWF (aux.offs);
     _clrf   (E.offs);        //En principio el resultado es cero.
     _clrf   (U.offs);
@@ -1758,7 +1771,7 @@ Arit_DivideBit8 := _PC;
     _goto   (Arit_DivideBit8);
     _movf   (E.offs,toW);    //Devuelve también en (W)
     _RETLW(0);  //En la mayoría de modelos no existe _RETURN
-//    aux2.used := false;
+    aux2.used := false;
     aux.used := false;
 end;
 procedure TGenCod.ROB_byte_div_byte(Opt: TxpOperation; SetRes: boolean);
@@ -2276,6 +2289,7 @@ end;
 procedure TGenCod.ROB_byte_equal_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
+  aux: TPicRegister;
 begin
   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
     GenError('Too complex pointer expression.'); exit;
@@ -2305,9 +2319,11 @@ begin
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    kMOVWF(FSR);  //byte temporal
+    aux := GetAuxRegisterByte;
+    kMOVWF(aux);  //byte temporal
     kMOVLW(value1);
-    kSUBWF(FSR, toW);      //si iguales _Z=1
+    kSUBWF(aux, toW);      //si iguales _Z=1
+    aux.used := false;
   end;
   stVariab_Const: begin
     ExchangeP1_P2;  //Convierte a stConst_Variab
@@ -2328,9 +2344,11 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    kMOVWF(FSR);  //byte temporal
+    aux := GetAuxRegisterByte;
+    kMOVWF(aux);  //byte temporal
     kMOVLW(value2);
-    kSUBWF(FSR, toW);      //si iguales _Z=1
+    kSUBWF(aux, toW);      //si iguales _Z=1
+    aux.used := false;
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
@@ -2364,7 +2382,7 @@ begin
 end;
 procedure TGenCod.ROB_byte_great_byte(Opt: TxpOperation; SetRes: boolean);
 var
-  tmp: TPicRegister;
+  tmp, aux: TPicRegister;
 begin
   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
     GenError('Too complex pointer expression.'); exit;
@@ -2388,12 +2406,14 @@ begin
     end;
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    kMOVWF(FSR);   //Guarda W temporalmente
-    varStkByte.addr0 := FSR.addr;  //Usa la variable temporal varStkByte para direccionar a FSR
+    aux := GetAuxRegisterByte;
+    kMOVWF(aux);   //Guarda W temporalmente
+    varStkByte.addr0 := aux.addr;  //Usa la variable temporal varStkByte para direccionar a aux
     p2^.SetAsVariab(varStkByte);  //Convierte Operando a variable
     {Luego el caso es similar a stConst_Variab y dedemos aegurarnos que
-    en este caso del ROB no se use ni FSR, ni varStkByte.}
+    en este caso del ROB no se use ni aux, ni varStkByte.}
     ROB_byte_great_byte(Opt, true);
+    aux.used := false;
   end;
   stVariab_Const: begin
     if p2^.valInt = 255 then begin
@@ -2402,12 +2422,14 @@ begin
       GenWarn('Expression will always be FALSE or TRUE.');
     end else begin
       SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
+      aux := GetAuxRegisterByte;
       kMOVLW(value2);
-      kMOVWF(FSR);
+      kMOVWF(aux);
       //Ahora es como stVariab_Variab
       kMOVF(byte1, toW);
-      kSUBWF(FSR, toW);  //Si p1 > p2: C=0.
+      kSUBWF(aux, toW);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
+      aux.used := false;
     end;
   end;
   stVariab_Variab:begin
@@ -2434,7 +2456,7 @@ begin
 //    end else begin
 //      SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
 //  //    p1, ya está en W
-//      kMOVWF(FSR);
+//      kMOVWF(aux);
 //      //Ahora es como stVariab_Const
 //
 //    end;
@@ -2546,56 +2568,47 @@ begin
       _MOVF(p1^.offs, toW);  //solo devuelve lo mismo en W
     end else if p2^.valInt = 1 then begin
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _RRF(p1^.offs, toW);  //devuelve desplazado en W
+      kRRF(byte1, toW);  //devuelve desplazado en W
     end else if p2^.valInt = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRRF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRRF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
+      kRRF(aux, toF);  //desplaza
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRRF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
+      kRRF(aux, toF);  //desplaza
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
+      kRRF(aux, toF);  //desplaza
       _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kMOVF(byte1, toW);
+      kMOVWF(aux);
       //copia p2 a W
-      _MOVLW(p2^.valInt);
+      kMOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, true);
       aux.used := false;
@@ -2605,13 +2618,10 @@ begin
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;
     //copia p1 a "aux"
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.offs, toW);
-    _BANKSEL(aux.bank);
-    _MOVWF(aux.offs);
+    kMOVF(byte1, toW);
+    kMOVWF(aux);
     //copia p2 a W
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
+    kMOVF(byte2, toW);
     //lazo de rotación
     CodifShift_by_W(aux, true);
     aux.used := false;
@@ -2662,9 +2672,9 @@ begin
     end else begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _MOVWF(aux.offs);
+      kMOVWF(aux);
       //copia p2 a W
-      _MOVLW(p2^.valInt);
+      kMOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, true);
       aux.used := false;
