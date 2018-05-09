@@ -261,9 +261,7 @@ type
     procedure dword_Low(const OpPtr: pointer);
     procedure dword_LowWord(const OpPtr: pointer);
     procedure dword_Ultra(const OpPtr: pointer);
-  public     //Inicialización
-    pic        : TPIC16;       //Objeto PIC de la serie 16.
-    procedure StartRegs;
+  public     //Acceso a campos del PIC
     function PICName: string; override;
     function PICNameShort: string; override;
     function PICBankSize: word; override; //Size of a RAM banks
@@ -272,9 +270,14 @@ type
     function PICBank(i: byte): TPICRAMBank; override; //Return a RAM bank
     function PICnPages: byte; override; //Number of FLASH pages
     function PICPage(i: byte): TPICFlashPage; override; //Return a FLASH page
-    function CompilerName: string; override;
-    function RAMcell(adr: word): TPICRamCellPtr; override;
+    function PICPines(i: byte): TPICPinPtr; override; //Return a PIN
+    function PICnPins: byte; override; //Return number of pins
+    function PICRam(adr: word): TPICRamCellPtr; override;
     function RAMmax: integer; override;
+  public     //Inicialización
+    pic        : TPIC16;       //Objeto PIC de la serie 16.
+    procedure StartRegs;
+    function CompilerName: string; override;
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -1756,7 +1759,6 @@ begin
     pic.codGotoAt(igot, _PC);   //termina de codificar el salto
   end;
 end;
-
 function TGenCodBas_PIC16.PICName: string;
 begin
   Result := pic.Model;
@@ -1791,6 +1793,14 @@ end;
 function TGenCodBas_PIC16.PICPage(i: byte): TPICFlashPage;
 begin
   Result := pic.pages[i];
+end;
+function TGenCodBas_PIC16.PICPines(i: byte): TPICPinPtr; inline;
+begin
+  Result := @pic.pines[i];
+end;
+function TGenCodBas_PIC16.PICnPins: byte; inline;
+begin
+  Result := pic.Npins;
 end;
 function TGenCodBas_PIC16.GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
 {Extrae el primer parámetro (que corresponde al índice) de las funciones getitem() o
@@ -2952,7 +2962,7 @@ function TGenCodBas_PIC16.CompilerName: string;
 begin
   Result := 'PIC16 Compiler'
 end;
-function TGenCodBas_PIC16.RAMcell(adr: word): TPICRamCellPtr;
+function TGenCodBas_PIC16.PICRam(adr: word): TPICRamCellPtr;
 //Devuelve referencia a una celda de la RAM. Se devuelve puntero por velocidad.
 begin
   Result := @pic.ram[adr];

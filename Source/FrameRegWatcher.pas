@@ -119,7 +119,7 @@ begin
     //Escribe dirección y nombre
     grilla.Cells[col_adr,f] := '$'+IntToHex(addr, 3);
     grilla.Cells[col_bit,f] := '';
-    grilla.Cells[COL_NAM,f] := cxp.RAMcell(addr)^.name;
+    grilla.Cells[COL_NAM,f] := cxp.PICRam(addr)^.name;
   end;
 end;
 procedure TfraRegWatcher.CompleteFromName(f: integer);
@@ -141,7 +141,7 @@ begin
     nbit := -1;
     //Busca nombre de bytes
     for i:=0 to cxp.RAMmax do begin
-      if UpCase(cxp.RAMcell(i)^.name) = nameStr then begin
+      if UpCase(cxp.PICRam(i)^.name) = nameStr then begin
         addr := i;
         break;
       end;
@@ -149,14 +149,14 @@ begin
     if addr=-1 then begin  //No encontrado
       //No encontró como byte, busca como bit
       for i:=0 to cxp.RAMmax do begin
-        if UpCase(cxp.RAMcell(i)^.bitname[0]) = nameStr then nbit := 0;
-        if UpCase(cxp.RAMcell(i)^.bitname[1]) = nameStr then nbit := 1;
-        if UpCase(cxp.RAMcell(i)^.bitname[2]) = nameStr then nbit := 2;
-        if UpCase(cxp.RAMcell(i)^.bitname[3]) = nameStr then nbit := 3;
-        if UpCase(cxp.RAMcell(i)^.bitname[4]) = nameStr then nbit := 4;
-        if UpCase(cxp.RAMcell(i)^.bitname[5]) = nameStr then nbit := 5;
-        if UpCase(cxp.RAMcell(i)^.bitname[6]) = nameStr then nbit := 6;
-        if UpCase(cxp.RAMcell(i)^.bitname[7]) = nameStr then nbit := 7;
+        if UpCase(cxp.PICRam(i)^.bitname[0]) = nameStr then nbit := 0;
+        if UpCase(cxp.PICRam(i)^.bitname[1]) = nameStr then nbit := 1;
+        if UpCase(cxp.PICRam(i)^.bitname[2]) = nameStr then nbit := 2;
+        if UpCase(cxp.PICRam(i)^.bitname[3]) = nameStr then nbit := 3;
+        if UpCase(cxp.PICRam(i)^.bitname[4]) = nameStr then nbit := 4;
+        if UpCase(cxp.PICRam(i)^.bitname[5]) = nameStr then nbit := 5;
+        if UpCase(cxp.PICRam(i)^.bitname[6]) = nameStr then nbit := 6;
+        if UpCase(cxp.PICRam(i)^.bitname[7]) = nameStr then nbit := 7;
         if nbit <> -1 then begin
           addr := i;
           break;
@@ -201,7 +201,7 @@ debugln('RefreshRow:'+IntToStr(f));
     if bitStr<>'' then begin
       bit := ord(bitStr[1])-ord('0');  //convierte
       //Imprime bit
-      valByte := cxp.RAMcell(addr)^.value;
+      valByte := cxp.PICRam(addr)^.value;
       if (valByte and (1<<bit)) = 0 then newValue := '0' else newValue := '1';
       if grilla.Cells[COL_VAL,f] <> newValue then begin
          //Hubo cambio
@@ -210,7 +210,7 @@ debugln('RefreshRow:'+IntToStr(f));
       end;
     end else begin
       //Imprime byte
-      newValue := '$'+IntToHex(cxp.RAMcell(addr)^.value, 2);
+      newValue := '$'+IntToHex(cxp.PICRam(addr)^.value, 2);
       if grilla.Cells[COL_VAL,f] <> newValue then begin
          //Hubo cambio
          grilla.Objects[1, f] := Tobject(Pointer(255));  //Pone color
@@ -342,7 +342,7 @@ var
 begin
   for reg in cxp.ProplistRegAux do begin
     if not reg.assigned then continue;  //puede haber registros de trabajo no asignados
-    nam := cxp.RAMcell(reg.addr)^.name; //debería tener nombre
+    nam := cxp.PICRam(reg.addr)^.name; //debería tener nombre
     AddWatch(nam);
   end;
 //  for rbit in cxp.ProplistRegAuxBit do begin

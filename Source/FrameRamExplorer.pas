@@ -62,11 +62,11 @@ begin
   for i := dir1 to dir2 do begin
     if i = dir1 then begin
       //Define el bloque inicial
-      tipBloque := cxp.RAMcell(i)^.state;
+      tipBloque := cxp.PICRam(i)^.state;
       pos1 := i;
       pos2 := i;
     end else begin
-      if cxp.RAMcell(i)^.state = tipBloque then begin
+      if cxp.PICRam(i)^.state = tipBloque then begin
         //Es del bloque anterior
         pos2 := i;   //actualiza límite
       end else begin
@@ -78,7 +78,7 @@ begin
         n := n + 1;
         setlength(blockSta, n+1);
         //Define nuevo blqoue
-        tipBloque := cxp.RAMcell(i)^.state;
+        tipBloque := cxp.PICRam(i)^.state;
         pos1 := i;
         pos2 := i;
       end;
@@ -103,11 +103,11 @@ begin
   for i := dir1 to dir2 do begin
     if i = dir1 then begin
       //Define el bloque inicial
-      mapeado := (cxp.RAMcell(i)^.mappedTo<>nil);
+      mapeado := (cxp.PICRam(i)^.mappedTo<>nil);
       pos1 := i;
       pos2 := i;
     end else begin
-      if (cxp.RAMcell(i)^.mappedTo<>nil) = mapeado then begin
+      if (cxp.PICRam(i)^.mappedTo<>nil) = mapeado then begin
         //Es del bloque anterior
         pos2 := i;   //actualiza límite
       end else begin
@@ -119,7 +119,7 @@ begin
         n := n + 1;
         setlength(blockMap, n+1);
         //Define nuevo blqoue
-        mapeado := (cxp.RAMcell(i)^.mappedTo<>nil);
+        mapeado := (cxp.PICRam(i)^.mappedTo<>nil);
         pos1 := i;
         pos2 := i;
       end;
@@ -144,11 +144,11 @@ begin
   for i := dir1 to dir2 do begin
     if i = dir1 then begin
       //Define el bloque inicial
-      used := (cxp.RAMcell(i)^.used<>0);
+      used := (cxp.PICRam(i)^.used<>0);
       pos1 := i;
       pos2 := i;
     end else begin
-      if (cxp.RAMcell(i)^.used<>0) = used then begin
+      if (cxp.PICRam(i)^.used<>0) = used then begin
         //Es del bloque anterior
         pos2 := i;   //actualiza límite
       end else begin
@@ -160,7 +160,7 @@ begin
         n := n + 1;
         setlength(blockUse, n+1);
         //Define nuevo blqoue
-        used := (cxp.RAMcell(i)^.used<>0);
+        used := (cxp.PICRam(i)^.used<>0);
         pos1 := i;
         pos2 := i;
       end;
@@ -342,7 +342,7 @@ begin
         for j:=0 to high(blockMap) do begin
           if blockMap[j].mapped then begin
              //Calcual en donde se está mapeado
-             tarAdd := cxp.RAMcell(blockMap[j].add1)^.mappedTo^.addr;
+             tarAdd := cxp.PICRam(blockMap[j].add1)^.mappedTo^.addr;
              tarBnk :=  tarAdd >> 7;
              lbl := 'Mapped in bank'+ IntToStr(tarBnk);
              cv.Brush.Style := bsDiagCross;

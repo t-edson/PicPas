@@ -284,6 +284,14 @@ protected
 public   //Información y acceso a memoria
   function hexFilePath: string;
   function mainFilePath: string;
+  function CompilerName: string; virtual; abstract;  //Name of the compiler
+  procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean); virtual; abstract;
+  function RAMusedStr: string; virtual; abstract;
+  function FLASHusedStr: string; virtual; abstract;
+  procedure GetResourcesUsed(out ramUse, romUse, stkUse: single); virtual; abstract;
+  procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); virtual; abstract;
+  procedure GenerateListReport(lins: TStrings); virtual; abstract;
+public     //Acceso a campos del objeto PIC
   function PICName: string; virtual; abstract;
   function PICNameShort: string; virtual; abstract;
   function PICBankSize: word; virtual; abstract; //Size of a RAM banks
@@ -292,15 +300,10 @@ public   //Información y acceso a memoria
   function PICBank(i: byte): TPICRAMBank; virtual; abstract; //Return a RAM bank
   function PICnPages: byte; virtual; abstract; //Number of FLASH pages
   function PICPage(i: byte): TPICFlashPage; virtual; abstract; //Return a FLASH page
-  function CompilerName: string; virtual; abstract;  //Name of the compiler
-  function RAMcell(adr: word): TPICRamCellPtr; virtual; abstract;
+  function PICPines(i: byte): TPICPinPtr; virtual; abstract; //Return a Pin Object
+  function PICnPins: byte; virtual; abstract; //Return number of pins
+  function PICRam(adr: word): TPICRamCellPtr; virtual; abstract;
   function RAMmax: integer; virtual; abstract;
-  procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean); virtual; abstract;
-  function RAMusedStr: string; virtual; abstract;
-  function FLASHusedStr: string; virtual; abstract;
-  procedure GetResourcesUsed(out ramUse, romUse, stkUse: single); virtual; abstract;
-  procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); virtual; abstract;
-  procedure GenerateListReport(lins: TStrings); virtual; abstract;
 protected  //Container lists of registers
   listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
   listRegStk: TPicRegister_list;  //lista de registros de pila

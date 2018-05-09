@@ -354,7 +354,7 @@ var
 begin
   if StringGrid1.Row=-1 then exit;
   pc := StringGrid1.Row;
-  pic.ToggleBreakopint(pc);
+  pic.ToggleBreakpoint(pc);
   RefreshScreen(false);
 end;
 procedure TfrmDebugger.acGenStepExecute(Sender: TObject);
@@ -394,9 +394,9 @@ begin
   fraRegWat.cxp:= cxp;
   //fraRegWat.Refrescar;
 
-  fraPicDia.pic:= pic;
+  fraPicDia.cxp := cxp;
   fraPicDia.Refrescar;
-  pic.AddBreakopint(0);
+  pic.AddBreakpoint(0);
   pic.OnExecutionMsg := @picExecutionMsg;
   acGenResetExecute(self);
   StatusBar1.Panels[0].Text := pic.Model + ' at ' + IntToStr(pic.frequen) + ' Hz';
@@ -421,11 +421,11 @@ begin
   {La idea de la ejecución en tiempo real, es ejecutar un paquete de instrucciones
   (ciclos) por bloques y luego aprovechar el tiempo muerto que queda por haber ejecutado
   todas las instrucciones en menor tiempo.
-  Si se fuera estricto en la simualción y tiempo real, se ejecutaría instrucción por
-  instrucción aprovechar el tiempo muerto que queda, después de cada instrucción, ya que
-  la PC, ejecuta cada instrucción PIC, en menos tiempo (al menos eso se espera).
+  Si se fuera estricto en la simulación y tiempo real, se ejecutaría instrucción por
+  instrucción y se aprovecharía el tiempo muerto que queda, después de cada instrucción,
+  ya que la PC, ejecuta cada instrucción PIC, en menos tiempo (al menos eso se espera).
   En pruebas con una PC Core i7 con 3.4GHz, se calculó que se podía ejecutar las
-  instruccioes al menos 12 veces más rápido, para un dispositivo trabajando a 10MHz.}
+  instrucciones al menos 12 veces más rápido, para un dispositivo trabajando a 10MHz.}
   milsecRefresh := 200;   //Fija un periodo de refresco inicial
   Timer1.Interval := milsecRefresh;
   {Calcula cuántos ciclos debe ejecutar por refresco. Aún cuando el resultado de la
@@ -434,7 +434,7 @@ begin
   nCyclesPerClk := round(int64(pic.frequen) * milsecRefresh / 4000);
   /////////////////////////////////////////////////////////////////////////////////
   fraRegWat.mnClearAllClick(self);
-  fraRegWat.mnAddVarsClick(self);  //agrea varaibles por defecto
+  fraRegWat.mnAddVarsClick(self);  //agrega varaibles por defecto
   self.Show;
 end;
 procedure TfrmDebugger.FormCreate(Sender: TObject);

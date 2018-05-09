@@ -7,10 +7,10 @@ uses
   Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic10Utils, Parser,
   MisUtils, LCLType, LCLProc;
 const
-  STACK_SIZE = 8;      //tamaño de pila para subrutinas en el PIC
-  MAX_REGS_AUX_BYTE = 6;   //cantidad máxima de registros a usar
+  STACK_SIZE = 2;      //tamaño de pila para subrutinas en el PIC
+  MAX_REGS_AUX_BYTE = 4;   //cantidad máxima de registros a usar
   MAX_REGS_AUX_BIT = 4;    //cantidad máxima de registros bit a usar
-  MAX_REGS_STACK_BYTE = 8; //cantidad máxima de registros a usar en la pila
+  MAX_REGS_STACK_BYTE = 6; //cantidad máxima de registros a usar en la pila
   MAX_REGS_STACK_BIT = 4;  //cantidad máxima de registros a usar en la pila
 
 type
@@ -256,9 +256,7 @@ type
     procedure dword_Low(const OpPtr: pointer);
     procedure dword_LowWord(const OpPtr: pointer);
     procedure dword_Ultra(const OpPtr: pointer);
-  public  //Inicialización
-    pic        : TPIC10;       //Objeto PIC de la serie 16.
-    procedure StartRegs;
+  public     //Acceso a campos del PIC
     function PICName: string; override;
     function PICNameShort: string; override;
     function PICBankSize: word; override; //Size of a RAM banks
@@ -267,9 +265,14 @@ type
     function PICBank(i: byte): TPICRAMBank; override; //Return a RAM bank
     function PICnPages: byte; override; //Number of FLASH pages
     function PICPage(i: byte): TPICFlashPage; override; //Return a FLASH page
-    function CompilerName: string; override;
-    function RAMcell(adr: word): TPICRamCellPtr; override;
+    function PICPines(i: byte): TPICPinPtr; override; //Return a PIN
+    function PICnPins: byte; override; //Return number of pins
+    function PICRam(adr: word): TPICRamCellPtr; override;
     function RAMmax: integer; override;
+  public  //Inicialización
+    pic        : TPIC10;       //Objeto PIC de la serie 16.
+    procedure StartRegs;
+    function CompilerName: string; override;
     constructor Create; override;
     destructor Destroy; override;
   end;
@@ -1722,6 +1725,14 @@ function TGenCodBas_PIC10.PICPage(i: byte): TPICFlashPage;
 begin
   Result := pic.pages[i];
 end;
+function TGenCodBas_PIC10.PICPines(i: byte): TPICPinPtr; inline;
+begin
+  Result := @pic.pines[i];
+end;
+function TGenCodBas_PIC10.PICnPins: byte; inline;
+begin
+  Result := pic.Npins;
+end;
 function TGenCodBas_PIC10.GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
 {Extrae el primer parámetro (que corresponde al índice) de las funciones getitem() o
 setitem(). También reconoce las formas con corchetes [], y en ese caso pone "WithBrackets"
@@ -2889,7 +2900,7 @@ function TGenCodBas_PIC10.CompilerName: string;
 begin
   Result := 'PIC10 Compiler'
 end;
-function TGenCodBas_PIC10.RAMcell(adr: word): TPICRamCellPtr;
+function TGenCodBas_PIC10.PICRam(adr: word): TPICRamCellPtr;
 //Devuelve referencia a una celda de la RAM. Se devuelve puntero por velocidad.
 begin
   Result := @pic.ram[adr];
