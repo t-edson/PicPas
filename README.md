@@ -2,12 +2,12 @@
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7LKYWG9LXNQ9C&lc=ES&item_name=Tito%20Hinostroza&item_number=2153&no_note=0&cn=Dar%20instrucciones%20especiales%20al%20vendedor%3a&no_shipping=2&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted)
 
-PicPas 0.8.5
+PicPas 0.8.6
 ============
 
 Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "PicPas IDE")
+![PicPas IDE](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "PicPas IDE")
 
 PicPas is a Pascal compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
 
@@ -41,8 +41,6 @@ program BlinkLed;
 uses PIC16F84A;
 {$FREQUENCY 8MHZ}
 var
-  PORTB : BYTE absolute $06;
-  TRISB : BYTE absolute $86;
   pin: bit absolute PORTB.7;
 begin                          
   TRISB := 0;   //all outputs
@@ -90,7 +88,7 @@ begin
 end. 
 ```
 
-There is not yet support for the Baseline, the Enhanced Mid-range, or the PIC18 High-preformance families of PIC.
+There is not yet support for Enhanced Mid-range, or the PIC18 High-preformance families of PIC.
 
 
 ## IDE
@@ -113,7 +111,7 @@ Some features of the IDE are:
 
 •	Code tools for completion and navigation.
 
-•	Check syntax in ¡¡¡REAL TIME!!!.
+•	Check syntax in REAL TIME!!!.
 
 •	Several setting options.
 
@@ -122,6 +120,8 @@ Some features of the IDE are:
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/06/PicPas-0.7_en.png "PicPas with dark skin")
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/PicPas-Linux.jpg "PicPas for Ubuntu")
+
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2018/05/PicPasMac.jpg "PicPas for Mac")
 
 
 ## Debugger/Simulator
