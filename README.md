@@ -25,7 +25,7 @@ The compiler includes optimization options so the code obtained is fairly compac
 
 PicPas doesn't need installation, and have not dependencies, except the commons of the operative system, where it's runnig.
 
-To run, it's only needed to download the folder from GitHub. There is a compiled  Windows-32 version (PicPas-win32.exe) and a Ubuntu version (PicPas-linux).
+To run, it's only needed to download the folder from GitHub. There is compiled binaries for Windows-64 version (PicPas-win64.exe), Ubuntu version (PicPas-linux) and a Mac version (PicPas-Mac.dmg).
 
 If it's required other platform, it need to be compiled from the source code.
 
