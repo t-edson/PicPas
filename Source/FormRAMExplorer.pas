@@ -48,7 +48,7 @@ end;
 
 procedure TfrmRAMExplorer.Exec(cxp0: TCompilerBase);
 begin
-  fra.cxp := cxp0;
+  fra.SetCompiler(cxp0);
   Caption := 'RAM Explorer. PICModel=' + cxp0.PICName;
   Show;
   self.Width := 600;

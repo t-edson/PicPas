@@ -5,7 +5,7 @@ uses
   Classes, SysUtils, Types, FileUtil, Forms, Controls, Graphics, Dialogs,
   ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, LCLType, Compiler_PIC16,
   FrameRamExplorer, FrameRomExplorer, FramePicRegisters, FrameRegWatcher,
-  Pic16Utils, MisUtils, FramePICDiagram;
+  Pic16Utils, PicCore, MisUtils, FramePICDiagram;
 type
   { TfrmDebugger }
   TfrmDebugger = class(TForm)
@@ -84,15 +84,15 @@ type
     milsecRefresh: integer;   //Periodo de refresco en milisegunod
     nCyclesPerClk: integer;   //Número de ciclos a ejecutar por pasada
     curVarName : string;
+    cxp: TCompiler_PIC16;
+    pic: TPIC16;
     procedure picExecutionMsg(message: string);
     procedure RefreshScreen(SetGridRow: boolean = true);
     procedure StringGrid1DrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
   public
-    cxp: TCompiler_PIC16;
-    pic: TPIC16;
     procedure SetLanguage;
-    procedure Exec;
+    procedure Exec(cxp0: TCompiler_PIC16; pic0: TPIC16);
   end;
 
 var
@@ -120,13 +120,14 @@ end;
 procedure TfrmDebugger.StringGrid1DrawCell(Sender: TObject; aCol,
   aRow: Integer; aRect: TRect; aState: TGridDrawState);
 var
-  txt, comm, lab: String;           // texto de la celda
-  cv: TCanvas;           //referencia al lienzo
-  valOp: word;
-  bnkOp: Byte;
+  txt, comm, lab: String;   //Texto de la celda
+  cv: TCanvas;              //Referencia al lienzo
+  ramCell: ^TPICFlashCell;  //Referencia a la celda RAM
+  PC: Word;
 begin
   cv := StringGrid1.Canvas;  //referencia al Lienzo
-
+  ramCell := @pic.flash[aRow];
+  //Fija color de texto y relleno
   if gdFixed in aState then begin
     //Es una celda fija
     cv.Brush.Color := clMenu;      // le ponemos azul de fondo
@@ -141,7 +142,7 @@ begin
       cv.Font.Style := [fsBold];   // negrita
     end else begin
       //Fila sin selección
-      if pic.flash[aRow].used then begin
+      if ramCell^.used then begin
         cv.Brush.Color := clWhite;  //fondo blanco
       end else begin  //Dirección no usada
         cv.Brush.Color := $E0E0E0;
@@ -156,59 +157,58 @@ begin
     cv.TextOut(aRect.Left + 2, aRect.Top + 2, txt);
   end else if ACol = 1 then begin
     //Celda normal
-    valOp := pic.flash[aRow].value;
-    bnkOp := pic.flash[aRow].curBnk;
-    txt := pic.Disassembler(valOp, bnkOp, true);   //desensambla
+    txt := pic.DisassemblerAt(aRow, true);   //desensambla
+    PC := pic.PC.W;
     //Escribe texto con alineación
     if StringGrid1.RowHeights[Arow] = defHeight*3 then begin
       //Celda con comentario superior y etiqueta
-      lab := trim(pic.flash[Arow].topLabel)+':';
-      comm := trim(pic.flash[Arow].topComment);
+      lab := trim(ramCell^.topLabel)+':';
+      comm := trim(ramCell^.topComment);
       cv.Font.Color := clGray;
       cv.TextOut(aRect.Left + 2, aRect.Top + 2, lab);  //comentario
       cv.Font.Color := clBlue;
       cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top + defHeight+ 2, comm);  //comentario
       cv.Font.Color := clGreen;   //letra verde
       cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top + defHeight*2 + 2, txt);
-      if pic.flash[aRow].breakPnt then begin
+      if ramCell^.breakPnt then begin
         ImageList16.Draw(cv, aRect.Left + 1, aRect.Top+2 + defHeight*2, 9);
       end;
-      if aRow = word((pic.PCH<<8) + pic.PCL) then begin  //marca
+      if aRow = PC then begin  //marca
          ImageList16.Draw(cv, aRect.Left + 10, aRect.Top+2 + defHeight*2, 3);
       end;
     end else if StringGrid1.RowHeights[Arow] = defHeight*2 then begin
       //Celda con comentario superior
-      comm := trim(pic.flash[Arow].topComment);
+      comm := trim(ramCell^.topComment);
       cv.Font.Color := clBlue;   //letra verde
       cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top + 2, comm);  //comentario
       cv.Font.Color := clGreen;   //letra verde
       cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top+2 + defHeight, txt);
-      if pic.flash[aRow].breakPnt then begin
+      if ramCell^.breakPnt then begin
         ImageList16.Draw(cv, aRect.Left + 1, aRect.Top+2 + defHeight, 9);
       end;
-      if aRow = word((pic.PCH<<8) + pic.PCL) then begin  //marca
+      if aRow = PC then begin  //marca
          ImageList16.Draw(cv, aRect.Left + 10, aRect.Top+2 + defHeight, 3);
       end;
     end else begin
       cv.Font.Color := clGreen;   //letra verde
       cv.TextOut(aRect.Left + 2 + margInstrc, aRect.Top + 2, txt);
-      if pic.flash[aRow].breakPnt then begin
+      if ramCell^.breakPnt then begin
         ImageList16.Draw(cv, aRect.Left + 1, aRect.Top+2, 9);
       end;
-      if aRow = word((pic.PCH<<8) + pic.PCL) then begin  //marca
+      if aRow = PC then begin  //marca
          ImageList16.Draw(cv, aRect.Left + 10, aRect.Top+2, 3);
       end;
     end;
   end else if ACol = 2 then begin
     //Celda normal
     cv.Font.Color := clBlue;   //letra verde
-    txt := pic.flash[aRow].sideComment;  //comentario
-//    if pic.flash[aRow].idFile=-1 then begin
+    txt := ramCell^.sideComment;  //comentario
+//    if ramCell^.idFile=-1 then begin
 //      txt := '';
 //    end else begin
-//      txt := 'IdFil=' + IntToStr(pic.flash[aRow].idFile) +
-//             'row='   + IntToStr(pic.flash[aRow].rowSrc) +
-//             'col='   + IntToStr(pic.flash[aRow].colSrc) ;
+//      txt := 'IdFil=' + IntToStr(ramCell^.idFile) +
+//             'row='   + IntToStr(ramCell^.rowSrc) +
+//             'col='   + IntToStr(ramCell^.colSrc) ;
 //    end;
     //Escribe texto con alineación
     cv.TextOut(aRect.Left + 2, aRect.Top + 2, txt);
@@ -220,7 +220,7 @@ var
   pc: word;
 begin
   if SetGridRow then begin
-    pc := pic.PCH<<8 + pic.PCL;
+    pc := pic.PC.W;
     StringGrid1.Row := pc;
   end;
   StringGrid1.Invalidate;  //Refersca posibles cambios
@@ -229,9 +229,8 @@ begin
   if fraRegWat.Visible then fraRegWat.Refrescar;
   if fraPicDia.Visible then fraPicDia.Refrescar;
   StatusBar1.Panels[1].Text := 'Clock Cycles = ' + IntToStr(pic.nClck);
-//  StatusBar1.Panels[1].Text := 'Time seconds = ' + FloatToStr(pic.nClck / pic.frequen);
   StatusBar1.Panels[2].Text := 'Time  = ' +
-            FormatDateTime('hh:mm:ss.zzz', 4 * pic.nClck / pic.frequen / 86400);
+            FormatDateTime('hh:mm:ss.zzz', pic.nClck / pic.frequen / (86400 / 4));
 end;
 procedure TfrmDebugger.picExecutionMsg(message: string);
 var
@@ -253,15 +252,13 @@ procedure TfrmDebugger.PopupMenu1Popup(Sender: TObject);
 var
   txt: String;
   a: TStringDynArray;
-  valp: Word;
 begin
   if StringGrid1.Row=-1 then begin
     acGenAddWatch.Visible := false;
     exit;
   end;
   //Obtiene instrucción seleccionada
-  valp := pic.flash[StringGrid1.Row].value;
-  txt := pic.Disassembler(valp, 0, true);
+  txt := pic.DisassemblerAt(StringGrid1.Row, true);
   //Valida si es instrucción
   a := Explode(' ', txt);
   if (high(a)<>1) and (high(a)<>2) then begin
@@ -319,11 +316,10 @@ begin
   lstMessages.AddItem('Execution Paused.', nil);
 end;
 procedure TfrmDebugger.acGenSetPCExecute(Sender: TObject);
-//Fija el puntero del programa en la instrucción seleccionad
+//Fija el puntero del programa en la instrucción seleccionada.
 begin
   if StringGrid1.Row=-1 then exit;
-  pic.PCL := StringGrid1.Row and $FF;
-  pic.PCH := StringGrid1.Row >> 8;
+  pic.PC.W := StringGrid1.Row;
   StringGrid1.Invalidate;
 end;
 procedure TfrmDebugger.acGenExecHerExecute(Sender: TObject);
@@ -359,12 +355,9 @@ begin
 end;
 procedure TfrmDebugger.acGenStepExecute(Sender: TObject);
 {Ejecuta una instrucción sin entrar a subrutinas}
-var
-  pc: word;
 begin
   if pic.CurInstruction = i_CALL then begin
-    pc := pic.PCH<<8 + pic.PCL;
-    pic.ExecTo(pc+1);  //Ejecuta hasta la sgte. instrucción, salta el i_CALL
+    pic.ExecTo(pic.PC.W+1);  //Ejecuta hasta la sgte. instrucción, salta el i_CALL
   end else begin
     pic.Exec();
   end;
@@ -376,26 +369,24 @@ begin
   pic.Exec();
   RefreshScreen;
 end;
-procedure TfrmDebugger.Exec;
+procedure TfrmDebugger.Exec(cxp0: TCompiler_PIC16; pic0: TPIC16);
 {Inicia el prcceso de depuración, mostrando la ventana.}
 var
   i: Integer;
 begin
+  cxp := cxp0;
+  pic := pic0;
   StringGrid1.DefaultDrawing:=false;
   StringGrid1.OnDrawCell := @StringGrid1DrawCell;
 
   //Muestra Frames
-  fraRamExp.cxp := cxp;
-  fraRamExp.panGraph.Invalidate;
-  fraRomExp.cxp := cxp;
-  fraRomExp.Invalidate;
-  fraPicReg.pic := pic;
-  fraPicReg.Invalidate;
-  fraRegWat.cxp:= cxp;
-  //fraRegWat.Refrescar;
+  fraRamExp.SetCompiler(cxp);
+  fraRomExp.SetCompiler(cxp);
+  fraRomExp.Invalidate;  //Se refresca aquí porque no se incluye su refresco en RefreshScreen().
+  fraPicReg.SetCompiler(cxp);
+  fraRegWat.SetCompiler(cxp);
+  fraPicDia.SetCompiler(cxp);
 
-  fraPicDia.cxp := cxp;
-  fraPicDia.Refrescar;
   pic.AddBreakpoint(0);
   pic.OnExecutionMsg := @picExecutionMsg;
   acGenResetExecute(self);

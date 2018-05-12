@@ -11,6 +11,7 @@ type
   TfraRomExplorer = class(TFrame)
     Label1: TLabel;
   private
+    cxp: TCompilerBase;
     procedure DibPaginaROM(x, y, ancho, alto: integer; pag: TPICFlashPage;
       dirIni: integer);
     procedure DibBar(const x1, x2: integer; y, alto: integer; dirIni,
@@ -20,8 +21,7 @@ type
     procedure Frame1Paint(Sender: TObject);
     procedure TextCEnt(x, y: integer; txt: string);
   public
-    //pic: TPIC16;
-    cxp: TCompilerBase;
+    procedure SetCompiler(cxp0: TCompilerBase);
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
   end;
@@ -29,7 +29,7 @@ type
 implementation
 {$R *.lfm}
 { TfraRamExplorer }
-procedure TfraRomExplorer.TextCent(x, y: integer; txt: string);
+procedure TfraRomExplorer.TextCEnt(x, y: integer; txt: string);
 {Excribe texto centrado}
 var
   ancTxt, altTxt: Integer;
@@ -38,6 +38,11 @@ begin
   ancTxt := Canvas.TextWidth(txt);
   Canvas.Brush.Color := clWhite;
   Canvas.TextOut(x - ancTxt div 2, y - altTxt div 2, txt);
+end;
+
+procedure TfraRomExplorer.SetCompiler(cxp0: TCompilerBase);
+begin
+  cxp := cxp0;
 end;
 procedure TfraRomExplorer.DibBar(const x1, x2: integer; y, alto: integer;
                                  dirIni, dirFin: integer; lbl: string);

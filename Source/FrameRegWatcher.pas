@@ -39,6 +39,7 @@ type
     TIT_NAM: string;
     TIT_VAL: string;
   private  //Índice de columnas
+    cxp: TCompilerBase;
     //Columnas ocultas
     col_adr: word;  //Direción física
     col_bit: byte;  //Posición de bit
@@ -48,7 +49,7 @@ type
     COL_NAM: integer;  //Columna de nombre
     COL_VAL: integer;  //Columna de valor
   public
-    cxp: TCompilerBase;
+    procedure SetCompiler(cxp0: TCompilerBase);
     procedure AddWatch(varName: string);
     procedure Refrescar;
     procedure SetLanguage;
@@ -184,7 +185,6 @@ var
   addr: Longint;
   bit, valByte: byte;
 begin
-debugln('RefreshRow:'+IntToStr(f));
   //Lee dirección
   addrStr := grilla.Cells[col_adr,f];
   bitStr := grilla.Cells[col_bit,f];
@@ -267,6 +267,12 @@ function TfraRegWatcher.UtilGrillaLeerColorFondo(col, fil: integer): TColor;
 begin
   Result := clWhite;
 end;
+
+procedure TfraRegWatcher.SetCompiler(cxp0: TCompilerBase);
+begin
+  cxp := cxp0;
+end;
+
 procedure TfraRegWatcher.AddWatch(varName: string);
 {Agrega una variable para vigilar}
 var

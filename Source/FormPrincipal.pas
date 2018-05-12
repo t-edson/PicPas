@@ -425,8 +425,6 @@ begin
   COmpiler10.OnAfterCompile      := @Compiler16_AfterCompile;
   //Crea dinámicamente para poder inciailizarlo con comodidad
   frmDebug:= TfrmDebugger.Create(self);
-  frmDebug.cxp := Compiler16;
-  frmDebug.pic := Compiler16.pic;
 end;
 procedure TfrmPrincipal.FormDestroy(Sender: TObject);
 begin
@@ -1005,7 +1003,7 @@ begin
 end;
 procedure TfrmPrincipal.acToolASMDebugExecute(Sender: TObject);
 begin
-  frmDebug.Exec;
+  frmDebug.Exec(Compiler16, Compiler16.pic);
 end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin

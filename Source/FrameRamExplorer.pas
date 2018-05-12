@@ -21,6 +21,7 @@ type
     SpeedButton1: TSpeedButton;
     procedure SpeedButton1Click(Sender: TObject);
   private
+    cxp: TCompilerBase;
     blockSta: array of TRamBlock;
     blockMap: array of TRamBlock;
     blockUse: array of TRamBlock;
@@ -35,8 +36,8 @@ type
       dirFin, BankSize: word);
     procedure panGraphPaint(Sender: TObject);
   public
-    cxp: TCompilerBase;
     OnCloseFrame: procedure of object;   //Evento de cierre
+    procedure SetCompiler(cxp0: TCompilerBase);
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
   end;
@@ -386,6 +387,10 @@ begin
     DibBancoRAM(Rect(x0, y0, x0+ancPag, y0+alto), cxp.PICBank(i), i = bnkSel);
     x0 := x0 + ancPag + separ;
   end;
+end;
+procedure TfraRamExplorer.SetCompiler(cxp0: TCompilerBase);
+begin
+  cxp := cxp0;
 end;
 constructor TfraRamExplorer.Create(AOwner: TComponent);
 begin

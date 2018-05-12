@@ -214,7 +214,7 @@ procedure TGenCod.CopyInvert_C_to_Z;
 begin
   //El resultado está en C (invertido), hay que pasarlo a Z
   _MOVLW($01 << _C);     //carga máscara de C
-  _ANDWF(STATUS, toW);   //el resultado está en Z, corregido en lógica.
+  _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
   InvertedFromC := true;  //Indica que se ha hecho Z = 'C. para que se pueda optimizar
 end;
 ////////////rutinas obligatorias
@@ -1493,7 +1493,7 @@ begin
     _BSF  (U.offs,3);  //8->U
     _RRF  (E.offs,toF);
 LOOP:=_PC;
-    _BTFSC (STATUS,0);
+    _BTFSC (_STATUS,0);
     _ADDWF (H.offs,toF);
     _RRF   (H.offs,toF);
     _RRF   (E.offs,toF);
@@ -1532,7 +1532,7 @@ begin
       SetROBResultExpres_word(Opt);
       _BANKSEL(H.bank);
       _CLRF(H.offs);
-      _BCF(STATUS, _C);
+      _BCF(_STATUS, _C);
       _BANKSEL(P2^.bank);
       _RLF(p2^.offs, toW);
       _BANKSEL(H.bank);
@@ -1764,7 +1764,7 @@ Arit_DivideBit8 := _PC;
     _rlf    (U.offs,toF);    // (U.offs) contiene el dividendo parcial.
     _movf   (aux.offs,toW);
     _subwf  (U.offs,toW);    //Compara dividendo parcial y divisor.
-    _btfsc  (STATUS,_C);     //Si (dividendo parcial)>(divisor)
+    _btfsc  (_STATUS,_C);     //Si (dividendo parcial)>(divisor)
     _movwf  (U.offs);        //(dividendo parcial) - (divisor) --> (dividendo parcial)
     _rlf    (E.offs,toF);    //Desplaza el cociente introduciendo el bit apropiado.
     _decfsz (aux2.offs,toF);
@@ -2532,7 +2532,7 @@ loop1 := _PC;
   _BTFSC(Z.offs, Z.bit);
   _GOTO_PEND(dg);     //Dio, cero, termina
   //Desplaza
-  _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+  _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
   if toRight then  //a la derecha
     _RRF(aux.offs, toF)
   else
@@ -2567,39 +2567,39 @@ begin
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.offs, toW);  //solo devuelve lo mismo en W
     end else if p2^.valInt = 1 then begin
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(byte1, toW);  //devuelve desplazado en W
     end else if p2^.valInt = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(aux, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(aux, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(aux, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
@@ -2636,37 +2636,37 @@ begin
     end else if p2^.valInt = 1 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toW);  //devuelve desplazado en W
       aux.used := false;
     end else if p2^.valInt = 2 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 3 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 4 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
@@ -2712,46 +2712,46 @@ begin
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.offs, toW);  //solo devuelve lo mismo en W
     end else if p2^.valInt = 1 then begin
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _BANKSEL(p1^.bank);  //verifica banco destino
       _RLF(p1^.offs, toW);  //devuelve desplazado en W
     end else if p2^.valInt = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BANKSEL(p1^.bank);  //verifica banco destino
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(p1^.offs, toW);  //desplaza y mueve
       _BANKSEL(aux.bank);
       _MOVWF(aux.offs);
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BANKSEL(p1^.bank);  //verifica banco destino
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(p1^.offs, toW);  //desplaza y mueve
       _BANKSEL(aux.bank);
       _MOVWF(aux.offs);
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BANKSEL(p1^.bank);  //verifica banco destino
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(p1^.offs, toW);  //desplaza y mueve
       _BANKSEL(aux.bank);
       _MOVWF(aux.offs);
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
@@ -2793,37 +2793,37 @@ begin
     end else if p2^.valInt = 1 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //devuelve desplazado en W
       aux.used := false;
     end else if p2^.valInt = 2 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 3 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if p2^.valInt = 4 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toF);  //desplaza
-      _BCF(STATUS, _C);   //limpia bandera porque se hace rotación
+      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
@@ -3337,7 +3337,7 @@ begin
     _movwf(H.offs);         //Guarda el resultado
     _movlw(p1^.LByte);      //Carga menos peso del dato 1
     _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-    _btfsc(STATUS,_C);     //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
     _incf(H.offs, toF);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
@@ -3348,7 +3348,7 @@ begin
     _addwf(H.offs,toF);         //Suma y guarda
     _movlw(p1^.LByte);      //Carga menos peso del dato 1
     _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
-    _btfsc(STATUS,_C);    //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
     aux.used := false;
   end;
@@ -3359,7 +3359,7 @@ begin
     _MOVWF(H.offs);         //Guarda el resultado
     _MOVLW(p2^.LByte);      //Carga menos peso del dato 1
     _ADDWF(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-    _BTFSC(STATUS,_C);     //Hubo acarreo anterior?
+    _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
     _INCF(H.offs, toF);
   end;
   stVariab_Variab:begin
@@ -3369,7 +3369,7 @@ begin
     _MOVWF(H.offs);         //Guarda mayor peso del resultado
     _MOVF(p1^.Loffs, toW);  //Carga menos peso del dato 1
     _ADDWF(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-    _BTFSC(STATUS,_C);     //Hubo acarreo anterior?
+    _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
     _INCF(H.offs, toF);
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
@@ -3386,7 +3386,7 @@ begin
     _MOVF(p1^.Loffs, toW);       //Carga menos peso del dato 1
     _BANKSEL(aux.bank);
     _addwf(aux.offs,toW);    //Suma menos peso del dato 2, deja en W
-    _btfsc(STATUS,_C);      //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);      //Hubo acarreo anterior?
     _incf(H.offs, toF);
     aux.used := false;
   end;
@@ -3398,7 +3398,7 @@ begin
     _addwf(H.offs,toF);         //Suma y guarda
     _movlw(p2^.LByte);      //Carga menos peso del dato 1
     _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
-    _btfsc(STATUS,_C);    //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
     aux.used := false;
   end;
@@ -3415,7 +3415,7 @@ begin
     _BANKSEL(aux.bank);
     _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);
-    _btfsc(STATUS,_C);    //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
     aux.used := false;
   end;
@@ -3453,7 +3453,7 @@ begin
     _movlw(p1^.LByte);      //Carga menos peso del dato 1
     _BANKSEL(p2^.bank);
     _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
-    _btfsc(STATUS,_C);    //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
@@ -3468,7 +3468,7 @@ begin
     _BANKSEL(aux.bank);
     _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
-    _btfsc(STATUS,_C);    //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
     aux.used := false;
   end;
@@ -3482,7 +3482,7 @@ begin
     _BANKSEL(p1^.bank);      //se cambia primero el banco por si acaso
     _ADDWF(p1^.Loffs,toW); //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
-    _BTFSC(STATUS,_C);    //Hubo acarreo anterior?
+    _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
     _INCF(H.offs, toF);
   end;
   stVariab_Variab:begin
@@ -3496,7 +3496,7 @@ begin
     _BANKSEL(p2^.bank);
     _ADDWF(p2^.Loffs,toW); //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
-    _BTFSC(STATUS,_C);    //Hubo acarreo anterior?
+    _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
     _INCF(H.offs, toF);
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
@@ -3513,7 +3513,7 @@ begin
     _BANKSEL(p1^.bank);
     _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
-    _btfsc(STATUS,_C);    //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
     aux.used := false;
   end;
@@ -3523,7 +3523,7 @@ begin
     kMOVWF(FSR);
     kADDWF(byte2L, toW);
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
-    _btfsc(STATUS,_C);    //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
@@ -3531,7 +3531,7 @@ begin
     _BANKSEL(p2^.bank);
     _addwf(p2^.Loffs,toW);         //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
-    _btfsc(STATUS,_C);    //Hubo acarreo anterior?
+    _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
   end;
   stExpres_Expres:begin
@@ -3583,7 +3583,7 @@ begin
     kMOVWF(FSR);
     kMOVF(byte2L, toW);
     kSUBWF(FSR, toW);
-    _btfss(STATUS, _C);
+    _btfss(_STATUS, _C);
     _decf(H.offs,toF);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
@@ -3603,7 +3603,7 @@ begin
     kMOVWF(FSR);
     kMOVF(aux, toW);
     kSUBWF(FSR, toW);
-    _btfss(STATUS, _C);
+    _btfss(_STATUS, _C);
     _decf(H.offs,toF);
     aux.used := false;
   end;
@@ -3614,7 +3614,7 @@ begin
     _movwf(H.offs);
     _movlw(p2^.LByte);
     _subwf(p1^.Loffs,toW);
-    _btfss(STATUS, _C);
+    _btfss(_STATUS, _C);
     _decf(H.offs,toF);
   end;
   stVariab_Variab:begin  //p1 - p2
@@ -3624,7 +3624,7 @@ begin
     _movwf(H.offs);
     _movf (p2^.Loffs,toW);
     _subwf(p1^.Loffs,toW);
-    _btfss(STATUS, _C);
+    _btfss(_STATUS, _C);
     _decf(H.offs,toF);
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en (H,W)
@@ -3636,7 +3636,7 @@ begin
     _movwf(H.offs);
     _movf (aux.offs,toW);
     _subwf(p1^.Loffs,toW);
-    _btfss(STATUS, _C);
+    _btfss(_STATUS, _C);
     _decf(H.offs,toF);
     aux.used := false;
   end;
@@ -3648,7 +3648,7 @@ begin
     _subwf(H.offs, toF);
     _movlw(p2^.LByte);
     _subwf(aux.offs,toW);
-    _btfss(STATUS, _C);
+    _btfss(_STATUS, _C);
     _decf(H.offs,toF);
     aux.used := false;
   end;
@@ -3660,7 +3660,7 @@ begin
     _subwf(H.offs, toF);
     _movf(p2^.Loffs, toW);
     _subwf(aux.offs,toW);
-    _btfss(STATUS, _C);
+    _btfss(_STATUS, _C);
     _decf(H.offs,toF);
     aux.used := false;
   end;
@@ -3706,21 +3706,21 @@ MUL16LOOP := _PC;
    _MOVF    (SYSTMP01.offs,toW);
    _ADDWF   (SYSTMP00.offs,toF);
    _MOVF    (SYSTMP02.offs,toW);
-   _BTFSC   (STATUS,0  );
+   _BTFSC   (_STATUS,0  );
    //_ADDLW   (1);  No existe esta instrucción
    kMOVWF(FSR);      //W=W+1
    kINCF(FSR, toW);  //W=W+1
    _ADDWF   (H.offs,toF);
 // END_IF_1:
-   _BCF     (STATUS, 0);    //STATUS.C := 0
+   _BCF     (_STATUS, 0);    //STATUS.C := 0
    _RRF     (E.offs, toF    );    //OP_B>>1
    _RRF     (U.offs, toF    );
-   _BCF     (STATUS, 0);    //STATUS.C := 0
+   _BCF     (_STATUS, 0);    //STATUS.C := 0
    _RLF     (SYSTMP01.offs,toF);  //OP_A<<1
    _RLF     (SYSTMP02.offs,toF);
    _MOVF    (E.offs, toW);  //Si (OP_B>0) then goto MUL16LOOP
    _IORWF   (U.offs, toW);
-   _BTFSS   (STATUS, 2);
+   _BTFSS   (_STATUS, 2);
    _GOTO    (MUL16LOOP);  //OP_B>0
    _MOVF    (SYSTMP00.offs, toW);  //i_RETURN RES.LOW to toW
    SYSTMP00.used := false;
@@ -4589,19 +4589,19 @@ begin
     _movwf  (aux.offs);       //Guarda Byte L de resultado
 
     _movf   (p2^.Hoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
+    _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Hoffs,toW);
     _addwf  (p1^.Hoffs,toW);  //Cambia C
     _movwf  (H.offs);       //Guarda Byte H de resultado
 
     _movf   (p2^.Eoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
+    _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Eoffs,toW);
     _addwf  (p1^.Eoffs,toW);  //Cambia C
     _movwf  (E.offs);       //Guarda Byte E de resultado
 
     _movf   (p2^.Uoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
+    _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Uoffs,toW);
     _addwf  (p1^.Uoffs,toW);
     _movwf  (U.offs);       //Guarda Byte U de resultado
@@ -4688,40 +4688,40 @@ begin
     end else if p2^.valInt <= $FF then begin
       _movlw (p2^.LByte);
       _addwf (p1^.Loffs,toF);
-      _btfsc (STATUS,_C);
+      _btfsc (_STATUS,_C);
       _INCF  (p1^.Hoffs,toF);
-      _btfsc (STATUS,_Z);
+      _btfsc (_STATUS,_Z);
       _INCF  (p1^.Eoffs,toF);
-      _btfsc (STATUS,_Z);
+      _btfsc (_STATUS,_Z);
       _INCF  (p1^.Uoffs,toF);
     end else if p2^.valInt <= $FFFF then begin
       _movlw (p2^.LByte);
       _addwf (p1^.Loffs,toF);
       _movlw (p2^.HByte);
       kMOVWF(FSR);  //Salva sin cambiar C
-      _btfsc (STATUS,_C);
+      _btfsc (_STATUS,_C);
       kINCF(FSR, toW);
       _addwf (p1^.Hoffs,toF);
-      _btfsc (STATUS,_C);
+      _btfsc (_STATUS,_C);
       _INCF  (p1^.Eoffs,toF);
-      _btfsc (STATUS,_Z);
+      _btfsc (_STATUS,_Z);
       _INCF  (p1^.Uoffs,toF);
     end else begin
       _movlw (p2^.LByte);
       _addwf (p1^.Loffs,toF);
       _movlw (p2^.HByte);
       kMOVWF(FSR);  //Salva sin cambiar C
-      _btfsc (STATUS,_C);
+      _btfsc (_STATUS,_C);
       kINCF(FSR, toW);
       _addwf (p1^.Hoffs,toF);
       _movlw (p2^.EByte);
       kMOVWF(FSR);  //Salva sin cambiar C
-      _btfsc (STATUS,_C);
+      _btfsc (_STATUS,_C);
       kINCF(FSR, toW);
       _addwf (p1^.Eoffs,toF);
       _movlw (p2^.UByte);
       kMOVWF(FSR);  //Salva sin cambiar C
-      _btfsc (STATUS,_C);
+      _btfsc (_STATUS,_C);
       kINCF(FSR, toW);
       _addwf (p1^.Uoffs,toF);
     end;
@@ -4731,15 +4731,15 @@ begin
     _movf   (p2^.Loffs,toW);
     _addwf  (p1^.Loffs,toF);
     _movf   (p2^.Hoffs,toW);
-    _btfsc  (STATUS,_C);
+    _btfsc  (_STATUS,_C);
     _incfsz (p2^.Hoffs,toW);
     _addwf  (p1^.Hoffs,toF);
     _movf   (p2^.Eoffs,toW);
-    _btfsc  (STATUS,_C);
+    _btfsc  (_STATUS,_C);
     _incfsz (p2^.Eoffs,toW);
     _addwf  (p1^.Eoffs,toF);
     _movf   (p2^.Uoffs,toW);
-    _btfsc  (STATUS,_C);
+    _btfsc  (_STATUS,_C);
     _incfsz (p2^.Uoffs,toW);
     _addwf  (p1^.Uoffs,toF);
   end;
@@ -4747,15 +4747,15 @@ begin
     if SetRes then SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
     _addwf  (p1^.Loffs,toF);  //p2 ya está en W
     _movf   (H.offs,toW);
-    _btfsc  (STATUS,_C);
+    _btfsc  (_STATUS,_C);
     _incfsz (H.offs,toW);
     _addwf  (p1^.Hoffs,toF);
     _movf   (E.offs,toW);
-    _btfsc  (STATUS,_C);
+    _btfsc  (_STATUS,_C);
     _incfsz (E.offs,toW);
     _addwf  (p1^.Eoffs,toF);
     _movf   (U.offs,toW);
-    _btfsc  (STATUS,_C);
+    _btfsc  (_STATUS,_C);
     _incfsz (U.offs,toW);
     _addwf  (p1^.Uoffs,toF);
   end;
@@ -5079,16 +5079,16 @@ begin
     end else if res.Typ = typWord then begin
       _BANKSEL(res.bank);
       _INCF(res.Loffs, toF);
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _INCF(res.Hoffs, toF);
     end else if res.Typ = typDWord then begin
       _BANKSEL(res.bank);
       _INCF(res.Loffs, toF);
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _INCF(res.Hoffs, toF);
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _INCF(res.Eoffs, toF);
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _INCF(res.Uoffs, toF);
     end else if res.Typ.catType = tctPointer then begin
       //Es puntero corto
@@ -5152,18 +5152,18 @@ begin
     end else if res.Typ = typWord then begin
       _BANKSEL(res.bank);
       _MOVF(res.Loffs, toW);
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _DECF(res.Hoffs, toF);
       _DECF(res.Loffs, toF);
     end else if res.Typ = typDWord then begin
       _BANKSEL(res.bank);
       _MOVLW(1);
       _subwf(res.Loffs, toF);
-      _BTFSS(STATUS, _C);
+      _BTFSS(_STATUS, _C);
       _subwf(RES.Hoffs, toF);
-      _BTFSS(STATUS, _C);
+      _BTFSS(_STATUS, _C);
       _subwf(RES.Eoffs, toF);
-      _BTFSS(STATUS, _C);
+      _BTFSS(_STATUS, _C);
       _subwf(RES.Uoffs, toF);
     end else if res.Typ.catType = tctPointer then begin
       //Es puntero corto
@@ -5443,7 +5443,7 @@ begin
       res.SetAsExpres(typByte);  //Cambia el tipo
     end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
       _MOVLW(0);    //Z -> W
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _MOVLW(1);
       res.SetAsExpres(typByte);  //Cambia el tipo
     end else begin
@@ -5502,7 +5502,7 @@ begin
       SetResultExpres(typWord);  //Devolvemo expresión
       _CLRF(H.offs);
       _MOVLW(0);
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _MOVLW(1);
     end else begin
       GenError('Cannot convert this variable to word.'); exit;
@@ -5527,7 +5527,7 @@ begin
       res.SetAsExpres(typWord);
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _MOVLW(1);
     end else begin
       GenError('Cannot convert expression to word.'); exit;
@@ -5589,7 +5589,7 @@ begin
       _CLRF(E.offs);
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _MOVLW(1);
     end else begin
       GenError('Cannot convert this variable to Dword.'); exit;
@@ -5622,7 +5622,7 @@ begin
       _CLRF(E.offs);
       _CLRF(H.offs);
       _MOVLW(0);    //Z -> W
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _MOVLW(1);
     end else begin
       GenError('Cannot convert expression to Dword.'); exit;

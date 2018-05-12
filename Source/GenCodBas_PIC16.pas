@@ -281,14 +281,6 @@ type
     constructor Create; override;
     destructor Destroy; override;
   end;
-const
-  //constantes útiles para ensamblador
-  STATUS = $03;
-  _C = 0;
-  _Z = 2;
-  _RP0 = 5;
-  _RP1 = 6;
-//  _IRP = 7;
 
 implementation
 
@@ -1211,10 +1203,10 @@ Siempre genera dos instrucciones. Se usa cuando no se puede predecir exactamente
 banco se encontrará el compilador.}
 begin
   if pic.NumBanks > 1 then begin
-    _BCF(STATUS, _RP0); PutComm(';Bank reset.');
+    _BCF(_STATUS, _RP0); PutComm(';Bank reset.');
   end;
   if pic.NumBanks > 2 then begin
-    _BCF(STATUS, _RP1); PutComm(';Bank reset.');
+    _BCF(_STATUS, _RP1); PutComm(';Bank reset.');
   end;
   CurrBank:=0;
 end;
@@ -1237,9 +1229,9 @@ begin
   if (CurrBank = 255) or (curRP0 <> newRP0) then begin
     //Debe haber cambio
     if curRP0 = 0 then begin
-      _BSF(STATUS, _RP0); PutComm(';Bank set.');
+      _BSF(_STATUS, _RP0); PutComm(';Bank set.');
     end else begin
-      _BCF(STATUS, _RP0); PutComm(';Bank set.');
+      _BCF(_STATUS, _RP0); PutComm(';Bank set.');
     end;
   end;
   //Verifica si ya no hay más bancos
@@ -1253,9 +1245,9 @@ begin
   if (CurrBank = 255) or (curRP1 <> newRP1) then begin
     //Debe haber cambio
     if curRP1 = 0 then begin
-      _BSF(STATUS, _RP1); PutComm(';Bank set.');
+      _BSF(_STATUS, _RP1); PutComm(';Bank set.');
     end else begin
-      _BCF(STATUS, _RP1); PutComm(';Bank set.');
+      _BCF(_STATUS, _RP1); PutComm(';Bank set.');
     end;
   end;
   //////////////////////////////////////
@@ -1703,13 +1695,13 @@ end;
 //Instrucciones adicionales
 procedure TGenCodBas_PIC16.kSHIFTR(const f: TPicRegister; d: TPIC16destin);
 begin
-  _BCF(STATUS, _C);
+  _BCF(_STATUS, _C);
   GenCodBank(f.addr);
   _RRF(f.addr, d);
 end;
 procedure TGenCodBas_PIC16.kSHIFTL(const f: TPicRegister; d: TPIC16destin);
 begin
-  _BCF(STATUS, _C);
+  _BCF(_STATUS, _C);
   GenCodBank(f.addr);
   _RLF(f.addr, d);
 end;
@@ -2200,7 +2192,7 @@ j1:= _PC;
       _CLRF($00);    //Limpia [FSR]
       _INCF($04, toF);    //Siguiente
       _ADDLW(1);   //W = W + 1
-      _BTFSS(STATUS, _Z);
+      _BTFSS(_STATUS, _Z);
       _GOTO(j1);
     end;
   end;
@@ -2391,7 +2383,7 @@ begin
       end;
     stVariab: begin
       SetResultExpres(arrVar.typ.refType, true);  //Es array de word, devuelve word
-      _BCF(STATUS, _C);
+      _BCF(_STATUS, _C);
       _RLF(idx.offs, toW);           //Multiplica Idx por 2
       _ADDLW(arrVar.addr0+1);   //Agrega OFFSET + 1
       _MOVWF(FSR.offs);     //direcciona con FSR
@@ -2403,7 +2395,7 @@ begin
     stExpres: begin
       SetResultExpres(arrVar.typ.refType, false);  //Es array de word, devuelve word
       _MOVWF(FSR.offs);     //idx a  FSR (usa como varaib. auxiliar)
-      _BCF(STATUS, _C);
+      _BCF(_STATUS, _C);
       _RLF(FSR.offs, toW);         //Multiplica Idx por 2
       _ADDLW(arrVar.addr0+1);   //Agrega OFFSET + 1
       _MOVWF(FSR.offs);     //direcciona con FSR
@@ -2478,7 +2470,7 @@ begin
         //Sabemos que hay una expresión word
         if value.Sto = stConst then begin
           //El valor a escribir, es una constante cualquiera
-          _BCF(STATUS, _C);
+          _BCF(_STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
           _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
@@ -2500,7 +2492,7 @@ begin
         end else if value.Sto = stVariab then begin
           //El valor a escribir, es una variable
           //Calcula dirfección de byte bajo
-          _BCF(STATUS, _C);
+          _BCF(_STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
           _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
@@ -2518,7 +2510,7 @@ begin
           typWord.DefineRegister;   //Para usar H
           _MOVWF(aux.offs);  //W->   salva W (Valor.H)
           //Calcula dirección de byte bajo
-          _BCF(STATUS, _C);
+          _BCF(_STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
           _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
@@ -2538,7 +2530,7 @@ begin
       if value.Sto = stConst then begin
         //El valor a asignar, es una constante
         _MOVWF(FSR.offs);   //Salva W.
-        _BCF(STATUS, _C);
+        _BCF(_STATUS, _C);
         _RLF(FSR.offs, toW);  //idx * 2
         _ADDLW(arrVar.addr0);  //Dirección de inicio
         _MOVWF(FSR.offs);  //Direcciona a byte bajo
@@ -2559,7 +2551,7 @@ begin
         end;
       end else if value.Sto = stVariab then begin
         _MOVWF(FSR.offs);   //Salva W.
-        _BCF(STATUS, _C);
+        _BCF(_STATUS, _C);
         _RLF(FSR.offs, toW);  //idx * 2
         _ADDLW(arrVar.addr0);  //Dirección de inicio
         _MOVWF(FSR.offs);  //Direcciona a byte bajo
@@ -2577,7 +2569,7 @@ begin
         _MOVWF(aux.offs);  //W->aux   salva W
         rVar := GetVarByteFromStk;  //toma referencia de la pila
         //Calcula dirección de byte bajo
-        _BCF(STATUS, _C);
+        _BCF(_STATUS, _C);
         _RLF(rVar.adrByte0.offs, toW);  //índice * 2
         _ADDLW(arrVar.addr0);  //Dirección de inicio
         _MOVWF(FSR.offs);  //Direcciona
@@ -2974,6 +2966,7 @@ end;
 constructor TGenCodBas_PIC16.Create;
 begin
   inherited Create;
+  ID := 16;  //Identifica al compilador PIC16
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPIC16.Create;
@@ -3082,13 +3075,13 @@ begin
   {Crea registro de trabajo Z. El registro Z, es el registro interno del PIC, y está
   siempre asignado en RAM. }
   Z := TPicRegisterBit.Create;
-  Z.addr := STATUS;
+  Z.addr := _STATUS;
   Z.bit := _Z;
   Z.assigned := true;   //ya está asignado desde el principio
   {Crea registro de trabajo C. El registro C, es el registro interno del PIC, y está
   siempre asignado en RAM. }
   C := TPicRegisterBit.Create;
-  C.addr := STATUS;
+  C.addr := _STATUS;
   C.bit := _C;
   C.assigned := true;   //ya está asignado desde el principio
   //Crea registro interno INDF

@@ -64,9 +64,8 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure motEdi_MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-    procedure SetCxp(AValue: TCompilerBase);
   public
-    property cxp: TCompilerBase read Fcxp write SetCxp;
+    procedure SetCompiler(cxp0: TCompilerBase);
     procedure Refrescar;
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
@@ -289,11 +288,12 @@ begin
   motEdi.Destroy;
   inherited Destroy;
 end;
-procedure TfraPICDiagram.SetCxp(AValue: TCompilerBase);
+procedure TfraPICDiagram.SetCompiler(cxp0: TCompilerBase);
 begin
-  Fcxp := AValue;
-  ogPic.cxp := AValue;  //Actualiza referencia
+  Fcxp := cxp0;
+  ogPic.cxp := cxp0;  //Actualiza referencia
 end;
+
 /////////////////////// Acciones /////////////////////////
 procedure TfraPICDiagram.acGenAddLogTogExecute(Sender: TObject);
 {Agrega un Objeto Gráfico LogicToggle}

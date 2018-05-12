@@ -720,7 +720,7 @@ begin
     end else if Op1.Typ = typWord then begin
       _BANKSEL(oP1.bank);
       _INCF(Op1.Loffs, toF);
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _INCF(Op1.Hoffs, toF);
     end;
     _GOTO(l1);  //repite el lazo
@@ -2492,7 +2492,7 @@ begin
       lins.Add(nam + ' EQU ' +  adStr);
     end;
     for rbit in listRegAuxBit do begin
-      nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
+      nam := pic.NameRAMbit(rbit.addr, rbit.bit); //debería tener nombre
       adStr := '0x' + IntToHex(rbit.addr, 3);
       lins.Add('#define' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
     end;
@@ -2505,7 +2505,7 @@ begin
       lins.Add(nam + ' EQU ' +  adStr);
     end;
     for rbit in listRegStkBit do begin
-      nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
+      nam := pic.NameRAMbit(rbit.addr, rbit.bit); //debería tener nombre
       adStr := '0x' + IntToHex(rbit.addr, 3);
       lins.Add('#define ' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
     end;
@@ -2587,8 +2587,7 @@ begin
   //Cuenta apariciones
   for i:=0 to high(pic.flash) do begin
     if pic.flash[i].used then begin
-       pic.PCH := hi(i);
-       pic.PCL := lo(i);
+       pic.PC.W := i;
        curInst := pic.CurInstruction;
        Inc(OpCodeCoun[curInst]);  //Acumula
     end;

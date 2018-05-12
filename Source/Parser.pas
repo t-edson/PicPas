@@ -224,16 +224,17 @@ public   //Tipos de datos a implementar
   typWord : TxpEleType;
   typDWord: TxpEleType;
 public
-  Compiling: boolean;    //Bandera para el compilado
-  FirstPass: boolean;    //Indica que está en la primera pasada.
-  xLex    : TSynFacilSyn; //Resaltador - lexer
-  cIn     : TContexts;   //Entrada de datos
+  ID       : integer;     //Identificador para el compilador.
+  Compiling: boolean;     //Bandera para el compilado
+  FirstPass: boolean;     //Indica que está en la primera pasada.
+  xLex     : TSynFacilSyn; //Resaltador - lexer
+  cIn      : TContexts;   //Entrada de datos
   //Variables públicas del compilador
-  ejecProg: boolean;     //Indica que se está ejecutando un programa o compilando
-  DetEjec : boolean;     //Para detener la ejecución (en intérpretes)
+  ejecProg : boolean;     //Indica que se está ejecutando un programa o compilando
+  DetEjec  : boolean;     //Para detener la ejecución (en intérpretes)
 
-  p1, p2  : ^TOperand;   //Pasa los operandos de la operación actual
-  res     : TOperand;    //resultado de la evaluación de la última expresión.
+  p1, p2   : ^TOperand;   //Pasa los operandos de la operación actual
+  res      : TOperand;    //resultado de la evaluación de la última expresión.
   procedure Compile(NombArc: string; Link: boolean = true); virtual; abstract;
 protected //Accesos a propeidades de p1^ y p2^.
   function value1: word;
