@@ -2970,6 +2970,7 @@ begin
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPIC16.Create;
+  picCore := pic;   //Referencia picCore
   ///////////Crea tipos
   ClearTypes;
   ///////////////// Tipo Bit ////////////////

@@ -8,7 +8,7 @@ uses
   MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 2;      //tamaño de pila para subrutinas en el PIC
-  MAX_REGS_AUX_BYTE = 4;   //cantidad máxima de registros a usar
+  MAX_REGS_AUX_BYTE = 5;   //cantidad máxima de registros a usar
   MAX_REGS_AUX_BIT = 4;    //cantidad máxima de registros bit a usar
   MAX_REGS_STACK_BYTE = 6; //cantidad máxima de registros a usar en la pila
   MAX_REGS_STACK_BIT = 4;  //cantidad máxima de registros a usar en la pila
@@ -2908,6 +2908,7 @@ begin
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPIC10.Create;
+  picCore := pic;   //Referencia picCore
   ///////////Crea tipos
   ClearTypes;
   ///////////////// Tipo Bit ////////////////

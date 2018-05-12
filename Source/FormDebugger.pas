@@ -3,7 +3,7 @@ unit FormDebugger;
 interface
 uses
   Classes, SysUtils, Types, FileUtil, Forms, Controls, Graphics, Dialogs,
-  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, LCLType, Compiler_PIC16,
+  ComCtrls, ExtCtrls, StdCtrls, Grids, ActnList, Menus, LCLType, Parser,
   FrameRamExplorer, FrameRomExplorer, FramePicRegisters, FrameRegWatcher,
   Pic16Utils, PicCore, MisUtils, FramePICDiagram;
 type
@@ -84,15 +84,15 @@ type
     milsecRefresh: integer;   //Periodo de refresco en milisegunod
     nCyclesPerClk: integer;   //Número de ciclos a ejecutar por pasada
     curVarName : string;
-    cxp: TCompiler_PIC16;
-    pic: TPIC16;
+    cxp: TCompilerBase;
+    pic: TPicCore;
     procedure picExecutionMsg(message: string);
     procedure RefreshScreen(SetGridRow: boolean = true);
     procedure StringGrid1DrawCell(Sender: TObject; aCol, aRow: Integer;
       aRect: TRect; aState: TGridDrawState);
   public
     procedure SetLanguage;
-    procedure Exec(cxp0: TCompiler_PIC16; pic0: TPIC16);
+    procedure Exec(cxp0: TCompilerBase);
   end;
 
 var
@@ -158,7 +158,7 @@ begin
   end else if ACol = 1 then begin
     //Celda normal
     txt := pic.DisassemblerAt(aRow, true);   //desensambla
-    PC := pic.PC.W;
+    PC := pic.ReadPC;
     //Escribe texto con alineación
     if StringGrid1.RowHeights[Arow] = defHeight*3 then begin
       //Celda con comentario superior y etiqueta
@@ -220,7 +220,7 @@ var
   pc: word;
 begin
   if SetGridRow then begin
-    pc := pic.PC.W;
+    pc := pic.ReadPC;
     StringGrid1.Row := pc;
   end;
   StringGrid1.Invalidate;  //Refersca posibles cambios
@@ -319,7 +319,7 @@ procedure TfrmDebugger.acGenSetPCExecute(Sender: TObject);
 //Fija el puntero del programa en la instrucción seleccionada.
 begin
   if StringGrid1.Row=-1 then exit;
-  pic.PC.W := StringGrid1.Row;
+  pic.WritePC(StringGrid1.Row);
   StringGrid1.Invalidate;
 end;
 procedure TfrmDebugger.acGenExecHerExecute(Sender: TObject);
@@ -356,11 +356,7 @@ end;
 procedure TfrmDebugger.acGenStepExecute(Sender: TObject);
 {Ejecuta una instrucción sin entrar a subrutinas}
 begin
-  if pic.CurInstruction = i_CALL then begin
-    pic.ExecTo(pic.PC.W+1);  //Ejecuta hasta la sgte. instrucción, salta el i_CALL
-  end else begin
-    pic.Exec();
-  end;
+  pic.ExecStep;
   RefreshScreen;
 end;
 procedure TfrmDebugger.acGenStepInExecute(Sender: TObject);
@@ -369,13 +365,13 @@ begin
   pic.Exec();
   RefreshScreen;
 end;
-procedure TfrmDebugger.Exec(cxp0: TCompiler_PIC16; pic0: TPIC16);
+procedure TfrmDebugger.Exec(cxp0: TCompilerBase);
 {Inicia el prcceso de depuración, mostrando la ventana.}
 var
   i: Integer;
 begin
   cxp := cxp0;
-  pic := pic0;
+  pic := cxp0.picCore;
   StringGrid1.DefaultDrawing:=false;
   StringGrid1.OnDrawCell := @StringGrid1DrawCell;
 

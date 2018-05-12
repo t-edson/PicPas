@@ -1003,7 +1003,7 @@ begin
 end;
 procedure TfrmPrincipal.acToolASMDebugExecute(Sender: TObject);
 begin
-  frmDebug.Exec(Compiler16, Compiler16.pic);
+  frmDebug.Exec(Compiler);
 end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin

@@ -306,13 +306,14 @@ public     //Acceso a campos del objeto PIC
   function PICRam(adr: word): TPICRamCellPtr; virtual; abstract;
   function RAMmax: integer; virtual; abstract;
 protected  //Container lists of registers
-  listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
-  listRegStk: TPicRegister_list;  //lista de registros de pila
+  listRegAux : TPicRegister_list;  //lista de registros de trabajo y auxiliares
+  listRegStk : TPicRegister_list;  //lista de registros de pila
   listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
   listRegStkBit: TPicRegisterBit_list;
-  stackTop: integer;   //índice al límite superior de la pila
+  stackTop   : integer;   //índice al límite superior de la pila
   stackTopBit: integer;   //índice al límite superior de la pila
 public
+  picCore    : TPicCore;       //Objeto PIC Core
   property ProplistRegAux: TPicRegister_list read listRegAux;
   property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
 public  //Inicialización

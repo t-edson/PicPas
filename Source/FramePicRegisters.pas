@@ -4,8 +4,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, StdCtrls, LCLProc,
   LCLIntf, LCLType, Grids, ExtCtrls, Parser,
-  GenCodBas_PIC16, Pic16Utils,
-  GenCodBas_PIC10, Pic10Utils;
+  PicCore, Pic16Utils, Pic10Utils;
 type
 
   { TfraPicRegisters }
@@ -51,20 +50,23 @@ begin
 end;
 procedure TfraPicRegisters.SetCompiler(cxp0: TCompilerBase);
 {Fija el compilador actual.}
+var
+  pic : TPicCore;
 begin
   cxp := cxp0;
+  pic := cxp0.picCore;
   //Configura registros de acuerdo al tipo de arquitectura del compilador
   WREGptr := nil;
   STATptr := nil;
   //Obtiene referencias a los registros importantes
   case cxp.ID of
   10: begin
-    WREGptr := @(TGenCodBas_PIC10(cxp).pic.W);
-    STATptr := @(TGenCodBas_PIC10(cxp).pic.ram[Pic10Utils._STATUS].dvalue);
+    WREGptr := @(TPIC10(pic).W);
+    STATptr := @(pic.ram[Pic10Utils._STATUS].dvalue);
   end;
   16: begin
-    WREGptr := @(TGenCodBas_PIC16(cxp).pic.W);
-    STATptr := @(TGenCodBas_PIC16(cxp).pic.ram[Pic16Utils._STATUS].dvalue);
+    WREGptr := @(TPIC16(pic).W);
+    STATptr := @(pic.ram[Pic16Utils._STATUS].dvalue);
   end;
   end;
 end;
