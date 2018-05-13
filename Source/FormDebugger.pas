@@ -69,6 +69,7 @@ type
     procedure acGenResetExecute(Sender: TObject);
     procedure acGenRunExecute(Sender: TObject);
     procedure acGenSetPCExecute(Sender: TObject);
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure PopupMenu1Popup(Sender: TObject);
@@ -321,6 +322,11 @@ begin
   if StringGrid1.Row=-1 then exit;
   pic.WritePC(StringGrid1.Row);
   StringGrid1.Invalidate;
+end;
+procedure TfrmDebugger.FormClose(Sender: TObject; var CloseAction: TCloseAction
+  );
+begin
+  acGenPauseExecute(self);
 end;
 procedure TfrmDebugger.acGenExecHerExecute(Sender: TObject);
 {Ejecuta una instrucción hasta la dirección seleccionada.}

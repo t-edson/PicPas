@@ -301,8 +301,6 @@ public     //Acceso a campos del objeto PIC
   function PICBank(i: byte): TPICRAMBank; virtual; abstract; //Return a RAM bank
   function PICnPages: byte; virtual; abstract; //Number of FLASH pages
   function PICPage(i: byte): TPICFlashPage; virtual; abstract; //Return a FLASH page
-  function PICPines(i: byte): TPICPinPtr; virtual; abstract; //Return a Pin Object
-  function PICnPins: byte; virtual; abstract; //Return number of pins
   function PICRam(adr: word): TPICRamCellPtr; virtual; abstract;
   function RAMmax: integer; virtual; abstract;
 protected  //Container lists of registers

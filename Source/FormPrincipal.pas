@@ -815,9 +815,8 @@ begin
     Add('// New program created in ' + DateToStr(now) + '}');
     Add('////////////////////////////////////////////');
     Add('program NewProgram;');
-    Add('{$PROCESSOR PIC16F84A}');
-    Add('{$FREQUENCY 4MHZ}');
     Add('uses PIC16F84A;');
+    Add('{$FREQUENCY 4MHZ}');
     Add('  ');
     Add('//Declarations here');
     Add('  ');

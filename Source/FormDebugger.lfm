@@ -6,6 +6,7 @@ object frmDebugger: TfrmDebugger
   Caption = 'Debugger'
   ClientHeight = 690
   ClientWidth = 983
+  OnClose = FormClose
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   LCLVersion = '1.8.0.6'

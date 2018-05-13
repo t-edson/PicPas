@@ -265,8 +265,6 @@ type
     function PICBank(i: byte): TPICRAMBank; override; //Return a RAM bank
     function PICnPages: byte; override; //Number of FLASH pages
     function PICPage(i: byte): TPICFlashPage; override; //Return a FLASH page
-    function PICPines(i: byte): TPICPinPtr; override; //Return a PIN
-    function PICnPins: byte; override; //Return number of pins
     function PICRam(adr: word): TPICRamCellPtr; override;
     function RAMmax: integer; override;
   public  //Inicialización
@@ -1716,14 +1714,6 @@ end;
 function TGenCodBas_PIC10.PICPage(i: byte): TPICFlashPage;
 begin
   Result := pic.pages[i];
-end;
-function TGenCodBas_PIC10.PICPines(i: byte): TPICPinPtr; inline;
-begin
-  Result := @pic.pines[i];
-end;
-function TGenCodBas_PIC10.PICnPins: byte; inline;
-begin
-  Result := pic.Npins;
 end;
 function TGenCodBas_PIC10.GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
 {Extrae el primer parámetro (que corresponde al índice) de las funciones getitem() o

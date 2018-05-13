@@ -12,8 +12,8 @@ type
   //Define el objeto gráfico PIC
   TPicObject = class(TObjGraf)
   private
-    cxp: TCompilerBase;
-    //pic: TPIC16;   //referencia al PIC
+
+    pic: TPicCore;   //referencia al PIC
     xpin: Single;  //Posición X del Pin
     nPinsDiag: Integer;  //Número de pines a dibujar
     procedure DibState(const xc, yc: Single; const pin: TPICPin);
@@ -27,8 +27,8 @@ type
   //Define el objeto gráfico LogicState
   TOgLogicState = class(TObjGraf)
   private
-    cxp: TCompilerBase;
-    //pic: TPIC16;   //referencia al PIC
+
+    pic: TPicCore;   //referencia al PIC
     FState: boolean;
     ptos: array of TFPoint;
     procedure DibState(const xc, yc: Single; const pin: TPICPin);
@@ -54,7 +54,7 @@ type
     procedure acGenAddLogTogExecute(Sender: TObject);
     procedure acGenDelObjectExecute(Sender: TObject);
   private
-    Fcxp: TCompilerBase;
+    Fpic: TPicCore;
     ogPic: TPicObject;
     motEdi: TModEdicion;
     procedure fraPICDiagramKeyDown(Sender: TObject; var Key: Word;
@@ -65,8 +65,8 @@ type
     procedure motEdi_MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
   public
-    procedure SetCompiler(cxp0: TCompilerBase);
     procedure Refrescar;
+    procedure SetCompiler(cxp0: TCompilerBase);
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
   end;
@@ -83,7 +83,7 @@ procedure TPicObject.DibState(const xc, yc: Single; const pin: TPICPin);
 begin
   if pin.typ = pptPort then begin
     //Ve estado
-    if cxp.PICRam(pin.add)^.value and (1<<pin.bit) = 0 then begin
+    if pic.ram[pin.add].value and (1<<pin.bit) = 0 then begin
       //Estado lógico bajo
     end else begin
       //Estado lógico alto
@@ -111,10 +111,10 @@ begin
     //Pin
     v2d.rectang(xpin, ypin-2, xpin+LON_PIN+1, ypin+2);
     //Etiqueta
-    lbl := cxp.PICPines(i)^.GetLabel;
+    lbl := pic.pines[i].GetLabel;
     v2d.Texto(x+2, ypin-8, lbl);
     //Estado de pin
-    DibState(xpin, ypin,  cxp.PICPines(i)^);
+    DibState(xpin, ypin,  pic.pines[i]);
     //Calcula siguiente posición
     ypin := ypin + SEP_PIN;
   end;
@@ -125,11 +125,11 @@ begin
     //Pin
     v2d.rectang(xpin, ypin-2, xpin+LON_PIN-1, ypin+2);
     //Etiqueta
-    lbl := cxp.PICPines(nPinsDiag-i+1)^.GetLabel;
+    lbl := pic.pines[nPinsDiag-i+1].GetLabel;
     lblWidth := v2d.TextWidth(lbl);
     v2d.Texto(xpin - lblWidth - 2, ypin-8, lbl);
     //Estado de pin
-    DibState(xpin+LON_PIN, ypin,  cxp.PICPines(nPinsDiag-i+1)^);
+    DibState(xpin+LON_PIN, ypin,  pic.pines[nPinsDiag-i+1]);
     //Calcula siguiente posición
     ypin := ypin + SEP_PIN;
   end;
@@ -137,30 +137,30 @@ end;
 procedure TPicObject.Draw;
 var
   ancho: Single;
-  Npins: Byte;
+
 begin
-  if cxp = nil then begin
+  if pic= nil then begin
     //Cuando no se ha iniciado el PIC
     v2d.SetPen(psSolid, 1, clBlack);
     v2d.SetBrush(clGray);
     v2d.RectangR(x, y, x+Width, y+Height);
   end else begin
     //Caso normal
-    ancho := v2d.TextWidth(cxp.PICName);
+    ancho := v2d.TextWidth(pic.Model);
     v2d.SetText(True, False, False);
-    v2d.Texto(x + width/2 - ancho/2 , y - 18, cxp.PICName);
+    v2d.Texto(x + width/2 - ancho/2 , y - 18, pic.Model);
     v2d.SetText(False, False, False);
-    Npins := cxp.PICnPins;
-    if Npins <= 8 then begin
+
+    if pic.Npins <= 8 then begin
       nPinsDiag := 8;
       DibCuerpo;
-    end else if Npins <=18 then begin
+    end else if pic.Npins <=18 then begin
       nPinsDiag := 18;
       DibCuerpo;
-    end else if Npins <=28 then begin
+    end else if pic.Npins <=28 then begin
       nPinsDiag := 28;
       DibCuerpo;
-    end else if Npins <=40 then begin
+    end else if pic.Npins <=40 then begin
       nPinsDiag := 40;
       DibCuerpo;
     end else begin
@@ -183,7 +183,7 @@ procedure TOgLogicState.DibState(const xc, yc: Single; const pin: TPICPin);
 begin
   if pin.typ = pptPort then begin
     //Ve estado
-    if cxp.PICRam(pin.add)^.value and (1<<pin.bit) = 0 then begin
+    if pic.ram[pin.add].value and (1<<pin.bit) = 0 then begin
       //Estado lógico bajo
     end else begin
       //Estado lógico alto
@@ -227,6 +227,11 @@ end;
 procedure TfraPICDiagram.Refrescar;
 begin
   motEdi.Refrescar;
+end;
+procedure TfraPICDiagram.SetCompiler(cxp0: TCompilerBase);
+begin
+  Fpic := cxp0.picCore;
+  ogPic.pic := cxp0.picCore;  //Actualiza referencia
 end;
 procedure TfraPICDiagram.fraPICDiagramKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
@@ -288,11 +293,6 @@ begin
   motEdi.Destroy;
   inherited Destroy;
 end;
-procedure TfraPICDiagram.SetCompiler(cxp0: TCompilerBase);
-begin
-  Fcxp := cxp0;
-  ogPic.cxp := cxp0;  //Actualiza referencia
-end;
 
 /////////////////////// Acciones /////////////////////////
 procedure TfraPICDiagram.acGenAddLogTogExecute(Sender: TObject);
@@ -317,4 +317,5 @@ begin
 end;
 
 end.
+
 

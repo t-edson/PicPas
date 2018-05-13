@@ -12,6 +12,7 @@ type
     Label1: TLabel;
   private
     cxp: TCompilerBase;
+    pic: TPicCore;
     procedure DibPaginaROM(x, y, ancho, alto: integer; pag: TPICFlashPage;
       dirIni: integer);
     procedure DibBar(const x1, x2: integer; y, alto: integer; dirIni,
@@ -39,10 +40,10 @@ begin
   Canvas.Brush.Color := clWhite;
   Canvas.TextOut(x - ancTxt div 2, y - altTxt div 2, txt);
 end;
-
 procedure TfraRomExplorer.SetCompiler(cxp0: TCompilerBase);
 begin
   cxp := cxp0;
+  pic := cxp0.picCore;
 end;
 procedure TfraRomExplorer.DibBar(const x1, x2: integer; y, alto: integer;
                                  dirIni, dirFin: integer; lbl: string);
@@ -186,7 +187,6 @@ begin
   end;
 
 end;
-
 constructor TfraRomExplorer.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
