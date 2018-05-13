@@ -1,8 +1,7 @@
 {Sample program to blink a Led on PORTB.0
 using ASM and a Pascal variable.}
-{$FREQUENCY 4 MHZ }
-{$PROCESSOR PIC16F84A}
 uses PIC16F84A;
+{$FREQUENCY 4 MHZ }
 var counter: byte;
 begin
 asm
