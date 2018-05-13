@@ -4,8 +4,8 @@ unit GenCodBas_PIC16;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic16Utils, Parser,
-  MisUtils, LCLType, LCLProc;
+  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic16Utils,
+  Parser, Globales, MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 8;      //tamaño de pila para subrutinas en el PIC
   MAX_REGS_AUX_BYTE = 6;   //cantidad máxima de registros a usar
@@ -2956,6 +2956,7 @@ constructor TGenCodBas_PIC16.Create;
 begin
   inherited Create;
   ID := 16;  //Identifica al compilador PIC16
+  devicesPath := patDevices16;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPIC16.Create;

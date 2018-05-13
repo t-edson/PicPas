@@ -1891,7 +1891,7 @@ begin
         uni.srcFile := uPath;   //Gaurda el archivo fuente
       end else begin
         //No lo encontró, busca en la carpeta de dispositivos
-        uPath := patDevices + DirectorySeparator + uName;
+        uPath := devicesPath + DirectorySeparator + uName;
         if OpenContextFrom(uPath) then begin
           uni.srcFile := uPath;   //Gaurda el archivo fuente
         end else begin

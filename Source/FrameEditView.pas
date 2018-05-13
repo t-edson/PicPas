@@ -173,6 +173,7 @@ type
     procedure AgregArcReciente(arch: string);
   public   //Inicialización
     procedure UpdateSynEditConfig;
+    procedure UpdateSynEditCompletion;
     procedure InitMenuRecents(menRecents0: TMenuItem; RecentList: TStringList;
       MaxRecents0: integer = 5);
     constructor Create(AOwner: TComponent) ; override;
@@ -1335,7 +1336,7 @@ begin
     RecentFiles.Delete(MaxRecents);
 end;
 procedure TfraEditView.UpdateSynEditConfig;
-{Indica que se desea cambiar la configuración de los SynEdit.}
+{Indica que se desea cambiar la configuración de todos los SynEdit abiertos.}
 var
   i: Integer;
 begin
@@ -1348,6 +1349,16 @@ begin
     ConfigureSyntax(editors[i], false);
   end;
 end;
+procedure TfraEditView.UpdateSynEditCompletion;
+var
+  i: Integer;
+begin
+  //Pide configurar completado para todos los editores abiertos
+  for i:=0 to editors.Count-1 do begin
+    if OnRequireSetCompletion<>nil then OnRequireSetCompletion(editors[i]);
+  end;
+end;
+
 //Inicialización
 procedure TfraEditView.InitMenuRecents(menRecents0: TMenuItem; RecentList: TStringList;
       MaxRecents0: integer=5);

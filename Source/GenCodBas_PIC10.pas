@@ -4,8 +4,8 @@ unit GenCodBas_PIC10;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic10Utils, Parser,
-  MisUtils, LCLType, LCLProc;
+  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic10Utils,
+  Parser, Globales, MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 2;      //tamaño de pila para subrutinas en el PIC
   MAX_REGS_AUX_BYTE = 5;   //cantidad máxima de registros a usar
@@ -2895,6 +2895,7 @@ constructor TGenCodBas_PIC10.Create;
 begin
   inherited Create;
   ID := 10;  //Identifica al compilador PIC10
+  devicesPath := patDevices10;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPIC10.Create;

@@ -5,16 +5,14 @@ interface
 uses
   Classes, SysUtils, LCLType, LCLProc, SynEdit, SynEditHighlighter, LazUTF8,
   MisUtils, SynFacilCompletion, SynFacilHighlighter, SynFacilBasic, XpresBas,
-  XpresElementsPIC, FrameEditView, FrameSyntaxTree, Compiler_PIC16,
-  Globales;
+  XpresElementsPIC, FrameEditView, Parser, Globales;
 type
   { TCodeTool }
   TCodeTool = class
   private
     //Referencias importantes
     fraEdit   : TfraEditView;
-    cxp       : TCompiler_PIC16;
-    fraSynTree: TfraSyntaxTree;
+    cxp       : TCompilerBase;
     opEve0: TFaOpenEvent;   //Para pasar parámetro a cxpTreeElemsFindElement´()
   public
     procedure ReadCurIdentif(out tok: string; out tokType: integer; out
@@ -24,6 +22,7 @@ type
   private  //Completado de código
     procedure cxpTreeElemsFindElement(elem: TxpElement);
     procedure AddListUnits(OpEve: TFaOpenEvent);
+    procedure CopyListItems(OpEve, OpEveSrc: TFaOpenEvent);
     procedure FieldsComplet(ident: string; opEve: TFaOpenEvent; tokPos: TSrcPos);
     procedure Fill_IFtemplate(opEve: TFaOpenEvent);
     procedure Fill_THENtemplate(opEve: TFaOpenEvent);
@@ -39,8 +38,8 @@ type
   public
     procedure SetCompletion(ed: TSynEditor);
   public  //Inicialización
-    constructor Create(fraEdit0: TfraEditView; cxp0: TCompiler_PIC16;
-      fraSynTree0: TfraSyntaxTree);
+    procedure SetCompiler(cxp0: TCompilerBase);
+    constructor Create(fraEdit0: TfraEditView);
   end;
 
 implementation
@@ -199,7 +198,7 @@ begin
     FindClose(SearchRec);
   end;
   //Directorio /devices
-  directorio := patDevices;
+  directorio := cxp.devicesPath;
   if FindFirst(directorio + '\*.pas', faDirectory, SearchRec) = 0 then begin
     repeat
       nomArc := SysToUTF8(SearchRec.Name);
@@ -214,6 +213,14 @@ begin
     FindClose(SearchRec);
   end;
 
+end;
+procedure TCodeTool.CopyListItems(OpEve, OpEveSrc: TFaOpenEvent);
+var
+  it : TFaCompletItem;
+begin
+  for it in OpEveSrc.Items do begin
+    opEve.AddItem(it.Caption, -1);
+  end;
 end;
 procedure TCodeTool.FieldsComplet(ident: string; opEve: TFaOpenEvent;
   tokPos: TSrcPos);
@@ -410,39 +417,48 @@ begin
 end;
 procedure TCodeTool.SetCompletion(ed: TSynEditor);
 var
-  opEve: TFaOpenEvent;
+  opEve1, opEve3, opEve2, opEve: TFaOpenEvent;
 begin
   //Llena eventos de apertura para la sección de unidades
   //Configura eventos de apertura para nombres de unidades.
-  opEve := ed.hl.FindOpenEvent('unit1');
-  opEve.ClearItems;
-  AddListUnits(opEve);  //Configura unidades disponibles
+  opEve1 := ed.hl.FindOpenEvent('unit1');
+  if OpEve1=nil then exit;
+  opEve1.ClearItems;
+  AddListUnits(opEve1);  //Configura unidades disponibles
 
-  opEve := ed.hl.FindOpenEvent('unit2');
-  opEve.ClearItems;
-  AddListUnits(opEve);  //Configura unidades disponibles
+  opEve2 := ed.hl.FindOpenEvent('unit2');
+  if OpEve2=nil then exit;
+  opEve2.ClearItems;
+  CopyListItems(opEve2, opEve1);  //Copia lista de ítems
 
-  opEve := ed.hl.FindOpenEvent('unit3');
-  opEve.ClearItems;
-  AddListUnits(opEve);  //Configura unidades disponibles
+  opEve3 := ed.hl.FindOpenEvent('unit3');
+  if OpEve3=nil then exit;
+  opEve3.ClearItems;
+  CopyListItems(opEve3, opEve1);  //Copia lista de ítems
 
   //Configura eventos, para "después del punto."
   opEve := ed.hl.FindOpenEvent('AfterDot1');
+  if OpEve=nil then exit;
   opEve.OnLoadItems := @OpenAfterDot1;
   opEve := ed.hl.FindOpenEvent('AfterDot2');
   opEve.OnLoadItems := @OpenAfterDot2;
 
   //Configura completado dinámico, en cualquier punto del programa
   opEve := ed.hl.FindOpenEvent('BE4');
+  if OpEve=nil then exit;
   opEve.OnLoadItems := @GeneralIdentifierCompletion;
 
 end;
-constructor TCodeTool.Create(fraEdit0: TfraEditView; cxp0 : TCompiler_PIC16;
-                             fraSynTree0: TfraSyntaxTree);
+
+procedure TCodeTool.SetCompiler(cxp0: TCompilerBase);
 begin
-  fraEdit    := fraEdit0;
-  cxp        := cxp0;
-  fraSynTree := fraSynTree0;
+  cxp     := cxp0;
+  //Habría que cambiar algunas configuraciones de acuerdo al compilador usado
+end;
+
+constructor TCodeTool.Create(fraEdit0: TfraEditView);
+begin
+  fraEdit := fraEdit0;
 end;
 
 end.

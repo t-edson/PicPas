@@ -393,7 +393,7 @@ begin
   //Es necesario crear solo una instancia del compilador.
   Compiler16 := TCompiler_PIC16.Create;  //Crea una instancia del compilador
   Compiler10 := TCompiler_PIC10.Create;
-  Compiler := Compiler16;
+  Compiler := Compiler16;  //Fija compilador por defecto
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
   //configura panel de mensajes
@@ -417,7 +417,8 @@ begin
   hlAssem := TSynFacilSyn.Create(self);
   edAsm.Highlighter := hlAssem;
   LoadAsmSyntaxEd;
-  CodeTool := TCodeTool.Create(fraEditView1, Compiler16, fraSynTree);
+  CodeTool := TCodeTool.Create(fraEditView1);
+  CodeTool.SetCompiler(Compiler);
   //Configura eventos de los compialdores
   Compiler16.OnRequireFileString := @Compiler16_RequireFileString;
   Compiler16.OnAfterCompile      := @Compiler16_AfterCompile;
@@ -806,6 +807,20 @@ begin
   end;
   MsgBox(MSG_NOFOUND_, [buscado]);
 end;
+procedure TfrmPrincipal.ComboBox1Change(Sender: TObject);
+begin
+  case ComboBox1.ItemIndex of
+  0: Compiler := Compiler16;
+  1: Compiler := Compiler10;
+  end;
+  //Para compilar de nuevo si está en modo de correccíón de Sintaxis
+  if fraEditView1.ActiveEditor <> nil then begin
+     fraEdit_ChangeEditorState(fraEditView1.ActiveEditor);
+  end;
+  //Para recargar CodeTools en todos los editores abiertos
+  CodeTool.SetCompiler(Compiler);
+  fraEditView1.UpdateSynEditCompletion;
+end;
 /////////////////// Acciones de Archivo /////////////////////
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
 begin
@@ -931,13 +946,6 @@ end;
 procedure TfrmPrincipal.acViewMsgPanExecute(Sender: TObject);
 begin
   Config.ViewPanMsg:= not Config.ViewPanMsg;
-end;
-procedure TfrmPrincipal.ComboBox1Change(Sender: TObject);
-begin
-  case ComboBox1.ItemIndex of
-  0: Compiler := Compiler16;
-  1: Compiler := Compiler10;
-  end;
 end;
 procedure TfrmPrincipal.acViewSynTreeExecute(Sender: TObject);
 begin

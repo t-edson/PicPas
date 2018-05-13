@@ -279,8 +279,8 @@ public   //Opciones de compilación
   OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
   OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
 protected
-  mainFile : string;  //archivo inicial que se compila
-  hexFile  : string;  //Nombre de archivo de salida
+  mainFile : string;   //archivo inicial que se compila
+  hexFile  : string;   //Nombre de archivo de salida
   function ExpandRelPathTo(BaseFile, FileName: string): string;
 public   //Información y acceso a memoria
   function hexFilePath: string;
@@ -312,6 +312,7 @@ protected  //Container lists of registers
   stackTopBit: integer;   //índice al límite superior de la pila
 public
   picCore    : TPicCore;       //Objeto PIC Core
+  devicesPath: string; //Ruta de las unidades de dispositivos
   property ProplistRegAux: TPicRegister_list read listRegAux;
   property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
 public  //Inicialización
