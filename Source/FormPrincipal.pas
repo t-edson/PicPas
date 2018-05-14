@@ -354,6 +354,7 @@ procedure TfrmPrincipal.fraEdit_RequireSetCompletion(ed: TSynEditor);
 {Solicita configurar el completado de código al resaltador.}
 begin
   CodeTool.SetCompletion(ed);
+  //¿Y si el archivo no es Pascal?
 end;
 procedure TfrmPrincipal.fraMessagesStatisDBlClick;
 //Doble clcik en la sección de estadísticas

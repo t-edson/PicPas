@@ -19,9 +19,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="574"/>
-        <CursorPos X="3" Y="812"/>
-        <FoldState Value=" TL0030411151 p0.X01 T4709 T5mG01]E8mB22 T3mV0F62414 pifnD04[94Yj00{i41F[C4oE038]9Zj603C pj0jH0A TMn02103111F181G121K p0-A04]B T6nG01G T0nLg211E[$4maZ212E[(4kgV4C2]WHw6RD1T"/>
+        <TopLine Value="230"/>
+        <CursorPos Y="357"/>
+        <FoldState Value=" TL0030411151 p0.Y01 T4709 T5mG01]E8mB22 T3mV0F62414 pifnE04[94Yj00{i41F[C4oE038]9Zj603C pj0jH0A TMn02103111G18]421K p0-B04]B T6nG01G T0nLg211E[$4mbZ212E[(4kgV4C2]WHw7RD1r"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -31,7 +31,7 @@
         </ExtraEditor1>
         <UsageCount Value="219"/>
         <Bookmarks Count="1">
-          <Item0 X="3" Y="1006" ID="6"/>
+          <Item0 X="3" Y="1007" ID="6"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit1>
@@ -249,8 +249,8 @@
         <Filename Value="CodeTools.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="431"/>
-        <CursorPos X="78" Y="456"/>
+        <TopLine Value="420"/>
+        <CursorPos X="38" Y="443"/>
         <FoldState Value=" T3i30Y2 piXjS0G015 pj5kN0D3 TLi501131 T6i7044]TT0iDQ3432191121224]KMiO41[g542C1X"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
@@ -516,128 +516,128 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="196" TopLine="179"/>
+        <Caret Line="188" TopLine="179"/>
       </Position1>
       <Position2>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="188" TopLine="179"/>
+        <Caret Line="189" TopLine="179"/>
       </Position2>
       <Position3>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="189" TopLine="179"/>
+        <Caret Line="193" TopLine="179"/>
       </Position3>
       <Position4>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="193" TopLine="179"/>
+        <Caret Line="194" TopLine="179"/>
       </Position4>
       <Position5>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="194" TopLine="179"/>
+        <Caret Line="196" TopLine="179"/>
       </Position5>
       <Position6>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="196" TopLine="179"/>
+        <Caret Line="188" TopLine="179"/>
       </Position6>
       <Position7>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="188" TopLine="179"/>
+        <Caret Line="189" TopLine="179"/>
       </Position7>
       <Position8>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="189" TopLine="179"/>
+        <Caret Line="193" TopLine="179"/>
       </Position8>
       <Position9>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="193" TopLine="179"/>
+        <Caret Line="194" TopLine="179"/>
       </Position9>
       <Position10>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="194" TopLine="179"/>
+        <Caret Line="196" TopLine="179"/>
       </Position10>
       <Position11>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="196" TopLine="179"/>
+        <Caret Line="188" TopLine="179"/>
       </Position11>
       <Position12>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="188" TopLine="179"/>
+        <Caret Line="189" TopLine="179"/>
       </Position12>
       <Position13>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="189" TopLine="179"/>
+        <Caret Line="193" TopLine="179"/>
       </Position13>
       <Position14>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="193" TopLine="179"/>
+        <Caret Line="194" TopLine="179"/>
       </Position14>
       <Position15>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="194" TopLine="179"/>
+        <Caret Line="196" TopLine="179"/>
       </Position15>
       <Position16>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="196" TopLine="179"/>
+        <Caret Line="188" TopLine="179"/>
       </Position16>
       <Position17>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="188" TopLine="179"/>
+        <Caret Line="189" TopLine="179"/>
       </Position17>
       <Position18>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="189" TopLine="179"/>
+        <Caret Line="193" TopLine="179"/>
       </Position18>
       <Position19>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="193" TopLine="179"/>
+        <Caret Line="194" TopLine="179"/>
       </Position19>
       <Position20>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="194" TopLine="179"/>
+        <Caret Line="196" TopLine="179"/>
       </Position20>
       <Position21>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="196" TopLine="179"/>
+        <Caret Line="197" TopLine="179"/>
       </Position21>
       <Position22>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="197" TopLine="179"/>
+        <Caret Line="200" TopLine="184"/>
       </Position22>
       <Position23>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="200" TopLine="184"/>
+        <Caret Line="453" Column="5" TopLine="425"/>
       </Position23>
       <Position24>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="453" Column="5" TopLine="425"/>
+        <Caret Line="42" Column="46" TopLine="25"/>
       </Position24>
       <Position25>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="42" Column="46" TopLine="25"/>
+        <Caret Line="453" Column="32" TopLine="431"/>
       </Position25>
       <Position26>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="453" Column="32" TopLine="431"/>
+        <Caret Line="41" Column="15" TopLine="25"/>
       </Position26>
       <Position27>
         <Filename Value="CodeTools.pas"/>
-        <Caret Line="41" Column="15" TopLine="25"/>
+        <Caret Line="455" Column="3" TopLine="431"/>
       </Position27>
       <Position28>
-        <Filename Value="CodeTools.pas"/>
-        <Caret Line="455" Column="3" TopLine="431"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="821" Column="34" TopLine="500"/>
       </Position28>
       <Position29>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="821" Column="34" TopLine="500"/>
+        <Caret Line="185" Column="15" TopLine="170"/>
       </Position29>
       <Position30>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="185" Column="15" TopLine="170"/>
+        <Caret Line="812" Column="3" TopLine="574"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
   <Debugging>
-    <BreakPoints Count="2">
+    <BreakPoints Count="1">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
@@ -645,13 +645,6 @@
         <Source Value="FrameEditView.pas"/>
         <Line Value="1349"/>
       </Item1>
-      <Item2>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="CodeTools.pas"/>
-        <Line Value="427"/>
-      </Item2>
     </BreakPoints>
   </Debugging>
 </CONFIG>
