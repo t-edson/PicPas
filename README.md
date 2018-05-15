@@ -747,7 +747,31 @@ These directives let us to define the RAM memory hardware state. In conjunction 
 {$SET_MAPPED_RAM '08C-0CF:bnk0'}
 ```
 
-(*) For more information, check the User Manual.
+#### $RESET_PINS 
+
+Clear all the configuration for the pines defined in the microcontroller.
+
+```
+{$RESET_PINS'}
+```
+
+This directive is generally used before of defining the microcontollers pins with the directive {$SET_PIN_NAME}
+
+
+#### $SET_PIN_NAME
+
+Define the name for a specified pin of the microcontroller. 
+
+The syntax is:
+
+{$SET_PIN_NAME <pin number>:<name>}
+
+One example would be:
+
+{$SET_PIN_NAME '2:VDD'}
+
+
+(*) For more information about directives, check the User Manual.
 
 #### SYSTEM VARIABLES
 
