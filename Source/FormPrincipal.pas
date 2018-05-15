@@ -419,7 +419,6 @@ begin
   edAsm.Highlighter := hlAssem;
   LoadAsmSyntaxEd;
   CodeTool := TCodeTool.Create(fraEditView1);
-  CodeTool.SetCompiler(Compiler);
   //Configura eventos de los compialdores
   Compiler16.OnRequireFileString := @Compiler16_RequireFileString;
   Compiler16.OnAfterCompile      := @Compiler16_AfterCompile;
@@ -450,7 +449,6 @@ begin
   InicEditorC1(edAsm);
   splEdPas.Align := alRight;
   fraEditView1.Align := alClient;
-  fraSynTree.Init(Compiler16.TreeElems);
   fraEditView1.tmpPath := patTemp;   //fija ruta de trabajo
   Config.Iniciar;   //necesario para poder trabajar
   Config.OnPropertiesChanges := @ChangeAppearance;
@@ -472,6 +470,8 @@ begin
     end;
     self.Close;
   end;
+  CodeTool.SetCompiler(Compiler);
+  fraSynTree.Init(Compiler.TreeElems);
   //Termina configuración
   fraEditView1.InitMenuRecents(mnRecents, Config.fraCfgSynEdit.ArcRecientes);  //inicia el menú "Recientes"
   ChangeAppearance;   //primera actualización
@@ -821,6 +821,8 @@ begin
   //Para recargar CodeTools en todos los editores abiertos
   CodeTool.SetCompiler(Compiler);
   fraEditView1.UpdateSynEditCompletion;
+  //Inicia árbol de sintaxis
+  fraSynTree.Init(Compiler.TreeElems);
 end;
 /////////////////// Acciones de Archivo /////////////////////
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);

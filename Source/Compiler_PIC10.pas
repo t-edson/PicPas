@@ -2556,7 +2556,7 @@ begin
   //Calcula STACK
   TreeElems.main.UpdateCalledAll;   //Debe haberse llenado TreeElems.main.lstCalled
   //No considera el anidamiento por interrupciones
-  stkUse := TreeElems.main.maxNesting/8;
+  stkUse := TreeElems.main.maxNesting/STACK_SIZE;
 end;
 procedure TCompiler_PIC10.GenerateListReport(lins: TStrings);
 {Genera un reporte detallado de la compialción}

@@ -79,6 +79,8 @@ type
     procedure ProcMSGERR;
     procedure ProcMSGWAR;
     procedure ProcSET_MAPPED_RAM;
+    procedure ProcRESET_PINS;
+    procedure ProcSET_PIN_NAME;
     procedure ProcMAP_RAM_TO_PIN;
     procedure ProcSET_UNIMP_BITS;
     procedure ProcCLEAR_STATE_RAM;
@@ -1268,6 +1270,20 @@ begin
   pic.SetMappRAMCom(txtMsg);
   if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
 end;
+procedure TParserDirec.ProcRESET_PINS;
+begin
+  pic.ResetPins;
+end;
+procedure TParserDirec.ProcSET_PIN_NAME;
+var
+  txtMsg: String;
+begin
+  lexDir.Next;  //pasa al siguiente
+  txtMsg := CogExpresion(0).valStr;
+  if HayError then exit;
+  pic.SetPinName(txtMsg);
+  if pic.MsjError<>'' then GenErrorDir(pic.MsjError);
+end;
 procedure TParserDirec.ProcMAP_RAM_TO_PIN;
 {Mapea pines del encapsulado a direcciones de memoria}
 var
@@ -1402,7 +1418,8 @@ begin
   'CLEAR_STATE_RAM': ProcCLEAR_STATE_RAM;
   'SET_STATE_RAM'  : ProcSET_STATE_RAM;
   'SET_MAPPED_RAM' : ProcSET_MAPPED_RAM;
-//  'SET_RAM_NAME'   : ProcSET_RAM_NAME;
+  'RESET_PINS'     : ProcRESET_PINS;
+  'SET_PIN_NAME'   : ProcSET_PIN_NAME;
   'MAP_RAM_TO_PIN' : ProcMAP_RAM_TO_PIN;
   'SET_UNIMP_BITS' : ProcSET_UNIMP_BITS;
   else
