@@ -62,10 +62,23 @@ begin
   case cxp.ID of
   10: begin
     WREGptr := @(TPIC10(pic).W);
-    STATptr := @(pic.ram[Pic10Utils._STATUS].dvalue);
+    StringGrid2.Cells[2,0] := 'GPWUF';
+    if copy(pic.Model,1,6) = 'PIC12F'  then begin
+      StringGrid2.Cells[3,0] := '';
+      StringGrid2.Cells[4,0] := 'PA0';
+      STATptr := @(pic.ram[Pic10Utils._STATUS].dvalue);
+    end else begin
+      //Habría que revisar si esto se cumple siempre
+      StringGrid2.Cells[3,0] := 'CWUF';
+      StringGrid2.Cells[4,0] := '';
+      STATptr := @(pic.ram[Pic10Utils._STATUS].dvalue);
+    end;
   end;
   16: begin
     WREGptr := @(TPIC16(pic).W);
+    StringGrid2.Cells[2,0] := 'IRP';
+    StringGrid2.Cells[3,0] := 'RP1';
+    StringGrid2.Cells[4,0] := 'RP0';
     STATptr := @(pic.ram[Pic16Utils._STATUS].dvalue);
   end;
   end;

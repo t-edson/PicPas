@@ -259,13 +259,11 @@ type
   public     //Acceso a campos del PIC
     function PICName: string; override;
     function PICNameShort: string; override;
-    function PICBankSize: word; override; //Size of a RAM banks
     function PICnBanks: byte; override; //Number of RAM banks
     function PICCurBank: byte; override; //Current RAM bank
     function PICBank(i: byte): TPICRAMBank; override; //Return a RAM bank
     function PICnPages: byte; override; //Number of FLASH pages
     function PICPage(i: byte): TPICFlashPage; override; //Return a FLASH page
-    function PICRam(adr: word): TPICRamCellPtr; override;
     function RAMmax: integer; override;
   public  //Inicialización
     pic        : TPIC10;       //Objeto PIC de la serie 16.
@@ -1691,10 +1689,6 @@ function TGenCodBas_PIC10.PICNameShort: string;
 begin
   Result := copy(pic.Model, 4, length(pic.Model));
 end;
-function TGenCodBas_PIC10.PICBankSize: word;
-begin
-  Result := PIC_BANK_SIZE;
-end;
 function TGenCodBas_PIC10.PICnBanks: byte;
 begin
   Result := pic.NumBanks;
@@ -1812,7 +1806,7 @@ begin
     //Almacenamiento no implementado
     GenError('Not implemented.');
   end;
-  if modReturn then _RETURN;  //codifica instrucción
+  if modReturn then _RETLW(0);  //codifica instrucción
 end;
 procedure TGenCodBas_PIC10.bit_DefineRegisters;
 begin
@@ -1847,10 +1841,10 @@ begin
   end;
   stVariab: begin
     kMOVF(Op^.rVar.adrByte0, toW);
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   stExpres: begin  //ya está en w
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   stVarRefVar: begin
     //Se tiene una variable puntero dereferenciada: x^
@@ -1859,7 +1853,7 @@ begin
     kMOVF(varPtr.adrByte0, toW);
     kMOVWF(FSR);  //direcciona
     kMOVF(INDF, toW);  //deje en W
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   stVarRefExp: begin
     //Es una expresión derefernciada (x+a)^.
@@ -1868,7 +1862,7 @@ begin
     //Mueve a W
     _MOVWF(FSR.offs);  //direcciona
     _MOVF(0, toW);  //deje en W
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   else
     //Almacenamiento no implementado
@@ -2210,10 +2204,10 @@ begin
     kMOVF(Op^.rVar.adrByte1, toW);
     kMOVWF(H);
     kMOVF(Op^.rVar.adrByte0, toW);
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   stExpres: begin  //se asume que ya está en (H,w)
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   stVarRefVar: begin
     //Se tiene una variable puntero dereferenciada: x^
@@ -2226,7 +2220,7 @@ begin
     _MOVWF(H.offs);  //Guarda byte alto
     _DECF(FSR.offs,toF);
     _MOVF(0, toW);  //deje en W byte bajo
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   stVarRefExp: begin
     //Es una expresión desrefernciada (x+a)^.
@@ -2240,7 +2234,7 @@ begin
     _MOVWF(H.offs);  //Guarda byte alto
     _DECF(FSR.offs,toF);
     _MOVF(0, toW);  //deje en W byte bajo
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   else
     //Almacenamiento no implementado
@@ -2629,10 +2623,10 @@ begin
     kMOVWF(H);
 
     kMOVF(Op^.rVar.adrByte0, toW);
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   stExpres: begin  //se asume que ya está en (U,E,H,w)
-    if modReturn then _RETURN;
+    if modReturn then _RETLW(0);
   end;
   else
     //Almacenamiento no implementado
@@ -2881,11 +2875,6 @@ end;
 function TGenCodBas_PIC10.CompilerName: string;
 begin
   Result := 'PIC10 Compiler'
-end;
-function TGenCodBas_PIC10.PICRam(adr: word): TPICRamCellPtr;
-//Devuelve referencia a una celda de la RAM. Se devuelve puntero por velocidad.
-begin
-  Result := @pic.ram[adr];
 end;
 function TGenCodBas_PIC10.RAMmax: integer;
 begin

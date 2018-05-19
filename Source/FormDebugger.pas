@@ -384,7 +384,7 @@ begin
   //Muestra Frames
   fraRamExp.SetCompiler(cxp);
   fraRomExp.SetCompiler(cxp);
-  fraRomExp.Invalidate;  //Se refresca aquí porque no se incluye su refresco en RefreshScreen().
+  fraRomExp.panGraph.Invalidate;  //Se refresca aquí porque no se incluye su refresco en RefreshScreen().
   fraPicReg.SetCompiler(cxp);
   fraRegWat.SetCompiler(cxp);
   fraPicDia.SetCompiler(cxp);

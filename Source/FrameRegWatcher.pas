@@ -4,7 +4,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Grids, ExtCtrls, StdCtrls,
   Buttons, Graphics, LCLType, Menus, LCLProc, Pic16Utils, MisUtils, UtilsGrilla,
-  CibGrillas, XpresTypesPIC, XpresElementsPIC, Parser, Globales;
+  CibGrillas, XpresTypesPIC, XpresElementsPIC, Parser, PicCore, Globales;
 type
 
   { TfraRegWatcher }
@@ -39,6 +39,7 @@ type
     TIT_NAM: string;
     TIT_VAL: string;
   private  //Índice de columnas
+    pic: TPicCore;
     cxp: TCompilerBase;
     //Columnas ocultas
     col_adr: word;  //Direción física
@@ -120,7 +121,7 @@ begin
     //Escribe dirección y nombre
     grilla.Cells[col_adr,f] := '$'+IntToHex(addr, 3);
     grilla.Cells[col_bit,f] := '';
-    grilla.Cells[COL_NAM,f] := cxp.PICRam(addr)^.name;
+    grilla.Cells[COL_NAM,f] := pic.ram[addr].name;
   end;
 end;
 procedure TfraRegWatcher.CompleteFromName(f: integer);
@@ -142,7 +143,7 @@ begin
     nbit := -1;
     //Busca nombre de bytes
     for i:=0 to cxp.RAMmax do begin
-      if UpCase(cxp.PICRam(i)^.name) = nameStr then begin
+      if UpCase(pic.ram[i].name) = nameStr then begin
         addr := i;
         break;
       end;
@@ -150,14 +151,14 @@ begin
     if addr=-1 then begin  //No encontrado
       //No encontró como byte, busca como bit
       for i:=0 to cxp.RAMmax do begin
-        if UpCase(cxp.PICRam(i)^.bitname[0]) = nameStr then nbit := 0;
-        if UpCase(cxp.PICRam(i)^.bitname[1]) = nameStr then nbit := 1;
-        if UpCase(cxp.PICRam(i)^.bitname[2]) = nameStr then nbit := 2;
-        if UpCase(cxp.PICRam(i)^.bitname[3]) = nameStr then nbit := 3;
-        if UpCase(cxp.PICRam(i)^.bitname[4]) = nameStr then nbit := 4;
-        if UpCase(cxp.PICRam(i)^.bitname[5]) = nameStr then nbit := 5;
-        if UpCase(cxp.PICRam(i)^.bitname[6]) = nameStr then nbit := 6;
-        if UpCase(cxp.PICRam(i)^.bitname[7]) = nameStr then nbit := 7;
+        if UpCase(pic.ram[i].bitname[0]) = nameStr then nbit := 0;
+        if UpCase(pic.ram[i].bitname[1]) = nameStr then nbit := 1;
+        if UpCase(pic.ram[i].bitname[2]) = nameStr then nbit := 2;
+        if UpCase(pic.ram[i].bitname[3]) = nameStr then nbit := 3;
+        if UpCase(pic.ram[i].bitname[4]) = nameStr then nbit := 4;
+        if UpCase(pic.ram[i].bitname[5]) = nameStr then nbit := 5;
+        if UpCase(pic.ram[i].bitname[6]) = nameStr then nbit := 6;
+        if UpCase(pic.ram[i].bitname[7]) = nameStr then nbit := 7;
         if nbit <> -1 then begin
           addr := i;
           break;
@@ -172,9 +173,15 @@ begin
     end;
     //Encontró dirección
     grilla.Cells[col_adr,f] := '$'+IntToHex(addr,3);
-    if nbit=-1 then grilla.Cells[col_bit,f] := ''
-    else grilla.Cells[col_bit,f] := IntToStr(nbit);
-    grilla.Cells[COL_ADD,f] := '$'+IntToHex(addr,3);
+    if nbit=-1 then begin
+      //No hay bit
+      grilla.Cells[col_bit,f] := '';
+      grilla.Cells[COL_ADD,f] := '$'+IntToHex(addr,3);
+    end else begin
+      //Hay bit
+      grilla.Cells[col_bit,f] := IntToStr(nbit);
+      grilla.Cells[COL_ADD,f] := '$'+IntToHex(addr,3)+'.'+IntToStr(nbit);
+    end;
   end;
 end;
 procedure TfraRegWatcher.RefreshRow(f: integer);
@@ -201,7 +208,7 @@ begin
     if bitStr<>'' then begin
       bit := ord(bitStr[1])-ord('0');  //convierte
       //Imprime bit
-      valByte := cxp.PICRam(addr)^.value;
+      valByte := pic.ram[addr].value;
       if (valByte and (1<<bit)) = 0 then newValue := '0' else newValue := '1';
       if grilla.Cells[COL_VAL,f] <> newValue then begin
          //Hubo cambio
@@ -210,7 +217,7 @@ begin
       end;
     end else begin
       //Imprime byte
-      newValue := '$'+IntToHex(cxp.PICRam(addr)^.value, 2);
+      newValue := '$'+IntToHex(pic.ram[addr].value, 2);
       if grilla.Cells[COL_VAL,f] <> newValue then begin
          //Hubo cambio
          grilla.Objects[1, f] := Tobject(Pointer(255));  //Pone color
@@ -271,6 +278,7 @@ end;
 procedure TfraRegWatcher.SetCompiler(cxp0: TCompilerBase);
 begin
   cxp := cxp0;
+  pic := cxp0.picCore;
 end;
 
 procedure TfraRegWatcher.AddWatch(varName: string);
@@ -348,7 +356,7 @@ var
 begin
   for reg in cxp.ProplistRegAux do begin
     if not reg.assigned then continue;  //puede haber registros de trabajo no asignados
-    nam := cxp.PICRam(reg.addr)^.name; //debería tener nombre
+    nam := pic.ram[reg.addr].name; //debería tener nombre
     AddWatch(nam);
   end;
 //  for rbit in cxp.ProplistRegAuxBit do begin
@@ -382,9 +390,9 @@ begin
   col_bit := tmp.idx;
   //Faltaría una o más columbas para el formato
   //Columnas visibles
-  COL_ADD := UtilGrilla.AgrEncab('Address' , 35).idx;
-  COL_NAM := UtilGrilla.AgrEncab('Name' , 50).idx;
-  COL_VAL := UtilGrilla.AgrEncab('Value' , 40, -1, taRightJustify).idx;
+  COL_ADD := UtilGrilla.AgrEncab('Address' , 40).idx;
+  COL_NAM := UtilGrilla.AgrEncab('Name' , 60).idx;
+  COL_VAL := UtilGrilla.AgrEncab('Value' , 50, -1, taRightJustify).idx;
   UtilGrilla.FinEncab;
   UtilGrilla.OnFinEditarCelda := @UtilGrillaFinEditarCelda;
   Utilgrilla.OnLeerColorFondo := @UtilGrillaLeerColorFondo;

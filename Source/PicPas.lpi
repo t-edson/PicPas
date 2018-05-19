@@ -215,6 +215,7 @@
         <Filename Value="FrameRomExplorer.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="fraRomExplorer"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
       </Unit25>
       <Unit26>

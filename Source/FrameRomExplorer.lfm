@@ -20,4 +20,12 @@ object fraRomExplorer: TfraRomExplorer
     ParentColor = False
     Transparent = False
   end
+  object panGraph: TPanel
+    Left = 0
+    Height = 308
+    Top = 17
+    Width = 438
+    Align = alClient
+    TabOrder = 0
+  end
 end

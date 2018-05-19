@@ -835,18 +835,18 @@ begin
     //Las interrupciones terminan así
     _RETFIE
   end else begin
-    //Para los procedimeintos, podemos terminar siemrpe con un i_RETURN u optimizar,
+    //Para los procedimeintos, podemos terminar siempre con un _RETURN u optimizar,
     if OptRetProc then begin
       //Verifica es que ya se ha incluido exit().
       if fun.ObligatoryExit<>nil then begin
         //Ya tiene un exit() obligatorio y en el final (al menos eso se espera)
-        //No es necesario incluir el i_RETURN().
+        //No es necesario incluir el _RETURN().
       end else begin
         //No hay un exit(), seguro
-        _RETURN();  //instrucción de salida
+        _RETLW(0);  //instrucción de salida
       end;
     end else begin
-      _RETURN();  //instrucción de salida
+      _RETLW(0);  //instrucción de salida
     end;
   end;
   EndCodeSub;  //termina codificación
@@ -1584,7 +1584,7 @@ begin
   TreeElems.CloseElement;  //Cierra Nodo Body
   TreeElems.CloseElement; //cierra espacio de nombres de la función
   bod.srcEnd := cIn.ReadSrcPos;  //Fin de cuerpo
-//  fun.adrReturn := pic.iFlash-1;  //Guarda dirección del i_RETURN
+//  fun.adrReturn := pic.iFlash-1;  //Guarda dirección del _RETURN
   if not CaptureTok(';') then exit;
   ProcComments;  //Quita espacios. Puede salir con error
 end;

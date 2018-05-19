@@ -264,13 +264,11 @@ type
   public     //Acceso a campos del PIC
     function PICName: string; override;
     function PICNameShort: string; override;
-    function PICBankSize: word; override; //Size of a RAM banks
     function PICnBanks: byte; override; //Number of RAM banks
     function PICCurBank: byte; override; //Current RAM bank
     function PICBank(i: byte): TPICRAMBank; override; //Return a RAM bank
     function PICnPages: byte; override; //Number of FLASH pages
     function PICPage(i: byte): TPICFlashPage; override; //Return a FLASH page
-    function PICRam(adr: word): TPICRamCellPtr; override;
     function RAMmax: integer; override;
   public     //Inicialización
     pic        : TPIC16;       //Objeto PIC de la serie 16.
@@ -1759,10 +1757,6 @@ function TGenCodBas_PIC16.PICNameShort: string;
 begin
   Result := copy(pic.Model, 4, length(pic.Model));
 end;
-function TGenCodBas_PIC16.PICBankSize: word;
-begin
-  Result := PIC_BANK_SIZE;
-end;
 function TGenCodBas_PIC16.PICnBanks: byte;
 begin
   Result := pic.NumBanks;
@@ -2942,11 +2936,6 @@ end;
 function TGenCodBas_PIC16.CompilerName: string;
 begin
   Result := 'PIC16 Compiler'
-end;
-function TGenCodBas_PIC16.PICRam(adr: word): TPICRamCellPtr;
-//Devuelve referencia a una celda de la RAM. Se devuelve puntero por velocidad.
-begin
-  Result := @pic.ram[adr];
 end;
 function TGenCodBas_PIC16.RAMmax: integer;
 begin

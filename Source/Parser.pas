@@ -295,13 +295,11 @@ public   //Información y acceso a memoria
 public     //Acceso a campos del objeto PIC
   function PICName: string; virtual; abstract;
   function PICNameShort: string; virtual; abstract;
-  function PICBankSize: word; virtual; abstract; //Size of a RAM banks
   function PICnBanks: byte; virtual; abstract; //Number of RAM banks
   function PICCurBank: byte; virtual; abstract; //Current RAM bank
   function PICBank(i: byte): TPICRAMBank; virtual; abstract; //Return a RAM bank
   function PICnPages: byte; virtual; abstract; //Number of FLASH pages
   function PICPage(i: byte): TPICFlashPage; virtual; abstract; //Return a FLASH page
-  function PICRam(adr: word): TPICRamCellPtr; virtual; abstract;
   function RAMmax: integer; virtual; abstract;
 protected  //Container lists of registers
   listRegAux : TPicRegister_list;  //lista de registros de trabajo y auxiliares
