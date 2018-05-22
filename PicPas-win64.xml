@@ -3,37 +3,35 @@
   <language Val="es - Español"/>
   <StateStatusbar Val="1"/>
   <chkLoadLast Val="True"/>
-  <filesClosed Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\nuevo-0.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\Test3_Procedure.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\Test1_Vars.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\Test2_Bit.pas
+  <filesClosed Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.7\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.7\testcode10\Simul_2\Test3_Byte3.pas
 "/>
-  <SplitterCol Val="536870912"/>
-  <MessPanPan Val="536870912"/>
+  <SplitterCol Val="4718592"/>
+  <MessPanPan Val="4718592"/>
   <VerPanMensaj Val="True"/>
   <VerStatusbar Val="True"/>
   <VerBarHerram Val="True"/>
   <ViewSynTree Val="True"/>
-  <SynTreeWidth Val="225"/>
+  <SynTreeWidth Val="221"/>
   <ViewPanAssem Val="True"/>
   <viewMode Val="2"/>
-  <MessPanBack Val="-2147483643"/>
-  <MessPanText Val="536870912"/>
+  <MessPanBack Val="4718592"/>
+  <MessPanText Val="16777215"/>
   <MessPanErr Val="255"/>
-  <MessPanSel Val="-2147483633"/>
-  <CodExplBack Val="-2147483643"/>
-  <CodExplText Val="536870912"/>
+  <MessPanSel Val="8388608"/>
+  <CodExplBack Val="4718592"/>
+  <CodExplText Val="16777215"/>
   <grpFiltypes Val="0"/>
   <TamLet Val="10"/>
-  <TipLet Val="Courier New"/>
+  <TipLet Val="DejaVu Sans Mono"/>
   <VerBarDesV Val="True"/>
   <VerBarDesH Val="False"/>
   <TabEdiState Val="0"/>
   <AutSynChk Val="False"/>
   <Edit>
-    <cTxtNor Val="0"/>
-    <cFonEdi Val="16777215"/>
-    <cLinAct Val="9109503"/>
+    <cTxtNor Val="16777215"/>
+    <cFonEdi Val="4718592"/>
+    <cLinAct Val="8388608"/>
     <Autoindent Val="True"/>
     <MarLinAct Val="True"/>
     <ResPalCur Val="True"/>
@@ -44,13 +42,13 @@ D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\Test2_Bit.pas
     <VerPanVer Val="True"/>
     <VerNumLin Val="True"/>
     <VerMarPle Val="True"/>
-    <cFonPan Val="16777215"/>
+    <cFonPan Val="4718592"/>
     <cTxtPan Val="0"/>
-    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\Test3_Procedure.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\nuevo-0.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\Test1_Vars.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\Test2_Bit.pas
-D:\Proyectos_Software\Lazarus\PicPas-0.8.6\testcode10\Simul_1\Test2_Bit2.pas
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.8.7\testcode10\Simul_2\Test3_Byte3.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.7\testcode10\Simul_2\Test3_Byte1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.7\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.7\testcode10\Simul_2\Test3_Byte4.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.8.7\testcode10\Simul_2\Test3_Byte2.pas
 "/>
   </Edit>
   <IncHeadMpu Val="True"/>

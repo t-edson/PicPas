@@ -1,3 +1,13 @@
+PicPas 0.8.7
+============
+Se pasa a usar la librería PicUtils en su versión 1.5.
+Se quita el soporte a los PIC de la serie 12F, en la driectiva {$PROCESSOR}, porque se está
+prefiriendo la definición de mciros, usando directivas más detalladas.
+Se agregan métodos de acceso a p1^ y p2^ en la unidad Parser.
+Se revisan y corrigen algunas rutinas del compialdor PIC10.
+Se crea el método TCompilerBase.OperationStr() para dar más información sobre una operación ROB,
+y se psa a usa en las unidades generadoras de código.
+
 PicPas 0.8.6
 ============
 * Se reemplazan más rutinas del generador de código de la unidad GenCod_PIC16 con instrucciones
@@ -42,6 +52,7 @@ que acepte un compilador genérico de la clase TcompilerBase.
 corresponde.
 * Se optimiza TCodeTool.SetCompletion() para evitar leer por triplicado, la lista de unidades.
 * Se crean las directivas $SET_PIN_NAME y $RESET_PINS y se incluyen en el archivo de sintaxis.
+* Se uniformiza el código de las unidades FrameRamExplorer y FrameRomExplorer.
 
 PENDIENTES
 -Revisar el uso de bancos, para funciones del sistema, como delay_ms() y las llamadas que se

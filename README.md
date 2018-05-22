@@ -2,14 +2,14 @@
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7LKYWG9LXNQ9C&lc=ES&item_name=Tito%20Hinostroza&item_number=2153&no_note=0&cn=Dar%20instrucciones%20especiales%20al%20vendedor%3a&no_shipping=2&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted)
 
-PicPas 0.8.6
+PicPas 0.8.7
 ============
 
-Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
+Multi-platform Pascal cross-compiler for Microchip 8 bits PIC microcontrollers.
 
 ![PicPas IDE](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "PicPas IDE")
 
-PicPas is a Pascal compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
+PicPas is a Pascal compiler, written in Lazarus, which generates executable code for Baseline and Mid-range PIC microcontrollers.
 
 No additional libraries or software required to compile. PicPas generates the *.hex file directly.
 
@@ -17,9 +17,9 @@ PicPas works with a simplified version of the Pascal language, that has been ada
 
 Currently, it only supports basic types. 
 
-It includes a very complete IDE to facilitate the development.
+It includes a complete IDE/debugger/simulator to facilitate the development.
 
-The compiler includes optimization options so the code obtained is fairly compact, as that could generate any commercial compiler.
+The PicpPas compiler includes advanced optimization options so the code obtained is generally more compact than the obtained with other compilers.
 
 ## Installation
 
@@ -51,11 +51,23 @@ begin
 end.
 ```
 
-PicPas has not special libraries yet, so the special register names, must be defined in the program, or a unit containing this definitions can be created.
+The processor target is defined including the correspondent unit in the USES section. 
+
+The CPU clock is defined using the directive {$FREQUENCY } and must be after the USES section.
 
 ## Devices supported
 
-Almost all the Mid-range PIC devices are supported:
+Almost all the Mid-range and Baseline PIC devices are supported:
+
+### BASELINE DEVICES:
+
+PIC10F200 PIC10F200 PIC10F202 PIC10F204 PIC10F206 PIC10F220 PIC10F222
+
+PIC12F508 PIC12F509 PIC12F510 PIC12F519
+
+PIC16F505 PIC16F506 PIC16F526 PIC16F527 PIC16F54 PIC16F57 PIC16F59
+
+### MID-RANGE DEVICES:
 
 PIC10F320 PIC10F322
 
@@ -537,9 +549,11 @@ Specify the target device model of the microcontroller. Example:
 
 The devices supported using $PROCESSOR directive are: 
 
-PIC12F629 PIC12F675 PIC12F629A PIC12F675A PIC16C63 PIC16CR63 PIC16C65 PIC16C65A PIC16CR65 PIC16F72 PIC16F83 PIC16CR83 PIC16F84 PIC16CR84 PIC16F84A PIC16F870 PIC16F871 PIC16F872 PIC16F873 PIC16F873A PIC16F874 PIC16F874A PIC16F876 PIC16F876A PIC16F877 PIC16F877A PIC16F887 PIC16F627A PIC16F628A PIC16F648A
+Baseline: PIC10F200 PIC10F202 PIC10F204 PIC10F206
 
-However, other devices are supported using units.
+Mid-Range: PIC16C63 PIC16CR63 PIC16C65 PIC16C65A PIC16CR65 PIC16F72 PIC16F83 PIC16CR83 PIC16F84 PIC16CR84 PIC16F84A PIC16F870 PIC16F871 PIC16F872 PIC16F873 PIC16F873A PIC16F874 PIC16F874A PIC16F876 PIC16F876A PIC16F877 PIC16F877A PIC16F887 PIC16F627A PIC16F628A PIC16F648A
+
+This directive is a short form to define a device, however it's preferred to define devices using directives, like $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM. 
 
  
 #### $FREQUENCY
