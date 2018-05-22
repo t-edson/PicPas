@@ -1473,15 +1473,15 @@ begin
     //Es función
     typ := getParamType;  //lee tipo
     if HayError then exit;
-
-//    parType := cIn.tok;   //lee tipo de parámetro
-//    cIn.Next;
-//    //Valida el tipo
-//    typ := FindSysEleType(parType);
-//    if typ = nil then begin
-//      GenError(ER_UNDEF_TYPE_, [parType]);
-//      exit;
-//    end;
+    {Verifica si se tiene disponible la instrucción RETURN (para poder devolver valores
+    en W), de otra forma, no nos complciamos por ahora y prohibimos funciones.}
+    if not pic.Enhanced then begin
+      GenError('Cannot use functions in this PIC devices.');
+      {Se podría implementar un método que use un registro de trabajo adicional
+      en lugar de W para devolver valores con RETLW y luego mover su valor a W
+      después de la llamada a la función.}
+      exit;
+    end;
     //Fija el tipo de la función
     fun.typ := typ;
   end;

@@ -165,6 +165,9 @@ procedure TfrmArcExplor.SetLanguage;
 //Rutina de traducción
 begin
   {$I ..\language\tra_FrameArcExplor.pas}
+  //Inicia propiedades
+  NewFileName := NEW_FILE_NAME;
+  NewFolderName := FOLDER_NAME;
 end;
 procedure TrozaRuta(rut: string; lrut: TStringList); //devuelve una ruta trozada
 begin
@@ -591,9 +594,6 @@ begin
   unidades.Free;
   TreeView1.OnAdvancedCustomDrawItem := @TreeView1AdvancedCustomDrawItem;
   TreeView1.Options := TreeView1.Options - [tvoThemedDraw];
-  //inicia propiedades
-  NewFileName := NEW_FILE_NAME;
-  NewFolderName := FOLDER_NAME;
   InternalPopupFolder := false;  //desactiva el menú interno
   InternalPopupFile := false;  //desactiva el menú interno
 end;

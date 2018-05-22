@@ -47,7 +47,6 @@ type
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
     function ValidateDWordRange(n: Int64): boolean;
-    procedure ExchangeP1_P2;
   protected
     procedure GenerateROBdetComment;
     procedure GenerateROUdetComment;
@@ -365,16 +364,6 @@ begin
     GenError('Numeric value exceeds a dword range.');
     exit(false);
   end;
-end;
-procedure TGenCodBas_PIC16.ExchangeP1_P2;
-{Intercambai el orden de los operandos.}
-var
-  tmp : ^TOperand;
-begin
-  //Invierte los operandos
-  tmp := p1;
-  p1 := p2;
-  p2 := tmp;
 end;
 procedure TGenCodBas_PIC16.GenerateROBdetComment;
 {Genera un comentario detallado en el código ASM. Válido solo para
@@ -951,7 +940,7 @@ end;
 procedure TGenCodBas_PIC16.SetROBResultExpres_bit(Opt: TxpOperation; Inverted: boolean);
 {Define el resultado como una expresión de tipo Bit, y se asegura de reservar el registro
 Z, para devolver la salida. Debe llamarse cuando se tienen los operandos de
-la oepración en p1^ y p2^, porque toma infiormación de allí.}
+la oepración en p1^ y p2^, porque toma información de allí.}
 begin
   GenerateROBdetComment;
   //Se van a usar los RT. Verificar si los RT están ocupadoa
@@ -969,7 +958,7 @@ end;
 procedure TGenCodBas_PIC16.SetROBResultExpres_bool(Opt: TxpOperation; Inverted: boolean);
 {Define el resultado como una expresión de tipo Boolean, y se asegura de reservar el
 registro Z, para devolver la salida. Debe llamarse cuando se tienen los operandos de
-la oepración en p1^y p2^, porque toma infiormación de allí.}
+la oepración en p1^y p2^, porque toma información de allí.}
 begin
   GenerateROBdetComment;
   //Se van a usar los RT. Verificar si los RT están ocupadoa
@@ -1003,7 +992,7 @@ end;
 procedure TGenCodBas_PIC16.SetROBResultExpres_char(Opt: TxpOperation);
 {Define el resultado como una expresión de tipo Char, y se asegura de reservar el
 registro W, para devolver la salida. Debe llamarse cuando se tienen los operandos de
-la oepración en p1^y p2^, porque toma infiormación de allí.}
+la oepración en p1^y p2^, porque toma información de allí.}
 begin
   GenerateROBdetComment;
   //Se van a usar los RT. Verificar si los RT están ocupadoa
@@ -1704,13 +1693,15 @@ end;
 procedure TGenCodBas_PIC16.kIF_BSET(const f: TPicRegisterBit; out igot: integer);
 {Conditional instruction. Test if the specified bit is set. In this case, execute
 the following block.
-This instruction require to i_CALL to kEND_BSET() to define the End of the block.
+This instruction require to call to kEND_BSET() to define the End of the block.
 The strategy here is to generate the sequence:
 
   <Bank setting>
   i_BTFSS f
   GOTO  <Block end>
   ;--- Block start ---
+  <several instructions>
+  ;--- Block end ---
 
 This scheme is the worst case (assuming the GOTO instruction is only one word), later
 if the body of the IF, is only one word, it will be optimized to:
@@ -1722,7 +1713,7 @@ if the body of the IF, is only one word, it will be optimized to:
   ;--- Block end ---
 
 It's not used the best case first, because in case it needs to change to the worst case,
-it will need to insert and move several words, including, probably, GOTOs and LABELs,
+it would need to insert and move several words, including, probably, GOTOs and LABELs,
 needing to recalculate jumps.
 }
 begin

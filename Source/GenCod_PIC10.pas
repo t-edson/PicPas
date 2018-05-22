@@ -256,684 +256,8 @@ física}
 begin
   Result := (var1.addr0 = var2.addr0) and (var1.bit0 = var2.bit0);
 end;
-////////////operaciones con Bit
-procedure TGenCod.ROB_bit_asig_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p1^.Sto <> stVariab then begin  //validación
-    GenError('Only variables can be assigned.'); exit;
-  end;
-  case p2^.Sto of
-  stConst : begin
-    SetROBResultExpres_bit(Opt, false);  //Realmente, el resultado no es importante
-    {Actualmente no existen constantes de tipo "Bit", ya que el número menor que se
-    reconoce es de typo byte. Por eso se define ROB_bit_asig_byte(). }
-    if p2^.valBool then begin
-      kBSF(bit1);
-    end else begin
-      kBCF(bit1);
-    end;
-  end;
-  stVariab: begin
-    SetROBResultExpres_bit(Opt, false);  //Realmente, el resultado no es importante
-    if IsTheSameBitVar(p1^.rVar, p2^.rVar) then begin
-      //Es asignación de la misma variable.
-      if p2^.Inverted then begin  //Es a := not a
-          //verifica error.
-        kMOVLW(p1^.rVar.BitMask);  //carga máscara
-        kXORWF(byte1, toF);  //Se usa como byte
-      end else begin  //Es a := a
-        PutTopComm('No code, by optimizing.');
-      end;
-    end else begin
-      //Es asignación de otra variable
-      if p1^.rVar.bank = p2^.rVar.bank then begin //Están en el mismo banco
-        //No se usa el registro W
-        kBCF(bit1);
-        if p2^.Inverted then kBTFSS(bit2) else kBTFSC(bit2);
-        kBSF(bit1);
-        //No hay problema con el banco final, porque es el mismo
-      end else begin  //Están en bancos diferentes
-        //No se usa el registro W
-        kBCF(bit1);
-        if p2^.Inverted then kBTFSS(bit2) else kBTFSC(bit2);
-        kBSF(bit1);
-        CurrBank := 255; //No se puede predecir el banco
-      end;
-    end;
-  end;
-  stExpres: begin  //ya está en STATUS.Z
-    SetROBResultExpres_bit(Opt, false);  //Realmente, el resultado no es importante
-    if p2^.Inverted then begin  //está invertido
-      //No se usa el registro W
-      kBCF(bit1);
-      kBTFSS(Z);
-      kBSF(bit1);
-    end else begin  //caso normal
-      //No se usa el registro W
-      kBCF(bit1);
-      kBTFSC(Z);
-      kBSF(bit1);
-    end;
-  end;
-  else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
-  end;
-end;
-procedure TGenCod.ROB_bit_asig_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p1^.Sto <> stVariab then begin  //validación
-    GenError('Only variables can be assigned.'); exit;
-  end;
-  case p2^.Sto of
-  stConst : begin
-    SetROBResultExpres_bit(Opt, false);  //Realmente, el resultado no es importante
-    {Esta es la única opción válida, pero solo para los valores 0 y 1}
-    if p2^.valInt = 0 then begin
-      //No se usa el registro W
-      kBCF(bit1);
-    end else if p2^.valInt = 1 then begin
-      //No se usa el registro W
-      kBSF(bit1);
-    end else begin
-      GenError('Invalid value for a bit variable.'); exit;
-    end;
-  end;
-  stVariab,
-  stExpres: begin  //ya está en STATUS.Z
-    GenError('Cannot asign: (bit) := (byte).'); exit;
-  end;
-  else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
-  end;
-end;
-procedure TGenCod.ROB_bit_and_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-    case stoOperation of
-    stConst_Const: begin  //AND de dos constantes. Caso especial
-      SetROBResultConst_bit(p1^.valBool and p2^.valBool);
-      exit;  //sale aquí, porque es un caso particular
-    end;
-    stConst_Variab: begin
-      if p1^.valBool then begin  //p1 = 1
-        //No usa ningún registro
-        //Optimiza devolviendo la misma variable
-        SetROBResultVariab(p2^.rVar, p2^.Inverted);  //mantiene la lógica
-      end else begin   //p1 = 0
-        //No usa ningún registro
-        //Optimiza devolviendo constante = 0
-        SetROBResultConst_bit(false);
-      end;
-    end;
-    stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-      if p1^.valBool then begin  //p1 = 1
-        //No usa ningún registro
-        //Optimiza devolviendo la misma expresión en Z
-        SetROBResultExpres_bit(Opt, p2^.Inverted);  //mantiene la lógica
-      end else begin   //p1 = 0
-        //No usa ningún registro
-        //Optimiza devolviendo constante = 0
-        SetROBResultConst_bit(false);
-        Z.used := false;  //libera el bit Z, porque ya no importa la expresión
-      end;
-    end;
-    stVariab_Const: begin
-      if p2^.valBool then begin  //p2 = 1
-        //No usa ningún registro
-        //Optimiza devolviendo la misma variable
-        SetROBResultVariab(p1^.rVar, p1^.Inverted);  //mantiene la lógica
-      end else begin   //p2 = 0
-        //No usa ningún registro
-        //Optimiza devolviendo constante = 0
-        SetROBResultConst_bit(false);
-      end;
-    end;
-    stVariab_Variab:begin
-      if IsTheSameBitVar(p1^.rVar, p2^.rVar) then begin
-        //Es la misma variable: a AND a
-        //Optimiza devolviendo la misma variable
-        if p1^.Inverted and p2^.Inverted then begin
-          //not a and not a = not a
-          SetROBResultVariab(p1^.rVar, p1^.Inverted);
-        end else if p1^.Inverted then begin
-          //not a and a = 0
-          SetROBResultConst_bit(false);
-        end else if p2^.Inverted then begin
-          //a and not a = 0
-          SetROBResultConst_bit(false);
-        end else begin  //Caso normal
-          //a and a = a
-          SetROBResultVariab(p1^.rVar, p1^.Inverted);
-        end;
-      end else begin
-        if p1^.Inverted and p2^.Inverted then begin
-          //Por La ley de Morgan, se convierten em OR
-          p1^.Inverted := false;
-          p2^.Inverted := false;
-          ROB_bit_or_bit(Opt, SetRes);  //procesa como OR
-          res.Invert;   //y niega todo
-          exit;
-        end else if p1^.Inverted then begin
-          //Este caso es lo inverso, no vale la pena implementarlo de nuevo
-          ExchangeP1_P2;
-          ROB_bit_and_bit(Opt, SetRes);  //procesa como OR
-          exit;
-        end else if p2^.Inverted then begin
-          SetROBResultExpres_bit(Opt, false);  //Fija resultado
-          //Mueve p2 a Z
-          kMOVLW(p2^.rVar.BitMask);
-          kANDWF(byte2, toW);  //Z aparece normal
-          //Aplica un AND entre Z y p1,
-          kBTFSS(bit1);   //Si es 1, deja tal cual
-          kBCF(Z);     //Si es 0, devuelve cero
-        end else begin  //Caso normal
-          SetROBResultExpres_bit(Opt, true);  //Fija resultado, con lógica invertida
-          //Mueve p2 a Z
-          kMOVLW(p2^.rVar.BitMask);
-          kANDWF(byte2, toW);  //Z está invertido
-          //Aplica un AND entre Z' y p1. Trabajamos con lógica invertida, por optimización
-          kBTFSS(bit1); //Si es 1, deja tal cual (pero sigue con lógica invertida)
-          kBSF(Z);       //Si es 0, devuelve cero (1 porque debe quedar con lógica invertida)
-        end;
-      end;
-    end;
-    stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-      if p1^.Inverted and p2^.Inverted then begin
-        //Por La ley de Morgan, se convierten em OR
-        p1^.Inverted := false;
-        p2^.Inverted := false;
-        ROB_bit_or_bit(Opt, SetRes);  //procesa como OR
-        exit;
-      end else if p1^.Inverted then begin  //lógica invertida en p1
-        SetROBResultExpres_bit(Opt, false); //Fija resultado
-        //Aplica un AND entre p1' y Z.
-        kBTFSC(bit1); //Si es 0, deja tal cual
-        kBCF(Z);      //Si es 1, devuelve cero
-      end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetROBResultExpres_bit(Opt, true); //Deja la lógica invertida por optimización
-        //Aplica un AND entre p1 y Z'.
-        kBTFSS(bit1); //Si es 1, deja tal cual
-        kBSF(Z);      //Si es 0, devuelve cero (1, porque es lógica es invertida)
-      end else begin  //lógica normal
-        SetROBResultExpres_bit(Opt, false); //Fija resultado
-        //Aplica un AND entre p1 y Z.
-        kBTFSS(bit1); //Si es 1, deja tal cual
-        kBCF(Z);      //Si es 0, devuelve cero
-      end;
-    end;
-    stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-      ExchangeP1_P2;       //Convierte en stConst_Expres
-      ROB_bit_and_bit(Opt, SetRes);
-      exit;
-    end;
-    stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-      ExchangeP1_P2;       //Convierte en stVariab_Expres
-      ROB_bit_and_bit(Opt, SetRes);
-      exit;
-    end;
-    stExpres_Expres:begin
-      //la expresión p1 debe estar salvada y p2 en el acumulador
-      p1^.SetAsVariab(GetVarBitFromStk);
-      //Luego el caso es similar a variable-expresión
-      ROB_bit_and_bit(Opt, SetRes);
-      FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
-    end;
-    else
-      genError('Cannot Compile: "%s"', [Opt.OperationString]);
-    end;
-end;
-procedure TGenCod.ROB_bit_and_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p2^.Sto <> stConst then begin
-    GenError('Incompatible types: (bit) AND (byte).'); exit;
-  end;
-  //p2 es constante
-  if p2^.valInt = 0 then begin
-    p2^.SetAsConst(typBit);   //convierte en bit
-    p2^.valBool := false;
-    ROB_bit_and_bit(Opt, SetRes);  //opera como bit
-  end else if p2^.valInt = 1 then begin
-    p2^.SetAsConst(typBit);   //convierte en bit
-    p2^.valBool := true;
-    ROB_bit_and_bit(Opt, SetRes);  //opera como bit
-  end else begin
-    GenError('Incompatible types: (bit) AND (byte).'); exit;
-  end;
-end;
-procedure TGenCod.ROB_bit_or_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-    case stoOperation of
-    stConst_Const: begin  //AND de dos constantes. Caso especial
-      SetROBResultConst_bit(p1^.valBool or p2^.valBool);
-      exit;  //sale aquí, porque es un caso particular
-    end;
-    stConst_Variab: begin
-      if p1^.valBool then begin  //p1 = 1
-        //No usa ningún registro
-        //Optimiza devolviendo constante = 1
-        SetROBResultConst_bit(true);
-      end else begin   //p1 = 0
-        //No usa ningún registro
-        //Optimiza devolviendo la misma variable
-        SetROBResultVariab(p2^.rVar, p2^.Inverted);
-      end;
-    end;
-    stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-      if p1^.valBool then begin  //p1 = 1
-        //No usa ningún registro
-        //Optimiza devolviendo constante = 1
-        SetROBResultConst_bit(true);
-        Z.used := false;  //libera el bit Z, porque ya no importa la expresión
-      end else begin   //p1 = 0
-        //No usa ningún registro
-        //Optimiza devolviendo la misma expresión en Z
-        SetROBResultExpres_bit(Opt, p2^.Inverted);  //mantiene la lógica
-      end;
-    end;
-    stVariab_Const: begin
-      if p2^.valBool then begin  //p2 = 1
-        //No usa ningún registro
-        //Optimiza devolviendo constante = 1
-        SetROBResultConst_bit(true);
-      end else begin   //p2 = 0
-        //No usa ningún registro
-        //Optimiza devolviendo la misma variable
-        SetROBResultVariab(p1^.rVar, p1^.Inverted);
-      end;
-    end;
-    stVariab_Variab:begin
-      if IsTheSameBitVar(p1^.rVar, p2^.rVar) then begin
-        //Es la misma variable: a OR a. Optimiza
-        if p1^.Inverted and p2^.Inverted then begin
-          //not a or not a = not a
-          SetROBResultVariab(p1^.rVar, p1^.Inverted);
-        end else if p1^.Inverted then begin
-          //not a or a = 1
-          SetROBResultConst_bit(true);
-        end else if p2^.Inverted then begin
-          //a or not a = 1
-          SetROBResultConst_bit(true);
-        end else begin  //Caso normal
-          //a and a = a
-          SetROBResultVariab(p1^.rVar, p1^.Inverted);
-        end;
-      end else begin
-        if p1^.Inverted and p2^.Inverted then begin
-          //Por La ley de Morgan, se convierten em AND
-          p1^.Inverted := false;
-          p2^.Inverted := false;
-          ROB_bit_and_bit(Opt, SetRes);  //procesa como OR
-          res.Invert;
-          exit;
-        end else if p1^.Inverted then begin
-          //Este caso es lo inverso, no vale la pena implementarlo de nuevo
-          ExchangeP1_P2;
-          ROB_bit_or_bit(Opt, SetRes);  //procesa como OR
-          exit;
-        end else if p2^.Inverted then begin
-          SetROBResultExpres_bit(Opt, false);  //Fija resultado
-          //Mueve p2 a Z
-          kMOVLW(p2^.rVar.BitMask);
-          kANDWF(byte2, toW);  //Z aparece normal
-          //Aplica un OR entre Z y p1,
-          kBTFSC(bit1);   //Si es 0, deja tal cual
-          kBSF(Z);     //Si es 1, devuelve uno
-        end else begin  //Caso normal
-          SetROBResultExpres_bit(Opt, true);  //Fija resultado, con lógica invertida
-          //Mueve p2 a Z
-          kMOVLW(p2^.rVar.BitMask);
-          kANDWF(byte2, toW);  //Z está invertido
-          //Aplica un OR entre p1 y Z'. Trabajamos con lógica invertida, por optimización
-          kBTFSC(bit1); //Si es 0, deja tal cual (pero sigue con lógica invertida)
-          kBCF(Z);       //Si es 1, devuelve 1 (0 porque debe quedar con lógica invertida)
-        end;
-      end;
-    end;
-    stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-      if p1^.Inverted and p2^.Inverted then begin
-        //Por La ley de Morgan, se convierten em AND
-        p1^.Inverted := false;
-        p2^.Inverted := false;
-        ROB_bit_and_bit(Opt, SetRes);  //procesa como OR
-        exit;
-      end else if p1^.Inverted then begin  //lógica invertida
-        SetROBResultExpres_bit(Opt, false);  //Fija resultado
-        //Aplica un OR entre p1' y Z.
-        kBTFSS(bit1);   //Si es 1, deja tal cual
-        kBSF(Z);     //Si es 0, devuelve uno
-      end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetROBResultExpres_bit(Opt, true); //Deja la lógica invertida por optimización
-        //Aplica un OR entre p1 y Z.
-        kBTFSC(bit1);   //Si es 0, deja tal cual
-        kBCF(Z);     //Si es 1, devuelve uno (0 porque es lógica invertida)
-      end else begin   //lógica normal
-        SetROBResultExpres_bit(Opt, false);  //Fija resultado
-        //Aplica un OR entre p1 y Z.
-        kBTFSC(bit1);   //Si es 0, deja tal cual
-        kBSF(Z);     //Si es 1, devuelve uno
-      end;
-    end;
-    stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-      ExchangeP1_P2;       //Convierte en stConst_Expres
-      ROB_bit_or_bit(Opt, SetRes);
-      exit;
-    end;
-    stExpres_Variab:begin  //la expresión p2 se evaluó y esta en W
-      ExchangeP1_P2;       //Convierte en stVariab_Expres
-      ROB_bit_or_bit(Opt, SetRes);
-      exit;
-    end;
-    stExpres_Expres:begin
-      //la expresión p1 debe estar salvada y p2 en el acumulador
-      p1^.SetAsVariab(GetVarBitFromStk);
-      //Luego el caso es similar a variable-expresión
-      ROB_bit_or_bit(Opt, SetRes);
-      FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
-    end;
-    else
-      genError('Cannot Compile: "%s"', [Opt.OperationString]);
-    end;
-end;
-procedure TGenCod.ROB_bit_or_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p2^.Sto <> stConst then begin
-    GenError('Incompatible types: (bit) OR (byte).'); exit;
-  end;
-  //p2 es constante
-  if p2^.valInt = 0 then begin
-    p2^.SetAsConst(typBit);   //convierte en bit
-    p2^.valBool := false;
-    ROB_bit_or_bit(Opt, SetRes);  //opera como bit
-  end else if p2^.valInt = 1 then begin
-    p2^.SetAsConst(typBit);   //convierte en bit
-    p2^.valBool := true;
-    ROB_bit_or_bit(Opt, SetRes);  //opera como bit
-  end else begin
-    GenError('Incompatible types: (bit) OR (byte).'); exit;
-  end;
-end;
-procedure TGenCod.ROB_bit_xor_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-    case stoOperation of
-    stConst_Const: begin  //XOR de dos constantes. Caso especial
-      SetROBResultConst_bit(p1^.valBool xor p2^.valBool);
-      exit;  //sale aquí, porque es un caso particular
-    end;
-    stConst_Variab: begin
-      if p1^.valBool then begin  //p1 = 1
-        //Optimiza devolviendo la variable invertida
-        SetROBResultVariab(p2^.rVar, not p2^.Inverted);
-      end else begin   //p1 = 0
-        //Optimiza devolviendo la misma variable
-        SetROBResultVariab(p2^.rVar, p2^.Inverted);
-      end;
-    end;
-    stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-      if p1^.valBool then begin  //p1 = 1
-        //Optimiza devolviendo la expresión invertida
-        SetROBResultExpres_bit(Opt, not p2^.Inverted);  //mantiene la lógica
-      end else begin   //p1 = 0
-        //Optimiza devolviendo la misma expresión en Z
-        SetROBResultExpres_bit(Opt, p2^.Inverted);  //mantiene la lógica
-      end;
-    end;
-    stVariab_Const: begin
-      ExchangeP1_P2;  //Convierte a stConst_Variab
-      ROB_bit_xor_bit(Opt, SetRes);
-      exit;
-    end;
-    stVariab_Variab:begin
-      if IsTheSameBitVar(p1^.rVar, p2^.rVar) then begin
-        //Es la misma variable: a XOR a
-        //Optimiza devolviendo cero
-        SetROBResultConst_bit(false);
-      end else begin
-        if p1^.Inverted and p2^.Inverted then begin
-          p1^.Inverted := false;
-          p2^.Inverted := false;
-          ROB_bit_xor_bit(Opt, SetRes);  //es lo mismo
-          exit;
-        end else if p1^.Inverted then begin
-          //Este caso es lo inverso, no vale la pena implementarlo de nuevo
-          ExchangeP1_P2;
-          ROB_bit_xor_bit(Opt, SetRes);  //procesa como OR
-          exit;
-        end else if p2^.Inverted then begin
-          //a XOR b' = (z XOR b)'
-          p2^.Inverted := false;
-          ROB_bit_xor_bit(Opt, SetRes);
-          res.Invert;  //Invierte la lógica
-          exit;
-        end else begin  //Caso normal
-          {Se optimiza bien, esta operación, porque es una rutina muy usada para loa
-          las operaciones XOR, y porque también se utiliza el XOR para las comparaciones
-          de bits.}
-          if p1^.bit = p2^.bit then begin
-            //Están en el mismo bit, se puede optimizar
-            SetROBResultExpres_bit(Opt, true);  //Fija resultado
-            kMOVF(byte2, toW);  //mueve a W
-            kXORWF(byte1, toW);      //APlica XOR,
-            kANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
-          end else if p1^.bit = p2^.bit +1 then begin
-            //p1 está a un bit a la izquierda, se puede optimizar
-            SetROBResultExpres_bit(Opt, true);  //Fija resultado
-            kRLF(byte2, toW);  //alinea y mueve a W
-            kXORWF(byte1, toW);      //APlica XOR,
-            kANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
-          end else if p1^.bit = p2^.bit-1 then begin
-            //p1 está a un bit a la derecha, se puede optimizar
-            SetROBResultExpres_bit(Opt, true);  //Fija resultado
-            kRRF(byte2, toW);  //alinea y mueve a W
-            kXORWF(byte1, toW);      //APlica XOR,
-            kANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
-          end else if abs(p1^.bit - p2^.bit) = 4 then begin
-            //p1 está a un nibble de distancia, se puede optimizar
-            SetROBResultExpres_bit(Opt, true);  //Fija resultado
-            kSWAPF(byte2, toW);  //alinea y mueve a W
-            kXORWF(byte1, toW);      //APlica XOR,
-            kANDLW(p1^.rVar.BitMask);  //Aplica máscara al bit que nos interesa, queda en Z, invertido
-          end else begin
-            //La forma larga
-            SetROBResultExpres_bit(Opt, false);  //Fija resultado,
-            //Mueve p2 a Z
-            kMOVLW(p2^.rVar.BitMask);
-            kANDWF(byte2, toW);  //Z está invertido
-            //Aplica un XOR entre p1 y Z'.
-            _BANKSEL(p1^.bank);
-            _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es que se necesita
-            _BTFSS(p1^.offs, p1^.bit);  //Si es 1, invierte, pero ya esta invertido, así que lo deja
-            _ANDWF(Z.offs, toW);  //Si es 0, deja tal cual, pero como está invertido, hay que corregir
-          end;
-        end;
-      end;
-    end;
-    stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-      if p1^.Inverted and p2^.Inverted then begin
-        p1^.Inverted := false;
-        p2^.Inverted := false;
-        ROB_bit_xor_bit(Opt, SetRes);   //es lo mismo
-        exit;
-      end else if p1^.Inverted then begin  //lógica invertida
-        SetROBResultExpres_bit(Opt, false);  //Fija resultado
-        //Aplica un XOR entre p1' y Z.
-        _BANKSEL(p1^.bank);
-        _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
-        _BTFSS(p1^.offs, p1^.bit);   //Si es 1(0), deja tal cual
-        _ANDWF(Z.offs, toW);     //Si es 0(1), invierte
-      end else if p2^.Inverted then begin  //lógica invertida en Z
-        SetROBResultExpres_bit(Opt, false);  //Fija resultado
-        //Aplica un XOR entre p1 y Z'.
-        _BANKSEL(p1^.bank);
-        _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
-        _BTFSS(p1^.offs, p1^.bit);   //Si es 1, invierte (deja igual porque ya está invertido)
-        _ANDWF(Z.offs, toW);     //Si es 0, deja tal cual (realmente debe invertir)
-      end else begin   //lógica normal
-        SetROBResultExpres_bit(Opt, false);  //Fija resultado
-        //Aplica un XOR entre p1 y Z.
-        _BANKSEL(p1^.bank);
-        _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es se necesita
-        _BTFSC(p1^.offs, p1^.bit);  //Si es 0, deja tal cual
-        _ANDWF(Z.offs, toW);         //Si es 1, invierte
-      end;
-    end;
-    stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-      ExchangeP1_P2;       //Convierte en stConst_Expres
-      ROB_bit_xor_bit(Opt, SetRes);
-      exit;
-    end;
-    stExpres_Variab:begin  //la expresión p2 se evaluó y esta en W
-      ExchangeP1_P2;       //Convierte en stVariab_Expres
-      ROB_bit_xor_bit(Opt, SetRes);
-      exit;
-    end;
-    stExpres_Expres:begin
-      //la expresión p1 debe estar salvada y p2 en el acumulador
-      p1^.SetAsVariab(GetVarBitFromStk);
-      //Luego el caso es similar a stVariab_Expres
-      ROB_bit_xor_bit(Opt, SetRes);
-      FreeStkRegisterBit;   //Libera pila. Ya se usó el dato.
-    end;
-    else
-      genError('Cannot Compile: "%s"', [Opt.OperationString]);
-    end;
-end;
-procedure TGenCod.ROB_bit_xor_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p2^.Sto <> stConst then begin
-    GenError('Incompatible types: (bit) XOR (byte).'); exit;
-  end;
-  //p2 es constante
-  if p2^.valInt = 0 then begin
-    p2^.SetAsConst(typBit);   //convierte en bit
-    p2^.valBool := false;
-    ROB_bit_xor_bit(Opt, SetRes);  //opera como bit
-  end else if p2^.valInt = 1 then begin
-    p2^.SetAsConst(typBit);   //convierte en bit
-    p2^.valBool := true;
-    ROB_bit_xor_bit(Opt, SetRes);  //opera como bit
-  end else begin
-    GenError('Incompatible types: (bit) XOR (byte).'); exit;
-  end;
-end;
-procedure TGenCod.ROB_bit_equ_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-  //Una comparación, es lo mismo que un XOR negado
-  ROB_bit_xor_bit(Opt, SetRes);  //puede devolver error
-  //Niega la lógica
-  res.Invert;  //Invierte la lógica
-  ChangeResultBitToBool;  //devuelve boolean
-end;
-procedure TGenCod.ROB_bit_equ_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  //Una comparación, es lo mismo que un XOR negado
-  ROB_bit_xor_byte(Opt, SetRes);  //puede devolver error
-  //¿Y si devuelve variable?
-  res.Invert;  //Invierte la lógica
-  ChangeResultBitToBool;  //devuelve boolean
-end;
-procedure TGenCod.ROB_bit_dif_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-  //Esta comparación, es lo mismo que un XOR
-  ROB_bit_xor_bit(Opt, SetRes);  //puede devolver error
-  ChangeResultBitToBool;  //devuelve boolean
-end;
-procedure TGenCod.ROB_bit_dif_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  //Una comparación, es lo mismo que un XOR
-  ROB_bit_xor_byte(Opt, SetRes);  //puede devolver error
-  ChangeResultBitToBool;  //devuelve boolean
-end;
-procedure TGenCod.ROU_not_bit(Opr: TxpOperator; SetRes: boolean);
-begin
-  case p1^.Sto of
-  stConst : begin
-    {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
-    SetROUResultConst_bit(not p1^.valBool);
-  end;
-  stVariab: begin
-    {Optimiza devolviendo la misma variable, pero invirtiendo la lógica.}
-    SetROBResultVariab(p1^.rVar, not p1^.Inverted);
-  end;
-  stExpres: begin  //ya está en STATUS.Z
-    //No cambiamos su valor, sino su significado.
-    SetROUResultExpres_bit(not p1^.Inverted);
-  end;
-  else
-    genError('Not implemented: "%s"', [Opr.OperationString]);
-  end;
-end;
-procedure TGenCod.ROU_not_byte(Opr: TxpOperator; SetRes: boolean);
-begin
-  case p1^.Sto of
-  stConst : begin
-    {Actualmente no existen constantes de tipo "Bit", pero si existieran, sería así}
-    SetROUResultConst_byte((not p1^.valInt) and $FF);
-  end;
-  stVariab: begin
-    SetROUResultExpres_byte;
-    _COMF(p1^.offs, toW);
-  end;
-//  stExpres: begin
-//    SetROUResultExpres_byte;
-//    //////
-//  end;
-  else
-    genError('Not implemented: "%s"', [Opr.OperationString]);
-  end;
-end;
-procedure TGenCod.ROU_addr_byte(Opr: TxpOperator; SetRes: boolean);
-{Devuelve la dirección de una variable.}
-begin
-  case p1^.Sto of
-  stConst : begin
-    genError('Cannot obtain address of constant.');
-  end;
-  stVariab: begin
-    //Es una variable normal
-    //La dirección de una variable es constante
-    SetResultConst(typByte);
-    //No se usa p1^.offs, porque solo retorna 7 bits;
-    res.valInt := p1^.rVar.addr and $ff;
-  end;
-  stExpres: begin  //ya está en STATUS.Z
-    genError('Cannot obtain address of an expression.');
-  end;
-  else
-    genError('Cannot obtain address of this operand.');
-  end;
-end;
-////////////operaciones con Boolean
-procedure TGenCod.ROB_bool_asig_bool(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_bit_asig_bit(Opt, SetRes);  //A bajo nivel es lo mismo
-end;
-procedure TGenCod.ROU_not_bool(Opr: TxpOperator; SetRes: boolean);
-begin
-  ROU_not_bit(Opr, SetRes);  //A bajo nivel es lo mismo
-  ChangeResultBitToBool;  //pero debe devolver este tipo
-end;
-procedure TGenCod.ROB_bool_and_bool(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_bit_and_bit(Opt, SetRes);  //A bajo nivel es lo mismo
-  ChangeResultBitToBool;  //pero debe devolver este tipo
-end;
-procedure TGenCod.ROB_bool_or_bool(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_bit_or_bit(Opt, SetRes);  //A bajo nivel es lo mismo
-  ChangeResultBitToBool;  //pero debe devolver este tipo
-end;
-procedure TGenCod.ROB_bool_xor_bool(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_bit_xor_bit(Opt, SetRes);  //A bajo nivel es lo mismo
-  ChangeResultBitToBool;  //pero debe devolver este tipo
-end;
-procedure TGenCod.ROB_bool_equ_bool(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_bit_equ_bit(Opt, SetRes);  //Es lo mismo
-end;
-procedure TGenCod.ROB_bool_dif_bool(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_bit_dif_bit(Opt, SetRes);
-end;
+////////////operaciones con Bit y Boolean
+{$I .\GenCod.inc}
 //////////// Operaciones con Byte
 procedure TGenCod.ROB_byte_asig_byte(Opt: TxpOperation; SetRes: boolean);
 var
@@ -948,7 +272,7 @@ begin
     //Asignación a una variable
     case p2^.Sto of
     stConst : begin
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //caso especial
         kCLRF(byte1);
       end else begin
@@ -974,7 +298,7 @@ begin
     stConst : begin
       kMOVWF(FSR);  //direcciona
       //Asignación normal
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //caso especial
         kCLRF(INDF);
       end else begin
@@ -1014,7 +338,7 @@ begin
       kMOVF(byte1, toW);
       kMOVWF(FSR);  //direcciona
       //Asignación normal
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //caso especial
         kCLRF(INDF);
       end else begin
@@ -1062,10 +386,10 @@ begin
     //Asignación a una variable
     case p2^.Sto of
     stConst : begin
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //Caso especial. No hace nada
       end else begin
-        _MOVLW(p2^.valInt);
+        _MOVLW(value2);
         _BANKSEL(p1^.bank);  //verifica banco destino
         _ADDWF(p1^.offs, toF);
       end;
@@ -1090,11 +414,11 @@ begin
     case p2^.Sto of
     stConst : begin
       //Asignación normal
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //Caso especial. No hace nada
       end else begin
         _MOVWF(FSR.offs);  //direcciona
-        _MOVLW(p2^.valInt);
+        _MOVLW(value2);
         _ADDWF(0, toF);
       end;
     end;
@@ -1131,14 +455,14 @@ begin
     case p2^.Sto of
     stConst : begin
       //Asignación normal
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //Caso especial. No hace nada
       end else begin
         //Caso especial de asignación a puntero dereferenciado: variable^
         _BANKSEL(p1^.bank);  //verifica banco destino
         _MOVF(p1^.offs, toW);
         _MOVWF(FSR.offs);  //direcciona
-        _MOVLW(p2^.valInt);
+        _MOVLW(value2);
         _ADDWF(0, toF);
       end;
     end;
@@ -1187,10 +511,10 @@ begin
     //Asignación a una variable
     case p2^.Sto of
     stConst : begin
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //Caso especial. No hace nada
       end else begin
-        _MOVLW(p2^.valInt);
+        _MOVLW(value2);
         _BANKSEL(p1^.bank);  //verifica banco destino
         _SUBWF(p1^.offs, toF);
       end;
@@ -1215,11 +539,11 @@ begin
     case p2^.Sto of
     stConst : begin
       //Asignación normal
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //Caso especial. No hace nada
       end else begin
         _MOVWF(FSR.offs);  //direcciona
-        _MOVLW(p2^.valInt);
+        _MOVLW(value2);
         _SUBWF(0, toF);
       end;
     end;
@@ -1256,14 +580,14 @@ begin
     case p2^.Sto of
     stConst : begin
       //Asignación normal
-      if p2^.valInt=0 then begin
+      if value2=0 then begin
         //Caso especial. No hace nada
       end else begin
         //Caso especial de asignación a puntero dereferenciado: variable^
         _BANKSEL(p1^.bank);  //verifica banco destino
         _MOVF(p1^.offs, toW);
         _MOVWF(FSR.offs);  //direcciona
-        _MOVLW(p2^.valInt);
+        _MOVLW(value2);
         _SUBWF(0, toF);
       end;
     end;
@@ -1311,14 +635,14 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin
-    SetROBResultConst_byte(p1^.valInt+p2^.valInt);  //puede generar error
+    SetROBResultConst_byte(value1+value2);  //puede generar error
   end;
   stConst_Variab: begin
-    if p1^.valInt = 0 then begin
+    if value1 = 0 then begin
       //Caso especial
       SetROBResultVariab(p2^.rVar);  //devuelve la misma variable
       exit;
-    end else if p1^.valInt = 1 then begin
+    end else if value1 = 1 then begin
       //Caso especial
       SetROBResultExpres_byte(Opt);
       _BANKSEL(p2^.bank);
@@ -1375,7 +699,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_add_word(Opt: TxpOperation; SetRes: boolean);
@@ -1413,7 +737,7 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const:begin  //suma de dos constantes. Caso especial
-    SetROBResultConst_byte(p1^.valInt-p2^.valInt);  //puede generar error
+    SetROBResultConst_byte(value1-value2);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
   stConst_Variab: begin
@@ -1437,7 +761,7 @@ begin
   end;
   stVariab_Const: begin
     SetROBResultExpres_byte(Opt);
-    _MOVLW(p2^.valInt);
+    _MOVLW(value2);
     _BANKSEL(p1^.bank);
     _SUBWF(p1^.offs, toW);  //F - W -> W
   end;
@@ -1478,7 +802,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.mul_byte_16(fun: TxpEleFun);
@@ -1514,21 +838,21 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const:begin  //producto de dos constantes. Caso especial
-    if p1^.valInt*p2^.valInt < $100 then begin
-      SetROBResultConst_byte((p1^.valInt*p2^.valInt) and $FF);  //puede generar error
+    if value1*value2 < $100 then begin
+      SetROBResultConst_byte((value1*value2) and $FF);  //puede generar error
     end else begin
-      SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+      SetROBResultConst_word((value1*value2) and $FFFF);  //puede generar error
     end;
     exit;  //sale aquí, porque es un caso particular
   end;
   stConst_Variab: begin
-    if p1^.valInt=0 then begin  //caso especial
+    if value1=0 then begin  //caso especial
       SetROBResultConst_byte(0);
       exit;
-    end else if p1^.valInt=1 then begin  //caso especial
+    end else if value1=1 then begin  //caso especial
       SetROBResultVariab(p2^.rVar);
       exit;
-    end else if p1^.valInt=2 then begin
+    end else if value1=2 then begin
       SetROBResultExpres_word(Opt);
       _BANKSEL(H.bank);
       _CLRF(H.offs);
@@ -1544,7 +868,7 @@ begin
     _MOVF(p2^.offs, toW);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
-    _MOVLW(p1^.valInt);
+    _MOVLW(value1);
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -1552,7 +876,7 @@ begin
     SetROBResultExpres_word(opt);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
-    _MOVLW(p1^.valInt);
+    _MOVLW(value1);
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -1562,7 +886,7 @@ begin
     _MOVF(p1^.offs, toW);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
-    _MOVLW(p2^.valInt);
+    _MOVLW(value2);
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -1590,7 +914,7 @@ begin
     SetROBResultExpres_word(Opt);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p1 -> E
-    _MOVLW(p2^.valInt); //p2 -> W
+    _MOVLW(value2); //p2 -> W
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -1620,7 +944,7 @@ begin
     AddCallerTo(f_byte_mul_byte_16);
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_mul_word(Opt: TxpOperation; SetRes: boolean);
@@ -1632,23 +956,23 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const:begin  //producto de dos constantes. Caso especial
-    if p1^.valInt*p2^.valInt < $100 then begin
-      SetROBResultConst_byte((p1^.valInt*p2^.valInt) and $FF);  //puede generar error
-    end else if p1^.valInt*p2^.valInt < $10000 then begin
-      SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+    if value1*value2 < $100 then begin
+      SetROBResultConst_byte((value1*value2) and $FF);  //puede generar error
+    end else if value1*value2 < $10000 then begin
+      SetROBResultConst_word((value1*value2) and $FFFF);  //puede generar error
     end else begin
-      SetROBResultConst_dword((p1^.valInt*p2^.valInt) and $FFFFFFFF);  //puede generar error
+      SetROBResultConst_dword((value1*value2) and $FFFFFFFF);  //puede generar error
     end;
     exit;  //sale aquí, porque es un caso particular
   end;
 //  stConst_Variab: begin
-//    if p1^.valInt=0 then begin  //caso especial
+//    if value1=0 then begin  //caso especial
 //      SetROBResultConst_byte(0);
 //      exit;
-//    end else if p1^.valInt=1 then begin  //caso especial
+//    end else if value1=1 then begin  //caso especial
 //      SetROBResultVariab(p2^.rVar);
 //      exit;
-//    end else if p1^.valInt=2 then begin
+//    end else if value1=2 then begin
 //      SetROBResultExpres_word(Opt);
 //      _BANKSEL(H.bank);
 //      _CLRF(H.offs);
@@ -1664,7 +988,7 @@ begin
 //    _MOVF(p2^.offs, toW);
 //    _BANKSEL(E.bank);
 //    _MOVWF(E.offs);
-//    _MOVLW(p1^.valInt);
+//    _MOVLW(value1);
 //    _CALL(f_byte_mul_byte_16.adrr);
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
@@ -1672,7 +996,7 @@ begin
 //    SetROBResultExpres_word(opt);
 //    _BANKSEL(E.bank);
 //    _MOVWF(E.offs);
-//    _MOVLW(p1^.valInt);
+//    _MOVLW(value1);
 //    _CALL(f_byte_mul_byte_16.adrr);
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
@@ -1682,7 +1006,7 @@ begin
 //    _MOVF(p1^.offs, toW);
 //    _BANKSEL(E.bank);
 //    _MOVWF(E.offs);
-//    _MOVLW(p2^.valInt);
+//    _MOVLW(value2);
 //    _CALL(f_byte_mul_byte_16.adrr);
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
@@ -1710,7 +1034,7 @@ begin
 //    SetROBResultExpres_word(Opt);
 //    _BANKSEL(E.bank);
 //    _MOVWF(E.offs);  //p1 -> E
-//    _MOVLW(p2^.valInt); //p2 -> W
+//    _MOVLW(value2); //p2 -> W
 //    _CALL(f_byte_mul_byte_16.adrr);
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
@@ -1740,7 +1064,7 @@ begin
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.byte_div_byte(fun: TxpEleFun);
@@ -1785,20 +1109,20 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const:begin  //producto de dos constantes. Caso especial
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       GenError('Cannot divide by zero');
       exit;
     end;
-    SetROBResultConst_byte(p1^.valInt div p2^.valInt);  //puede generar error
+    SetROBResultConst_byte(value1 div value2);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
   stConst_Variab: begin
-    if p1^.valInt=0 then begin  //caso especial
+    if value1=0 then begin  //caso especial
       SetROBResultConst_byte(0);
       exit;
     end;
     SetROBResultExpres_byte(Opt);
-    _MOVLW(p1^.valInt);
+    _MOVLW(value1);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
     _BANKSEL(p2^.bank);
@@ -1807,7 +1131,7 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    if p1^.valInt=0 then begin  //caso especial
+    if value1=0 then begin  //caso especial
       SetROBResultConst_byte(0);
       exit;
     end;
@@ -1815,7 +1139,7 @@ begin
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //guarda divisor
 
-    _MOVLW(p1^.valInt);
+    _MOVLW(value1);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //dividendo
 
@@ -1825,7 +1149,7 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Const: begin
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       GenError('Cannot divide by zero');
       exit;
     end;
@@ -1834,7 +1158,7 @@ begin
     _MOVF(p1^.offs, toW);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
-    _MOVLW(p2^.valInt);
+    _MOVLW(value2);
     _CALL(f_byte_div_byte.adrr);
     AddCallerTo(f_byte_div_byte);
   end;
@@ -1866,14 +1190,14 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       GenError('Cannot divide by zero');
       exit;
     end;
     SetROBResultExpres_byte(Opt);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //p1 -> H
-    _MOVLW(p2^.valInt); //p2 -> W
+    _MOVLW(value2); //p2 -> W
     _CALL(f_byte_div_byte.adrr);
     AddCallerTo(f_byte_div_byte);
   end;
@@ -1911,7 +1235,7 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_mod_byte(Opt: TxpOperation; SetRes: boolean);
@@ -1925,20 +1249,20 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const : begin  //producto de dos constantes. Caso especial
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       GenError('Cannot divide by zero');
       exit;
     end;
-    SetROBResultConst_byte(p1^.valInt mod p2^.valInt);  //puede generar error
+    SetROBResultConst_byte(value1 mod value2);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
   stConst_Variab: begin
-    if p1^.valInt=0 then begin  //caso especial
+    if value1=0 then begin  //caso especial
       SetROBResultConst_byte(0);
       exit;
     end;
     SetROBResultExpres_byte(Opt);
-    kMOVLW(p1^.valInt);
+    kMOVLW(value1);
     kMOVWF(H);
     kMOVF(byte2, toW);
     _CALL(f_byte_div_byte.adrr);
@@ -1947,13 +1271,13 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    if p1^.valInt=0 then begin  //caso especial
+    if value1=0 then begin  //caso especial
       SetROBResultConst_byte(0);
       exit;
     end;
     SetROBResultExpres_byte(Opt);
     kMOVWF(E);  //guarda divisor
-    kMOVLW(p1^.valInt);
+    kMOVLW(value1);
     kMOVWF(H);  //dividendo
 
     kMOVF(E, toW);  //divisor
@@ -1962,14 +1286,14 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Const: begin
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       GenError('Cannot divide by zero');
       exit;
     end;
     SetROBResultExpres_byte(Opt);
     kMOVF(byte1, toW);
     kMOVWF(H);
-    kMOVLW(p2^.valInt);
+    kMOVLW(value2);
     _CALL(f_byte_div_byte.adrr);
     kMOVF(U, toW);  //Resultado en W
     AddCallerTo(f_byte_div_byte);
@@ -1997,13 +1321,13 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       GenError('Cannot divide by zero');
       exit;
     end;
     SetROBResultExpres_byte(Opt);
     kMOVWF(H);  //p1 -> H
-    kMOVLW(p2^.valInt); //p2 -> W
+    kMOVLW(value2); //p2 -> W
     _CALL(f_byte_div_byte.adrr);
     kMOVF(U, toW);  //Resultado en W
     AddCallerTo(f_byte_div_byte);
@@ -2037,10 +1361,9 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
-{$I .\GenCod.inc}
 procedure TGenCod.ROB_byte_and_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
@@ -2053,7 +1376,7 @@ begin
 
   case stoOperation of
   stConst_Const: begin  //suma de dos constantes. Caso especial
-    SetROBResultConst_byte(p1^.valInt and p2^.valInt);  //puede generar error
+    SetROBResultConst_byte(value1 and value2);  //puede generar error
   end;
   stConst_Variab: begin
     if value1 = 0 then begin  //Caso especial
@@ -2122,7 +1445,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_and_bit(Opt: TxpOperation; SetRes: boolean);
@@ -2144,7 +1467,7 @@ begin
 
   case stoOperation of
   stConst_Const: begin  //suma de dos constantes. Caso especial
-    SetROBResultConst_byte(p1^.valInt or p2^.valInt);  //puede generar error
+    SetROBResultConst_byte(value1 or value2);  //puede generar error
   end;
   stConst_Variab: begin
     if value1 = 0 then begin  //Caso especial
@@ -2213,7 +1536,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_or_bit(Opt: TxpOperation; SetRes: boolean);
@@ -2235,7 +1558,7 @@ begin
 
   case stoOperation of
   stConst_Const: begin  //suma de dos constantes. Caso especial
-    SetROBResultConst_byte(p1^.valInt xor p2^.valInt);  //puede generar error
+    SetROBResultConst_byte(value1 xor value2);  //puede generar error
   end;
   stConst_Variab: begin
     SetROBResultExpres_byte(Opt);
@@ -2276,7 +1599,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_xor_bit(Opt: TxpOperation; SetRes: boolean);
@@ -2298,21 +1621,21 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_bool(p1^.valInt = p2^.valInt);
+    SetROBResultConst_bool(value1 = value2);
   end;
   stConst_Variab: begin
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    if p1^.valInt = 0 then begin  //caso especial
+    if value1 = 0 then begin  //caso especial
       _BANKSEL(p2^.bank);  //verifica banco destino
       _MOVF(p2^.offs, toF);  //si iguales _Z=1
-    end else if p1^.valInt = 1 then begin  //caso especial
+    end else if value1 = 1 then begin  //caso especial
       _BANKSEL(p2^.bank);  //verifica banco destino
       _DECF(p2^.offs, toW);  //si el resultado es cero _Z=1
-    end else if p1^.valInt = 255 then begin  //caso especial
+    end else if value1 = 255 then begin  //caso especial
       _BANKSEL(p2^.bank);  //verifica banco destino
       _INCF(p2^.offs, toW);  //si el resultado es cero _Z=1
     end else begin
-      _MOVLW(p1^.valInt);
+      _MOVLW(value1);
       _BANKSEL(p2^.bank);  //verifica banco destino
       _SUBWF(p2^.offs, toW);  //si iguales _Z=1
     end;
@@ -2365,7 +1688,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_difer_byte(Opt: TxpOperation; SetRes: boolean);
@@ -2391,10 +1714,10 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_bool(p1^.valInt > p2^.valInt);
+    SetROBResultConst_bool(value1 > value2);
   end;
   stConst_Variab: begin
-    if p1^.valInt = 0 then begin
+    if value1 = 0 then begin
       //0 es mayor que nada
       SetROBResultConst_bool(false);
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
@@ -2416,7 +1739,7 @@ begin
     aux.used := false;
   end;
   stVariab_Const: begin
-    if p2^.valInt = 255 then begin
+    if value2 = 255 then begin
       //Nada es mayor que 255
       SetROBResultConst_bool(false);
       GenWarn('Expression will always be FALSE or TRUE.');
@@ -2448,19 +1771,21 @@ begin
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     tmp.used := false;  //libera
   end;
-//  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-//    if p2^.valInt = 255 then begin
-//      //nada es mayor que 255
-//      SetROBResultConst_bool(false);
-////      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
-//    end else begin
-//      SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-//  //    p1, ya está en W
-//      kMOVWF(aux);
-//      //Ahora es como stVariab_Const
-//
-//    end;
-//  end;
+  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
+    if value2 = 255 then begin
+      //Nada es mayor que 255
+      SetROBResultConst_bool(false);
+//      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
+    end else begin
+      SetROBResultExpres_bool(Opt, true);   //Se pide Z para el resultado
+      aux := GetAuxRegisterByte;
+      kMOVWF(aux);    //Salva W (p1)
+      kMOVLW(value2+1); //Carga p2
+      kSUBWF(aux, toW);    //
+      CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
+      aux.used := false;
+    end;
+  end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
     kSUBWF(byte2, toW);  //Si p1 > p2: C=0.
@@ -2474,7 +1799,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se usó el dato ahí contenido
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_less_byte(Opt: TxpOperation; SetRes: boolean);
@@ -2532,11 +1857,7 @@ loop1 := _PC;
   _BTFSC(Z.offs, Z.bit);
   _GOTO_PEND(dg);     //Dio, cero, termina
   //Desplaza
-  _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-  if toRight then  //a la derecha
-    _RRF(aux.offs, toF)
-  else
-    _RLF(aux.offs, toF);
+  if toRight then kSHIFTR(aux, toF) else kSHIFTL(aux, toF);
   _GOTO(loop1);
   //Terminó el lazo
   //Ya estamos en el banco de "aux"
@@ -2554,7 +1875,7 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_byte(p1^.valInt >> p2^.valInt);
+    SetROBResultConst_byte(value1 >> value2);
   end;
 //  stConst_Variab: begin
 //  end;
@@ -2563,13 +1884,13 @@ begin
   stVariab_Const: begin
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     //Verifica casos simples
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.offs, toW);  //solo devuelve lo mismo en W
-    end else if p2^.valInt = 1 then begin
+    end else if value2 = 1 then begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(byte1, toW);  //devuelve desplazado en W
-    end else if p2^.valInt = 2 then begin
+    end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2578,7 +1899,7 @@ begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
-    end else if p2^.valInt = 3 then begin
+    end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2589,7 +1910,7 @@ begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
-    end else if p2^.valInt = 4 then begin
+    end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2631,15 +1952,15 @@ begin
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     //Verifica casos simples
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       //solo devuelve lo mismo en W
-    end else if p2^.valInt = 1 then begin
+    end else if value2 = 1 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toW);  //devuelve desplazado en W
       aux.used := false;
-    end else if p2^.valInt = 2 then begin
+    end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2647,7 +1968,7 @@ begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
-    end else if p2^.valInt = 3 then begin
+    end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2657,7 +1978,7 @@ begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RRF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
-    end else if p2^.valInt = 4 then begin
+    end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2685,7 +2006,7 @@ begin
 //  stExpres_Expres:begin
 //  end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_shl_byte(Opt: TxpOperation; SetRes: boolean);   //Desplaza a la izquierda
@@ -2699,7 +2020,7 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_byte(p1^.valInt << p2^.valInt);
+    SetROBResultConst_byte(value1 << value2);
   end;
 //  stConst_Variab: begin
 //  end;
@@ -2708,14 +2029,14 @@ begin
   stVariab_Const: begin
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     //Verifica casos simples
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.offs, toW);  //solo devuelve lo mismo en W
-    end else if p2^.valInt = 1 then begin
+    end else if value2 = 1 then begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _BANKSEL(p1^.bank);  //verifica banco destino
       _RLF(p1^.offs, toW);  //devuelve desplazado en W
-    end else if p2^.valInt = 2 then begin
+    end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -2726,7 +2047,7 @@ begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
-    end else if p2^.valInt = 3 then begin
+    end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -2739,7 +2060,7 @@ begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
-    end else if p2^.valInt = 4 then begin
+    end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
       _BANKSEL(p1^.bank);  //verifica banco destino
@@ -2762,7 +2083,7 @@ begin
       _BANKSEL(aux.bank);
       _MOVWF(aux.offs);
       //copia p2 a W
-      _MOVLW(p2^.valInt);
+      _MOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, false);
       aux.used := false;
@@ -2788,15 +2109,15 @@ begin
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     //Verifica casos simples
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       //solo devuelve lo mismo en W
-    end else if p2^.valInt = 1 then begin
+    end else if value2 = 1 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //devuelve desplazado en W
       aux.used := false;
-    end else if p2^.valInt = 2 then begin
+    end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2804,7 +2125,7 @@ begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
-    end else if p2^.valInt = 3 then begin
+    end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2814,7 +2135,7 @@ begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
       _RLF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
-    end else if p2^.valInt = 4 then begin
+    end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
       _MOVWF(aux.offs);   //copia p1 a "aux"
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
@@ -2831,7 +2152,7 @@ begin
       //copia p1 a "aux"
       _MOVWF(aux.offs);
       //copia p2 a W
-      _MOVLW(p2^.valInt);
+      _MOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, false);
       aux.used := false;
@@ -2842,7 +2163,7 @@ begin
 //  stExpres_Expres:begin
 //  end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 //////////// Operaciones con Word
@@ -2965,13 +2286,13 @@ begin
     case p2^.Sto of
     stConst : begin
       SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-      if p2^.valInt = 0 then begin
+      if value2 = 0 then begin
         //caso especial
         _CLRF(p1^.Loffs);
         _CLRF(p1^.Hoffs);
       end else begin;
         _CLRF(p1^.Hoffs);
-        _MOVLW(p2^.valInt);
+        _MOVLW(value2);
         _MOVWF(p1^.Loffs);
       end;
     end;
@@ -3005,7 +2326,7 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_bool(p1^.valInt = p2^.valInt);
+    SetROBResultConst_bool(value1 = value2);
   end;
   stConst_Variab: begin
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
@@ -3133,7 +2454,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     FreeStkRegisterWord;
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_difer_word(Opt: TxpOperation; SetRes: boolean);
@@ -3147,7 +2468,7 @@ procedure TGenCod.ROB_word_great_word(Opt: TxpOperation; SetRes: boolean);
   var
     sale: integer;
   begin
-    if p2^.valInt = $FFFF then begin
+    if value2 = $FFFF then begin
       //Nada es mayor que $FFFF
       SetROBResultConst_bool(false);
       GenWarn('Expression will always be FALSE or TRUE.');
@@ -3194,10 +2515,10 @@ var
 begin
   case stoOperation of
   stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_bool(p1^.valInt > p2^.valInt);
+    SetROBResultConst_bool(value1 > value2);
   end;
   stConst_Variab: begin
-    if p1^.valInt = 0 then begin
+    if value1 = 0 then begin
       //0 es mayor que nada
       SetROBResultConst_bool(false);
       GenWarn('Expression will always be FALSE or TRUE.');
@@ -3296,7 +2617,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     FreeStkRegisterWord;
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_add_word(Opt: TxpOperation; SetRes: boolean);
@@ -3310,11 +2631,11 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin
-    if p1^.valInt+p2^.valInt <256 then begin
+    if value1+value2 <256 then begin
       //Optimiza
-      SetROBResultConst_byte(p1^.valInt+p2^.valInt);
+      SetROBResultConst_byte(value1+value2);
     end else begin
-      SetROBResultConst_word(p1^.valInt+p2^.valInt);
+      SetROBResultConst_word(value1+value2);
     end;
   end;
   stConst_Variab: begin
@@ -3428,7 +2749,7 @@ begin
     FreeStkRegisterWord;   //libera pila, obtiene dirección
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_add_byte(Opt: TxpOperation; SetRes: boolean);
@@ -3437,11 +2758,11 @@ var
 begin
   case stoOperation of
   stConst_Const: begin
-    if p1^.valInt+p2^.valInt <256 then begin
+    if value1+value2 <256 then begin
       //Optimiza
-      SetROBResultConst_byte(p1^.valInt+p2^.valInt);
+      SetROBResultConst_byte(value1+value2);
     end else begin
-      SetROBResultConst_word(p1^.valInt+p2^.valInt);
+      SetROBResultConst_word(value1+value2);
     end;
   end;
   stConst_Variab: begin
@@ -3543,7 +2864,7 @@ begin
     FreeStkRegisterWord;   //libera pila
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_sub_word(Opt: TxpOperation; SetRes: boolean);
@@ -3557,15 +2878,15 @@ begin
   if not ChangePointerToExpres(p2^) then exit;
   case stoOperation of
   stConst_Const: begin
-    if p1^.valInt-p2^.valInt < 0 then begin
+    if value1-value2 < 0 then begin
       genError('Numeric value exceeds a word range.');
       exit;
     end;
-    if p1^.valInt-p2^.valInt <256 then begin
+    if value1-value2 <256 then begin
       //Optimiza
-      SetROBResultConst_byte(p1^.valInt-p2^.valInt);
+      SetROBResultConst_byte(value1-value2);
     end else begin
-      SetROBResultConst_word(p1^.valInt-p2^.valInt);
+      SetROBResultConst_word(value1-value2);
     end;
   end;
   stConst_Variab: begin
@@ -3673,7 +2994,7 @@ begin
     FreeStkRegisterWord;   //libera pila, obtiene dirección
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.word_mul_word_16(fun: TxpEleFun);
@@ -3737,23 +3058,23 @@ begin
    if not ChangePointerToExpres(p2^) then exit;
    case stoOperation of
    stConst_Const:begin  //producto de dos constantes. Caso especial
-     if p1^.valInt*p2^.valInt < $100 then begin
-       SetROBResultConst_byte((p1^.valInt*p2^.valInt) and $FF);  //puede generar error
-     end else if p1^.valInt*p2^.valInt < $10000 then begin
-       SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+     if value1*value2 < $100 then begin
+       SetROBResultConst_byte((value1*value2) and $FF);  //puede generar error
+     end else if value1*value2 < $10000 then begin
+       SetROBResultConst_word((value1*value2) and $FFFF);  //puede generar error
      end else begin
-       SetROBResultConst_dword((p1^.valInt*p2^.valInt) and $FFFFFFFF);  //puede generar error
+       SetROBResultConst_dword((value1*value2) and $FFFFFFFF);  //puede generar error
      end;
      exit;  //sale aquí, porque es un caso particular
    end;
  //  stConst_Variab: begin
- //    if p1^.valInt=0 then begin  //caso especial
+ //    if value1=0 then begin  //caso especial
  //      SetROBResultConst_byte(0);
  //      exit;
- //    end else if p1^.valInt=1 then begin  //caso especial
+ //    end else if value1=1 then begin  //caso especial
  //      SetROBResultVariab(p2^.rVar);
  //      exit;
- //    end else if p1^.valInt=2 then begin
+ //    end else if value1=2 then begin
  //      SetROBResultExpres_word(Opt);
  //      _BANKSEL(H.bank);
  //      _CLRF(H.offs);
@@ -3769,7 +3090,7 @@ begin
  //    _MOVF(p2^.offs, toW);
  //    _BANKSEL(E.bank);
  //    _MOVWF(E.offs);
- //    _MOVLW(p1^.valInt);
+ //    _MOVLW(value1);
  //    _CALL(f_byte_mul_byte_16.adrr);
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
@@ -3777,7 +3098,7 @@ begin
  //    SetROBResultExpres_word(opt);
  //    _BANKSEL(E.bank);
  //    _MOVWF(E.offs);
- //    _MOVLW(p1^.valInt);
+ //    _MOVLW(value1);
  //    _CALL(f_byte_mul_byte_16.adrr);
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
@@ -3787,7 +3108,7 @@ begin
  //    _MOVF(p1^.offs, toW);
  //    _BANKSEL(E.bank);
  //    _MOVWF(E.offs);
- //    _MOVLW(p2^.valInt);
+ //    _MOVLW(value2);
  //    _CALL(f_byte_mul_byte_16.adrr);
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
@@ -3815,7 +3136,7 @@ begin
  //    SetROBResultExpres_word(Opt);
  //    _BANKSEL(E.bank);
  //    _MOVWF(E.offs);  //p1 -> E
- //    _MOVLW(p2^.valInt); //p2 -> W
+ //    _MOVLW(value2); //p2 -> W
  //    _CALL(f_byte_mul_byte_16.adrr);
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
@@ -3845,7 +3166,7 @@ begin
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
    else
-     genError('Cannot Compile: "%s"', [Opt.OperationString]);
+     genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
    end;
 end;
 procedure TGenCod.ROB_word_mul_word(Opt: TxpOperation; SetRes: boolean);
@@ -3857,23 +3178,23 @@ begin
    if not ChangePointerToExpres(p2^) then exit;
    case stoOperation of
    stConst_Const:begin  //producto de dos constantes. Caso especial
-     if p1^.valInt*p2^.valInt < $100 then begin
-       SetROBResultConst_byte((p1^.valInt*p2^.valInt) and $FF);  //puede generar error
-     end else if p1^.valInt*p2^.valInt < $10000 then begin
-       SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+     if value1*value2 < $100 then begin
+       SetROBResultConst_byte((value1*value2) and $FF);  //puede generar error
+     end else if value1*value2 < $10000 then begin
+       SetROBResultConst_word((value1*value2) and $FFFF);  //puede generar error
      end else begin
-       SetROBResultConst_dword((p1^.valInt*p2^.valInt) and $FFFFFFFF);  //puede generar error
+       SetROBResultConst_dword((value1*value2) and $FFFFFFFF);  //puede generar error
      end;
      exit;  //sale aquí, porque es un caso particular
    end;
  //  stConst_Variab: begin
- //    if p1^.valInt=0 then begin  //caso especial
+ //    if value1=0 then begin  //caso especial
  //      SetROBResultConst_byte(0);
  //      exit;
- //    end else if p1^.valInt=1 then begin  //caso especial
+ //    end else if value1=1 then begin  //caso especial
  //      SetROBResultVariab(p2^.rVar);
  //      exit;
- //    end else if p1^.valInt=2 then begin
+ //    end else if value1=2 then begin
  //      SetROBResultExpres_word(Opt);
  //      _BANKSEL(H.bank);
  //      _CLRF(H.offs);
@@ -3889,7 +3210,7 @@ begin
  //    _MOVF(p2^.offs, toW);
  //    _BANKSEL(E.bank);
  //    _MOVWF(E.offs);
- //    _MOVLW(p1^.valInt);
+ //    _MOVLW(value1);
  //    _CALL(f_byte_mul_byte_16.adrr);
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
@@ -3897,7 +3218,7 @@ begin
  //    SetROBResultExpres_word(opt);
  //    _BANKSEL(E.bank);
  //    _MOVWF(E.offs);
- //    _MOVLW(p1^.valInt);
+ //    _MOVLW(value1);
  //    _CALL(f_byte_mul_byte_16.adrr);
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
@@ -3907,7 +3228,7 @@ begin
  //    _MOVF(p1^.offs, toW);
  //    _BANKSEL(E.bank);
  //    _MOVWF(E.offs);
- //    _MOVLW(p2^.valInt);
+ //    _MOVLW(value2);
  //    _CALL(f_byte_mul_byte_16.adrr);
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
@@ -3935,7 +3256,7 @@ begin
  //    SetROBResultExpres_word(Opt);
  //    _BANKSEL(E.bank);
  //    _MOVWF(E.offs);  //p1 -> E
- //    _MOVLW(p2^.valInt); //p2 -> W
+ //    _MOVLW(value2); //p2 -> W
  //    _CALL(f_byte_mul_byte_16.adrr);
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
@@ -3965,14 +3286,14 @@ begin
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
    else
-     genError('Cannot Compile: "%s"', [Opt.OperationString]);
+     genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
    end;
 end;
 procedure TGenCod.ROB_word_umulword_word(Opt: TxpOperation; SetRes: boolean);
 begin
   case stoOperation of
   stConst_Const:begin  //producto de dos constantes. Caso especial
-    SetROBResultConst_word((p1^.valInt*p2^.valInt) and $FFFF);  //puede generar error
+    SetROBResultConst_word((value1*value2) and $FFFF);  //puede generar error
     exit;  //sale aquí, porque es un caso particular
   end;
 //  stConst_Variab: begin
@@ -3981,14 +3302,14 @@ begin
 //    _MOVF(p2^.offs, toW);
 //    _BANKSEL(H.bank);
 //    _MOVWF(H.offs);
-//    _MOVLW(p1^.valInt);
+//    _MOVLW(value1);
 //    _CALL(f_byteXbyte_byte.adrr);
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
 //  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
 //    _BANKSEL(H.bank);
 //    _MOVWF(H.offs);
-//    _MOVLW(p1^.valInt);
+//    _MOVLW(value1);
 //    _CALL(f_byteXbyte_byte.adrr);
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
@@ -3998,7 +3319,7 @@ begin
 //    _MOVF(p1^.offs, toW);
 //    _BANKSEL(H.bank);
 //    _MOVWF(H.offs);
-//    _MOVLW(p2^.valInt);
+//    _MOVLW(value2);
 //    _CALL(f_byteXbyte_byte.adrr);
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
@@ -4023,7 +3344,7 @@ begin
 //  end;
 //  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
 //    _MOVWF(H.offs);  //p1 -> H
-//    _MOVLW(p2^.valInt); //p2 -> W
+//    _MOVLW(value2); //p2 -> W
 //    _CALL(f_byteXbyte_byte.adrr);
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
@@ -4051,7 +3372,7 @@ begin
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_and_byte(Opt: TxpOperation; SetRes: boolean);
@@ -4059,7 +3380,7 @@ begin
   case stoOperation of
   stConst_Const: begin
     //Optimiza
-    SetROBResultConst_byte(p1^.valInt and p2^.valInt);
+    SetROBResultConst_byte(value1 and value2);
   end;
   stConst_Variab: begin
     SetROBResultExpres_byte(Opt);
@@ -4108,7 +3429,7 @@ begin
     FreeStkRegisterWord;   //libera pila
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROU_addr_word(Opr: TxpOperator; SetRes: boolean);
@@ -4142,7 +3463,7 @@ begin
   case p2^.Sto of
   stConst : begin
     SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       //caso especial
       _CLRF(p1^.Loffs);
       _CLRF(p1^.Hoffs);
@@ -4152,7 +3473,7 @@ begin
       _CLRF(p1^.Uoffs);
       _CLRF(p1^.Eoffs);
       _CLRF(p1^.Hoffs);
-      _MOVLW(p2^.valInt);
+      _MOVLW(value2);
       _MOVWF(p1^.Loffs);
     end;
   end;
@@ -4183,7 +3504,7 @@ begin
   case p2^.Sto of
   stConst : begin
     SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       //caso especial
       _CLRF(p1^.Uoffs);
       _CLRF(p1^.Eoffs);
@@ -4227,7 +3548,7 @@ begin
   case p2^.Sto of
   stConst : begin
     SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       //caso especial
       _BANKSEL(p1^.bank);
       _CLRF(p1^.Uoffs);
@@ -4290,7 +3611,7 @@ var
 begin
   case stoOperation of
   stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_bool(p1^.valInt = p2^.valInt);
+    SetROBResultConst_bool(value1 = value2);
   end;
   stConst_Variab: begin
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
@@ -4384,9 +3705,10 @@ _LABEL(sale3);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y está en UEHW
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
+    if HayError then exit;
     //Compara byte L
     //_SUBLW(p1^.LByte); //p2^.L está en W
-    kXORLW(value1);  //Debería funcionar igual que SUBLW
+    kXORLW(value1L);  //Debería funcionar igual que SUBLW
     _BTFSS(Z.offs, Z.bit);
     _GOTO_PEND(sale1);  //no son iguales
     //Compara byte H
@@ -4481,7 +3803,7 @@ _LABEL(sale3);
     FreeStkRegisterdWord;
   end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_dword_difer_dword(Opt: TxpOperation; SetRes: boolean);
@@ -4496,49 +3818,40 @@ var
 begin
   case stoOperation of
   stConst_Const: begin
-    if p1^.valInt+p2^.valInt < $FF then begin
+    if value1+value2 < $FF then begin
       //Optimiza
-      SetROBResultConst_byte(p1^.valInt+p2^.valInt);
-    end else if p1^.valInt+p2^.valInt < $FFFF then begin
+      SetROBResultConst_byte(value1+value2);
+    end else if value1+value2 < $FFFF then begin
       //Optimiza
-      SetROBResultConst_word(p1^.valInt+p2^.valInt);
+      SetROBResultConst_word(value1+value2);
     end else begin
-      SetROBResultConst_dword(p1^.valInt+p2^.valInt);
+      SetROBResultConst_dword(value1+value2);
     end;
   end;
-//  stConst_Variab: begin
-//    SetROBResultExpres_dword(Opt);
-//    aux := GetAuxRegisterByte;  //Pide un registro libre
-//    if HayError then exit;
-//    //_movf   (p2^.Loffs,toW);
-//    //_ADDLW  (p1^.LByte);  //Cambia C
-//    //_movwf  (aux.offs);       //Guarda Byte L de resultado
-//    kMOVLW(value1L);
-//    kMOVWF(aux);
-//    kADDWF(aux, toF);
-//
-//    _movf   (p2^.Hoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-//    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
-//    _incfsz (p2^.Hoffs,toW);
-//    _ADDLW  (p1^.HByte);  //Cambia C
-//    _movwf  (H.offs);       //Guarda Byte H de resultado
-//
-//    _movf   (p2^.Eoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-//    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
-//    _incfsz (p2^.Eoffs,toW);
-//    _ADDLW  (p1^.EByte);  //Cambia C
-//    _movwf  (E.offs);       //Guarda Byte E de resultado
-//
-//    _movf   (p2^.Uoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
-//    _btfsc  (STATUS,_C);      //Mira acarreo de operación anterior
-//    _incfsz (p2^.Uoffs,toW);
-//    _ADDLW  (p1^.UByte);
-//    _movwf  (U.offs);       //Guarda Byte U de resultado
-//
-//    _movf (aux.offs, toW);  //Deja L en W
-//
-//    aux.used := false;
-//  end;
+  stConst_Variab: begin
+    SetROBResultExpres_dword(Opt);
+    aux := GetAuxRegisterByte;  //Pide un registro libre
+    if HayError then exit;
+    {Se usará la rutina dword+=dword. Tal vez se pueda optimizar en espacio, pero
+    se complica.}
+    //Primero se mueve la constante a una variable con los RT
+    kMOVLW(value1L);
+    kMOVWF(aux);
+    kMOVLW(value1H);
+    kMOVWF(H);
+    kMOVLW(value1E);
+    kMOVWF(E);
+    kMOVLW(value1U);
+    kMOVWF(U);
+    //Creamos ahora una variable con los RT
+    varTmp := NewTmpVarDword(aux, H, E, U);
+    p1^.SetAsVariab(varTmp);   //Actualiza Op1
+    //Usamos la rutina: dword+=dword
+    ROB_dword_aadd_dword(Opt, False);  //Solo se quiere el código
+    kMOVF (aux, toW);  //Deja L en W
+    varTmp.Destroy;
+    aux.used := false;
+  end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
     if SetRes then SetROBResultExpres_dword(Opt); //Se fija aquí el resultado
     //K + WHEU -> WHEU, se puede manejar como asignación con sums
@@ -4672,7 +3985,7 @@ begin
 //    FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
 //  end;
   else
-    genError('Cannot Compile: "%s"', [Opt.OperationString]);
+    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_dword_aadd_dword(Opt: TxpOperation; SetRes: boolean);
@@ -4683,9 +3996,9 @@ begin
   case p2^.Sto of
   stConst : begin
     if SetRes then SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    if p2^.valInt = 0 then begin
+    if value2 = 0 then begin
       //No cambia
-    end else if p2^.valInt <= $FF then begin
+    end else if value2 <= $FF then begin
       _movlw (p2^.LByte);
       _addwf (p1^.Loffs,toF);
       _btfsc (_STATUS,_C);
@@ -4694,7 +4007,7 @@ begin
       _INCF  (p1^.Eoffs,toF);
       _btfsc (_STATUS,_Z);
       _INCF  (p1^.Uoffs,toF);
-    end else if p2^.valInt <= $FFFF then begin
+    end else if value2 <= $FFFF then begin
       _movlw (p2^.LByte);
       _addwf (p1^.Loffs,toF);
       _movlw (p2^.HByte);
@@ -4772,12 +4085,12 @@ begin
   case p2^.Sto of
   stConst : begin
     SetROBResultExpres_char(Opt);  //Realmente, el resultado no es importante
-    if p2^.valInt=0 then begin
+    if value2=0 then begin
       //caso especial
       _BANKSEL(p1^.bank);  //verifica banco destino
       _CLRF(p1^.offs);
     end else begin
-      _MOVLW(p2^.valInt);  //Los chars se manejan como números
+      _MOVLW(value2);  //Los chars se manejan como números
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVWF(p1^.offs);
     end;
@@ -4856,7 +4169,7 @@ begin
     //Caso especial. Cuando se tenga algo como: TPunteroAByte($FF)^
     //Se asume que devuelve una variable de tipo Byte.
     tmpVar := CreateTmpVar('', typByte);
-    tmpVar.addr0 := p1^.valInt;  //Fija dirección de constante
+    tmpVar.addr0 := value1;  //Fija dirección de constante
     SetROUResultVariab(tmpVar);
   end;
   stVariab: begin

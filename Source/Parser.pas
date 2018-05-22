@@ -236,11 +236,14 @@ public
   p1, p2   : ^TOperand;   //Pasa los operandos de la operación actual
   res      : TOperand;    //resultado de la evaluación de la última expresión.
   procedure Compile(NombArc: string; Link: boolean = true); virtual; abstract;
+  function OperationStr(Opt: TxpOperation): string;
 protected //Accesos a propeidades de p1^ y p2^.
-  function value1: word;
+  function value1: dword;
   function value1L: word;
   function value1H: word;
-  function value2: word;
+  function value1U: word;
+  function value1E: word;
+  function value2: dword;
   function value2L: word;
   function value2H: word;
   function bit1: TPicRegisterBit;
@@ -248,9 +251,13 @@ protected //Accesos a propeidades de p1^ y p2^.
   function byte1: TPicRegister;
   function byte1L: TPicRegister;
   function byte1H: TPicRegister;
+  function byte1E: TPicRegister;
+  function byte1U: TPicRegister;
   function byte2: TPicRegister;
   function byte2L: TPicRegister;
   function byte2H: TPicRegister;
+  function byte2E: TPicRegister;
+  function byte2U: TPicRegister;
 public   //Manejo de errores y advertencias
   HayError: boolean;
   OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
@@ -282,6 +289,7 @@ protected
   mainFile : string;   //archivo inicial que se compila
   hexFile  : string;   //Nombre de archivo de salida
   function ExpandRelPathTo(BaseFile, FileName: string): string;
+  procedure ExchangeP1_P2;
 public   //Información y acceso a memoria
   function hexFilePath: string;
   function mainFilePath: string;
@@ -1074,6 +1082,18 @@ begin
    res.txt := Op1.txt + opr.txt;   //indica que es expresión
    {$ENDIF}
 end;
+function TCompilerBase.OperationStr(Opt: TxpOperation): string;
+{Devuelve una cadena indicando los tipos/alacenamiento y la operación, que se tiene
+en "p1", "p2" y "Opt".}
+var
+  type1, type2: TxpEleType;
+  Operat: TxpOperator;
+begin
+  type1 := Opt.parent.parent;
+  type2 := Opt.ToType;
+  Operat:= Opt.parent;
+  Result := p1^.StoOpStr+' '+type1.name + ' ' + Operat.txt + ' ' + p2^.StoOpStr+' '+type2.name;
+end;
 function TCompilerBase.stoOperation: TStoOperandsROB;
 begin
   //Combinación de los almacenamientos de los operandos
@@ -1232,7 +1252,7 @@ begin
   end;
 end;
 //Accesos a propiedades de p1^ y p2^.
-function TCompilerBase.value1: word; inline;
+function TCompilerBase.value1: dword; inline;
 begin
   Result := p1^.valInt;
 end;
@@ -1244,7 +1264,15 @@ function TCompilerBase.value1H: word; inline;
 begin
   Result := p1^.HByte;
 end;
-function TCompilerBase.value2: word; inline;
+function TCompilerBase.value1U: word; inline;
+begin
+  Result := p1^.UByte;
+end;
+function TCompilerBase.value1E: word; inline;
+begin
+  Result := p1^.EByte;
+end;
+function TCompilerBase.value2: dword; inline;
 begin
   Result := p2^.valInt;
 end;
@@ -1268,6 +1296,14 @@ function TCompilerBase.byte1H: TPicRegister; inline;
 begin
   Result := p1^.rVar.adrByte1;
 end;
+function TCompilerBase.byte1E: TPicRegister;
+begin
+  Result := p1^.rVar.adrByte2;
+end;
+function TCompilerBase.byte1U: TPicRegister;
+begin
+  Result := p1^.rVar.adrByte3;
+end;
 function TCompilerBase.byte2: TPicRegister; inline;
 begin
   Result := p2^.rVar.adrByte0;
@@ -1279,6 +1315,14 @@ end;
 function TCompilerBase.byte2H: TPicRegister; inline;
 begin
   Result := p2^.rVar.adrByte1;
+end;
+function TCompilerBase.byte2E: TPicRegister;
+begin
+  Result := p2^.rVar.adrByte2;
+end;
+function TCompilerBase.byte2U: TPicRegister;
+begin
+  Result := p2^.rVar.adrByte3;
 end;
 function TCompilerBase.bit1: TPicRegisterBit; inline;
 begin
@@ -1401,6 +1445,17 @@ begin
      Result := FileName;
    end;
 end;
+procedure TCompilerBase.ExchangeP1_P2;
+{Intercambia el orden de los operandos.}
+var
+  tmp : ^TOperand;
+begin
+  //Invierte los operandos
+  tmp := p1;
+  p1 := p2;
+  p2 := tmp;
+end;
+
 function TCompilerBase.hexFilePath: string;
 begin
   Result := ExpandRelPathTo(mainFile, hexfile); //Convierte a ruta absoluta
@@ -1695,6 +1750,8 @@ begin
   stConst : exit('Constant');
   stVariab, stVarRefVar, stVarRefExp: exit('Variable');
   stExpres: exit('Expression');
+  else
+    exit('');
   end;
 end;
 function TOperand.StoOpChr: char;

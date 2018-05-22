@@ -269,7 +269,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.21;..\..\_Librerias\MisUtils-0.6;..\..\_Librerias\MiConfig-0.4;..\..\_Librerias\PicUtils-1.4;..\..\_Librerias\Xpres-1.3.2;..\..\_Librerias\UtilsGrilla-0.8;..\..\_Librerias\ogEditGraf-2.3"/>
+      <OtherUnitFiles Value="..\..\_Librerias\SynFacilUtils-1.21;..\..\_Librerias\MisUtils-0.6;..\..\_Librerias\MiConfig-0.4;..\..\_Librerias\PicUtils-1.5;..\..\_Librerias\Xpres-1.3.2;..\..\_Librerias\UtilsGrilla-0.8;..\..\_Librerias\ogEditGraf-2.3"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

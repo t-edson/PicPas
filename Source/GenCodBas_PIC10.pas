@@ -47,7 +47,6 @@ type
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
     function ValidateDWordRange(n: Int64): boolean;
-    procedure ExchangeP1_P2;
   protected
     procedure GenerateROBdetComment;
     procedure GenerateROUdetComment;
@@ -215,6 +214,11 @@ type
     procedure kSWAPF(const f: TPicRegister; d: TPIC10Destin);
     procedure kXORLW(const k: word);
     procedure kXORWF(const f: TPicRegister; d: TPIC10Destin);
+    //Instrucciones adicionales
+    procedure kSHIFTR(const f: TPicRegister; d: TPIC10destin);
+    procedure kSHIFTL(const f: TPicRegister; d: TPIC10destin);
+    procedure kIF_BSET(const f: TPicRegisterBit; out igot: integer);
+    procedure kEND_BSET(igot: integer);
   public  //Acceso a registro de trabajo
     property H_register: TPicRegister read H;
     property E_register: TPicRegister read E;
@@ -361,16 +365,6 @@ begin
     GenError('Numeric value exceeds a dword range.');
     exit(false);
   end;
-end;
-procedure TGenCodBas_PIC10.ExchangeP1_P2;
-{Intercambai el orden de los operandos.}
-var
-  tmp : ^TOperand;
-begin
-  //Invierte los operandos
-  tmp := p1;
-  p1 := p2;
-  p2 := tmp;
 end;
 procedure TGenCodBas_PIC10.GenerateROBdetComment;
 {Genera un comentario detallado en el código ASM. Válido solo para
@@ -1549,7 +1543,7 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_MOVF, f.addr, d);
 end;
-procedure TGenCodBas_PIC10.kMOVWF(const f: TPicRegister); inline;
+procedure TGenCodBas_PIC10.kMOVWF(const f: TPicRegister);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1673,11 +1667,72 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
 end;
-procedure TGenCodBas_PIC10.kXORWF(const f: TPicRegister; d: TPIC10Destin);
+procedure TGenCodBas_PIC10.kXORWF(const f: TPicRegister; d: TPIC10Destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f.addr, d);
+end;
+//Instrucciones adicionales
+procedure TGenCodBas_PIC10.kSHIFTR(const f: TPicRegister; d: TPIC10destin);
+begin
+  _BCF(_STATUS, _C);
+  GenCodBank(f.addr);
+  _RRF(f.addr, d);
+end;
+procedure TGenCodBas_PIC10.kSHIFTL(const f: TPicRegister; d: TPIC10destin);
+begin
+  _BCF(_STATUS, _C);
+  GenCodBank(f.addr);
+  _RLF(f.addr, d);
+end;
+procedure TGenCodBas_PIC10.kIF_BSET(const f: TPicRegisterBit; out igot: integer);
+{Conditional instruction. Test if the specified bit is set. In this case, execute
+the following block.
+This instruction require to call to kEND_BSET() to define the End of the block.
+The strategy here is to generate the sequence:
+
+  <Bank setting>
+  i_BTFSS f
+  GOTO  <Block end>
+  ;--- Block start ---
+  <several instructions>
+  ;--- Block end ---
+
+This scheme is the worst case (assuming the GOTO instruction is only one word), later
+if the body of the IF, is only one word, it will be optimized to:
+
+  <Bank setting>
+  i_BTFSC f
+  ;--- Block start ---
+  <one instruction>
+  ;--- Block end ---
+
+It's not used the best case first, because in case it needs to change to the worst case,
+it would need to insert and move several words, including, probably, GOTOs and LABELs,
+needing to recalculate jumps.
+}
+begin
+  GenCodBank(f.addr);
+  _BTFSS(f.addr, f.bit);
+  igot := pic.iFlash;     //guarda posición de instrucción de salto
+  _GOTO(0); //salto pendiente
+end;
+procedure TGenCodBas_PIC10.kEND_BSET(igot: integer);
+{Define the End of the block, created with kIF_BSET().}
+begin
+  if _PC = igot+1 then begin
+    //No hay instrucciones en en bloque
+    pic.iFlash:=pic.iFlash-2 ;  //Elimina hasta el i_BTFSS, porque no tiene sentido
+  end else if _PC = igot+2 then begin
+    //Es un bloque de una sola instrucción. Se puede optimizar
+    pic.BTFSC_sw_BTFSS(igot-1);  //Cambia i_BTFSS por i_BTFSC
+    pic.flash[igot] := pic.flash[igot+1];  //Desplaza la instrucción
+    pic.flash[igot].used:=false;  //Elimina
+  end else begin
+    //Bloque de varias instrucciones
+    pic.codGotoAt(igot, _PC);   //termina de codificar el salto
+  end;
 end;
 
 function TGenCodBas_PIC10.PICName: string;
@@ -1806,7 +1861,7 @@ begin
     //Almacenamiento no implementado
     GenError('Not implemented.');
   end;
-  if modReturn then _RETLW(0);  //codifica instrucción
+  if modReturn then _RETURN;  //codifica instrucción
 end;
 procedure TGenCodBas_PIC10.bit_DefineRegisters;
 begin
@@ -1841,10 +1896,10 @@ begin
   end;
   stVariab: begin
     kMOVF(Op^.rVar.adrByte0, toW);
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   stExpres: begin  //ya está en w
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   stVarRefVar: begin
     //Se tiene una variable puntero dereferenciada: x^
@@ -1853,7 +1908,7 @@ begin
     kMOVF(varPtr.adrByte0, toW);
     kMOVWF(FSR);  //direcciona
     kMOVF(INDF, toW);  //deje en W
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   stVarRefExp: begin
     //Es una expresión derefernciada (x+a)^.
@@ -1862,7 +1917,7 @@ begin
     //Mueve a W
     _MOVWF(FSR.offs);  //direcciona
     _MOVF(0, toW);  //deje en W
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   else
     //Almacenamiento no implementado
@@ -2204,10 +2259,10 @@ begin
     kMOVF(Op^.rVar.adrByte1, toW);
     kMOVWF(H);
     kMOVF(Op^.rVar.adrByte0, toW);
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   stExpres: begin  //se asume que ya está en (H,w)
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   stVarRefVar: begin
     //Se tiene una variable puntero dereferenciada: x^
@@ -2220,7 +2275,7 @@ begin
     _MOVWF(H.offs);  //Guarda byte alto
     _DECF(FSR.offs,toF);
     _MOVF(0, toW);  //deje en W byte bajo
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   stVarRefExp: begin
     //Es una expresión desrefernciada (x+a)^.
@@ -2234,7 +2289,7 @@ begin
     _MOVWF(H.offs);  //Guarda byte alto
     _DECF(FSR.offs,toF);
     _MOVF(0, toW);  //deje en W byte bajo
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   else
     //Almacenamiento no implementado
@@ -2623,10 +2678,10 @@ begin
     kMOVWF(H);
 
     kMOVF(Op^.rVar.adrByte0, toW);
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   stExpres: begin  //se asume que ya está en (U,E,H,w)
-    if modReturn then _RETLW(0);
+    if modReturn then _RETURN;
   end;
   else
     //Almacenamiento no implementado

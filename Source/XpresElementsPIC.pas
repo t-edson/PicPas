@@ -550,9 +550,13 @@ end;
 function TxpOperation.OperationString: string;
 {Devuelve una cadena que representa a la operación, sobre los tipos.
  Algo como: byte + byte}
+var
+  type1: TxpEleType;
 begin
-  Result := parent.parent.name + ' ' + parent.txt + ' ' + ToType.name;
+  type1 := parent.parent;
+  Result := type1.name + ' ' + parent.txt + ' ' + ToType.name;
 end;
+
 { TxpElement }
 function TxpElement.AddElement(elem: TxpElement): TxpElement;
 {Agrega un elemento hijo al elemento actual. Devuelve referencia. }
