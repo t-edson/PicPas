@@ -117,7 +117,7 @@ type
       procedure ROB_byte_less_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_gequ_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_lequ_byte(Opt: TxpOperation; SetRes: boolean);
-      procedure CodifShift_by_W(aux: TPicRegister; toRight: boolean);
+      procedure CodifShift_by_W(target: TPicRegister; toRight: boolean);
       procedure ROB_byte_shr_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_shl_byte(Opt: TxpOperation; SetRes: boolean);
     private  //Operaciones con Word
@@ -1777,7 +1777,7 @@ begin
   ROB_byte_great_byte(Opt, SetRes);
   res.Invert;
 end;
-procedure TGenCod.CodifShift_by_W(aux: TPicRegister; toRight: boolean);
+procedure TGenCod.CodifShift_by_W(target: TPicRegister; toRight: boolean);
 {Desplaza el registro "aux", las veces indicadas en el registro W.
 Deja el resultado en W.
 Deja el banco, en el banco de "aux"}
@@ -1787,19 +1787,19 @@ var
   loop1: Word;
   dg: integer;
 begin
-  _BANKSEL(aux.bank);  //quedará en este banco
+  _BANKSEL(target.bank);  //quedará en este banco
   _ADDLW(1);   //corrige valor inicial
 loop1 := _PC;
   _ADDLW(255);  //W=W-1  (no hay instrucción DECW)
   _BTFSC(Z.offs, Z.bit);
   _GOTO_PEND(dg);     //Dio, cero, termina
   //Desplaza
-  if toRight then kSHIFTR(aux, toF) else kSHIFTL(aux, toF);
+  if toRight then kSHIFTR(target, toF) else kSHIFTL(target, toF);
   _GOTO(loop1);
   //Terminó el lazo
-  //Ya estamos en el banco de "aux"
+  //Ya estamos en el banco de "target"
   pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-  _MOVF(aux.offs, toW);  //deja en W
+  _MOVF(target.offs, toW);  //deja en W
 end;
 procedure TGenCod.ROB_byte_shr_byte(Opt: TxpOperation; SetRes: boolean);  //Desplaza a la derecha
 var
@@ -1868,14 +1868,13 @@ begin
       _RRF(aux.offs, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
+      //Caso general
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kMOVF(byte1, toW);
+      kMOVWF(aux);
       //copia p2 a W
-      _MOVLW(value2);
+      kMOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, true);
       aux.used := false;
@@ -1885,13 +1884,10 @@ begin
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;
     //copia p1 a "aux"
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.offs, toW);
-    _BANKSEL(aux.bank);
-    _MOVWF(aux.offs);
+    kMOVF(byte1, toW);
+    kMOVWF(aux);
     //copia p2 a W
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
+    kMOVF(byte2, toW);
     //lazo de rotación
     CodifShift_by_W(aux, true);
     aux.used := false;

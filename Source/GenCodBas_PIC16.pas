@@ -5,7 +5,7 @@ unit GenCodBas_PIC16;
 interface
 uses
   Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic16Utils,
-  Parser, Globales, MisUtils, LCLType, LCLProc;
+  Parser, ParserDirec, Globales, MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 8;      //tamaño de pila para subrutinas en el PIC
   MAX_REGS_AUX_BYTE = 6;   //cantidad máxima de registros a usar
@@ -15,7 +15,7 @@ const
 
 type
   { TGenCodBas_PIC16 }
-  TGenCodBas_PIC16 = class(TCompilerBase)
+  TGenCodBas_PIC16 = class(TParserDirecBase)
   private
     linRep : string;   //línea para generar de reporte
     posFlash: Integer;

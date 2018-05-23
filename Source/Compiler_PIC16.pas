@@ -5,7 +5,7 @@ unit Compiler_PIC16;
 interface
 uses
   Classes, SysUtils, lclProc, SynEditHighlighter, types, MisUtils, XpresBas,
-  XpresTypesPIC, XpresElementsPIC, Pic16Utils, Pic16Devices, Parser,
+  XpresTypesPIC, XpresElementsPIC, Pic16Utils, Pic16Devices, Parser, ParserDirec,
   GenCodBas_PIC16, GenCod_PIC16, ParserDirec_PIC16, Globales, FormConfig {Por diseño, parecería que GenCodBas, no debería accederse desde aquí};
 type
  { TCompiler }

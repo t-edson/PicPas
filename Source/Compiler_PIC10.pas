@@ -5,8 +5,9 @@ unit Compiler_PIC10;
 interface
 uses
   Classes, SysUtils, lclProc, SynEditHighlighter, types, MisUtils, XpresBas,
-  XpresTypesPIC, XpresElementsPIC, Pic10Utils, Pic10Devices, Parser,
-  GenCodBas_PIC10, GenCod_PIC10, ParserDirec_PIC10, Globales, FormConfig {Por diseño, parecería que GenCodBas, no debería accederse desde aquí};
+  XpresTypesPIC, XpresElementsPIC, Pic10Utils, Pic10Devices, Parser, ParserDirec,
+  GenCodBas_PIC10, GenCod_PIC10, ParserDirec_PIC10, Globales,
+  FormConfig {Por diseño, parecería que GenCodBas, no debería accederse desde aquí};
 type
  { TCompiler }
   TCompiler_PIC10 = class(TParserDirec)
