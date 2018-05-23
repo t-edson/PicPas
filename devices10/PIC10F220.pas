@@ -65,7 +65,7 @@ var
   {$SET_UNIMP_BITS '003:DF'} // STATUS
   {$SET_UNIMP_BITS '006:0F'} // GPIO
   {$SET_UNIMP_BITS '007:CF'} // ADCON0
-
+  {$SET_UNIMP_BITS1 '004:E0'} // FSR Bits 7,6,5 always read as 1
 
   // -- PIN mapping --
 

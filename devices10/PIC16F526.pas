@@ -124,7 +124,9 @@ var
   {$SET_MAPPED_RAM '065-066:bnk1'} // EEDATA, EEADR
   {$SET_MAPPED_RAM '067-06C:bnk0'} // PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
 
-
+  {$SET_MAPPED_RAM '02D-02F:bnk0'} // GPR
+  {$SET_MAPPED_RAM '04D-04F:bnk0'} // GPR
+  {$SET_MAPPED_RAM '06D-06F:bnk0'} // GPR
   // -- Initial values --
 
 

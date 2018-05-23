@@ -157,6 +157,9 @@ var
   {$SET_MAPPED_RAM '06A-06A:bnk1'} // ANSEL
   {$SET_MAPPED_RAM '06B-06B:bnk0'} // INTCON0
 
+  {$SET_MAPPED_RAM '02C-02F:bnk0'} // GPR
+  {$SET_MAPPED_RAM '04C-04F:bnk0'} // GPR
+  {$SET_MAPPED_RAM '06C-06F:bnk0'} // GPR
 
   // -- Initial values --
 

@@ -44,8 +44,10 @@ var
 
   {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, GPIO
   {$SET_STATE_RAM '007-01F:GPR'} 
-  {$SET_STATE_RAM '027-03F:GPR'} 
-
+  {$SET_STATE_RAM '020-03F:GPR'} 
+  
+  // -- Define mirrored registers --
+  {$SET_MAPPED_RAM '020-02F:bnk0'} 
 
   // -- Initial values --
 
