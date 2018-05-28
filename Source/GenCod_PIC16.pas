@@ -43,9 +43,9 @@ unit GenCod_PIC16;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, SynEditHighlighter, Graphics, LCLType, LCLProc,
+  Classes, SysUtils, Graphics, LCLType, LCLProc,
   SynFacilBasic, XpresTypesPIC, XpresElementsPIC, Pic16Utils, GenCodBas_PIC16,
-  Parser, MisUtils, XpresBas;
+  Parser, Globales, MisUtils, XpresBas;
 type
     { TGenCod }
     TGenCod = class(TGenCodBas_PIC16)
@@ -174,8 +174,19 @@ type
       procedure DefPointerArithmetic(etyp: TxpEleType);
     end;
 
+  procedure SetLanguage;
 implementation
+var
+  MSG_NOT_IMPLEM: string;
+  MSG_INVAL_PARTYP: string;
+  MSG_UNSUPPORTED : string;
+  MSG_CANNOT_COMPL: string;
 
+procedure SetLanguage;
+begin
+  GenCodBas_PIC16.SetLanguage;
+  {$I ..\language\tra_GenCod.pas}
+end;
 procedure TGenCod.StartCodeSub(fun: TxpEleFun);
 {debe ser llamado para iniciar la codificación de una subrutina}
 begin
@@ -250,12 +261,6 @@ begin
   end;
   //Muestra informa
 end;
-function IsTheSameBitVar(var1, var2: TxpEleVar): boolean; inline;
-{Indica si dos variables bit son la misma, es decir que apuntan, a la misma dirección
-física}
-begin
-  Result := (var1.addr0 = var2.addr0) and (var1.bit0 = var2.bit0);
-end;
 ////////////operaciones con Bit y Boolean
 {$I .\GenCod.inc}
 //////////// Operaciones con Byte
@@ -288,7 +293,7 @@ begin
       kMOVWF(byte1);
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else if p1^.Sto = stVarRefExp then begin
     {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
@@ -327,7 +332,7 @@ begin
       exit;
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else if p1^.Sto = stVarRefVar then begin
     //Asignación a una variable
@@ -367,7 +372,7 @@ begin
       aux.used := false;
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else begin
     GenError('Cannot assign to this Operand.'); exit;
@@ -402,7 +407,7 @@ begin
       kADDWF(byte1, toF);
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else if p1^.Sto = stVarRefExp then begin
     {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
@@ -440,7 +445,7 @@ begin
       exit;
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else if p1^.Sto = stVarRefVar then begin
     //Asignación a una variable
@@ -479,7 +484,7 @@ begin
       aux.used := false;
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else begin
     GenError('Cannot assign to this Operand.'); exit;
@@ -513,7 +518,7 @@ begin
       kSUBWF(byte1, toF);
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else if p1^.Sto = stVarRefExp then begin
     {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
@@ -551,7 +556,7 @@ begin
       exit;
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else if p1^.Sto = stVarRefVar then begin
     //Asignación a una variable
@@ -590,7 +595,7 @@ begin
       aux.used := false;
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else begin
     GenError('Cannot assign to this Operand.'); exit;
@@ -622,13 +627,12 @@ begin
       exit;
     end;
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
-    _ADDLW(value1);  //deja en W
+    kMOVLW(value1);
+    kADDWF(byte2, toW);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    CodAsmK(i_ADDLW, value1);  //deja en W
+    kADDLW(value1);  //deja en W
   end;
   stVariab_Const: begin
     ExchangeP1_P2;
@@ -648,7 +652,7 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    CodAsmK(i_ADDLW, value2);  //deja en W
+    kADDLW(value2);  //deja en W
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -663,7 +667,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_add_word(Opt: TxpOperation; SetRes: boolean);
@@ -705,13 +709,12 @@ begin
   end;
   stConst_Variab: begin
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
-    _SUBLW(value1);   //K - W -> W
+    kMOVF(byte2, toW);
+    kSUBLW(value1);   //K - W -> W
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _SUBLW(value1);   //K - W -> W
+    kSUBLW(value1);   //K - W -> W
   end;
   stVariab_Const: begin
     SetROBResultExpres_byte(Opt);
@@ -733,14 +736,13 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _SUBLW(value2);  //K - W -> W
-    _SUBLW(0);  //K - W -> W   //invierte W
+    kSUBLW(value2);  //K - W -> W
+    kSUBLW(0);  //K - W -> W   //invierte W
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _SUBWF(p2^.offs, toW);  //F - W -> W
-    _SUBLW(0);  //K - W -> W   //invierte W
+    kSUBWF(byte2, toW);  //F - W -> W
+    kSUBLW(0);  //K - W -> W   //invierte W
   end;
   stExpres_Expres:begin
     SetROBResultExpres_byte(Opt);
@@ -750,7 +752,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.mul_byte_16(fun: TxpEleFun);
@@ -891,7 +893,7 @@ begin
     AddCallerTo(f_byte_mul_byte_16);
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_mul_word(Opt: TxpOperation; SetRes: boolean);
@@ -1011,7 +1013,7 @@ begin
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.byte_div_byte(fun: TxpEleFun);
@@ -1182,7 +1184,7 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_mod_byte(Opt: TxpOperation; SetRes: boolean);
@@ -1308,7 +1310,7 @@ begin
     AddCallerTo(f_byte_div_byte);
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_and_byte(Opt: TxpOperation; SetRes: boolean);
@@ -1392,7 +1394,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_and_bit(Opt: TxpOperation; SetRes: boolean);
@@ -1483,7 +1485,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_or_bit(Opt: TxpOperation; SetRes: boolean);
@@ -1546,7 +1548,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se uso
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_xor_bit(Opt: TxpOperation; SetRes: boolean);
@@ -1588,7 +1590,7 @@ begin
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    _SUBLW(value1);  //si iguales _Z=1
+    kXORLW(value1);  //Si son iguales Z=1. Se usa XORLW, porque SUBLW no existe en la gama baja
   end;
   stVariab_Const: begin
     ExchangeP1_P2;  //Convierte a stConst_Variab
@@ -1609,8 +1611,7 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //ReserveW; if HayError then exit;
-    _SUBLW(value2);  //si iguales _Z=1
+    kXORLW(value2);  //Si son iguales Z=1. Se usa XORLW, porque SUBLW no existe en la gama baja
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
@@ -1626,7 +1627,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_difer_byte(Opt: TxpOperation; SetRes: boolean);
@@ -1661,9 +1662,8 @@ begin
 //      GenWarn('Expression will always be FALSE.');  //o TRUE si la lógica Está invertida
     end else begin
       SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-      _MOVLW(value1);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
+      kMOVLW(value1);
+      kSUBWF(byte2, toW);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     end;
   end;
@@ -1688,18 +1688,15 @@ begin
       GenWarn('Expression will always be FALSE or TRUE.');
     end else begin
       SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _SUBLW(value2);  //Si p1 > p2: C=0.
+      kMOVF(byte1, toW);
+      kSUBLW(value2);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     end;
   end;
   stVariab_Variab:begin
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.offs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
+    kMOVF(byte1, toW);
+    kSUBWF(byte2, toW);  //Si p1 > p2: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
@@ -1707,10 +1704,8 @@ begin
     tmp := GetAuxRegisterByte;  //Se pide registro auxiliar
     _MOVWF(tmp.offs);    //guarda resultado de expresión
     //Ahora es como stVariab_Variab
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.offs, toW);
-    _BANKSEL(tmp.bank);  //verifica banco destino
-    _SUBWF(tmp.offs, toW);  //Si p1 > tmp: C=0.
+    kMOVF(byte1, toW);
+    kSUBWF(tmp, toW);  //Si p1 > tmp: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     tmp.used := false;  //libera
   end;
@@ -1728,8 +1723,7 @@ begin
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.offs, toW);  //Si p1 > p2: C=0.
+    kSUBWF(byte2, toW);  //Si p1 > p2: C=0.
     CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
   end;
   stExpres_Expres:begin
@@ -1740,7 +1734,7 @@ begin
     FreeStkRegisterByte;   //libera pila porque ya se usó el dato ahí contenido
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_less_byte(Opt: TxpOperation; SetRes: boolean);
@@ -1786,8 +1780,9 @@ en un registro, o se podría generar el código usando la rutina de WHILE. }
 var
   loop1: Word;
   dg: integer;
+  bnkExp1: Byte;
 begin
-  _BANKSEL(target.bank);  //quedará en este banco
+  bnkExp1 := CurrBank;   //Guarda el banco al entrar la rutina
   _ADDLW(1);   //corrige valor inicial
 loop1 := _PC;
   _ADDLW(255);  //W=W-1  (no hay instrucción DECW)
@@ -1797,9 +1792,21 @@ loop1 := _PC;
   if toRight then kSHIFTR(target, toF) else kSHIFTL(target, toF);
   _GOTO(loop1);
   //Terminó el lazo
-  //Ya estamos en el banco de "target"
   pic.codGotoAt(dg, _PC);   //termina de codificar el salto
-  _MOVF(target.offs, toW);  //deja en W
+  {El valor del banco RAM al terminar de ejecutarse esta rutina sería:
+  * El mismo banco antes de entrar -> Si el lazo no se ejecuto ninguna vez.
+  * El mismo banco de "target"     -> Si el lazo se ejecuta al menos una vez.
+  Si en "bnkExp1" almacenamos el banco al inicio de la rutina, se concluye entonces
+  que:
+  * Si "bnkExp1" es igual al banco de "target", No se generan instrucciones de cambio de
+  banco y todo trabaja pues no se altera "CurrBank",
+  * Si "bnkExp1" es diferente al banco de "target", entonces se generarán instrucciones
+  de cambio de banco en el lazo, pero como no sabemos si se ejecutarán, por seguridad
+  generamos código obligatorio para fijar siempre el banco de salida en el de "target".}
+  if bnkExp1 <> target.bank then begin
+    CurrBank := 255;  //Para forzar a generar cambio de banco
+    _BANKSEL(target.bank);  //quedará en este banco
+  end;
 end;
 procedure TGenCod.ROB_byte_shr_byte(Opt: TxpOperation; SetRes: boolean);  //Desplaza a la derecha
 var
@@ -1822,50 +1829,42 @@ begin
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     //Verifica casos simples
     if value2 = 0 then begin
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);  //solo devuelve lo mismo en W
+      kMOVF(byte1, toW);  //solo devuelve lo mismo en W
     end else if value2 = 1 then begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _RRF(p1^.offs, toW);  //devuelve desplazado en W
+      kRRF(byte1, toW);  //devuelve desplazado en W
     end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRRF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRRF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
+      kRRF(aux, toF);  //desplaza
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRRF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
+      kRRF(aux, toF);  //desplaza
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
+      kRRF(aux, toF);  //desplaza
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kRRF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
       //Caso general
@@ -1877,6 +1876,7 @@ begin
       kMOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, true);
+      kMOVF(aux, toW);  //deja en W
       aux.used := false;
     end;
   end;
@@ -1890,6 +1890,7 @@ begin
     kMOVF(byte2, toW);
     //lazo de rotación
     CodifShift_by_W(aux, true);
+    kMOVF(aux, toW);  //deja en W
     aux.used := false;
   end;
 //  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
@@ -1943,6 +1944,7 @@ begin
       _MOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, true);
+      kMOVF(aux, toW);  //deja en W
       aux.used := false;
     end;
   end;
@@ -1951,7 +1953,7 @@ begin
 //  stExpres_Expres:begin
 //  end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_byte_shl_byte(Opt: TxpOperation; SetRes: boolean);   //Desplaza a la izquierda
@@ -1975,62 +1977,53 @@ begin
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     //Verifica casos simples
     if value2 = 0 then begin
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);  //solo devuelve lo mismo en W
+      kMOVF(byte1, toW);  //solo devuelve lo mismo en W
     end else if value2 = 1 then begin
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _RLF(p1^.offs, toW);  //devuelve desplazado en W
+      kRLF(byte1, toW);  //devuelve desplazado en W
     end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRLF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toW);  //desplaza y devuelve en W
+      kRLF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRLF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
+      kRLF(aux, toF);  //desplaza
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toW);  //desplaza y devuelve en W
+      kRLF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(p1^.offs, toW);  //desplaza y mueve
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kRLF(byte1, toW);  //desplaza y mueve
+      kMOVWF(aux);
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
+      kRLF(aux, toF);  //desplaza
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
+      kRLF(aux, toF);  //desplaza
       _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toW);  //desplaza y devuelve en W
+      kRLF(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);
+      kMOVF(byte1, toW);
+      kMOVWF(aux);
       //copia p2 a W
       _MOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, false);
+      kMOVF(aux, toW);  //deja en W
       aux.used := false;
     end;
   end;
@@ -2038,15 +2031,13 @@ begin
     SetROBResultExpres_byte(Opt);   //Se pide Z para el resultado
     aux := GetAuxRegisterByte;
     //copia p1 a "aux"
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.offs, toW);
-    _BANKSEL(aux.bank);
-    _MOVWF(aux.offs);
+    kMOVF(byte1, toW);
+    kMOVWF(aux);
     //copia p2 a W
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
+    kMOVF(byte2, toW);
     //lazo de rotación
     CodifShift_by_W(aux, false);
+    kMOVF(aux, toW);  //deja en W
     aux.used := false;
   end;
 //  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
@@ -2100,6 +2091,7 @@ begin
       _MOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, false);
+      kMOVF(aux, toW);  //deja en W
       aux.used := false;
     end;
   end;
@@ -2108,7 +2100,7 @@ begin
 //  stExpres_Expres:begin
 //  end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 //////////// Operaciones con Word
@@ -2158,7 +2150,7 @@ begin
       _MOVWF(p1^.Hoffs);
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else if p1^.Sto = stVarRefVar then begin
     //Asignación a una variable
@@ -2219,7 +2211,7 @@ begin
       aux.used := false;
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else begin
     GenError('Cannot assign to this Operand.'); exit;
@@ -2253,7 +2245,7 @@ begin
       _MOVWF(p1^.offs);
     end;
     else
-      GenError('No soportado'); exit;
+      GenError(MSG_UNSUPPORTED); exit;
     end;
   end else begin
     GenError('Cannot assign to this Operand.'); exit;
@@ -2399,7 +2391,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     FreeStkRegisterWord;
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_difer_word(Opt: TxpOperation; SetRes: boolean);
@@ -2428,6 +2420,8 @@ procedure TGenCod.ROB_word_great_word(Opt: TxpOperation; SetRes: boolean);
       _BANKSEL(p1^.bank);  //verifica banco destino
       _MOVF(p1^.Loffs, toW);
       _SUBLW(p2^.LByte);	//p2-p1
+						
+						 
   _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
       CopyInvert_C_to_Z;  //Pasa a Z
     end;
@@ -2560,7 +2554,7 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     FreeStkRegisterWord;
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_add_word(Opt: TxpOperation; SetRes: boolean);
@@ -2692,7 +2686,7 @@ begin
     FreeStkRegisterWord;   //libera pila, obtiene dirección
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_add_byte(Opt: TxpOperation; SetRes: boolean);
@@ -2805,7 +2799,7 @@ begin
     FreeStkRegisterWord;   //libera pila
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_sub_word(Opt: TxpOperation; SetRes: boolean);
@@ -2919,7 +2913,7 @@ begin
     FreeStkRegisterWord;   //libera pila, obtiene dirección
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.word_mul_word_16(fun: TxpEleFun);
@@ -3087,7 +3081,7 @@ begin
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
    else
-     genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+     genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
    end;
 end;
 procedure TGenCod.ROB_word_mul_word(Opt: TxpOperation; SetRes: boolean);
@@ -3207,7 +3201,7 @@ begin
  //    AddCallerTo(f_byte_mul_byte_16);
  //  end;
    else
-     genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+     genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
    end;
 end;
 procedure TGenCod.ROB_word_umulword_word(Opt: TxpOperation; SetRes: boolean);
@@ -3293,7 +3287,7 @@ begin
 //    if FirstPass then f_byteXbyte_byte.AddCaller;
 //  end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_word_and_byte(Opt: TxpOperation; SetRes: boolean);
@@ -3350,7 +3344,7 @@ begin
     FreeStkRegisterWord;   //libera pila
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROU_addr_word(Opr: TxpOperator; SetRes: boolean);
@@ -3414,7 +3408,7 @@ begin
     _MOVWF(p1^.offs);
   end;
   else
-    GenError('No soportado'); exit;
+    GenError(MSG_UNSUPPORTED); exit;
   end;
 end;
 procedure TGenCod.ROB_dword_asig_word(Opt: TxpOperation; SetRes: boolean);
@@ -3458,7 +3452,7 @@ begin
     _MOVWF(p1^.Hoffs);
   end;
   else
-    GenError('No soportado'); exit;
+    GenError(MSG_UNSUPPORTED); exit;
   end;
 end;
 procedure TGenCod.ROB_dword_asig_dword(Opt: TxpOperation; SetRes: boolean);
@@ -3523,7 +3517,7 @@ begin
     _MOVWF(p1^.Uoffs);
   end;
   else
-    GenError('No soportado'); exit;
+    GenError(MSG_UNSUPPORTED); exit;
   end;
 end;
 procedure TGenCod.ROB_dword_equal_dword(Opt: TxpOperation; SetRes: boolean);
@@ -3722,7 +3716,7 @@ _LABEL(sale3);
     FreeStkRegisterdWord;
   end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_dword_difer_dword(Opt: TxpOperation; SetRes: boolean);
@@ -3910,7 +3904,7 @@ begin
 //    FreeStkRegisterByte(spL);   //libera pila, obtiene dirección
 //  end;
   else
-    genError('Cannot Compile: "%s"', [OperationStr(Opt)]);
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
 procedure TGenCod.ROB_dword_aadd_dword(Opt: TxpOperation; SetRes: boolean);
@@ -3994,7 +3988,7 @@ begin
     _addwf  (p1^.Uoffs,toF);
   end;
   else
-    GenError('No soportado'); exit;
+    GenError(MSG_UNSUPPORTED); exit;
   end;
 end;
 //////////// Operaciones con Char
@@ -4029,7 +4023,7 @@ begin
     _MOVWF(p1^.offs);
   end;
   else
-    GenError('No soportado'); exit;
+    GenError(MSG_UNSUPPORTED); exit;
   end;
 end;
 procedure TGenCod.ROB_char_equal_char(Opt: TxpOperation; SetRes: boolean);
@@ -4227,7 +4221,7 @@ begin
     //El parámetro word, debe estar en (H, W)
     _CALL(fun.adrr+1);
   end else begin
-    GenError('Invalid parameter type: %s', [res.Typ.name]);
+    GenError(MSG_INVAL_PARTYP, [res.Typ.name]);
     exit;
   end;
   //Verifica fin de parámetros
@@ -4319,7 +4313,7 @@ begin
       _BANKSEL(res.bank);
       _INCF(res.offs, toF);
     end else begin
-      GenError('Invalid parameter type: %s', [res.Typ.name]);
+      GenError(MSG_INVAL_PARTYP, [res.Typ.name]);
       exit;
     end;
   end;
@@ -4346,7 +4340,7 @@ begin
 //      _BANKSEL(res.bank);
 //      _INCF(res.offs, toF);
 //    end else begin
-//      GenError('Invalid parameter type: %s', [res.Typ.name]);
+//      GenError(MSG_INVAL_PARTYP, [res.Typ.name]);
 //      exit;
 //    end;
 //  end;
@@ -4394,7 +4388,7 @@ begin
       _BANKSEL(res.bank);
       _DECF(res.offs, toF);
     end else begin
-      GenError('Invalid parameter type: %s', [res.Typ.name]);
+      GenError(MSG_INVAL_PARTYP, [res.Typ.name]);
       exit;
     end;
   end;
@@ -4531,7 +4525,8 @@ begin
     if res.Typ = typByte then begin
       SetResultExpres(typBit); //No se usa SetROUResultExpres_bit, porque no se tiene el operando en p1^
       res.Inverted := true;
-      _ADDLW(0);   //el resultado aparecerá en Z, invertido
+      _IORLW(0);   //El resultado aparecerá en Z, invertido
+      //Se usa _IORLW en lugar de _ADDLW para poder usar esta rutina en modelos que no cuenten con _ADDLW
     end else begin
       GenError('Cannot convert to bit.'); exit;
     end;
@@ -4586,7 +4581,8 @@ begin
     if res.Typ = typByte then begin
       SetResultExpres(typBool); //No se usa SetROUResultExpres_bit, porque no se tiene el operando en p1^
       res.Inverted := true;
-      _ADDLW(0);   //el resultado aparecerá en Z, invertido
+      _IORLW(0);   //El resultado aparecerá en Z, invertido
+      //Se usa _IORLW en lugar de _ADDLW para poder usar esta rutina en modelos que no cuenten con _ADDLW
     end else begin
       GenError('Cannot convert to boolean.'); exit;
     end;
@@ -5271,25 +5267,6 @@ begin
   f_word_mul_word_16 := CreateSysFunction('word_mul_word_16', nil, nil);
   f_word_mul_word_16.adrr:=$0;
   f_word_mul_word_16.compile := @word_mul_word_16;
-end;
-procedure SetLanguage(lang: string);
-begin
-  case lang of
-  'en': begin
-    dicClear;  //it's yet in English
-  end;
-  'es': begin
-    //Update messages
-    dicSet('Not implemented.', 'No implementado.');
-    dicSet('Invalid value for a bit variable.', 'Valor inválido para una variable bit');
-    dicSet('")" expected.', 'Se esperaba ")"');
-    dicSet('Invalid parameter type: %s','Tipo de parámetro inválido: %s');
-  end;
-  //  ER_NOT_IMPLEM_ := trans('Cannot increase a constant.', 'No se puede incrementar una constante.','','');
-  //  ER_NOT_IMPLEM_ := trans('Cannot increase an expression.','No se puede incrementar una expresión.','','');
-  //  ER_NOT_IMPLEM_ := trans('Cannot decrease a constant.', 'No se puede disminuir una constante.','','');
-  //  ER_NOT_IMPLEM_ := trans('Cannot decrease an expression.','No se puede disminuir una expresión.','','');
-  end;
 end;
 end.
 

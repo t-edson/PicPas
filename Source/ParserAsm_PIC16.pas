@@ -73,6 +73,7 @@ var  //Mensajes
 
 procedure SetLanguage;
 begin
+  GenCod_PIC16.SetLanguage;
   {$I ..\language\tra_ParserAsm.pas}
 end;
 

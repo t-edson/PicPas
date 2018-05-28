@@ -133,7 +133,7 @@ type
   protected  //Instrucciones que no manejan el cambio de banco
     procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin);
     procedure CodAsmK(const inst: TPIC16Inst; const k: byte);
-      procedure _BANKSEL(targetBank: byte);
+    procedure _BANKSEL(targetBank: byte);
     procedure GenCodBank(targetAdrr: word);
     procedure _BANKRESET;
     function _PC: word;
@@ -218,7 +218,7 @@ type
     procedure kSHIFTR(const f: TPicRegister; d: TPIC16destin);
     procedure kSHIFTL(const f: TPicRegister; d: TPIC16destin);
     procedure kIF_BSET(const f: TPicRegisterBit; out igot: integer);
-    procedure kEND_BSET(igot: integer);
+    procedure kIF_BSET_END(igot: integer);
   public     //Acceso a registro de trabajo
     property H_register: TPicRegister read H;
     property E_register: TPicRegister read E;
@@ -277,30 +277,16 @@ type
     destructor Destroy; override;
   end;
 
+  procedure SetLanguage;
 implementation
+var
+  TXT_SAVE_W, TXT_SAVE_Z, TXT_SAVE_H, MSG_NO_ENOU_RAM,
+  MSG_VER_CMP_EXP, MSG_STACK_OVERF, MSG_NOT_IMPLEM: string;
 
-procedure SetLanguage(lang: string);
+procedure SetLanguage;
 begin
-  case lang of
-  'en': begin
-    dicClear;  //it's yet in English
-  end;
-  'es': begin
-    //Update messages
-    dicSet(';save W', ';guardar W');
-    dicSet(';save Z', ';guardar Z');
-    dicSet(';save H', ';guardar H');
-    dicSet(';restore W','restaurar W');
-    dicSet(';restore Z','restaurar Z');
-    dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
-    dicSet('No enough RAM', 'No hay suficiente RAM.');
-    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
-    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
-    dicSet('Very complex expression. To simplify.','Expresión muy compleja. Simplificar.');
-    dicSet('Stack Overflow', 'Desborde de pila.');
-    dicSet('Not implemented.', 'No implementado');
-  end;
-  end;
+  ParserDirec.SetLanguage;
+  {$I ..\language\tra_GenCodBas.pas}
 end;
 { TGenCodPic }
 procedure TGenCodBas_PIC16.ProcByteUsed(offs, bnk: byte; regPtr: TPICRamCellPtr);
@@ -390,7 +376,7 @@ begin
   {Esta dirección física, la mantendrá este registro hasta el final de la compilación
   y en teoría, hasta el final de la ejecución de programa en el PIC.}
   if not pic.GetFreeByte(addr, shared) then begin
-    GenError('No enough RAM');
+    GenError(MSG_NO_ENOU_RAM);
     exit;
   end;
   pic.SetNameRAM(addr, regName);  //pone nombre a registro
@@ -398,7 +384,7 @@ end;
 procedure TGenCodBas_PIC16.AssignRAMbit(out addr: word; out bit: byte; regName: string; shared: boolean);
 begin
   if not pic.GetFreeBit(addr, bit, shared) then begin
-    GenError('No enough RAM');
+    GenError(MSG_NO_ENOU_RAM);
     exit;
   end;
   pic.SetNameRAMbit(addr, bit, regName);  //pone nombre a bit
@@ -416,7 +402,7 @@ begin
   listRegAux.Add(reg);   //agrega a lista
   if listRegAux.Count > MAX_REGS_AUX_BYTE then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
-    GenError('Very complex expression. To simplify.');
+    GenError(MSG_VER_CMP_EXP);
     exit(nil);
   end;
   Result := reg;   //devuelve referencia
@@ -434,7 +420,7 @@ begin
   listRegAuxBit.Add(reg);   //agrega a lista
   if listRegAuxBit.Count > MAX_REGS_AUX_BIT then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
-    GenError('Very complex expression. To simplify.');
+    GenError(MSG_VER_CMP_EXP);
     exit(nil);
   end;
   Result := reg;   //devuelve referencia
@@ -496,7 +482,7 @@ begin
   end;
   //No encontró ninguno libre, crea uno en memoria
   reg := CreateRegisterByte(prtAuxReg);
-  if reg = nil then exit(nil);  //hubo errir
+  if reg = nil then exit(nil);  //hubo error
   regName := 'aux'+IntToSTr(listRegAux.Count);
   AssignRAM(reg.addr, regName, false);   //Asigna memoria. Puede generar error.
   if HayError then exit;
@@ -542,7 +528,7 @@ begin
   //Validación
   if stackTop>MAX_REGS_STACK_BYTE then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
-    GenError('Very complex expression. To simplify.');
+    GenError(MSG_VER_CMP_EXP);
     exit(nil);
   end;
   if stackTop>listRegStk.Count-1 then begin
@@ -572,7 +558,7 @@ begin
   //Validación
   if stackTopBit>MAX_REGS_STACK_BIT then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
-    GenError('Very complex expression. To simplify.');
+    GenError(MSG_VER_CMP_EXP);
     exit(nil);
   end;
   if stackTopBit>listRegStkBit.Count-1 then begin
@@ -656,7 +642,7 @@ function TGenCodBas_PIC16.FreeStkRegisterBit: boolean;
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
 begin
    if stackTopBit=0 then begin  //Ya está abajo
-     GenError('Stack Overflow');
+     GenError(MSG_STACK_OVERF);
      exit(false);
    end;
    dec(stackTopBit);   //Baja puntero
@@ -668,7 +654,7 @@ function TGenCodBas_PIC16.FreeStkRegisterByte: boolean;
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
 begin
    if stackTop=0 then begin  //Ya está abajo
-     GenError('Stack Overflow');
+     GenError(MSG_STACK_OVERF);
      exit(false);
    end;
    dec(stackTop);   //Baja puntero
@@ -678,7 +664,7 @@ function TGenCodBas_PIC16.FreeStkRegisterWord: boolean;
 {Libera el último word, que se pidió a la RAM. Si hubo error, devuelve FALSE.}
 begin
    if stackTop<=1 then begin  //Ya está abajo
-     GenError('Stack Overflow');
+     GenError(MSG_STACK_OVERF);
      exit(false);
    end;
    dec(stackTop, 2);   //Baja puntero
@@ -688,7 +674,7 @@ function TGenCodBas_PIC16.FreeStkRegisterDWord: boolean;
 {Libera el último dword, que se pidió a la RAM. Si hubo error, devuelve FALSE.}
 begin
    if stackTop<=3 then begin  //Ya está abajo
-     GenError('Stack Overflow');
+     GenError(MSG_STACK_OVERF);
      exit(false);
    end;
    dec(stackTop, 4);   //Baja puntero
@@ -793,13 +779,13 @@ begin
     //Es un arreglo de algún tipo
     if absAdd<>-1 then begin
       //Se pide mapearlo de forma absoluta
-      GenError('Not implemented.', [varName]);
+      GenError(MSG_NOT_IMPLEM, [varName]);
       exit;
     end;
     //Asignamos espacio en RAM
     nbytes := typ.arrSize * typ.refType.size;
     if not pic.GetFreeBytes(nbytes, addr) then begin
-      GenError('No enough RAM');
+      GenError(MSG_NO_ENOU_RAM);
       exit;
     end;
     pic.SetNameRAM(addr, nVar.name);   //Nombre solo al primer byte
@@ -811,7 +797,7 @@ begin
     //Los punteros cortos, se manejan como bytes
     AssignRAMinByte(absAdd, nVar.addr0, varName, shared);
   end else begin
-    GenError('Not implemented.', [varName]);
+    GenError(MSG_NOT_IMPLEM, [varName]);
   end;
   if HayError then  exit;
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
@@ -1213,7 +1199,7 @@ begin
   newRP0 := targetBank and $01;
   if (CurrBank = 255) or (curRP0 <> newRP0) then begin
     //Debe haber cambio
-    if curRP0 = 0 then begin
+    if newRP0 = 1 then begin
       _BSF(_STATUS, _RP0); PutComm(';Bank set.');
     end else begin
       _BCF(_STATUS, _RP0); PutComm(';Bank set.');
@@ -1229,7 +1215,7 @@ begin
   newRP1 := targetBank and $02;
   if (CurrBank = 255) or (curRP1 <> newRP1) then begin
     //Debe haber cambio
-    if curRP1 = 0 then begin
+    if newRP1 = 2 then begin
       _BSF(_STATUS, _RP1); PutComm(';Bank set.');
     end else begin
       _BCF(_STATUS, _RP1); PutComm(';Bank set.');
@@ -1722,7 +1708,7 @@ begin
   igot := pic.iFlash;     //guarda posición de instrucción de salto
   _GOTO(0); //salto pendiente
 end;
-procedure TGenCodBas_PIC16.kEND_BSET(igot: integer);
+procedure TGenCodBas_PIC16.kIF_BSET_END(igot: integer);
 {Define the End of the block, created with kIF_BSET().}
 begin
   if _PC = igot+1 then begin
@@ -1863,7 +1849,7 @@ begin
   end;
   else
     //Almacenamiento no implementado
-    GenError('Not implemented.');
+    GenError(MSG_NOT_IMPLEM);
   end;
   if modReturn then _RETURN;  //codifica instrucción
 end;
@@ -1880,9 +1866,9 @@ begin
   if stk= nil then exit;   //error
   //Guarda Z
   _BANKSEL(stk.bank);
-  _BCF(stk.offs, stk.bit); PutComm(';save Z');
-  _BTFSC(Z.offs, Z.bit); PutComm(';save Z');
-  _BSF(stk.offs, stk.bit); PutComm(';save Z');
+  _BCF(stk.offs, stk.bit); PutComm(TXT_SAVE_Z);
+  _BTFSC(Z.offs, Z.bit); PutComm(TXT_SAVE_Z);
+  _BSF(stk.offs, stk.bit); PutComm(TXT_SAVE_Z);
   stk.used := true;
 end;
 //////////////// Tipo Byte /////////////
@@ -1925,7 +1911,7 @@ begin
   end;
   else
     //Almacenamiento no implementado
-    GenError('Not implemented.');
+    GenError(MSG_NOT_IMPLEM);
   end;
 end;
 procedure TGenCodBas_PIC16.byte_DefineRegisters;
@@ -1939,7 +1925,7 @@ begin
   stk := GetStkRegisterByte;  //pide memoria
   //guarda W
   _BANKSEL(stk.bank);
-  _MOVWF(stk.offs);PutComm(';save W');
+  _MOVWF(stk.offs);PutComm(TXT_SAVE_W);
   stk.used := true;
 end;
 procedure TGenCodBas_PIC16.byte_GetItem(const OpPtr: pointer);
@@ -2296,7 +2282,7 @@ begin
   end;
   else
     //Almacenamiento no implementado
-    GenError('Not implemented.');
+    GenError(MSG_NOT_IMPLEM);
   end;
 end;
 procedure TGenCodBas_PIC16.word_DefineRegisters;
@@ -2316,13 +2302,13 @@ begin
   stk := GetStkRegisterByte;  //pide memoria
   if stk = nil then exit;
   _BANKSEL(stk.bank);
-  _MOVWF(stk.offs);PutComm(';save W');
+  _MOVWF(stk.offs);PutComm(TXT_SAVE_W);
   stk.used := true;
   //guarda H
   stk := GetStkRegisterByte;   //pide memoria
   if stk = nil then exit;
   _BANKSEL(H.bank);
-  _MOVF(H.offs, toW);PutComm(';save H');
+  _MOVF(H.offs, toW);PutComm(TXT_SAVE_H);
   _BANKSEL(stk.bank);
   _MOVWF(stk.offs);
   stk.used := true;   //marca
@@ -2681,7 +2667,7 @@ begin
   end;
   else
     //Almacenamiento no implementado
-    GenError('Not implemented.');
+    GenError(MSG_NOT_IMPLEM);
   end;
 end;
 procedure TGenCodBas_PIC16.dword_DefineRegisters;
@@ -2711,13 +2697,13 @@ begin
   stk := GetStkRegisterByte;  //pide memoria
   if HayError then exit;
   _BANKSEL(stk.bank);
-  _MOVWF(stk.offs);PutComm(';save W');
+  _MOVWF(stk.offs);PutComm(TXT_SAVE_W);
   stk.used := true;
   //guarda H
   stk := GetStkRegisterByte;   //pide memoria
   if HayError then exit;
   _BANKSEL(H.bank);
-  _MOVF(H.offs, toW);PutComm(';save H');
+  _MOVF(H.offs, toW);PutComm(TXT_SAVE_H);
   _BANKSEL(stk.bank);
   _MOVWF(stk.offs);
   stk.used := true;   //marca

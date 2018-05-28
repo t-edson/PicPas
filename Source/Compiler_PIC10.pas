@@ -218,7 +218,7 @@ begin
       end;
     end else begin
       //Es una directiva
-     ProcDIRline(cIn.tok, ctxChanged);  //procesa línea
+      ProcDIRline(cIn.tok, ctxChanged);  //procesa línea
       if HayError then begin
         cIn.Next;   //Pasa, porque es un error ya ubicado, y mejor buscamos otros
         cIn.SkipWhites;

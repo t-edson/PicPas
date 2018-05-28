@@ -113,6 +113,7 @@ protected  //Variables de expresión.
 protected
   procedure IdentifyField(xOperand: TOperand);
   procedure LogExpLevel(txt: string);
+  function IsTheSameBitVar(var1, var2: TxpEleVar): boolean; inline;
   function AddCallerTo(elem: TxpElement; callerElem: TxpElement = nil): TxpEleCaller;
   function AddCallerTo(elem: TxpElement; const curPos: TSrcPos): TxpEleCaller;
 protected  //Eventos del compilador
@@ -278,8 +279,10 @@ public   //Manejo de errores y advertencias
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
   procedure GenErrorPos(msg: String; const Args: array of const; srcPos: TSrcPos);
-public   //Opciones de compilación
-  incDetComm  : boolean;   //Incluir Comentarios detallados.
+public    //Compiling Options
+  incDetComm  : boolean; //Incluir Comentarios detallados.
+  ConfigWord  : integer; //Bits de configuración
+  mode        : (modPascal, modPicPas);
   SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
   OptBnkAftPro: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
   OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
@@ -290,7 +293,7 @@ protected
   hexFile  : string;   //Nombre de archivo de salida
   function ExpandRelPathTo(BaseFile, FileName: string): string;
   procedure ExchangeP1_P2;
-public   //Información y acceso a memoria
+public    //Información y acceso a memoria
   function hexFilePath: string;
   function mainFilePath: string;
   function CompilerName: string; virtual; abstract;  //Name of the compiler
@@ -300,7 +303,7 @@ public   //Información y acceso a memoria
   procedure GetResourcesUsed(out ramUse, romUse, stkUse: single); virtual; abstract;
   procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); virtual; abstract;
   procedure GenerateListReport(lins: TStrings); virtual; abstract;
-public     //Acceso a campos del objeto PIC
+public    //Acceso a campos del objeto PIC
   function PICName: string; virtual; abstract;
   function PICNameShort: string; virtual; abstract;
   function PICnBanks: byte; virtual; abstract; //Number of RAM banks
@@ -309,7 +312,7 @@ public     //Acceso a campos del objeto PIC
   function PICnPages: byte; virtual; abstract; //Number of FLASH pages
   function PICPage(i: byte): TPICFlashPage; virtual; abstract; //Return a FLASH page
   function RAMmax: integer; virtual; abstract;
-protected  //Container lists of registers
+protected //Container lists of registers
   listRegAux : TPicRegister_list;  //lista de registros de trabajo y auxiliares
   listRegStk : TPicRegister_list;  //lista de registros de pila
   listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
@@ -321,7 +324,7 @@ public
   devicesPath: string; //Ruta de las unidades de dispositivos
   property ProplistRegAux: TPicRegister_list read listRegAux;
   property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
-public  //Inicialización
+public    //Inicialización
   constructor Create; virtual;
   destructor Destroy; override;
 end;
@@ -960,6 +963,12 @@ procedure TCompilerBase.LogExpLevel(txt: string);
 {Genera una cadena de registro , considerando el valor de "ExprLevel"}
 begin
   debugln(space(3*ExprLevel)+ txt );
+end;
+function TCompilerBase.IsTheSameBitVar(var1, var2: TxpEleVar): boolean; inline;
+{Indica si dos variables bit son la misma, es decir que apuntan, a la misma dirección
+física}
+begin
+  Result := (var1.addr0 = var2.addr0) and (var1.bit0 = var2.bit0);
 end;
 function TCompilerBase.AddCallerTo(elem: TxpElement; callerElem: TxpElement=nil): TxpEleCaller;
 {Agregar una llamada a un elemento de la sintaxis.
