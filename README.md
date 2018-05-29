@@ -868,7 +868,9 @@ $SET_STATE_RAM, let us to define the state of the RAM using a range of addresses
 
 The syntax of $SET_STATE_RAM is: 
 
+```
 {$SET_STATE_RAM <list of commands>}
+```
 
 One valid example would be:
 
@@ -886,11 +888,15 @@ $SET_MAPPED_RAM, can map ranges of RAM in register GPR and SFR. It has not sense
 
 The syntax for $SET_MAPPED_RAM is: 
 
+```
 {$SET_MAPPED_RAM <list of commands>}
+```
 
 Commands are separated by commas. One command have the form:
 
-<Start address>-<End address>:<Target bank>
+```
+Start address>-<End address>:<Target bank>
+```
 
 Target bank can be: 
 
@@ -931,7 +937,9 @@ Define the name for a specified pin of the microcontroller.
 
 The syntax is:
 
+```
 {$SET_PIN_NAME <pin number>:<name>}
+```
 
 One example would be:
 
@@ -949,11 +957,15 @@ This assignment is needed to a have a better visual effect in the simulation of 
 
 The syntax of $MAP_RAM_TO_PIN is: 
 
+```
 {$MAP_RAM_TO_PIN <address>:<list of associations>}
+```
 
 Associations are separated by commas. One association have the form:
 
+```
 <number of bit>-<number of pin>
+```
 
 One valid example would be:
 
@@ -973,11 +985,15 @@ This setting is used to model the RAM in a accurate way (to the bit level) in or
 
 The syntax of $SET_UNIMP_BITS is: 
 
+```
 {$SET_UNIMP_BITS <list of commands>}
+```
 
 The commands are separtaed by commas. One command have the form:
 
+```
 <address>:<mask>
+```
 
 The address and the mask are expressed in hexadecimal using 3 and 2 digits respectively.
 
