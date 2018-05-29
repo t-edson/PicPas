@@ -555,9 +555,11 @@ Some features of this programming language are:
 
 Variables are assigned with the instruction $SET:
 
+```
 {$SET x = 1}
 {$SET y = 1 + x}
 {$SET x = 'I'm now a string'}
+```
 
 $SET, is not a declaration, but an assignment. First time a variable is assigned, it's created.
 
