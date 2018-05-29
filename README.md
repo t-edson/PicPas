@@ -989,7 +989,7 @@ The syntax of $SET_UNIMP_BITS is:
 {$SET_UNIMP_BITS <list of commands>}
 ```
 
-The commands are separtaed by commas. One command have the form:
+The commands are separated by commas. One command have the form:
 
 ```
 <address>:<mask>
