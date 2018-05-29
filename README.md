@@ -545,11 +545,11 @@ Directives have their own programmig language. It's a simple and interpreted lan
 
 Some features of this programming language are:
 
-•	It's case insensitive, like Pascal is.
-•	Instructions are contained in one single line and are delimited by {$ … }
-•	It's not a typed language. Variables can change their type and value in execution and different type variables can be assigned.
-•	Variables don't need to be defined before using.
-•	There are only two types for variables: strings and numbers.
+*	It's case insensitive, like Pascal is.
+*	Instructions are contained in one single line and are delimited by {$ … }
+*	It's not a typed language. Variables can change their type and value in execution and different type variables can be assigned.
+*	Variables don't need to be defined before using.
+*	There are only two types for variables: strings and numbers.
 
 ### Variables
 
@@ -850,8 +850,6 @@ var x: word;
 
 #### $SET_STATE_RAM
 
-These directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
-
 Set the state of the RAM memory for the current device.
 
 The state of a byte of RAM can have 3 values:
@@ -871,7 +869,9 @@ One valid example would be:
 {$SET_STATE_RAM '000-00B:SFR'};
 
 
-#### $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM
+#### $SET_MAPPED_RAM, $CLEAR_STATE_RAM
+
+These directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
 
 
 
