@@ -812,17 +812,21 @@ Directive $IF evaluates an expression, and according to the result, compile or o
 
 The common syntax is: 
 
+```
 {$IF <expression>} 
 ... 
 {$ENDIF}
+```
 
 A long way can be used too:
 
+```
 {$IF <expression>} 
 ... 
 {$ELSE}
 ... 
 {$ENDIF}
+```
  
 The following code shows an example of use:
 
@@ -868,14 +872,46 @@ The syntax of $SET_STATE_RAM is:
 
 One valid example would be:
 
+```
 {$SET_STATE_RAM '000-00B:SFR'};
+```
 
+#### $SET_MAPPED_RAM
 
-#### $SET_MAPPED_RAM, $CLEAR_STATE_RAM
+Define mapped regions of the RAM memory, for the current device.
 
-These directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
+RAM memory can be implemented as independent or mapped RAM. Mapped RAM usually points to other RAM bank. One register can be mapped in several banks. That's the case of registers like STATUS or INTCON, mapped in all the banks of the RAM.
 
+$SET_MAPPED_RAM, can map ranges of RAM in register GPR and SFR. It has not sense to map unimplemented RAM.
 
+The syntax for $SET_MAPPED_RAM is: 
+
+{$SET_MAPPED_RAM <list of commands>}
+
+Commands are separated by commas. One command have the form:
+
+<Start address>-<End address>:<Target bank>
+
+Target bank can be: 
+
+bnk0, bnk1, bnk2 or bnk3 for the Mid-Range PIC core devices (14 bits instruction).
+bnk0, bnk1, bnk2, bnk3, bnk4, bnk5, bnk6 or bnk7 for the Baseline PIC core devices (12 bits).
+
+A valid example, for a Mid-Range PIC would be:
+
+{$SET_MAPPED_RAM ' 080-080:bnk0'};
+
+This instruction defines the RAM address $080 as a register mapped at the bank 0, corresponding to the address 0x00.
+
+Addresses are expresed always as a 3 digit hexadecimal number.
+
+#### $CLEAR_STATE_RAM
+
+USed to define the initial state of RAM memory. 
+
+$CLEAR_STATE_RAM, set the state of all the RAM as unimplemented, clearing all previous setting.
+
+It's used before of starting to define the RAM for a device, using the directives $SET_STATE_RAM and $SET_MAPPED_RAM.
 
 
 #### $RESET_PINS 
@@ -899,8 +935,71 @@ The syntax is:
 
 One example would be:
 
+```
 {$SET_PIN_NAME '2:VDD'}
+```
 
+This definition would make the label "VDD" will appear in the pin 2 of the graphic representation of the PIC, when using the debugger.,
+
+#### $MAP_RAM_TO_PIN
+
+Assign some bits of the RAM, to physical pins of a microcontroller. This is used to map the registers GPIO, PORTA, PORTB, …, to pins of the device.
+
+This assignment is needed to a have a better visual effect in the simulation of the PIC, when using the debugger. This way we will see the pin highlighted when it has a high level (bit set to 1). 
+
+The syntax of $MAP_RAM_TO_PIN is: 
+
+{$MAP_RAM_TO_PIN <address>:<list of associations>}
+
+Associations are separated by commas. One association have the form:
+
+<number of bit>-<number of pin>
+
+One valid example would be:
+
+```
+{$MAP_RAM_TO_PIN '005:0-17,1-18,2-1,3-2,4-3'};
+```
+
+This instruction indicates the bits  0, 1, 2, 3 and 4, of the address $05, are mapped to the pins 17, 18, 1, 2 y 3 respectively.
+
+Values for number of bit and pins are in decimal.
+
+#### $SET_UNIMP_BITS
+
+Defines bits not implemented in some specific positions of the RAM.
+
+This setting is used to model the RAM in a accurate way (to the bit level) in order to have a better and realistic simulation of the device.
+
+The syntax of $SET_UNIMP_BITS is: 
+
+{$SET_UNIMP_BITS <list of commands>}
+
+The commands are separtaed by commas. One command have the form:
+
+<address>:<mask>
+
+The address and the mask are expressed in hexadecimal using 3 and 2 digits respectively.
+
+One valid example would be:
+
+```
+{$SET_UNIMP_BITS '005:1F'};
+```
+
+And indicates the bits 5, 6 and 7, of the position $005 (PORTA) are not implemented in the hardware and will be read always as 0.
+
+#### $SET_UNIMP_BITS1
+
+Defines bits not implemented in some specific positions of the RAM.
+
+This instruction works in the same way of $SET_UNIMP_BITS, but the unimplemented bits will be read always as 1, instead of 0.
+
+One valid example would be:
+
+{$SET_UNIMP_BITS1 '004:E0'};
+
+And indicates the bits 5, 6 and 7, of the position $004 are not implemented in the hardware and will be read always as 1.
 
 (*) For more information about directives, check the User Manual.
 
