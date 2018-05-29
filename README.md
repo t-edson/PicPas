@@ -537,6 +537,54 @@ Subtrac  :	p1 - 5
 
 ## Directives
 
+Directives are special instructions inserted in the source code that are interpreted and executed by the compiler when compiling the source code (in compilation time).
+
+### Directive Programming Language
+
+Directives have their own programmig language. It's a simple and interpreted language (with instructions, variables, operators and conditional structures) what is different from Pascal.
+
+Some features of this programming language are:
+
+•	It's case insensitive, like Pascal is.
+•	Instructions are contained in one single line and are delimited by {$ … }
+•	It's not a typed language. Variables can change their type and value in execution and different type variables can be assigned.
+•	Variables don't need to be defined before using.
+•	There are only two types for variables: strings and numbers.
+
+### Variables
+
+Variables are assigned with the instruction $SET:
+
+{$SET x = 1}
+{$SET y = 1 + x}
+{$SET x = 'I'm now a string'}
+
+$SET, is not a declaration, but an assignment. First time a variable is assigned, it's created.
+
+Content of a variable, can be shown using instructions like $MSGBOX oo $INFO:
+
+{$MSGBOX 'x is:' + x}
+
+### System Variables
+
+There are some system variables, accessible from the directives language. They are:
+ 
+{$MSGBOX PIC_MODEL} -> Shows the PIC model defined.
+
+{$MSGBOX PIC_FREQUEN} -> Shows the Clock frequency.
+
+{$MSGBOX PIC_MAXFREQ} -> Shows the Max Clock frequency for the device.
+
+{$MSGBOX PIC_NUMBANKS} -> Shows the RAM banks number for the device.
+
+{$MSGBOX SYN_MODE} -> Shows the syntax Mode of the compiler.
+
+{$MSGBOX CURRBANK} -> Shows the current RAM bank.
+
+(*) To see the complete list, check the User Manual.
+
+### List of Directives
+
 The next directives are supported by PicPas:
 
 #### $PROCESSOR
@@ -642,6 +690,10 @@ Defines the name of the output binary file *.hex.
 
 When relative path is used, the file will be created in the same folder the Pascal program is.
 
+If it's not defined the name of the *.hex file, it will be used the name of the program/unit compiled. So if the program is called "myprogram" (and the file is "myprogram.pas"), then the *.hex file will be "myprogram.hex".
+
+Directive {$OUTPUTHEX}, can be placed in any part of the source code and can be used several times. If so, the output file will be the defined by the last directive.
+
 #### $DEFINE
 
 Define symbols or macros
@@ -698,9 +750,28 @@ Variables supports expresions:
 
 Unlike macros, variables values are solved when assigned. Macros values, are solved when macro is referenced.
 
-#### $IFDEF, $IFNDEF, $ELSE, $ENDIF
+#### $IFDEF, $ELSE, $ENDIF
 
 This directives let us to define conditional compilation blocks:
+
+Directive $IFDEF check the existence of some macro or variable and according to that, compile or not some blocks of code.
+
+It has two forms: 
+
+```
+{$IFDEF <identifier>} 
+... 
+{$ENDIF}
+```
+
+```
+{$IFDEF <identifier>} 
+... 
+{$ELSE}
+... 
+{$ENDIF}
+```
+The next code is an example of use:
 
 ```
 {$DEFINE MyPinOut=PORTB.0}
@@ -715,6 +786,10 @@ begin
 end.
 ```
 
+#### $IFNDEF
+
+This directive is the opposite version of $IFDEF.
+
 ```
 {$DEFINE MyPinOut=PORTB.0}
 uses PIC16F84A;
@@ -727,46 +802,86 @@ begin
 end.
 ```
 
-#### $IF, $IFNOT
+#### $IF
 
 This directives let us to define conditional compilation blocks, using expressions:
 
+Directive $IF evaluates an expression, and according to the result, compile or omit some blocks of code.
+
+The common syntax is: 
+
+{$IF <expression>} 
+... 
+{$ENDIF}
+
+A long way can be used too:
+
+{$IF <expression>} 
+... 
+{$ELSE}
+... 
+{$ENDIF}
+ 
+The following code shows an example of use:
+
 ```
-{$IF valor>255}
+{$IF value>255}
 var x: word;
 {$ELSE}
 var x: byte;
 {$ENDIF}
 ```
 
-#### $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM
+As there is not a boolean type, a boolean expression returns the number 1 when the expression is TRUE and 0 when the expression is FALSE.
+
+On the other side, instruction {$IF} will consider as TRUE, any number different from 0, or any string not empty.
+
+#### $IFNOT
+
+It's the opposite version of $IF.
+
+```
+{$IFNOT value>255}
+var x: byte;
+{$ELSE}
+var x: word;
+{$ENDIF}
+```
+
+#### $SET_STATE_RAM
 
 These directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
 
-```
-//Define hardware
-{$SET PIC_MODEL='MY_PIC'}
-{$SET PIC_MAXFREQ = 1000000}
-{$SET PIC_NPINS = 18}
-{$SET PIC_NUMBANKS = 2}
-{$SET PIC_NUMPAGES = 1}
-{$SET PIC_MAXFLASH = 1024}
-//Clear memory state
-{$SET_STATE_RAM '000-1FF:NIM'}
-//Define RAM state
-{$SET_STATE_RAM '000-00B:SFR, 00C-04F:GPR'}
-{$SET_STATE_RAM '080-08B:SFR, 08C-0CF:GPR'}
-//Define mapped RAM
-{$SET_MAPPED_RAM '080-080:bnk0, 082-084:bnk0, 08A-08B:bnk0'}
-{$SET_MAPPED_RAM '08C-0CF:bnk0'}
-```
+Set the state of the RAM memory for the current device.
+
+The state of a byte of RAM can have 3 values:
+
+* SFR: Special Function Register, like STATUS or TRISB.
+* GPR: General Purpose Register. Used as free memory for the user.
+* NIM: Not implemented cell.
+
+$SET_STATE_RAM, let us to define the state of the RAM using a range of addresses.
+
+The syntax of $SET_STATE_RAM is: 
+
+{$SET_STATE_RAM <list of commands>}
+
+One valid example would be:
+
+{$SET_STATE_RAM '000-00B:SFR'};
+
+
+#### $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM
+
+
+
 
 #### $RESET_PINS 
 
 Clear all the configuration for the pines defined in the microcontroller.
 
 ```
-{$RESET_PINS'}
+{$RESET_PINS}
 ```
 
 This directive is generally used before of defining the microcontollers pins with the directive {$SET_PIN_NAME}
@@ -787,25 +902,37 @@ One example would be:
 
 (*) For more information about directives, check the User Manual.
 
-#### SYSTEM VARIABLES
+### Defining custom devices
 
-There are some system variables, accessible from the directives language. They are:
+PicPas have complete support to define the hardware of microcontrollers, using directives. 
+
+Practically all devices from Baseline and Mid-Range families can be defined in this way.
+
+Following, there is an example of defining a microcontoller similar to the  PIC16F84:
  
-{$MSGBOX PIC_MODEL} -> Shows the PIC model defined.
+```
+//Define hardware
+{$SET PIC_MODEL='MY_PIC'}
+{$SET PIC_MAXFREQ = 1000000}
+{$SET PIC_NPINS = 18}
+{$SET PIC_NUMBANKS = 2}
+{$SET PIC_NUMPAGES = 1}
+{$SET PIC_MAXFLASH = 1024}
+//Clear memory state
+{$SET_STATE_RAM '000-1FF:NIM'}
+//Define RAM state
+{$SET_STATE_RAM '000-00B:SFR, 00C-04F:GPR'}
+{$SET_STATE_RAM '080-08B:SFR, 08C-0CF:GPR'}
+//Define mapped RAM
+{$SET_MAPPED_RAM '080-080:bnk0, 082-084:bnk0, 08A-08B:bnk0'}
+{$SET_MAPPED_RAM '08C-0CF:bnk0'}
+//Define unimplemented bits in RAM
+{$SET_UNIMP_BITS '003:3F,083:3F,005:1F,085:1F,00A:1F,08A:1F'}
+```
 
-{$MSGBOX PIC_FREQUEN} -> Shows the Clock frequency.
-
-{$MSGBOX PIC_MAXFREQ} -> Shows the Max Clock frequency for the device.
-
-{$MSGBOX PIC_NUMBANKS} -> Shows the RAM banks number for the device.
-
-{$MSGBOX SYN_MODE} -> Shows the syntax Mode of the compiler.
-
-{$MSGBOX CURRBANK} -> Shows the current RAM bank.
-
-(*) To see the complete list, check the User Manual.
-
-## Limitations
+To see more examples of definig devices, check the folders /devices10 and /devices16.
+ 
+## PicPas Limitations
 
 •	Only basic types are implemented: bit, byte, char, boolean, word an dword(limited support).
 
