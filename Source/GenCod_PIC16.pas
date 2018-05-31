@@ -824,9 +824,8 @@ begin
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_word(opt);
-    _BANKSEL(E.bank);
-    _MOVWF(E.offs);
-    _MOVLW(value1);
+    kMOVWF(E);
+    kMOVLW(value1);
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -1313,335 +1312,7 @@ begin
     genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
   end;
 end;
-procedure TGenCod.ROB_byte_and_byte(Opt: TxpOperation; SetRes: boolean);
-var
-  rVar: TxpEleVar;
-begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
-    GenError('Too complex pointer expression.'); exit;
-  end;
-  if not ChangePointerToExpres(p1^) then exit;
-  if not ChangePointerToExpres(p2^) then exit;
 
-  case stoOperation of
-  stConst_Const: begin  //suma de dos constantes. Caso especial
-    SetROBResultConst_byte(value1 and value2);  //puede generar error
-  end;
-  stConst_Variab: begin
-    if value1 = 0 then begin  //Caso especial
-      SetROBResultConst_byte(0);  //puede generar error
-      exit;
-    end else if value1 = 255 then begin  //Caso especial
-      SetROBResultVariab(p2^.rVar);  //puede generar error
-      exit;
-    end;
-    SetROBResultExpres_byte(Opt);
-    kMOVF(byte2, toW);
-    kANDLW(value1);  //leave in W
-  end;
-  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    if value1 = 0 then begin  //Caso especial
-      SetROBResultConst_byte(0);  //puede generar error
-      exit;
-    end else if value1 = 255 then begin  //Caso especial
-      SetROBResultExpres_byte(Opt);  //No es necesario hacer nada. Ya está en W
-      exit;
-    end;
-    SetROBResultExpres_byte(Opt);
-    kANDLW(value1);  //leave in W
-  end;
-  stVariab_Const: begin
-    if value2 = 0 then begin  //Caso especial
-      SetROBResultConst_byte(0);  //puede generar error
-      exit;
-    end else if value1 = 255 then begin  //Caso especial
-      SetROBResultVariab(p1^.rVar);  //puede generar error
-      exit;
-    end;
-    SetROBResultExpres_byte(Opt);
-    kMOVLW(value2);
-    kANDWF(byte1, toW);   //leave in W
-  end;
-  stVariab_Variab:begin
-    SetROBResultExpres_byte(Opt);
-    kMOVF(byte2, toW);
-    kANDWF(byte1, toW);   //leave in W
-  end;
-  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    kANDWF(byte1, toW);   //leave in W
-  end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    if value2 = 0 then begin  //Caso especial
-      SetROBResultConst_byte(0);  //puede generar error
-      exit;
-    end else if value1 = 255 then begin  //Caso especial
-      SetROBResultExpres_byte(Opt);  //No es necesario hacer nada. Ya está en W
-      exit;
-    end;
-    SetROBResultExpres_byte(Opt);
-    kANDLW(value2);
-  end;
-  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    kANDWF(byte2, toW);
-  end;
-  stExpres_Expres:begin
-    SetROBResultExpres_byte(Opt);
-    //p1 está en la pila y p2 en el acumulador
-    rVar := GetVarByteFromStk;
-    kANDWF(rVar.adrByte0, toW);
-    FreeStkRegisterByte;   //libera pila porque ya se uso
-  end;
-  else
-    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROB_byte_and_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
-  no se implementa ROB_bit_and_byte.}
-  ExchangeP1_P2;   //Invierte los operandos
-  ROB_bit_and_byte(Opt, SetRes);
-end;
-procedure TGenCod.ROB_byte_or_byte(Opt: TxpOperation; SetRes: boolean);
-var
-  rVar: TxpEleVar;
-begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
-    GenError('Too complex pointer expression.'); exit;
-  end;
-  if not ChangePointerToExpres(p1^) then exit;
-  if not ChangePointerToExpres(p2^) then exit;
-
-  case stoOperation of
-  stConst_Const: begin  //suma de dos constantes. Caso especial
-    SetROBResultConst_byte(value1 or value2);  //puede generar error
-  end;
-  stConst_Variab: begin
-    if value1 = 0 then begin  //Caso especial
-      SetROBResultVariab(p2^.rVar);
-      exit;
-    end else if value1 = 255 then begin  //Caso especial
-      SetROBResultConst_byte(255);
-      exit;
-    end;
-    SetROBResultExpres_byte(Opt);
-    kMOVF(byte2, toW);
-    kIORLW(value1);  //leave in W
-  end;
-  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    if value1 = 0 then begin  //Caso especial
-      SetROBResultExpres_byte(Opt);  //No es necesario hacer nada. Ya está en W
-      exit;
-    end else if value1 = 255 then begin  //Caso especial
-      SetROBResultConst_byte(255);
-      exit;
-    end;
-    SetROBResultExpres_byte(Opt);
-    kIORLW(value1);  //leave in W
-  end;
-  stVariab_Const: begin
-    if value2 = 0 then begin  //Caso especial
-      SetROBResultVariab(p1^.rVar);
-      exit;
-    end else if value1 = 255 then begin  //Caso especial
-      SetROBResultConst_byte(255);
-      exit;
-    end;
-    SetROBResultExpres_byte(Opt);
-    kMOVLW(value2);
-    kIORWF(byte1, toW);   //leave in W
-  end;
-  stVariab_Variab:begin
-    SetROBResultExpres_byte(Opt);
-    kMOVF(byte2, toW);
-    kIORWF(byte1, toW);   //leave in W
-  end;
-  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    kIORWF(byte1, toW);   //leave in W
-  end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    if value2 = 0 then begin  //Caso especial
-      SetROBResultExpres_byte(Opt);  //No es necesario hacer nada. Ya está en W
-      exit;
-    end else if value2 = 255 then begin  //Caso especial
-      SetROBResultConst_byte(255);
-      exit;
-    end;
-    SetROBResultExpres_byte(Opt);
-    kIORLW(value2);
-  end;
-  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    kIORWF(byte2, toW);
-  end;
-  stExpres_Expres:begin
-    SetROBResultExpres_byte(Opt);
-    //p1 está en la pila y p2 en el acumulador
-    rVar := GetVarByteFromStk;
-    kIORWF(rVar.adrByte0, toW);
-    FreeStkRegisterByte;   //libera pila porque ya se uso
-  end;
-  else
-    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROB_byte_or_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
-  no se implementa ROB_bit_or_byte.}
-  ExchangeP1_P2;   //Invierte los operandos
-  ROB_bit_or_byte(Opt, SetRes);
-end;
-procedure TGenCod.ROB_byte_xor_byte(Opt: TxpOperation; SetRes: boolean);
-var
-  rVar: TxpEleVar;
-begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
-    GenError('Too complex pointer expression.'); exit;
-  end;
-  if not ChangePointerToExpres(p1^) then exit;
-  if not ChangePointerToExpres(p2^) then exit;
-
-  case stoOperation of
-  stConst_Const: begin  //suma de dos constantes. Caso especial
-    SetROBResultConst_byte(value1 xor value2);  //puede generar error
-  end;
-  stConst_Variab: begin
-    SetROBResultExpres_byte(Opt);
-    kMOVF(byte2, toW);
-    kXORLW(value1);  //leave in W
-  end;
-  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    kXORLW(value1);  //leave in W
-  end;
-  stVariab_Const: begin
-    SetROBResultExpres_byte(Opt);
-    kMOVLW(value2);
-    kXORWF(byte1, toW);   //leave in W
-  end;
-  stVariab_Variab:begin
-    SetROBResultExpres_byte(Opt);
-    kMOVF(byte2, toW);
-    kXORWF(byte1, toW);   //leave in W
-  end;
-  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    kXORWF(byte1, toW);   //leave in W
-  end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    kXORLW(value2);
-  end;
-  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetROBResultExpres_byte(Opt);
-    kXORWF(byte2, toW);
-  end;
-  stExpres_Expres:begin
-    SetROBResultExpres_byte(Opt);
-    //p1 está en la pila y p2 en el acumulador
-    rVar := GetVarByteFromStk;
-    kXORWF(rVar.adrByte0, toW);
-    FreeStkRegisterByte;   //libera pila porque ya se uso
-  end;
-  else
-    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROB_byte_xor_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
-  no se implementa ROB_bit_xor_byte.}
-  ExchangeP1_P2;   //Invierte los operandos
-  ROB_bit_xor_byte(Opt, SetRes);
-end;
-procedure TGenCod.ROB_byte_equal_byte(Opt: TxpOperation; SetRes: boolean);
-var
-  rVar: TxpEleVar;
-begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
-    GenError('Too complex pointer expression.'); exit;
-  end;
-  if not ChangePointerToExpres(p1^) then exit;
-  if not ChangePointerToExpres(p2^) then exit;
-  case stoOperation of
-  stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_bool(value1 = value2);
-  end;
-  stConst_Variab: begin
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    if value1 = 0 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _MOVF(p2^.offs, toF);  //si iguales _Z=1
-    end else if value1 = 1 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _DECF(p2^.offs, toW);  //si el resultado es cero _Z=1
-    end else if value1 = 255 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _INCF(p2^.offs, toW);  //si el resultado es cero _Z=1
-    end else begin
-      _MOVLW(value1);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.offs, toW);  //si iguales _Z=1
-    end;
-  end;
-  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    kXORLW(value1);  //Si son iguales Z=1. Se usa XORLW, porque SUBLW no existe en la gama baja
-  end;
-  stVariab_Const: begin
-    ExchangeP1_P2;  //Convierte a stConst_Variab
-    ROB_byte_equal_byte(Opt, SetRes);
-  end;
-  stVariab_Variab:begin
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.offs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.offs, toW);  //si iguales _Z=1
-  end;
-  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //ReserveW; if HayError then exit;
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _SUBWF(p1^.offs, toW);  //si iguales _Z=1
-  end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    kXORLW(value2);  //Si son iguales Z=1. Se usa XORLW, porque SUBLW no existe en la gama baja
-  end;
-  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //ReserveW; if HayError then exit;
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.offs, toW);  //si iguales _Z=1
-  end;
-  stExpres_Expres:begin
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //la expresión p1 debe estar salvada y p2 en el acumulador
-    rVar := GetVarByteFromStk;
-    kSUBWF(rVar.adrByte0, toW);  //compara directamente a lo que había en pila.
-    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
-  end;
-  else
-    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROB_byte_difer_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_byte_equal_byte(Opt, SetRes);  //usa el mismo código
-  res.Invert;  //Invierte la lógica
-end;
-procedure TGenCod.ROB_byte_difer_bit(Opt: TxpOperation; SetRes: boolean);
-begin
-  {No hay problema en usar siempre ExchangeP1_P2, porque el caso Expresión-Expresión,
-  no se implementa ROB_bit_dif_byte.}
-  ExchangeP1_P2;
-  ROB_bit_dif_byte(Opt, SetRes);
-end;
 procedure TGenCod.ROB_byte_great_byte(Opt: TxpOperation; SetRes: boolean);
 var
   tmp: TPicRegister;
@@ -2411,17 +2082,13 @@ procedure TGenCod.ROB_word_great_word(Opt: TxpOperation; SetRes: boolean);
       GenWarn('Expression will always be FALSE or TRUE.');
     end else begin
       //Compara byte alto
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.Hoffs, toW);
-      _SUBLW(p2^.HByte); //p2-p1
+      kMOVF(byte1H, toW);
+      kSUBLW(value2H); //p2-p1
       _BTFSS(Z.offs, Z.bit);
       _GOTO_PEND(sale);  //no son iguales
       //Son iguales, comparar el byte bajo
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.Loffs, toW);
-      _SUBLW(p2^.LByte);	//p2-p1
-						
-						 
+      kMOVF(byte1L, toW);
+      kSUBLW(value2L);	//p2-p1
   _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
       CopyInvert_C_to_Z;  //Pasa a Z
     end;
@@ -2777,7 +2444,7 @@ begin
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
     SetROBResultExpres_word(Opt);
-    _addlw(p2^.LByte);     //Suma menos peso del dato 2, deja en W
+    kADDLW(value2);     //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
     _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
@@ -2826,25 +2493,27 @@ begin
   end;
   stConst_Variab: begin
     SetROBResultExpres_word(Opt);
-    _movf (p2^.Hoffs,toW);  //p2->w
-    _SUBLW(p1^.HByte);     //p1 - W -W
-    _movwf(H.offs);
-    _movf (p2^.Loffs,toW);  //p2-W
-    _SUBLW(p1^.LByte);      //p1-W->w
-    _btfss(_STATUS, _C);
-    _decf(H.offs,toF);
+    kMOVF (byte2H, toW); //p2->w
+    kSUBLW(value1H);     //p1 - W -W
+    kMOVWF(H);
+    kMOVF (byte2L, toW); //p2-W
+    kSUBLW(value1L);     //p1-W->w
+    _BANKSEL(H.bank);    //Para fijar el banco de salida de la condicional
+    _BTFSS(_STATUS, _C);
+    _DECF (H.offs, toF);
   end;
   stConst_Expres: begin  //la expresión p2 se evaluó y esta en (H,W)
     SetROBResultExpres_word(Opt);
     aux := GetAuxRegisterByte;
-    _MOVWF(aux.offs);
-    _movf (H.offs,toW);    //p2->w
-    _SUBLW(p1^.HByte);     //p1 - W -W
-    _movwf(H.offs);
-    _movf (aux.offs,toW);  //p2-W
-    _SUBLW(p1^.LByte);     //p1-W->w
-    _btfss(_STATUS, _C);
-    _decf(H.offs,toF);
+    kMOVWF(aux);
+    kMOVF(H, toW);    //p2->w
+    kSUBLW(value1H);     //p1 - W -W
+    kMOVWF(H);
+    kMOVF (aux, toW);  //p2-W
+    kSUBLW(value1L);     //p1-W->w
+    _BANKSEL(H.bank);    //Para fijar el banco de salida de la condicional
+    _BTFSS(_STATUS, _C);
+    _DECF (H.offs, toF);
     aux.used := false;
   end;
   stVariab_Const: begin

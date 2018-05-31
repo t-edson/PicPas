@@ -191,7 +191,7 @@ type
     procedure kCLRF(const f: TPicRegister);
     procedure kCLRW;
     procedure kCLRWDT;
-    procedure kCOMF(const f: word; d: TPIC10Destin);
+    procedure kCOMF(const f: TPicRegister; d: TPIC10Destin);
     procedure kDECF(const f: TPicRegister; d: TPIC10Destin);
     procedure kDECFSZ(const f: word; d: TPIC10Destin);
     procedure kGOTO(const a: word);
@@ -210,6 +210,7 @@ type
     procedure kRLF(const f: TPicRegister; d: TPIC10Destin);
     procedure kRRF(const f: TPicRegister; d: TPIC10Destin);
     procedure kSLEEP;
+    procedure kSUBLW_x(const k: word);
     procedure kSUBWF(const f: TPicRegister; d: TPIC10Destin);
     procedure kSWAPF(const f: TPicRegister; d: TPIC10Destin);
     procedure kXORLW(const k: word);
@@ -1487,11 +1488,11 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
 end;
-procedure TGenCodBas_PIC10.kCOMF(const f: word; d: TPIC10Destin);
+procedure TGenCodBas_PIC10.kCOMF(const f: TPicRegister; d: TPIC10Destin);
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_COMF, f,d);
+  pic.codAsmFD(i_COMF, f.addr, d);
 end;
 procedure TGenCodBas_PIC10.kDECF(const f: TPicRegister; d: TPIC10Destin);
 begin
@@ -1653,6 +1654,28 @@ procedure TGenCodBas_PIC10.kSLEEP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_SLEEP);
+end;
+procedure TGenCodBas_PIC10.kSUBLW_x(const k: word);
+{Instrucción simulada, ya que en esta familia, no existe la instrucción SUBLW.}
+var
+  aux, aux2: TPicRegister;
+begin
+  aux := GetAuxRegisterByte;
+  aux2 := GetAuxRegisterByte;
+  kMOVWF(aux);  //Salva W
+  kMOVLW(k);
+  kMOVWF(aux2);
+  kMOVF(aux, toW);
+  kSUBWF(aux2, toW);
+  aux.used := false;
+  aux2.used := false;
+////Esta versión es más corta pero no actualiza el bit C de la misma forma
+//  aux := GetAuxRegisterByte;
+//  kMOVWF(aux);  //Salva W
+//  kMOVLW(k+1);
+//  kSUBWF(aux, toF); //W - K -> aux
+//  kCOMF(aux, toW);
+//  aux.used := false;
 end;
 procedure TGenCodBas_PIC10.kXORLW(const k: word); inline;
 begin

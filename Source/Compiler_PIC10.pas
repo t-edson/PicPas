@@ -2335,6 +2335,10 @@ begin
   PutLabel('__end_program__');
   {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
   _SLEEP();   //agrega instrucción final
+  if pic.MsjError<>'' then begin //Puede ser error al escribir la última instrucción
+      GenError(pic.MsjError);
+      exit;
+  end;
 end;
 function TCompiler_PIC10.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}

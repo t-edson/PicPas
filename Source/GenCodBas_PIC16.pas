@@ -190,8 +190,8 @@ type
     procedure kCLRF(const f: TPicRegister);
     procedure kCLRW;
     procedure kCLRWDT;
-    procedure kCOMF(const f: word; d: TPIC16destin);
-    procedure kDECF(const f: word; d: TPIC16destin);
+    procedure kCOMF(const f: TPicRegister; d: TPIC16Destin);
+    procedure kDECF(const f: TPicRegister; d: TPIC16Destin);
     procedure kDECFSZ(const f: word; d: TPIC16destin);
     procedure kGOTO(const a: word);
     procedure kGOTO_PEND(out igot: integer);
@@ -1480,17 +1480,17 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
 end;
-procedure TGenCodBas_PIC16.kCOMF(const f: word; d: TPIC16destin); inline;
+procedure TGenCodBas_PIC16.kCOMF(const f: TPicRegister; d: TPIC16Destin);
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_COMF, f,d);
+  pic.codAsmFD(i_COMF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kDECF(const f: word; d: TPIC16destin); inline;
+procedure TGenCodBas_PIC16.kDECF(const f: TPicRegister; d: TPIC16Destin);
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_DECF, f,d);
+  pic.codAsmFD(i_DECF, f.addr, d);
 end;
 procedure TGenCodBas_PIC16.kDECFSZ(const f: word; d: TPIC16destin); inline;
 begin
