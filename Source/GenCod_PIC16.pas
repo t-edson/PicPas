@@ -224,7 +224,7 @@ end;
 procedure TGenCod.CopyInvert_C_to_Z;
 begin
   //El resultado está en C (invertido), hay que pasarlo a Z
-  _MOVLW($01 << _C);     //carga máscara de C
+  kMOVLW($01 << _C);     //carga máscara de C
   _ANDWF(_STATUS, toW);   //el resultado está en Z, corregido en lógica.
   InvertedFromC := true;  //Indica que se ha hecho Z = 'C. para que se pueda optimizar
 end;
@@ -622,8 +622,7 @@ begin
     end else if value1 = 1 then begin
       //Caso especial
       SetROBResultExpres_byte(Opt);
-      _BANKSEL(p2^.bank);
-      _INCF(p2^.offs, toW);
+      kINCF(byte2, toW);
       exit;
     end;
     SetROBResultExpres_byte(Opt);
@@ -640,15 +639,12 @@ begin
   end;
   stVariab_Variab:begin
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
-    _BANKSEL(p1^.bank);
-    _ADDWF(p1^.offs, toW);  //deja en W
+    kMOVF(byte2, toW);
+    kADDWF(byte1, toW);  //deja en W
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p1^.bank);
-    _ADDWF(p1^.offs, toW);  //deja en W
+    kADDWF(byte1, toW);  //deja en W
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -656,8 +652,7 @@ begin
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _ADDWF(p2^.offs, toW);  //deja en W
+    kADDWF(byte2, toW);  //deja en W
   end;
   stExpres_Expres:begin
     SetROBResultExpres_byte(Opt);
@@ -718,21 +713,17 @@ begin
   end;
   stVariab_Const: begin
     SetROBResultExpres_byte(Opt);
-    _MOVLW(value2);
-    _BANKSEL(p1^.bank);
-    _SUBWF(p1^.offs, toW);  //F - W -> W
+    kMOVLW(value2);
+    kSUBWF(byte1, toW);  //F - W -> W
   end;
   stVariab_Variab:begin
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
-    _BANKSEL(p1^.bank);
-    _SUBWF(p1^.offs, toW);  //F - W -> W
+    kMOVF(byte2, toW);
+    kSUBWF(byte1, toW);  //F - W -> W
   end;
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p1^.bank);
-    _SUBWF(p1^.offs, toW);  //F - W -> W
+    kSUBWF(byte1, toW);  //F - W -> W
   end;
   stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
     SetROBResultExpres_byte(Opt);
@@ -807,18 +798,16 @@ begin
       _BANKSEL(H.bank);
       _CLRF(H.offs);
       _BCF(_STATUS, _C);
-      _BANKSEL(P2^.bank);
-      _RLF(p2^.offs, toW);
+      kRLF(byte2, toW);
       _BANKSEL(H.bank);
       _RLF(H.offs, toF);
       exit;
     end;
     SetROBResultExpres_word(Opt);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
+    kMOVF(byte2, toW);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
-    _MOVLW(value1);
+    kMOVLW(value1);
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -831,22 +820,19 @@ begin
   end;
   stVariab_Const: begin
     SetROBResultExpres_word(opt);
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.offs, toW);
+    kMOVF(byte1, toW);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
-    _MOVLW(value2);
+    kMOVLW(value2);
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
   stVariab_Variab:begin
     SetROBResultExpres_word(Opt);
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.offs, toW);
+    kMOVF(byte1, toW);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
+    kMOVF(byte2, toW);
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -854,8 +840,7 @@ begin
     SetROBResultExpres_word(Opt);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p2 -> E
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.offs, toW); //p1 -> W
+    kMOVF(byte1, toW); //p1 -> W
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -863,7 +848,7 @@ begin
     SetROBResultExpres_word(Opt);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p1 -> E
-    _MOVLW(value2); //p2 -> W
+    kMOVLW(value2); //p2 -> W
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -871,8 +856,7 @@ begin
     SetROBResultExpres_word(Opt);
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //p1 -> E
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW); //p2 -> W
+    kMOVF(byte2, toW); //p2 -> W
     _CALL(f_byte_mul_byte_16.adrr);
     AddCallerTo(f_byte_mul_byte_16);
   end;
@@ -936,7 +920,7 @@ begin
 //    _MOVF(p2^.offs, toW);
 //    _BANKSEL(E.bank);
 //    _MOVWF(E.offs);
-//    _MOVLW(value1);
+//    kMOVLW(value1);
 //    _CALL(f_byte_mul_byte_16.adrr);
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
@@ -944,7 +928,7 @@ begin
 //    SetROBResultExpres_word(opt);
 //    _BANKSEL(E.bank);
 //    _MOVWF(E.offs);
-//    _MOVLW(value1);
+//    kMOVLW(value1);
 //    _CALL(f_byte_mul_byte_16.adrr);
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
@@ -954,7 +938,7 @@ begin
 //    _MOVF(p1^.offs, toW);
 //    _BANKSEL(E.bank);
 //    _MOVWF(E.offs);
-//    _MOVLW(value2);
+//    kMOVLW(value2);
 //    _CALL(f_byte_mul_byte_16.adrr);
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
@@ -982,7 +966,7 @@ begin
 //    SetROBResultExpres_word(Opt);
 //    _BANKSEL(E.bank);
 //    _MOVWF(E.offs);  //p1 -> E
-//    _MOVLW(value2); //p2 -> W
+//    kMOVLW(value2); //p2 -> W
 //    _CALL(f_byte_mul_byte_16.adrr);
 //    AddCallerTo(f_byte_mul_byte_16);
 //  end;
@@ -1030,7 +1014,7 @@ begin
     _MOVWF (aux.offs);
     _clrf   (E.offs);        //En principio el resultado es cero.
     _clrf   (U.offs);
-    _movlw  (8);             //Carga el contador.
+    kMOVLW  (8);             //Carga el contador.
     _movwf  (aux2.offs);
 Arit_DivideBit8 := _PC;
     _rlf    (H.offs,toF);
@@ -1071,11 +1055,10 @@ begin
       exit;
     end;
     SetROBResultExpres_byte(Opt);
-    _MOVLW(value1);
+    kMOVLW(value1);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
+    kMOVF(byte2, toW);
     _CALL(f_byte_div_byte.adrr);
     AddCallerTo(f_byte_div_byte);
   end;
@@ -1088,7 +1071,7 @@ begin
     _BANKSEL(E.bank);
     _MOVWF(E.offs);  //guarda divisor
 
-    _MOVLW(value1);
+    kMOVLW(value1);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //dividendo
 
@@ -1103,22 +1086,19 @@ begin
       exit;
     end;
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.offs, toW);
+    kMOVF(byte1, toW);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
-    _MOVLW(value2);
+    kMOVLW(value2);
     _CALL(f_byte_div_byte.adrr);
     AddCallerTo(f_byte_div_byte);
   end;
   stVariab_Variab:begin
     SetROBResultExpres_byte(Opt);
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.offs, toW);
+    kMOVF(byte1, toW);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW);
+    kMOVF(byte2, toW);
     _CALL(f_byte_div_byte.adrr);
     AddCallerTo(f_byte_div_byte);
   end;
@@ -1128,8 +1108,7 @@ begin
     _BANKSEL(E.bank);
     _MOVWF(E.offs);
     //p1 -> H
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.offs, toW); //p1 -> W
+    kMOVF(byte1, toW); //p1 -> W
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //dividendo
 
@@ -1146,7 +1125,7 @@ begin
     SetROBResultExpres_byte(Opt);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //p1 -> H
-    _MOVLW(value2); //p2 -> W
+    kMOVLW(value2); //p2 -> W
     _CALL(f_byte_div_byte.adrr);
     AddCallerTo(f_byte_div_byte);
   end;
@@ -1154,8 +1133,7 @@ begin
     SetROBResultExpres_byte(Opt);
     _BANKSEL(H.bank);
     _MOVWF(H.offs);  //p1 -> H
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.offs, toW); //p2 -> W
+    kMOVF(byte2, toW); //p2 -> W
     _CALL(f_byte_div_byte.adrr);
     AddCallerTo(f_byte_div_byte);
   end;
@@ -1348,7 +1326,7 @@ begin
       //Se necesita asegurar que p1, es mayo que cero.
       SetROBResultExpres_bool(Opt, true);  //invierte la lógica
       //p2, ya está en W
-      _SUBLW(value1-1);  //Si p1 > p2: C=0.
+      kSUBLW(value1-1);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     end;
   end;
@@ -1373,7 +1351,7 @@ begin
   stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
     SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
     tmp := GetAuxRegisterByte;  //Se pide registro auxiliar
-    _MOVWF(tmp.offs);    //guarda resultado de expresión
+    kMOVWF(tmp);    //guarda resultado de expresión
     //Ahora es como stVariab_Variab
     kMOVF(byte1, toW);
     kSUBWF(tmp, toW);  //Si p1 > tmp: C=0.
@@ -1388,7 +1366,7 @@ begin
     end else begin
       SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
   //    p1, ya está en W
-      _SUBLW(value2);  //Si p1 > p2: C=0.
+      kSUBLW(value2);  //Si p1 > p2: C=0.
       CopyInvert_C_to_Z; //Pasa C a Z (invirtiendo)
     end;
   end;
@@ -1502,40 +1480,30 @@ begin
     if value2 = 0 then begin
       kMOVF(byte1, toW);  //solo devuelve lo mismo en W
     end else if value2 = 1 then begin
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(byte1, toW);  //devuelve desplazado en W
+      kSHIFTR(byte1, toW);  //devuelve desplazado en W
     end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(byte1, toW);  //desplaza y mueve
+      kSHIFTR(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(aux, toW);  //desplaza y devuelve en W
+      kSHIFTR(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(byte1, toW);  //desplaza y mueve
+      kSHIFTR(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(aux, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(aux, toW);  //desplaza y devuelve en W
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(byte1, toW);  //desplaza y mueve
+      kSHIFTR(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(aux, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(aux, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRRF(aux, toW);  //desplaza y devuelve en W
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
       //Caso general
@@ -1573,46 +1541,36 @@ begin
       //solo devuelve lo mismo en W
     end else if value2 = 1 then begin
       aux := GetAuxRegisterByte;
-      _MOVWF(aux.offs);
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //devuelve desplazado en W
+      kMOVWF(aux);
+      kSHIFTR(aux, toW);  //devuelve desplazado en W
       aux.used := false;
     end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
-      _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kMOVWF(aux);   //copia p1 a "aux"
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
-      _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kMOVWF(aux);   //copia p1 a "aux"
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
-      _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RRF(aux.offs, toW);  //desplaza y devuelve en W
+      kMOVWF(aux);   //copia p1 a "aux"
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toF);  //desplaza
+      kSHIFTR(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _MOVWF(aux.offs);
+      kMOVWF(aux);
       //copia p2 a W
-      _MOVLW(value2);
+      kMOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, true);
       kMOVF(aux, toW);  //deja en W
@@ -1650,40 +1608,30 @@ begin
     if value2 = 0 then begin
       kMOVF(byte1, toW);  //solo devuelve lo mismo en W
     end else if value2 = 1 then begin
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(byte1, toW);  //devuelve desplazado en W
+      kSHIFTL(byte1, toW);  //devuelve desplazado en W
     end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(byte1, toW);  //desplaza y mueve
+      kSHIFTL(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(aux, toW);  //desplaza y devuelve en W
+      kSHIFTL(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(byte1, toW);  //desplaza y mueve
+      kSHIFTL(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(aux, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(aux, toW);  //desplaza y devuelve en W
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(byte1, toW);  //desplaza y mueve
+      kSHIFTL(byte1, toW);  //desplaza y mueve
       kMOVWF(aux);
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(aux, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(aux, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      kRLF(aux, toW);  //desplaza y devuelve en W
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
       aux := GetAuxRegisterByte;
@@ -1691,7 +1639,7 @@ begin
       kMOVF(byte1, toW);
       kMOVWF(aux);
       //copia p2 a W
-      _MOVLW(value2);
+      kMOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, false);
       kMOVF(aux, toW);  //deja en W
@@ -1720,46 +1668,36 @@ begin
       //solo devuelve lo mismo en W
     end else if value2 = 1 then begin
       aux := GetAuxRegisterByte;
-      _MOVWF(aux.offs);
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toW);  //devuelve desplazado en W
+      kMOVWF(aux);
+      kSHIFTL(aux, toW);  //devuelve desplazado en W
       aux.used := false;
     end else if value2 = 2 then begin
       aux := GetAuxRegisterByte;
-      _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toW);  //desplaza y devuelve en W
+      kMOVWF(aux);   //copia p1 a "aux"
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 3 then begin
       aux := GetAuxRegisterByte;
-      _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toW);  //desplaza y devuelve en W
+      kMOVWF(aux);   //copia p1 a "aux"
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else if value2 = 4 then begin
       aux := GetAuxRegisterByte;
-      _MOVWF(aux.offs);   //copia p1 a "aux"
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toF);  //desplaza
-      _BCF(_STATUS, _C);   //limpia bandera porque se hace rotación
-      _RLF(aux.offs, toW);  //desplaza y devuelve en W
+      kMOVWF(aux);   //copia p1 a "aux"
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toF);  //desplaza
+      kSHIFTL(aux, toW);  //desplaza y devuelve en W
       aux.used := false;
     end else begin
       aux := GetAuxRegisterByte;
       //copia p1 a "aux"
-      _MOVWF(aux.offs);
+      kMOVWF(aux);
       //copia p2 a W
-      _MOVLW(value2);
+      kMOVLW(value2);
       //lazo de rotación
       CodifShift_by_W(aux, false);
       kMOVF(aux, toW);  //deja en W
@@ -1775,301 +1713,6 @@ begin
   end;
 end;
 //////////// Operaciones con Word
-procedure TGenCod.ROB_word_asig_word(Opt: TxpOperation; SetRes: boolean);
-var
-  aux: TPicRegister;
-begin
-  //Simplifcamos el caso en que p2, sea de tipo p2^
-  if not ChangePointerToExpres(p2^) then exit;
-  //Realiza la asignación
-  if p1^.Sto = stVariab then begin
-    case p2^.Sto of
-    stConst : begin
-      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-      _BANKSEL(p1^.bank);
-      if p2^.LByte = 0 then begin  //optimiza
-        _CLRF(p1^.Loffs);
-      end else begin
-        _MOVLW(p2^.LByte);
-        _MOVWF(p1^.Loffs);
-      end;
-      if p2^.HByte = 0 then begin  //optimiza
-        _CLRF(p1^.Hoffs);
-      end else begin
-        _MOVLW(p2^.HByte);
-        _MOVWF(p1^.Hoffs);
-      end;
-    end;
-    stVariab: begin
-      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-      _BANKSEL(p2^.bank);
-      _MOVF(p2^.Loffs, toW);
-      _BANKSEL(p1^.bank);
-      _MOVWF(p1^.Loffs);
-      _BANKSEL(p2^.bank);
-      _MOVF(p2^.Hoffs, toW);
-      _BANKSEL(p1^.bank);
-      _MOVWF(p1^.Hoffs);
-    end;
-    stExpres: begin   //se asume que se tiene en (H,w)
-      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-      _BANKSEL(p1^.bank);
-      _MOVWF(p1^.Loffs);
-      _BANKSEL(H.bank);
-      _MOVF(H.offs, toW);
-      _BANKSEL(p1^.bank);
-      _MOVWF(p1^.Hoffs);
-    end;
-    else
-      GenError(MSG_UNSUPPORTED); exit;
-    end;
-  end else if p1^.Sto = stVarRefVar then begin
-    //Asignación a una variable
-    SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
-    case p2^.Sto of
-    stConst : begin
-      //Caso especial de asignación a puntero derefrrenciado: variable^
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona byte bajo
-      //Asignación normal
-      if p2^.LByte=0 then begin
-        //caso especial
-        _CLRF(0);
-      end else begin
-        _MOVLW(p2^.LByte);
-        _MOVWF(0);
-      end;
-      _INCF(FSR.offs, toF);  //direcciona byte alto
-      if p2^.HByte=0 then begin
-        //caso especial
-        _CLRF(0);
-      end else begin
-        _MOVLW(p2^.HByte);
-        _MOVWF(0);
-      end;
-    end;
-    stVariab: begin
-      //Caso especial de asignación a puntero dereferenciado: variable^
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona byte bajo
-      //Asignación normal
-      _BANKSEL(p2^.bank);  //verifica banco fuente
-      _MOVF(p2^.Loffs, toW);
-      _MOVWF(0);
-      _INCF(FSR.offs, toF);  //direcciona byte alto
-      _MOVF(p2^.Hoffs, toW);
-      _MOVWF(0);
-    end;
-    stExpres: begin  //ya está en H,w
-      //Caso especial de asignación a puntero dereferenciado: variable^
-      aux := GetAuxRegisterByte;
-      _BANKSEL(aux.bank);
-      _MOVWF(aux.offs);   //Salva W (p2.L)
-      //Apunta con p1
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVF(p1^.offs, toW);
-      _MOVWF(FSR.offs);  //direcciona a byte bajo
-      //Asignación normal
-      _BANKSEL(aux.bank);
-      _MOVF(aux.offs, toW);   //recupero p2.L
-      _MOVWF(0);          //escribe
-      _BANKSEL(H.bank);
-      _MOVF(H.offs, toW);   //recupero p2.H
-      _INCF(FSR.offs, toF);   //apunta a byte alto
-      _MOVWF(0);          //escribe
-      aux.used := false;
-    end;
-    else
-      GenError(MSG_UNSUPPORTED); exit;
-    end;
-  end else begin
-    GenError('Cannot assign to this Operand.'); exit;
-  end;
-end;
-procedure TGenCod.ROB_word_asig_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p1^.Sto = stVariab then begin
-    case p2^.Sto of
-    stConst : begin
-      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-      if value2 = 0 then begin
-        //caso especial
-        _CLRF(p1^.Loffs);
-        _CLRF(p1^.Hoffs);
-      end else begin;
-        _CLRF(p1^.Hoffs);
-        _MOVLW(value2);
-        _MOVWF(p1^.Loffs);
-      end;
-    end;
-    stVariab: begin
-      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-      _CLRF(p1^.Hoffs);
-      _MOVF(p2^.Loffs, toW);
-      _MOVWF(p1^.Loffs);
-    end;
-    stExpres: begin   //se asume que está en w
-      SetROBResultExpres_word(Opt);  //Realmente, el resultado no es importante
-      _CLRF(p1^.Hoffs);
-      _MOVWF(p1^.offs);
-    end;
-    else
-      GenError(MSG_UNSUPPORTED); exit;
-    end;
-  end else begin
-    GenError('Cannot assign to this Operand.'); exit;
-  end;
-end;
-procedure TGenCod.ROB_word_equal_word(Opt: TxpOperation; SetRes: boolean);
-var
-  tmp: TPicRegister;
-  sale: integer;
-begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
-    GenError('Too complex pointer expression.'); exit;
-  end;
-  if not ChangePointerToExpres(p1^) then exit;
-  if not ChangePointerToExpres(p2^) then exit;
-  case stoOperation of
-  stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_bool(value1 = value2);
-  end;
-  stConst_Variab: begin
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    ////////// Compara byte alto
-    if p1^.HByte = 0 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _MOVF(p2^.Hoffs, toW); //p2-p1
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale);  //no son iguales
-    end else if p1^.HByte = 1 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _DECF(p2^.Hoffs, toW); //p2-p1
-      _BTFSS(Z.offs, Z.bit);
-      {De no ser porque se tiene que devolver siempre, el valor de Z,
-      las 2 instrucciones anteriores, se podrían reemplazar con un i_DECFSZ,
-      pero i_DECFSZ, no actualiza Z}
-      _GOTO_PEND(sale);  //no son iguales
-    end else if p1^.HByte = 255 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _INCF(p2^.Hoffs, toW); //p2-p1
-      _BTFSS(Z.offs, Z.bit);
-      {De no ser porque se tiene que devolver siempre, el valor de Z,
-      las 2 instrucciones anteriores, se podrían reemplazar con un i_DECFSZ,
-      pero i_DECFSZ, no actualiza Z}
-      _GOTO_PEND(sale);  //no son iguales
-    end else begin  //caso general
-      _MOVLW(p1^.HByte);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.Hoffs, toW); //p2-p1
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale);  //no son iguales
-    end;
-    //////////  Son iguales, comparar el byte bajo
-    if p1^.LByte = 0 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _MOVF(p2^.Loffs,toW);	//p2-p1
-  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-    end else if p1^.LByte = 1 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _DECF(p2^.Loffs,toW);	//p2-p1
-  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-    end else if p1^.LByte = 255 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _INCF(p2^.Loffs,toW);	//p2-p1
-  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-    end else begin
-      _MOVLW(p1^.LByte);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.Loffs,toW);	//p2-p1
-  _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-    end;
-  end;
-  stConst_Expres: begin  //la expresión p2 se evaluó p2 esta en W
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    tmp := GetAuxRegisterByte;
-    if HayError then exit;
-    _BANKSEL(tmp.bank);
-    _MOVWF(tmp.offs);   //salva byte bajo de Expresión
-    //Compara byte alto
-    _MOVLW(p1^.HByte);
-    _BANKSEL(H.bank);  //verifica banco destino
-    _SUBWF(H.offs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale);  //no son iguales
-    //Son iguales, comparar el byte bajo
-    _MOVLW(p1^.LByte);
-    _BANKSEL(tmp.bank);  //verifica banco destino
-    _SUBWF(tmp.offs,toW);	//p2-p1
-_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-    tmp.used := false;
-  end;
-  stVariab_Const: begin
-    ExchangeP1_P2;  //Convierte a stConst_Variab
-    ROB_word_equal_word(Opt, SetRes);
-  end;
-  stVariab_Variab:begin
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //Compara byte alto
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Hoffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Hoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale);  //no son iguales
-    //Son iguales, comparar el byte bajo
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Loffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Loffs,toW);	//p2-p1
-_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-  end;
-  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    tmp := GetAuxRegisterByte;
-    _BANKSEL(tmp.bank);
-    _MOVWF(tmp.offs);   //salva byte bajo de Expresión
-    //Compara byte alto
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Hoffs, toW);
-    _BANKSEL(H.bank);  //verifica banco destino
-    _SUBWF(H.offs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale);  //no son iguales
-    //Son iguales, comparar el byte bajo
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Loffs, toW);
-    _BANKSEL(tmp.bank);  //verifica banco destino
-    _SUBWF(tmp.offs,toW);	//p2-p1
-    tmp.used := false;
-_LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-  end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    ExchangeP1_P2;  //Convierte a stConst_Expres;
-    ROB_word_equal_word(Opt, SetRes);
-  end;
-  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    ExchangeP1_P2;  //Convierte a stVariab_Expres;
-    ROB_word_equal_word(Opt, SetRes);
-  end;
-  stExpres_Expres:begin
-    //La expresión p1, debe estar salvada y p2 en (H,W)
-    p1^.SetAsVariab(GetVarWordFromStk);
-    //Luego el caso es similar a variable-expresión
-    ROB_word_equal_word(Opt, SetRes);
-    FreeStkRegisterWord;
-  end;
-  else
-    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROB_word_difer_word(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_word_equal_word(Opt, SetRes);
-  res.Invert;
-end;
 procedure TGenCod.ROB_word_great_word(Opt: TxpOperation; SetRes: boolean);
   procedure codVariab_Const;
   {Codifica el caso variable (p1) - constante (p2)}
@@ -2098,17 +1741,13 @@ procedure TGenCod.ROB_word_great_word(Opt: TxpOperation; SetRes: boolean);
     sale: integer;
   begin
     //Compara byte alto
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Hoffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Hoffs, toW); //p2-p1
+    kMOVF(byte1H, toW);
+    kSUBWF(byte2H, toW); //p2-p1
     _BTFSS(Z.offs, Z.bit);
     _GOTO_PEND(sale);  //no son iguales
     //Son iguales, comparar el byte bajo
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Loffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Loffs,toW);	//p2-p1
+    kMOVF(byte1L, toW);
+    kSUBWF(byte2L, toW);	//p2-p1
 _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     CopyInvert_C_to_Z;  //Pasa a Z
   end;
@@ -2132,15 +1771,13 @@ begin
     end else begin
       SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
       //Compara byte alto
-      _MOVLW(p1^.HByte);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.Hoffs, toW); //p2-p1
+      kMOVLW(value1H);
+      kSUBWF(byte2H, toW); //p2-p1
       _BTFSS(Z.offs, Z.bit);
       _GOTO_PEND(sale);  //no son iguales
       //Son iguales, comparar el byte bajo
-      _MOVLW(p1^.LByte);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.Loffs,toW);	//p2-p1
+      kMOVLW(value1L);
+      kSUBWF(byte2L, toW);	//p2-p1
   _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
       CopyInvert_C_to_Z;  //Pasa a Z
     end;
@@ -2151,13 +1788,13 @@ begin
     _BANKSEL(tmp.bank);
     _MOVWF(tmp.offs);   //salva byte bajo de Expresión
     //Compara byte alto
-    _MOVLW(p1^.HByte);
+    kMOVLW(value1H);
     _BANKSEL(H.bank);  //verifica banco destino
     _SUBWF(H.offs, toW); //p2-p1
     _BTFSS(Z.offs, Z.bit);
     _GOTO_PEND(sale);  //no son iguales
     //Son iguales, comparar el byte bajo
-    _MOVLW(p1^.LByte);
+    kMOVLW(value1L);
     _BANKSEL(tmp.bank);  //verifica banco destino
     _SUBWF(tmp.offs,toW);	//p2-p1
 _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
@@ -2178,15 +1815,13 @@ _LABEL(sale); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
     _BANKSEL(tmp.bank);
     _MOVWF(tmp.offs);   //salva byte bajo de Expresión
     //Compara byte alto
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Hoffs, toW);
+    kMOVF(byte1H, toW);
     _BANKSEL(H.bank);  //verifica banco destino
     _SUBWF(H.offs, toW); //p2-p1
     _BTFSS(Z.offs, Z.bit);
     _GOTO_PEND(sale);  //no son iguales
     //Son iguales, comparar el byte bajo
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Loffs, toW);
+    kMOVF(byte1L, toW);
     _BANKSEL(tmp.bank);  //verifica banco destino
     _SUBWF(tmp.offs,toW);	//p2-p1
     tmp.used := false;
@@ -2245,23 +1880,23 @@ begin
   stConst_Variab: begin
     SetROBResultExpres_word(Opt);
 {     aux := GetUnusedByteRegister;  //Pide un registro libre
-    _movlw(p1^.LByte);      //Carga menos peso del dato 1
-    _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2
+    kMOVLW(value1L);      //Carga menos peso del dato 1
+    _addwf(byte2L,toW);  //Suma menos peso del dato 2
     _movwf(aux);             //Almacena el resultado
-    _movlw(p1^.HByte);      //Carga más peso del dato 1
+    kMOVLW(value1H);      //Carga más peso del dato 1
     _btfsc(STATUS,_C);    //Hubo acarreo anterior?
     _addlw(1);             //Si, suma 1 al acumulador
-    _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
+    _addwf(byte2H,toW);  //Suma más peso del dato 2
     _movwf(H);             //Guarda el resultado
     _movf(aux,toW);          //deja byte bajo en W
     aux.Used := false;
 }
     //versión más corta que solo usa H, por validar
-    _movlw(p1^.HByte);      //Carga más peso del dato 1
-    _addwf(p2^.Hoffs,toW);  //Suma más peso del dato 2
+    kMOVLW(value1H);      //Carga más peso del dato 1
+    kADDWF(byte2H, toW);  //Suma más peso del dato 2
     _movwf(H.offs);         //Guarda el resultado
-    _movlw(p1^.LByte);      //Carga menos peso del dato 1
-    _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    kMOVLW(value1L);      //Carga menos peso del dato 1
+    kADDWF(byte2L, toW);  //Suma menos peso del dato 2, deja en W
     _btfsc(_STATUS,_C);     //Hubo acarreo anterior?
     _incf(H.offs, toF);
   end;
@@ -2269,9 +1904,9 @@ begin
     SetROBResultExpres_word(Opt);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _movwf(aux.offs);             //guarda byte bajo
-    _movlw(p1^.HByte);      //Carga más peso del dato 1
+    kMOVLW(value1H);      //Carga más peso del dato 1
     _addwf(H.offs,toF);         //Suma y guarda
-    _movlw(p1^.LByte);      //Carga menos peso del dato 1
+    kMOVLW(value1L);      //Carga menos peso del dato 1
     _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
     _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
@@ -2279,21 +1914,21 @@ begin
   end;
   stVariab_Const: begin
     SetROBResultExpres_word(Opt);
-    _MOVLW(p2^.HByte);      //Carga más peso del dato 1
-    _ADDWF(p1^.Hoffs,toW);  //Suma más peso del dato 2
+    kMOVLW(value2H);      //Carga más peso del dato 1
+    kADDWF(byte1H, toW);  //Suma más peso del dato 2
     _MOVWF(H.offs);         //Guarda el resultado
-    _MOVLW(p2^.LByte);      //Carga menos peso del dato 1
-    _ADDWF(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    kMOVLW(value2L);      //Carga menos peso del dato 1
+    kADDWF(byte1L, toW);  //Suma menos peso del dato 2, deja en W
     _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
     _INCF(H.offs, toF);
   end;
   stVariab_Variab:begin
     SetROBResultExpres_word(Opt);
-    _MOVF(p1^.Hoffs, toW);  //Carga mayor peso del dato 1
-    _ADDWF(p2^.Hoffs,toW);  //Suma mayor peso del dato 2
+    kMOVF(byte1H, toW);  //Carga mayor peso del dato 1
+    kADDWF(byte2H, toW);  //Suma mayor peso del dato 2
     _MOVWF(H.offs);         //Guarda mayor peso del resultado
-    _MOVF(p1^.Loffs, toW);  //Carga menos peso del dato 1
-    _ADDWF(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    kMOVF(byte1L, toW);  //Carga menos peso del dato 1
+    kADDWF(byte2L, toW);  //Suma menos peso del dato 2, deja en W
     _BTFSC(_STATUS,_C);     //Hubo acarreo anterior?
     _INCF(H.offs, toF);
   end;
@@ -2302,13 +1937,11 @@ begin
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _BANKSEL(aux.bank);
     _movwf(aux.offs);        //guarda byte bajo
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.Hoffs, toW);   //Carga más peso del dato 1
+    kMOVF(byte1H, toW);   //Carga más peso del dato 1
     _BANKSEL(H.bank);
     _addwf(H.offs,toF);      //Suma y guarda
     //Siguiente byte
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.Loffs, toW);       //Carga menos peso del dato 1
+    kMOVF(byte1L, toW);       //Carga menos peso del dato 1
     _BANKSEL(aux.bank);
     _addwf(aux.offs,toW);    //Suma menos peso del dato 2, deja en W
     _btfsc(_STATUS,_C);      //Hubo acarreo anterior?
@@ -2319,9 +1952,9 @@ begin
     SetROBResultExpres_word(Opt);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _movwf(aux.offs);             //guarda byte bajo
-    _movlw(p2^.HByte);      //Carga más peso del dato 1
+    kMOVLW(value2H);      //Carga más peso del dato 1
     _addwf(H.offs,toF);         //Suma y guarda
-    _movlw(p2^.LByte);      //Carga menos peso del dato 1
+    kMOVLW(value2L);      //Carga menos peso del dato 1
     _addwf(aux.offs,toW);         //Suma menos peso del dato 2, deja en W
     _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
@@ -2331,12 +1964,10 @@ begin
     SetROBResultExpres_word(Opt);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _movwf(aux.offs);      //guarda byte bajo
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.Hoffs, toW);     //Carga más peso del dato 1
+    kMOVF(byte2H, toW);     //Carga más peso del dato 1
     _BANKSEL(H.bank);
     _addwf(H.offs,toF);    //Suma y guarda
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.Loffs, toW);     //Carga menos peso del dato 1
+    kMOVF(byte2L, toW);     //Carga menos peso del dato 1
     _BANKSEL(aux.bank);
     _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);
@@ -2372,12 +2003,11 @@ begin
   stConst_Variab: begin
     SetROBResultExpres_word(Opt);
     //versión más corta que solo usa _H, por validar
-    _movlw(p1^.HByte);      //Carga más peso del dato 1
+    kMOVLW(value1H);      //Carga más peso del dato 1
     _BANKSEL(H.bank);
     _movwf(H.offs);
-    _movlw(p1^.LByte);      //Carga menos peso del dato 1
-    _BANKSEL(p2^.bank);
-    _addwf(p2^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    kMOVLW(value1L);      //Carga menos peso del dato 1
+    kADDWF(byte2L, toW);  //Suma menos peso del dato 2, deja en W
     _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
   end;
@@ -2386,10 +2016,10 @@ begin
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _BANKSEL(aux.bank);
     _movwf(aux.offs);      //guarda byte bajo
-    _movlw(p1^.HByte);     //Carga más peso del dato 1
+    kMOVLW(value1H);     //Carga más peso del dato 1
     _BANKSEL(H.bank);
     _movwf(H.offs);
-    _movlw(p1^.LByte);     //Carga menos peso del dato 1
+    kMOVLW(value1L);     //Carga menos peso del dato 1
     _BANKSEL(aux.bank);
     _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
@@ -2399,27 +2029,22 @@ begin
   end;
   stVariab_Const: begin
     SetROBResultExpres_word(Opt);
-    _BANKSEL(p1^.bank);      //se cambia primero el banco por si acaso
-    _MOVF(p1^.Hoffs, toW); //Carga más peso del dato 1
+    kMOVF(byte1H, toW); //Carga más peso del dato 1
     _BANKSEL(H.bank);      //se cambia primero el banco por si acaso
     _MOVWF(H.offs);        //Guarda el resultado
-    _MOVLW(p2^.LByte);
-    _BANKSEL(p1^.bank);      //se cambia primero el banco por si acaso
-    _ADDWF(p1^.Loffs,toW); //Suma menos peso del dato 2, deja en W
+    kMOVLW(value2L);
+    kADDWF(byte1L, toW); //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
     _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
     _INCF(H.offs, toF);
   end;
   stVariab_Variab:begin
     SetROBResultExpres_word(Opt);
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.Hoffs, toW);     //Carga más peso del dato 1
+    kMOVF(byte1H, toW);     //Carga más peso del dato 1
     _BANKSEL(H.bank);
     _MOVWF(H.offs);
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.Loffs, toW);     //Carga menos peso del dato 1
-    _BANKSEL(p2^.bank);
-    _ADDWF(p2^.Loffs,toW); //Suma menos peso del dato 2, deja en W
+    kMOVF(byte1L, toW);     //Carga menos peso del dato 1
+    kADDWF(byte2L, toW); //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
     _BTFSC(_STATUS,_C);    //Hubo acarreo anterior?
     _INCF(H.offs, toF);
@@ -2429,14 +2054,12 @@ begin
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _BANKSEL(aux.bank);
     _movwf(aux.offs);        //guarda byte de expresión
-    _BANKSEL(p1^.bank);
-    _movf(p1^.Hoffs, toW);  //Carga Hbyte del dato 1
+    kMOVF(byte1H, toW);  //Carga Hbyte del dato 1
     _BANKSEL(H.bank);
     _movwf(H.offs);        //Lo deja para devolver en H
     _BANKSEL(aux.bank);
     _MOVF(aux.offs,toW);   //recupera byte de expresión
-    _BANKSEL(p1^.bank);
-    _addwf(p1^.Loffs,toW);  //Suma menos peso del dato 2, deja en W
+    kADDWF(byte1L, toW);  //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
     _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
@@ -2451,8 +2074,7 @@ begin
   end;
   stExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
     SetROBResultExpres_word(Opt);
-    _BANKSEL(p2^.bank);
-    _addwf(p2^.Loffs,toW);         //Suma menos peso del dato 2, deja en W
+    kADDWF(byte2L, toW);         //Suma menos peso del dato 2, deja en W
     _BANKSEL(H.bank);      //se cambia primero el banco, por si acaso.
     _btfsc(_STATUS,_C);    //Hubo acarreo anterior?
     _incf(H.offs, toF);
@@ -2518,21 +2140,21 @@ begin
   end;
   stVariab_Const: begin
     SetROBResultExpres_word(Opt);
-    _movlw(p2^.HByte);
-    _subwf(p1^.Hoffs,toW);
+    kMOVLW(value2H);
+    kSUBWF(byte1H,toW);
     _movwf(H.offs);
-    _movlw(p2^.LByte);
-    _subwf(p1^.Loffs,toW);
+    kMOVLW(value2L);
+    kSUBWF(byte1L, toW);
     _btfss(_STATUS, _C);
     _decf(H.offs,toF);
   end;
   stVariab_Variab:begin  //p1 - p2
     SetROBResultExpres_word(Opt);
-    _movf (p2^.Hoffs,toW);
-    _subwf(p1^.Hoffs,toW);
+    kMOVF (byte2H, toW);
+    kSUBWF(byte1H,toW);
     _movwf(H.offs);
-    _movf (p2^.Loffs,toW);
-    _subwf(p1^.Loffs,toW);
+    kMOVF (byte2L, toW);
+    kSUBWF(byte1L,toW);
     _btfss(_STATUS, _C);
     _decf(H.offs,toF);
   end;
@@ -2541,10 +2163,10 @@ begin
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);
     _movf (H.offs,toW);
-    _subwf(p1^.Hoffs,toW);
+    kSUBWF(byte1H,toW);
     _movwf(H.offs);
     _movf (aux.offs,toW);
-    _subwf(p1^.Loffs,toW);
+    kSUBWF(byte1L, toW);
     _btfss(_STATUS, _C);
     _decf(H.offs,toF);
     aux.used := false;
@@ -2553,9 +2175,9 @@ begin
     SetROBResultExpres_word(Opt);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);
-    _movlw(p2^.HByte);
+    kMOVLW(value2H);
     _subwf(H.offs, toF);
-    _movlw(p2^.LByte);
+    kMOVLW(value2L);
     _subwf(aux.offs,toW);
     _btfss(_STATUS, _C);
     _decf(H.offs,toF);
@@ -2565,9 +2187,9 @@ begin
     SetROBResultExpres_word(Opt);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     _MOVWF(aux.offs);
-    _movf(p2^.Hoffs, toW);
+    kMOVF(byte2H, toW);
     _subwf(H.offs, toF);
-    _movf(p2^.Loffs, toW);
+    kMOVF(byte2L, toW);
     _subwf(aux.offs,toW);
     _btfss(_STATUS, _C);
     _decf(H.offs,toF);
@@ -2633,766 +2255,8 @@ MUL16LOOP := _PC;
    SYSTMP02.used := false;
    EndCodeSub;  //termina codificación
 end;
-procedure TGenCod.ROB_word_mul_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
-     GenError('Too complex pointer expression.'); exit;
-   end;
-   if not ChangePointerToExpres(p1^) then exit;
-   if not ChangePointerToExpres(p2^) then exit;
-   case stoOperation of
-   stConst_Const:begin  //producto de dos constantes. Caso especial
-     if value1*value2 < $100 then begin
-       SetROBResultConst_byte((value1*value2) and $FF);  //puede generar error
-     end else if value1*value2 < $10000 then begin
-       SetROBResultConst_word((value1*value2) and $FFFF);  //puede generar error
-     end else begin
-       SetROBResultConst_dword((value1*value2) and $FFFFFFFF);  //puede generar error
-     end;
-     exit;  //sale aquí, porque es un caso particular
-   end;
- //  stConst_Variab: begin
- //    if value1=0 then begin  //caso especial
- //      SetROBResultConst_byte(0);
- //      exit;
- //    end else if value1=1 then begin  //caso especial
- //      SetROBResultVariab(p2^.rVar);
- //      exit;
- //    end else if value1=2 then begin
- //      SetROBResultExpres_word(Opt);
- //      _BANKSEL(H.bank);
- //      _CLRF(H.offs);
- //      _BCF(STATUS, _C);
- //      _BANKSEL(P2^.bank);
- //      _RLF(p2^.offs, toW);
- //      _BANKSEL(H.bank);
- //      _RLF(H.offs, toF);
- //      exit;
- //    end;
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(p2^.bank);
- //    _MOVF(p2^.offs, toW);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);
- //    _MOVLW(value1);
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
- //    SetROBResultExpres_word(opt);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);
- //    _MOVLW(value1);
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stVariab_Const: begin
- //    SetROBResultExpres_word(opt);
- //    _BANKSEL(p1^.bank);
- //    _MOVF(p1^.offs, toW);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);
- //    _MOVLW(value2);
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stVariab_Variab:begin
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(p1^.bank);
- //    _MOVF(p1^.offs, toW);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);
- //    _BANKSEL(p2^.bank);
- //    _MOVF(p2^.offs, toW);
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);  //p2 -> E
- //    _BANKSEL(p1^.bank);
- //    _MOVF(p1^.offs, toW); //p1 -> W
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);  //p1 -> E
- //    _MOVLW(value2); //p2 -> W
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);  //p1 -> E
- //    _BANKSEL(p2^.bank);
- //    _MOVF(p2^.offs, toW); //p2 -> W
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stExpres_Expres:begin
- //    SetROBResultExpres_word(Opt);
- //    //la expresión p1 debe estar salvada y p2 en el acumulador
- //    rVar := GetVarByteFromStk;
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);  //p2 -> E
- //    _BANKSEL(rVar.adrByte0.bank);
- //    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
- //    {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
- //    variable) temporal, si se tuviera una rutina de multiplicación que compilara a
- //    partir de la direccion de una variable (en este caso de la pila, que se puede
- //    modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
-   else
-     genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-   end;
-end;
-procedure TGenCod.ROB_word_mul_word(Opt: TxpOperation; SetRes: boolean);
-begin
-   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
-     GenError('Too complex pointer expression.'); exit;
-   end;
-   if not ChangePointerToExpres(p1^) then exit;
-   if not ChangePointerToExpres(p2^) then exit;
-   case stoOperation of
-   stConst_Const:begin  //producto de dos constantes. Caso especial
-     if value1*value2 < $100 then begin
-       SetROBResultConst_byte((value1*value2) and $FF);  //puede generar error
-     end else if value1*value2 < $10000 then begin
-       SetROBResultConst_word((value1*value2) and $FFFF);  //puede generar error
-     end else begin
-       SetROBResultConst_dword((value1*value2) and $FFFFFFFF);  //puede generar error
-     end;
-     exit;  //sale aquí, porque es un caso particular
-   end;
- //  stConst_Variab: begin
- //    if value1=0 then begin  //caso especial
- //      SetROBResultConst_byte(0);
- //      exit;
- //    end else if value1=1 then begin  //caso especial
- //      SetROBResultVariab(p2^.rVar);
- //      exit;
- //    end else if value1=2 then begin
- //      SetROBResultExpres_word(Opt);
- //      _BANKSEL(H.bank);
- //      _CLRF(H.offs);
- //      _BCF(STATUS, _C);
- //      _BANKSEL(P2^.bank);
- //      _RLF(p2^.offs, toW);
- //      _BANKSEL(H.bank);
- //      _RLF(H.offs, toF);
- //      exit;
- //    end;
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(p2^.bank);
- //    _MOVF(p2^.offs, toW);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);
- //    _MOVLW(value1);
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
- //    SetROBResultExpres_word(opt);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);
- //    _MOVLW(value1);
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stVariab_Const: begin
- //    SetROBResultExpres_word(opt);
- //    _BANKSEL(p1^.bank);
- //    _MOVF(p1^.offs, toW);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);
- //    _MOVLW(value2);
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stVariab_Variab:begin
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(p1^.bank);
- //    _MOVF(p1^.offs, toW);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);
- //    _BANKSEL(p2^.bank);
- //    _MOVF(p2^.offs, toW);
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);  //p2 -> E
- //    _BANKSEL(p1^.bank);
- //    _MOVF(p1^.offs, toW); //p1 -> W
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);  //p1 -> E
- //    _MOVLW(value2); //p2 -> W
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
- //    SetROBResultExpres_word(Opt);
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);  //p1 -> E
- //    _BANKSEL(p2^.bank);
- //    _MOVF(p2^.offs, toW); //p2 -> W
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
- //  stExpres_Expres:begin
- //    SetROBResultExpres_word(Opt);
- //    //la expresión p1 debe estar salvada y p2 en el acumulador
- //    rVar := GetVarByteFromStk;
- //    _BANKSEL(E.bank);
- //    _MOVWF(E.offs);  //p2 -> E
- //    _BANKSEL(rVar.adrByte0.bank);
- //    _MOVF(rVar.adrByte0.offs, toW); //p1 -> W
- //    _CALL(f_byte_mul_byte_16.adrr);
- //    FreeStkRegisterByte;   //libera pila porque se usará el dato ahí contenido
- //    {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
- //    variable) temporal, si se tuviera una rutina de multiplicación que compilara a
- //    partir de la direccion de una variable (en este caso de la pila, que se puede
- //    modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
- //    AddCallerTo(f_byte_mul_byte_16);
- //  end;
-   else
-     genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-   end;
-end;
-procedure TGenCod.ROB_word_umulword_word(Opt: TxpOperation; SetRes: boolean);
-begin
-  case stoOperation of
-  stConst_Const:begin  //producto de dos constantes. Caso especial
-    SetROBResultConst_word((value1*value2) and $FFFF);  //puede generar error
-    exit;  //sale aquí, porque es un caso particular
-  end;
-//  stConst_Variab: begin
-//    SetROBResultExpres_word(Opt);
-//    _BANKSEL(p2^.bank);
-//    _MOVF(p2^.offs, toW);
-//    _BANKSEL(H.bank);
-//    _MOVWF(H.offs);
-//    _MOVLW(value1);
-//    _CALL(f_byteXbyte_byte.adrr);
-//    if FirstPass then f_byteXbyte_byte.AddCaller;
-//  end;
-//  stConst_Expres: begin  //la expresión p2 se evaluó y esta en W
-//    _BANKSEL(H.bank);
-//    _MOVWF(H.offs);
-//    _MOVLW(value1);
-//    _CALL(f_byteXbyte_byte.adrr);
-//    if FirstPass then f_byteXbyte_byte.AddCaller;
-//  end;
-//  stVariab_Const: begin
-//    SetROBResultExpres_byte(Opt);
-//    _BANKSEL(p1^.bank);
-//    _MOVF(p1^.offs, toW);
-//    _BANKSEL(H.bank);
-//    _MOVWF(H.offs);
-//    _MOVLW(value2);
-//    _CALL(f_byteXbyte_byte.adrr);
-//    if FirstPass then f_byteXbyte_byte.AddCaller;
-//  end;
-//  stVariab_Variab:begin
-//    SetROBResultExpres_byte(Opt);
-//    _BANKSEL(p1^.bank);
-//    _MOVF(p1^.offs, toW);
-//    _BANKSEL(H.bank);
-//    _MOVWF(H.offs);
-//    _BANKSEL(p2^.bank);
-//    _MOVF(p2^.offs, toW);
-//    _CALL(f_byteXbyte_byte.adrr);
-//    if FirstPass then f_byteXbyte_byte.AddCaller;
-//  end;
-//  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-//    _BANKSEL(H.bank);
-//    _MOVWF(H.offs);  //p2 -> H
-//    _BANKSEL(p1^.bank);
-//    _MOVF(p1^.offs, toW); //p1 -> W
-//    _CALL(f_byteXbyte_byte.adrr);
-//    if FirstPass then f_byteXbyte_byte.AddCaller;
-//  end;
-//  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-//    _MOVWF(H.offs);  //p1 -> H
-//    _MOVLW(value2); //p2 -> W
-//    _CALL(f_byteXbyte_byte.adrr);
-//    if FirstPass then f_byteXbyte_byte.AddCaller;
-//  end;
-//  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-//    _BANKSEL(H.bank);
-//    _MOVWF(H.offs);  //p1 -> H
-//    _BANKSEL(p2^.bank);
-//    _MOVF(p2^.offs, toW); //p2 -> W
-//    _CALL(f_byteXbyte_byte.adrr);
-//    if FirstPass then f_byteXbyte_byte.AddCaller;
-//  end;
-//  stExpres_Expres:begin
-//    SetROBResultExpres_byte(Opt);
-//    //la expresión p1 debe estar salvada y p2 en el acumulador
-//    FreeStkRegisterByte(r);   //libera pila porque se usará el dato ahí contenido
-//    _BANKSEL(H.bank);
-//    _MOVWF(H.offs);  //p2 -> H
-//    _BANKSEL(r.bank);
-//    _MOVF(r.offs, toW); //p1 -> W
-//    _CALL(f_byteXbyte_byte.adrr);
-//    {Se podría ahorrar el paso de mover la variable de la pila a W (y luego a una
-//    variable) temporal, si se tuviera una rutina de multiplicación que compilara a
-//    partir de la direccion de una variable (en este caso de la pila, que se puede
-//    modificar), pero es un caso puntual, y podría no reutilizar el código apropiadamente.}
-//    if FirstPass then f_byteXbyte_byte.AddCaller;
-//  end;
-  else
-    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROB_word_and_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  case stoOperation of
-  stConst_Const: begin
-    //Optimiza
-    SetROBResultConst_byte(value1 and value2);
-  end;
-  stConst_Variab: begin
-    SetROBResultExpres_byte(Opt);
-    _movlw(p1^.LByte);      //Carga menos peso del dato 1
-    _BANKSEL(p2^.bank);
-    _andwf(p2^.Loffs,toW);  //deja en W
-  end;
-  stConst_Expres: begin  //la expresión p2 se evaluó y esta en (W)
-    SetROBResultExpres_byte(Opt);
-    _andlw(p1^.LByte);      //Deja en W
-  end;
-  stVariab_Const: begin
-    SetROBResultExpres_byte(Opt);
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.Loffs, toW);
-    _ANDLW(p2^.LByte);
-  end;
-  stVariab_Variab:begin
-    SetROBResultExpres_byte(Opt);
-    _BANKSEL(p1^.bank);
-    _MOVF(p1^.Loffs, toW);
-    _BANKSEL(p2^.bank);
-    _ANDWF(p2^.Loffs, toW);
-  end;
-  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en (_H,W)
-    SetROBResultExpres_byte(Opt);
-    _BANKSEL(p1^.bank);
-    _ANDWF(p1^.Loffs, toW);
-  end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en (H,W)
-    SetROBResultExpres_byte(Opt);
-    _ANDLW(p2^.LByte);
-  end;
-  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en (H,W)
-    SetROBResultExpres_byte(Opt);
-    _BANKSEL(p2^.bank);
-    _ANDWF(p2^.Loffs, toW);
-  end;
-  stExpres_Expres:begin
-    SetROBResultExpres_byte(Opt);
-    //p1 está salvado en pila y p2 en (W)
-    p1^.SetAsVariab(GetVarWordFromStk);  //Convierte a variable
-    //Luego el caso es similar a stVariab_Expres
-    _BANKSEL(p1^.bank);
-    _ANDWF(p1^.Loffs, toW);
-    FreeStkRegisterWord;   //libera pila
-  end;
-  else
-    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROU_addr_word(Opr: TxpOperator; SetRes: boolean);
-{Devuelve la dirección de una variable.}
-begin
-  case p1^.Sto of
-  stConst : begin
-    genError('Cannot obtain address of constant.');
-  end;
-  stVariab: begin
-    //Es una variable normal
-    //La dirección de una variable es constante
-    SetResultConst(typByte);
-    //No se usa p1^.offs, porque solo retorna 7 bits;
-    res.valInt := p1^.rVar.addr and $ff;
-  end;
-  stExpres: begin  //ya está en STATUS.Z
-    genError('Cannot obtain address of an expression.');
-  end;
-  else
-    genError('Cannot obtain address of this operand.');
-  end;
-end;
 
 //////////// Operaciones con Dword
-procedure TGenCod.ROB_dword_asig_byte(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p1^.Sto <> stVariab then begin  //validación
-    GenError('Only variables can be assigned.'); exit;
-  end;
-  case p2^.Sto of
-  stConst : begin
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    if value2 = 0 then begin
-      //caso especial
-      _CLRF(p1^.Loffs);
-      _CLRF(p1^.Hoffs);
-      _CLRF(p1^.Eoffs);
-      _CLRF(p1^.Uoffs);
-    end else begin;
-      _CLRF(p1^.Uoffs);
-      _CLRF(p1^.Eoffs);
-      _CLRF(p1^.Hoffs);
-      _MOVLW(value2);
-      _MOVWF(p1^.Loffs);
-    end;
-  end;
-  stVariab: begin
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    _CLRF(p1^.Uoffs);
-    _CLRF(p1^.Eoffs);
-    _CLRF(p1^.Hoffs);
-    _MOVF(p2^.Loffs, toW);
-    _MOVWF(p1^.Loffs);
-  end;
-  stExpres: begin   //se asume que está en w
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    _CLRF(p1^.Uoffs);
-    _CLRF(p1^.Eoffs);
-    _CLRF(p1^.Hoffs);
-    _MOVWF(p1^.offs);
-  end;
-  else
-    GenError(MSG_UNSUPPORTED); exit;
-  end;
-end;
-procedure TGenCod.ROB_dword_asig_word(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p1^.Sto <> stVariab then begin  //validación
-    GenError('Only variables can be assigned.'); exit;
-  end;
-  case p2^.Sto of
-  stConst : begin
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    if value2 = 0 then begin
-      //caso especial
-      _CLRF(p1^.Uoffs);
-      _CLRF(p1^.Eoffs);
-      _CLRF(p1^.Hoffs);
-      _CLRF(p1^.Loffs);
-    end else begin;
-      _CLRF(p1^.Uoffs);
-      _CLRF(p1^.Eoffs);
-      _MOVLW(p2^.HByte);
-      _MOVWF(p1^.Hoffs);
-      _MOVLW(p2^.LByte);
-      _MOVWF(p1^.Loffs);
-    end;
-  end;
-  stVariab: begin
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    _CLRF(p1^.Uoffs);
-    _CLRF(p1^.Eoffs);
-    _MOVF(p2^.Hoffs, toW);
-    _MOVWF(p1^.Hoffs);
-    _MOVF(p2^.Loffs, toW);
-    _MOVWF(p1^.Loffs);
-  end;
-  stExpres: begin   //se asume que está en w
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    _CLRF(p1^.Uoffs);
-    _CLRF(p1^.Eoffs);
-    _MOVWF(p1^.Loffs);
-    _MOVF(H.offs, toW);
-    _MOVWF(p1^.Hoffs);
-  end;
-  else
-    GenError(MSG_UNSUPPORTED); exit;
-  end;
-end;
-procedure TGenCod.ROB_dword_asig_dword(Opt: TxpOperation; SetRes: boolean);
-begin
-  if p1^.Sto <> stVariab then begin  //validación
-    GenError('Only variables can be assigned.'); exit;
-  end;
-  case p2^.Sto of
-  stConst : begin
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    if value2 = 0 then begin
-      //caso especial
-      _BANKSEL(p1^.bank);
-      _CLRF(p1^.Uoffs);
-      _CLRF(p1^.Eoffs);
-      _CLRF(p1^.Hoffs);
-      _CLRF(p1^.Loffs);
-    end else begin;
-      _BANKSEL(p1^.bank);
-      _MOVLW(p2^.UByte);
-      _MOVWF(p1^.Uoffs);
-      _MOVLW(p2^.EByte);
-      _MOVWF(p1^.Eoffs);
-      _MOVLW(p2^.HByte);
-      _MOVWF(p1^.Hoffs);
-      _MOVLW(p2^.LByte);
-      _MOVWF(p1^.Loffs);
-    end;
-  end;
-  stVariab: begin
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.Uoffs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Uoffs);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.Eoffs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Eoffs);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.Hoffs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Hoffs);
-    _BANKSEL(p2^.bank);
-    _MOVF(p2^.Loffs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Loffs);
-  end;
-  stExpres: begin   //se asume que está en w
-    SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    _MOVWF(p1^.Loffs);
-    _BANKSEL(H.bank);
-    _MOVF(H.offs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Hoffs);
-    _BANKSEL(E.bank);
-    _MOVF(E.offs, toW);
-    _BANKSEL(p1^.bank);
-    _MOVWF(p1^.Eoffs);
-    _BANKSEL(U.bank);
-    _MOVF(U.offs, toW);
-    _MOVWF(p1^.Uoffs);
-  end;
-  else
-    GenError(MSG_UNSUPPORTED); exit;
-  end;
-end;
-procedure TGenCod.ROB_dword_equal_dword(Opt: TxpOperation; SetRes: boolean);
-var
-  sale1, sale2, sale3: integer;
-begin
-  case stoOperation of
-  stConst_Const: begin  //compara constantes. Caso especial
-    SetROBResultConst_bool(value1 = value2);
-  end;
-  stConst_Variab: begin
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //Compara byte U
-    if p1^.UByte = 0 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _MOVF(p2^.Uoffs, toW); //p2=0?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale1);  //no son iguales
-    end else if p1^.UByte = 1 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _DECF(p2^.Uoffs, toW); //p2=1?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale1);  //no son iguales
-    end else if p1^.UByte = 255 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _INCF(p2^.Uoffs, toW); //p2=255?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale1);  //no son iguales
-    end else begin  //caso general
-      _MOVLW(p1^.UByte);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.Uoffs, toW); //p2-p1
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale1);  //no son iguales
-    end;
-    //Compara byte E
-    if p1^.EByte = 0 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _MOVF(p2^.Eoffs, toW); //p2=0?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale2);  //no son iguales
-    end else if p1^.EByte = 1 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _DECF(p2^.Eoffs, toW); //p2=1?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale2);  //no son iguales
-    end else if p1^.EByte = 255 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _INCF(p2^.Eoffs, toW); //p2=255?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale2);  //no son iguales
-    end else begin  //caso general
-      _MOVLW(p1^.EByte);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.Eoffs, toW); //p2-p1
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale2);  //no son iguales
-    end;
-    //Compara byte H
-    if p1^.HByte = 0 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _MOVF(p2^.Hoffs, toW); //p2=0?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale3);  //no son iguales
-    end else if p1^.HByte = 1 then begin
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _DECF(p2^.Hoffs, toW); //p2=1?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale3);  //no son iguales
-    end else if p1^.HByte = 255 then begin
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _INCF(p2^.Hoffs, toW); //p2=255?
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale3);  //no son iguales
-    end else begin  //caso general
-      _MOVLW(p1^.HByte);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.Hoffs, toW); //p2-p1
-      _BTFSS(Z.offs, Z.bit);
-      _GOTO_PEND(sale3);  //no son iguales
-    end;
-    //Son iguales, comparar el byte bajo
-    if p1^.LByte = 0 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _MOVF(p2^.Loffs,toW);	//p2=0?
-    end else if p1^.LByte = 1 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _DECF(p2^.Loffs,toW);	//p2=1?
-    end else if p1^.LByte = 255 then begin  //caso especial
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _INCF(p2^.Loffs,toW);	//p2=255?
-    end else begin  //caso general
-      _MOVLW(p1^.LByte);
-      _BANKSEL(p2^.bank);  //verifica banco destino
-      _SUBWF(p2^.Loffs,toW);	//p2-p1
-    end;
-_LABEL(sale1); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-_LABEL(sale2);
-_LABEL(sale3);
-  end;
-  stConst_Expres: begin  //la expresión p2 se evaluó y está en UEHW
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //Compara byte L
-    _SUBLW(p1^.LByte); //p2^.L está en W
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale1);  //no son iguales
-    //Compara byte H
-    _MOVLW(p1^.HByte);
-    _SUBWF(H.offs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale2);  //no son iguales
-    //Compara byte E
-    _MOVLW(p1^.EByte);
-    _SUBWF(E.offs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale3);  //no son iguales
-    //Comparar el byte U
-    _MOVLW(p1^.UByte);
-    _SUBWF(U.offs,toW);	//p2-p1
-_LABEL(sale1); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-_LABEL(sale2);
-_LABEL(sale3);
-  end;
-  stVariab_Const: begin
-    ExchangeP1_P2;  //Convierte a stConst_Variab
-    ROB_dword_equal_dword(Opt, SetRes);
-  end;
-  stVariab_Variab:begin
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //Compara byte U
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Uoffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Uoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale1);  //no son iguales
-    //Compara byte E
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Eoffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Eoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale2);  //no son iguales
-    //Compara byte alto
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Hoffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Hoffs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale3);  //no son iguales
-    //Son iguales, comparar el byte bajo
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVF(p1^.Loffs, toW);
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _SUBWF(p2^.Loffs,toW);	//p2-p1
-_LABEL(sale1); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-_LABEL(sale2);
-_LABEL(sale3);
-  end;
-  stVariab_Expres:begin   //la expresión p2 se evaluó y esta en W
-    SetROBResultExpres_bool(Opt, false);   //Se pide Z para el resultado
-    //Compara byte L
-    _SUBWF(p1^.Loffs, toW); //p2^.L ya está en W
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale1);  //no son iguales
-    //Compara byte H
-    _MOVF(p1^.Hoffs, toW);
-    _SUBWF(H.offs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale2);  //no son iguales
-    //Compara byte E
-    _MOVF(p1^.Eoffs, toW);
-    _SUBWF(E.offs, toW); //p2-p1
-    _BTFSS(Z.offs, Z.bit);
-    _GOTO_PEND(sale3);  //no son iguales
-    //Comparar el byte U
-    _MOVF(p1^.Uoffs, toW);
-    _SUBWF(U.offs,toW);	//p2-p1
-_LABEL(sale1); //Si p1=p2 -> Z=1. Si p1>p2 -> C=0.
-_LABEL(sale2);
-_LABEL(sale3);
-  end;
-  stExpres_Const: begin   //la expresión p1 se evaluó y esta en W
-    ExchangeP1_P2;  //Convierte a stConst_Expres;
-    ROB_dword_equal_dword(Opt, SetRes);
-  end;
-  stExpres_Variab:begin  //la expresión p1 se evaluó y esta en W
-    ExchangeP1_P2;  //Convierte a stVariab_Expres;
-    ROB_dword_equal_dword(Opt, SetRes);
-  end;
-  stExpres_Expres:begin
-    //La expresión p1, debe estar salvada y p2 en (H,W,E,U)
-    p1^.SetAsVariab(GetVarDWordFromStk);
-    //Luego el caso es similar a variable-expresión
-    ROB_dword_equal_dword(Opt, SetRes);
-    FreeStkRegisterdWord;
-  end;
-  else
-    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROB_dword_difer_dword(Opt: TxpOperation; SetRes: boolean);
-begin
-  ROB_dword_equal_dword(Opt, SetRes);
-  res.Invert;
-end;
 procedure TGenCod.ROB_dword_add_dword(Opt: TxpOperation; SetRes: boolean);
 var
   aux: TPicRegister;
@@ -3414,23 +2278,23 @@ begin
     SetROBResultExpres_dword(Opt);
     aux := GetAuxRegisterByte;  //Pide un registro libre
     if HayError then exit;
-    _movf   (p2^.Loffs,toW);
-    _ADDLW  (p1^.LByte);  //Cambia C
+    kMOVF   (byte2L, toW);
+    _ADDLW  (value1L);  //Cambia C
     _movwf  (aux.offs);       //Guarda Byte L de resultado
 
-    _movf   (p2^.Hoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+    kMOVF   (byte2H, toW);  //Prepara sumando. Altera Z, pero no toca C
     _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Hoffs,toW);
-    _ADDLW  (p1^.HByte);  //Cambia C
+    _ADDLW  (value1H);  //Cambia C
     _movwf  (H.offs);       //Guarda Byte H de resultado
 
-    _movf   (p2^.Eoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+    kMOVF   (byte2E, toW);  //Prepara sumando. Altera Z, pero no toca C
     _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Eoffs,toW);
     _ADDLW  (p1^.EByte);  //Cambia C
     _movwf  (E.offs);       //Guarda Byte E de resultado
 
-    _movf   (p2^.Uoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+    kMOVF   (byte2U, toW);  //Prepara sumando. Altera Z, pero no toca C
     _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Uoffs,toW);
     _ADDLW  (p1^.UByte);
@@ -3462,46 +2326,46 @@ begin
 //  Este algoritmo Falla
 //    aux := GetAuxRegisterByte;  //Pide un registro libre
 //    if HayError then exit;
-//    _movf (p2^.Loffs,toW);
-//    _addwf(p1^.Loffs,toW);
+//    _movf (byte2L,toW);
+//    _addwf(byte1L,toW);
 //    _movwf(aux.offs);
-//    _movf (p2^.Hoffs,toW);
+//    _movf (byte2H,toW);
 //    _btfsc(STATUS, _C);
 //    _addlw(1);
-//    _addwf(p1^.Hoffs,toW);
+//    _addwf(byte1H,toW);
 //    _movwf(H.offs);
-//    _movf (p2^.Eoffs,toW);
+//    _movf (byte2E,toW);
 //    _btfsc(STATUS, _C);
 //    _addlw(1);
-//    _addwf(p1^.Eoffs,toW);
+//    _addwf(byte1E,toW);
 //    _movwf(E.offs);
-//    _movf (p2^.Uoffs,toW);
+//    _movf (byte2U,toW);
 //    _btfsc(STATUS, _C);
 //    _addlw(1);
-//    _addwf(p1^.Uoffs,toW);
+//    _addwf(byte1U,toW);
 //    _movwf(U.offs);
 //    _movf (aux.offs, toW);
 //    aux.used := false;
 
     aux := GetAuxRegisterByte;  //Pide un registro libre
     if HayError then exit;
-    _movf   (p2^.Loffs,toW);
-    _addwf  (p1^.Loffs,toW);  //Cambia C
+    kMOVF   (byte2L, toW);
+    kADDWF  (byte1L, toW);  //Cambia C
     _movwf  (aux.offs);       //Guarda Byte L de resultado
 
-    _movf   (p2^.Hoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+    kMOVF   (byte2H, toW);  //Prepara sumando. Altera Z, pero no toca C
     _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Hoffs,toW);
     _addwf  (p1^.Hoffs,toW);  //Cambia C
     _movwf  (H.offs);       //Guarda Byte H de resultado
 
-    _movf   (p2^.Eoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+    kMOVF   (byte2E, toW);  //Prepara sumando. Altera Z, pero no toca C
     _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Eoffs,toW);
     _addwf  (p1^.Eoffs,toW);  //Cambia C
     _movwf  (E.offs);       //Guarda Byte E de resultado
 
-    _movf   (p2^.Uoffs,toW);  //Prepara sumando. Altera Z, pero no toca C
+    kMOVF   (byte2U, toW);  //Prepara sumando. Altera Z, pero no toca C
     _btfsc  (_STATUS,_C);      //Mira acarreo de operación anterior
     _incfsz (p2^.Uoffs,toW);
     _addwf  (p1^.Uoffs,toW);
@@ -3519,12 +2383,12 @@ begin
 //    _BANKSEL(aux.bank);
 //    _movwf(aux.offs);        //guarda byte bajo
 //    _BANKSEL(p1^.bank);
-//    _MOVF(p1^.Hoffs, toW);   //Carga más peso del dato 1
+//    _MOVF(byte1H, toW);   //Carga más peso del dato 1
 //    _BANKSEL(H.bank);
 //    _addwf(H.offs,toF);      //Suma y guarda
 //    //Siguiente byte
 //    _BANKSEL(p1^.bank);
-//    _MOVF(p1^.Loffs, toW);       //Carga menos peso del dato 1
+//    _MOVF(byte1L, toW);       //Carga menos peso del dato 1
 //    _BANKSEL(aux.bank);
 //    _addwf(aux.offs,toW);    //Suma menos peso del dato 2, deja en W
 //    _btfsc(STATUS,_C);      //Hubo acarreo anterior?
@@ -3549,11 +2413,11 @@ begin
 //    if HayError then exit;
 //    _movwf(aux.offs);      //guarda byte bajo
 //    _BANKSEL(p2^.bank);
-//    _MOVF(p2^.Hoffs, toW);     //Carga más peso del dato 1
+//    _MOVF(byte2H, toW);     //Carga más peso del dato 1
 //    _BANKSEL(H.bank);
 //    _addwf(H.offs,toF);    //Suma y guarda
 //    _BANKSEL(p2^.bank);
-//    _MOVF(p2^.Loffs, toW);     //Carga menos peso del dato 1
+//    _MOVF(byte2L, toW);     //Carga menos peso del dato 1
 //    _BANKSEL(aux.bank);
 //    _addwf(aux.offs,toW);  //Suma menos peso del dato 2, deja en W
 //    _BANKSEL(H.bank);
@@ -3587,8 +2451,8 @@ begin
     if value2 = 0 then begin
       //No cambia
     end else if value2 <= $FF then begin
-      _movlw (p2^.LByte);
-      _addwf (p1^.Loffs,toF);
+      kMOVLW (value2L);
+      kADDWF (byte1L,toF);
       _btfsc (_STATUS,_C);
       _INCF  (p1^.Hoffs,toF);
       _btfsc (_STATUS,_Z);
@@ -3596,53 +2460,53 @@ begin
       _btfsc (_STATUS,_Z);
       _INCF  (p1^.Uoffs,toF);
     end else if value2 <= $FFFF then begin
-      _movlw (p2^.LByte);
-      _addwf (p1^.Loffs,toF);
-      _movlw (p2^.HByte);
+      kMOVLW (value2L);
+      kADDWF (byte1L,toF);
+      kMOVLW (value2H);
       _btfsc (_STATUS,_C);
       _ADDLW (1);
-      _addwf (p1^.Hoffs,toF);
+      kADDWF (byte1H, toF);
       _btfsc (_STATUS,_C);
       _INCF  (p1^.Eoffs,toF);
       _btfsc (_STATUS,_Z);
       _INCF  (p1^.Uoffs,toF);
     end else begin
-      _movlw (p2^.LByte);
-      _addwf (p1^.Loffs,toF);
-      _movlw (p2^.HByte);
+      kMOVLW (value2L);
+      kADDWF (byte1L, toF);
+      kMOVLW (value2H);
       _btfsc (_STATUS,_C);
       _ADDLW (1);
-      _addwf (p1^.Hoffs,toF);
-      _movlw (p2^.EByte);
+      kADDWF (byte1H, toF);
+      kMOVLW (p2^.EByte);
       _btfsc (_STATUS,_C);
       _ADDLW (1);
-      _addwf (p1^.Eoffs,toF);
-      _movlw (p2^.UByte);
+      kADDWF (byte1E, toF);
+      kMOVLW (p2^.UByte);
       _btfsc (_STATUS,_C);
       _ADDLW (1);
-      _addwf (p1^.Uoffs,toF);
+      kADDWF (byte1U,toF);
     end;
   end;
   stVariab: begin
     if SetRes then SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    _movf   (p2^.Loffs,toW);
-    _addwf  (p1^.Loffs,toF);
-    _movf   (p2^.Hoffs,toW);
+    kMOVF   (byte2L, toW);
+    kADDWF  (byte1L, toF);
+    kMOVF   (byte2H, toW);
     _btfsc  (_STATUS,_C);
     _incfsz (p2^.Hoffs,toW);
     _addwf  (p1^.Hoffs,toF);
-    _movf   (p2^.Eoffs,toW);
+    kMOVF   (byte2E, toW);
     _btfsc  (_STATUS,_C);
     _incfsz (p2^.Eoffs,toW);
     _addwf  (p1^.Eoffs,toF);
-    _movf   (p2^.Uoffs,toW);
+    kMOVF   (byte2U, toW);
     _btfsc  (_STATUS,_C);
     _incfsz (p2^.Uoffs,toW);
     _addwf  (p1^.Uoffs,toF);
   end;
   stExpres: begin   //Se asume que está en U,E,H,w
     if SetRes then SetROBResultExpres_dword(Opt);  //Realmente, el resultado no es importante
-    _addwf  (p1^.Loffs,toF);  //p2 ya está en W
+    kADDWF  (byte1L, toF);  //p2 ya está en W
     _movf   (H.offs,toW);
     _btfsc  (_STATUS,_C);
     _incfsz (H.offs,toW);
@@ -3671,25 +2535,20 @@ begin
     SetROBResultExpres_char(Opt);  //Realmente, el resultado no es importante
     if value2=0 then begin
       //caso especial
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _CLRF(p1^.offs);
+      kCLRF(byte1);
     end else begin
-      _MOVLW(value2);  //Los chars se manejan como números
-      _BANKSEL(p1^.bank);  //verifica banco destino
-      _MOVWF(p1^.offs);
+      kMOVLW(value2);  //Los chars se manejan como números
+      kMOVWF(byte1);
     end;
   end;
   stVariab: begin
     SetROBResultExpres_char(Opt);  //Realmente, el resultado no es importante
-    _BANKSEL(p2^.bank);  //verifica banco destino
-    _MOVF(p2^.offs, toW);
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVWF(p1^.offs);
+    kMOVF(byte2, toW);
+    kMOVWF(byte1);
   end;
   stExpres: begin  //ya está en w
     SetROBResultExpres_char(Opt);  //Realmente, el resultado no es importante
-    _BANKSEL(p1^.bank);  //verifica banco destino
-    _MOVWF(p1^.offs);
+    kMOVWF(byte1);
   end;
   else
     GenError(MSG_UNSUPPORTED); exit;
@@ -3775,30 +2634,30 @@ procedure TGenCod.codif_1mseg;
 begin
   PutFwdComm(';1 msec routine.');
   if _CLOCK = 1000000 then begin
-    _MOVLW(62);  //contador de iteraciones
+    kMOVLW(62);  //contador de iteraciones
     _ADDLW(255);  //lazo de 4 ciclos
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 1MHz.');
   end else if _CLOCK = 2000000 then begin
-    _MOVLW(125);  //contador de iteraciones
+    kMOVLW(125);  //contador de iteraciones
     _ADDLW(255);  //lazo de 4 ciclos
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 2MHz.');
   end else if _CLOCK = 4000000 then begin
     //rtuina básica para 4MHz
-    _MOVLW(250);  //contador de iteraciones
+    kMOVLW(250);  //contador de iteraciones
     _ADDLW(255);  //lazo de 4 ciclos
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-2); PutComm(';fin rutina 1 mseg a 4MHz.');
   end else if _CLOCK = 8000000 then begin
-    _MOVLW(250);
+    kMOVLW(250);
     _ADDLW(255);   //lazo de 8 ciclos
     _GOTO(_PC+1);  //introduce 4 ciclos más de retardo
     _GOTO(_PC+1);
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-4); PutComm(';fin rutina 1 mseg a 8Mhz.');
   end else if _CLOCK = 10000000 then begin
-    _MOVLW(250);
+    kMOVLW(250);
     _ADDLW(255);   //lazo de 10 ciclos
     _GOTO(_PC+1);  //introduce 6 ciclos más de retardo
     _GOTO(_PC+1);
@@ -3806,7 +2665,7 @@ begin
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-5); PutComm(';fin rutina 1 mseg a 10MHz.');
   end else if _CLOCK = 12000000 then begin
-    _MOVLW(250);
+    kMOVLW(250);
     _ADDLW(255);   //lazo de 12 ciclos
     _GOTO(_PC+1);  //introduce 8 ciclos más de retardo
     _GOTO(_PC+1);
@@ -3815,7 +2674,7 @@ begin
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-6); PutComm(';fin rutina 1 mseg a 12MHz.');
   end else if _CLOCK = 16000000 then begin
-    _MOVLW(250);
+    kMOVLW(250);
     _ADDLW(255);   //lazo de 16 ciclos
     _GOTO(_PC+1);  //introduce 12 ciclos más de retardo
     _GOTO(_PC+1);
@@ -3826,7 +2685,7 @@ begin
     _BTFSS(_STATUS,_Z);
     _GOTO(_PC-8); PutComm(';fin rutina 1 mseg a 12MHz.');
   end else if _CLOCK = 20000000 then begin
-    _MOVLW(250);
+    kMOVLW(250);
     _ADDLW(255);   //lazo de 20 ciclos
     _GOTO(_PC+1);  //introduce 16 ciclos más de retardo
     _GOTO(_PC+1);
@@ -4044,7 +2903,7 @@ begin
       _DECF(res.Loffs, toF);
     end else if res.Typ = typDWord then begin
       _BANKSEL(res.bank);
-      _MOVLW(1);
+      kMOVLW(1);
       _subwf(res.Loffs, toF);
       _BTFSS(_STATUS, _C);
       _subwf(RES.Hoffs, toF);
@@ -4292,7 +3151,7 @@ begin
       SetResultExpres(typByte);
       _CLRW;
       _BTFSC(res.Boffs, res.bit);
-      _MOVLW(1);  //devuelve 1
+      kMOVLW(1);  //devuelve 1
       //Es lo mismo
     end else if res.Typ = typChar then begin
       //Crea varaible que apunte al byte bajo
@@ -4329,9 +3188,9 @@ begin
       //Ya está en W el byet bajo
       res.SetAsExpres(typByte);  //Cambia el tipo
     end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
-      _MOVLW(0);    //Z -> W
+      kMOVLW(0);    //Z -> W
       _BTFSC(_STATUS, _Z);
-      _MOVLW(1);
+      kMOVLW(1);
       res.SetAsExpres(typByte);  //Cambia el tipo
     end else begin
       GenError('Cannot convert to byte.'); exit;
@@ -4388,9 +3247,9 @@ begin
     end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
       SetResultExpres(typWord);  //Devolvemo expresión
       _CLRF(H.offs);
-      _MOVLW(0);
+      kMOVLW(0);
       _BTFSC(_STATUS, _Z);
-      _MOVLW(1);
+      kMOVLW(1);
     end else begin
       GenError('Cannot convert this variable to word.'); exit;
     end;
@@ -4413,9 +3272,9 @@ begin
     end else if (res.Typ = typBool) or (res.Typ = typBit) then begin
       res.SetAsExpres(typWord);
       _CLRF(H.offs);
-      _MOVLW(0);    //Z -> W
+      kMOVLW(0);    //Z -> W
       _BTFSC(_STATUS, _Z);
-      _MOVLW(1);
+      kMOVLW(1);
     end else begin
       GenError('Cannot convert expression to word.'); exit;
     end;
@@ -4475,9 +3334,9 @@ begin
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
-      _MOVLW(0);    //Z -> W
+      kMOVLW(0);    //Z -> W
       _BTFSC(_STATUS, _Z);
-      _MOVLW(1);
+      kMOVLW(1);
     end else begin
       GenError('Cannot convert this variable to Dword.'); exit;
     end;
@@ -4508,9 +3367,9 @@ begin
       _CLRF(U.offs);
       _CLRF(E.offs);
       _CLRF(H.offs);
-      _MOVLW(0);    //Z -> W
+      kMOVLW(0);    //Z -> W
       _BTFSC(_STATUS, _Z);
-      _MOVLW(1);
+      kMOVLW(1);
     end else begin
       GenError('Cannot convert expression to Dword.'); exit;
     end;
@@ -4532,7 +3391,7 @@ begin
   stVariab: begin
     if res.Typ = typByte then begin
       //Se asume que será algo como PORTA, PORTB, ...
-      _MOVLW($FF);   //todos como entradas
+      kMOVLW($FF);   //todos como entradas
       _BANKSEL(1);   //los registros TRIS, están en el banco 1
       _MOVWF(res.offs); //escribe en TRIS
     end else if res.Typ = typBit then begin
