@@ -497,22 +497,22 @@ begin
       end else if p1^.Inverted then begin  //lógica invertida
         SetROBResultExpres_bit(Opt, false);  //Fija resultado
         //Aplica un XOR entre p1' y Z.
-        _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
+        _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1(0), deja tal cual
         _ANDWF(Z.offs, toW);     //Si es 0(1), invierte
       end else if p2^.Inverted then begin  //lógica invertida en Z
         SetROBResultExpres_bit(Opt, false);  //Fija resultado
         //Aplica un XOR entre p1 y Z'.
-        _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es eu se necesita
+        _BANKSEL(p1^.bank);
         _BTFSS(p1^.offs, p1^.bit);   //Si es 1, invierte (deja igual porque ya está invertido)
         _ANDWF(Z.offs, toW);     //Si es 0, deja tal cual (realmente debe invertir)
       end else begin   //lógica normal
         SetROBResultExpres_bit(Opt, false);  //Fija resultado
         //Aplica un XOR entre p1 y Z.
-        _BANKSEL(p1^.bank);
         _MOVLW($1 << Z.bit);   //carga máscara, y deja lista si es se necesita
+        _BANKSEL(p1^.bank);
         _BTFSC(p1^.offs, p1^.bit);  //Si es 0, deja tal cual
         _ANDWF(Z.offs, toW);         //Si es 1, invierte
       end;

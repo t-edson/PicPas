@@ -6,8 +6,8 @@ object fraPICDiagram: TfraPICDiagram
   ClientHeight = 317
   ClientWidth = 378
   TabOrder = 0
-  DesignLeft = 550
-  DesignTop = 250
+  DesignLeft = 469
+  DesignTop = 254
   object PaintBox1: TPaintBox
     Left = 0
     Height = 317
@@ -19,22 +19,25 @@ object fraPICDiagram: TfraPICDiagram
     Images = frmDebugger.ImageList16
     left = 72
     top = 128
-    object MenuItem1: TMenuItem
+    object mnReset: TMenuItem
       Action = frmDebugger.acGenReset
     end
-    object MenuItem2: TMenuItem
+    object mnRun: TMenuItem
       Action = frmDebugger.acGenRun
     end
-    object MenuItem5: TMenuItem
+    object mnStepOver: TMenuItem
       Action = frmDebugger.acGenStep
     end
     object MenuItem3: TMenuItem
       Caption = '-'
     end
-    object MenuItem4: TMenuItem
+    object mnAddLogicTog: TMenuItem
       Action = acGenAddLogTog
     end
-    object MenuItem6: TMenuItem
+    object mnConnect: TMenuItem
+      Action = acGenConnect
+    end
+    object mnDelete: TMenuItem
       Action = acGenDelObject
     end
   end
@@ -52,6 +55,12 @@ object fraPICDiagram: TfraPICDiagram
       Caption = '&Delete'
       ImageIndex = 10
       OnExecute = acGenDelObjectExecute
+    end
+    object acGenConnect: TAction
+      Category = 'Gen'
+      Caption = 'Connect to'
+      ImageIndex = 11
+      OnExecute = acGenConnectExecute
     end
   end
 end
