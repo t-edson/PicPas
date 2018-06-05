@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Version Value="10"/>
     <BuildModes Active="Debug"/>
-    <Units Count="59">
+    <Units Count="60">
       <Unit0>
         <Filename Value="PicPas.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -293,7 +293,7 @@
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="3"/>
         <TopLine Value="126"/>
-        <CursorPos Y="149"/>
+        <CursorPos X="17" Y="149"/>
         <FoldState Value=" T4304 T5ig02 TLkQ271 T8iL2F]83j503225 piZkc067 T6jA01]o0jFI112]rMlW24b"/>
         <UsageCount Value="202"/>
         <Loaded Value="True"/>
@@ -366,13 +366,13 @@
         <ResourceBaseClass Value="Frame"/>
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="4"/>
-        <TopLine Value="382"/>
-        <CursorPos X="53" Y="420"/>
-        <FoldState Value=" T4303 TL824081 T8jE24 T3jS0B4 pifjG0Q4251215 T6jT011521]g0kCS86733]E41D"/>
+        <TopLine Value="260"/>
+        <CursorPos X="18" Y="356"/>
+        <FoldState Value=" T4303 TL8240H241 p0t501 T7jIJj T8jf242 TMpM030O]P3kT0B7121116 piZnV0H912 pj0m90F41]a0nMP1521251A]acpWWA]=6lA0112A13 p0tR01B"/>
         <UsageCount Value="200"/>
         <Bookmarks Count="2">
-          <Item0 Y="301" ID="2"/>
-          <Item1 X="3" Y="246" ID="1"/>
+          <Item0 X="3" Y="236" ID="1"/>
+          <Item1 Y="248" ID="2"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -394,7 +394,7 @@
         <EditorIndex Value="1"/>
         <WindowIndex Value="1"/>
         <TopLine Value="2615"/>
-        <CursorPos Y="3921"/>
+        <CursorPos X="66" Y="2624"/>
         <FoldState Value=" TL00A141 T4i103 T5i50{k]G7i7E{h T8i8426 piaj2434 TMlK01]X3lC04A pl5lO0{T1 pjOm70\2]9Akg0J[I4WkA0{c]JkfnY0{i[K4ImH0N4]JZ]?{t[(50m0N29 piej1EA7]9Xi3F3A]l8iOE98]Iai6E79]I1iJ[IBG]9djg-2E]R2jNL2A]IYjMG9D]9Zm3IFA[R5DL39[R5IH[a5biBI9[R4AjUN17]9BiNN18 pigiS[IC111A T6n902M THnJHJ3]T2k8HX[940kJHZ]9k9mPK{R1 pjPnCK{n[A4TnAK{D2 pkBndK{jr"/>
         <UsageCount Value="205"/>
         <Loaded Value="True"/>
@@ -440,7 +440,7 @@
         <WindowIndex Value="1"/>
         <TopLine Value="33"/>
         <CursorPos X="11" Y="49"/>
-        <UsageCount Value="66"/>
+        <UsageCount Value="60"/>
       </Unit35>
       <Unit36>
         <Filename Value="..\..\_Librerias\PicUtils-1.4\Pic10Utils.pas"/>
@@ -455,7 +455,7 @@
           <CursorPos X="15" Y="186"/>
           <FoldState Value=" TL00A0313A T4F01 T8ic2501122 T3m00B7 piYjA0N02C2114 T0o2i3C pjGlQj2E[W4i6H3D]I0iDj3F23242M T6nf01He"/>
         </ExtraEditor1>
-        <UsageCount Value="40"/>
+        <UsageCount Value="34"/>
         <Bookmarks Count="2">
           <Item0 Y="1399" ID="2"/>
           <Item1 Y="152" ID="1"/>
@@ -466,7 +466,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="171"/>
         <CursorPos X="15" Y="179"/>
-        <UsageCount Value="41"/>
+        <UsageCount Value="35"/>
         <Bookmarks Count="2">
           <Item0 Y="144" ID="3"/>
           <Item1 Y="1351" ID="4"/>
@@ -477,21 +477,21 @@
         <EditorIndex Value="-1"/>
         <CursorPos Y="30"/>
         <FoldState Value=" TL004043C1 T480]65i60e TCED8 T7i9G32 T8iL27132321]E3m309427 T0m5P2F pj2lfU341A153G THrPI7]%6nQ03A26 TDqe2f02]KEra22012c"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="33"/>
       </Unit38>
       <Unit39>
         <Filename Value="..\..\_Librerias\PicUtils-1.4\Pic16Devices.pas"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="20" Y="7"/>
         <FoldState Value=" T3G0b TLH011 T0jPG8224$"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="2"/>
       </Unit39>
       <Unit40>
         <Filename Value="..\..\_Librerias\PicUtils-1.4\Pic10Devices.pas"/>
         <EditorIndex Value="-1"/>
         <WindowIndex Value="1"/>
         <CursorPos X="20" Y="7"/>
-        <UsageCount Value="43"/>
+        <UsageCount Value="37"/>
       </Unit40>
       <Unit41>
         <Filename Value="..\..\_Librerias\PicUtils-1.5\Pic10Utils.pas"/>
@@ -508,22 +508,21 @@
         <TopLine Value="993"/>
         <CursorPos X="24" Y="1098"/>
         <FoldState Value=" TL00A0313417 p0z6025]8uJ024 T4F01 T5H0o2 pj8kI05 TM=642 T7iZB{3 T8ia258 T3l10B6 pifjG05C]9Xj9048 pmdn90{d314]=5u803[95jE[m5k4iM2u4 T0l6T3M]uZoKB4B]9Yi7B4I]iCjZZ2G[I5cB2J]9ejOL151J]T1j3L121F1C1C]FFnI,SN[i4l0U2B THlGCH8 pmBoQGL2 T6nX01I*"/>
-        <UsageCount Value="30"/>
+        <UsageCount Value="24"/>
       </Unit42>
       <Unit43>
         <Filename Value="..\..\_Librerias\PicUtils-1.5\PicCore.pas"/>
-        <EditorIndex Value="6"/>
-        <TopLine Value="171"/>
-        <CursorPos X="49" Y="185"/>
-        <FoldState Value=" TL00404361 T480]65A0102]9CED8]77i9G301]A8k0220232113 T3m609019 T0m8P21262315155F THnCB4 T6nR0381A TDvJ2d TErc222{"/>
-        <UsageCount Value="36"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="173"/>
+        <CursorPos X="65" Y="189"/>
+        <FoldState Value=" TL00404361 T480]65A0102]9CED8]77i9G301]A8k0220232113 T3m709019 T0m9P21262315155C THnDB4 T6nS0381317 TDvK2d TErd222i"/>
+        <UsageCount Value="51"/>
       </Unit43>
       <Unit44>
         <Filename Value="ParserDirec.inc"/>
         <EditorIndex Value="-1"/>
         <WindowIndex Value="1"/>
-        <UsageCount Value="15"/>
+        <UsageCount Value="9"/>
       </Unit44>
       <Unit45>
         <Filename Value="GenCod.inc"/>
@@ -544,220 +543,227 @@
         <TopLine Value="312"/>
         <CursorPos X="25" Y="333"/>
         <FoldState Value=" T3iB0{W TMkS070K1 T0iNS4622111223k"/>
-        <UsageCount Value="82"/>
+        <UsageCount Value="136"/>
       </Unit46>
       <Unit47>
-        <Filename Value="C:\lazarus\lcl\forms.pp"/>
-        <UnitName Value="Forms"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="355"/>
-        <CursorPos X="14" Y="372"/>
-        <UsageCount Value="4"/>
-      </Unit47>
-      <Unit48>
         <Filename Value="..\..\_Librerias\ogEditGraf-2.3\ogMotEdicion.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="22"/>
         <CursorPos X="52" Y="38"/>
-        <UsageCount Value="6"/>
-      </Unit48>
-      <Unit49>
+        <UsageCount Value="0"/>
+      </Unit47>
+      <Unit48>
         <Filename Value="..\..\_Librerias\ogEditGraf-2.3\ogDefObjGraf.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="122"/>
         <CursorPos X="36" Y="141"/>
-        <UsageCount Value="6"/>
-      </Unit49>
-      <Unit50>
+        <UsageCount Value="1"/>
+      </Unit48>
+      <Unit49>
         <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogDefObjGraf.pas"/>
         <EditorIndex Value="7"/>
-        <TopLine Value="103"/>
-        <CursorPos X="5" Y="144"/>
-        <FoldState Value=" T7jGDO_"/>
-        <UsageCount Value="30"/>
+        <TopLine Value="510"/>
+        <CursorPos X="5" Y="597"/>
+        <FoldState Value=" TL00R0413411122 p0u9530314124 T4V02 T5Z03011 TMnZ5415172414]l218]8[r4K21]:C]a7i3FR1[k48i42281A piYlV2]!3n40wA15]IXmK0B63B pj9ld0E[K5jB0Q3 pk2jJ2F7]IckG083 T6n9013]$T0nLIAA]CG1M]y5w9T2D]gejPk3]gHpeGD4h"/>
+        <UsageCount Value="57"/>
+        <Bookmarks Count="1">
+          <Item0 X="28" Y="587" ID="3"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
+      </Unit49>
+      <Unit50>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotGraf2D.pas"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="495"/>
+        <CursorPos X="28" Y="512"/>
+        <UsageCount Value="19"/>
         <Loaded Value="True"/>
       </Unit50>
       <Unit51>
-        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotGraf2D.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="267"/>
-        <CursorPos X="20" Y="270"/>
-        <UsageCount Value="9"/>
-      </Unit51>
-      <Unit52>
         <Filename Value="C:\lazarus\lcl\controls.pp"/>
         <UnitName Value="Controls"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="1679"/>
         <CursorPos X="14" Y="1695"/>
-        <UsageCount Value="8"/>
-      </Unit52>
-      <Unit53>
+        <UsageCount Value="3"/>
+      </Unit51>
+      <Unit52>
         <Filename Value="C:\lazarus\fpc\3.0.4\source\rtl\inc\systemh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="178"/>
         <CursorPos X="3" Y="195"/>
-        <UsageCount Value="9"/>
-      </Unit53>
-      <Unit54>
+        <UsageCount Value="4"/>
+      </Unit52>
+      <Unit53>
         <Filename Value="C:\lazarus\lcl\graphics.pp"/>
         <UnitName Value="Graphics"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="1196"/>
         <CursorPos X="14" Y="1213"/>
-        <UsageCount Value="9"/>
-      </Unit54>
-      <Unit55>
+        <UsageCount Value="4"/>
+      </Unit53>
+      <Unit54>
         <Filename Value="C:\lazarus\lcl\include\canvas.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="1770"/>
         <CursorPos X="3" Y="1796"/>
-        <UsageCount Value="9"/>
-      </Unit55>
-      <Unit56>
+        <UsageCount Value="4"/>
+      </Unit54>
+      <Unit55>
         <Filename Value="C:\lazarus\lcl\include\winapih.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="136"/>
         <CursorPos Y="152"/>
-        <UsageCount Value="9"/>
-      </Unit56>
-      <Unit57>
+        <UsageCount Value="4"/>
+      </Unit55>
+      <Unit56>
         <Filename Value="C:\lazarus\lcl\include\intfbasewinapi.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="1168"/>
         <CursorPos X="3" Y="1172"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="4"/>
+      </Unit56>
+      <Unit57>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="638"/>
+        <CursorPos X="16" Y="671"/>
+        <FoldState Value=" TL00C01413 T4G02 T5K07 T8i22C119 TMiX020612152315181]ip0xH011C165A1111]3 TKjE471 p5;b0{Z T3m90N0141142]+6 pidte0I7 pjTkG069]9CmI064 T6kg[h4[i4 p0tJ02E T0l8BC11F123B1B];ZoKbG225]BXj1bE22J]@1o8V47 TFyJ461y"/>
+        <UsageCount Value="41"/>
+        <Loaded Value="True"/>
       </Unit57>
       <Unit58>
-        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
-        <EditorIndex Value="5"/>
-        <TopLine Value="816"/>
-        <CursorPos Y="838"/>
-        <UsageCount Value="14"/>
-        <Loaded Value="True"/>
+        <Filename Value="C:\lazarus\fpc\3.0.4\source\rtl\objpas\classes\classesh.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="77"/>
+        <CursorPos X="30" Y="94"/>
+        <UsageCount Value="15"/>
       </Unit58>
+      <Unit59>
+        <Filename Value="C:\lazarus\components\lazutils\lazloggerbase.pas"/>
+        <UnitName Value="LazLoggerBase"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="742"/>
+        <CursorPos Y="759"/>
+        <UsageCount Value="10"/>
+      </Unit59>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
-        <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="399" TopLine="349"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
+        <Caret Line="634" Column="24" TopLine="526"/>
       </Position1>
       <Position2>
-        <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="400" TopLine="349"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
+        <Caret Line="635" Column="24" TopLine="526"/>
       </Position2>
       <Position3>
-        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
-        <Caret Line="833" TopLine="816"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogDefObjGraf.pas"/>
+        <Caret Line="412" TopLine="371"/>
       </Position3>
       <Position4>
-        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
-        <Caret Line="834" TopLine="816"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogDefObjGraf.pas"/>
       </Position4>
       <Position5>
-        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
-        <Caret Line="835" TopLine="816"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogDefObjGraf.pas"/>
+        <Caret Line="152" Column="29" TopLine="90"/>
       </Position5>
       <Position6>
-        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
-        <Caret Line="837" TopLine="816"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogDefObjGraf.pas"/>
+        <Caret Line="412" Column="30" TopLine="161"/>
       </Position6>
       <Position7>
-        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
-        <Caret Line="838" TopLine="816"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogDefObjGraf.pas"/>
+        <Caret Line="152" Column="15" TopLine="135"/>
       </Position7>
       <Position8>
-        <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="397" TopLine="349"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogDefObjGraf.pas"/>
+        <Caret Line="577" Column="3" TopLine="471"/>
       </Position8>
       <Position9>
-        <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="398" TopLine="349"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogDefObjGraf.pas"/>
+        <Caret Line="153" Column="26" TopLine="134"/>
       </Position9>
       <Position10>
-        <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="399" TopLine="349"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
+        <Caret Line="673" Column="5" TopLine="541"/>
       </Position10>
       <Position11>
-        <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="403" Column="29" TopLine="365"/>
+        <Filename Value="..\..\_Librerias\ogEditGraf-2.4\ogMotEdicion.pas"/>
+        <Caret Line="665" Column="3" TopLine="641"/>
       </Position11>
       <Position12>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="414" TopLine="386"/>
+        <Caret Line="196" TopLine="156"/>
       </Position12>
       <Position13>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="468" TopLine="392"/>
+        <Caret Line="244" Column="18" TopLine="208"/>
       </Position13>
       <Position14>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="398" TopLine="383"/>
+        <Caret Line="67" Column="24" TopLine="50"/>
       </Position14>
       <Position15>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="399" TopLine="383"/>
+        <Caret Line="244" Column="27" TopLine="197"/>
       </Position15>
       <Position16>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="468" TopLine="392"/>
+        <Caret Line="340" Column="43" TopLine="244"/>
       </Position16>
       <Position17>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="399" Column="14" TopLine="392"/>
+        <Caret Line="27" Column="5" TopLine="9"/>
       </Position17>
       <Position18>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="398" Column="34" TopLine="381"/>
+        <Caret Line="297" Column="11" TopLine="259"/>
       </Position18>
       <Position19>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="399" Column="19" TopLine="381"/>
+        <Caret Line="27" Column="24" TopLine="3"/>
       </Position19>
       <Position20>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="469" TopLine="393"/>
+        <Caret Line="156" Column="15" TopLine="148"/>
       </Position20>
       <Position21>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="398" Column="21" TopLine="384"/>
+        <Caret Line="22" Column="9" TopLine="8"/>
       </Position21>
       <Position22>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="469" TopLine="393"/>
+        <Caret Line="163" Column="25" TopLine="96"/>
       </Position22>
       <Position23>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="400" TopLine="381"/>
+        <Caret Line="31" Column="23" TopLine="14"/>
       </Position23>
       <Position24>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="63" TopLine="37"/>
+        <Caret Line="163" Column="29" TopLine="90"/>
       </Position24>
       <Position25>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="290" TopLine="199"/>
+        <Caret Line="161" TopLine="89"/>
       </Position25>
       <Position26>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="48" TopLine="31"/>
+        <Caret Line="30" Column="15" TopLine="9"/>
       </Position26>
       <Position27>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="236" TopLine="195"/>
+        <Caret Line="349" Column="39" TopLine="250"/>
       </Position27>
       <Position28>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="34" TopLine="22"/>
+        <Caret Line="251" Column="53" TopLine="230"/>
       </Position28>
       <Position29>
         <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="115" TopLine="110"/>
+        <Caret Line="165" Column="9" TopLine="100"/>
       </Position29>
-      <Position30>
-        <Filename Value="FramePICDiagram.pas"/>
-        <Caret Line="255" TopLine="113"/>
-      </Position30>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>

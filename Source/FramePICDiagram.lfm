@@ -31,11 +31,17 @@ object fraPICDiagram: TfraPICDiagram
     object MenuItem3: TMenuItem
       Caption = '-'
     end
+    object mnConnect: TMenuItem
+      Action = acGenConnect
+    end
     object mnAddLogicTog: TMenuItem
       Action = acGenAddLogTog
     end
-    object mnConnect: TMenuItem
-      Action = acGenConnect
+    object MenuItem2: TMenuItem
+      Action = acGenAddLed
+    end
+    object MenuItem1: TMenuItem
+      Action = acGenAddConn
     end
     object mnDelete: TMenuItem
       Action = acGenDelObject
@@ -48,19 +54,32 @@ object fraPICDiagram: TfraPICDiagram
     object acGenAddLogTog: TAction
       Category = 'Gen'
       Caption = 'Add LogicToggle'
+      ImageIndex = 13
       OnExecute = acGenAddLogTogExecute
+    end
+    object acGenAddConn: TAction
+      Category = 'Gen'
+      Caption = 'Add Connector'
+      ImageIndex = 11
+      OnExecute = acGenAddConnExecute
+    end
+    object acGenAddLed: TAction
+      Category = 'Gen'
+      Caption = 'Add Led'
+      ImageIndex = 14
+      OnExecute = acGenAddLedExecute
+    end
+    object acGenConnect: TAction
+      Category = 'Gen'
+      Caption = 'Connect to'
+      ImageIndex = 12
+      OnExecute = acGenConnectExecute
     end
     object acGenDelObject: TAction
       Category = 'Gen'
       Caption = '&Delete'
       ImageIndex = 10
       OnExecute = acGenDelObjectExecute
-    end
-    object acGenConnect: TAction
-      Category = 'Gen'
-      Caption = 'Connect to'
-      ImageIndex = 11
-      OnExecute = acGenConnectExecute
     end
   end
 end
