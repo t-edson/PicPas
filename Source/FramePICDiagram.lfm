@@ -43,6 +43,9 @@ object fraPICDiagram: TfraPICDiagram
     object MenuItem1: TMenuItem
       Action = acGenAddConn
     end
+    object MenuItem4: TMenuItem
+      Action = acGenAddResis
+    end
     object mnDelete: TMenuItem
       Action = acGenDelObject
     end
@@ -68,6 +71,12 @@ object fraPICDiagram: TfraPICDiagram
       Caption = 'Add Led'
       ImageIndex = 14
       OnExecute = acGenAddLedExecute
+    end
+    object acGenAddResis: TAction
+      Category = 'Gen'
+      Caption = 'Add &Resistor'
+      ImageIndex = 15
+      OnExecute = acGenAddResisExecute
     end
     object acGenConnect: TAction
       Category = 'Gen'

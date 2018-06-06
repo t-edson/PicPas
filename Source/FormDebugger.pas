@@ -98,7 +98,9 @@ var
   stopped: boolean;
 begin
   if pic = nil then exit;
+  consoleTickStart;
   pic.ExecNCycles(nCyclesPerClk, stopped);
+  consoleTickCount('');
   if stopped then begin
     acGenPauseExecute(self);
   end else begin
@@ -155,12 +157,7 @@ begin
   ///// Calcula parámetros de refresco, para la ejecución en tiempo real //////////
   {La idea de la ejecución en tiempo real, es ejecutar un paquete de instrucciones
   (ciclos) por bloques y luego aprovechar el tiempo muerto que queda por haber ejecutado
-  todas las instrucciones en menor tiempo.
-  Si se fuera estricto en la simulación y tiempo real, se ejecutaría instrucción por
-  instrucción y se aprovecharía el tiempo muerto que queda, después de cada instrucción,
-  ya que la PC, ejecuta cada instrucción PIC, en menos tiempo (al menos eso se espera).
-  En pruebas con una PC Core i7 con 3.4GHz, se calculó que se podía ejecutar las
-  instrucciones al menos 12 veces más rápido, para un dispositivo trabajando a 10MHz.}
+  todas las instrucciones en menor tiempo.}
   milsecRefresh := 200;   //Fija un periodo de refresco inicial
   Timer1.Interval := milsecRefresh;
   {Calcula cuántos ciclos debe ejecutar por refresco. Aún cuando el resultado de la
