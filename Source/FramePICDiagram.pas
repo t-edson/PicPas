@@ -19,20 +19,22 @@ type
   un punto de conexión, se decidió crearlo como una extensión de TPtoConx, así se
   simplifica considerablemente la administración.}
   TPinGraph = class(TPtoConx)
-  private
-    x1, y1, x2, y2: Single; //Cordenadas cuando se representa como rectángulo
-    lbl   : string;     //Etiqueta
-    xLbl, yLbl: Single; //Posición de la etiqueta
-    {Se necesita una referencia al PIC para poder leer el valor del voltaje del pin de
-    salida, cuando este pin es parte de un PIC.}
-    pic   : TPicCore;
+  private  //Parámetros del modelo interno del Pin
     {Cuando es un componente común. se leerán estos parámetros, como modelo
     del pin.}
     vThev: single;
     rThev: single;
+  private  //Campos adicionales cuando es pin de un PIC
+    {Se necesita una referencia al PIC cuando este pin es parte de un PIC.}
+    pic   : TPicCore;
+    nPin  : integer;    //Número de pin (del encapsulado)
+  private  //Propiedades geométricas
+    x1, y1, x2, y2: Single; //Cordenadas cuando se representa como rectángulo
+    lbl   : string;     //Etiqueta
+    xLbl, yLbl: Single; //Posición de la etiqueta
   public
-    nPin: integer;    //Número de pin (del encapsulado)
-    procedure GetThev(out vThev0, rThev0: Single);
+    procedure GetThevNod(out vThev0, rThev0: Single);//Devuelve parámetros del modelo eléctrico
+    procedure GetThev(out vThev0, rThev0: Single);  //Devuelve parámetros del modelo eléctrico
     procedure SetLabel(xl, yl: Single; txt: string; align: TAlignment =
       taLeftJustify);
   end;
@@ -67,7 +69,7 @@ type
   private
     procedure PCtlConnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
     procedure PCtlDisconnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
-    function GetVoltage: Single;
+    procedure GetThev(out vt, rt: Single);
   public
     function LoSelecciona(xr, yr: Integer): Boolean; override;
     procedure Draw; override;
@@ -95,8 +97,8 @@ type
   //Define el objeto gráfico LogicState
   TOgLogicState = class(TOgComponent)
   private
-    FState: boolean;
     ptos: array of TFPoint;
+    pin: TPinGraph;
   public
     //procedure SetState(Value: boolean);
     procedure Draw; override;
@@ -108,7 +110,7 @@ type
   //Define el objeto Diodo Led
   TOgLedRed = class(TOgComponent)
   private
-    FState: boolean;
+    pin: TPinGraph;
   public
     //procedure SetState(Value: boolean);
     procedure Draw; override;
@@ -120,7 +122,6 @@ type
   //Define el objeto Resistencia (Resistor)
   TOgResisten = class(TOgComponent)
   private
-    FState: boolean;
   public
     //procedure SetState(Value: boolean);
     procedure Draw; override;
@@ -183,8 +184,29 @@ implementation
 {$R *.lfm}
 const
   SEP_PIN = 20;   //Separación entre pines
-  LON_PIN = 15;   //Longitud de pin
+  LON_PIN = 10;   //Longitud de pin
+  //Colores pro defecto
+  COL_CI  = $404040;  //Circuitos Integrados
+  COL_GND = $404040;  //GND
+  COL_VCC = clRed;    //Voltajes VCC
+  COL_HIM = $A0A0A0;  //Alta impedancia
+  COL_RES = $9FE7F9;  //Cuerpo de resistencias
 
+function GetThevCol(vt, rt: Single): TColor;
+{Devuelve un color que representa el estado de un circuito de Thevening.}
+begin
+  if rt>1e+6 then begin
+    //Se considera alta impedancia
+    exit(COL_HIM);
+  end else begin
+    //Tiene potencial
+    if vt > 2.5 then begin
+      exit(COL_VCC);
+    end else begin
+      exit(COL_GND);
+    end;
+  end;
+end;
 { TNodo }
 constructor TNodo.Create(mGraf: TMotGraf);
 begin
@@ -196,8 +218,37 @@ begin
   inherited Destroy;
 end;
 { TPinGraph }
+procedure TPinGraph.GetThevNod(out vThev0, rThev0: Single);
+{Devuelve los valores de voltaje e impedancia del nodo al que se encuentra conectado el
+pin, si es que acaso se encuentra conectado a un nodo. De no ser así, devuelve los
+parametros del mismo pin.}
+var
+  pCtl: TPtoCtrl;
+  og: TObjGraf;
+  ogCon: TOgConector;
+begin
+  if ptosControl.Count = 0 then begin
+    //No tiene conexión a ningún nodo
+    vThev0 := vThev;  //¿Y si es PIC?
+    rThev0 := rThev;
+  end else begin
+    //está conectado a al menos un nodo
+    pCtl := ptosControl[0];
+    og :=  pCtl.Parent;
+    if og is TOgConector then begin  //Optimizar usando mejor un ID
+      //Es el punto de control de un conector
+      ogCon := TOgConector(og);
+      ogCon.GetThev(vThev0, rThev0);  //Lee de conector
+    end else begin
+      //Es el punto de control de otra cosa que se conectó a este pin. ¿Qué raro?
+      vThev0 := vThev;  //¿Y si es PIC?
+      rThev0 := rThev;
+    end;
+  end;
+end;
 procedure TPinGraph.GetThev(out vThev0, rThev0: Single);
-{Devuelve el equivalente de Thevening del pin cuando es una salida.}
+{Devuelve el equivalente de Thevening del pin. Equivale a devolver el modelo eléctrico
+del pin, cuando está desconectado.}
 begin
   if pic = nil then begin
     //No pertenece a un PIC, lee directamente sus parámetros
@@ -272,10 +323,12 @@ begin
 //  pinsNod.Remove( TPinGraph(pCnx.data) );
 //  DebugLn('PCtlDisconnect');
 end;
-function TOgConector.GetVoltage: Single;
+procedure TOgConector.GetThev(out vt, rt: Single);
+{Devuelve los parámetros de Thevening del nodo. Esto es útil para leer el voltaje del
+nodo en cualquier momento, que es parte de un análisis por nodos, común.}
 var
   pin1, pin2: TPinGraph;
-  vThev, rThev: Single;
+  V1, R1, V2, R2: Single;
 begin
   //Calcula el voltaje del conector, que es tratado como parte de un nodo.
   {Formalmente, debería analizarse todo un nodo (del cual este conector debe formar
@@ -285,23 +338,46 @@ begin
 
   if (pin1<>nil) and (pin2<>nil) then begin
     //Conectado a dos pines
-    debugln('Conectado a dos pines.');
+    pin1.GetThev(V1, R1);
+    pin2.GetThev(V2, R2);
+    if (V1 = 0) and (V2 = 0) then begin
+      //No hay fuentes
+      vt := 0;
+      if R1+R2 = 0 then rt := 0 else rt := R1*R2/(R1+R2);
+    end else if (V1 = 0) then begin
+      //V2 <> 0
+      vt := V2 * R1/(R1+R2);
+      if R1+R2 = 0 then rt := 0 else rt := R1*R2/(R1+R2);
+    end else if (V2 = 0) then begin
+      //V1 <> 0
+      vt := V1 * R2/(R2+R1);
+      if R1+R2 = 0 then rt := 0 else rt := R1*R2/(R1+R2);
+    end else begin
+      //Hay dos fuentes
+      if V1 = V2 then begin
+        vt :=  V1;
+      end else if V1>V2 then begin
+        vt :=  (V1-V2)*R2/(R2+R1);
+      end else if V2>V1 then begin
+        vt :=  (V2-V1)*R1/(R1+R2);
+      end;
+      if R1+R2 = 0 then rt := 0 else rt := R1*R2/(R1+R2);
+    end;
+    //debugln('Conectado a dos pines.');
   end else if pin1<>nil then begin
-    pin1.GetThev(vThev, rThev);
-    exit(vThev)
-//    debugln('Conectado a un pin.');
+    //Conectado a un pin.
+    pin1.GetThev(V1, R1);
+    vt := V1;
+    rt := R1;
   end else if pin2<>nil then begin
-    pin2.GetThev(vThev, rThev);
-    exit(vThev)
-//    debugln('Conectado a un pin.');
+    //Conectado a un pin.
+    pin2.GetThev(V2, R2);
+    vt := V2;
+    rt := R2;
   end else begin
-    debugln('No conectado.');
+    vt := 0;
+    rt := 1e+9;  //Alta impedancia
   end;
-//debugln('Voltaje de oonector: %d pines.', [pinsNod.Count]);
-//  for pin in pinsNod do begin
-//
-//  end;
-  Result := 0;
 end;
 { TOgConector }
 function TOgConector.LoSelecciona(xr, yr: Integer): Boolean;
@@ -313,15 +389,15 @@ begin
   Result := PointSelectSegment(xr, yr, x0, y0, x1, y1 );
 end;
 procedure TOgConector.Draw;
+var
+  vt, rt: Single;
 begin
   //Descripción
   //v2d.SetText(clBlack, 11,'', true);
   //v2d.Texto(X + 2, Y -20, 'Conector');
-  if GetVoltage > 2.5 then begin
-    v2d.SetPen(psSolid, 1, clRed);
-  end else begin
-    v2d.SetPen(psSolid, 1, clGray);
-  end;
+  //Cuerpo
+  GetThev(vt, rt);
+  v2d.SetPen(psSolid, 1, GetThevCol(vt,rt));
   v2d.Linea(pcBEGIN.x, pcBEGIN.y, pcEND.x, pcEND.y);
   inherited Draw;
 end;
@@ -383,11 +459,12 @@ begin
   PtosConex.Clear;  //Se aprovechará para crear puntos de conexión
   //Pines de la izquierda
   ypin := SEP_PIN/2;   //posición inicial
-  xpin := -LON_PIN;
+  xpin := -LON_PIN+3;
   for i:=1 to nPinsSide do begin
     //Pin
-    pin := AddPin(xpin, ypin-1, xpin, ypin-2, xpin+LON_PIN+1, ypin+2);
-    pin.SetLabel(2, ypin-8, pic.pines[i].GetLabel);
+    pin := AddPin(xpin, ypin-1,
+                  xpin, ypin-5, xpin+LON_PIN+1, ypin+5);
+    pin.SetLabel(5, ypin-8, pic.pines[i].GetLabel);
     pin.pic := pic0;  //guarda referencia el PIC
     //pin.lValue := @;
     //Calcula siguiente posición
@@ -395,10 +472,11 @@ begin
   end;
   //Pines de la derecha
   ypin := SEP_PIN/2 + (nPinsSide-1) * SEP_PIN;   //posición inicial
-  xpin := width;
+  xpin := width-3;
   for i:=nPinsSide+1 to nPinsDiag do begin
     //Pin
-    pin := AddPin(xpin+LON_PIN-1, ypin, xpin, ypin-2, xpin+LON_PIN-1, ypin+2);
+    pin := AddPin(xpin+LON_PIN-1, ypin,
+                  xpin, ypin-5, xpin+LON_PIN-1, ypin+5);
     pin.SetLabel(xpin-2, ypin-8, pic.pines[i].GetLabel, taRightJustify);
     pin.pic := pic0;  //guarda referencia el PIC
     //Calcula siguiente posición
@@ -408,8 +486,10 @@ begin
   Relocate(x, y);  //Se mantiene la posición, pero se hace para actualizar a los puntos de conexión
 end;
 procedure TOgPic.Draw;
+const
+  RAD_MARK = 15;  //Radio de la marca superior del chip
 var
-  ancho: Single;
+  ancho, rt, vt, xMed: Single;
   pin : TPinGraph;
   pCnx: TPtoConx;
 begin
@@ -418,22 +498,29 @@ begin
     v2d.SetBrush(clGray);
     v2d.RectangR(x, y, x+Width, y+Height);
   end else begin //Caso normal
+    xMed := x + width/2;
     //Dibuja título
     ancho := v2d.TextWidth(Name);
     v2d.SetText(True, False, False);
-    v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
+    v2d.Texto(xMed - ancho/2 , y - 18, Name);
     //Dibuja cuerpo
     v2d.SetText(False, False, False);
+    v2d.SetText($D0D0D0);
     v2d.SetPen(psSolid, 1, clGray);
-    v2d.SetBrush(clGray);
+    v2d.SetBrush(COL_CI);
     v2d.RectangR(x, y, x+Width, y+Height);  //fondo
+    v2d.SetBrush($202020);
+    v2d.RadialPie(xMed-RAD_MARK ,y-RAD_MARK, xMed+RAD_MARK,y+RAD_MARK,2880,2880);
     //Dibuja los pines
     for pCnx in self.PtosConex do begin
       pin := TPinGraph(pCnx);
-      v2d.rectang(x+pin.x1, y+pin.y1, x+pin.x2, y+pin.y2);
+      //En el PIC, los pines se pintan con el color del modelo interno
+      pin.GetThev(vt, rt);
+      v2d.SetBrush(GetThevCol(vt,rt));
+      v2d.rectangR(x+pin.x1, y+pin.y1, x+pin.x2, y+pin.y2);
       v2d.Texto(x+pin.xLbl, y+pin.yLbl, pin.lbl);
       //Visualiza el estado lógico de pin
-      DrawState(x+pin.x1, y+pin.y1, pin);
+//      DrawState(x+pin.x1, y+pin.y1, pin);
     end;
   end;
   inherited;
@@ -448,7 +535,7 @@ begin
 //  pcCEN_LEF.Visible := false;
 //  pcCEN_RIG.Visible := false;
   SizeLocked := true;
-  ShowPtosConex:=true;  //Muestra los puntos de conexión
+//  ShowPtosConex:=true;  //Muestra los puntos de conexión
 end;
 destructor TOgPic.Destroy;
 begin
@@ -461,12 +548,16 @@ var
 begin
   //Dibuja título
   ancho := v2d.TextWidth(Name);
+  v2d.SetText(COL_GND);
   v2d.SetText(True, False, False);
   v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
   //Dibuja cuerpo
   v2d.SetPen(psSolid, 1, clBlack);
-  if FState then v2d.SetBrush(clRed)
-  else v2d.SetBrush(clGray);
+  if pin.vThev>2.5 then begin
+    v2d.SetBrush(clRed)
+  end else begin
+    v2d.SetBrush(clGray);
+  end;
   //v2d.RectangR(x, y, x+Width, y+Height);
   ptos[0].x := x;
   ptos[0].y := y;
@@ -482,8 +573,6 @@ begin
   inherited;
 end;
 constructor TOgLogicState.Create(mGraf: TMotGraf);
-var
-  pin: TPinGraph;
 begin
   inherited Create(mGraf);
   setlength(ptos, 5);
@@ -506,36 +595,37 @@ end;
 { TOgLedRed }
 procedure TOgLedRed.Draw;
 var
-  ancho, x2, y2, yled: Single;
+  ancho, x2, y2, yled, vt, rt: Single;
 begin
   x2:=x+width;
   yled := y + 40;
   y2:=y+height;
   //Dibuja título
   ancho := v2d.TextWidth(Name);
+  v2d.SetText(COL_GND);
   v2d.SetText(True, False, False);
   v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
   //Verifica valor lógico
 
   //FState
   //Dibuja cuerpo
-  v2d.SetPen(psSolid, 1, clBlack);
+  v2d.SetPen(psSolid, 2, COL_GND);
   //Línea vertioal y conexión a tierra
   v2d.Linea(x+12, y, x+12, y2);
   v2d.Linea(x+5, y2, x+19, y2);
   //Resistencia
-  v2d.SetBrush(clGray);
+  v2d.SetPen(psSolid, 1, COL_GND);
+  v2d.SetBrush(COL_RES);
   v2d.RectangR(x+5, y+10, x2-5, y+35);
   //Símbolo circular
-  if FState then v2d.SetBrush(clRed)
+  pin.GetThevNod(vt, rt);  //Lee voltaje del nodo
+  if vt>2 then v2d.SetBrush(clRed)
   else v2d.SetBrush(clGray);
   v2d.Ellipse(x, yled, x+width, yled+24);
   v2d.Ellipse(x+3, yled+3, x+width-3, yled+24-3);
   inherited;
 end;
 constructor TOgLedRed.Create(mGraf: TMotGraf);
-var
-  pin: TPinGraph;
 begin
   inherited Create(mGraf);
   Width  := 24;
@@ -564,16 +654,18 @@ begin
   y2:=y+height;
   //Dibuja título
   ancho := v2d.TextWidth(Name);
+  v2d.SetText(COL_GND);
   v2d.SetText(True, False, False);
   v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
   //Verifica valor lógico
 
   //Línea vertioal y conexión a tierra
-  v2d.SetPen(psSolid, 1, clBlack);
+  v2d.SetPen(psSolid, 2, COL_GND);
   v2d.Linea(x+12, y, x+12, y2);
   v2d.Linea(x+5, y2, x+19, y2);
   //Resistencia
-  v2d.SetBrush(clGray);
+  v2d.SetPen(psSolid, 1, COL_GND);
+  v2d.SetBrush(COL_RES);
   v2d.RectangR(x+5, y+20, x2-5, y+50);
   inherited;
 end;
@@ -684,7 +776,7 @@ begin
       //Click sobre un objeto seleccionado
       if motEdi.Selected is TOgLogicState then begin
         LogInp := TOgLogicState(motEdi.Selected);
-        LogInp.FState := true;
+        LogInp.pin.vThev := 5;
         Refrescar;
         //MsgBox('TOggle');
       end;
@@ -722,7 +814,7 @@ begin
     if motEdi.Selected.LoSelecciona(X,Y) then begin
       if motEdi.Selected is TOgLogicState then begin
         LogInp := TOgLogicState(motEdi.Selected);
-        LogInp.FState := false;
+        LogInp.pin.vThev := 0;
       end;
     end;
   end;

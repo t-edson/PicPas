@@ -2845,4 +2845,10 @@ object frmDebugger: TfrmDebugger
       Action = acGenClearCC
     end
   end
+  object Timer2: TTimer
+    Enabled = False
+    OnTimer = Timer2Timer
+    left = 168
+    top = 120
+  end
 end

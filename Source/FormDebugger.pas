@@ -41,6 +41,7 @@ type
     Splitter6: TSplitter;
     StatusBar1: TStatusBar;
     Timer1: TTimer;
+    Timer2: TTimer;
     ToolBar1: TToolBar;
     ToolButton1: TToolButton;
     ToolButton2: TToolButton;
@@ -62,6 +63,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure Timer1Timer(Sender: TObject);
+    procedure Timer2Timer(Sender: TObject);
   private
     defHeight: LongInt;
     margInstrc: Integer;
@@ -94,18 +96,32 @@ begin
   fraRegWat.SetLanguage;
 end;
 procedure TfrmDebugger.Timer1Timer(Sender: TObject);
+{temporizador para eleditor de diagramas }
 var
   stopped: boolean;
 begin
   if pic = nil then exit;
   consoleTickStart;
   pic.ExecNCycles(nCyclesPerClk, stopped);
-  consoleTickCount('');
   if stopped then begin
     acGenPauseExecute(self);
   end else begin
-    RefreshScreen;
+    if fraPicDia.Visible then fraPicDia.Refrescar;
+//    RefreshScreen;
   end;
+  consoleTickCount('');
+end;
+procedure TfrmDebugger.Timer2Timer(Sender: TObject);
+{Temporizador para los otros frames menos fraPicDia.}
+begin
+  fraPicReg.Refrescar;
+  if fraRamExp.Visible then fraRamExp.panGraph.Invalidate;
+  if fraRegWat.Visible then fraRegWat.Refrescar;
+//  if fraPicDia.Visible then fraPicDia.Refrescar;
+  if fraPicAsm.Visible then fraPicAsm.Refrescar(true);
+  StatusBar1.Panels[1].Text := 'Clock Cycles = ' + IntToStr(pic.nClck);
+  StatusBar1.Panels[2].Text := 'Time  = ' +
+            FormatDateTime('hh:mm:ss.zzz', pic.nClck / pic.frequen / (86400 / 4));
 end;
 procedure TfrmDebugger.RefreshScreen(SetGridRow: boolean = true);
 {Refresca los paneles de la pantalla, con información actual del PIC}
@@ -158,8 +174,9 @@ begin
   {La idea de la ejecución en tiempo real, es ejecutar un paquete de instrucciones
   (ciclos) por bloques y luego aprovechar el tiempo muerto que queda por haber ejecutado
   todas las instrucciones en menor tiempo.}
-  milsecRefresh := 200;   //Fija un periodo de refresco inicial
+  milsecRefresh := 50;   //Fija un periodo de refresco inicial
   Timer1.Interval := milsecRefresh;
+  Timer2.Interval := 250;  //Los controles adicionales
   {Calcula cuántos ciclos debe ejecutar por refresco. Aún cuando el resultado de la
   fórmula sea exacto, la función ExecNCycles() usada para ejecutar un grupo de ciclos
   no siempre ejecuta los ciclos solicitados exactamente.}
@@ -217,6 +234,7 @@ procedure TfrmDebugger.acGenResetExecute(Sender: TObject);
 begin
   pic.Reset;
   Timer1.Enabled := false;
+  Timer2.Enabled := false;
   acGenRun.Enabled := true;
   acGenPause.Enabled := false;
   RefreshScreen;
@@ -239,6 +257,7 @@ begin
   end;
   //Programa la ejecución temporizada
   Timer1.Enabled := true;
+  Timer2.Enabled := true;
   acGenRun.Enabled := false;
   acGenPause.Enabled := true;
   RefreshScreen;
@@ -248,6 +267,7 @@ procedure TfrmDebugger.acGenPauseExecute(Sender: TObject);
 {Detiene el programa en el punto actual.}
 begin
   Timer1.Enabled := false;
+  Timer2.Enabled := false;
   acGenRun.Enabled := true;
   acGenPause.Enabled := false;
   RefreshScreen;
