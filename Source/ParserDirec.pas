@@ -1251,7 +1251,7 @@ end;
 procedure TParserDirecBase.ProcSET;
 //Asigna valor a una varaible
 var
-  varName: String;
+  varName, unitInf: String;
   varValue: TDirOperand;
 begin
   lexDir.Next;  //pasa al siguiente
@@ -1270,6 +1270,23 @@ begin
   if not CogCarERR('=') then exit;  //sale con error
   varValue := CogExpresion(0);
   if HayError then exit;
+  unitInf := lexDir.GetToken;  //Puede que haya unidades
+  //Esta facilidad adicional es útil para casos en que se expresa la frecuencia.
+  if upcase(unitInf) = 'KHZ' then begin
+    lexDir.Next;  //Lo reconcoe
+    varValue.SetvalNum(varValue.GetvalNum * 1000);
+  end else if upcase(unitInf) = 'MHZ' then begin
+    lexDir.Next;  //Lo reconcoe
+    varValue.SetvalNum(varValue.GetvalNum * 1000000);
+  end;
+  if not lexdir.GetEol then begin
+    GenErrorDir(ER_SYNTAX_ERRO);
+    exit;
+  end;
+  if not lexdir.GetEol then begin
+    GenErrorDir(ER_SYNTAX_ERRO);
+    exit;
+  end;
   AsigVariable(varName, varValue);
 end;
 procedure TParserDirecBase.ProcMSGBOX;

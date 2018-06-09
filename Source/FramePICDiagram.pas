@@ -24,6 +24,9 @@ type
     del pin.}
     vThev: single;
     rThev: single;
+  private  //Valores de voltaje e impedancia del nodo al que se encuentra conectado
+    vNod: single;
+    rNod: single;
   private  //Campos adicionales cuando es pin de un PIC
     {Se necesita una referencia al PIC cuando este pin es parte de un PIC.}
     pic   : TPicCore;
@@ -33,10 +36,11 @@ type
     lbl   : string;     //Etiqueta
     xLbl, yLbl: Single; //Posición de la etiqueta
   public
-    procedure GetThevNod(out vThev0, rThev0: Single);//Devuelve parámetros del modelo eléctrico
-    procedure GetThev(out vThev0, rThev0: Single);  //Devuelve parámetros del modelo eléctrico
+    //procedure GetThevNod(out vThev0, rThev0: Single);//Devuelve parámetros del modelo eléctrico
+    procedure GetModel(out vThev0, rThev0: Single);  //Devuelve parámetros del modelo eléctrico
     procedure SetLabel(xl, yl: Single; txt: string; align: TAlignment =
       taLeftJustify);
+    constructor Create(mGraf: TMotGraf);  //OJO: No es override
   end;
   TPicPinList = specialize TFPGObjectList<TPinGraph>;  //Lista para gestionar los puntos de control
 
@@ -44,7 +48,6 @@ type
   {Incluye propiedades de los componentes para este editor gráfico.}
   TOgComponent = class(TObjGraf)
   private
-    procedure ProcMoveConnPoint(x0, y0, ancho0, alto0: Single);
   public
     Ref: string;  //Nomenclatura única del componente: R1, R2, CI1
     ShowRef: boolean;
@@ -56,26 +59,40 @@ type
     destructor Destroy; override;
   end;
 
-  { TNodo }
-
-  TNodo = class
-    pinsNod: TPicPinList;  //Lista de pines conectadas al nodo
-    constructor Create(mGraf: TMotGraf);
-    destructor Destroy; override;
-  end;
+  TNode = class;
 
   { TOgConector }
   TOgConector = class(TOgComponent)
   private
+    OnConnect: procedure of object;
+    OnDisconnect: procedure of object;
+    nodParent: TNode;
     procedure PCtlConnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
     procedure PCtlDisconnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
-    procedure GetThev(out vt, rt: Single);
+    function ConnectedTo(ogCon: TOgConector): boolean;
   public
     function LoSelecciona(xr, yr: Integer): Boolean; override;
     procedure Draw; override;
     constructor Create(mGraf: TMotGraf); override;
     destructor Destroy; override;
   end;
+  TConnectorList = specialize TFPGObjectList<TOgConector>;  //Lista para gestionar los puntos de control
+
+  { TNode }
+  TNode = class
+  private
+    vt, rt: Single;
+    connectorList: TConnectorList;
+    pinList      : TPicPinList;  //Lista de pines conectadas al nodo
+    procedure UpdateModel;
+    function Contains(ogCon: TOgConector): boolean;
+    function ConnectedTo(ogCon: TOgConector): boolean;
+    procedure AddConnector(ogCon: TOgConector);
+  public
+    constructor Create;
+    destructor Destroy; override;
+  end;
+  TNodeList = specialize TFPGObjectList<TNode>;  //Lista de nodos
 
   { TOgPic }
   //Define el objeto gráfico PIC
@@ -157,10 +174,15 @@ type
     procedure acGenConnectExecute(Sender: TObject);
     procedure acGenDelObjectExecute(Sender: TObject);
   private  //Nombres y referencias
+    procedure connectorChange;
     function ExistsName(AName: string): boolean;
     function UniqueName(NameBase: string): string;
     function ExistsRef(ARef: string): boolean;
     function UniqueRef(RefBase: string): string;
+  private  //Manejo de nodos
+    nodeList: TNodeList;
+    procedure AddConnectorToNodes(ogCon: TOgConector);
+    procedure UpdateNodeList;
   private
     Fpic: TPicCore;
     ogPic: TOgPic;
@@ -191,6 +213,14 @@ const
   COL_VCC = clRed;    //Voltajes VCC
   COL_HIM = $A0A0A0;  //Alta impedancia
   COL_RES = $9FE7F9;  //Cuerpo de resistencias
+const  //ID para componentes
+  ID_PINGRAF = 1;    //Un pin que desciende de un Punto de conexión
+  ID_COMPON  = 10;   //Componentes en general
+  ID_PIC     = 11;
+  ID_CONNEC  = 12;
+  ID_LEDRES  = 13;
+  ID_RESIST  = 14;
+  ID_TOG_LOG = 15;
 
 function GetThevCol(vt, rt: Single): TColor;
 {Devuelve un color que representa el estado de un circuito de Thevening.}
@@ -207,46 +237,168 @@ begin
     end;
   end;
 end;
-{ TNodo }
-constructor TNodo.Create(mGraf: TMotGraf);
+function ResParallel(r1, r2: Single): Single; inline;
 begin
-  pinsNod := TPicPinList.Create(false);
+  if r1+r2=0 then begin
+    exit(0)
+  end else begin
+    exit(r1*r2/(r1+r2));
+  end;
 end;
-destructor TNodo.Destroy;
+{ TNode }
+procedure TNode.UpdateModel;
+{Devuelve los parámetros de Thevening del nodo. Esto es útil para leer el voltaje del
+nodo en cualquier momento, que es parte de un análisis común por nodos.}
+var
+  pin: TPinGraph;
+  r0 : Single;
+  v1, r1, v2, r2: Single;
+  nResistor, nSource: integer;  //Contadores y banderas
 begin
-  pinsNod.Destroy;
+  //Casos especiales
+  if pinList.Count = 0 then begin
+    //Nodo sin conexiones
+    vt := 0;
+    rt := 1e+9;  //Alta impedancia
+  end else if pinList.Count = 1 then begin
+    //Conectado a un solo pin
+    pinList[0].GetModel(vt, rt);  //Mismo modelo del nodo
+  end else begin
+    //Conectado a varios pines
+    {Va simplificando por un lado las que son fuentes (en v1, r1)
+    y por otro las que son solo resistencias (en r0). La idea es que al final
+    se tenga:
+
+          +--[R1]---
+          |
+         [V1]
+          |
+         ---
+
+    Y por el otro:
+
+      ----+
+          |
+         [R0]
+          |
+         ---
+    }
+    nResistor := 0;
+    nSource   := 0;
+    for pin in pinList do begin
+      pin.GetModel(v2, r2);
+      if v2 = 0 then begin
+        //Es resistencia pura
+        if nResistor=0 then begin
+          //Primera resistencia
+          r0 := r2;  //toma su valor
+        end else begin
+          r0 := ResParallel(r0, r2);  //Acumula en paralelo
+        end;
+        inc(nResistor);  //Lleva la cuenta
+      end else begin
+        //Es fuente con resistencia
+        if nSource=0 then begin
+          //Primera fuente
+          v1 := v2;  //Toma su valor
+          r1 := r2;
+        end else begin
+          if r1+r2 = 0 then begin
+            //Hay conexión directa de dos fuentes
+            {Se pone valor de voltaje promedio para evitar la indeterminación, pero
+            ralemnte debería generarse un error o advertencia.}
+            v1 := (v1+v2)/2;
+          end else begin
+            v1 := v2 + (v1-v2)*r2/(r1+r2);
+          end;
+          r1 := ResParallel(r1, r2);
+        end;
+        inc(nSource);  //lleva la cuenta
+      end;
+    end;
+    //Ya se han explorado todos los pines. Ahora analzia lso casos
+    if nSource=0 then begin
+      //Todas son resistncias
+      vt := 0;
+      rt := r0;  //Resistencia acumulada
+    end else if nResistor=0 then begin
+      //Todas son fuentes thevening
+      vt := v1;  //Voltaje acumulado
+      rt := r1;  //Resistencia acumulada
+    end else begin
+      //Caso general: Fuentes de thevening con resistencia:
+      vt := v1*r0/(r0 + r1);
+      rt := ResParallel(r0, r1);
+    end;
+  end;
+debugln('Nodo actualizado: %d fuentes, %d resist.', [nSource, nResistor]);
+  {Ahora que ya se tienen los valores de voltaje e impedancia del nodo, pasa esa
+  información a todos los pines de los componentes conectados, para uniformizar estados}
+  for pin in pinList do begin
+    pin.vNod := vt;
+    pin.rNod := rt;
+  end;
+end;
+function TNode.Contains(ogCon: TOgConector): boolean;
+{Indica si el conector está en la lista de conectores del nodo.}
+var
+  c: TOgConector;
+begin
+  for c in connectorList do begin
+    if c = ogCon then exit(true);
+  end;
+  //No está
+  exit(false);
+end;
+function TNode.ConnectedTo(ogCon: TOgConector): boolean;
+{Indica si el conector indicado, está eléctricamente conectado a este nodo.}
+var
+  c: TOgConector;
+begin
+  //Verifia si etsá conectado a alguno de los conectores del nodo
+  for c in connectorList do begin
+    if c.ConnectedTo(ogCon) then exit(true);
+  end;
+  //No está conectado a ningún conector
+  exit(false);
+end;
+procedure TNode.AddConnector(ogCon: TOgConector);
+{Agrega un connector a la lista de conectores del nodo. Se supone que todo los
+conectores de un nodo están eléctrticamenet conectados.}
+  procedure AddPinOf(pCtl: TPtoCtrl);
+  var
+    pin: TPinGraph;
+  begin
+    if pCtl.ConnectedTo<>nil then begin
+      if pCtl.ConnectedTo.Id = ID_PINGRAF then begin
+        pin := TPinGraph(pCtl.ConnectedTo);
+        if pinList.IndexOf(pin) = -1 then begin
+          //No existe el pin, lo agrega
+          pinList.Add(pin);
+        end;
+      end;
+    end;
+  end;
+begin
+  connectorList.Add(ogCon);
+  ogCon.nodParent := self;  //Guarda referencia
+  //También se guardan los pines a los que se encuentra conectado
+  AddPinOf(ogCon.pcBEGIN);
+  AddPinOf(ogCon.pcEND);
+end;
+constructor TNode.Create;
+begin
+  connectorList:= TConnectorList.Create(false);
+  pinList := TPicPinList.Create(false);
+end;
+destructor TNode.Destroy;
+begin
+  pinList.Destroy;
+  connectorList.Destroy;
   inherited Destroy;
 end;
 { TPinGraph }
-procedure TPinGraph.GetThevNod(out vThev0, rThev0: Single);
-{Devuelve los valores de voltaje e impedancia del nodo al que se encuentra conectado el
-pin, si es que acaso se encuentra conectado a un nodo. De no ser así, devuelve los
-parametros del mismo pin.}
-var
-  pCtl: TPtoCtrl;
-  og: TObjGraf;
-  ogCon: TOgConector;
-begin
-  if ptosControl.Count = 0 then begin
-    //No tiene conexión a ningún nodo
-    vThev0 := vThev;  //¿Y si es PIC?
-    rThev0 := rThev;
-  end else begin
-    //está conectado a al menos un nodo
-    pCtl := ptosControl[0];
-    og :=  pCtl.Parent;
-    if og is TOgConector then begin  //Optimizar usando mejor un ID
-      //Es el punto de control de un conector
-      ogCon := TOgConector(og);
-      ogCon.GetThev(vThev0, rThev0);  //Lee de conector
-    end else begin
-      //Es el punto de control de otra cosa que se conectó a este pin. ¿Qué raro?
-      vThev0 := vThev;  //¿Y si es PIC?
-      rThev0 := rThev;
-    end;
-  end;
-end;
-procedure TPinGraph.GetThev(out vThev0, rThev0: Single);
+procedure TPinGraph.GetModel(out vThev0, rThev0: Single);
 {Devuelve el equivalente de Thevening del pin. Equivale a devolver el modelo eléctrico
 del pin, cuando está desconectado.}
 begin
@@ -269,16 +421,19 @@ begin
   taRightJustify: xLbl := xl - v2d.TextWidth(txt);
   end
 end;
-procedure TOgComponent.ProcMoveConnPoint(x0, y0, ancho0, alto0: Single);
-{Para algo debe servir esto}
+constructor TPinGraph.Create(mGraf: TMotGraf);
 begin
-
+  inherited Create(mGraf);
+  {Se usa un ID porque identificar un objeto por ID es más rápido que usar
+  la comparación con: <variable> IS <Alguna Clase>.}
+  id := ID_PINGRAF;
 end;
+{ TOgComponent }
 function TOgComponent.AddPtoConex(xOff, yOff: Single): TPinGraph;
 {Reescribimos nuestra propia función porque no vamos a agregar objetos TPtoConx,
 sino objetos TPinGraph.}
 begin
-  Result := TPinGraph.Create(v2d, @ProcMoveConnPoint);
+  Result := TPinGraph.Create(v2d);
   ////// Esta sección es similar al del método virtual AddPtoConex //////
   Result.xFac := xOff/Width;
   Result.yFac := yOff/Height;
@@ -288,7 +443,6 @@ begin
   Result.Parent := self;
   PtosConex.Add(Result);
 end;
-{ TOgComponent }
 function TOgComponent.AddPin(xCnx, yCnx, //Coord. del punto de conexión
                              x1, y1, x2, y2: Single): TPinGraph;
 var
@@ -305,81 +459,41 @@ begin
 end;
 constructor TOgComponent.Create(mGraf: TMotGraf);
 begin
+  Id := ID_COMPON;
   inherited Create(mGraf);
 end;
 destructor TOgComponent.Destroy;
   begin
     inherited Destroy;
   end;
+{ TOgConector }
 procedure TOgConector.PCtlConnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
 {Un punto de control se conecta a un punto de conexión }
 begin
-//  pinsNod.Add( TPinGraph(pCnx.data) );
-//  DebugLn('PCtlConnect');
+   if OnConnect<>nil then OnConnect();
 end;
 procedure TOgConector.PCtlDisconnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
 {Un punto de control se desconecta a un punto de conexión }
 begin
-//  pinsNod.Remove( TPinGraph(pCnx.data) );
-//  DebugLn('PCtlDisconnect');
+  if OnDisconnect<>nil then OnDisconnect();
 end;
-procedure TOgConector.GetThev(out vt, rt: Single);
-{Devuelve los parámetros de Thevening del nodo. Esto es útil para leer el voltaje del
-nodo en cualquier momento, que es parte de un análisis por nodos, común.}
-var
-  pin1, pin2: TPinGraph;
-  V1, R1, V2, R2: Single;
-begin
-  //Calcula el voltaje del conector, que es tratado como parte de un nodo.
-  {Formalmente, debería analizarse todo un nodo (del cual este conector debe formar
-  parte), pero para prueba aquí solo analizamos el caso de dos pines}
-  if not(pcBEGIN.ConnectedTo is TPinGraph) then pin1 := nil else pin1 := TPinGraph(pcBEGIN.ConnectedTo);
-  if not(pcEND.ConnectedTo is TPinGraph) then pin2 := nil else pin2 := TPinGraph(pcEND.ConnectedTo);
-
-  if (pin1<>nil) and (pin2<>nil) then begin
-    //Conectado a dos pines
-    pin1.GetThev(V1, R1);
-    pin2.GetThev(V2, R2);
-    if (V1 = 0) and (V2 = 0) then begin
-      //No hay fuentes
-      vt := 0;
-      if R1+R2 = 0 then rt := 0 else rt := R1*R2/(R1+R2);
-    end else if (V1 = 0) then begin
-      //V2 <> 0
-      vt := V2 * R1/(R1+R2);
-      if R1+R2 = 0 then rt := 0 else rt := R1*R2/(R1+R2);
-    end else if (V2 = 0) then begin
-      //V1 <> 0
-      vt := V1 * R2/(R2+R1);
-      if R1+R2 = 0 then rt := 0 else rt := R1*R2/(R1+R2);
-    end else begin
-      //Hay dos fuentes
-      if V1 = V2 then begin
-        vt :=  V1;
-      end else if V1>V2 then begin
-        vt :=  (V1-V2)*R2/(R2+R1);
-      end else if V2>V1 then begin
-        vt :=  (V2-V1)*R1/(R1+R2);
-      end;
-      if R1+R2 = 0 then rt := 0 else rt := R1*R2/(R1+R2);
-    end;
-    //debugln('Conectado a dos pines.');
-  end else if pin1<>nil then begin
-    //Conectado a un pin.
-    pin1.GetThev(V1, R1);
-    vt := V1;
-    rt := R1;
-  end else if pin2<>nil then begin
-    //Conectado a un pin.
-    pin2.GetThev(V2, R2);
-    vt := V2;
-    rt := R2;
-  end else begin
-    vt := 0;
-    rt := 1e+9;  //Alta impedancia
+function TOgConector.ConnectedTo(ogCon: TOgConector): boolean;
+{Verifica si hay conexión entre este conector y "ogCon"}
+  function ConnectedSameConexionPoint(p1, p2: TPtoCtrl): boolean;
+  {Indica si los puntos de control indicados, están conectados al mismo Punto
+  de Conexión.}
+  begin
+    if p1.ConnectedTo = nil then exit(false);  //No está conectado a nada
+    if p2.ConnectedTo = nil then exit(false);  //No está conectado a nada
+    if p1.ConnectedTo = p2.ConnectedTo then exit(true) else exit(false);
   end;
+begin
+  if ConnectedSameConexionPoint(pcBEGIN, ogCon.pcBEGIN) then exit(true);
+  if ConnectedSameConexionPoint(pcBEGIN, ogCon.pcEND) then exit(true);
+  if ConnectedSameConexionPoint(pcEND, ogCon.pcBEGIN) then exit(true);
+  if ConnectedSameConexionPoint(pcEND, ogCon.pcEND) then exit(true);
+  exit(false);
 end;
-{ TOgConector }
 function TOgConector.LoSelecciona(xr, yr: Integer): Boolean;
 var
   x0, y0, x1, y1: Integer;
@@ -390,20 +504,21 @@ begin
 end;
 procedure TOgConector.Draw;
 var
-  vt, rt: Single;
+  col: TColor;
 begin
   //Descripción
   //v2d.SetText(clBlack, 11,'', true);
   //v2d.Texto(X + 2, Y -20, 'Conector');
   //Cuerpo
-  GetThev(vt, rt);
-  v2d.SetPen(psSolid, 1, GetThevCol(vt,rt));
+  col := GetThevCol(nodParent.vt, nodParent.rt);  //Se supone que el nodo padre ya está actualizado
+  v2d.SetPen(psSolid, 1, col);
   v2d.Linea(pcBEGIN.x, pcBEGIN.y, pcEND.x, pcEND.y);
   inherited Draw;
 end;
 constructor TOgConector.Create(mGraf: TMotGraf);
 begin
   inherited Create(mGraf);
+  Id := ID_CONNEC;
   pcBEGIN.OnConnect := @PCtlConnect;
   pcEND.OnConnect := @PCtlConnect;
   pcBEGIN.OnDisconnect := @PCtlDisconnect;
@@ -419,7 +534,7 @@ procedure TOgPic.DrawState(const xc, yc: Single; pin: TPinGraph);
 var
   vThev, rThev: Single;
 begin
-  pin.GetThev(vThev, rThev);
+  pin.GetModel(vThev, rThev);
   if vThev > 2.5 then begin
     //Se asume en alta a partir de 2.5V
     v2d.Barra(xc-5, yc-5, xc+5, yc+5, clRed);
@@ -515,7 +630,7 @@ begin
     for pCnx in self.PtosConex do begin
       pin := TPinGraph(pCnx);
       //En el PIC, los pines se pintan con el color del modelo interno
-      pin.GetThev(vt, rt);
+      pin.GetModel(vt, rt);
       v2d.SetBrush(GetThevCol(vt,rt));
       v2d.rectangR(x+pin.x1, y+pin.y1, x+pin.x2, y+pin.y2);
       v2d.Texto(x+pin.xLbl, y+pin.yLbl, pin.lbl);
@@ -528,6 +643,7 @@ end;
 constructor TOgPic.Create(mGraf: TMotGraf);
 begin
   inherited Create(mGraf);
+  ID := ID_PIC;
   Width := 140;
   Height := 180;
 //  pcTOP_CEN.Visible := false;
@@ -575,6 +691,7 @@ end;
 constructor TOgLogicState.Create(mGraf: TMotGraf);
 begin
   inherited Create(mGraf);
+  id := ID_TOG_LOG;
   setlength(ptos, 5);
   Width  := 30;
   Height := 20;
@@ -595,7 +712,7 @@ end;
 { TOgLedRed }
 procedure TOgLedRed.Draw;
 var
-  ancho, x2, y2, yled, vt, rt: Single;
+  ancho, x2, y2, yled: Single;
 begin
   x2:=x+width;
   yled := y + 40;
@@ -618,8 +735,7 @@ begin
   v2d.SetBrush(COL_RES);
   v2d.RectangR(x+5, y+10, x2-5, y+35);
   //Símbolo circular
-  pin.GetThevNod(vt, rt);  //Lee voltaje del nodo
-  if vt>2 then v2d.SetBrush(clRed)
+  if pin.vNod>2 then v2d.SetBrush(clRed)
   else v2d.SetBrush(clGray);
   v2d.Ellipse(x, yled, x+width, yled+24);
   v2d.Ellipse(x+3, yled+3, x+width-3, yled+24-3);
@@ -628,6 +744,7 @@ end;
 constructor TOgLedRed.Create(mGraf: TMotGraf);
 begin
   inherited Create(mGraf);
+  id := ID_LEDRES;
   Width  := 24;
   Height := 70;
   pcTOP_CEN.Visible := false;
@@ -647,10 +764,9 @@ end;
 { TOgResisten }
 procedure TOgResisten.Draw;
 var
-  ancho, x2, y2, yled: Single;
+  ancho, x2, y2: Single;
 begin
   x2:=x+width;
-  yled := y + 40;
   y2:=y+height;
   //Dibuja título
   ancho := v2d.TextWidth(Name);
@@ -674,6 +790,7 @@ var
   pin: TPinGraph;
 begin
   inherited Create(mGraf);
+  id := ID_RESIST;
   Width  := 24;
   Height := 70;
   pcTOP_CEN.Visible := false;
@@ -692,7 +809,17 @@ begin
 end;
 { TfraPICDiagram }
 procedure TfraPICDiagram.Refrescar;
+var
+  nod: TNode;
 begin
+  {Aqui debería hacerse la actualización del PIC, y de los otros elementos que se mueven
+  con reloj.}
+  //pic.ExecNCycle()
+  {Actualiza el estado de los Nodos porqu se supone que los voltajes o resisetncias de
+  los componentes pueden haber cambiado (Como los pines de salida del PIC).}
+  for nod in nodeList do begin
+    nod.UpdateModel;
+  end;
   motEdi.Refrescar;
 end;
 procedure TfraPICDiagram.SetCompiler(cxp0: TCompilerBase);
@@ -714,6 +841,51 @@ begin
     mnItem := TMenuItem(Sender);
     msgbox('Eureka:' + mnItem.Hint);
   end;
+end;
+//Manejo de nodos
+procedure TfraPICDiagram.AddConnectorToNodes(ogCon: TOgConector);
+{Agrega un conector al nodo que corresponda (al que contiene conectores que están
+unidos eléctricamente a "conn"), o crea un nuevo nodo.}
+var
+  nod, newNode: TNode;
+begin
+  for nod in nodeList do begin
+    if nod.Contains(ogCon) then begin
+      //Ya lo contiene en su lista. No hay nada que hacer.
+      exit;
+    end else if nod.ConnectedTo(ogCon) then begin
+      //Está eléctricamente conectado, pero no está en la lista
+      nod.AddConnector(ogCon);  //Lo agrega
+      exit;
+    end;
+  end;
+  //No pertenece a ningún nodo existente.
+  newNode := TNode.Create;  //Se crea con sus listas de conectores y pines vacías
+  newNode.AddConnector(ogCon);
+  nodeList.Add(newNode);
+end;
+procedure TfraPICDiagram.UpdateNodeList;
+{Actualiza la lista de nodos a partir de los conectores existentes. Esta tarea
+es importante para realizar el análisis correcto del voltaje e impedancia del nodo.
+Como esta tarea puede ser algo pesada, pro optimizaicón se debe reañizar solo cuando
+se pueda producir cambios en los nodos (creación, eliminación, conexión y desconexión)}
+var
+  og: TObjGraf;
+  ogCon: TOgConector;
+nod: TNode;
+begin
+  nodeList.Clear;
+  //Explora objetos gráfiocs
+  for og in motEdi.objetos do begin
+    if og is TOgConector then begin
+      ogCon := TOgConector(og);
+      AddConnectorToNodes(ogCon);
+    end;
+  end;
+//debugln('Lista de Nodos:');
+//for nod in nodeList do begin
+//  debugln('  Nodo con '+IntToStr(nod.connectorList.Count)+' conectores.');
+//end;
 end;
 function TfraPICDiagram.ExistsName(AName: string): boolean;
 {Indica si existe algún componente con el nombre AName}
@@ -898,6 +1070,7 @@ begin
   inherited Create(AOwner);
   //crea motor de edición
   motEdi := TModEdicion.Create(PaintBox1);
+  nodeList := TNodeList.Create(true);
   //agrega objeto
   ogPic := TOgPic.Create(motEdi.v2d);
   ogPic.Ref := 'CI1';
@@ -911,8 +1084,13 @@ begin
 end;
 destructor TfraPICDiagram.Destroy;
 begin
+  nodeList.Destroy;
   motEdi.Destroy;
   inherited Destroy;
+end;
+procedure TfraPICDiagram.connectorChange;
+begin
+  UpdateNodeList;
 end;
 /////////////////////// Acciones /////////////////////////
 procedure TfraPICDiagram.acGenConnectExecute(Sender: TObject);
@@ -968,8 +1146,11 @@ begin
   //conn.Highlight := false;
   conn.Name := UniqueName('Connector');
   conn.Ref := UniqueRef('CN');  //Genera nombe único
+  conn.OnConnect := @connectorChange;
+  conn.OnDisconnect := @connectorChange;
   motEdi.AddGraphObject(conn);
   conn.Selec;
+  UpdateNodeList;
   Refrescar;
 end;
 procedure TfraPICDiagram.acGenDelObjectExecute(Sender: TObject);
@@ -981,8 +1162,8 @@ begin
   end;
   //Elimina elementos seleccionados
   motEdi.DeleteSelected;
+  UpdateNodeList;
 end;
-
 end.
 
 

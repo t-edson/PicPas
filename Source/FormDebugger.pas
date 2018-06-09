@@ -176,7 +176,7 @@ begin
   todas las instrucciones en menor tiempo.}
   milsecRefresh := 50;   //Fija un periodo de refresco inicial
   Timer1.Interval := milsecRefresh;
-  Timer2.Interval := 250;  //Los controles adicionales
+  Timer2.Interval := 250;  //Los controles adicionales se pueden refersacr despacio
   {Calcula cuántos ciclos debe ejecutar por refresco. Aún cuando el resultado de la
   fórmula sea exacto, la función ExecNCycles() usada para ejecutar un grupo de ciclos
   no siempre ejecuta los ciclos solicitados exactamente.}
