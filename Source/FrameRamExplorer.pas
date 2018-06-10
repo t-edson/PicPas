@@ -3,9 +3,12 @@ unit FrameRamExplorer;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, StdCtrls, LCLProc,
-  LCLIntf, LCLType, ExtCtrls, Buttons, Pic16Utils, PicCore;
+  LCLIntf, LCLType, ExtCtrls, Buttons, PicCore, Parser;
 type
   //Define a un bloque de RAM, que servirá para dibujo
+  {Los bloques de RAM se usan para separar la memoria en bloques de acuerdo a
+  diversos criterios, como el estado, el uso o el mapeo. Por eso tienen diversas
+  banderas}
   TRamBlock = record
     add1, add2: word;      //Direcciones de memoria
     blkType: TPICCellState; //Tipo de blqoue
@@ -21,22 +24,24 @@ type
     SpeedButton1: TSpeedButton;
     procedure SpeedButton1Click(Sender: TObject);
   private
+    cxp: TCompilerBase;
+    pic: TPicCore;
     blockSta: array of TRamBlock;
     blockMap: array of TRamBlock;
     blockUse: array of TRamBlock;
-    procedure SepararEnBloquesEstado(dir1, dir2: word);
-    procedure SepararEnBloquesMapeado(dir1, dir2: word);
+    procedure SplitInStateRAM(dir1, dir2: word);
+    procedure SplitInMappedRAM(dir1, dir2: word);
     procedure SplitInUsedRAM(dir1, dir2: word);
-    procedure DibBancoRAM(const marcoRam: TRect; bnk: TPICRAMBank; selected: boolean);
+    procedure DrawRAMbank(const marcoRam: TRect; bnk: TPICRAMBank; selected: boolean);
     procedure DibBar(const x1, x2: integer; y1, y2: integer; lbl: string);
     procedure DrawBlockTxt(const marcoRam: TRect; ancMargenDir: integer; dirIni,
-      dirFin: integer; lbl: string);
+      dirFin, BankSize: word; lbl: string);
     procedure DrawBlock(const marcoRam: TRect; ancMargenDir: integer; dirIni,
-      dirFin: integer);
+      dirFin, BankSize: word);
     procedure panGraphPaint(Sender: TObject);
   public
-    pic: TPIC16;
     OnCloseFrame: procedure of object;   //Evento de cierre
+    procedure SetCompiler(cxp0: TCompilerBase);
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
   end;
@@ -48,7 +53,7 @@ procedure TfraRamExplorer.SpeedButton1Click(Sender: TObject);
 begin
   if OnCloseFrame<>nil then OnCloseFrame;
 end;
-procedure TfraRamExplorer.SepararEnBloquesEstado(dir1, dir2: word);
+procedure TfraRamExplorer.SplitInStateRAM(dir1, dir2: word);
 {Explora la memoria RAM, entre las direcciones dir1, y dir2, y almacena los bloques
 encontrados (de distinto campo "state"), en el arreglo "blockSta".
 }
@@ -89,7 +94,7 @@ begin
   blockSta[n].add2 := pos2;
   blockSta[n].blkType := tipBloque;
 end;
-procedure TfraRamExplorer.SepararEnBloquesMapeado(dir1, dir2: word);
+procedure TfraRamExplorer.SplitInMappedRAM(dir1, dir2: word);
 {Explora la memoria RAM, entre las direcciones dir1, y dir2, y almacena los bloques
 encontrados (de acuerdo a si están mapeados), en el arreglo "blockMap".
 }
@@ -212,11 +217,10 @@ begin
 end;
 procedure TfraRamExplorer.DrawBlockTxt(const marcoRam: TRect;
                                  ancMargenDir: integer;
-                                 dirIni, dirFin: integer; lbl: string);
-{Dibuja un bloque de un banco de RAM (definida en el área marcoRam), pone etiqueta
+                                 dirIni, dirFin, BankSize: word; lbl: string);
+{Dibuja un bloque de un banco de RAM (definida en el área "marcoRam"), pone etiqueta
 descriptiva y pinta con color indicativo.
-El bloque a dibujar, empieza en la dirección "dirIni" y termina en "dirFin".
-Se asume que todo el alto del banco RAM, tiene $80 bytes}
+El bloque a dibujar, empieza en la dirección "dirIni" y termina en "dirFin".}
 var
   etiqIni, etiqFin: String;
   altTxt: integer;  //Ancho de margen para las etiquetas de dirección.
@@ -224,12 +228,15 @@ var
   x1, x2: LongInt;
   altoByte: Double;
   y1, y2, alto: integer;
+  BankMask: Word;
 begin
+  BankMask := BankSize-1;  //Máscara para el banco: $7F (Mid-range) o $1F (Baseline)
+
   x1 := marcoRam.Left;
   x2 := marcoRam.Right;
-  altoByte := (marcoRam.Bottom - marcoRam.Top)/$80;
-  y1 := round(marcoRam.Top + (dirIni and $7F) * altoByte);
-  y2 := round(marcoRam.Top + ((dirFin and $7F)+1) * altoByte);
+  altoByte := (marcoRam.Bottom - marcoRam.Top)/BankSize;
+  y1 := round(marcoRam.Top + (dirIni and BankMask) * altoByte);
+  y2 := round(marcoRam.Top + ((dirFin and BankMask)+1) * altoByte);
   alto := y2 - y1;
 
   cv := panGraph.Canvas;
@@ -250,7 +257,8 @@ begin
   end;
 end;
 procedure TfraRamExplorer.DrawBlock(const marcoRam: TRect;
-  ancMargenDir: integer; dirIni, dirFin: integer);
+                                 ancMargenDir: integer;
+                                 dirIni, dirFin, BankSize: word);
 {Similar a DrawBlockTxt(), pero no pone las etiquetas de dirección, ni la etiqueta
 central.}
 var
@@ -258,18 +266,21 @@ var
   x1, x2: LongInt;
   altoByte: Double;
   y1, y2: integer;
+  BankMask: Word;
 begin
+  BankMask := BankSize-1;  //Máscara para el banco: $7F (Mid-range) o $1F (Baseline)
+
   x1 := marcoRam.Left;
   x2 := marcoRam.Right;
-  altoByte := (marcoRam.Bottom - marcoRam.Top)/$80;
-  y1 := round(marcoRam.Top + (dirIni and $7F) * altoByte);
-  y2 := round(marcoRam.Top + ((dirFin and $7F)+1) * altoByte);
+  altoByte := (marcoRam.Bottom - marcoRam.Top)/BankSize;
+  y1 := round(marcoRam.Top + (dirIni and BankMask) * altoByte);
+  y2 := round(marcoRam.Top + ((dirFin and BankMask)+1) * altoByte);
   //Dibuja barra de fondo
   cv := panGraph.Canvas;
   cv.Rectangle(x1+ancMargenDir,
                y1, x2, y2+1);  //Corrige y2, porque Rectangle, dibuja hasta un pincel antes
 end;
-procedure TfraRamExplorer.DibBancoRAM(const marcoRam: TRect; bnk: TPICRAMBank;
+procedure TfraRamExplorer.DrawRAMbank(const marcoRam: TRect; bnk: TPICRAMBank;
                                  selected: boolean);
 {Dibuja el banco de RAM completo, en el área "marcoRam", separando por bloques
 de acuerdo al campo "state" }
@@ -277,7 +288,7 @@ var
   i, ancMargenDir, j: integer;
   cv: TCanvas;
   lbl: String;
-  tarAdd, tarBnk: Word;
+  tarAdd, tarBnk, tmp: Word;
 begin
   cv := panGraph.Canvas;
   //Calcula el ancho de las etqiuetas
@@ -289,13 +300,14 @@ begin
 //  DrawBlock(marcoRam, ancMargenDir, blockSta[i].add1, blockSta[i].add2);  //dibuja;
 
   //Dibuja primero los bloques de memoria usadas
-  SplitInUsedRAM(0+bnk.AddrStart, $7F+bnk.AddrStart);
+  SplitInUsedRAM(bnk.AddrStart, bnk.AddrEnd);
   cv.Pen.Color := $80FF80;
   cv.Brush.Style := bsSolid;
   for i:=0 to high(blockUse) do begin
     if blockUse[i].used then begin
       cv.Brush.Color := $80FF80;
-      DrawBlock(marcoRam, ancMargenDir, blockUse[i].add1, blockUse[i].add2);  //dibuja;
+      DrawBlock(marcoRam, ancMargenDir,
+                blockUse[i].add1, blockUse[i].add2, pic.PICBANKSIZE);  //dibuja;
     end;
   end;
   //Dibuja zonas de la RAM
@@ -308,7 +320,7 @@ begin
   cv.Pen.Width := 1;
   cv.Pen.Color := clBlack;
   //Separa bloques
-  SepararEnBloquesEstado(0+bnk.AddrStart, $7F+bnk.AddrStart);
+  SplitInStateRAM(0+bnk.AddrStart, bnk.AddrEnd);
   // Dibuja los bloques
   for i:=0 to high(blockSta) do begin
     //Crea etiqueta
@@ -319,7 +331,7 @@ begin
       lbl := 'SFR';
     end;
     cs_impleGPR: begin
-      cv.Brush.Color := clWhite;
+//      cv.Brush.Color := clWhite;
       cv.Brush.Color := clNone;
       lbl := 'GPR';
     end;
@@ -328,12 +340,13 @@ begin
       lbl := 'Uninplemented';
     end;
     end;
+    tmp := pic.PICBANKSIZE;
     if blockSta[i].blkType = cs_impleGPR then begin
         //Divide el bloque, para ver zonas mapeadas
-        SepararEnBloquesMapeado(blockSta[i].add1, blockSta[i].add2);
+        SplitInMappedRAM(blockSta[i].add1, blockSta[i].add2);
         for j:=0 to high(blockMap) do begin
           if blockMap[j].mapped then begin
-             //Calcual en donde se está mapeado
+             //Calcula en donde está mapeado
              tarAdd := pic.ram[blockMap[j].add1].mappedTo^.addr;
              tarBnk :=  tarAdd >> 7;
              lbl := 'Mapped in bank'+ IntToStr(tarBnk);
@@ -343,13 +356,13 @@ begin
              cv.Brush.Style := bsSolid;
           end;
           DrawBlockTxt(marcoRam, ancMargenDir,
-                    blockMap[j].add1, blockMap[j].add2, lbl);  //dibuja;
+                       blockMap[j].add1, blockMap[j].add2, tmp,  lbl);  //dibuja;
         end;
     end else begin
         //Dibuja el bloque de forma normal.
         cv.Brush.Style := bsSolid;
         DrawBlockTxt(marcoRam, ancMargenDir,
-                blockSta[i].add1, blockSta[i].add2, lbl);  //dibuja;
+                blockSta[i].add1, blockSta[i].add2, tmp, lbl);  //dibuja;
     end;
   end;
 end;
@@ -358,27 +371,39 @@ var
   bordlat, ancPag, x0, i, separ, alto, bordSup, y0: Integer;
   bnkSel: byte;
 begin
-  if pic = nil then exit;
   ////////////////////////
   //Espaciado entre bancos
-  if width < 300 then begin
+  if width < 250 then begin
+    //Ancho reducido
     separ := panGraph.width div 24;  //espacio lateral
     bordlat := panGraph.width div 24;
   end else begin
-    separ := panGraph.width div 18;  //espacio lateral
-    bordlat := panGraph.width div 18;
+    //Ancho grande
+    if cxp.picCore.NumBanks = 1 then begin
+      //Es un solo banco. Puede quedar mal proporcionada
+      separ := panGraph.width div 4;  //espacio lateral
+      bordlat := panGraph.width div 4;
+    end else begin
+      separ := panGraph.width div 18;  //espacio lateral
+      bordlat := panGraph.width div 18;
+    end;
   end;
-  bordSup := (panGraph.height) div 15;  //espacio superior
-  ancPag := (panGraph.width - bordlat * 2 - separ * (pic.NumBanks-1)) div pic.NumBanks;
-  alto := (panGraph.height) - 2* bordSup;
+  bordSup := panGraph.height div 15;  //espacio superior
+  ancPag := (panGraph.width - bordlat * 2 - separ * (cxp.PICnBanks-1)) div cxp.PICnBanks;
+  alto := panGraph.height - 2* bordSup;
 //debugln('panGraph.width: %d bordLat: %d', [panGraph.width, bordlat]);
   x0 := bordlat;
   y0 := bordsup;
-  bnkSel := pic.STATUS >> 5;
-  for i:=0 to pic.NumBanks-1 do begin
-    DibBancoRAM(Rect(x0, y0, x0+ancPag, y0+alto), pic.banks[i], i = bnkSel);
+  bnkSel := cxp.PICCurBank;
+  for i:=0 to cxp.PICnBanks-1 do begin
+    DrawRAMbank(Rect(x0, y0, x0+ancPag, y0+alto), cxp.PICBank(i), i = bnkSel);
     x0 := x0 + ancPag + separ;
   end;
+end;
+procedure TfraRamExplorer.SetCompiler(cxp0: TCompilerBase);
+begin
+  pic := cxp0.picCore;
+  cxp := cxp0;
 end;
 constructor TfraRamExplorer.Create(AOwner: TComponent);
 begin

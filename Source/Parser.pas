@@ -11,8 +11,8 @@ técnica.
 unit Parser;
 interface
 uses
-  Classes, SysUtils, Forms, LCLType, lclProc, SynEditHighlighter,
-  SynFacilHighlighter, XpresBas, XpresTypesPIC, XpresElementsPIC, MisUtils;
+  Classes, SysUtils, Forms, LCLType, lclProc, SynFacilHighlighter, SynEditHighlighter,
+  XpresBas, XpresTypesPIC, XpresElementsPIC, MisUtils, FormConfig, PicCore;
 const
   TIT_BODY_ELE = 'Body';
 type
@@ -97,7 +97,9 @@ public  //Campos de acceso a los valores constantes
 end;
 
 { TCompilerBase }
-{Clase base para crear al objeto compilador}
+{Clase base para crear a los objetos compiladores.
+Esta clase debe ser el ancestro común de todos los compialdores a usar en PicPas.
+Contiene métodos abstractos que deben ser impleemntados en las clases descendeintes.}
 TCompilerBase = class
 protected  //Variables de expresión.
   {Estas variables, se inician al inicio de cada expresión y su valor es válido
@@ -111,6 +113,7 @@ protected  //Variables de expresión.
 protected
   procedure IdentifyField(xOperand: TOperand);
   procedure LogExpLevel(txt: string);
+  function IsTheSameBitVar(var1, var2: TxpEleVar): boolean; inline;
   function AddCallerTo(elem: TxpElement; callerElem: TxpElement = nil): TxpEleCaller;
   function AddCallerTo(elem: TxpElement; const curPos: TSrcPos): TxpEleCaller;
 protected  //Eventos del compilador
@@ -164,21 +167,21 @@ protected
   function GetOperandPrec(pre: integer): TOperand;
   function GetOperator(const Op: Toperand): TxpOperator;
   procedure GetExpressionE(const prec: Integer; posExpres: TPosExpres = pexINDEP);
-public
-  FirstPass  : boolean;      //Indica que está en la primera pasada.
+public  //Contenedores
   TreeElems  : TXpTreeElements; //Árbol de sintaxis del lenguaje
   TreeDirec  : TXpTreeElements; //Árbol de sinatxis para directivas
   listFunSys : TxpEleFuns;   //lista de funciones del sistema
   listTypSys : TxpEleTypes;  //lista de tipos del sistema
 protected
+  function stoOperation: TStoOperandsROB; inline;
   procedure LoadToRT(Op: TOperand; modReturn: boolean = false);
   function GetExpression(const prec: Integer): TOperand;
   //LLamadas a las rutinas de operación
   procedure Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
   procedure OperPre(var Op1: TOperand; opr: TxpOperator);
   procedure OperPost(var Op1: TOperand; opr: TxpOperator);
-public  //Referencias a los tipos predefinidos de tokens.
-  tnEol     : integer;
+public   //Referencias a los tipos predefinidos de tokens.
+  tnEol       : integer;
   tnSymbol  : integer;
   tnSpace   : integer;
   tnIdentif : integer;
@@ -205,7 +208,7 @@ public  //Referencias a los tipos predefinidos de tokens.
   tkBoolean : TSynHighlighterAttributes;
   tkSysFunct: TSynHighlighterAttributes;
   tkType    : TSynHighlighterAttributes;
-public //Tipos adicionales de tokens
+public   //Tipos adicionales de tokens
   tnStruct   : integer;
   tnDirective: integer;
   tnAsm      : integer;
@@ -213,22 +216,35 @@ public //Tipos adicionales de tokens
   tnBlkDelim : integer;
   tnChar     : integer;
   tnOthers   : integer;
+public   //Tipos de datos a implementar
+  {No es obligatorio implementar todos los tipos de datos, para todos los compiladoreslo }
+  typBit  : TxpEleType;
+  typBool : TxpEleType;
+  typByte : TxpEleType;
+  typChar : TxpEleType;
+  typWord : TxpEleType;
+  typDWord: TxpEleType;
 public
-  xLex   : TSynFacilSyn; //resaltador - lexer
-  cIn    : TContexts;   //entrada de datos
-  //variables públicas del compilador
-  ejecProg: boolean;    //Indica que se está ejecutando un programa o compilando
-  DetEjec: boolean;     //para detener la ejecución (en intérpretes)
+  ID       : integer;     //Identificador para el compilador.
+  Compiling: boolean;     //Bandera para el compilado
+  FirstPass: boolean;     //Indica que está en la primera pasada.
+  xLex     : TSynFacilSyn; //Resaltador - lexer
+  cIn      : TContexts;   //Entrada de datos
+  //Variables públicas del compilador
+  ejecProg : boolean;     //Indica que se está ejecutando un programa o compilando
+  DetEjec  : boolean;     //Para detener la ejecución (en intérpretes)
 
-//  func0  : TxpEleFun;   //función interna para almacenar parámetros
-  p1, p2 : ^TOperand;   //Pasa los operandos de la operación actual
-  res    : TOperand;    //resultado de la evaluación de la última expresión.
-  function stoOperation: TStoOperandsROB; inline;
+  p1, p2   : ^TOperand;   //Pasa los operandos de la operación actual
+  res      : TOperand;    //resultado de la evaluación de la última expresión.
+  procedure Compile(NombArc: string; Link: boolean = true); virtual; abstract;
+  function OperationStr(Opt: TxpOperation): string;
 protected //Accesos a propeidades de p1^ y p2^.
-  function value1: word;
+  function value1: dword;
   function value1L: word;
   function value1H: word;
-  function value2: word;
+  function value1U: word;
+  function value1E: word;
+  function value2: dword;
   function value2L: word;
   function value2H: word;
   function bit1: TPicRegisterBit;
@@ -236,10 +252,14 @@ protected //Accesos a propeidades de p1^ y p2^.
   function byte1: TPicRegister;
   function byte1L: TPicRegister;
   function byte1H: TPicRegister;
+  function byte1E: TPicRegister;
+  function byte1U: TPicRegister;
   function byte2: TPicRegister;
   function byte2L: TPicRegister;
   function byte2H: TPicRegister;
-public  //Manejo de errores y advertencias
+  function byte2E: TPicRegister;
+  function byte2U: TPicRegister;
+public   //Manejo de errores y advertencias
   HayError: boolean;
   OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
   OnError  : procedure(errTxt: string; fileName: string; row, col: integer) of object;
@@ -259,7 +279,52 @@ public  //Manejo de errores y advertencias
   procedure GenError(msg: string);
   procedure GenError(msg: String; const Args: array of const);
   procedure GenErrorPos(msg: String; const Args: array of const; srcPos: TSrcPos);
-public  //Inicialización
+public    //Compiling Options
+  incDetComm  : boolean; //Incluir Comentarios detallados.
+  ConfigWord  : integer; //Bits de configuración
+  mode        : (modPascal, modPicPas);
+  SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
+  OptBnkAftPro: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
+  OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
+  OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
+  OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
+protected
+  mainFile : string;   //archivo inicial que se compila
+  hexFile  : string;   //Nombre de archivo de salida
+  function ExpandRelPathTo(BaseFile, FileName: string): string;
+  procedure ExchangeP1_P2;
+public    //Información y acceso a memoria
+  function hexFilePath: string;
+  function mainFilePath: string;
+  function CompilerName: string; virtual; abstract;  //Name of the compiler
+  procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean); virtual; abstract;
+  function RAMusedStr: string; virtual; abstract;
+  function FLASHusedStr: string; virtual; abstract;
+  procedure GetResourcesUsed(out ramUse, romUse, stkUse: single); virtual; abstract;
+  procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); virtual; abstract;
+  procedure GenerateListReport(lins: TStrings); virtual; abstract;
+public    //Acceso a campos del objeto PIC
+  function PICName: string; virtual; abstract;
+  function PICNameShort: string; virtual; abstract;
+  function PICnBanks: byte; virtual; abstract; //Number of RAM banks
+  function PICCurBank: byte; virtual; abstract; //Current RAM bank
+  function PICBank(i: byte): TPICRAMBank; virtual; abstract; //Return a RAM bank
+  function PICnPages: byte; virtual; abstract; //Number of FLASH pages
+  function PICPage(i: byte): TPICFlashPage; virtual; abstract; //Return a FLASH page
+  function RAMmax: integer; virtual; abstract;
+protected //Container lists of registers
+  listRegAux : TPicRegister_list;  //lista de registros de trabajo y auxiliares
+  listRegStk : TPicRegister_list;  //lista de registros de pila
+  listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
+  listRegStkBit: TPicRegisterBit_list;
+  stackTop   : integer;   //índice al límite superior de la pila
+  stackTopBit: integer;   //índice al límite superior de la pila
+public
+  picCore    : TPicCore;       //Objeto PIC Core
+  devicesPath: string; //Ruta de las unidades de dispositivos
+  property ProplistRegAux: TPicRegister_list read listRegAux;
+  property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
+public    //Inicialización
   constructor Create; virtual;
   destructor Destroy; override;
 end;
@@ -305,14 +370,14 @@ begin
   listTypSys.Clear;
 end;
 function TCompilerBase.CreateSysType(nom0: string; cat0: TTypeGroup; siz0: smallint): TxpEleType;
-{Crea un elemento tipo, del sistema.}
+{Crea un elemento tipo, del sistema. Devuelve referencia al tipo creado.}
 var
   eType: TxpEleType;
 begin
   //Verifica nombre
   if FindSysEleType(nom0) <> nil then begin
     GenError('Duplicated identifier: "%s"', [nom0]);
-    {%H-}exit;  //Devuelve valor indeterminado
+    exit(nil);  //Devuelve tipo nulo
   end;
   //Crea elemento de tipo
   eType := TxpEleType.Create;
@@ -899,6 +964,12 @@ procedure TCompilerBase.LogExpLevel(txt: string);
 begin
   debugln(space(3*ExprLevel)+ txt );
 end;
+function TCompilerBase.IsTheSameBitVar(var1, var2: TxpEleVar): boolean; inline;
+{Indica si dos variables bit son la misma, es decir que apuntan, a la misma dirección
+física}
+begin
+  Result := (var1.addr0 = var2.addr0) and (var1.bit0 = var2.bit0);
+end;
 function TCompilerBase.AddCallerTo(elem: TxpElement; callerElem: TxpElement=nil): TxpEleCaller;
 {Agregar una llamada a un elemento de la sintaxis.
 Agrega información sobre el elemento "llamador", es decir, el elemento que hace
@@ -931,12 +1002,10 @@ end;
 function TCompilerBase.AddCallerTo(elem: TxpElement; const curPos: TSrcPos): TxpEleCaller;
 {Versión de AddCallerTo() que agrega además la posición de la llamada, en lugar de usar
 la posición actual.}
-var
-  caller: TxpEleCaller;
 begin
-  caller := AddCallerTo(elem);
-  if caller = nil then exit;
-  caller.curPos := curPos;  //Corrige posición de llamada
+  Result := AddCallerTo(elem);
+  if Result = nil then exit;
+  Result.curPos := curPos;  //Corrige posición de llamada
 end;
 procedure TCompilerBase.Oper(var Op1: TOperand; opr: TxpOperator; var Op2: TOperand);
 {Ejecuta una operación con dos operandos y un operador. "opr" es el operador de Op1.
@@ -1021,6 +1090,18 @@ begin
    LogExpLevel('Oper('+Op1.catOpChr+ ' ' +opr.txt +') -> ' + res.catOpChr);
    res.txt := Op1.txt + opr.txt;   //indica que es expresión
    {$ENDIF}
+end;
+function TCompilerBase.OperationStr(Opt: TxpOperation): string;
+{Devuelve una cadena indicando los tipos/alacenamiento y la operación, que se tiene
+en "p1", "p2" y "Opt".}
+var
+  type1, type2: TxpEleType;
+  Operat: TxpOperator;
+begin
+  type1 := Opt.parent.parent;
+  type2 := Opt.ToType;
+  Operat:= Opt.parent;
+  Result := p1^.StoOpStr+' '+type1.name + ' ' + Operat.txt + ' ' + p2^.StoOpStr+' '+type2.name;
 end;
 function TCompilerBase.stoOperation: TStoOperandsROB;
 begin
@@ -1180,7 +1261,7 @@ begin
   end;
 end;
 //Accesos a propiedades de p1^ y p2^.
-function TCompilerBase.value1: word; inline;
+function TCompilerBase.value1: dword; inline;
 begin
   Result := p1^.valInt;
 end;
@@ -1192,7 +1273,15 @@ function TCompilerBase.value1H: word; inline;
 begin
   Result := p1^.HByte;
 end;
-function TCompilerBase.value2: word; inline;
+function TCompilerBase.value1U: word; inline;
+begin
+  Result := p1^.UByte;
+end;
+function TCompilerBase.value1E: word; inline;
+begin
+  Result := p1^.EByte;
+end;
+function TCompilerBase.value2: dword; inline;
 begin
   Result := p2^.valInt;
 end;
@@ -1216,6 +1305,14 @@ function TCompilerBase.byte1H: TPicRegister; inline;
 begin
   Result := p1^.rVar.adrByte1;
 end;
+function TCompilerBase.byte1E: TPicRegister;
+begin
+  Result := p1^.rVar.adrByte2;
+end;
+function TCompilerBase.byte1U: TPicRegister;
+begin
+  Result := p1^.rVar.adrByte3;
+end;
 function TCompilerBase.byte2: TPicRegister; inline;
 begin
   Result := p2^.rVar.adrByte0;
@@ -1227,6 +1324,14 @@ end;
 function TCompilerBase.byte2H: TPicRegister; inline;
 begin
   Result := p2^.rVar.adrByte1;
+end;
+function TCompilerBase.byte2E: TPicRegister;
+begin
+  Result := p2^.rVar.adrByte2;
+end;
+function TCompilerBase.byte2U: TPicRegister;
+begin
+  Result := p2^.rVar.adrByte3;
 end;
 function TCompilerBase.bit1: TPicRegisterBit; inline;
 begin
@@ -1329,6 +1434,45 @@ begin
   GenError(Format(msg, Args), srcPos.fil, srcPos.row, srcPos.col);
 end;
 
+function TCompilerBase.ExpandRelPathTo(BaseFile, FileName: string): string;
+{Convierte una ruta relativa (FileName), a una absoluta, usnado como base la ruta de
+otro archivo (BaseFile)}
+var
+  BasePath: RawByteString;
+begin
+   if pos(DirectorySeparator, FileName)=0 then begin
+     //Ruta relativa. Se completa
+     BasePath := ExtractFileDir(BaseFile);
+     if BasePath = '' then begin
+       //No hay de donde completar, usa la ruta actual
+       Result := ExpandFileName(FileName);
+     end else  begin
+       Result := ExtractFileDir(BaseFile) + DirectorySeparator + FileName;
+     end;
+   end else begin
+     //Tiene "DirectorySeparator", se asume que es ruta absoluta, y no se cambia.
+     Result := FileName;
+   end;
+end;
+procedure TCompilerBase.ExchangeP1_P2;
+{Intercambia el orden de los operandos.}
+var
+  tmp : ^TOperand;
+begin
+  //Invierte los operandos
+  tmp := p1;
+  p1 := p2;
+  p2 := tmp;
+end;
+
+function TCompilerBase.hexFilePath: string;
+begin
+  Result := ExpandRelPathTo(mainFile, hexfile); //Convierte a ruta absoluta
+end;
+function TCompilerBase.mainFilePath: string;
+begin
+  Result := mainFile;
+end;
 //Inicialización
 constructor TCompilerBase.Create;
 begin
@@ -1615,6 +1759,8 @@ begin
   stConst : exit('Constant');
   stVariab, stVarRefVar, stVarRefExp: exit('Variable');
   stExpres: exit('Expression');
+  else
+    exit('');
   end;
 end;
 function TOperand.StoOpChr: char;

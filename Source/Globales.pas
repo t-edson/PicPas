@@ -18,10 +18,13 @@ var
    patApp     : string;     //ruta de la aplicación
    patSamples : string;     //ruta de la carpeta de scripts
    patUnits   : string;     //ruta para guardar las sintaxis
-   patDevices : string;     //ruta para guardar las sintaxis
    patTemp    : string;     //ruta para los archivos temporales
    patSyntax  : string;     //ruta de los archivos de sintaxis
    patThemes  : string;     //ruta de los archivos de temas
+   patDevices10 : string;     //ruta para guardar unidades
+   patDevices16 : string;     //ruta para guardar unidades
+   patDevices17 : string;     //ruta para guardar unidades
+   patDevices18 : string;     //ruta para guardar unidades
 
    archivoEnt  : string;    //archivo de entrada
    MostrarError: Boolean;   //Bandera para mostrar mensajesde error.
@@ -173,14 +176,17 @@ End;
 
 initialization
   //inicia directorios de la aplicación
-  patApp :=  ExtractFilePath(Application.ExeName);  //incluye el '\' final
-  patSamples := patApp + 'samples';
-  patUnits   := patApp + 'units';
-  patDevices := patApp + 'devices';
-  patTemp    := patApp + 'temp';
-  patSyntax  := patApp + 'syntax';
-  patThemes  := patApp + 'themes';
-  archivoEnt := '';    //archivo de entrada
+  patApp      :=  ExtractFilePath(Application.ExeName);  //incluye el '\' final
+  patSamples  := patApp + 'samples';
+  patUnits    := patApp + 'units';
+  patTemp     := patApp + 'temp';
+  patSyntax   := patApp + 'syntax';
+  patThemes   := patApp + 'themes';
+  patDevices10 := patApp + 'devices10';
+  patDevices16 := patApp + 'devices16';
+  patDevices17 := patApp + 'devices17';
+  patDevices18 := patApp + 'devices18';
+  archivoEnt  := '';    //archivo de entrada
   //verifica existencia de carpetas de trabajo
   try
     if not DirectoryExists(patSamples) then begin
@@ -191,9 +197,21 @@ initialization
        msgexc(WA_DIR_NOEXIST, [patUnits]);
        CreateDir(patUnits);
     end;
-    if not DirectoryExists(patDevices) then begin
-       msgexc(WA_DIR_NOEXIST, [patDevices]);
-       CreateDir(patDevices);
+    if not DirectoryExists(patDevices10) then begin
+       msgexc(WA_DIR_NOEXIST, [patDevices10]);
+       CreateDir(patDevices10);
+    end;
+    if not DirectoryExists(patDevices16) then begin
+       msgexc(WA_DIR_NOEXIST, [patDevices16]);
+       CreateDir(patDevices16);
+    end;
+    if not DirectoryExists(patDevices17) then begin
+       msgexc(WA_DIR_NOEXIST, [patDevices17]);
+       CreateDir(patDevices17);
+    end;
+    if not DirectoryExists(patDevices18) then begin
+       msgexc(WA_DIR_NOEXIST, [patDevices18]);
+       CreateDir(patDevices18);
     end;
     if not DirectoryExists(patTemp) then begin
        msgexc(WA_DIR_NOEXIST, [patTemp]);
@@ -218,7 +236,10 @@ finalization
   patApp :=  '';
   patSamples := '';
   patUnits := '';
-  patDevices := '';
+  patDevices10 := '';
+  patDevices16 := '';
+  patDevices17 := '';
+  patDevices18 := '';
   patTemp := '';
   patSyntax := '';
 end.

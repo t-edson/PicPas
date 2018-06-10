@@ -1,8 +1,8 @@
 {Sample program to read a digital input
 in PORTB.4 and put the value in PORTB.5}
+program DigitalInput;
 {$FREQUENCY 8 MHZ }
-{$PROCESSOR PIC16F84A}
-program BlinkLed;
+uses PIC16F84A;
 var
   PORTB : BYTE absolute $06;
   TRISB : BYTE absolute $86;

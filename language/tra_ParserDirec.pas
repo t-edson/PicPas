@@ -1,16 +1,4 @@
-var
-  ER_ERROR_DIREC, ER_UNKNO_DEVIC, ER_MODE_UNKNOWN, ER_UNKNO_DIREC,
-  ER_ERROR_FREQ, ER_IDENT_EXPEC, ER_EXPEC_EQUAL,
-  ER_SYNTAX_ERRO, ER_SYNTAX_ERR_: string;
-  ER_EXPECTED_BR, ER_ENDIF_NOFOU, ER_UNEXP_ENDIF: String;
-  ER_UNEXP_ELSE, ER_CONF_UNDEF_, ER_INVAL_CBIT_: String;
-  ER_FILE_NO_FND_, ER_ERIN_NUMBER_, ER_UNKNW_IDENT_: String;
-  ER_DIVIDE_ZERO, ER_EVA_ZER_ZER, ER_OPE_NOT_IMP_: String;
-  ER_EXPECT_CAR_: String;
-  ER_TOOHIGHFRE: String;
 
-procedure SetLanguage;
-begin
 //Messages when compiling Directives
 ER_ERROR_DIREC := trans('Error in directive.'  , 'Error en directiva'      ,'',
                         'Fehler bei Direktive.','Помилка директиви.','Ошибка в директиве.', 'Directive erronnée.');
@@ -59,5 +47,4 @@ ER_OPE_NOT_IMP_ := trans('Operator not implemented: %s', 'Operador no implementa
 ER_EXPECT_CAR_ := trans('Expected "%s"'          , 'Se esperaba "%s"'         , '',
                         '"%s" erwartet.'         , 'Очікується "%s"','Ожидается "%s"', 'Attendu "%s"');
 
-end;
 

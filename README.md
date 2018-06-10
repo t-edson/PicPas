@@ -2,14 +2,14 @@
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7LKYWG9LXNQ9C&lc=ES&item_name=Tito%20Hinostroza&item_number=2153&no_note=0&cn=Dar%20instrucciones%20especiales%20al%20vendedor%3a&no_shipping=2&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted)
 
-PicPas 0.8.5
+PicPas 0.8.7
 ============
 
-Multi-platform Pascal cross-compiler for Microchip PIC16F microcontrollers.
+Multi-platform Pascal cross-compiler for Microchip 8 bits PIC microcontrollers.
 
-![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "PicPas IDE")
+![PicPas IDE](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "PicPas IDE")
 
-PicPas is a Pascal compiler, written in Lazarus, which generates executable code for midrange PIC microcontrollers (the 16F series).
+PicPas is a Pascal compiler, written in Lazarus, which generates executable code for Baseline and Mid-range PIC microcontrollers.
 
 No additional libraries or software required to compile. PicPas generates the *.hex file directly.
 
@@ -17,15 +17,15 @@ PicPas works with a simplified version of the Pascal language, that has been ada
 
 Currently, it only supports basic types. 
 
-It includes a very complete IDE to facilitate the development.
+It includes a complete IDE/debugger/simulator to facilitate the development.
 
-The compiler includes optimization options so the code obtained is fairly compact, as that could generate any commercial compiler.
+The PicpPas compiler includes advanced optimization options so the code obtained is generally more compact than the obtained with other compilers.
 
 ## Installation
 
 PicPas doesn't need installation, and have not dependencies, except the commons of the operative system, where it's runnig.
 
-To run, it's only needed to download the folder from GitHub. There is a compiled  Windows-32 version (PicPas-win32.exe) and a Ubuntu version (PicPas-linux).
+To run, it's only needed to download the folder from GitHub. There is compiled binaries for Windows-64 version (PicPas-win64.exe), Ubuntu version (PicPas-linux) and a Mac version (PicPas-Mac.dmg).
 
 If it's required other platform, it need to be compiled from the source code.
 
@@ -41,8 +41,6 @@ program BlinkLed;
 uses PIC16F84A;
 {$FREQUENCY 8MHZ}
 var
-  PORTB : BYTE absolute $06;
-  TRISB : BYTE absolute $86;
   pin: bit absolute PORTB.7;
 begin                          
   TRISB := 0;   //all outputs
@@ -53,11 +51,23 @@ begin
 end.
 ```
 
-PicPas has not special libraries yet, so the special register names, must be defined in the program, or a unit containing this definitions can be created.
+The processor target is defined including the correspondent unit in the USES section. 
+
+The CPU clock is defined using the directive {$FREQUENCY } and must be after the USES section.
 
 ## Devices supported
 
-Almost all the Mid-range PIC devices are supported:
+Almost all the Mid-range and Baseline PIC devices are supported:
+
+### BASELINE DEVICES:
+
+PIC10F200 PIC10F200 PIC10F202 PIC10F204 PIC10F206 PIC10F220 PIC10F222
+
+PIC12F508 PIC12F509 PIC12F510 PIC12F519
+
+PIC16F505 PIC16F506 PIC16F526 PIC16F527 PIC16F54 PIC16F57 PIC16F59
+
+### MID-RANGE DEVICES:
 
 PIC10F320 PIC10F322
 
@@ -90,7 +100,7 @@ begin
 end. 
 ```
 
-There is not yet support for the Baseline, the Enhanced Mid-range, or the PIC18 High-preformance families of PIC.
+There is not yet support for Enhanced Mid-range, or the PIC18 High-preformance families of PIC.
 
 
 ## IDE
@@ -113,7 +123,7 @@ Some features of the IDE are:
 
 •	Code tools for completion and navigation.
 
-•	Check syntax in ¡¡¡REAL TIME!!!.
+•	Check syntax in REAL TIME!!!.
 
 •	Several setting options.
 
@@ -122,6 +132,8 @@ Some features of the IDE are:
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/06/PicPas-0.7_en.png "PicPas with dark skin")
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/PicPas-Linux.jpg "PicPas for Ubuntu")
+
+![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2018/05/PicPasMac.jpg "PicPas for Mac")
 
 
 ## Debugger/Simulator
@@ -525,6 +537,56 @@ Subtrac  :	p1 - 5
 
 ## Directives
 
+Directives are special instructions inserted in the source code that are interpreted and executed by the compiler when compiling the source code (in compilation time).
+
+### Directive Programming Language
+
+Directives have their own programmig language. It's a simple and interpreted language (with instructions, variables, operators and conditional structures) what is different from Pascal.
+
+Some features of this programming language are:
+
+*	It's case insensitive, like Pascal is.
+*	Instructions are contained in one single line and are delimited by {$ … }
+*	It's not a typed language. Variables can change their type and value in execution and different type variables can be assigned.
+*	Variables don't need to be defined before using.
+*	There are only two types for variables: strings and numbers.
+
+### Variables
+
+Variables are assigned with the instruction $SET:
+
+```
+{$SET x = 1}
+{$SET y = 1 + x}
+{$SET x = 'I'm now a string'}
+```
+
+$SET, is not a declaration, but an assignment. First time a variable is assigned, it's created.
+
+Content of a variable, can be shown using instructions like $MSGBOX oo $INFO:
+
+{$MSGBOX 'x is:' + x}
+
+### System Variables
+
+There are some system variables, accessible from the directives language. They are:
+ 
+{$MSGBOX PIC_MODEL} -> Shows the PIC model defined.
+
+{$MSGBOX PIC_FREQUEN} -> Shows the Clock frequency.
+
+{$MSGBOX PIC_MAXFREQ} -> Shows the Max Clock frequency for the device.
+
+{$MSGBOX PIC_NUMBANKS} -> Shows the RAM banks number for the device.
+
+{$MSGBOX SYN_MODE} -> Shows the syntax Mode of the compiler.
+
+{$MSGBOX CURRBANK} -> Shows the current RAM bank.
+
+(*) To see the complete list, check the User Manual.
+
+### List of Directives
+
 The next directives are supported by PicPas:
 
 #### $PROCESSOR
@@ -537,9 +599,11 @@ Specify the target device model of the microcontroller. Example:
 
 The devices supported using $PROCESSOR directive are: 
 
-PIC12F629 PIC12F675 PIC12F629A PIC12F675A PIC16C63 PIC16CR63 PIC16C65 PIC16C65A PIC16CR65 PIC16F72 PIC16F83 PIC16CR83 PIC16F84 PIC16CR84 PIC16F84A PIC16F870 PIC16F871 PIC16F872 PIC16F873 PIC16F873A PIC16F874 PIC16F874A PIC16F876 PIC16F876A PIC16F877 PIC16F877A PIC16F887 PIC16F627A PIC16F628A PIC16F648A
+Baseline: PIC10F200 PIC10F202 PIC10F204 PIC10F206
 
-However, other devices are supported using units.
+Mid-Range: PIC16C63 PIC16CR63 PIC16C65 PIC16C65A PIC16CR65 PIC16F72 PIC16F83 PIC16CR83 PIC16F84 PIC16CR84 PIC16F84A PIC16F870 PIC16F871 PIC16F872 PIC16F873 PIC16F873A PIC16F874 PIC16F874A PIC16F876 PIC16F876A PIC16F877 PIC16F877A PIC16F887 PIC16F627A PIC16F628A PIC16F648A
+
+This directive is a short form to define a device, however it's preferred to define devices using directives, like $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM. 
 
  
 #### $FREQUENCY
@@ -628,6 +692,10 @@ Defines the name of the output binary file *.hex.
 
 When relative path is used, the file will be created in the same folder the Pascal program is.
 
+If it's not defined the name of the *.hex file, it will be used the name of the program/unit compiled. So if the program is called "myprogram" (and the file is "myprogram.pas"), then the *.hex file will be "myprogram.hex".
+
+Directive {$OUTPUTHEX}, can be placed in any part of the source code and can be used several times. If so, the output file will be the defined by the last directive.
+
 #### $DEFINE
 
 Define symbols or macros
@@ -684,9 +752,28 @@ Variables supports expresions:
 
 Unlike macros, variables values are solved when assigned. Macros values, are solved when macro is referenced.
 
-#### $IFDEF, $IFNDEF, $ELSE, $ENDIF
+#### $IFDEF, $ELSE, $ENDIF
 
 This directives let us to define conditional compilation blocks:
+
+Directive $IFDEF check the existence of some macro or variable and according to that, compile or not some blocks of code.
+
+It has two forms: 
+
+```
+{$IFDEF <identifier>} 
+... 
+{$ENDIF}
+```
+
+```
+{$IFDEF <identifier>} 
+... 
+{$ELSE}
+... 
+{$ENDIF}
+```
+The next code is an example of use:
 
 ```
 {$DEFINE MyPinOut=PORTB.0}
@@ -701,6 +788,10 @@ begin
 end.
 ```
 
+#### $IFNDEF
+
+This directive is the opposite version of $IFDEF.
+
 ```
 {$DEFINE MyPinOut=PORTB.0}
 uses PIC16F84A;
@@ -713,22 +804,229 @@ begin
 end.
 ```
 
-#### $IF, $IFNOT
+#### $IF
 
 This directives let us to define conditional compilation blocks, using expressions:
 
+Directive $IF evaluates an expression, and according to the result, compile or omit some blocks of code.
+
+The common syntax is: 
+
 ```
-{$IF valor>255}
+{$IF <expression>} 
+... 
+{$ENDIF}
+```
+
+A long way can be used too:
+
+```
+{$IF <expression>} 
+... 
+{$ELSE}
+... 
+{$ENDIF}
+```
+ 
+The following code shows an example of use:
+
+```
+{$IF value>255}
 var x: word;
 {$ELSE}
 var x: byte;
 {$ENDIF}
 ```
 
-#### $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM
+As there is not a boolean type, a boolean expression returns the number 1 when the expression is TRUE and 0 when the expression is FALSE.
 
-These directives let us to define the RAM memory hardware state. In conjunction with system variables, they can define custom microcontroller hardware:
+On the other side, instruction {$IF} will consider as TRUE, any number different from 0, or any string not empty.
 
+#### $IFNOT
+
+It's the opposite version of $IF.
+
+```
+{$IFNOT value>255}
+var x: byte;
+{$ELSE}
+var x: word;
+{$ENDIF}
+```
+
+#### $SET_STATE_RAM
+
+Set the state of the RAM memory for the current device.
+
+The state of a byte of RAM can have 3 values:
+
+* SFR: Special Function Register, like STATUS or TRISB.
+* GPR: General Purpose Register. Used as free memory for the user.
+* NIM: Not implemented cell.
+
+$SET_STATE_RAM, let us to define the state of the RAM using a range of addresses.
+
+The syntax of $SET_STATE_RAM is: 
+
+```
+{$SET_STATE_RAM <list of commands>}
+```
+
+One valid example would be:
+
+```
+{$SET_STATE_RAM '000-00B:SFR'};
+```
+
+#### $SET_MAPPED_RAM
+
+Define mapped regions of the RAM memory, for the current device.
+
+RAM memory can be implemented as independent or mapped RAM. Mapped RAM usually points to other RAM bank. One register can be mapped in several banks. That's the case of registers like STATUS or INTCON, mapped in all the banks of the RAM.
+
+$SET_MAPPED_RAM, can map ranges of RAM in register GPR and SFR. It has not sense to map unimplemented RAM.
+
+The syntax for $SET_MAPPED_RAM is: 
+
+```
+{$SET_MAPPED_RAM <list of commands>}
+```
+
+Commands are separated by commas. One command have the form:
+
+```
+Start address>-<End address>:<Target bank>
+```
+
+Target bank can be: 
+
+bnk0, bnk1, bnk2 or bnk3 for the Mid-Range PIC core devices (14 bits instruction).
+bnk0, bnk1, bnk2, bnk3, bnk4, bnk5, bnk6 or bnk7 for the Baseline PIC core devices (12 bits).
+
+A valid example, for a Mid-Range PIC would be:
+
+{$SET_MAPPED_RAM ' 080-080:bnk0'};
+
+This instruction defines the RAM address $080 as a register mapped at the bank 0, corresponding to the address 0x00.
+
+Addresses are expresed always as a 3 digit hexadecimal number.
+
+#### $CLEAR_STATE_RAM
+
+USed to define the initial state of RAM memory. 
+
+$CLEAR_STATE_RAM, set the state of all the RAM as unimplemented, clearing all previous setting.
+
+It's used before of starting to define the RAM for a device, using the directives $SET_STATE_RAM and $SET_MAPPED_RAM.
+
+
+#### $RESET_PINS 
+
+Clear all the configuration for the pines defined in the microcontroller.
+
+```
+{$RESET_PINS}
+```
+
+This directive is generally used before of defining the microcontollers pins with the directive {$SET_PIN_NAME}
+
+
+#### $SET_PIN_NAME
+
+Define the name for a specified pin of the microcontroller. 
+
+The syntax is:
+
+```
+{$SET_PIN_NAME <pin number>:<name>}
+```
+
+One example would be:
+
+```
+{$SET_PIN_NAME '2:VDD'}
+```
+
+This definition would make the label "VDD" will appear in the pin 2 of the graphic representation of the PIC, when using the debugger.,
+
+#### $MAP_RAM_TO_PIN
+
+Assign some bits of the RAM, to physical pins of a microcontroller. This is used to map the registers GPIO, PORTA, PORTB, …, to pins of the device.
+
+This assignment is needed to a have a better visual effect in the simulation of the PIC, when using the debugger. This way we will see the pin highlighted when it has a high level (bit set to 1). 
+
+The syntax of $MAP_RAM_TO_PIN is: 
+
+```
+{$MAP_RAM_TO_PIN <address>:<list of associations>}
+```
+
+Associations are separated by commas. One association have the form:
+
+```
+<number of bit>-<number of pin>
+```
+
+One valid example would be:
+
+```
+{$MAP_RAM_TO_PIN '005:0-17,1-18,2-1,3-2,4-3'};
+```
+
+This instruction indicates the bits  0, 1, 2, 3 and 4, of the address $05, are mapped to the pins 17, 18, 1, 2 y 3 respectively.
+
+Values for number of bit and pins are in decimal.
+
+#### $SET_UNIMP_BITS
+
+Defines bits not implemented in some specific positions of the RAM.
+
+This setting is used to model the RAM in a accurate way (to the bit level) in order to have a better and realistic simulation of the device.
+
+The syntax of $SET_UNIMP_BITS is: 
+
+```
+{$SET_UNIMP_BITS <list of commands>}
+```
+
+The commands are separated by commas. One command have the form:
+
+```
+<address>:<mask>
+```
+
+The address and the mask are expressed in hexadecimal using 3 and 2 digits respectively.
+
+One valid example would be:
+
+```
+{$SET_UNIMP_BITS '005:1F'};
+```
+
+And indicates the bits 5, 6 and 7, of the position $005 (PORTA) are not implemented in the hardware and will be read always as 0.
+
+#### $SET_UNIMP_BITS1
+
+Defines bits not implemented in some specific positions of the RAM.
+
+This instruction works in the same way of $SET_UNIMP_BITS, but the unimplemented bits will be read always as 1, instead of 0.
+
+One valid example would be:
+
+{$SET_UNIMP_BITS1 '004:E0'};
+
+And indicates the bits 5, 6 and 7, of the position $004 are not implemented in the hardware and will be read always as 1.
+
+(*) For more information about directives, check the User Manual.
+
+### Defining custom devices
+
+PicPas have complete support to define the hardware of microcontrollers, using directives. 
+
+Practically all devices from Baseline and Mid-Range families can be defined in this way.
+
+Following, there is an example of defining a microcontoller similar to the  PIC16F84:
+ 
 ```
 //Define hardware
 {$SET PIC_MODEL='MY_PIC'}
@@ -745,29 +1043,13 @@ These directives let us to define the RAM memory hardware state. In conjunction 
 //Define mapped RAM
 {$SET_MAPPED_RAM '080-080:bnk0, 082-084:bnk0, 08A-08B:bnk0'}
 {$SET_MAPPED_RAM '08C-0CF:bnk0'}
+//Define unimplemented bits in RAM
+{$SET_UNIMP_BITS '003:3F,083:3F,005:1F,085:1F,00A:1F,08A:1F'}
 ```
 
-(*) For more information, check the User Manual.
-
-#### SYSTEM VARIABLES
-
-There are some system variables, accessible from the directives language. They are:
+To see more examples of definig devices, check the folders /devices10 and /devices16.
  
-{$MSGBOX PIC_MODEL} -> Shows the PIC model defined.
-
-{$MSGBOX PIC_FREQUEN} -> Shows the Clock frequency.
-
-{$MSGBOX PIC_MAXFREQ} -> Shows the Max Clock frequency for the device.
-
-{$MSGBOX PIC_NUMBANKS} -> Shows the RAM banks number for the device.
-
-{$MSGBOX SYN_MODE} -> Shows the syntax Mode of the compiler.
-
-{$MSGBOX CURRBANK} -> Shows the current RAM bank.
-
-(*) To see the complete list, check the User Manual.
-
-## Limitations
+## PicPas Limitations
 
 •	Only basic types are implemented: bit, byte, char, boolean, word an dword(limited support).
 

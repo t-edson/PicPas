@@ -5,8 +5,8 @@ unit Compiler_PIC16;
 interface
 uses
   Classes, SysUtils, lclProc, SynEditHighlighter, types, MisUtils, XpresBas,
-  XpresTypesPIC, XpresElementsPIC, Pic16Utils, Pic16Devices, Parser,
-  Globales, GenCodBas_PIC16, GenCod_PIC16, ParserDirec_PIC16, FormConfig {Por diseño, parecería que GenCodPic, no debería accederse desde aquí};
+  XpresTypesPIC, XpresElementsPIC, Pic16Utils, Pic16Devices, Parser, ParserDirec,
+  GenCodBas_PIC16, GenCod_PIC16, ParserDirec_PIC16, Globales, FormConfig {Por diseño, parecería que GenCodBas, no debería accederse desde aquí};
 type
  { TCompiler }
   TCompiler_PIC16 = class(TParserDirec)
@@ -69,15 +69,13 @@ type
      si se tiene un Stringlist, con los datos ya caragdos del archivo, para evitar
      tener que abrir nuevamente al archivo.}
     OnRequireFileString: procedure(FilePath: string; var strList: TStrings) of object;
-    function hexFilePath: string;
-    function mainFilePath: string;
-    procedure Compile(NombArc: string; Link: boolean = true);
-    procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean);  //uso de memoria RAM
-    procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean);  //uso de la memoria Flash
-    function RAMusedStr: string;
-    function FLASHusedStr: string;
-    procedure GetResourcesUsed(out ramUse, romUse, stkUse: single);
-    procedure GenerateListReport(lins: TStrings);
+    procedure Compile(NombArc: string; Link: boolean = true); override;
+    procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean); override; //uso de memoria RAM
+    procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); override; //uso de la memoria Flash
+    function RAMusedStr: string; override;
+    function FLASHusedStr: string; override;
+    procedure GetResourcesUsed(out ramUse, romUse, stkUse: single); override;
+    procedure GenerateListReport(lins: TStrings); override;
   public //Inicialización
     constructor Create; override;
     destructor Destroy; override;
@@ -86,8 +84,26 @@ type
 procedure SetLanguage;
 
 implementation
+var
+  ER_NOT_IMPLEM_, ER_IDEN_EXPECT, ER_DUPLIC_IDEN, ER_INVAL_FLOAT: string;
+  ER_ERR_IN_NUMB, ER_NOTYPDEFNUM, ER_UNDEF_TYPE_: string;
+  ER_INV_MAD_DEV, ER_EXP_VAR_IDE, ER_INV_MEMADDR, ER_BIT_VAR_REF: String;
+  ER_UNKNOWN_ID_: string;
+  ER_IDE_CON_EXP, ER_NUM_ADD_EXP, ER_IDE_TYP_EXP, ER_SEM_COM_EXP: String;
+  ER_EQU_COM_EXP, ER_END_EXPECTE, ER_EOF_END_EXP, ER_BOOL_EXPECT: String;
+  ER_UNKN_STRUCT, ER_PROG_NAM_EX, ER_COMPIL_PROC, ER_CON_EXP_EXP: String;
+  ER_NOT_AFT_END, ER_ELS_UNEXPEC : String;
+  ER_INST_NEV_EXE, ER_ONLY_ONE_REG: String;
+  ER_VARIAB_EXPEC, ER_ONL_BYT_WORD, ER_ASIG_EXPECT: String;
+  ER_FIL_NOFOUND, WA_UNUSED_CON_, WA_UNUSED_VAR_,WA_UNUSED_PRO_: String;
+  MSG_RAM_USED, MSG_FLS_USED, ER_NOTYPDEF_NU, ER_ARR_SIZ_BIG: String;
+  ER_INV_ARR_SIZ: String;
 //Funciones básicas
+procedure SetLanguage;
+begin
+  ParserDirec_PIC16.SetLanguage;
 {$I ..\language\tra_Parser.pas}
+end;
 procedure TCompiler_PIC16.cInNewLine(lin: string);
 //Se pasa a una nueva _Línea en el contexto de entrada
 begin
@@ -306,6 +322,7 @@ var
   i: Integer;
 begin
   cIn.SkipWhites;
+  SetLength(itemList, 0);
   if EOBlock or EOExpres or (cIn.tok = ':') then begin
     //no tiene parámetros
   end else begin
@@ -703,7 +720,7 @@ begin
     end else if Op1.Typ = typWord then begin
       _BANKSEL(oP1.bank);
       _INCF(Op1.Loffs, toF);
-      _BTFSC(STATUS, _Z);
+      _BTFSC(_STATUS, _Z);
       _INCF(Op1.Hoffs, toF);
     end;
     _GOTO(l1);  //repite el lazo
@@ -879,7 +896,8 @@ var
   srcPosArray: TSrcPosArray;
   i: integer;
 begin
-  //procesa lista de constantes a,b,cons ;
+  SetLength(consNames, 0);
+  //Procesa lista de constantes a,b,cons ;
   getListOfIdent(consNames, srcPosArray);
   if HayError then begin  //precisa el error
     GenError(ER_IDE_CON_EXP);
@@ -1353,6 +1371,7 @@ var
   adicVarDec: TAdicVarDec;
   typEleDec: TxpEleType;
 begin
+  SetLength(varNames, 0);
   //Procesa variables a,b,c : int;
   getListOfIdent(varNames, srcPosArray);
   if HayError then begin  //precisa el error
@@ -1872,7 +1891,7 @@ begin
         uni.srcFile := uPath;   //Gaurda el archivo fuente
       end else begin
         //No lo encontró, busca en la carpeta de dispositivos
-        uPath := patDevices + DirectorySeparator + uName;
+        uPath := devicesPath + DirectorySeparator + uName;
         if OpenContextFrom(uPath) then begin
           uni.srcFile := uPath;   //Gaurda el archivo fuente
         end else begin
@@ -2315,14 +2334,10 @@ begin
   PutLabel('__end_program__');
   {No es necesario hacer más validaciones, porque ya se hicieron en la primera pasada}
   _SLEEP();   //agrega instrucción final
-end;
-function TCompiler_PIC16.hexFilePath: string;
-begin
-  Result := ExpandRelPathTo(mainFile, hexfile); //Convierte a ruta absoluta
-end;
-function TCompiler_PIC16.mainFilePath: string;
-begin
-  Result := mainFile;
+  if pic.MsjError<>'' then begin //Puede ser error al escribir la última instrucción
+      GenError(pic.MsjError);
+      exit;
+  end;
 end;
 function TCompiler_PIC16.IsUnit: boolean;
 {Indica si el archivo del contexto actual, es una unidad. Debe llamarse}
@@ -2476,12 +2491,12 @@ begin
     lins.Add(';------ Work and Aux. Registers ------');
     for reg in listRegAux do begin
       if not reg.assigned then continue;  //puede haber registros de trabajo no asignados
-      nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
+      nam := pic.NameRAM(reg.addr); //debería tener nombre
       adStr := '0x' + IntToHex(reg.addr, 3);
       lins.Add(nam + ' EQU ' +  adStr);
     end;
     for rbit in listRegAuxBit do begin
-      nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
+      nam := pic.NameRAMbit(rbit.addr, rbit.bit); //debería tener nombre
       adStr := '0x' + IntToHex(rbit.addr, 3);
       lins.Add('#define' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
     end;
@@ -2489,12 +2504,12 @@ begin
   if (listRegStk.Count>0) or (listRegStkBit.Count>0) then begin
     lins.Add(';------ Stack Registers ------');
     for reg in listRegStk do begin
-      nam := pic.NameRAM(reg.offs, reg.bank); //debería tener nombre
+      nam := pic.NameRAM(reg.addr); //debería tener nombre
       adStr := '0x' + IntToHex(reg.addr, 3);
       lins.Add(nam + ' EQU ' +  adStr);
     end;
     for rbit in listRegStkBit do begin
-      nam := pic.NameRAMbit(rbit.offs, rbit.bank, rbit.bit); //debería tener nombre
+      nam := pic.NameRAMbit(rbit.addr, rbit.bit); //debería tener nombre
       adStr := '0x' + IntToHex(rbit.addr, 3);
       lins.Add('#define ' + nam + ' ' +  adStr + ',' + IntToStr(rbit.bit));
     end;
@@ -2545,7 +2560,7 @@ begin
   //Calcula STACK
   TreeElems.main.UpdateCalledAll;   //Debe haberse llenado TreeElems.main.lstCalled
   //No considera el anidamiento por interrupciones
-  stkUse := TreeElems.main.maxNesting/8;
+  stkUse := TreeElems.main.maxNesting/STACK_SIZE;
 end;
 procedure TCompiler_PIC16.GenerateListReport(lins: TStrings);
 {Genera un reporte detallado de la compialción}
@@ -2576,8 +2591,7 @@ begin
   //Cuenta apariciones
   for i:=0 to high(pic.flash) do begin
     if pic.flash[i].used then begin
-       pic.PCH := hi(i);
-       pic.PCL := lo(i);
+       pic.PC.W := i;
        curInst := pic.CurInstruction;
        Inc(OpCodeCoun[curInst]);  //Acumula
     end;

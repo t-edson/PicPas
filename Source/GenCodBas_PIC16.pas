@@ -4,8 +4,8 @@ unit GenCodBas_PIC16;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic16Utils, Parser,
-  MisUtils, LCLType, LCLProc;
+  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic16Utils,
+  Parser, ParserDirec, Globales, MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 8;      //tamaño de pila para subrutinas en el PIC
   MAX_REGS_AUX_BYTE = 6;   //cantidad máxima de registros a usar
@@ -14,8 +14,8 @@ const
   MAX_REGS_STACK_BIT = 4;  //cantidad máxima de registros a usar en la pila
 
 type
-  { TGenCodBas_PIC16 }
-  TGenCodBas_PIC16 = class(TCompilerBase)
+  { TGenCodBas }
+  TGenCodBas = class(TParserDirecBase)
   private
     linRep : string;   //línea para generar de reporte
     posFlash: Integer;
@@ -39,13 +39,6 @@ type
     //Registros auxiliares
     INDF   : TPicRegister;     //Registro Interno.
     FSR    : TPicRegister;     //Registro Interno.
-    //Listas contenedoras de registros
-    listRegAux: TPicRegister_list;  //lista de registros de trabajo y auxiliares
-    listRegStk: TPicRegister_list;  //lista de registros de pila
-    listRegAuxBit: TPicRegisterBit_list;  //lista de registros de trabajo y auxiliares
-    listRegStkBit: TPicRegisterBit_list;
-    stackTop: integer;   //índice al límite superior de la pila
-    stackTopBit: integer;   //índice al límite superior de la pila
     procedure PutLabel(lbl: string); inline;
     procedure PutTopComm(cmt: string; replace: boolean = true); inline;
     procedure PutComm(cmt: string); inline;
@@ -54,7 +47,6 @@ type
     function ValidateByteRange(n: integer): boolean;
     function ValidateWordRange(n: integer): boolean;
     function ValidateDWordRange(n: Int64): boolean;
-    procedure ExchangeP1_P2;
   protected
     procedure GenerateROBdetComment;
     procedure GenerateROUdetComment;
@@ -141,7 +133,7 @@ type
   protected  //Instrucciones que no manejan el cambio de banco
     procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin);
     procedure CodAsmK(const inst: TPIC16Inst; const k: byte);
-      procedure _BANKSEL(targetBank: byte);
+    procedure _BANKSEL(targetBank: byte);
     procedure GenCodBank(targetAdrr: word);
     procedure _BANKRESET;
     function _PC: word;
@@ -187,7 +179,7 @@ type
   protected  //Instrucciones "k"
     //Instrucciones equivalentes
     procedure kADDLW(const k: word);
-    procedure kADDWF(const f: word; d: TPIC16destin);
+    procedure kADDWF(const f: TPicRegister; d: TPIC16destin);
     procedure kANDLW(const k: word);
     procedure kANDWF(const f: TPicRegister; d: TPIC16destin);
     procedure kBCF(const f: TPicRegisterBit);
@@ -198,15 +190,15 @@ type
     procedure kCLRF(const f: TPicRegister);
     procedure kCLRW;
     procedure kCLRWDT;
-    procedure kCOMF(const f: word; d: TPIC16destin);
-    procedure kDECF(const f: word; d: TPIC16destin);
+    procedure kCOMF(const f: TPicRegister; d: TPIC16Destin);
+    procedure kDECF(const f: TPicRegister; d: TPIC16Destin);
     procedure kDECFSZ(const f: word; d: TPIC16destin);
     procedure kGOTO(const a: word);
     procedure kGOTO_PEND(out igot: integer);
     procedure kINCF(const f: TPicRegister; d: TPIC16destin);
     procedure kINCFSZ(const f: word; d: TPIC16destin);
     procedure kIORLW(const k: word);
-    procedure kIORWF(const f: word; d: TPIC16destin);
+    procedure kIORWF(const f: TPicRegister; d: TPIC16destin);
     procedure kMOVF(const f: TPicRegister; d: TPIC16destin);
     procedure kMOVLW(const k: word);
     procedure kMOVWF(const f: TPicRegister);
@@ -218,7 +210,7 @@ type
     procedure kRRF(const f: TPicRegister; d: TPIC16destin);
     procedure kSLEEP;
     procedure kSUBLW(const k: word);
-    procedure kSUBWF(const f: word; d: TPIC16destin);
+    procedure kSUBWF(const f: TPicRegister; d: TPIC16destin);
     procedure kSWAPF(const f: TPicRegister; d: TPIC16destin);
     procedure kXORLW(const k: word);
     procedure kXORWF(const f: TPicRegister; d: TPIC16destin);
@@ -226,17 +218,8 @@ type
     procedure kSHIFTR(const f: TPicRegister; d: TPIC16destin);
     procedure kSHIFTL(const f: TPicRegister; d: TPIC16destin);
     procedure kIF_BSET(const f: TPicRegisterBit; out igot: integer);
-    procedure kEND_BSET(igot: integer);
-  public     //Opciones de compilación
-    incDetComm  : boolean;   //Incluir Comentarios detallados.
-    SetProIniBnk: boolean; //Incluir instrucciones de cambio de banco al inicio de procedimientos
-    OptBnkAftPro: boolean; //Incluir instrucciones de cambio de banco al final de procedimientos
-    OptBnkAftIF : boolean; //Optimizar instrucciones de cambio de banco al final de IF
-    OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
-    OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
+    procedure kIF_BSET_END(igot: integer);
   public     //Acceso a registro de trabajo
-    property ProplistRegAux: TPicRegister_list read listRegAux;
-    property ProplistRegAuxBit: TPicRegisterBit_list read listRegAuxBit;
     property H_register: TPicRegister read H;
     property E_register: TPicRegister read E;
     property U_register: TPicRegister read U;
@@ -277,83 +260,69 @@ type
     procedure dword_Low(const OpPtr: pointer);
     procedure dword_LowWord(const OpPtr: pointer);
     procedure dword_Ultra(const OpPtr: pointer);
+  public     //Acceso a campos del PIC
+    function PICName: string; override;
+    function PICNameShort: string; override;
+    function PICnBanks: byte; override; //Number of RAM banks
+    function PICCurBank: byte; override; //Current RAM bank
+    function PICBank(i: byte): TPICRAMBank; override; //Return a RAM bank
+    function PICnPages: byte; override; //Number of FLASH pages
+    function PICPage(i: byte): TPICFlashPage; override; //Return a FLASH page
+    function RAMmax: integer; override;
   public     //Inicialización
     pic        : TPIC16;       //Objeto PIC de la serie 16.
-    function PicName: string;
-    function PicNameShort: string;
     procedure StartRegs;
+    function CompilerName: string; override;
     constructor Create; override;
     destructor Destroy; override;
   end;
-const
-  //constantes útiles para ensamblador
-  STATUS = $03;
-  _C = 0;
-  _Z = 2;
-  _RP0 = 5;
-  _RP1 = 6;
-//  _IRP = 7;
 
+  procedure SetLanguage;
 implementation
+var
+  TXT_SAVE_W, TXT_SAVE_Z, TXT_SAVE_H, MSG_NO_ENOU_RAM,
+  MSG_VER_CMP_EXP, MSG_STACK_OVERF, MSG_NOT_IMPLEM: string;
 
-procedure SetLanguage(lang: string);
+procedure SetLanguage;
 begin
-  case lang of
-  'en': begin
-    dicClear;  //it's yet in English
-  end;
-  'es': begin
-    //Update messages
-    dicSet(';save W', ';guardar W');
-    dicSet(';save Z', ';guardar Z');
-    dicSet(';save H', ';guardar H');
-    dicSet(';restore W','restaurar W');
-    dicSet(';restore Z','restaurar Z');
-    dicSet('Size of data not supported.', 'Tamaño de dato no soportado.');
-    dicSet('No enough RAM', 'No hay suficiente RAM.');
-    dicSet('Duplicated identifier: "%s"', 'Identificador duplicado: "%s"');
-    dicSet('Undefined type "%s"', 'Tipo "%s" no definido.');
-    dicSet('Very complex expression. To simplify.','Expresión muy compleja. Simplificar.');
-    dicSet('Stack Overflow', 'Desborde de pila.');
-    dicSet('Not implemented.', 'No implementado');
-  end;
-  end;
+  ParserDirec.SetLanguage;
+  {$I ..\language\tra_GenCodBas.pas}
 end;
 { TGenCodPic }
-procedure TGenCodBas_PIC16.ProcByteUsed(offs, bnk: byte; regPtr: TPICRamCellPtr);
+procedure TGenCodBas.ProcByteUsed(offs, bnk: byte; regPtr: TPICRamCellPtr);
 begin
   linRep := linRep + regPtr^.name +
             ' DB ' + 'bnk'+ IntToStr(bnk) + ':$' + IntToHex(offs, 3) + LineEnding;
 end;
-procedure TGenCodBas_PIC16.PutLabel(lbl: string);
+procedure TGenCodBas.PutLabel(lbl: string);
 {Agrega uan etiqueta antes de la instrucción. Se recomienda incluir solo el nombre de
 la etiqueta, sin ":", ni comentarios, porque este campo se usará para desensamblar.}
 begin
   pic.addTopLabel(lbl);  //agrega línea al código ensmblador
 end;
-procedure TGenCodBas_PIC16.PutTopComm(cmt: string; replace: boolean = true);
+procedure TGenCodBas.PutTopComm(cmt: string; replace: boolean = true);
 //Agrega comentario al inicio de la posición de memoria
 begin
   pic.addTopComm(cmt, replace);  //agrega línea al código ensmblador
 end;
-procedure TGenCodBas_PIC16.PutComm(cmt: string);
+procedure TGenCodBas.PutComm(cmt: string);
 //Agrega comentario lateral al código. Se llama después de poner la instrucción.
 begin
   pic.addSideComm(cmt, true);  //agrega línea al código ensmblador
 end;
-procedure TGenCodBas_PIC16.PutFwdComm(cmt: string);
+procedure TGenCodBas.PutFwdComm(cmt: string);
 //Agrega comentario lateral al código. Se llama antes de poner la instrucción.
 begin
   pic.addSideComm(cmt, false);  //agrega línea al código ensmblador
 end;
-function TGenCodBas_PIC16.ReportRAMusage: string;
+function TGenCodBas.ReportRAMusage: string;
 {Genera un reporte de uso de la memoria RAM}
 begin
   linRep := '';
   pic.ExploreUsed(@ProcByteUsed);
   Result := linRep;
 end;
-function TGenCodBas_PIC16.ValidateByteRange(n: integer): boolean;
+function TGenCodBas.ValidateByteRange(n: integer): boolean;
 //Verifica que un valor entero, se pueda convertir a byte. Si no, devuelve FALSE.
 begin
   if (n>=0) and (n<256) then
@@ -363,7 +332,7 @@ begin
     exit(false);
   end;
 end;
-function TGenCodBas_PIC16.ValidateWordRange(n: integer): boolean;
+function TGenCodBas.ValidateWordRange(n: integer): boolean;
 //Verifica que un valor entero, se pueda convertir a byte. Si no, devuelve FALSE.
 begin
   if (n>=0) and (n<65536) then
@@ -373,7 +342,7 @@ begin
     exit(false);
   end;
 end;
-function TGenCodBas_PIC16.ValidateDWordRange(n: Int64): boolean;
+function TGenCodBas.ValidateDWordRange(n: Int64): boolean;
 begin
   if (n>=0) and (n<$100000000) then
      exit(true)
@@ -382,17 +351,7 @@ begin
     exit(false);
   end;
 end;
-procedure TGenCodBas_PIC16.ExchangeP1_P2;
-{Intercambai el orden de los operandos.}
-var
-  tmp : ^TOperand;
-begin
-  //Invierte los operandos
-  tmp := p1;
-  p1 := p2;
-  p2 := tmp;
-end;
-procedure TGenCodBas_PIC16.GenerateROBdetComment;
+procedure TGenCodBas.GenerateROBdetComment;
 {Genera un comentario detallado en el código ASM. Válido solo para
 Rutinas de Operación binaria, que es cuando está definido operType, p1, y p2.}
 begin
@@ -401,7 +360,7 @@ begin
                                 p2^.StoOpChr + ':' + p2^.Typ.name + ')', false);
   end;
 end;
-procedure TGenCodBas_PIC16.GenerateROUdetComment;
+procedure TGenCodBas.GenerateROUdetComment;
 {Genera un comentario detallado en el código ASM. Válido solo para
 Rutinas de Operación unaria, que es cuando está definido operType, y p1.}
 begin
@@ -409,56 +368,28 @@ begin
     PutTopComm('      ;Oper(' + p1^.StoOpChr + ':' + p1^.Typ.name + ')', false);
   end;
 end;
-//Funciones auxiliares privadas
-function OperandUseW(Oper: TOperand): boolean;
-{Indica si el operando está usando el registro W}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typByte) or (Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
-end;
-function OperandUseH(Oper: TOperand): boolean;
-{Indica si el operando está usando el registro H}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
-end;
-function OperandUseHW(Oper: TOperand): boolean;
-{Indica si el operando está usando los registros H,W}
-begin
-  if (Oper.Sto = stExpres) and
-     ((Oper.Typ = typWord) or (Oper.Typ = typDWord)) then
-    exit(true)
-  else
-    exit(false);
-end;
 //Rutinas de gestión de memoria de bajo nivel
-procedure TGenCodBas_PIC16.AssignRAM(out addr: word; regName: string; shared: boolean);
+procedure TGenCodBas.AssignRAM(out addr: word; regName: string; shared: boolean);
 //Asocia a una dirección física de la memoria del PIC.
 //Si encuentra error, devuelve el mensaje de error en "MsjError"
 begin
   {Esta dirección física, la mantendrá este registro hasta el final de la compilación
   y en teoría, hasta el final de la ejecución de programa en el PIC.}
   if not pic.GetFreeByte(addr, shared) then begin
-    GenError('No enough RAM');
+    GenError(MSG_NO_ENOU_RAM);
     exit;
   end;
   pic.SetNameRAM(addr, regName);  //pone nombre a registro
 end;
-procedure TGenCodBas_PIC16.AssignRAMbit(out addr: word; out bit: byte; regName: string; shared: boolean);
+procedure TGenCodBas.AssignRAMbit(out addr: word; out bit: byte; regName: string; shared: boolean);
 begin
   if not pic.GetFreeBit(addr, bit, shared) then begin
-    GenError('No enough RAM');
+    GenError(MSG_NO_ENOU_RAM);
     exit;
   end;
   pic.SetNameRAMbit(addr, bit, regName);  //pone nombre a bit
 end;
-function TGenCodBas_PIC16.CreateRegisterByte(RegType: TPicRegType): TPicRegister;
+function TGenCodBas.CreateRegisterByte(RegType: TPicRegType): TPicRegister;
 {Crea una nueva entrada para registro en listRegAux[], pero no le asigna memoria.
  Si encuentra error, devuelve NIL. Este debería ser el único punto de entrada
 para agregar un nuevo registro a listRegAux.}
@@ -471,12 +402,12 @@ begin
   listRegAux.Add(reg);   //agrega a lista
   if listRegAux.Count > MAX_REGS_AUX_BYTE then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
-    GenError('Very complex expression. To simplify.');
+    GenError(MSG_VER_CMP_EXP);
     exit(nil);
   end;
   Result := reg;   //devuelve referencia
 end;
-function TGenCodBas_PIC16.CreateRegisterBit(RegType: TPicRegType): TPicRegisterBit;
+function TGenCodBas.CreateRegisterBit(RegType: TPicRegType): TPicRegisterBit;
 {Crea una nueva entrada para registro en listRegAux[], pero no le asigna memoria.
  Si encuentra error, devuelve NIL. Este debería ser el único punto de entrada
 para agregar un nuevo registro a listRegAux.}
@@ -489,12 +420,12 @@ begin
   listRegAuxBit.Add(reg);   //agrega a lista
   if listRegAuxBit.Count > MAX_REGS_AUX_BIT then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
-    GenError('Very complex expression. To simplify.');
+    GenError(MSG_VER_CMP_EXP);
     exit(nil);
   end;
   Result := reg;   //devuelve referencia
 end;
-function TGenCodBas_PIC16.CreateTmpVar(nam: string; eleTyp: TxpEleType): TxpEleVar;
+function TGenCodBas.CreateTmpVar(nam: string; eleTyp: TxpEleType): TxpEleVar;
 {Crea una variable temporal agregándola al contenedor varFields, que es
 limpiado al iniciar la compilación. Notar que la variable temporal creada, no tiene
 RAM asiganda.}
@@ -509,7 +440,7 @@ begin
   varFields.Add(tmpVar);  //Agrega
   Result := tmpVar;
 end;
-function TGenCodBas_PIC16.NewTmpVarWord(rL, rH: TPicRegister): TxpEleVar;
+function TGenCodBas.NewTmpVarWord(rL, rH: TPicRegister): TxpEleVar;
 {Crea una variable temporal Word, con las direcciones de los registros indicados, y
 devuelve la referencia. La variable se crea sin asignación de memoria.}
 begin
@@ -519,7 +450,7 @@ begin
   Result.addr1 := rH.addr;
 end;
 //Variables temporales
-function TGenCodBas_PIC16.NewTmpVarDword(rL, rH, rE, rU: TPicRegister): TxpEleVar;
+function TGenCodBas.NewTmpVarDword(rL, rH, rE, rU: TPicRegister): TxpEleVar;
 {Crea una variable temporal DWord, con las direcciones de los registros indicados, y
 devuelve la referencia. La variable se crea sin asignación de memoria.}
 begin
@@ -531,7 +462,7 @@ begin
   Result.addr3 := rU.addr;
 end;
 //Rutinas de Gestión de memoria
-function TGenCodBas_PIC16.GetAuxRegisterByte: TPicRegister;
+function TGenCodBas.GetAuxRegisterByte: TPicRegister;
 {Devuelve la dirección de un registro de trabajo libre. Si no encuentra alguno, lo crea.
  Si hay algún error, llama a GenError() y devuelve NIL}
 var
@@ -551,7 +482,7 @@ begin
   end;
   //No encontró ninguno libre, crea uno en memoria
   reg := CreateRegisterByte(prtAuxReg);
-  if reg = nil then exit(nil);  //hubo errir
+  if reg = nil then exit(nil);  //hubo error
   regName := 'aux'+IntToSTr(listRegAux.Count);
   AssignRAM(reg.addr, regName, false);   //Asigna memoria. Puede generar error.
   if HayError then exit;
@@ -559,7 +490,7 @@ begin
   reg.used := true;  //marca como usado
   Result := reg;   //Devuelve la referencia
 end;
-function TGenCodBas_PIC16.GetAuxRegisterBit: TPicRegisterBit;
+function TGenCodBas.GetAuxRegisterBit: TPicRegisterBit;
 {Devuelve la dirección de un registro de trabajo libre. Si no encuentra alguno, lo crea.
  Si hay algún error, llama a GenError() y devuelve NIL}
 var
@@ -585,7 +516,7 @@ begin
   reg.used := true;  //marca como usado
   Result := reg;   //Devuelve la referencia
 end;
-function TGenCodBas_PIC16.GetStkRegisterByte: TPicRegister;
+function TGenCodBas.GetStkRegisterByte: TPicRegister;
 {Pone un registro de un byte, en la pila, de modo que se pueda luego acceder con
 FreeStkRegisterByte(). Si hay un error, devuelve NIL.
 Notar que esta no es una pila de memoria en el PIC, sino una emulación de pila
@@ -597,7 +528,7 @@ begin
   //Validación
   if stackTop>MAX_REGS_STACK_BYTE then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
-    GenError('Very complex expression. To simplify.');
+    GenError(MSG_VER_CMP_EXP);
     exit(nil);
   end;
   if stackTop>listRegStk.Count-1 then begin
@@ -615,7 +546,7 @@ begin
   Result.used := true;   //lo marca
   inc(stackTop);  //actualiza
 end;
-function TGenCodBas_PIC16.GetStkRegisterBit: TPicRegisterBit;
+function TGenCodBas.GetStkRegisterBit: TPicRegisterBit;
 {Pone un registro de un bit, en la pila, de modo que se pueda luego acceder con
 FreeStkRegisterBit(). Si hay un error, devuelve NIL.
 Notar que esta no es una pila de memoria en el PIC, sino una emulación de pila
@@ -627,7 +558,7 @@ begin
   //Validación
   if stackTopBit>MAX_REGS_STACK_BIT then begin
     //Se asume que se desbordó la memoria evaluando a alguna expresión
-    GenError('Very complex expression. To simplify.');
+    GenError(MSG_VER_CMP_EXP);
     exit(nil);
   end;
   if stackTopBit>listRegStkBit.Count-1 then begin
@@ -645,7 +576,7 @@ begin
   Result.used := true;   //lo marca
   inc(stackTopBit);  //actualiza
 end;
-function TGenCodBas_PIC16.GetVarBitFromStk: TxpEleVar;
+function TGenCodBas.GetVarBitFromStk: TxpEleVar;
 {Devuelve la referencia a una variable bit, que representa al último bit agregado en
 la pila. Se usa como un medio de trabajar con los datos de la pila.}
 var
@@ -659,7 +590,7 @@ begin
   //Ahora que tenemos ya la variable configurada, devolvemos la referecnia
   Result := varStkBit;
 end;
-function TGenCodBas_PIC16.GetVarByteFromStk: TxpEleVar;
+function TGenCodBas.GetVarByteFromStk: TxpEleVar;
 {Devuelve la referencia a una variable byte, que representa al último byte agregado en
 la pila. Se usa como un medio de trabajar con los datos de la pila.}
 var
@@ -672,7 +603,7 @@ begin
   //Ahora que tenemos ya la variable configurada, devolvemos la referecnia
   Result := varStkByte;
 end;
-function TGenCodBas_PIC16.GetVarWordFromStk: TxpEleVar;
+function TGenCodBas.GetVarWordFromStk: TxpEleVar;
 {Devuelve la referencia a una variable word, que representa al último word agregado en
 la pila. Se usa como un medio de trabajar con los datos de la pila.}
 var
@@ -687,7 +618,7 @@ begin
   //Ahora que tenemos ya la variable configurada, devolvemos la referencia
   Result := varStkWord;
 end;
-function TGenCodBas_PIC16.GetVarDWordFromStk: TxpEleVar;
+function TGenCodBas.GetVarDWordFromStk: TxpEleVar;
 {Devuelve la referencia a una variable Dword, que representa al último Dword agregado en
 la pila. Se usa como un medio de trabajar con los datos de la pila.}
 var
@@ -706,51 +637,51 @@ begin
   //Ahora que tenemos ya la variable configurada, devolvemos la referencia
   Result := varStkDWord;
 end;
-function TGenCodBas_PIC16.FreeStkRegisterBit: boolean;
+function TGenCodBas.FreeStkRegisterBit: boolean;
 {Libera el último bit, que se pidió a la RAM. Si hubo error, devuelve FALSE.
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
 begin
    if stackTopBit=0 then begin  //Ya está abajo
-     GenError('Stack Overflow');
+     GenError(MSG_STACK_OVERF);
      exit(false);
    end;
    dec(stackTopBit);   //Baja puntero
    exit(true);
 end;
-function TGenCodBas_PIC16.FreeStkRegisterByte: boolean;
+function TGenCodBas.FreeStkRegisterByte: boolean;
 {Libera el último byte, que se pidió a la RAM. Devuelve en "reg", la dirección del último
  byte pedido. Si hubo error, devuelve FALSE.
  Liberarlos significa que estarán disponibles, para la siguiente vez que se pidan}
 begin
    if stackTop=0 then begin  //Ya está abajo
-     GenError('Stack Overflow');
+     GenError(MSG_STACK_OVERF);
      exit(false);
    end;
    dec(stackTop);   //Baja puntero
    exit(true);
 end;
-function TGenCodBas_PIC16.FreeStkRegisterWord: boolean;
+function TGenCodBas.FreeStkRegisterWord: boolean;
 {Libera el último word, que se pidió a la RAM. Si hubo error, devuelve FALSE.}
 begin
    if stackTop<=1 then begin  //Ya está abajo
-     GenError('Stack Overflow');
+     GenError(MSG_STACK_OVERF);
      exit(false);
    end;
    dec(stackTop, 2);   //Baja puntero
    exit(true);
 end;
-function TGenCodBas_PIC16.FreeStkRegisterDWord: boolean;
+function TGenCodBas.FreeStkRegisterDWord: boolean;
 {Libera el último dword, que se pidió a la RAM. Si hubo error, devuelve FALSE.}
 begin
    if stackTop<=3 then begin  //Ya está abajo
-     GenError('Stack Overflow');
+     GenError(MSG_STACK_OVERF);
      exit(false);
    end;
    dec(stackTop, 4);   //Baja puntero
    exit(true);
 end;
 ////Rutinas de gestión de memoria para variables
-procedure TGenCodBas_PIC16.AssignRAMinBit(absAdd, absBit: integer;
+procedure TGenCodBas.AssignRAMinBit(absAdd, absBit: integer;
   var addr: word; var bit: byte; regName: string; shared: boolean = false);
 {Aeigna RAM a un registro o lo coloca en la dirección indicada.}
 begin
@@ -767,7 +698,7 @@ begin
     pic.SetNameRAMbit(addr, bit, regName);
   end;
 end;
-procedure TGenCodBas_PIC16.AssignRAMinByte(absAdd: integer;
+procedure TGenCodBas.AssignRAMinByte(absAdd: integer;
   var addr: word; regName: string; shared: boolean = false);
 {Asigna RAM a un registro o lo coloca en la dirección indicada.}
 begin
@@ -783,7 +714,7 @@ begin
     pic.SetNameRAM(addr, regName);
   end;
 end;
-procedure TGenCodBas_PIC16.CreateVarInRAM(nVar: TxpEleVar; shared: boolean = false);
+procedure TGenCodBas.CreateVarInRAM(nVar: TxpEleVar; shared: boolean = false);
 {Rutina para asignar espacio físico a una variable. La variable, es creada en memoria
 con los parámetros que posea en ese momento. Si está definida como ABSOLUTE, se le
 creará en la posicón indicada. }
@@ -848,13 +779,13 @@ begin
     //Es un arreglo de algún tipo
     if absAdd<>-1 then begin
       //Se pide mapearlo de forma absoluta
-      GenError('Not implemented.', [varName]);
+      GenError(MSG_NOT_IMPLEM, [varName]);
       exit;
     end;
     //Asignamos espacio en RAM
     nbytes := typ.arrSize * typ.refType.size;
     if not pic.GetFreeBytes(nbytes, addr) then begin
-      GenError('No enough RAM');
+      GenError(MSG_NO_ENOU_RAM);
       exit;
     end;
     pic.SetNameRAM(addr, nVar.name);   //Nombre solo al primer byte
@@ -866,20 +797,20 @@ begin
     //Los punteros cortos, se manejan como bytes
     AssignRAMinByte(absAdd, nVar.addr0, varName, shared);
   end else begin
-    GenError('Not implemented.', [varName]);
+    GenError(MSG_NOT_IMPLEM, [varName]);
   end;
   if HayError then  exit;
   if typ.OnGlobalDef<>nil then typ.OnGlobalDef(varName, '');
 end;
 //Métodos para fijar el resultado
-procedure TGenCodBas_PIC16.SetResultNull;
+procedure TGenCodBas.SetResultNull;
 {Fija el resultado como NULL.}
 begin
   res.SetAsNull;
   InvertedFromC:=false;   //para limpiar el estado
   res.Inverted := false;
 end;
-procedure TGenCodBas_PIC16.SetResultConst(typ: TxpEleType);
+procedure TGenCodBas.SetResultConst(typ: TxpEleType);
 {Fija los parámetros del resultado de una subexpresion. Este método se debe ejcutar,
 siempre antes de evaluar cada subexpresión.}
 begin
@@ -889,7 +820,7 @@ begin
   que en este caso, tenemos control pleno de su valor}
   res.Inverted := false;
 end;
-procedure TGenCodBas_PIC16.SetResultVariab(rVar: TxpEleVar; Inverted: boolean = false);
+procedure TGenCodBas.SetResultVariab(rVar: TxpEleVar; Inverted: boolean = false);
 {Fija los parámetros del resultado de una subexpresion. Este método se debe ejcutar,
 siempre antes de evaluar cada subexpresión.}
 begin
@@ -898,7 +829,7 @@ begin
   //"Inverted" solo tiene sentido, para los tipos bit y boolean
   res.Inverted := Inverted;
 end;
-procedure TGenCodBas_PIC16.SetResultExpres(typ: TxpEleType; ChkRTState: boolean = true);
+procedure TGenCodBas.SetResultExpres(typ: TxpEleType; ChkRTState: boolean = true);
 {Fija los parámetros del resultado de una subexpresion (en "res"). Este método se debe
 ejecutar, siempre antes de evaluar cada subexpresión. Más exactamente, antes de generar
 código para ña subexpresión, porque esta rutina puede generar su propio código.}
@@ -919,14 +850,14 @@ begin
   //Actualiza el estado de los registros de trabajo.
   RTstate := typ;
 end;
-procedure TGenCodBas_PIC16.SetResultVarRef(rVarBase: TxpEleVar);
+procedure TGenCodBas.SetResultVarRef(rVarBase: TxpEleVar);
 begin
   res.SetAsVarRef(rVarBase);
   InvertedFromC:=false;   //para limpiar el estado
   //No se usa "Inverted" en este almacenamiento
   res.Inverted := false;
 end;
-procedure TGenCodBas_PIC16.SetResultExpRef(rVarBase: TxpEleVar; typ: TxpEleType; ChkRTState: boolean = true);
+procedure TGenCodBas.SetResultExpRef(rVarBase: TxpEleVar; typ: TxpEleType; ChkRTState: boolean = true);
 begin
   if ChkRTState then begin
     //Se pide verificar si se están suando los RT, para salvarlos en la pila.
@@ -943,19 +874,19 @@ begin
   res.Inverted := false;
 end;
 //Fija el resultado de ROP como constante
-procedure TGenCodBas_PIC16.SetROBResultConst_bool(valBool: boolean);
+procedure TGenCodBas.SetROBResultConst_bool(valBool: boolean);
 begin
   GenerateROBdetComment;
   SetResultConst(typBool);
   res.valBool := valBool;
 end;
-procedure TGenCodBas_PIC16.SetROBResultConst_bit(valBit: boolean);
+procedure TGenCodBas.SetROBResultConst_bit(valBit: boolean);
 begin
   GenerateROBdetComment;
   SetResultConst(typBit);
   res.valBool := valBit;
 end;
-procedure TGenCodBas_PIC16.SetROBResultConst_byte(valByte: integer);
+procedure TGenCodBas.SetROBResultConst_byte(valByte: integer);
 begin
   GenerateROBdetComment;
   if not ValidateByteRange(valByte) then
@@ -963,13 +894,13 @@ begin
   SetResultConst(typByte);
   res.valInt := valByte;
 end;
-procedure TGenCodBas_PIC16.SetROBResultConst_char(valByte: integer);
+procedure TGenCodBas.SetROBResultConst_char(valByte: integer);
 begin
   GenerateROBdetComment;
   SetResultConst(typChar);
   res.valInt := valByte;
 end;
-procedure TGenCodBas_PIC16.SetROBResultConst_word(valWord: integer);
+procedure TGenCodBas.SetROBResultConst_word(valWord: integer);
 begin
   GenerateROBdetComment;
   if not ValidateWordRange(valWord) then
@@ -977,7 +908,7 @@ begin
   SetResultConst(typWord);
   res.valInt := valWord;
 end;
-procedure TGenCodBas_PIC16.SetROBResultConst_dword(valWord: Int64);
+procedure TGenCodBas.SetROBResultConst_dword(valWord: Int64);
 begin
   GenerateROBdetComment;
   if not ValidateDWordRange(valWord) then
@@ -986,16 +917,16 @@ begin
   res.valInt := valWord;
 end;
 //Fija el resultado de ROP como variable
-procedure TGenCodBas_PIC16.SetROBResultVariab(rVar: TxpEleVar; Inverted: boolean);
+procedure TGenCodBas.SetROBResultVariab(rVar: TxpEleVar; Inverted: boolean);
 begin
   GenerateROBdetComment;
   SetResultVariab(rVar, Inverted);
 end;
 //Fija el resultado de ROP como expresión
-procedure TGenCodBas_PIC16.SetROBResultExpres_bit(Opt: TxpOperation; Inverted: boolean);
+procedure TGenCodBas.SetROBResultExpres_bit(Opt: TxpOperation; Inverted: boolean);
 {Define el resultado como una expresión de tipo Bit, y se asegura de reservar el registro
 Z, para devolver la salida. Debe llamarse cuando se tienen los operandos de
-la oepración en p1^ y p2^, porque toma infiormación de allí.}
+la oepración en p1^ y p2^, porque toma información de allí.}
 begin
   GenerateROBdetComment;
   //Se van a usar los RT. Verificar si los RT están ocupadoa
@@ -1010,10 +941,10 @@ begin
   //Fija la lógica
   res.Inverted := Inverted;
 end;
-procedure TGenCodBas_PIC16.SetROBResultExpres_bool(Opt: TxpOperation; Inverted: boolean);
+procedure TGenCodBas.SetROBResultExpres_bool(Opt: TxpOperation; Inverted: boolean);
 {Define el resultado como una expresión de tipo Boolean, y se asegura de reservar el
 registro Z, para devolver la salida. Debe llamarse cuando se tienen los operandos de
-la oepración en p1^y p2^, porque toma infiormación de allí.}
+la oepración en p1^y p2^, porque toma información de allí.}
 begin
   GenerateROBdetComment;
   //Se van a usar los RT. Verificar si los RT están ocupadoa
@@ -1028,7 +959,7 @@ begin
   //Fija la lógica
   res.Inverted := Inverted;
 end;
-procedure TGenCodBas_PIC16.SetROBResultExpres_byte(Opt: TxpOperation);
+procedure TGenCodBas.SetROBResultExpres_byte(Opt: TxpOperation);
 {Define el resultado como una expresión de tipo Byte, y se asegura de reservar el
 registro W, para devolver la salida. Debe llamarse cuando se tienen los operandos de
 la oepración en p1^y p2^, porque toma información de allí.}
@@ -1044,10 +975,10 @@ begin
     SetResultExpres(typByte);  //actualiza "RTstate"
   end;
 end;
-procedure TGenCodBas_PIC16.SetROBResultExpres_char(Opt: TxpOperation);
+procedure TGenCodBas.SetROBResultExpres_char(Opt: TxpOperation);
 {Define el resultado como una expresión de tipo Char, y se asegura de reservar el
 registro W, para devolver la salida. Debe llamarse cuando se tienen los operandos de
-la oepración en p1^y p2^, porque toma infiormación de allí.}
+la oepración en p1^y p2^, porque toma información de allí.}
 begin
   GenerateROBdetComment;
   //Se van a usar los RT. Verificar si los RT están ocupadoa
@@ -1060,7 +991,7 @@ begin
     SetResultExpres(typChar);  //actualiza "RTstate"
   end;
 end;
-procedure TGenCodBas_PIC16.SetROBResultExpres_word(Opt: TxpOperation);
+procedure TGenCodBas.SetROBResultExpres_word(Opt: TxpOperation);
 {Define el resultado como una expresión de tipo Word, y se asegura de reservar los
 registros H,W, para devolver la salida.}
 begin
@@ -1075,7 +1006,7 @@ begin
     SetResultExpres(typWord);
   end;
 end;
-procedure TGenCodBas_PIC16.SetROBResultExpres_dword(Opt: TxpOperation);
+procedure TGenCodBas.SetROBResultExpres_dword(Opt: TxpOperation);
 {Define el resultado como una expresión de tipo Word, y se asegura de reservar los
 registros H,W, para devolver la salida.}
 begin
@@ -1092,13 +1023,13 @@ begin
   end;
 end;
 //Fija el resultado de ROU
-procedure TGenCodBas_PIC16.SetROUResultConst_bit(valBit: boolean);
+procedure TGenCodBas.SetROUResultConst_bit(valBit: boolean);
 begin
   GenerateROUdetComment;
   SetResultConst(typBit);
   res.valBool := valBit;
 end;
-procedure TGenCodBas_PIC16.SetROUResultConst_byte(valByte: integer);
+procedure TGenCodBas.SetROUResultConst_byte(valByte: integer);
 begin
   GenerateROUdetComment;
   if not ValidateByteRange(valByte) then
@@ -1106,18 +1037,18 @@ begin
   SetResultConst(typByte);
   res.valInt := valByte;
 end;
-procedure TGenCodBas_PIC16.SetROUResultVariab(rVar: TxpEleVar; Inverted: boolean);
+procedure TGenCodBas.SetROUResultVariab(rVar: TxpEleVar; Inverted: boolean);
 begin
   GenerateROUdetComment;
   SetResultVariab(rVar, Inverted);
 end;
-procedure TGenCodBas_PIC16.SetROUResultVarRef(rVarBase: TxpEleVar);
+procedure TGenCodBas.SetROUResultVarRef(rVarBase: TxpEleVar);
 {Fija el resultado como una referencia de tipo stVarRefVar}
 begin
   GenerateROUdetComment;
   SetResultVarRef(rVarBase);
 end;
-procedure TGenCodBas_PIC16.SetROUResultExpres_bit(Inverted: boolean);
+procedure TGenCodBas.SetROUResultExpres_bit(Inverted: boolean);
 {Define el resultado como una expresión de tipo Bit, y se asegura de reservar el registro
 Z, para devolver la salida. Se debe usar solo para operaciones unarias.}
 begin
@@ -1134,7 +1065,7 @@ begin
   //Fija la lógica
   res.Inverted := Inverted;
 end;
-procedure TGenCodBas_PIC16.SetROUResultExpres_byte;
+procedure TGenCodBas.SetROUResultExpres_byte;
 {Define el resultado como una expresión de tipo Byte, y se asegura de reservar el
 registro W, para devolver la salida. Se debe usar solo para operaciones unarias.}
 begin
@@ -1149,7 +1080,7 @@ begin
     SetResultExpres(typByte);  //actualiza "RTstate"
   end;
 end;
-procedure TGenCodBas_PIC16.SetROUResultExpRef(rVarBase: TxpEleVar; typ: TxpEleType);
+procedure TGenCodBas.SetROUResultExpRef(rVarBase: TxpEleVar; typ: TxpEleType);
 {Define el resultado como una expresión stVarRefExp, protegiendo los RT si es necesario.
 Se debe usar solo para operaciones unarias.}
 begin
@@ -1165,7 +1096,7 @@ begin
   end;
 end;
 //Adicionales
-procedure TGenCodBas_PIC16.ChangeResultBitToBool;
+procedure TGenCodBas.ChangeResultBitToBool;
 {Cambia el tipo de dato del resultado (que se supone es Bit), a Boolean.}
 var
   tmpVar: TxpEleVar;
@@ -1185,11 +1116,11 @@ begin
   end;
   end;
 end;
-procedure TGenCodBas_PIC16.ChangeResultCharToByte;
+procedure TGenCodBas.ChangeResultCharToByte;
 begin
 
 end;
-function TGenCodBas_PIC16.ChangePointerToExpres(var ope: TOperand): boolean;
+function TGenCodBas.ChangePointerToExpres(var ope: TOperand): boolean;
 {Convierte un operando de tipo puntero dereferenciado (x^), en una expresión en los RT,
 para que pueda ser evaluado, sin problemas, por las ROP.
 Si hay error devuelve false.}
@@ -1224,11 +1155,11 @@ begin
   end;
 end;
 //Rutinas generales para la codificación
-procedure TGenCodBas_PIC16.CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas.CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
 begin
   pic.codAsmFD(inst, f, d);
 end;
-procedure TGenCodBas_PIC16.CodAsmK(const inst: TPIC16Inst; const k: byte); inline;
+procedure TGenCodBas.CodAsmK(const inst: TPIC16Inst; const k: byte); inline;
 begin
   pic.codAsmK(inst, k);
 end;
@@ -1237,20 +1168,20 @@ begin
   pic.codAsmFB(inst, f, b);
 end;}
 //rutinas que facilitan la codifición de instrucciones
-procedure TGenCodBas_PIC16._BANKRESET;
+procedure TGenCodBas._BANKRESET;
 {Reinicia el banco al banco 0, independientemente de donde se pueda encontrar antes.
 Siempre genera dos instrucciones. Se usa cuando no se puede predecir exactamente, en que
 banco se encontrará el compilador.}
 begin
   if pic.NumBanks > 1 then begin
-    _BCF(STATUS, _RP0); PutComm(';Bank reset.');
+    _BCF(_STATUS, _RP0); PutComm(';Bank reset.');
   end;
   if pic.NumBanks > 2 then begin
-    _BCF(STATUS, _RP1); PutComm(';Bank reset.');
+    _BCF(_STATUS, _RP1); PutComm(';Bank reset.');
   end;
   CurrBank:=0;
 end;
-procedure TGenCodBas_PIC16._BANKSEL(targetBank: byte);
+procedure TGenCodBas._BANKSEL(targetBank: byte);
 {Verifica si se está en el banco deseado, de no ser así genera las instrucciones
  para el cambio de banco.
  Devuelve el número de instrucciones generado.}
@@ -1268,10 +1199,10 @@ begin
   newRP0 := targetBank and $01;
   if (CurrBank = 255) or (curRP0 <> newRP0) then begin
     //Debe haber cambio
-    if curRP0 = 0 then begin
-      _BSF(STATUS, _RP0); PutComm(';Bank set.');
+    if newRP0 = 1 then begin
+      _BSF(_STATUS, _RP0); PutComm(';Bank set.');
     end else begin
-      _BCF(STATUS, _RP0); PutComm(';Bank set.');
+      _BCF(_STATUS, _RP0); PutComm(';Bank set.');
     end;
   end;
   //Verifica si ya no hay más bancos
@@ -1284,17 +1215,17 @@ begin
   newRP1 := targetBank and $02;
   if (CurrBank = 255) or (curRP1 <> newRP1) then begin
     //Debe haber cambio
-    if curRP1 = 0 then begin
-      _BSF(STATUS, _RP1); PutComm(';Bank set.');
+    if newRP1 = 2 then begin
+      _BSF(_STATUS, _RP1); PutComm(';Bank set.');
     end else begin
-      _BCF(STATUS, _RP1); PutComm(';Bank set.');
+      _BCF(_STATUS, _RP1); PutComm(';Bank set.');
     end;
   end;
   //////////////////////////////////////
   CurrBank := targetBank;
   exit;
 end;
-procedure TGenCodBas_PIC16.GenCodBank(targetAdrr: word);
+procedure TGenCodBas.GenCodBank(targetAdrr: word);
 {Genera código de cambio de banco para acceder a la dirección indicada.
 Se debe usar antes de una instrucción que va a acceder a RAM.}
 var
@@ -1307,154 +1238,154 @@ begin
   mapeada, también, en otros bancos y así evitar cambios innecesarios de banco. }
   _BANKSEL(targetBank);
 end;
-function TGenCodBas_PIC16._PC: word; inline;
+function TGenCodBas._PC: word; inline;
 {Devuelve la dirección actual en Flash}
 begin
   Result := pic.iFlash;
 end;
-function TGenCodBas_PIC16._CLOCK: integer; inline;
+function TGenCodBas._CLOCK: integer; inline;
 {Devuelve la frecuencia de reloj del PIC}
 begin
   Result := pic.frequen;
 end;
-procedure TGenCodBas_PIC16._LABEL(igot: integer);
+procedure TGenCodBas._LABEL(igot: integer);
 {Termina de codificar el GOTO_PEND}
 begin
   pic.codGotoAt(igot, _PC);
 end;
 //Instrucciones simples
 {Estas instrucciones no guardan la instrucción compilada en "lastOpCode".}
-procedure TGenCodBas_PIC16._ADDLW(const k: word); inline;
+procedure TGenCodBas._ADDLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ADDLW, k);
 end;
-procedure TGenCodBas_PIC16._ANDLW(const k: word); inline;
+procedure TGenCodBas._ANDLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ANDLW, k);
 end;
-procedure TGenCodBas_PIC16._ADDWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._ADDWF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ADDWF, f,d);
 end;
-procedure TGenCodBas_PIC16._ANDWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._ANDWF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ANDWF, f,d);
 end;
-procedure TGenCodBas_PIC16._CLRF(const f: byte); inline;
+procedure TGenCodBas._CLRF(const f: byte); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(i_CLRF, f);
 end;
-procedure TGenCodBas_PIC16._CLRW; inline;
+procedure TGenCodBas._CLRW; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
 end;
-procedure TGenCodBas_PIC16._COMF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._COMF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_COMF, f,d);
 end;
-procedure TGenCodBas_PIC16._DECF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._DECF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECF, f,d);
 end;
-procedure TGenCodBas_PIC16._DECFSZ(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._DECFSZ(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECFSZ, f,d);
 end;
-procedure TGenCodBas_PIC16._INCF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._INCF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCF, f,d);
 end;
-procedure TGenCodBas_PIC16._INCFSZ(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._INCFSZ(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
 end;
-procedure TGenCodBas_PIC16._IORWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._IORWF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_IORWF, f,d);
 end;
-procedure TGenCodBas_PIC16._MOVF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._MOVF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_MOVF, f,d);
 end;
-procedure TGenCodBas_PIC16._MOVWF(const f: byte);
+procedure TGenCodBas._MOVWF(const f: byte);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(i_MOVWF, f);
 end;
-procedure TGenCodBas_PIC16._NOP; inline;
+procedure TGenCodBas._NOP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_NOP);
 end;
-procedure TGenCodBas_PIC16._RLF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._RLF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RLF, f,d);
 end;
-procedure TGenCodBas_PIC16._RRF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._RRF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f,d);
 end;
-procedure TGenCodBas_PIC16._SUBWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._SUBWF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SUBWF, f,d);
 end;
-procedure TGenCodBas_PIC16._SWAPF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._SWAPF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SWAPF, f,d);
 end;
-procedure TGenCodBas_PIC16._BCF(const f, b: byte); inline;
+procedure TGenCodBas._BCF(const f, b: byte); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BCF, f, b);
 end;
-procedure TGenCodBas_PIC16._BSF(const f, b: byte); //inline;
+procedure TGenCodBas._BSF(const f, b: byte); //inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BSF, f, b);
 end;
-procedure TGenCodBas_PIC16._BTFSC(const f, b: byte); inline;
+procedure TGenCodBas._BTFSC(const f, b: byte); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BTFSC, f, b);
 end;
-procedure TGenCodBas_PIC16._BTFSS(const f, b: byte); inline;
+procedure TGenCodBas._BTFSS(const f, b: byte); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BTFSS, f, b);
 end;
-procedure TGenCodBas_PIC16._CALL(const a: word); inline;
+procedure TGenCodBas._CALL(const a: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_CALL, a);
 end;
-procedure TGenCodBas_PIC16._CLRWDT; inline;
+procedure TGenCodBas._CLRWDT; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRWDT);
 end;
-procedure TGenCodBas_PIC16._GOTO(const a: word); inline;
+procedure TGenCodBas._GOTO(const a: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_GOTO, a);
 end;
-procedure TGenCodBas_PIC16._GOTO_PEND(out igot: integer);
+procedure TGenCodBas._GOTO_PEND(out igot: integer);
 {Escribe una instrucción GOTO, pero sin precisar el destino aún. Devuelve la dirección
  donde se escribe el GOTO, para poder completarla posteriormente.
 }
@@ -1463,203 +1394,221 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_GOTO, 0);  //pone salto indefinido
 end;
-procedure TGenCodBas_PIC16._IORLW(const k: word); inline;
+procedure TGenCodBas._IORLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_IORLW, k);
 end;
-procedure TGenCodBas_PIC16._MOVLW(const k: word); inline;
+procedure TGenCodBas._MOVLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_MOVLW, k);
 end;
-procedure TGenCodBas_PIC16._RETFIE; inline;
+procedure TGenCodBas._RETFIE; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_RETFIE);
 end;
-procedure TGenCodBas_PIC16._RETLW(const k: word); inline;
+procedure TGenCodBas._RETLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_RETLW, k);
 end;
-procedure TGenCodBas_PIC16._RETURN;
+procedure TGenCodBas._RETURN;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_RETURN);
 end;
-procedure TGenCodBas_PIC16._SLEEP; inline;
+procedure TGenCodBas._SLEEP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_SLEEP);
 end;
-procedure TGenCodBas_PIC16._SUBLW(const k: word); inline;
+procedure TGenCodBas._SUBLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_SUBLW, k);
 end;
-procedure TGenCodBas_PIC16._XORLW(const k: word); inline;
+procedure TGenCodBas._XORLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
 end;
-procedure TGenCodBas_PIC16._XORWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._XORWF(const f: byte; d: TPIC16destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f,d);
 end;
 //Instrucciones que manejan el cambio de banco
 {Estas instrucciones guardan la instrucción compilada en "lastOpCode".}
-procedure TGenCodBas_PIC16.kADDLW(const k: word); inline;
+procedure TGenCodBas.kADDLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;  //Este es el banco esperado
   pic.codAsmK(i_ADDLW, k);
 end;
-procedure TGenCodBas_PIC16.kADDWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas.kADDWF(const f: word; d: TPIC16destin); inline;
+//begin
+//  GenCodBank(f);
+//  pic.flash[pic.iFlash].curBnk := CurrBank;
+//  pic.codAsmFD(i_ADDWF, f,d);
+//end;
+procedure TGenCodBas.kADDWF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_ADDWF, f,d);
+  pic.codAsmFD(i_ADDWF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kANDLW(const k: word); inline;
+procedure TGenCodBas.kANDLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ANDLW, k);
 end;
-procedure TGenCodBas_PIC16.kANDWF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kANDWF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ANDWF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kCLRF(const f: TPicRegister); inline;
+procedure TGenCodBas.kCLRF(const f: TPicRegister); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(i_CLRF, f.addr);
 end;
-procedure TGenCodBas_PIC16.kCLRW;
+procedure TGenCodBas.kCLRW;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
 end;
-procedure TGenCodBas_PIC16.kCOMF(const f: word; d: TPIC16destin); inline;
+procedure TGenCodBas.kCOMF(const f: TPicRegister; d: TPIC16Destin);
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_COMF, f,d);
+  pic.codAsmFD(i_COMF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kDECF(const f: word; d: TPIC16destin); inline;
+procedure TGenCodBas.kDECF(const f: TPicRegister; d: TPIC16Destin);
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_DECF, f,d);
+  pic.codAsmFD(i_DECF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kDECFSZ(const f: word; d: TPIC16destin); inline;
+procedure TGenCodBas.kDECFSZ(const f: word; d: TPIC16destin); inline;
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECFSZ, f,d);
 end;
-procedure TGenCodBas_PIC16.kINCF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kINCF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kINCFSZ(const f: word; d: TPIC16destin); inline;
+procedure TGenCodBas.kINCFSZ(const f: word; d: TPIC16destin); inline;
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
 end;
-procedure TGenCodBas_PIC16.kIORWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas.kIORWF(const f: word; d: TPIC16destin); inline;
+//begin
+//  GenCodBank(f);
+//  pic.flash[pic.iFlash].curBnk := CurrBank;
+//  pic.codAsmFD(i_IORWF, f,d);
+//end;
+procedure TGenCodBas.kIORWF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_IORWF, f,d);
+  pic.codAsmFD(i_IORWF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kMOVF(const f: TPicRegister; d: TPIC16destin);
+procedure TGenCodBas.kMOVF(const f: TPicRegister; d: TPIC16destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_MOVF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kMOVWF(const f: TPicRegister); inline;
+procedure TGenCodBas.kMOVWF(const f: TPicRegister); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmF(i_MOVWF, f.addr);
 end;
-procedure TGenCodBas_PIC16.kNOP; inline;
+procedure TGenCodBas.kNOP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_NOP);
 end;
-procedure TGenCodBas_PIC16.kRLF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kRLF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RLF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kRRF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kRRF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kSUBWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas.kSUBWF(const f: word; d: TPIC16destin); inline;
+//begin
+//  GenCodBank(f);
+//  pic.flash[pic.iFlash].curBnk := CurrBank;
+//  pic.codAsmFD(i_SUBWF, f,d);
+//end;
+procedure TGenCodBas.kSUBWF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
-  GenCodBank(f);
+  GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
-  pic.codAsmFD(i_SUBWF, f,d);
+  pic.codAsmFD(i_SUBWF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kSWAPF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kSWAPF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SWAPF, f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kBCF(const f: TPicRegisterBit);
+procedure TGenCodBas.kBCF(const f: TPicRegisterBit);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BCF, f.addr, f.bit);
 end;
-procedure TGenCodBas_PIC16.kBSF(const f: TPicRegisterBit);
+procedure TGenCodBas.kBSF(const f: TPicRegisterBit);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BSF, f.addr, f.bit);
 end;
-procedure TGenCodBas_PIC16.kBTFSC(const f: TPicRegisterBit);
+procedure TGenCodBas.kBTFSC(const f: TPicRegisterBit);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BTFSC, f.addr, f.bit);
 end;
-procedure TGenCodBas_PIC16.kBTFSS(const f: TPicRegisterBit);
+procedure TGenCodBas.kBTFSS(const f: TPicRegisterBit);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFB(i_BTFSS, f.addr, f.bit);
 end;
-procedure TGenCodBas_PIC16.kCALL(const a: word); inline;
+procedure TGenCodBas.kCALL(const a: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_CALL, a);
 end;
-procedure TGenCodBas_PIC16.kCLRWDT; inline;
+procedure TGenCodBas.kCLRWDT; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRWDT);
 end;
-procedure TGenCodBas_PIC16.kGOTO(const a: word); inline;
+procedure TGenCodBas.kGOTO(const a: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_GOTO, a);
 end;
-procedure TGenCodBas_PIC16.kGOTO_PEND(out igot: integer);
+procedure TGenCodBas.kGOTO_PEND(out igot: integer);
 {Escribe una instrucción GOTO, pero sin precisar el destino aún. Devuelve la dirección
  donde se escribe el GOTO, para poder completarla posteriormente.
 }
@@ -1668,75 +1617,77 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmA(i_GOTO, 0);  //pone salto indefinido
 end;
-procedure TGenCodBas_PIC16.kIORLW(const k: word); inline;
+procedure TGenCodBas.kIORLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_IORLW, k);
 end;
-procedure TGenCodBas_PIC16.kMOVLW(const k: word); inline;
+procedure TGenCodBas.kMOVLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_MOVLW, k);
 end;
-procedure TGenCodBas_PIC16.kRETFIE;
+procedure TGenCodBas.kRETFIE;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_RETFIE);
 end;
-procedure TGenCodBas_PIC16.kRETLW(const k: word); inline;
+procedure TGenCodBas.kRETLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_RETLW, k);
 end;
-procedure TGenCodBas_PIC16.kRETURN; inline;
+procedure TGenCodBas.kRETURN; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_RETURN);
 end;
-procedure TGenCodBas_PIC16.kSLEEP; inline;
+procedure TGenCodBas.kSLEEP; inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_SLEEP);
 end;
-procedure TGenCodBas_PIC16.kSUBLW(const k: word); inline;
+procedure TGenCodBas.kSUBLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_SUBLW, k);
 end;
-procedure TGenCodBas_PIC16.kXORLW(const k: word); inline;
+procedure TGenCodBas.kXORLW(const k: word); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
 end;
-procedure TGenCodBas_PIC16.kXORWF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kXORWF(const f: TPicRegister; d: TPIC16destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f.addr, d);
 end;
 //Instrucciones adicionales
-procedure TGenCodBas_PIC16.kSHIFTR(const f: TPicRegister; d: TPIC16destin);
+procedure TGenCodBas.kSHIFTR(const f: TPicRegister; d: TPIC16destin);
 begin
-  _BCF(STATUS, _C);
+  _BCF(_STATUS, _C);
   GenCodBank(f.addr);
   _RRF(f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kSHIFTL(const f: TPicRegister; d: TPIC16destin);
+procedure TGenCodBas.kSHIFTL(const f: TPicRegister; d: TPIC16destin);
 begin
-  _BCF(STATUS, _C);
+  _BCF(_STATUS, _C);
   GenCodBank(f.addr);
   _RLF(f.addr, d);
 end;
-procedure TGenCodBas_PIC16.kIF_BSET(const f: TPicRegisterBit; out igot: integer);
+procedure TGenCodBas.kIF_BSET(const f: TPicRegisterBit; out igot: integer);
 {Conditional instruction. Test if the specified bit is set. In this case, execute
 the following block.
-This instruction require to i_CALL to kEND_BSET() to define the End of the block.
+This instruction require to call to kEND_BSET() to define the End of the block.
 The strategy here is to generate the sequence:
 
   <Bank setting>
   i_BTFSS f
   GOTO  <Block end>
   ;--- Block start ---
+  <several instructions>
+  ;--- Block end ---
 
 This scheme is the worst case (assuming the GOTO instruction is only one word), later
 if the body of the IF, is only one word, it will be optimized to:
@@ -1748,7 +1699,7 @@ if the body of the IF, is only one word, it will be optimized to:
   ;--- Block end ---
 
 It's not used the best case first, because in case it needs to change to the worst case,
-it will need to insert and move several words, including, probably, GOTOs and LABELs,
+it would need to insert and move several words, including, probably, GOTOs and LABELs,
 needing to recalculate jumps.
 }
 begin
@@ -1757,7 +1708,7 @@ begin
   igot := pic.iFlash;     //guarda posición de instrucción de salto
   _GOTO(0); //salto pendiente
 end;
-procedure TGenCodBas_PIC16.kEND_BSET(igot: integer);
+procedure TGenCodBas.kIF_BSET_END(igot: integer);
 {Define the End of the block, created with kIF_BSET().}
 begin
   if _PC = igot+1 then begin
@@ -1774,16 +1725,36 @@ begin
   end;
 end;
 
-function TGenCodBas_PIC16.PicName: string;
+function TGenCodBas.PICName: string;
 begin
   Result := pic.Model;
 end;
-function TGenCodBas_PIC16.PicNameShort: string;
+function TGenCodBas.PICNameShort: string;
 {Genera el nombre del PIC, quitándole la parte inicial "PIC".}
 begin
   Result := copy(pic.Model, 4, length(pic.Model));
 end;
-function TGenCodBas_PIC16.GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
+function TGenCodBas.PICnBanks: byte;
+begin
+  Result := pic.NumBanks;
+end;
+function TGenCodBas.PICCurBank: byte;
+begin
+  Result := pic.STATUS >> 5;
+end;
+function TGenCodBas.PICBank(i: byte): TPICRAMBank;
+begin
+  Result := pic.banks[i];
+end;
+function TGenCodBas.PICnPages: byte;
+begin
+  Result := pic.NumPages;
+end;
+function TGenCodBas.PICPage(i: byte): TPICFlashPage;
+begin
+  Result := pic.pages[i];
+end;
+function TGenCodBas.GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
 {Extrae el primer parámetro (que corresponde al índice) de las funciones getitem() o
 setitem(). También reconoce las formas con corchetes [], y en ese caso pone "WithBrackets"
 en TRUE. Si encuentra error, devuelve false.}
@@ -1807,7 +1778,7 @@ begin
   if HayError then exit(false);
   exit(true);
 end;
-function TGenCodBas_PIC16.GetValueToAssign(WithBrack: boolean; arrVar: TxpEleVar; out value: TOperand): boolean;
+function TGenCodBas.GetValueToAssign(WithBrack: boolean; arrVar: TxpEleVar; out value: TOperand): boolean;
 {Lee el segundo parámetro de SetItem y devuelve en "value". Valida que sea sel tipo
 correcto. Si hay error, devuelve FALSE.}
 var
@@ -1839,7 +1810,7 @@ begin
   exit(true);
 end;
 ///////////////// Tipo Bit ////////////////
-procedure TGenCodBas_PIC16.bit_LoadToRT(const OpPtr: pointer; modReturn: boolean);
+procedure TGenCodBas.bit_LoadToRT(const OpPtr: pointer; modReturn: boolean);
 {Carga operando a registros Z.}
 var
   Op: ^TOperand;
@@ -1878,15 +1849,15 @@ begin
   end;
   else
     //Almacenamiento no implementado
-    GenError('Not implemented.');
+    GenError(MSG_NOT_IMPLEM);
   end;
   if modReturn then _RETURN;  //codifica instrucción
 end;
-procedure TGenCodBas_PIC16.bit_DefineRegisters;
+procedure TGenCodBas.bit_DefineRegisters;
 begin
   //No es encesario, definir registros adicionales a W
 end;
-procedure TGenCodBas_PIC16.bit_SaveToStk;
+procedure TGenCodBas.bit_SaveToStk;
 {Guarda el valor bit, cargado actualmente en Z, a pila.}
 var
   stk: TPicRegisterBit;
@@ -1895,13 +1866,13 @@ begin
   if stk= nil then exit;   //error
   //Guarda Z
   _BANKSEL(stk.bank);
-  _BCF(stk.offs, stk.bit); PutComm(';save Z');
-  _BTFSC(Z.offs, Z.bit); PutComm(';save Z');
-  _BSF(stk.offs, stk.bit); PutComm(';save Z');
+  _BCF(stk.offs, stk.bit); PutComm(TXT_SAVE_Z);
+  _BTFSC(Z.offs, Z.bit); PutComm(TXT_SAVE_Z);
+  _BSF(stk.offs, stk.bit); PutComm(TXT_SAVE_Z);
   stk.used := true;
 end;
 //////////////// Tipo Byte /////////////
-procedure TGenCodBas_PIC16.byte_LoadToRT(const OpPtr: pointer; modReturn: boolean);
+procedure TGenCodBas.byte_LoadToRT(const OpPtr: pointer; modReturn: boolean);
 {Carga operando a registros de trabajo.}
 var
   Op: ^TOperand;
@@ -1940,24 +1911,24 @@ begin
   end;
   else
     //Almacenamiento no implementado
-    GenError('Not implemented.');
+    GenError(MSG_NOT_IMPLEM);
   end;
 end;
-procedure TGenCodBas_PIC16.byte_DefineRegisters;
+procedure TGenCodBas.byte_DefineRegisters;
 begin
   //No es encesario, definir registros adicionales a W
 end;
-procedure TGenCodBas_PIC16.byte_SaveToStk;
+procedure TGenCodBas.byte_SaveToStk;
 var
   stk: TPicRegister;
 begin
   stk := GetStkRegisterByte;  //pide memoria
   //guarda W
   _BANKSEL(stk.bank);
-  _MOVWF(stk.offs);PutComm(';save W');
+  _MOVWF(stk.offs);PutComm(TXT_SAVE_W);
   stk.used := true;
 end;
-procedure TGenCodBas_PIC16.byte_GetItem(const OpPtr: pointer);
+procedure TGenCodBas.byte_GetItem(const OpPtr: pointer);
 //Función que devuelve el valor indexado
 var
   Op: ^TOperand;
@@ -2002,7 +1973,7 @@ begin
     if not CaptureTok(')') then exit;
   end;
 end;
-procedure TGenCodBas_PIC16.byte_SetItem(const OpPtr: pointer);
+procedure TGenCodBas.byte_SetItem(const OpPtr: pointer);
 //Función que fija un valor indexado
 var
   WithBrack: Boolean;
@@ -2114,7 +2085,7 @@ begin
     if not CaptureTok(')') then exit;
   end;
 end;
-procedure TGenCodBas_PIC16.byte_ClearItems(const OpPtr: pointer);
+procedure TGenCodBas.byte_ClearItems(const OpPtr: pointer);
 {Limpia el contenido de todo el arreglo}
 var
   Op: ^TOperand;
@@ -2131,47 +2102,47 @@ begin
     res.valInt {%H-}:= xvar.typ.arrSize;  //Devuelve tamaño
     if xvar.typ.arrSize = 0 then exit;  //No hay nada que limpiar
     if xvar.typ.arrSize = 1 then begin  //Es de un solo byte
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
     end else if xvar.typ.arrSize = 2 then begin  //Es de 2 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
     end else if xvar.typ.arrSize = 3 then begin  //Es de 3 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
     end else if xvar.typ.arrSize = 4 then begin  //Es de 4 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
+      _CLRF(xvar.addr0+3);
     end else if xvar.typ.arrSize = 5 then begin  //Es de 5 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
+      _CLRF(xvar.addr0+3);
+      _CLRF(xvar.addr0+4);
     end else if xvar.typ.arrSize = 6 then begin  //Es de 6 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
-      _CLRF(xvar.adrByte0.offs+5);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
+      _CLRF(xvar.addr0+3);
+      _CLRF(xvar.addr0+4);
+      _CLRF(xvar.addr0+5);
     end else if xvar.typ.arrSize = 7 then begin  //Es de 7 bytes
-      _BANKSEL(xvar.adrByte0.bank);
-      _CLRF(xvar.adrByte0.offs);
-      _CLRF(xvar.adrByte0.offs+1);
-      _CLRF(xvar.adrByte0.offs+2);
-      _CLRF(xvar.adrByte0.offs+3);
-      _CLRF(xvar.adrByte0.offs+4);
-      _CLRF(xvar.adrByte0.offs+5);
-      _CLRF(xvar.adrByte0.offs+6);
+      _BANKSEL(xvar.bank);
+      _CLRF(xvar.addr0);
+      _CLRF(xvar.addr0+1);
+      _CLRF(xvar.addr0+2);
+      _CLRF(xvar.addr0+3);
+      _CLRF(xvar.addr0+4);
+      _CLRF(xvar.addr0+5);
+      _CLRF(xvar.addr0+6);
     end else begin
       //Implementa lazo, usando W como índice
       _MOVLW(xvar.adrByte0.offs);  //dirección inicial
@@ -2181,7 +2152,7 @@ j1:= _PC;
       _CLRF($00);    //Limpia [FSR]
       _INCF($04, toF);    //Siguiente
       _ADDLW(1);   //W = W + 1
-      _BTFSS(STATUS, _Z);
+      _BTFSS(_STATUS, _Z);
       _GOTO(j1);
     end;
   end;
@@ -2189,7 +2160,7 @@ j1:= _PC;
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.byte_bit(const OpPtr: pointer; nbit: byte);
+procedure TGenCodBas.byte_bit(const OpPtr: pointer; nbit: byte);
 //Implementa la operación del campo <tipo>.bit#
 var
   xvar, tmpVar: TxpEleVar;
@@ -2218,40 +2189,40 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.byte_bit0(const OpPtr: pointer);
+procedure TGenCodBas.byte_bit0(const OpPtr: pointer);
 begin
   byte_bit(OpPtr, 0);
 end;
-procedure TGenCodBas_PIC16.byte_bit1(const OpPtr: pointer);
+procedure TGenCodBas.byte_bit1(const OpPtr: pointer);
 begin
   byte_bit(OpPtr, 1);
 end;
-procedure TGenCodBas_PIC16.byte_bit2(const OpPtr: pointer);
+procedure TGenCodBas.byte_bit2(const OpPtr: pointer);
 begin
   byte_bit(OpPtr, 2);
 end;
-procedure TGenCodBas_PIC16.byte_bit3(const OpPtr: pointer);
+procedure TGenCodBas.byte_bit3(const OpPtr: pointer);
 begin
   byte_bit(OpPtr, 3);
 end;
-procedure TGenCodBas_PIC16.byte_bit4(const OpPtr: pointer);
+procedure TGenCodBas.byte_bit4(const OpPtr: pointer);
 begin
   byte_bit(OpPtr, 4);
 end;
-procedure TGenCodBas_PIC16.byte_bit5(const OpPtr: pointer);
+procedure TGenCodBas.byte_bit5(const OpPtr: pointer);
 begin
   byte_bit(OpPtr, 5);
 end;
-procedure TGenCodBas_PIC16.byte_bit6(const OpPtr: pointer);
+procedure TGenCodBas.byte_bit6(const OpPtr: pointer);
 begin
   byte_bit(OpPtr, 6);
 end;
-procedure TGenCodBas_PIC16.byte_bit7(const OpPtr: pointer);
+procedure TGenCodBas.byte_bit7(const OpPtr: pointer);
 begin
   byte_bit(OpPtr, 7);
 end;
 //////////////// Tipo DWord /////////////
-procedure TGenCodBas_PIC16.word_LoadToRT(const OpPtr: pointer; modReturn: boolean);
+procedure TGenCodBas.word_LoadToRT(const OpPtr: pointer; modReturn: boolean);
 {Carga el valor de una expresión a los registros de trabajo.}
 var
   Op: ^TOperand;
@@ -2311,10 +2282,10 @@ begin
   end;
   else
     //Almacenamiento no implementado
-    GenError('Not implemented.');
+    GenError(MSG_NOT_IMPLEM);
   end;
 end;
-procedure TGenCodBas_PIC16.word_DefineRegisters;
+procedure TGenCodBas.word_DefineRegisters;
 begin
   //Aparte de W, solo se requiere H
   if not H.assigned then begin
@@ -2323,7 +2294,7 @@ begin
     H.used := false;
   end;
 end;
-procedure TGenCodBas_PIC16.word_SaveToStk;
+procedure TGenCodBas.word_SaveToStk;
 var
   stk: TPicRegister;
 begin
@@ -2331,18 +2302,18 @@ begin
   stk := GetStkRegisterByte;  //pide memoria
   if stk = nil then exit;
   _BANKSEL(stk.bank);
-  _MOVWF(stk.offs);PutComm(';save W');
+  _MOVWF(stk.offs);PutComm(TXT_SAVE_W);
   stk.used := true;
   //guarda H
   stk := GetStkRegisterByte;   //pide memoria
   if stk = nil then exit;
   _BANKSEL(H.bank);
-  _MOVF(H.offs, toW);PutComm(';save H');
+  _MOVF(H.offs, toW);PutComm(TXT_SAVE_H);
   _BANKSEL(stk.bank);
   _MOVWF(stk.offs);
   stk.used := true;   //marca
 end;
-procedure TGenCodBas_PIC16.word_GetItem(const OpPtr: pointer);
+procedure TGenCodBas.word_GetItem(const OpPtr: pointer);
 //Función que devuelve el valor indexado
 var
   Op: ^TOperand;
@@ -2372,7 +2343,7 @@ begin
       end;
     stVariab: begin
       SetResultExpres(arrVar.typ.refType, true);  //Es array de word, devuelve word
-      _BCF(STATUS, _C);
+      _BCF(_STATUS, _C);
       _RLF(idx.offs, toW);           //Multiplica Idx por 2
       _ADDLW(arrVar.addr0+1);   //Agrega OFFSET + 1
       _MOVWF(FSR.offs);     //direcciona con FSR
@@ -2384,7 +2355,7 @@ begin
     stExpres: begin
       SetResultExpres(arrVar.typ.refType, false);  //Es array de word, devuelve word
       _MOVWF(FSR.offs);     //idx a  FSR (usa como varaib. auxiliar)
-      _BCF(STATUS, _C);
+      _BCF(_STATUS, _C);
       _RLF(FSR.offs, toW);         //Multiplica Idx por 2
       _ADDLW(arrVar.addr0+1);   //Agrega OFFSET + 1
       _MOVWF(FSR.offs);     //direcciona con FSR
@@ -2403,7 +2374,7 @@ begin
     if not CaptureTok(')') then exit;
   end;
 end;
-procedure TGenCodBas_PIC16.word_SetItem(const OpPtr: pointer);
+procedure TGenCodBas.word_SetItem(const OpPtr: pointer);
 //Función que fija un valor indexado
 var
   WithBrack: Boolean;
@@ -2459,7 +2430,7 @@ begin
         //Sabemos que hay una expresión word
         if value.Sto = stConst then begin
           //El valor a escribir, es una constante cualquiera
-          _BCF(STATUS, _C);
+          _BCF(_STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
           _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
@@ -2481,7 +2452,7 @@ begin
         end else if value.Sto = stVariab then begin
           //El valor a escribir, es una variable
           //Calcula dirfección de byte bajo
-          _BCF(STATUS, _C);
+          _BCF(_STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
           _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
@@ -2499,7 +2470,7 @@ begin
           typWord.DefineRegister;   //Para usar H
           _MOVWF(aux.offs);  //W->   salva W (Valor.H)
           //Calcula dirección de byte bajo
-          _BCF(STATUS, _C);
+          _BCF(_STATUS, _C);
           _RLF(idx.offs, toW);  //índice * 2
           _ADDLW(arrVar.addr0);  //Dirección de inicio
           _MOVWF(FSR.offs);  //Direcciona
@@ -2519,7 +2490,7 @@ begin
       if value.Sto = stConst then begin
         //El valor a asignar, es una constante
         _MOVWF(FSR.offs);   //Salva W.
-        _BCF(STATUS, _C);
+        _BCF(_STATUS, _C);
         _RLF(FSR.offs, toW);  //idx * 2
         _ADDLW(arrVar.addr0);  //Dirección de inicio
         _MOVWF(FSR.offs);  //Direcciona a byte bajo
@@ -2540,7 +2511,7 @@ begin
         end;
       end else if value.Sto = stVariab then begin
         _MOVWF(FSR.offs);   //Salva W.
-        _BCF(STATUS, _C);
+        _BCF(_STATUS, _C);
         _RLF(FSR.offs, toW);  //idx * 2
         _ADDLW(arrVar.addr0);  //Dirección de inicio
         _MOVWF(FSR.offs);  //Direcciona a byte bajo
@@ -2558,7 +2529,7 @@ begin
         _MOVWF(aux.offs);  //W->aux   salva W
         rVar := GetVarByteFromStk;  //toma referencia de la pila
         //Calcula dirección de byte bajo
-        _BCF(STATUS, _C);
+        _BCF(_STATUS, _C);
         _RLF(rVar.adrByte0.offs, toW);  //índice * 2
         _ADDLW(arrVar.addr0);  //Dirección de inicio
         _MOVWF(FSR.offs);  //Direcciona
@@ -2582,11 +2553,11 @@ begin
     if not CaptureTok(')') then exit;
   end;
 end;
-procedure TGenCodBas_PIC16.word_ClearItems(const OpPtr: pointer);
+procedure TGenCodBas.word_ClearItems(const OpPtr: pointer);
 begin
 
 end;
-procedure TGenCodBas_PIC16.word_Low(const OpPtr: pointer);
+procedure TGenCodBas.word_Low(const OpPtr: pointer);
 {Acceso al byte de menor peso de un word.}
 var
   xvar, tmpVar: TxpEleVar;
@@ -2612,7 +2583,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.word_High(const OpPtr: pointer);
+procedure TGenCodBas.word_High(const OpPtr: pointer);
 {Acceso al byte de mayor peso de un word.}
 var
   xvar, tmpVar: TxpEleVar;
@@ -2639,7 +2610,7 @@ begin
   end;
 end;
 //////////////// Tipo DWord /////////////
-procedure TGenCodBas_PIC16.dword_LoadToRT(const OpPtr: pointer; modReturn: boolean);
+procedure TGenCodBas.dword_LoadToRT(const OpPtr: pointer; modReturn: boolean);
 {Carga el valor de una expresión a los registros de trabajo.}
 var
   Op: ^TOperand;
@@ -2696,10 +2667,10 @@ begin
   end;
   else
     //Almacenamiento no implementado
-    GenError('Not implemented.');
+    GenError(MSG_NOT_IMPLEM);
   end;
 end;
-procedure TGenCodBas_PIC16.dword_DefineRegisters;
+procedure TGenCodBas.dword_DefineRegisters;
 begin
   //Aparte de W, se requieren H, E y U
   if not H.assigned then begin
@@ -2718,7 +2689,7 @@ begin
     U.used := false;
   end;
 end;
-procedure TGenCodBas_PIC16.dword_SaveToStk;
+procedure TGenCodBas.dword_SaveToStk;
 var
   stk: TPicRegister;
 begin
@@ -2726,13 +2697,13 @@ begin
   stk := GetStkRegisterByte;  //pide memoria
   if HayError then exit;
   _BANKSEL(stk.bank);
-  _MOVWF(stk.offs);PutComm(';save W');
+  _MOVWF(stk.offs);PutComm(TXT_SAVE_W);
   stk.used := true;
   //guarda H
   stk := GetStkRegisterByte;   //pide memoria
   if HayError then exit;
   _BANKSEL(H.bank);
-  _MOVF(H.offs, toW);PutComm(';save H');
+  _MOVF(H.offs, toW);PutComm(TXT_SAVE_H);
   _BANKSEL(stk.bank);
   _MOVWF(stk.offs);
   stk.used := true;   //marca
@@ -2753,7 +2724,7 @@ begin
   _MOVWF(stk.offs);
   stk.used := true;   //marca
 end;
-procedure TGenCodBas_PIC16.dword_Low(const OpPtr: pointer);
+procedure TGenCodBas.dword_Low(const OpPtr: pointer);
 {Acceso al byte de menor peso de un Dword.}
 var
   xvar, tmpVar: TxpEleVar;
@@ -2779,7 +2750,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.dword_High(const OpPtr: pointer);
+procedure TGenCodBas.dword_High(const OpPtr: pointer);
 {Acceso al byte de mayor peso de un Dword.}
 var
   xvar, tmpVar: TxpEleVar;
@@ -2805,7 +2776,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.dword_Extra(const OpPtr: pointer);
+procedure TGenCodBas.dword_Extra(const OpPtr: pointer);
 {Acceso al byte 2 de un Dword.}
 var
   xvar, tmpVar: TxpEleVar;
@@ -2831,7 +2802,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.dword_Ultra(const OpPtr: pointer);
+procedure TGenCodBas.dword_Ultra(const OpPtr: pointer);
 {Acceso al byte 3 de un Dword.}
 var
   xvar, tmpVar: TxpEleVar;
@@ -2857,7 +2828,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.dword_LowWord(const OpPtr: pointer);
+procedure TGenCodBas.dword_LowWord(const OpPtr: pointer);
 {Acceso al word de menor peso de un Dword.}
 var
   xvar, tmpVar: TxpEleVar;
@@ -2884,7 +2855,7 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.dword_HighWord(const OpPtr: pointer);
+procedure TGenCodBas.dword_HighWord(const OpPtr: pointer);
 {Acceso al word de mayor peso de un Dword.}
 var
   xvar, tmpVar: TxpEleVar;
@@ -2911,18 +2882,18 @@ begin
     GenError('Syntax error.');
   end;
 end;
-procedure TGenCodBas_PIC16.GenCodPicReqStopCodeGen;
+procedure TGenCodBas.GenCodPicReqStopCodeGen;
 {Required Stop the Code generation}
 begin
   posFlash := pic.iFlash; //Probably not the best way.
 end;
-procedure TGenCodBas_PIC16.GenCodPicReqStartCodeGen;
+procedure TGenCodBas.GenCodPicReqStartCodeGen;
 {Required Start the Code generation}
 begin
   pic.iFlash := posFlash; //Probably not the best way.
 end;
 //Inicialización
-procedure TGenCodBas_PIC16.StartRegs;
+procedure TGenCodBas.StartRegs;
 {Inicia los registros de trabajo en la lista.}
 begin
   listRegAux.Clear;
@@ -2938,15 +2909,26 @@ begin
   U := CreateRegisterByte(prtWorkReg);
   //Puede salir con error
 end;
-constructor TGenCodBas_PIC16.Create;
+
+function TGenCodBas.CompilerName: string;
+begin
+  Result := 'PIC16 Compiler'
+end;
+function TGenCodBas.RAMmax: integer;
+begin
+   Result := high(pic.ram);
+end;
+constructor TGenCodBas.Create;
 begin
   inherited Create;
+  ID := 16;  //Identifica al compilador PIC16
+  devicesPath := patDevices16;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPIC16.Create;
+  picCore := pic;   //Referencia picCore
   ///////////Crea tipos
   ClearTypes;
-  typNull := CreateSysType('null',t_boolean,-1);
   ///////////////// Tipo Bit ////////////////
   typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
   typBit.OnLoadToRT  :=  @bit_LoadToRT;
@@ -3050,13 +3032,13 @@ begin
   {Crea registro de trabajo Z. El registro Z, es el registro interno del PIC, y está
   siempre asignado en RAM. }
   Z := TPicRegisterBit.Create;
-  Z.addr := STATUS;
+  Z.addr := _STATUS;
   Z.bit := _Z;
   Z.assigned := true;   //ya está asignado desde el principio
   {Crea registro de trabajo C. El registro C, es el registro interno del PIC, y está
   siempre asignado en RAM. }
   C := TPicRegisterBit.Create;
-  C.addr := STATUS;
+  C.addr := _STATUS;
   C.bit := _C;
   C.assigned := true;   //ya está asignado desde el principio
   //Crea registro interno INDF
@@ -3069,7 +3051,7 @@ begin
   FSR.addr := $04;
   FSR.assigned := true;   //ya está asignado desde el principio
 end;
-destructor TGenCodBas_PIC16.Destroy;
+destructor TGenCodBas.Destroy;
 begin
   INDF.Destroy;
   FSR.Destroy;

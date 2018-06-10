@@ -178,7 +178,7 @@
  acToolFindDec.Caption := Trans('Find declaration' , 'Ir a la declaración' , 'Riqsichikusqan k''itiman riy',
                                 'Finde Deklaration','Знайти декларування','Найти декларирование',
                                 'Trouver déclaration');
- acToolRamExp.Caption  := Trans('RAM Explorer' , 'Explorador de RAM' , '',
+ acToolRamExp.Caption  := Trans('&RAM Explorer' , 'Explorador de &RAM' , '',
                                 '','','',
                                 '');
 

@@ -1,30 +1,58 @@
-PicPas 0.8.5
+PicPas 0.8.7
 ============
-Se crea la unidad /devices para almacenar las unidades de modelos de microcontroladores.
-Se implementa la búsqueda de unidades en la carpeta /devices para compilación y autocompletado.
-Se cambia de nombre a las variables de rutas para que empiecen con "pat" en lugar de "rut".
-Se incluyen librerías que definen diversos dispositivos que no están definidos internamente.
-Se compila el proyecto con la versión 1.8 de Lazarus.
-Se crea una entrada nueva en los archivos de idioma para ingresar el idioma frances.
-Se cambia el nombre del proyecto a PicPas (antes era Project1).
-Se optimiza la operación <Constante byte>*<Constante byte> para resultado menor a 256.
-Se implementa la operación <Constante byte>*<Constante word>
-Se implementa la operación <Constante word>*<Constante word>
-Se cambia de nombre a la unidad XpresParserPIC for Parser y se eliminan las referencias a TPIC16
-Se cambia de nombre a la unidad GenCodPIC for GenCodBas_PIC16
-Se cambia de nombre a la unidad GenCod for GenCod_PIC16 
-Se cambia de nombre a la unidad Parser for Compiler_PIC16
-Se cambia de nombre a la unidad ParserDirec for ParserDirec_PIC16.
-Se cambia de nombre a la unidad ParserAsm for ParserAsmPIC16 
-Se cambia el nombre de TfrmPrincipal.CT a CodeTool.
-Se cambia el nombre de TfrmPrincipal.cxp a TfrmPrincipal.Compiler.
-Se cambia de nombre a la clase TGenCodPic por TGenCodBas_PICBase.
-Se pasa a usar la versión 2.3 de ogEditGraf.
-Se elimina el campo TGenCodBas_PIC16.lastOpCode
-Se cambia el sistema de traducción de idioma a FrameArcExplor, para que use el mismo que
-usa todo el proyecto.
-Se mueven métodos de GenCod_PIC16 a "Parser" para que sirvan a otros compiladores.
-Se divide la doceumentación técnica en varios archivos más específicos.
+Se pasa a usar la librería PicUtils en su versión 1.5.
+Se quita el soporte a los PIC de la serie 12F, en la driectiva {$PROCESSOR}, porque se está
+prefiriendo la definición de mciros, usando directivas más detalladas.
+Se agregan métodos de acceso a p1^ y p2^ en la unidad Parser.
+Se revisan y corrigen algunas rutinas del compialdor PIC10.
+Se crea el método TCompilerBase.OperationStr() para dar más información sobre una operación ROB,
+y se psa a usa en las unidades generadoras de código.
+
+PicPas 0.8.6
+============
+* Se reemplazan más rutinas del generador de código de la unidad GenCod_PIC16 con instrucciones
+"k".
+* Se reescriben la rutina TGenCod.ROB_byte_and_byte(), TGenCod.ROB_byte_or_byte() y
+TGenCod.ROB_byte_xor_byte() para no usar TGenCod.opers_byte() y se incluyen algunas optimizaciones.
+* Se elimina TGenCod.opers_byte().
+* Se modifican los métodos AddrString, IsBitSize, IsByteSize, IsWordSize y IsDWordSize en 
+TxpEleType para que no accedan a los tipos typBit, typBool, ... y así puedan moverse estos 
+campos a la clase TCompilerBase.
+* Se mueve la declaración de tipos: typBit, typBool, typByte, typChar, typWord, typDWord a la
+clase TCOmpilerBase, para poder crear instancias independientes de compiladores, basados en 
+TCOmpilerBase.
+* Se cambia de nombre a TfrmPrincipal.Compiler por TfrmPrincipal.Compiler16 y se crea el
+objeto TfrmPrincipal.Compiler10
+* Se modifica la unidad "Parser" para incluir campos virtuales y abstractos en TCompilerBase. 
+* Se modifica frmPrincipal para que pueda trabajar con distintos compiladores, descendientes
+de la clase TCompilerBase.
+* Se rediseña gran parte de la unidad FrameRegWatcher para que acepte a un objeto TCompilerBase
+como fuente, de modo que ya no es específico de PIC16. Además se implementa la opción de mostrar 
+variables de tipo bit y se le crea un archivo de traducciones para el idioma.
+* Se modifica la unidad FrameRamExplorer para que acepte a un objeto TCompilerBase
+como fuente, de modo que ya no es específico de PIC16. 
+* Se modifica la unidad FrameRomExplorer para que acepte a un objeto TCompilerBase
+como fuente, de modo que ya no es específico de PIC16. 
+* Se crea el registro TWordRec en PicCore y se usa para optimizar el manejo de los campo PCH y 
+PCL de TPIC16 y TPIC10.
+* Se modifica FramePicregisters, para optimizar y modularizar la forma en que se muestran los 
+bits de un registro. Se quita, además, la descripción de los bits del registro  STATUS.
+* Se modifica la forma de llamar a TfrmPrincipal.frmDebug para poder indicarle el compilador y 
+el PIC, al momento de mostrar el formulario.
+* Se modifica FormDebugger para que pueda trabajar con los compiladores PIC10 y PIC16.
+* Se cambia la plantilla de Programa nuevo, para hacerla más actualziada a la forma de trabajo 
+actual, usando unidades.
+* Se actualizan los programas de la carpeta ejemplo, a la nueva forma de trabajar con las 
+unidades.
+* Se elimina el campo fraSynTree de la clase TCodeTools y se modifica TCodeTool.Create() para
+que acepte un compilador genérico de la clase TcompilerBase.
+* Se renombra la carpeta /devices a /devices16 y se crean las carpetas /devices10, /devices17,
+/devices18 y se separan las unidades de acuerdo a su arquitectura.
+* Se modifican a los compiladores para que busquen a sus unidades en la ruta que les 
+corresponde.
+* Se optimiza TCodeTool.SetCompletion() para evitar leer por triplicado, la lista de unidades.
+* Se crean las directivas $SET_PIN_NAME y $RESET_PINS y se incluyen en el archivo de sintaxis.
+* Se uniformiza el código de las unidades FrameRamExplorer y FrameRomExplorer.
 
 PENDIENTES
 -Revisar el uso de bancos, para funciones del sistema, como delay_ms() y las llamadas que se
@@ -70,6 +98,34 @@ los lazos y condicionales.
 -Incluir el tipo integer con signo.
 -Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
 y más de una página de ROM.
+
+PicPas 0.8.5
+============
+Se crea la unidad /devices para almacenar las unidades de modelos de microcontroladores.
+Se implementa la búsqueda de unidades en la carpeta /devices para compilación y autocompletado.
+Se cambia de nombre a las variables de rutas para que empiecen con "pat" en lugar de "rut".
+Se incluyen librerías que definen diversos dispositivos que no están definidos internamente.
+Se compila el proyecto con la versión 1.8 de Lazarus.
+Se crea una entrada nueva en los archivos de idioma para ingresar el idioma frances.
+Se cambia el nombre del proyecto a PicPas (antes era Project1).
+Se optimiza la operación <Constante byte>*<Constante byte> para resultado menor a 256.
+Se implementa la operación <Constante byte>*<Constante word>
+Se implementa la operación <Constante word>*<Constante word>
+Se cambia de nombre a la unidad XpresParserPIC for Parser y se eliminan las referencias a TPIC16
+Se cambia de nombre a la unidad GenCodPIC for GenCodBas_PIC16
+Se cambia de nombre a la unidad GenCod for GenCod_PIC16 
+Se cambia de nombre a la unidad Parser for Compiler_PIC16
+Se cambia de nombre a la unidad ParserDirec for ParserDirec_PIC16.
+Se cambia de nombre a la unidad ParserAsm for ParserAsmPIC16 
+Se cambia el nombre de TfrmPrincipal.CT a CodeTool.
+Se cambia el nombre de TfrmPrincipal.cxp a TfrmPrincipal.Compiler.
+Se cambia de nombre a la clase TGenCodPic por TGenCodBas_PICBase.
+Se pasa a usar la versión 2.3 de ogEditGraf.
+Se elimina el campo TGenCodBas_PIC16.lastOpCode
+Se cambia el sistema de traducción de idioma a FrameArcExplor, para que use el mismo que
+usa todo el proyecto.
+Se mueven métodos de GenCod_PIC16 a "Parser" para que sirvan a otros compiladores.
+Se divide la documentación técnica en varios archivos más específicos.
 
 
 PicPas 0.8.4

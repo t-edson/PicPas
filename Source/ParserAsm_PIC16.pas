@@ -5,7 +5,7 @@ unit ParserAsm_PIC16;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, fgl, GenCod_PIC16, Pic16Utils, SynFacilHighlighter, Globales,
+  Classes, SysUtils, fgl, SynFacilHighlighter, Pic16Utils, GenCod_PIC16, Globales,
   XpresBas, strutils, XpresElementsPIC;
 
 type
@@ -28,7 +28,7 @@ type
   TParserAsm = class(TGenCod)
   private
     lexAsm : TSynFacilSyn;   //lexer para analizar ASM
-    tokIni : integer;  //Posición inicial del token actual
+    tokIni2 : integer;  //Posición inicial del token actual
     labels : TPicLabel_list; //Lista de etiquetas
     uJumps : TPicUJump_list; //Lista de instrucciones GOTO o i_CALL, indefinidas
     asmRow : integer;     //número de fila explorada
@@ -73,6 +73,7 @@ var  //Mensajes
 
 procedure SetLanguage;
 begin
+  GenCod_PIC16.SetLanguage;
   {$I ..\language\tra_ParserAsm.pas}
 end;
 
@@ -83,7 +84,7 @@ var
   p: TSrcPos;
 begin
   p := cIn.ReadSrcPos;
-  p.col := tokIni + lexAsm.GetX;  //corrige columna
+  p.col := tokIni2 + lexAsm.GetX;  //corrige columna
   GenErrorPos(msg, [], p);
 end;
 procedure TParserAsm.GenErrorAsm(msg: string; const Args: array of const);
@@ -91,7 +92,7 @@ var
   p: TSrcPos;
 begin
   p := cIn.ReadSrcPos;
-  p.col := tokIni + lexAsm.GetX;  //corrige columna
+  p.col := tokIni2 + lexAsm.GetX;  //corrige columna
   GenErrorPos(msg, Args, p);
 end;
 procedure TParserAsm.GenWarnAsm(msg: string);
@@ -786,9 +787,9 @@ begin
   lin := AsmLin;  //crea copia para poder modificarla
   //Extrae el texto entre los delimitadores de ensamblador
   if IsStartASM(lin) then begin
-    //Como se ha recortado el "ASM", se debe compensar "tokIni"
+    //Como se ha recortado el "ASM", se debe compensar "tokIni2"
     //Además se debe considerar si el delim. ASM, no inicia en 1.
-    tokIni := 3 + Cin.curCon.lex.GetX - 1;
+    tokIni2 := 3 + Cin.curCon.lex.GetX - 1;
     //Es la primera línea de ensamblador
     StartASM;
     //puede incluir también al delimitador "end"
@@ -800,12 +801,12 @@ begin
     end;
   end else if IsEndASM(lin) then begin
     //Es la última línea de ensamblador
-    tokIni := 0;   //En el margen izquierdo, porque no está el delimit. inicial "ASM"
+    tokIni2 := 0;   //En el margen izquierdo, porque no está el delimit. inicial "ASM"
     ProcASM(lin);  //procesa por si queda código
     EndASM;
   end else begin
     //Es una línea común
-    tokIni := 0;   //una línea común, siempre empieza en al margen izquierdo
+    tokIni2 := 0;   //una línea común, siempre empieza en al margen izquierdo
     ProcASM(lin);
   end;
 end;

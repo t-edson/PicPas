@@ -6,8 +6,8 @@ object fraPICDiagram: TfraPICDiagram
   ClientHeight = 317
   ClientWidth = 378
   TabOrder = 0
-  DesignLeft = 550
-  DesignTop = 250
+  DesignLeft = 469
+  DesignTop = 254
   object PaintBox1: TPaintBox
     Left = 0
     Height = 317
@@ -19,22 +19,34 @@ object fraPICDiagram: TfraPICDiagram
     Images = frmDebugger.ImageList16
     left = 72
     top = 128
-    object MenuItem1: TMenuItem
+    object mnReset: TMenuItem
       Action = frmDebugger.acGenReset
     end
-    object MenuItem2: TMenuItem
+    object mnRun: TMenuItem
       Action = frmDebugger.acGenRun
     end
-    object MenuItem5: TMenuItem
+    object mnStepOver: TMenuItem
       Action = frmDebugger.acGenStep
     end
     object MenuItem3: TMenuItem
       Caption = '-'
     end
-    object MenuItem4: TMenuItem
+    object mnConnect: TMenuItem
+      Action = acGenConnect
+    end
+    object mnAddLogicTog: TMenuItem
       Action = acGenAddLogTog
     end
-    object MenuItem6: TMenuItem
+    object MenuItem2: TMenuItem
+      Action = acGenAddLed
+    end
+    object MenuItem1: TMenuItem
+      Action = acGenAddConn
+    end
+    object MenuItem4: TMenuItem
+      Action = acGenAddResis
+    end
+    object mnDelete: TMenuItem
       Action = acGenDelObject
     end
   end
@@ -45,7 +57,32 @@ object fraPICDiagram: TfraPICDiagram
     object acGenAddLogTog: TAction
       Category = 'Gen'
       Caption = 'Add LogicToggle'
+      ImageIndex = 13
       OnExecute = acGenAddLogTogExecute
+    end
+    object acGenAddConn: TAction
+      Category = 'Gen'
+      Caption = 'Add Connector'
+      ImageIndex = 11
+      OnExecute = acGenAddConnExecute
+    end
+    object acGenAddLed: TAction
+      Category = 'Gen'
+      Caption = 'Add Led'
+      ImageIndex = 14
+      OnExecute = acGenAddLedExecute
+    end
+    object acGenAddResis: TAction
+      Category = 'Gen'
+      Caption = 'Add &Resistor'
+      ImageIndex = 15
+      OnExecute = acGenAddResisExecute
+    end
+    object acGenConnect: TAction
+      Category = 'Gen'
+      Caption = 'Connect to'
+      ImageIndex = 12
+      OnExecute = acGenConnectExecute
     end
     object acGenDelObject: TAction
       Category = 'Gen'

@@ -25,11 +25,9 @@
 *
 }
  
-{$PROCESSOR PIC16F84A}
-{$FREQUENCY 8Mhz}
 {$MODE PICPAS}
- 
 uses PIC16F84A;
+{$FREQUENCY 8Mhz}
  
 const
   DataBitCount = 8;        // 8 bits de datos, sin paridad ni control de flujo.
