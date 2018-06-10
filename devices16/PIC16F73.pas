@@ -211,43 +211,52 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-007:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC
   {$SET_STATE_RAM '00A-01F:SFR'}  // PCLATH, INTCON, PIR1, PIR2, TMR1L, TMR1H, T1CON, TMR2, T2CON, SSPBUF, SSPCON, CCPR1L, CCPR1H, CCP1CON, RCSTA, TXREG, RCREG, CCPR2L, CCPR2H, CCP2CON, ADRES, ADCON0
   {$SET_STATE_RAM '020-07F:GPR'} 
-  {$SET_STATE_RAM '080-087:SFR'}  // INDF, OPTION_REG, PCL, STATUS, FSR, TRISA, TRISB, TRISC
-  {$SET_STATE_RAM '08A-08E:SFR'}  // PCLATH, INTCON, PIE1, PIE2, PCON
+  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
+  {$SET_STATE_RAM '082-082:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '085-087:SFR'}  // TRISA, TRISB, TRISC
+  {$SET_STATE_RAM '08A-08A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '08C-08E:SFR'}  // PIE1, PIE2, PCON
   {$SET_STATE_RAM '092-094:SFR'}  // PR2, SSPADD, SSPSTAT
   {$SET_STATE_RAM '098-099:SFR'}  // TXSTA, SPBRG
   {$SET_STATE_RAM '09F-09F:SFR'}  // ADCON1
   {$SET_STATE_RAM '0A0-0FF:GPR'} 
-  {$SET_STATE_RAM '100-104:SFR'}  // INDF, TMR0, PCL, STATUS, FSR
-  {$SET_STATE_RAM '106-106:SFR'}  // PORTB
-  {$SET_STATE_RAM '10A-10F:SFR'}  // PCLATH, INTCON, PMDATA, PMADR, PMDATH, PMADRH
+  {$SET_STATE_RAM '100-102:SFR'}  // mapped to INDF, TMR0, PCL
+  {$SET_STATE_RAM '106-106:SFR'}  // mapped to PORTB
+  {$SET_STATE_RAM '10A-10A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '10C-10F:SFR'}  // PMDATA, PMADR, PMDATH, PMADRH
   {$SET_STATE_RAM '120-17F:GPR'} 
-  {$SET_STATE_RAM '180-184:SFR'}  // INDF, OPTION_REG, PCL, STATUS, FSR
-  {$SET_STATE_RAM '186-186:SFR'}  // TRISB
-  {$SET_STATE_RAM '18A-18C:SFR'}  // PCLATH, INTCON, PMCON1
+  {$SET_STATE_RAM '180-182:SFR'}  // mapped to INDF, OPTION_REG, PCL
+  {$SET_STATE_RAM '186-186:SFR'}  // mapped to TRISB
+  {$SET_STATE_RAM '18A-18A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '18C-18C:SFR'}  // PMCON1
   {$SET_STATE_RAM '1A0-1FF:GPR'} 
 
 
-  // -- Define mirrored registers --
+  // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // INDF
-  {$SET_MAPPED_RAM '082-084:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '100-104:bnk0'} // INDF, TMR0, PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '106-106:bnk0'} // PORTB
-  {$SET_MAPPED_RAM '10A-10B:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '180-180:bnk0'} // INDF
-  {$SET_MAPPED_RAM '181-181:bnk1'} // OPTION_REG
-  {$SET_MAPPED_RAM '182-184:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '186-186:bnk1'} // TRISB
-  {$SET_MAPPED_RAM '18A-18B:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '100-100:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '101-101:bnk0'} // maps to TMR0 (bank 0)
+  {$SET_MAPPED_RAM '102-104:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '106-106:bnk0'} // maps to PORTB (bank 0)
+  {$SET_MAPPED_RAM '10A-10B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '120-17F:bnk2'} // maps to area 020-07F (bank 0)
+  {$SET_MAPPED_RAM '180-180:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '181-181:bnk1'} // maps to OPTION_REG (bank 1)
+  {$SET_MAPPED_RAM '182-184:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '186-186:bnk1'} // maps to TRISB (bank 1)
+  {$SET_MAPPED_RAM '18A-18B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '1A0-1FF:bnk3'} // maps to area 0A0-0FF (bank 1)
 
-  {$SET_MAPPED_RAM '120-17F:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '1A0-1FF:bnk1'} // PCLATH, INTCON
 
   // -- Initial values --
 
@@ -314,27 +323,27 @@ var
 
   // -- Bits Configuration --
 
-  // BOREN : Brown-out Reset Enable bit
-  {$define _BOREN_ON  = $005F}  // BOR enabled
-  {$define _BOREN_OFF = $005E}  // BOR disabled
-
-  // CP : FLASH Program Memory Code Protection bit
-  {$define _CP_OFF    = $005F}  // Code protection off
-  {$define _CP_ON     = $005D}  // All Memory locations code protected
-
-  // PWRTE : Power-up Timer Enable bit
-  {$define _PWRTE_OFF = $005F}  // PWRT disabled
-  {$define _PWRTE_ON  = $005B}  // PWRT enabled
+  // FOSC : Oscillator Selection bits
+  {$define _FOSC_RC   = $3FFF}  // RC oscillator
+  {$define _FOSC_HS   = $3FFE}  // HS oscillator
+  {$define _FOSC_XT   = $3FFD}  // XT oscillator
+  {$define _FOSC_LP   = $3FFC}  // LP oscillator
 
   // WDTE : Watchdog Timer Enable bit
-  {$define _WDTE_ON   = $005F}  // WDT enabled
-  {$define _WDTE_OFF  = $0057}  // WDT disabled
+  {$define _WDTE_ON   = $3FFF}  // WDT enabled
+  {$define _WDTE_OFF  = $3FFB}  // WDT disabled
 
-  // FOSC : Oscillator Selection bits
-  {$define _FOSC_RC   = $007F}  // RC oscillator
-  {$define _FOSC_HS   = $006F}  // HS oscillator
-  {$define _FOSC_XT   = $005F}  // XT oscillator
-  {$define _FOSC_LP   = $004F}  // LP oscillator
+  // PWRTE : Power-up Timer Enable bit
+  {$define _PWRTE_OFF = $3FFF}  // PWRT disabled
+  {$define _PWRTE_ON  = $3FF7}  // PWRT enabled
+
+  // CP : FLASH Program Memory Code Protection bit
+  {$define _CP_OFF    = $3FFF}  // Code protection off
+  {$define _CP_ON     = $3FEF}  // All Memory locations code protected
+
+  // BOREN : Brown-out Reset Enable bit
+  {$define _BOREN_ON  = $3FFF}  // BOR enabled
+  {$define _BOREN_OFF = $3FBF}  // BOR disabled
 
 implementation
 end.

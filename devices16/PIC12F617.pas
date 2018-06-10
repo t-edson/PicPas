@@ -208,7 +208,8 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, GPIO
   {$SET_STATE_RAM '00A-00C:SFR'}  // PCLATH, INTCON, PIR1
@@ -216,9 +217,14 @@ var
   {$SET_STATE_RAM '019-01A:SFR'}  // VRCON, CMCON0
   {$SET_STATE_RAM '01C-01C:SFR'}  // CMCON1
   {$SET_STATE_RAM '01E-01F:SFR'}  // ADRESH, ADCON0
-  {$SET_STATE_RAM '020-07F:GPR'} 
-  {$SET_STATE_RAM '080-085:SFR'}  // INDF, OPTION_REG, PCL, STATUS, FSR, TRISIO
-  {$SET_STATE_RAM '08A-08C:SFR'}  // PCLATH, INTCON, PIE1
+  {$SET_STATE_RAM '020-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
+  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
+  {$SET_STATE_RAM '082-082:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '085-085:SFR'}  // TRISIO
+  {$SET_STATE_RAM '08A-08A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '08C-08C:SFR'}  // PIE1
   {$SET_STATE_RAM '08E-08E:SFR'}  // PCON
   {$SET_STATE_RAM '090-090:SFR'}  // OSCTUNE
   {$SET_STATE_RAM '092-093:SFR'}  // PR2, APFCON
@@ -228,11 +234,12 @@ var
   {$SET_STATE_RAM '0F0-0FF:GPR'} 
 
 
-  // -- Define mirrored registers --
+  // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // INDF
-  {$SET_MAPPED_RAM '082-084:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '0F0-0FF:bnk1'} // maps to area 070-07F (bank 0)
 
 
   // -- Initial values --
@@ -281,46 +288,46 @@ var
 
   // -- Bits Configuration --
 
-  // WRT : Flash Program Memory Self Write Enable bits
-  {$define _WRT_OFF        = $0FFF}  // Write protection off
-  {$define _WRT_BOOT       = $0FFE}  // 000h to 1FFh write protected, 200h to 7FFh may be modified by PMCON1 control
-  {$define _WRT_HALF       = $0FFD}  // 000h to 3FFh write protected, 400h to 7FFh may be modified by PMCON1 control
-  {$define _WRT_ALL        = $0FFC}  // 000h to 7FFh write protected, entire program memory is write protected.
-
-  // BOREN : Brown-out Reset Selection bits
-  {$define _BOREN_ON       = $0FFF}  // BOR enabled
-  {$define _BOREN_NSLEEP   = $0FFB}  // BOR enabled during operation and disabled in Sleep
-  {$define _BOREN_OFF      = $0FF3}  // BOR disabled
-
-  // IOSCFS : Internal Oscillator Frequency Select
-  {$define _IOSCFS_8MHZ    = $0FFF}  // 8 MHz
-  {$define _IOSCFS_4MHZ    = $0FEF}  // 4 MHz
-
-  // CP : Code Protection bit
-  {$define _CP_OFF         = $0FFF}  // Program memory is not code protected
-  {$define _CP_ON          = $0FDF}  // Program memory is external read and write protected
-
-  // MCLRE : MCLR Pin Function Select bit
-  {$define _MCLRE_ON       = $0FFF}  // MCLR pin is MCLR function and weak internal pull-up is enabled
-  {$define _MCLRE_OFF      = $0FBF}  // MCLR pin is alternate function, MCLR function is internally disabled
-
-  // PWRTE : Power-up Timer Enable bit
-  {$define _PWRTE_OFF      = $0FFF}  // PWRT disabled
-  {$define _PWRTE_ON       = $0F7F}  // PWRT enabled
+  // FOSC : Oscillator Selection bits
+  {$define _FOSC_EXTRCCLK  = $3FFF}  // EXTRC oscillator: CLKOUT function on RA4/AN3/T1G/OSC2/CLKOUT, RC on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_EXTRCIO   = $3FFE}  // EXTRCIO oscillator: I/O function on RA4/AN3/T1G/OSC2/CLKOUT, RC on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_INTOSCCLK = $3FFD}  // INTOSC oscillator: CLKOUT function on RA4/AN3/T1G/OSC2/CLKOUT, I/O function on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_INTOSCIO  = $3FFC}  // INTOSCIO oscillator: I/O function on RA4/AN3/T1G/OSC2/CLKOUT, I/O function on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_EC        = $3FFB}  // EC: I/O function on RA4/AN3/T1G/OSC2/CLKOUT, CLKIN on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_HS        = $3FFA}  // HS oscillator: High-speed crystal/resonator on RA5/T1CKI/OSC1/CLKIN and RA4/AN3/T1G/OSC2/CLKOUT
+  {$define _FOSC_XT        = $3FF9}  // XT oscillator: Crystal/resonator on RA5/T1CKI/OSC1/CLKIN and RA4/AN3/T1G/OSC2/CLKOUT
+  {$define _FOSC_LP        = $3FF8}  // LP oscillator: Low-power crystal on RA5/T1CKI/OSC1/CLKIN and RA4/AN3/T1G/OSC2/CLKOUT
 
   // WDTE : Watchdog Timer Enable bit
-  {$define _WDTE_ON        = $0FFF}  // WDT enabled
-  {$define _WDTE_OFF       = $0EFF}  // WDT disabled and can be enabled by SWDTEN bit of the WDTCON register
+  {$define _WDTE_ON        = $3FFF}  // WDT enabled
+  {$define _WDTE_OFF       = $3FF7}  // WDT disabled and can be enabled by SWDTEN bit of the WDTCON register
 
-  // FOSC : Oscillator Selection bits
-  {$define _FOSC_EXTRCCLK  = $0FFF}  // EXTRC oscillator: CLKOUT function on RA4/AN3/T1G/OSC2/CLKOUT, RC on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_EXTRCIO   = $0DFF}  // EXTRCIO oscillator: I/O function on RA4/AN3/T1G/OSC2/CLKOUT, RC on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_INTOSCCLK = $0BFF}  // INTOSC oscillator: CLKOUT function on RA4/AN3/T1G/OSC2/CLKOUT, I/O function on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_INTOSCIO  = $09FF}  // INTOSCIO oscillator: I/O function on RA4/AN3/T1G/OSC2/CLKOUT, I/O function on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_EC        = $07FF}  // EC: I/O function on RA4/AN3/T1G/OSC2/CLKOUT, CLKIN on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_HS        = $05FF}  // HS oscillator: High-speed crystal/resonator on RA5/T1CKI/OSC1/CLKIN and RA4/AN3/T1G/OSC2/CLKOUT
-  {$define _FOSC_XT        = $03FF}  // XT oscillator: Crystal/resonator on RA5/T1CKI/OSC1/CLKIN and RA4/AN3/T1G/OSC2/CLKOUT
-  {$define _FOSC_LP        = $01FF}  // LP oscillator: Low-power crystal on RA5/T1CKI/OSC1/CLKIN and RA4/AN3/T1G/OSC2/CLKOUT
+  // PWRTE : Power-up Timer Enable bit
+  {$define _PWRTE_OFF      = $3FFF}  // PWRT disabled
+  {$define _PWRTE_ON       = $3FEF}  // PWRT enabled
+
+  // MCLRE : MCLR Pin Function Select bit
+  {$define _MCLRE_ON       = $3FFF}  // MCLR pin is MCLR function and weak internal pull-up is enabled
+  {$define _MCLRE_OFF      = $3FDF}  // MCLR pin is alternate function, MCLR function is internally disabled
+
+  // CP : Code Protection bit
+  {$define _CP_OFF         = $3FFF}  // Program memory is not code protected
+  {$define _CP_ON          = $3FBF}  // Program memory is external read and write protected
+
+  // IOSCFS : Internal Oscillator Frequency Select
+  {$define _IOSCFS_8MHZ    = $3FFF}  // 8 MHz
+  {$define _IOSCFS_4MHZ    = $3F7F}  // 4 MHz
+
+  // BOREN : Brown-out Reset Selection bits
+  {$define _BOREN_ON       = $3FFF}  // BOR enabled
+  {$define _BOREN_NSLEEP   = $3EFF}  // BOR enabled during operation and disabled in Sleep
+  {$define _BOREN_OFF      = $3CFF}  // BOR disabled
+
+  // WRT : Flash Program Memory Self Write Enable bits
+  {$define _WRT_OFF        = $3FFF}  // Write protection off
+  {$define _WRT_BOOT       = $3BFF}  // 000h to 1FFh write protected, 200h to 7FFh may be modified by PMCON1 control
+  {$define _WRT_HALF       = $37FF}  // 000h to 3FFh write protected, 400h to 7FFh may be modified by PMCON1 control
+  {$define _WRT_ALL        = $33FF}  // 000h to 7FFh write protected, entire program memory is write protected.
 
 implementation
 end.

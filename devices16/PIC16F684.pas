@@ -226,18 +226,24 @@ var
   ADCON1_ADCS0      : bit  absolute ADCON1.4;
 
 
-// -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+  // -- Define RAM state values --
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA
   {$SET_STATE_RAM '007-007:SFR'}  // PORTC
   {$SET_STATE_RAM '00A-00C:SFR'}  // PCLATH, INTCON, PIR1
   {$SET_STATE_RAM '00E-01A:SFR'}  // TMR1L, TMR1H, T1CON, TMR2, T2CON, CCPR1L, CCPR1H, CCP1CON, PWM1CON, ECCPAS, WDTCON, CMCON0, CMCON1
   {$SET_STATE_RAM '01E-01F:SFR'}  // ADRESH, ADCON0
-  {$SET_STATE_RAM '020-07F:GPR'} 
-  {$SET_STATE_RAM '080-085:SFR'}  // INDF, OPTION_REG, PCL, STATUS, FSR, TRISA
+  {$SET_STATE_RAM '020-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
+  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
+  {$SET_STATE_RAM '082-082:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '085-085:SFR'}  // TRISA
   {$SET_STATE_RAM '087-087:SFR'}  // TRISC
-  {$SET_STATE_RAM '08A-08C:SFR'}  // PCLATH, INTCON, PIE1
+  {$SET_STATE_RAM '08A-08A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '08C-08C:SFR'}  // PIE1
   {$SET_STATE_RAM '08E-092:SFR'}  // PCON, OSCCON, OSCTUNE, ANSEL, PR2
   {$SET_STATE_RAM '095-096:SFR'}  // WPUA, IOCA
   {$SET_STATE_RAM '099-09F:SFR'}  // VRCON, EEDAT, EEADR, EECON1, EECON2, ADRESL, ADCON1
@@ -245,13 +251,13 @@ var
   {$SET_STATE_RAM '0F0-0FF:GPR'} 
 
 
-  // -- Define mirrored registers --
+  // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // INDF
-  {$SET_MAPPED_RAM '082-084:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '0F0-0FF:bnk1'} // maps to area 070-07F (bank 0)
 
-  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 
@@ -301,49 +307,49 @@ var
 
   // -- Bits Configuration --
 
-  // FCMEN : Fail-Safe Clock Monitor Enabled bit
-  {$define _FCMEN_ON       = $0FFF}  // Fail-Safe Clock Monitor is enabled
-  {$define _FCMEN_OFF      = $0FFE}  // Fail-Safe Clock Monitor is disabled
-
-  // IESO : Internal External Switchover bit
-  {$define _IESO_ON        = $0FFF}  // Internal External Switchover mode is enabled
-  {$define _IESO_OFF       = $0FFD}  // Internal External Switchover mode is disabled
-
-  // BOREN : Brown Out Detect
-  {$define _BOREN_ON       = $0FFF}  // BOR enabled
-  {$define _BOREN_NSLEEP   = $0FFB}  // BOR enabled during operation and disabled in Sleep
-  {$define _BOREN_SBODEN   = $0FF7}  // BOR controlled by SBOREN bit of the PCON register
-  {$define _BOREN_OFF      = $0FF3}  // BOR disabled
-
-  // CPD : Data Code Protection bit
-  {$define _CPD_OFF        = $0FFF}  // Data memory code protection is disabled
-  {$define _CPD_ON         = $0FEF}  // Data memory code protection is enabled
-
-  // CP : Code Protection bit
-  {$define _CP_OFF         = $0FFF}  // Program memory code protection is disabled
-  {$define _CP_ON          = $0FDF}  // Program memory code protection is enabled
-
-  // MCLRE : MCLR Pin Function Select bit
-  {$define _MCLRE_ON       = $0FFF}  // MCLR pin function is MCLR
-  {$define _MCLRE_OFF      = $0FBF}  // MCLR pin function is digital input, MCLR internally tied to VDD
-
-  // PWRTE : Power-up Timer Enable bit
-  {$define _PWRTE_OFF      = $0FFF}  // PWRT disabled
-  {$define _PWRTE_ON       = $0F7F}  // PWRT enabled
+  // FOSC : Oscillator Selection bits
+  {$define _FOSC_EXTRCCLK  = $3FFF}  // EXTRC oscillator: External RC on RA5/OSC1/CLKIN, CLKOUT function on RA4/OSC2/CLKOUT pin
+  {$define _FOSC_EXTRCIO   = $3FFE}  // EXTRCIO oscillator: External RC on RA5/OSC1/CLKIN, I/O function on RA4/OSC2/CLKOUT pin
+  {$define _FOSC_INTOSCCLK = $3FFD}  // INTOSC oscillator: CLKOUT function on RA4/OSC2/CLKOUT pin, I/O function on RA5/OSC1/CLKIN
+  {$define _FOSC_INTOSCIO  = $3FFC}  // INTOSCIO oscillator: I/O function on RA4/OSC2/CLKOUT pin, I/O function on RA5/OSC1/CLKIN
+  {$define _FOSC_EC        = $3FFB}  // EC: I/O function on RA4/OSC2/CLKOUT pin, CLKIN on RA5/OSC1/CLKIN
+  {$define _FOSC_HS        = $3FFA}  // HS oscillator: High-speed crystal/resonator on RA4/OSC2/CLKOUT and RA5/OSC1/CLKIN
+  {$define _FOSC_XT        = $3FF9}  // XT oscillator: Crystal/resonator on RA4/OSC2/CLKOUT and RA5/OSC1/CLKINT
+  {$define _FOSC_LP        = $3FF8}  // LP oscillator: Low-power crystal on RA4/OSC2/CLKOUT and RA5/OSC1/CLKIN
 
   // WDTE : Watchdog Timer Enable bit
-  {$define _WDTE_ON        = $0FFF}  // WDT enabled
-  {$define _WDTE_OFF       = $0EFF}  // WDT disabled
+  {$define _WDTE_ON        = $3FFF}  // WDT enabled
+  {$define _WDTE_OFF       = $3FF7}  // WDT disabled
 
-  // FOSC : Oscillator Selection bits
-  {$define _FOSC_EXTRCCLK  = $0FFF}  // EXTRC oscillator: External RC on RA5/OSC1/CLKIN, CLKOUT function on RA4/OSC2/CLKOUT pin
-  {$define _FOSC_EXTRCIO   = $0DFF}  // EXTRCIO oscillator: External RC on RA5/OSC1/CLKIN, I/O function on RA4/OSC2/CLKOUT pin
-  {$define _FOSC_INTOSCCLK = $0BFF}  // INTOSC oscillator: CLKOUT function on RA4/OSC2/CLKOUT pin, I/O function on RA5/OSC1/CLKIN
-  {$define _FOSC_INTOSCIO  = $09FF}  // INTOSCIO oscillator: I/O function on RA4/OSC2/CLKOUT pin, I/O function on RA5/OSC1/CLKIN
-  {$define _FOSC_EC        = $07FF}  // EC: I/O function on RA4/OSC2/CLKOUT pin, CLKIN on RA5/OSC1/CLKIN
-  {$define _FOSC_HS        = $05FF}  // HS oscillator: High-speed crystal/resonator on RA4/OSC2/CLKOUT and RA5/OSC1/CLKIN
-  {$define _FOSC_XT        = $03FF}  // XT oscillator: Crystal/resonator on RA4/OSC2/CLKOUT and RA5/OSC1/CLKINT
-  {$define _FOSC_LP        = $01FF}  // LP oscillator: Low-power crystal on RA4/OSC2/CLKOUT and RA5/OSC1/CLKIN
+  // PWRTE : Power-up Timer Enable bit
+  {$define _PWRTE_OFF      = $3FFF}  // PWRT disabled
+  {$define _PWRTE_ON       = $3FEF}  // PWRT enabled
+
+  // MCLRE : MCLR Pin Function Select bit
+  {$define _MCLRE_ON       = $3FFF}  // MCLR pin function is MCLR
+  {$define _MCLRE_OFF      = $3FDF}  // MCLR pin function is digital input, MCLR internally tied to VDD
+
+  // CP : Code Protection bit
+  {$define _CP_OFF         = $3FFF}  // Program memory code protection is disabled
+  {$define _CP_ON          = $3FBF}  // Program memory code protection is enabled
+
+  // CPD : Data Code Protection bit
+  {$define _CPD_OFF        = $3FFF}  // Data memory code protection is disabled
+  {$define _CPD_ON         = $3F7F}  // Data memory code protection is enabled
+
+  // BOREN : Brown Out Detect
+  {$define _BOREN_ON       = $3FFF}  // BOR enabled
+  {$define _BOREN_NSLEEP   = $3EFF}  // BOR enabled during operation and disabled in Sleep
+  {$define _BOREN_SBODEN   = $3DFF}  // BOR controlled by SBOREN bit of the PCON register
+  {$define _BOREN_OFF      = $3CFF}  // BOR disabled
+
+  // IESO : Internal External Switchover bit
+  {$define _IESO_ON        = $3FFF}  // Internal External Switchover mode is enabled
+  {$define _IESO_OFF       = $3BFF}  // Internal External Switchover mode is disabled
+
+  // FCMEN : Fail-Safe Clock Monitor Enabled bit
+  {$define _FCMEN_ON       = $3FFF}  // Fail-Safe Clock Monitor is enabled
+  {$define _FCMEN_OFF      = $37FF}  // Fail-Safe Clock Monitor is disabled
 
 implementation
 end.

@@ -345,7 +345,8 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-02E:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, TRISA, LATA, ANSELA, WPUA, PCLATH, INTCON, PIR1, PIE1, OPTION_REG, PCON, OSCCON, TMR2, PR2, T2CON, PWM1DCL, PWM1DCH, PWM1CON, PWM2DCL, PWM2DCH, PWM2CON, IOCAP, IOCAN, IOCAF, FVRCON, ADRES, ADCON, PMADRL, PMADRH, PMDATL, PMDATH, PMCON1, PMCON2, CLKRCON, NCO1ACCL, NCO1ACCH, NCO1ACCU, NCO1INCL, NCO1INCH, NCO1INCU, NCO1CON, NCO1CLK
   {$SET_STATE_RAM '030-03F:SFR'}  // WDTCON, CLC1CON, CLC1SEL0, CLC1SEL1, CLC1POL, CLC1GLS0, CLC1GLS1, CLC1GLS2, CLC1GLS3, CWG1CON0, CWG1CON1, CWG1CON2, CWG1DBR, CWG1DBF, VREGCON, BORCON
@@ -412,55 +413,51 @@ var
 
   // -- Bits Configuration --
 
-  // DEBUG : In-Circuit Debugger Mode
-  {$define _DEBUG_OFF    = $1FFF}  // In-Circuit Debugger disabled, ICSPCLK and ICSPDAT are general purpose I/O pins
-  {$define _DEBUG_ON     = $1FFE}  // In-Circuit Debugger enabled, ICSPCLK and ICSPDAT are dedicated to the debugger
-
-  // WRT : Flash Memory Self-Write Protection
-  {$define _WRT_OFF      = $1FFF}  // Write protection off
-  {$define _WRT_BOOT     = $1FFD}  // 000h to 03Fh write protected, 040h to 0FFh may be modified by PMCON control
-  {$define _WRT_HALF     = $1FFB}  // 000h to 07Fh write protected, 080h to 0FFh may be modified by PMCON control
-  {$define _WRT_ALL      = $1FF9}  // 000h to 0FFh write protected, no addresses may be modified by PMCON control
-
-  // BORV : Brown-out Reset Voltage Selection
-  {$define _BORV_LO      = $1FFF}  // Brown-out Reset Voltage (Vbor), low trip point selected.
-  {$define _BORV_HI      = $1FF7}  // Brown-out Reset Voltage (Vbor), high trip point selected.
-
-  // LPBOR : Brown-out Reset Selection bits
-  {$define _LPBOR_ON     = $1FFF}  // BOR enabled
-  {$define _LPBOR_OFF    = $1FEF}  // BOR disabled
-
-  // LVP : Low-Voltage Programming Enable
-  {$define _LVP_ON       = $1FFF}  // Low-voltage programming enabled
-  {$define _LVP_OFF      = $1FDF}  // High-voltage on MCLR/VPP must be used for programming
-
-  // CP : Code Protection bit
-  {$define _CP_OFF       = $1FFF}  // Program memory code protection is disabled
-  {$define _CP_ON        = $1FBF}  // Program memory code protection is enabled
-
-  // MCLRE : MCLR Pin Function Select bit
-  {$define _MCLRE_ON     = $1FFF}  // MCLR pin function is MCLR
-  {$define _MCLRE_OFF    = $1F7F}  // MCLR pin function is digital input, MCLR internally tied to VDD
-
-  // PWRTE : Power-up Timer Enable bit
-  {$define _PWRTE_OFF    = $1FFF}  // PWRT disabled
-  {$define _PWRTE_ON     = $1EFF}  // PWRT enabled
-
-  // WDTE : Watchdog Timer Enable
-  {$define _WDTE_ON      = $1FFF}  // WDT enabled
-  {$define _WDTE_NSLEEP  = $1DFF}  // WDT enabled while running and disabled in Sleep
-  {$define _WDTE_SWDTEN  = $1BFF}  // WDT controlled by the SWDTEN bit in the WDTCON register
-  {$define _WDTE_OFF     = $19FF}  // WDT disabled
+  // FOSC : Oscillator Selection bits
+  {$define _FOSC_INTOSC  = $3FFE}  // INTOSC oscillator: CLKIN function disabled
+  {$define _FOSC_EC      = $3FFF}  // EC: CLKIN function enabled
 
   // BOREN : Brown-out Reset Enable
-  {$define _BOREN_ON     = $1FFF}  // Brown-out Reset enabled
-  {$define _BOREN_NSLEEP = $17FF}  // Brown-out Reset enabled while running and disabled in Sleep
-  {$define _BOREN_SBODEN = $0FFF}  // Brown-out Reset controlled by the SBOREN bit in the BORCON register
-  {$define _BOREN_OFF    = $07FF}  // Brown-out Reset disabled
+  {$define _BOREN_ON     = $3FFF}  // Brown-out Reset enabled
+  {$define _BOREN_NSLEEP = $3FFD}  // Brown-out Reset enabled while running and disabled in Sleep
+  {$define _BOREN_SBODEN = $3FFB}  // Brown-out Reset controlled by the SBOREN bit in the BORCON register
+  {$define _BOREN_OFF    = $3FF9}  // Brown-out Reset disabled
 
-  // FOSC : Oscillator Selection bits
-  {$define _FOSC_INTOSC  = $1FFF}  // INTOSC oscillator: CLKIN function disabled
-  {$define _FOSC_EC      = $3FFF}  // EC: CLKIN function enabled
+  // WDTE : Watchdog Timer Enable
+  {$define _WDTE_ON      = $3FFF}  // WDT enabled
+  {$define _WDTE_NSLEEP  = $3FF7}  // WDT enabled while running and disabled in Sleep
+  {$define _WDTE_SWDTEN  = $3FEF}  // WDT controlled by the SWDTEN bit in the WDTCON register
+  {$define _WDTE_OFF     = $3FE7}  // WDT disabled
+
+  // PWRTE : Power-up Timer Enable bit
+  {$define _PWRTE_OFF    = $3FFF}  // PWRT disabled
+  {$define _PWRTE_ON     = $3FDF}  // PWRT enabled
+
+  // MCLRE : MCLR Pin Function Select bit
+  {$define _MCLRE_ON     = $3FFF}  // MCLR pin function is MCLR
+  {$define _MCLRE_OFF    = $3FBF}  // MCLR pin function is digital input, MCLR internally tied to VDD
+
+  // CP : Code Protection bit
+  {$define _CP_OFF       = $3FFF}  // Program memory code protection is disabled
+  {$define _CP_ON        = $3F7F}  // Program memory code protection is enabled
+
+  // LVP : Low-Voltage Programming Enable
+  {$define _LVP_ON       = $3FFF}  // Low-voltage programming enabled
+  {$define _LVP_OFF      = $3EFF}  // High-voltage on MCLR/VPP must be used for programming
+
+  // LPBOR : Brown-out Reset Selection bits
+  {$define _LPBOR_ON     = $3FFF}  // BOR enabled
+  {$define _LPBOR_OFF    = $3DFF}  // BOR disabled
+
+  // BORV : Brown-out Reset Voltage Selection
+  {$define _BORV_LO      = $3FFF}  // Brown-out Reset Voltage (Vbor), low trip point selected.
+  {$define _BORV_HI      = $3BFF}  // Brown-out Reset Voltage (Vbor), high trip point selected.
+
+  // WRT : Flash Memory Self-Write Protection
+  {$define _WRT_OFF      = $3FFF}  // Write protection off
+  {$define _WRT_BOOT     = $37FF}  // 000h to 03Fh write protected, 040h to 0FFh may be modified by PMCON control
+  {$define _WRT_HALF     = $2FFF}  // 000h to 07Fh write protected, 080h to 0FFh may be modified by PMCON control
+  {$define _WRT_ALL      = $27FF}  // 000h to 0FFh write protected, no addresses may be modified by PMCON control
 
 implementation
 end.

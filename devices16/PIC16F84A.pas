@@ -1,16 +1,15 @@
-{
-*  UNIT para compilador PicPas
-*  SFR del microcontrolador PIC 16F84A
-*
-*  (C) AguHDz 05-JUN-2017
-*  Ultima Actualizacion: 23-JUN-2017
-}
-{$PROCESSOR PIC16F84A}
 unit PIC16F84A;
+
+// Define hardware
+{$SET PIC_MODEL    = 'PIC16F84A'}
+{$SET PIC_MAXFREQ  = 4000000}
+{$SET PIC_NPINS    = 18}
+{$SET PIC_NUMBANKS = 2}
+{$SET PIC_NUMPAGES = 1}
+{$SET PIC_MAXFLASH = 1024}
+
 interface
 var
-// DEFINICION DE BYTES Y BITS DE ZONA MEMORIA SFR.
-// Segun los nombres y direcciones en datasheet de Microchip.
   INDF              : byte absolute $0000;
   TMR0              : byte absolute $0001;
   PCL               : byte absolute $0002;
@@ -25,7 +24,6 @@ var
   STATUS_C          : bit  absolute STATUS.0;
   FSR               : byte absolute $0004;
   PORTA             : byte absolute $0005;
-  PORTA_T0CKI       : bit  absolute PORTA.4;
   PORTA_RA4         : bit  absolute PORTA.4;
   PORTA_RA3         : bit  absolute PORTA.3;
   PORTA_RA2         : bit  absolute PORTA.2;
@@ -40,11 +38,10 @@ var
   PORTB_RB2         : bit  absolute PORTB.2;
   PORTB_RB1         : bit  absolute PORTB.1;
   PORTB_RB0         : bit  absolute PORTB.0;
-  PORTB_INT         : bit  absolute PORTB.0;
-  EEDATA            : byte absolute $0008;  
+  EEDATA            : byte absolute $0008;
   EEADR             : byte absolute $0009;
-  PCLATH            : byte absolute $000A;
-  INTCON            : byte absolute $000B;
+  PCLATH            : byte absolute $000a;
+  INTCON            : byte absolute $000b;
   INTCON_GIE        : bit  absolute INTCON.7;
   INTCON_EEIE       : bit  absolute INTCON.6;
   INTCON_T0IE       : bit  absolute INTCON.5;
@@ -63,7 +60,20 @@ var
   OPTION_REG_PS1    : bit  absolute OPTION_REG.1;
   OPTION_REG_PS0    : bit  absolute OPTION_REG.0;
   TRISA             : byte absolute $0085;
+  TRISA_TRISA4      : bit  absolute TRISA.4;
+  TRISA_TRISA3      : bit  absolute TRISA.3;
+  TRISA_TRISA2      : bit  absolute TRISA.2;
+  TRISA_TRISA1      : bit  absolute TRISA.1;
+  TRISA_TRISA0      : bit  absolute TRISA.0;
   TRISB             : byte absolute $0086;
+  TRISB_TRISB7      : bit  absolute TRISB.7;
+  TRISB_TRISB6      : bit  absolute TRISB.6;
+  TRISB_TRISB5      : bit  absolute TRISB.5;
+  TRISB_TRISB4      : bit  absolute TRISB.4;
+  TRISB_TRISB3      : bit  absolute TRISB.3;
+  TRISB_TRISB2      : bit  absolute TRISB.2;
+  TRISB_TRISB1      : bit  absolute TRISB.1;
+  TRISB_TRISB0      : bit  absolute TRISB.0;
   EECON1            : byte absolute $0088;
   EECON1_EEIF       : bit  absolute EECON1.4;
   EECON1_WRERR      : bit  absolute EECON1.3;
@@ -72,38 +82,87 @@ var
   EECON1_RD         : bit  absolute EECON1.0;
   EECON2            : byte absolute $0089;
 
-  //Bits Configuration 
-  {$define _CP_ON       =     0x000F}
-  {$define _CP_OFF      =     0x3FFF}
-  {$define _PWRTE_ON    =     0x3FF7}
-  {$define _PWRTE_OFF   =     0x3FFF}
-  {$define _WDT_ON      =     0x3FFF}
-  {$define _WDT_OFF     =     0x3FFB}
-  {$define _LP_OSC      =     0x3FFC}
-  {$define _XT_OSC      =     0x3FFD}
-  {$define _HS_OSC      =     0x3FFE}
-  {$define _RC_OSC      =     0x3FFF}
- 
+
+  // -- Define RAM state values --
+
+  {$CLEAR_STATE_RAM}
+
+  {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB
+  {$SET_STATE_RAM '008-00B:SFR'}  // EEDATA, EEADR, PCLATH, INTCON
+  {$SET_STATE_RAM '00C-04F:GPR'} 
+  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
+  {$SET_STATE_RAM '082-082:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '085-086:SFR'}  // TRISA, TRISB
+  {$SET_STATE_RAM '088-089:SFR'}  // EECON1, EECON2
+  {$SET_STATE_RAM '08A-08A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '08C-0CF:GPR'} 
+
+
+  // -- Define mapped RAM --
+
+  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '08C-0CF:bnk1'} // maps to area 00C-04F (bank 0)
+
+
+  // -- Initial values --
+
+  {$SET_UNIMP_BITS '000:00'} // INDF
+  {$SET_UNIMP_BITS '005:1F'} // PORTA
+  {$SET_UNIMP_BITS '00A:1F'} // PCLATH
+  {$SET_UNIMP_BITS '085:1F'} // TRISA
+  {$SET_UNIMP_BITS '088:1F'} // EECON1
+
+
+  // -- PIN mapping --
+
+  // Pin  1 : RA2
+  // Pin  2 : RA3
+  // Pin  3 : RA4/T0CKI
+  // Pin  4 : MCLR
+  // Pin  5 : Vss
+  // Pin  6 : RB0/INT
+  // Pin  7 : RB1
+  // Pin  8 : RB2
+  // Pin  9 : RB3
+  // Pin 10 : RB4
+  // Pin 11 : RB5
+  // Pin 12 : RB6
+  // Pin 13 : RB7
+  // Pin 14 : Vdd
+  // Pin 15 : OSC2/CLKOUT
+  // Pin 16 : OSC1/CLKIN
+  // Pin 17 : RA0
+  // Pin 18 : RA1
+
+
+  // -- RAM to PIN mapping --
+
+  {$MAP_RAM_TO_PIN '005:0-17,1-18,2-1,3-2,4-3'} // PORTA
+  {$MAP_RAM_TO_PIN '006:0-6,1-7,2-8,3-9,4-10,5-11,6-12,7-13'} // PORTB
+
+
+  // -- Bits Configuration --
+
+  // FOSC : Oscillator Selection bits
+  {$define _FOSC_EXTRC = $3FFF}  // RC oscillator
+  {$define _FOSC_HS    = $3FFE}  // HS oscillator
+  {$define _FOSC_XT    = $3FFD}  // XT oscillator
+  {$define _FOSC_LP    = $3FFC}  // LP oscillator
+
+  // WDTE : Watchdog Timer
+  {$define _WDTE_ON    = $3FFF}  // WDT enabled
+  {$define _WDTE_OFF   = $3FFB}  // WDT disabled
+
+  // PWRTE : Power-up Timer Enable bit
+  {$define _PWRTE_OFF  = $3FFF}  // Power-up Timer is disabled
+  {$define _PWRTE_ON   = $3FF7}  // Power-up Timer is enabled
+
+  // CP : Code Protection bit
+  {$define _CP_OFF     = $3FFF}  // Code protection disabled
+  {$define _CP_ON      = $000F}  // All program memory is code protected
 
 implementation
-
-procedure EEPROM_Read(addr:byte):byte;
-begin
-   EEADR:=addr;
-   EECON1_RD:=1;
-   exit(EEDATA);   
-end; 
-
-procedure WriteEEPROM(direccion , valor: byte);
-begin
-  EEADR       := direccion;
-  EEDATA      := valor;
-  EECON1_WREN := 1;
-  EECON2      := $55;
-  EECON2      := $AA;
-  EECON1_WR   := 1;
-  EECON1_WREN := 0;
-  repeat until (EECON1_WR = 0);
-end;
- 
 end.
