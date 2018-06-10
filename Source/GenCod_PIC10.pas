@@ -48,7 +48,7 @@ uses
   Parser, Globales, MisUtils, XpresBas;
 type
     { TGenCod }
-    TGenCod = class(TGenCodBas_PIC10)
+    TGenCod = class(TGenCodBas)
     protected
       procedure callParam(fun: TxpEleFun);
       procedure callFunct(fun: TxpEleFun);

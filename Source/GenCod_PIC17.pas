@@ -39,12 +39,12 @@ Por normas de Xpres, se debe considerar que:
 Las rutinas de operación, deben devolver su resultado en "res".
 Para mayor información, consultar la doc. técnica.
  }
-unit GenCod_PIC16;
+unit GenCod_PIC17;
 {$mode objfpc}{$H+}
 interface
 uses
   Classes, SysUtils, Graphics, LCLType, LCLProc,
-  SynFacilBasic, XpresTypesPIC, XpresElementsPIC, Pic16Utils, GenCodBas_PIC16,
+  SynFacilBasic, XpresTypesPIC, XpresElementsPIC, Pic17Utils, GenCodBas_PIC17,
   Parser, Globales, MisUtils, XpresBas;
 type
     { TGenCod }
@@ -184,7 +184,7 @@ var
 
 procedure SetLanguage;
 begin
-  GenCodBas_PIC16.SetLanguage;
+  GenCodBas_PIC17.SetLanguage;
   {$I ..\language\tra_GenCod.pas}
 end;
 procedure TGenCod.StartCodeSub(fun: TxpEleFun);

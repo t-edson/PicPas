@@ -1,17 +1,17 @@
 {Unidad que agrega campos necesarios a la clase TCompilerBase, para la generación de
 código con el PIC16F.}
-unit GenCodBas_PIC16;
+unit GenCodBas_PIC17;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic16Utils,
+  Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic17Utils,
   Parser, ParserDirec, Globales, MisUtils, LCLType, LCLProc;
 const
-  STACK_SIZE = 8;      //tamaño de pila para subrutinas en el PIC
-  MAX_REGS_AUX_BYTE = 6;   //cantidad máxima de registros a usar
-  MAX_REGS_AUX_BIT = 4;    //cantidad máxima de registros bit a usar
-  MAX_REGS_STACK_BYTE = 8; //cantidad máxima de registros a usar en la pila
-  MAX_REGS_STACK_BIT = 4;  //cantidad máxima de registros a usar en la pila
+  STACK_SIZE = 16;         //Tamaño de pila para subrutinas en el PIC
+  MAX_REGS_AUX_BYTE = 8;   //Cantidad máxima de registros a usar
+  MAX_REGS_AUX_BIT = 6;    //Cantidad máxima de registros bit a usar
+  MAX_REGS_STACK_BYTE = 8; //Cantidad máxima de registros a usar en la pila
+  MAX_REGS_STACK_BIT = 6;  //Cantidad máxima de registros a usar en la pila
 
 type
   { TGenCodBas }
@@ -28,6 +28,7 @@ type
     procedure word_ClearItems(const OpPtr: pointer);
     procedure word_GetItem(const OpPtr: pointer);
     procedure word_SetItem(const OpPtr: pointer);
+    procedure _MOVLB(const k: word);
   protected
     //Registros de trabajo
     W      : TPicRegister;     //Registro Interno.
@@ -131,8 +132,8 @@ type
     procedure ChangeResultCharToByte;
     function ChangePointerToExpres(var ope: TOperand): boolean;
   protected  //Instrucciones que no manejan el cambio de banco
-    procedure CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin);
-    procedure CodAsmK(const inst: TPIC16Inst; const k: byte);
+    procedure CodAsmFD(const inst: TPIC17Inst; const f: byte; d: TPIC17destin);
+    procedure CodAsmK(const inst: TPIC17Inst; const k: byte);
     procedure _BANKSEL(targetBank: byte);
     procedure GenCodBank(targetAdrr: word);
     procedure _BANKRESET;
@@ -141,9 +142,9 @@ type
     procedure _LABEL(igot: integer);
     //Instrucciones simples
     procedure _ADDLW(const k: word);
-    procedure _ADDWF(const f: byte; d: TPIC16destin);
+    procedure _ADDWF(const f: byte; d: TPIC17destin);
     procedure _ANDLW(const k: word);
-    procedure _ANDWF(const f: byte; d: TPIC16destin);
+    procedure _ANDWF(const f: byte; d: TPIC17destin);
     procedure _BCF(const f, b: byte);
     procedure _BSF(const f, b: byte);
     procedure _BTFSC(const f, b: byte);
@@ -152,36 +153,36 @@ type
     procedure _CLRF(const f: byte);
     procedure _CLRW;
     procedure _CLRWDT;
-    procedure _COMF(const f: byte; d: TPIC16destin);
-    procedure _DECF(const f: byte; d: TPIC16destin);
-    procedure _DECFSZ(const f: byte; d: TPIC16destin);
+    procedure _COMF(const f: byte; d: TPIC17destin);
+    procedure _DECF(const f: byte; d: TPIC17destin);
+    procedure _DECFSZ(const f: byte; d: TPIC17destin);
     procedure _GOTO(const a: word);
     procedure _GOTO_PEND(out igot: integer);
-    procedure _INCF(const f: byte; d: TPIC16destin);
-    procedure _INCFSZ(const f: byte; d: TPIC16destin);
+    procedure _INCF(const f: byte; d: TPIC17destin);
+    procedure _INCFSZ(const f: byte; d: TPIC17destin);
     procedure _IORLW(const k: word);
-    procedure _IORWF(const f: byte; d: TPIC16destin);
-    procedure _MOVF(const f: byte; d: TPIC16destin);
+    procedure _IORWF(const f: byte; d: TPIC17destin);
+    procedure _MOVF(const f: byte; d: TPIC17destin);
     procedure _MOVLW(const k: word);
     procedure _MOVWF(const f: byte);
     procedure _NOP;
     procedure _RETFIE;
     procedure _RETLW(const k: word);
     procedure _RETURN;
-    procedure _RLF(const f: byte; d: TPIC16destin);
-    procedure _RRF(const f: byte; d: TPIC16destin);
+    procedure _RLF(const f: byte; d: TPIC17destin);
+    procedure _RRF(const f: byte; d: TPIC17destin);
     procedure _SLEEP;
     procedure _SUBLW(const k: word);
-    procedure _SUBWF(const f: byte; d: TPIC16destin);
-    procedure _SWAPF(const f: byte; d: TPIC16destin);
+    procedure _SUBWF(const f: byte; d: TPIC17destin);
+    procedure _SWAPF(const f: byte; d: TPIC17destin);
     procedure _XORLW(const k: word);
-    procedure _XORWF(const f: byte; d: TPIC16destin);
+    procedure _XORWF(const f: byte; d: TPIC17destin);
   protected  //Instrucciones "k"
     //Instrucciones equivalentes
     procedure kADDLW(const k: word);
-    procedure kADDWF(const f: TPicRegister; d: TPIC16destin);
+    procedure kADDWF(const f: TPicRegister; d: TPIC17destin);
     procedure kANDLW(const k: word);
-    procedure kANDWF(const f: TPicRegister; d: TPIC16destin);
+    procedure kANDWF(const f: TPicRegister; d: TPIC17destin);
     procedure kBCF(const f: TPicRegisterBit);
     procedure kBSF(const f: TPicRegisterBit);
     procedure kBTFSC(const f: TPicRegisterBit);
@@ -190,33 +191,33 @@ type
     procedure kCLRF(const f: TPicRegister);
     procedure kCLRW;
     procedure kCLRWDT;
-    procedure kCOMF(const f: TPicRegister; d: TPIC16Destin);
-    procedure kDECF(const f: TPicRegister; d: TPIC16Destin);
-    procedure kDECFSZ(const f: word; d: TPIC16destin);
+    procedure kCOMF(const f: TPicRegister; d: TPIC17Destin);
+    procedure kDECF(const f: TPicRegister; d: TPIC17Destin);
+    procedure kDECFSZ(const f: word; d: TPIC17destin);
     procedure kGOTO(const a: word);
     procedure kGOTO_PEND(out igot: integer);
-    procedure kINCF(const f: TPicRegister; d: TPIC16destin);
-    procedure kINCFSZ(const f: word; d: TPIC16destin);
+    procedure kINCF(const f: TPicRegister; d: TPIC17destin);
+    procedure kINCFSZ(const f: word; d: TPIC17destin);
     procedure kIORLW(const k: word);
-    procedure kIORWF(const f: TPicRegister; d: TPIC16destin);
-    procedure kMOVF(const f: TPicRegister; d: TPIC16destin);
+    procedure kIORWF(const f: TPicRegister; d: TPIC17destin);
+    procedure kMOVF(const f: TPicRegister; d: TPIC17destin);
     procedure kMOVLW(const k: word);
     procedure kMOVWF(const f: TPicRegister);
     procedure kNOP;
     procedure kRETFIE;
     procedure kRETLW(const k: word);
     procedure kRETURN;
-    procedure kRLF(const f: TPicRegister; d: TPIC16destin);
-    procedure kRRF(const f: TPicRegister; d: TPIC16destin);
+    procedure kRLF(const f: TPicRegister; d: TPIC17destin);
+    procedure kRRF(const f: TPicRegister; d: TPIC17destin);
     procedure kSLEEP;
     procedure kSUBLW(const k: word);
-    procedure kSUBWF(const f: TPicRegister; d: TPIC16destin);
-    procedure kSWAPF(const f: TPicRegister; d: TPIC16destin);
+    procedure kSUBWF(const f: TPicRegister; d: TPIC17destin);
+    procedure kSWAPF(const f: TPicRegister; d: TPIC17destin);
     procedure kXORLW(const k: word);
-    procedure kXORWF(const f: TPicRegister; d: TPIC16destin);
+    procedure kXORWF(const f: TPicRegister; d: TPIC17destin);
     //Instrucciones adicionales
-    procedure kSHIFTR(const f: TPicRegister; d: TPIC16destin);
-    procedure kSHIFTL(const f: TPicRegister; d: TPIC16destin);
+    procedure kSHIFTR(const f: TPicRegister; d: TPIC17destin);
+    procedure kSHIFTL(const f: TPicRegister; d: TPIC17destin);
     procedure kIF_BSET(const f: TPicRegisterBit; out igot: integer);
     procedure kIF_BSET_END(igot: integer);
   public     //Acceso a registro de trabajo
@@ -270,7 +271,7 @@ type
     function PICPage(i: byte): TPICFlashPage; override; //Return a FLASH page
     function RAMmax: integer; override;
   public     //Inicialización
-    pic        : TPIC16;       //Objeto PIC de la serie 16.
+    pic        : TPIC17;       //Objeto PIC de la serie 16.
     procedure StartRegs;
     function CompilerName: string; override;
     constructor Create; override;
@@ -1155,11 +1156,12 @@ begin
   end;
 end;
 //Rutinas generales para la codificación
-procedure TGenCodBas.CodAsmFD(const inst: TPIC16Inst; const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas.CodAsmFD(const inst: TPIC17Inst; const f: byte;
+  d: TPIC17destin);
 begin
   pic.codAsmFD(inst, f, d);
 end;
-procedure TGenCodBas.CodAsmK(const inst: TPIC16Inst; const k: byte); inline;
+procedure TGenCodBas.CodAsmK(const inst: TPIC17Inst; const k: byte);
 begin
   pic.codAsmK(inst, k);
 end;
@@ -1170,15 +1172,10 @@ end;}
 //rutinas que facilitan la codifición de instrucciones
 procedure TGenCodBas._BANKRESET;
 {Reinicia el banco al banco 0, independientemente de donde se pueda encontrar antes.
-Siempre genera dos instrucciones. Se usa cuando no se puede predecir exactamente, en que
-banco se encontrará el compilador.}
+Se usa cuando no se puede predecir exactamente, en que banco se encontrará el
+compilador.}
 begin
-  if pic.NumBanks > 1 then begin
-    _BCF(_STATUS, _RP0); PutComm(';Bank reset.');
-  end;
-  if pic.NumBanks > 2 then begin
-    _BCF(_STATUS, _RP1); PutComm(';Bank reset.');
-  end;
+  _MOVLB(0);
   CurrBank:=0;
 end;
 procedure TGenCodBas._BANKSEL(targetBank: byte);
@@ -1194,32 +1191,9 @@ begin
   if targetBank = CurrBank then
     exit;  //Ya estamos en el banco pedido
   //Se está en un banco diferente
-  ////////// Verifica RP0 ////////////
-  curRP0 := CurrBank and $01;
-  newRP0 := targetBank and $01;
-  if (CurrBank = 255) or (curRP0 <> newRP0) then begin
+  if (CurrBank = 255) or (CurrBank <> targetBank) then begin
     //Debe haber cambio
-    if newRP0 = 1 then begin
-      _BSF(_STATUS, _RP0); PutComm(';Bank set.');
-    end else begin
-      _BCF(_STATUS, _RP0); PutComm(';Bank set.');
-    end;
-  end;
-  //Verifica si ya no hay más bancos
-  if pic.NumBanks <= 2 then begin
-    CurrBank := targetBank;
-    exit;
-  end;
-  ////////// Verifica RP1 ////////////
-  curRP1 := CurrBank and $02;
-  newRP1 := targetBank and $02;
-  if (CurrBank = 255) or (curRP1 <> newRP1) then begin
-    //Debe haber cambio
-    if newRP1 = 2 then begin
-      _BSF(_STATUS, _RP1); PutComm(';Bank set.');
-    end else begin
-      _BCF(_STATUS, _RP1); PutComm(';Bank set.');
-    end;
+    _MOVLB(targetBank); PutComm(';Bank set.');
   end;
   //////////////////////////////////////
   CurrBank := targetBank;
@@ -1265,12 +1239,12 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ANDLW, k);
 end;
-procedure TGenCodBas._ADDWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._ADDWF(const f: byte; d: TPIC17destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ADDWF, f,d);
 end;
-procedure TGenCodBas._ANDWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._ANDWF(const f: byte; d: TPIC17destin);
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_ANDWF, f,d);
@@ -1285,37 +1259,37 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
 end;
-procedure TGenCodBas._COMF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._COMF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_COMF, f,d);
 end;
-procedure TGenCodBas._DECF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._DECF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECF, f,d);
 end;
-procedure TGenCodBas._DECFSZ(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._DECFSZ(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECFSZ, f,d);
 end;
-procedure TGenCodBas._INCF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._INCF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCF, f,d);
 end;
-procedure TGenCodBas._INCFSZ(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._INCFSZ(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
 end;
-procedure TGenCodBas._IORWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._IORWF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_IORWF, f,d);
 end;
-procedure TGenCodBas._MOVF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._MOVF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_MOVF, f,d);
@@ -1330,22 +1304,22 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_NOP);
 end;
-procedure TGenCodBas._RLF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._RLF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RLF, f,d);
 end;
-procedure TGenCodBas._RRF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._RRF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f,d);
 end;
-procedure TGenCodBas._SUBWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._SUBWF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SUBWF, f,d);
 end;
-procedure TGenCodBas._SWAPF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._SWAPF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SWAPF, f,d);
@@ -1434,10 +1408,16 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
 end;
-procedure TGenCodBas._XORWF(const f: byte; d: TPIC16destin); inline;
+procedure TGenCodBas._XORWF(const f: byte; d: TPIC17destin); inline;
 begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f,d);
+end;
+//Instrucciones adicionales de la gama mejorada
+procedure TGenCodBas._MOVLB(const k: word); inline;
+begin
+  pic.flash[pic.iFlash].curBnk := CurrBank;
+  pic.codAsmK(i_MOVLB, k);
 end;
 //Instrucciones que manejan el cambio de banco
 {Estas instrucciones guardan la instrucción compilada en "lastOpCode".}
@@ -1446,13 +1426,13 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;  //Este es el banco esperado
   pic.codAsmK(i_ADDLW, k);
 end;
-//procedure TGenCodBas.kADDWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas.kADDWF(const f: word; d: TPIC17destin); inline;
 //begin
 //  GenCodBank(f);
 //  pic.flash[pic.iFlash].curBnk := CurrBank;
 //  pic.codAsmFD(i_ADDWF, f,d);
 //end;
-procedure TGenCodBas.kADDWF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kADDWF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1463,7 +1443,7 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_ANDLW, k);
 end;
-procedure TGenCodBas.kANDWF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kANDWF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1480,49 +1460,49 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_CLRW);
 end;
-procedure TGenCodBas.kCOMF(const f: TPicRegister; d: TPIC16Destin);
+procedure TGenCodBas.kCOMF(const f: TPicRegister; d: TPIC17Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_COMF, f.addr, d);
 end;
-procedure TGenCodBas.kDECF(const f: TPicRegister; d: TPIC16Destin);
+procedure TGenCodBas.kDECF(const f: TPicRegister; d: TPIC17Destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECF, f.addr, d);
 end;
-procedure TGenCodBas.kDECFSZ(const f: word; d: TPIC16destin); inline;
+procedure TGenCodBas.kDECFSZ(const f: word; d: TPIC17destin); inline;
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_DECFSZ, f,d);
 end;
-procedure TGenCodBas.kINCF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kINCF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCF, f.addr, d);
 end;
-procedure TGenCodBas.kINCFSZ(const f: word; d: TPIC16destin); inline;
+procedure TGenCodBas.kINCFSZ(const f: word; d: TPIC17destin); inline;
 begin
   GenCodBank(f);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_INCFSZ, f,d);
 end;
-//procedure TGenCodBas.kIORWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas.kIORWF(const f: word; d: TPIC17destin); inline;
 //begin
 //  GenCodBank(f);
 //  pic.flash[pic.iFlash].curBnk := CurrBank;
 //  pic.codAsmFD(i_IORWF, f,d);
 //end;
-procedure TGenCodBas.kIORWF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kIORWF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_IORWF, f.addr, d);
 end;
-procedure TGenCodBas.kMOVF(const f: TPicRegister; d: TPIC16destin);
+procedure TGenCodBas.kMOVF(const f: TPicRegister; d: TPIC17destin);
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1539,31 +1519,31 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsm(i_NOP);
 end;
-procedure TGenCodBas.kRLF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kRLF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RLF, f.addr, d);
 end;
-procedure TGenCodBas.kRRF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kRRF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_RRF, f.addr, d);
 end;
-//procedure TGenCodBas.kSUBWF(const f: word; d: TPIC16destin); inline;
+//procedure TGenCodBas.kSUBWF(const f: word; d: TPIC17destin); inline;
 //begin
 //  GenCodBank(f);
 //  pic.flash[pic.iFlash].curBnk := CurrBank;
 //  pic.codAsmFD(i_SUBWF, f,d);
 //end;
-procedure TGenCodBas.kSUBWF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kSUBWF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_SUBWF, f.addr, d);
 end;
-procedure TGenCodBas.kSWAPF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kSWAPF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
@@ -1657,20 +1637,20 @@ begin
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmK(i_XORLW, k);
 end;
-procedure TGenCodBas.kXORWF(const f: TPicRegister; d: TPIC16destin); inline;
+procedure TGenCodBas.kXORWF(const f: TPicRegister; d: TPIC17destin); inline;
 begin
   GenCodBank(f.addr);
   pic.flash[pic.iFlash].curBnk := CurrBank;
   pic.codAsmFD(i_XORWF, f.addr, d);
 end;
 //Instrucciones adicionales
-procedure TGenCodBas.kSHIFTR(const f: TPicRegister; d: TPIC16destin);
+procedure TGenCodBas.kSHIFTR(const f: TPicRegister; d: TPIC17destin);
 begin
   _BCF(_STATUS, _C);
   GenCodBank(f.addr);
   _RRF(f.addr, d);
 end;
-procedure TGenCodBas.kSHIFTL(const f: TPicRegister; d: TPIC16destin);
+procedure TGenCodBas.kSHIFTL(const f: TPicRegister; d: TPIC17destin);
 begin
   _BCF(_STATUS, _C);
   GenCodBank(f.addr);
@@ -2925,7 +2905,7 @@ begin
   devicesPath := patDevices16;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
-  pic := TPIC16.Create;
+  pic := TPIC17.Create;
   picCore := pic;   //Referencia picCore
   ///////////Crea tipos
   ClearTypes;

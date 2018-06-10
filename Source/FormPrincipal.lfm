@@ -31,7 +31,7 @@ object frmPrincipal: TfrmPrincipal
         Width = 80
       end    
       item
-        Width = 70
+        Width = 120
       end    
       item
         Width = 70
@@ -135,27 +135,27 @@ object frmPrincipal: TfrmPrincipal
       Action = acToolConfig
     end
     object ToolButton14: TToolButton
-      Left = 324
+      Left = 359
       Top = 2
       Action = acToolExt1
     end
     object ToolButton17: TToolButton
-      Left = 347
+      Left = 382
       Top = 2
       Action = acToolExt2
     end
     object ToolButton18: TToolButton
-      Left = 370
+      Left = 405
       Top = 2
       Action = acToolExt3
     end
     object ToolButton19: TToolButton
-      Left = 393
+      Left = 428
       Top = 2
       Action = acToolExt4
     end
     object ToolButton20: TToolButton
-      Left = 416
+      Left = 451
       Top = 2
       Action = acToolExt5
     end
@@ -164,20 +164,15 @@ object frmPrincipal: TfrmPrincipal
       Top = 2
       Action = acToolASMDebug
     end
-    object ComboBox1: TComboBox
-      Left = 439
-      Height = 23
+    object butSelCompiler: TToolButton
+      Left = 324
+      Hint = 'Select Compiler'
       Top = 2
-      Width = 137
-      ItemHeight = 15
-      ItemIndex = 0
-      Items.Strings = (
-        'Mid-range Compiler'
-        'Baseline Compiler'
-      )
-      OnChange = ComboBox1Change
-      TabOrder = 0
-      Text = 'Mid-range Compiler'
+      Caption = 'tbSelCompiler'
+      DropdownMenu = PopupCompiler
+      ImageIndex = 27
+      OnClick = butSelCompilerClick
+      Style = tbsDropDown
     end
   end
   object splSynTree: TSplitter
@@ -1935,6 +1930,7 @@ object frmPrincipal: TfrmPrincipal
       Category = 'Tool'
       Caption = 'Compilar y Ejecutar'
       ImageIndex = 24
+      OnExecute = acToolComEjecExecute
     end
     object acToolPICExpl: TAction
       Category = 'Tool'
@@ -2108,6 +2104,21 @@ object frmPrincipal: TfrmPrincipal
       Caption = 'External Tool 5'
       ImageIndex = 33
       OnExecute = acToolExt5Execute
+    end
+    object acToolSelPIC10: TAction
+      Category = 'Tool'
+      Caption = 'Baseline Compiler'
+      OnExecute = acToolSelPIC10Execute
+    end
+    object acToolSelPIC16: TAction
+      Category = 'Tool'
+      Caption = 'Mid-range Compiler'
+      OnExecute = acToolSelPIC16Execute
+    end
+    object acToolSelPIC17: TAction
+      Category = 'Tool'
+      Caption = 'Enhanced Mid-range Compiler'
+      OnExecute = acToolSelPIC17Execute
     end
   end
   object MainMenu1: TMainMenu
@@ -6918,5 +6929,18 @@ object frmPrincipal: TfrmPrincipal
     OnReplace = ReplaceDialog1Replace
     left = 328
     top = 328
+  end
+  object PopupCompiler: TPopupMenu
+    left = 216
+    top = 208
+    object MenuItem48: TMenuItem
+      Action = acToolSelPIC10
+    end
+    object MenuItem49: TMenuItem
+      Action = acToolSelPIC16
+    end
+    object MenuItem50: TMenuItem
+      Action = acToolSelPIC17
+    end
   end
 end

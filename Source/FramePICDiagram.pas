@@ -24,9 +24,11 @@ type
     del pin.}
     vThev: single;
     rThev: single;
+    procedure GetModel(out vThev0, rThev0: Single);  //Devuelve parámetros del modelo eléctrico
   private  //Valores de voltaje e impedancia del nodo al que se encuentra conectado
     vNod: single;
     rNod: single;
+    procedure SetNodePars(vNod0, rNod0: Single);   //Fija parámetros debido al nodoconectado
   private  //Campos adicionales cuando es pin de un PIC
     {Se necesita una referencia al PIC cuando este pin es parte de un PIC.}
     pic   : TPicCore;
@@ -37,7 +39,6 @@ type
     xLbl, yLbl: Single; //Posición de la etiqueta
   public
     //procedure GetThevNod(out vThev0, rThev0: Single);//Devuelve parámetros del modelo eléctrico
-    procedure GetModel(out vThev0, rThev0: Single);  //Devuelve parámetros del modelo eléctrico
     procedure SetLabel(xl, yl: Single; txt: string; align: TAlignment =
       taLeftJustify);
     constructor Create(mGraf: TMotGraf);  //OJO: No es override
@@ -102,7 +103,6 @@ type
     xpin: Single;  //Posición X del Pin
     nPinsDiag: Integer;  //Número de pines a dibujar
     nPinsSide: Integer;
-    procedure DrawState(const xc, yc: Single; pin: TPinGraph);
   public
     procedure SetPic(pic0: TPicCore);
     procedure Draw; override;
@@ -331,12 +331,11 @@ begin
       rt := ResParallel(r0, r1);
     end;
   end;
-debugln('Nodo actualizado: %d fuentes, %d resist.', [nSource, nResistor]);
+//debugln('Nodo actualizado: %d fuentes, %d resist.', [nSource, nResistor]);
   {Ahora que ya se tienen los valores de voltaje e impedancia del nodo, pasa esa
   información a todos los pines de los componentes conectados, para uniformizar estados}
   for pin in pinList do begin
-    pin.vNod := vt;
-    pin.rNod := rt;
+    pin.SetNodePars(vt, rt);
   end;
 end;
 function TNode.Contains(ogCon: TOgConector): boolean;
@@ -409,6 +408,20 @@ begin
   end else begin
     //Es pin de un pic
     pic.GetPinThev(nPin, vThev0, rThev0);
+  end;
+end;
+procedure TPinGraph.SetNodePars(vNod0, rNod0: Single);
+{Fija los valores de voltaje que debe tener el pin, y la impedancia que debe ver,
+por el efecto de estar conectado a algún nodo.
+Se supone que ya se ha hecho el cálculo de voltaje/impedancia em el nodo.}
+begin
+  if pic = nil then begin
+    //No pertenece a un PIC
+    vNod := vNod0;
+    rNod := rNod0;
+  end else begin
+    //Es parte de un PIC
+    pic.SetNodePars(nPin, vNod0, rNod0);
   end;
 end;
 procedure TPinGraph.SetLabel(xl, yl: Single; txt: string;
@@ -529,17 +542,6 @@ begin
   inherited Destroy;
 end;
 { TOgPic }
-procedure TOgPic.DrawState(const xc, yc: Single; pin: TPinGraph);
-{Dibuja un indicador del estado lógico del PIN}
-var
-  vThev, rThev: Single;
-begin
-  pin.GetModel(vThev, rThev);
-  if vThev > 2.5 then begin
-    //Se asume en alta a partir de 2.5V
-    v2d.Barra(xc-5, yc-5, xc+5, yc+5, clRed);
-  end;
-end;
 procedure TOgPic.SetPic(pic0: TPicCore);
 {Fija el dispositivo de trabajo y prepara las estructuras que
 definen la geometría del componente, de modo que el dibujo sea rápido.}
@@ -555,6 +557,8 @@ begin
     nPinsDiag := 6;
   end else if pic.Npins <=8 then begin
     nPinsDiag := 8;
+  end else if pic.Npins <=14 then begin
+    nPinsDiag := 14;
   end else if pic.Npins <=18 then begin
     nPinsDiag := 18;
   end else if pic.Npins <=28 then begin
@@ -631,11 +635,9 @@ begin
       pin := TPinGraph(pCnx);
       //En el PIC, los pines se pintan con el color del modelo interno
       pin.GetModel(vt, rt);
-      v2d.SetBrush(GetThevCol(vt,rt));
+      v2d.SetBrush(GetThevCol(vt,rt));  //Rellena de acuerdo al estado
       v2d.rectangR(x+pin.x1, y+pin.y1, x+pin.x2, y+pin.y2);
       v2d.Texto(x+pin.xLbl, y+pin.yLbl, pin.lbl);
-      //Visualiza el estado lógico de pin
-//      DrawState(x+pin.x1, y+pin.y1, pin);
     end;
   end;
   inherited;
@@ -817,9 +819,11 @@ begin
   //pic.ExecNCycle()
   {Actualiza el estado de los Nodos porqu se supone que los voltajes o resisetncias de
   los componentes pueden haber cambiado (Como los pines de salida del PIC).}
-  for nod in nodeList do begin
-    nod.UpdateModel;
-  end;
+  if nodeList <> nil then begin
+    for nod in nodeList do begin
+      nod.UpdateModel;
+    end;
+  end; //Protección
   motEdi.Refrescar;
 end;
 procedure TfraPICDiagram.SetCompiler(cxp0: TCompilerBase);
@@ -872,7 +876,6 @@ se pueda producir cambios en los nodos (creación, eliminación, conexión y des
 var
   og: TObjGraf;
   ogCon: TOgConector;
-nod: TNode;
 begin
   nodeList.Clear;
   //Explora objetos gráfiocs
@@ -1084,12 +1087,17 @@ begin
 end;
 destructor TfraPICDiagram.Destroy;
 begin
-  nodeList.Destroy;
+  nodeList .Destroy;
+  {Marca "nodeList" en NIL porque cuando se destruye "motEdi", si es que hay connectores,
+  unidos a algún componente, estos intentarán llamar a "UpdateNodeList", cuando se
+  desconecten, al momento de destruirse, y "UpdateNodeList" intentaría acceder a "nodeList"}
+  nodeList := nil;
   motEdi.Destroy;
   inherited Destroy;
 end;
 procedure TfraPICDiagram.connectorChange;
 begin
+  if nodeList = nil then exit;  //Protección
   UpdateNodeList;
 end;
 /////////////////////// Acciones /////////////////////////

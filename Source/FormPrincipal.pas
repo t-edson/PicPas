@@ -12,6 +12,7 @@ uses
   Parser,  //Para tener acceso a TCompilerBase
   Compiler_PIC10,
   Compiler_PIC16,
+  Compiler_PIC17,
   FormPICExplorer, FrameSyntaxTree, FormConfig, Globales,
   PicPasProject, FrameEditView, FrameMessagesWin, XpresElementsPIC, CodeTools,
   FrameCfgExtTool, FormDebugger, FormRAMExplorer;
@@ -37,6 +38,9 @@ type
     acArcCloseProj: TAction;
     acArcCloseFile: TAction;
     acSearFindPrv: TAction;
+    acToolSelPIC16: TAction;
+    acToolSelPIC10: TAction;
+    acToolSelPIC17: TAction;
     acToolASMDebug: TAction;
     acViewAsmPan: TAction;
     acToolRamExp: TAction;
@@ -56,7 +60,6 @@ type
     ActionList: TActionList;
     acViewStatbar: TAction;
     acViewSynTree: TAction;
-    ComboBox1: TComboBox;
     edAsm: TSynEdit;
     FindDialog1: TFindDialog;
     ImgActions32: TImageList;
@@ -100,6 +103,9 @@ type
     MenuItem45: TMenuItem;
     MenuItem46: TMenuItem;
     MenuItem47: TMenuItem;
+    MenuItem48: TMenuItem;
+    MenuItem49: TMenuItem;
+    MenuItem50: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -119,6 +125,7 @@ type
     mnRecents: TMenuItem;
     panMessages: TPanel;
     PopupEdit: TPopupMenu;
+    PopupCompiler: TPopupMenu;
     ReplaceDialog1: TReplaceDialog;
     splSynTree: TSplitter;
     Splitter2: TSplitter;
@@ -140,6 +147,7 @@ type
     ToolButton2: TToolButton;
     ToolButton20: TToolButton;
     ToolButton21: TToolButton;
+    butSelCompiler: TToolButton;
     ToolButton3: TToolButton;
     ToolButton4: TToolButton;
     ToolButton5: TToolButton;
@@ -165,6 +173,7 @@ type
     procedure acEdRedoExecute(Sender: TObject);
     procedure acEdSelecAllExecute(Sender: TObject);
     procedure acEdUndoExecute(Sender: TObject);
+    procedure acToolComEjecExecute(Sender: TObject);
     procedure acToolCompilExecute(Sender: TObject);
     procedure acToolASMDebugExecute(Sender: TObject);
     procedure acToolListRepExecute(Sender: TObject);
@@ -177,12 +186,14 @@ type
     procedure acToolFindDecExecute(Sender: TObject);
     procedure acToolPICExplExecute(Sender: TObject);
     procedure acToolRamExpExecute(Sender: TObject);
+    procedure acToolSelPIC10Execute(Sender: TObject);
+    procedure acToolSelPIC16Execute(Sender: TObject);
+    procedure acToolSelPIC17Execute(Sender: TObject);
     procedure acViewAsmPanExecute(Sender: TObject);
     procedure acViewSynTreeExecute(Sender: TObject);
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
     procedure acViewMsgPanExecute(Sender: TObject);
-    procedure ComboBox1Change(Sender: TObject);
     procedure FindDialog1Find(Sender: TObject);
     procedure fraEdit_ChangeEditorState(ed: TSynEditor);
     procedure DoSelectSample(Sender: TObject);
@@ -196,9 +207,11 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure ReplaceDialog1Replace(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
+    procedure butSelCompilerClick(Sender: TObject);
   private
     Compiler16  : TCompiler_PIC16;
     Compiler10  : TCompiler_PIC10;
+    Compiler17  : TCompiler_PIC17;
     Compiler    : TCompilerBase;
     tic         : integer;  //Contador para temporización
     ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
@@ -313,7 +326,7 @@ begin
   ed.ClearMarkErr;  //Quita la marca de error que pudiera haber
 end;
 procedure TfrmPrincipal.fraEdit_SelectEditor;
-{Se ha cambiado el estado de los editores: Se ha cambaido la selección, se ha
+{Se ha cambiado el estado de los editores: Se ha cambiado la selección, se ha
 agregado o eliminado alguno.}
 var
   ed: TSynEditor;
@@ -392,9 +405,10 @@ end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   //Es necesario crear solo una instancia del compilador.
-  Compiler16 := TCompiler_PIC16.Create;  //Crea una instancia del compilador
   Compiler10 := TCompiler_PIC10.Create;
-  Compiler := Compiler16;  //Fija compilador por defecto
+  Compiler16 := TCompiler_PIC16.Create;  //Crea una instancia del compilador
+  Compiler17 := TCompiler_PIC17.Create;
+  Compiler := Compiler16;  //Inicializa variable Compiler
   fraSynTree := TfraSyntaxTree.Create(self);
   fraSynTree.Parent := self;
   //configura panel de mensajes
@@ -432,8 +446,9 @@ begin
   frmDebug.Destroy;
   CodeTool.Destroy;
   hlAssem.Free;
-  Compiler10.Destroy;
+  Compiler17.Destroy;
   Compiler16.Destroy;
+  Compiler10.Destroy;
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
@@ -485,6 +500,7 @@ begin
   //Inicia encabezado
   //Carga último archivo
   if Config.LoadLast then fraEditView1.LoadListFiles(Config.filesClosed);
+  acToolSelPIC16Execute(self);  //Fija compilador por defecto
 end;
 procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
 //Se ha seleccionado un archivo de ejemplo.
@@ -562,6 +578,11 @@ begin
       fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
     end;
   end;
+end;
+procedure TfrmPrincipal.butSelCompilerClick(Sender: TObject);
+begin
+  //Para facilitar el acceso al menú de compialdores
+  butSelCompiler.DropdownMenu.PopUp;
 end;
 procedure TfrmPrincipal.FormDropFiles(Sender: TObject; const FileNames: array of String);
 var
@@ -808,12 +829,47 @@ begin
   end;
   MsgBox(MSG_NOFOUND_, [buscado]);
 end;
-procedure TfrmPrincipal.ComboBox1Change(Sender: TObject);
+procedure TfrmPrincipal.acToolSelPIC10Execute(Sender: TObject);
 begin
-  case ComboBox1.ItemIndex of
-  0: Compiler := Compiler16;
-  1: Compiler := Compiler10;
+  Compiler := Compiler10;
+  acToolSelPIC10.Checked := true;
+  acToolSelPIC16.Checked := false;
+  acToolSelPIC17.Checked := false;
+  StatusBar1.Panels[2].Text := 'Baseline Compiler';
+  //Para compilar de nuevo si está en modo de correccíón de Sintaxis
+  if fraEditView1.ActiveEditor <> nil then begin
+     fraEdit_ChangeEditorState(fraEditView1.ActiveEditor);
   end;
+  //Para recargar CodeTools en todos los editores abiertos
+  CodeTool.SetCompiler(Compiler);
+  fraEditView1.UpdateSynEditCompletion;
+  //Inicia árbol de sintaxis
+  fraSynTree.Init(Compiler.TreeElems);
+end;
+procedure TfrmPrincipal.acToolSelPIC16Execute(Sender: TObject);
+begin
+  Compiler := Compiler16;
+  acToolSelPIC10.Checked := false;
+  acToolSelPIC16.Checked := true;
+  acToolSelPIC17.Checked := false;
+  StatusBar1.Panels[2].Text := 'Mid-range Compiler';
+  //Para compilar de nuevo si está en modo de correccíón de Sintaxis
+  if fraEditView1.ActiveEditor <> nil then begin
+     fraEdit_ChangeEditorState(fraEditView1.ActiveEditor);
+  end;
+  //Para recargar CodeTools en todos los editores abiertos
+  CodeTool.SetCompiler(Compiler);
+  fraEditView1.UpdateSynEditCompletion;
+  //Inicia árbol de sintaxis
+  fraSynTree.Init(Compiler.TreeElems);
+end;
+procedure TfrmPrincipal.acToolSelPIC17Execute(Sender: TObject);
+begin
+  Compiler := Compiler17;
+  acToolSelPIC10.Checked := false;
+  acToolSelPIC16.Checked := false;
+  acToolSelPIC17.Checked := true;
+  StatusBar1.Panels[2].Text := 'Enhanced Mid-range Compiler';
   //Para compilar de nuevo si está en modo de correccíón de Sintaxis
   if fraEditView1.ActiveEditor <> nil then begin
      fraEdit_ChangeEditorState(fraEditView1.ActiveEditor);
@@ -1010,6 +1066,14 @@ begin
   edAsm.Lines.Add(';--------------------');
   edAsm.Lines.Add('    END');
   edAsm.EndUpdate;
+end;
+procedure TfrmPrincipal.acToolComEjecExecute(Sender: TObject);
+{Compila y ejecuta en la ventana de simulación}
+begin
+  acToolCompilExecute(self);
+  if not fraMessages.HaveErrors then begin
+     acToolASMDebugExecute(self);
+  end;
 end;
 procedure TfrmPrincipal.acToolASMDebugExecute(Sender: TObject);
 begin
