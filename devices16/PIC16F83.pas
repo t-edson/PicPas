@@ -104,7 +104,7 @@ var
   {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '08C-0AF:bnk1'} // maps to area 00C-02F (bank 0)
+  {$SET_MAPPED_RAM '08C-0AF:bnk0'} // maps to area 00C-02F (bank 0)
 
 
   // -- Un-implemented fields --
