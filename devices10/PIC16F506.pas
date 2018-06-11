@@ -83,23 +83,43 @@ var
   VRCON_VR0       : bit  absolute VRCON.0;
 
 
-// -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+  // -- Define RAM state values --
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-00C:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
-  {$SET_STATE_RAM '00D-01F:GPR'} 
-  {$SET_STATE_RAM '02D-03F:GPR'} 
-  {$SET_STATE_RAM '04D-05F:GPR'} 
-  {$SET_STATE_RAM '06D-07F:GPR'} 
+  {$SET_STATE_RAM '00D-00F:GPR'} 
+  {$SET_STATE_RAM '010-01F:GPR'} 
+  {$SET_STATE_RAM '020-02C:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
+  {$SET_STATE_RAM '02D-02F:GPR'} 
+  {$SET_STATE_RAM '030-03F:GPR'} 
+  {$SET_STATE_RAM '040-04C:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
+  {$SET_STATE_RAM '04D-04F:GPR'} 
+  {$SET_STATE_RAM '050-05F:GPR'} 
+  {$SET_STATE_RAM '060-06C:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
+  {$SET_STATE_RAM '06D-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
 
 
-  // -- Initial values --
+  // -- Define mapped RAM --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:FE'} // OSCCAL
-  {$SET_UNIMP_BITS '006:3F'} // PORTB
-  {$SET_UNIMP_BITS '007:3F'} // PORTC
-  {$SET_UNIMP_BITS '00C:EF'} // VRCON
+  {$SET_MAPPED_RAM '020-02C:bnk1'} // maps to area 000-00C (bank 0)
+  {$SET_MAPPED_RAM '02D-02F:bnk1'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '040-04C:bnk2'} // maps to area 000-00C (bank 0)
+  {$SET_MAPPED_RAM '04D-04F:bnk2'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '060-06C:bnk3'} // maps to area 000-00C (bank 0)
+  {$SET_MAPPED_RAM '06D-06F:bnk3'} // maps to area 00D-00F (bank 0)
+
+
+  // -- Un-implemented fields --
+
+  {$SET_UNIMP_BITS '004:9F'} // FSR bits 6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '005:FE'} // OSCCAL bit 0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:3F'} // PORTB bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '007:3F'} // PORTC bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00C:EF'} // VRCON bit 4 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:80'} // FSR bit 7 un-implemented (read as 1)
 
 
   // -- PIN mapping --
@@ -128,31 +148,31 @@ var
 
   // -- Bits Configuration --
 
-  // IOSCFS : Internal Oscillator Frequency Select bit
-  {$define _IOSCFS_ON          = $007F}  // 8 MHz INTOSC Speed
-  {$define _IOSCFS_OFF         = $007E}  // 4 MHz INTOSC Speed
-
-  // MCLRE : Master Clear Enable bit
-  {$define _MCLRE_ON           = $007F}  // RB3/MCLR pin functions as MCLR
-  {$define _MCLRE_OFF          = $007D}  // RB3/MCLR pin functions as RB3, MCLR tied internally to VDD
-
-  // CP : Code Protect
-  {$define _CP_OFF             = $007F}  // Code protection off
-  {$define _CP_ON              = $007B}  // Code protection on
+  // OSC : Oscillator Selection bits
+  {$define _OSC_LP             = $0FF8}  // LP oscillator and 18 ms DRT
+  {$define _OSC_XT             = $0FF9}  // XT oscillator and 18 ms DRT
+  {$define _OSC_HS             = $0FFA}  // HS oscillator and 18 ms DRT
+  {$define _OSC_EC             = $0FFB}  // EC Osc With RB4 and 1.125 ms DRT
+  {$define _OSC_IntRC_RB4EN    = $0FFC}  // INTRC With RB4 and 1.125 ms DRT
+  {$define _OSC_IntRC_CLKOUTEN = $0FFD}  // INTRC With CLKOUT and 1.125 ms DRT
+  {$define _OSC_ExtRC_RB4EN    = $0FFE}  // EXTRC With RB4 and 1.125 ms DRT
+  {$define _OSC_ExtRC_CLKOUTEN = $0FFF}  // EXTRC With CLKOUT and 1.125 ms DRT
 
   // WDT : Watchdog Timer Enable bit
-  {$define _WDT_ON             = $007F}  // WDT enabled
-  {$define _WDT_OFF            = $0077}  // WDT disabled
+  {$define _WDT_ON             = $0FFF}  // WDT enabled
+  {$define _WDT_OFF            = $0FF7}  // WDT disabled
 
-  // OSC : Oscillator Selection bits
-  {$define _OSC_LP             = $000F}  // LP oscillator and 18 ms DRT
-  {$define _OSC_XT             = $001F}  // XT oscillator and 18 ms DRT
-  {$define _OSC_HS             = $002F}  // HS oscillator and 18 ms DRT
-  {$define _OSC_EC             = $003F}  // EC Osc With RB4 and 1.125 ms DRT
-  {$define _OSC_IntRC_RB4EN    = $004F}  // INTRC With RB4 and 1.125 ms DRT
-  {$define _OSC_IntRC_CLKOUTEN = $005F}  // INTRC With CLKOUT and 1.125 ms DRT
-  {$define _OSC_ExtRC_RB4EN    = $006F}  // EXTRC With RB4 and 1.125 ms DRT
-  {$define _OSC_ExtRC_CLKOUTEN = $007F}  // EXTRC With CLKOUT and 1.125 ms DRT
+  // CP : Code Protect
+  {$define _CP_OFF             = $0FFF}  // Code protection off
+  {$define _CP_ON              = $0FEF}  // Code protection on
+
+  // MCLRE : Master Clear Enable bit
+  {$define _MCLRE_ON           = $0FFF}  // RB3/MCLR pin functions as MCLR
+  {$define _MCLRE_OFF          = $0FDF}  // RB3/MCLR pin functions as RB3, MCLR tied internally to VDD
+
+  // IOSCFS : Internal Oscillator Frequency Select bit
+  {$define _IOSCFS_ON          = $0FFF}  // 8 MHz INTOSC Speed
+  {$define _IOSCFS_OFF         = $0FBF}  // 4 MHz INTOSC Speed
 
 implementation
 end.

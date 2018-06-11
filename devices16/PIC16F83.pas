@@ -40,8 +40,8 @@ var
   PORTB_RB0         : bit  absolute PORTB.0;
   EEDATA            : byte absolute $0008;
   EEADR             : byte absolute $0009;
-  PCLATH            : byte absolute $000a;
-  INTCON            : byte absolute $000b;
+  PCLATH            : byte absolute $000A;
+  INTCON            : byte absolute $000B;
   INTCON_GIE        : bit  absolute INTCON.7;
   INTCON_EEIE       : bit  absolute INTCON.6;
   INTCON_T0IE       : bit  absolute INTCON.5;
@@ -107,13 +107,12 @@ var
   {$SET_MAPPED_RAM '08C-0AF:bnk1'} // maps to area 00C-02F (bank 0)
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:1F'} // PORTA
-  {$SET_UNIMP_BITS '00A:1F'} // PCLATH
-  {$SET_UNIMP_BITS '085:1F'} // TRISA
-  {$SET_UNIMP_BITS '088:1F'} // EECON1
+  {$SET_UNIMP_BITS '005:1F'} // PORTA bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00A:1F'} // PCLATH bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '085:1F'} // TRISA bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '088:1F'} // EECON1 bits 7,6,5 un-implemented (read as 0)
 
 
   // -- PIN mapping --

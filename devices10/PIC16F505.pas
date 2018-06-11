@@ -46,22 +46,42 @@ var
   PORTC_RC0    : bit  absolute PORTC.0;
 
 
-// -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+  // -- Define RAM state values --
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-007:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
-  {$SET_STATE_RAM '008-01F:GPR'} 
-  {$SET_STATE_RAM '028-03F:GPR'} 
-  {$SET_STATE_RAM '048-05F:GPR'} 
-  {$SET_STATE_RAM '068-07F:GPR'} 
+  {$SET_STATE_RAM '008-00F:GPR'} 
+  {$SET_STATE_RAM '010-01F:GPR'} 
+  {$SET_STATE_RAM '020-027:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
+  {$SET_STATE_RAM '028-02F:GPR'} 
+  {$SET_STATE_RAM '030-03F:GPR'} 
+  {$SET_STATE_RAM '040-047:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
+  {$SET_STATE_RAM '048-04F:GPR'} 
+  {$SET_STATE_RAM '050-05F:GPR'} 
+  {$SET_STATE_RAM '060-067:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
+  {$SET_STATE_RAM '068-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
 
 
-  // -- Initial values --
+  // -- Define mapped RAM --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:FE'} // OSCCAL
-  {$SET_UNIMP_BITS '006:3F'} // PORTB
-  {$SET_UNIMP_BITS '007:3F'} // PORTC
+  {$SET_MAPPED_RAM '020-027:bnk1'} // maps to area 000-007 (bank 0)
+  {$SET_MAPPED_RAM '028-02F:bnk1'} // maps to area 008-00F (bank 0)
+  {$SET_MAPPED_RAM '040-047:bnk2'} // maps to area 000-007 (bank 0)
+  {$SET_MAPPED_RAM '048-04F:bnk2'} // maps to area 008-00F (bank 0)
+  {$SET_MAPPED_RAM '060-067:bnk3'} // maps to area 000-007 (bank 0)
+  {$SET_MAPPED_RAM '068-06F:bnk3'} // maps to area 008-00F (bank 0)
+
+
+  // -- Un-implemented fields --
+
+  {$SET_UNIMP_BITS '004:9F'} // FSR bits 6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '005:FE'} // OSCCAL bit 0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:3F'} // PORTB bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '007:3F'} // PORTC bits 7,6 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:80'} // FSR bit 7 un-implemented (read as 1)
 
 
   // -- PIN mapping --
@@ -90,27 +110,27 @@ var
 
   // -- Bits Configuration --
 
-  // MCLRE : RB3/MCLR Pin Function Select bit
-  {$define _MCLRE_ON           = $003F}  // RB3/MCLR pin function is MCLR
-  {$define _MCLRE_OFF          = $003E}  // GP3/MCLR pin function is digital input, MCLR internally tied to VDD
-
-  // CP : Code Protection bit
-  {$define _CP_OFF             = $003F}  // Code protection off
-  {$define _CP_ON              = $003D}  // Code protection on
+  // OSC : Oscillator Selection bits
+  {$define _OSC_ExtRC_CLKOUTEN = $0FFF}  // External RC oscillator/CLKOUT function on RB4/OSC2/CLKOUT pin
+  {$define _OSC_ExtRC_RB4EN    = $0FFE}  // External RC oscillator/RB4 function on RB4/OSC2/CLKOUT pin
+  {$define _OSC_IntRC_CLKOUTEN = $0FFD}  // Internal RC oscillator/CLKOUT function on RB4/OSC2/CLKOUT pin
+  {$define _OSC_IntRC_RB4EN    = $0FFC}  // Internal RC oscillator/RB4 function on RB4/OSC2/CLKOUT pin
+  {$define _OSC_EC             = $0FFB}  // EC oscillator/RB4 function on RB4/OSC2/CLKOUT pin
+  {$define _OSC_HS             = $0FFA}  // HS oscillator
+  {$define _OSC_XT             = $0FF9}  // XT oscillator
+  {$define _OSC_LP             = $0FF8}  // LP oscillator
 
   // WDT : Watchdog Timer Enable bit
-  {$define _WDT_ON             = $003F}  // WDT enabled
-  {$define _WDT_OFF            = $003B}  // WDT disabled
+  {$define _WDT_ON             = $0FFF}  // WDT enabled
+  {$define _WDT_OFF            = $0FF7}  // WDT disabled
 
-  // OSC : Oscillator Selection bits
-  {$define _OSC_ExtRC_CLKOUTEN = $003F}  // External RC oscillator/CLKOUT function on RB4/OSC2/CLKOUT pin
-  {$define _OSC_ExtRC_RB4EN    = $0037}  // External RC oscillator/RB4 function on RB4/OSC2/CLKOUT pin
-  {$define _OSC_IntRC_CLKOUTEN = $002F}  // Internal RC oscillator/CLKOUT function on RB4/OSC2/CLKOUT pin
-  {$define _OSC_IntRC_RB4EN    = $0027}  // Internal RC oscillator/RB4 function on RB4/OSC2/CLKOUT pin
-  {$define _OSC_EC             = $001F}  // EC oscillator/RB4 function on RB4/OSC2/CLKOUT pin
-  {$define _OSC_HS             = $0017}  // HS oscillator
-  {$define _OSC_XT             = $000F}  // XT oscillator
-  {$define _OSC_LP             = $0007}  // LP oscillator
+  // CP : Code Protection bit
+  {$define _CP_OFF             = $0FFF}  // Code protection off
+  {$define _CP_ON              = $0FEF}  // Code protection on
+
+  // MCLRE : RB3/MCLR Pin Function Select bit
+  {$define _MCLRE_ON           = $0FFF}  // RB3/MCLR pin function is MCLR
+  {$define _MCLRE_OFF          = $0FDF}  // GP3/MCLR pin function is digital input, MCLR internally tied to VDD
 
 implementation
 end.

@@ -41,16 +41,18 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB
   {$SET_STATE_RAM '007-01F:GPR'} 
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:1F'} // PORTA
+  {$SET_UNIMP_BITS '005:1F'} // PORTA bits 7,6,5 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:E0'} // FSR bits 7,6,5 un-implemented (read as 1)
 
 
   // -- PIN mapping --
@@ -83,22 +85,19 @@ var
 
   // -- Bits Configuration --
 
-  // Reserved : Reserved
-  {$define _Reserved_ = $003F}  // 
-
-  // CP : Code protection bit
-  {$define _CP_OFF    = $004F}  // Code protection off
-  {$define _CP_ON     = $000F}  // Code protection on
+  // OSC : Oscillator selection bits
+  {$define _OSC_RC  = $0FFF}  // RC oscillator
+  {$define _OSC_HS  = $0FFE}  // HS oscillator
+  {$define _OSC_XT  = $0FFD}  // XT oscillator
+  {$define _OSC_LP  = $0FFC}  // LP oscillator
 
   // WDT : Watchdog timer enable bit
-  {$define _WDT_ON    = $008F}  // WDT enabled
-  {$define _WDT_OFF   = $000F}  // WDT disabled
+  {$define _WDT_ON  = $0FFF}  // WDT enabled
+  {$define _WDT_OFF = $0FFB}  // WDT disabled
 
-  // OSC : Oscillator selection bits
-  {$define _OSC_RC    = $030F}  // RC oscillator
-  {$define _OSC_HS    = $020F}  // HS oscillator
-  {$define _OSC_XT    = $010F}  // XT oscillator
-  {$define _OSC_LP    = $000F}  // LP oscillator
+  // CP : Code protection bit
+  {$define _CP_OFF  = $0FFF}  // Code protection off
+  {$define _CP_ON   = $0FF7}  // Code protection on
 
 implementation
 end.

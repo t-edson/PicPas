@@ -60,18 +60,30 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-009:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, GPIO, CM1CON0, ADCON0, ADRES
-  {$SET_STATE_RAM '00A-01F:GPR'} 
-  {$SET_STATE_RAM '02A-03F:GPR'} 
+  {$SET_STATE_RAM '00A-00F:GPR'} 
+  {$SET_STATE_RAM '010-01F:GPR'} 
+  {$SET_STATE_RAM '020-029:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, GPIO, CM1CON0, ADCON0, ADRES
+  {$SET_STATE_RAM '02A-02F:GPR'} 
+  {$SET_STATE_RAM '030-03F:GPR'} 
 
 
-  // -- Initial values --
+  // -- Define mapped RAM --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:FE'} // OSCCAL
-  {$SET_UNIMP_BITS '006:3F'} // GPIO
+  {$SET_MAPPED_RAM '020-029:bnk1'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '02A-02F:bnk1'} // maps to area 00A-00F (bank 0)
+
+
+  // -- Un-implemented fields --
+
+  {$SET_UNIMP_BITS '004:DF'} // FSR bit 5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '005:FE'} // OSCCAL bit 0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:3F'} // GPIO bits 7,6 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:C0'} // FSR bits 7,6 un-implemented (read as 1)
 
 
   // -- PIN mapping --
@@ -93,27 +105,27 @@ var
 
   // -- Bits Configuration --
 
-  // IOSCFS : Internal Oscillator Frequency Select bit
-  {$define _IOSCFS_ON  = $003F}  // 8 MHz INTOSC Speed
-  {$define _IOSCFS_OFF = $003E}  // 4 MHz INTOSC Speed
-
-  // MCLRE : Master Clear Enable bit
-  {$define _MCLRE_ON   = $003F}  // GP3/MCLR Functions as MCLR
-  {$define _MCLRE_OFF  = $003D}  // GP3/MCLR pin functions as GP3, MCLR internally tied to VDD
-
-  // CP : Code Protect
-  {$define _CP_OFF     = $003F}  // Code protection off
-  {$define _CP_ON      = $003B}  // Code protection on
+  // OSC : Oscillator Select
+  {$define _OSC_ExtRC  = $0FFF}  // EXTRC with 1.125 ms DRT
+  {$define _OSC_IntRC  = $0FFE}  // INTOSC with 1.125 ms DRT
+  {$define _OSC_XT     = $0FFD}  // XT oscillator with 18 ms DRT
+  {$define _OSC_LP     = $0FFC}  // LP oscillator with 18 ms DRT
 
   // WDT : Watchdog Timer Enable bit
-  {$define _WDT_ON     = $003F}  // WDT enabled
-  {$define _WDT_OFF    = $0037}  // WDT disabled
+  {$define _WDT_ON     = $0FFF}  // WDT enabled
+  {$define _WDT_OFF    = $0FFB}  // WDT disabled
 
-  // OSC : Oscillator Select
-  {$define _OSC_ExtRC  = $003F}  // EXTRC with 1.125 ms DRT
-  {$define _OSC_IntRC  = $002F}  // INTOSC with 1.125 ms DRT
-  {$define _OSC_XT     = $001F}  // XT oscillator with 18 ms DRT
-  {$define _OSC_LP     = $000F}  // LP oscillator with 18 ms DRT
+  // CP : Code Protect
+  {$define _CP_OFF     = $0FFF}  // Code protection off
+  {$define _CP_ON      = $0FF7}  // Code protection on
+
+  // MCLRE : Master Clear Enable bit
+  {$define _MCLRE_ON   = $0FFF}  // GP3/MCLR Functions as MCLR
+  {$define _MCLRE_OFF  = $0FEF}  // GP3/MCLR pin functions as GP3, MCLR internally tied to VDD
+
+  // IOSCFS : Internal Oscillator Frequency Select bit
+  {$define _IOSCFS_ON  = $0FFF}  // 8 MHz INTOSC Speed
+  {$define _IOSCFS_OFF = $0FDF}  // 4 MHz INTOSC Speed
 
 implementation
 end.

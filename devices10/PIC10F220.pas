@@ -53,19 +53,21 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-008:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, GPIO, ADCON0, ADRES
   {$SET_STATE_RAM '010-01F:GPR'} 
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '003:DF'} // STATUS
-  {$SET_UNIMP_BITS '006:0F'} // GPIO
-  {$SET_UNIMP_BITS '007:CF'} // ADCON0
-  {$SET_UNIMP_BITS1 '004:E0'} // FSR Bits 7,6,5 always read as 1
+  {$SET_UNIMP_BITS '003:DF'} // STATUS bit 5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:0F'} // GPIO bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '007:CF'} // ADCON0 bits 5,4 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:E0'} // FSR bits 7,6,5 un-implemented (read as 1)
+
 
   // -- PIN mapping --
 
@@ -86,25 +88,25 @@ var
 
   // -- Bits Configuration --
 
-  // MCLRE : GP3/MCLR Pin Function Select bit
-  {$define _MCLRE_ON    = $001F}  // GP3/MCLR pin function is MCLR
-  {$define _MCLRE_OFF   = $001E}  // GP3/MCLR pin function is digital I/O, MCLR internally tied to VDD
-
-  // CP : Code protection bit
-  {$define _CP_OFF      = $001F}  // Code protection off
-  {$define _CP_ON       = $001D}  // Code protection on
-
-  // WDTE : Watchdog Timer Enable bit
-  {$define _WDTE_ON     = $001F}  // WDT enabled
-  {$define _WDTE_OFF    = $001B}  // WDT disabled
+  // IOSCFS : Internal Oscillator Frequency Select bit
+  {$define _IOSCFS_8MHZ = $0FFF}  // 8 MHz
+  {$define _IOSCFS_4MHZ = $0FFE}  // 4 MHz
 
   // MCPU : Master Clear Pull-up Enable bit
-  {$define _MCPU_OFF    = $001F}  // Pull-up disabled
-  {$define _MCPU_ON     = $0017}  // Pull-up enabled
+  {$define _MCPU_OFF    = $0FFF}  // Pull-up disabled
+  {$define _MCPU_ON     = $0FFD}  // Pull-up enabled
 
-  // IOSCFS : Internal Oscillator Frequency Select bit
-  {$define _IOSCFS_8MHZ = $001F}  // 8 MHz
-  {$define _IOSCFS_4MHZ = $000F}  // 4 MHz
+  // WDTE : Watchdog Timer Enable bit
+  {$define _WDTE_ON     = $0FFF}  // WDT enabled
+  {$define _WDTE_OFF    = $0FFB}  // WDT disabled
+
+  // CP : Code protection bit
+  {$define _CP_OFF      = $0FFF}  // Code protection off
+  {$define _CP_ON       = $0FF7}  // Code protection on
+
+  // MCLRE : GP3/MCLR Pin Function Select bit
+  {$define _MCLRE_ON    = $0FFF}  // GP3/MCLR pin function is MCLR
+  {$define _MCLRE_OFF   = $0FEF}  // GP3/MCLR pin function is digital I/O, MCLR internally tied to VDD
 
 implementation
 end.

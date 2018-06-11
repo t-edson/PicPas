@@ -64,24 +64,57 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-009:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE
-  {$SET_STATE_RAM '00A-01F:GPR'} 
-  {$SET_STATE_RAM '02A-03F:GPR'} 
-  {$SET_STATE_RAM '04A-05F:GPR'} 
-  {$SET_STATE_RAM '06A-07F:GPR'} 
-  {$SET_STATE_RAM '08A-09F:GPR'} 
-  {$SET_STATE_RAM '0AA-0BF:GPR'} 
-  {$SET_STATE_RAM '0CA-0DF:GPR'} 
-  {$SET_STATE_RAM '0EA-0FF:GPR'} 
+  {$SET_STATE_RAM '00A-00F:GPR'} 
+  {$SET_STATE_RAM '010-01F:GPR'} 
+  {$SET_STATE_RAM '020-029:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE
+  {$SET_STATE_RAM '02A-02F:GPR'} 
+  {$SET_STATE_RAM '030-03F:GPR'} 
+  {$SET_STATE_RAM '040-049:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE
+  {$SET_STATE_RAM '04A-04F:GPR'} 
+  {$SET_STATE_RAM '050-05F:GPR'} 
+  {$SET_STATE_RAM '060-069:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE
+  {$SET_STATE_RAM '06A-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
+  {$SET_STATE_RAM '080-089:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE
+  {$SET_STATE_RAM '08A-08F:GPR'} 
+  {$SET_STATE_RAM '090-09F:GPR'} 
+  {$SET_STATE_RAM '0A0-0A9:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE
+  {$SET_STATE_RAM '0AA-0AF:GPR'} 
+  {$SET_STATE_RAM '0B0-0BF:GPR'} 
+  {$SET_STATE_RAM '0C0-0C9:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE
+  {$SET_STATE_RAM '0CA-0CF:GPR'} 
+  {$SET_STATE_RAM '0D0-0DF:GPR'} 
+  {$SET_STATE_RAM '0E0-0E9:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE
+  {$SET_STATE_RAM '0EA-0EF:GPR'} 
+  {$SET_STATE_RAM '0F0-0FF:GPR'} 
 
 
-  // -- Initial values --
+  // -- Define mapped RAM --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:1F'} // PORTA
-  {$SET_UNIMP_BITS '009:F0'} // PORTE
+  {$SET_MAPPED_RAM '020-029:bnk1'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '02A-02F:bnk1'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '040-049:bnk2'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '04A-04F:bnk2'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '060-069:bnk3'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '06A-06F:bnk3'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '080-089:bnk4'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '08A-08F:bnk4'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '0A0-0A9:bnk5'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '0AA-0AF:bnk5'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '0C0-0C9:bnk6'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '0CA-0CF:bnk6'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '0E0-0E9:bnk7'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '0EA-0EF:bnk7'} // maps to area 00A-00F (bank 0)
+
+
+  // -- Un-implemented fields --
+
+  {$SET_UNIMP_BITS '005:1F'} // PORTA bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '009:F0'} // PORTE bits 3,2,1,0 un-implemented (read as 0)
 
 
   // -- PIN mapping --
@@ -139,19 +172,19 @@ var
 
   // -- Bits Configuration --
 
-  // CP : Code protection bit
-  {$define _CP_OFF  = $000F}  // Code protection off
-  {$define _CP_ON   = $000E}  // Code protection on
+  // OSC : Oscillator selection bits
+  {$define _OSC_RC  = $0FFF}  // RC oscillator
+  {$define _OSC_HS  = $0FFE}  // HS oscillator
+  {$define _OSC_XT  = $0FFD}  // XT oscillator
+  {$define _OSC_LP  = $0FFC}  // LP oscillator
 
   // WDT : Watchdog timer enable bit
-  {$define _WDT_ON  = $000F}  // WDT enabled
-  {$define _WDT_OFF = $000D}  // WDT disabled
+  {$define _WDT_ON  = $0FFF}  // WDT enabled
+  {$define _WDT_OFF = $0FFB}  // WDT disabled
 
-  // OSC : Oscillator selection bits
-  {$define _OSC_RC  = $000F}  // RC oscillator
-  {$define _OSC_HS  = $000B}  // HS oscillator
-  {$define _OSC_XT  = $0007}  // XT oscillator
-  {$define _OSC_LP  = $0003}  // LP oscillator
+  // CP : Code protection bit
+  {$define _CP_OFF  = $0FFF}  // Code protection off
+  {$define _CP_ON   = $0FF7}  // Code protection on
 
 implementation
 end.

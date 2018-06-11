@@ -30,8 +30,8 @@ var
   GPIO_GP2          : bit  absolute GPIO.2;
   GPIO_GP1          : bit  absolute GPIO.1;
   GPIO_GP0          : bit  absolute GPIO.0;
-  PCLATH            : byte absolute $000a;
-  INTCON            : byte absolute $000b;
+  PCLATH            : byte absolute $000A;
+  INTCON            : byte absolute $000B;
   INTCON_GIE        : bit  absolute INTCON.7;
   INTCON_PEIE       : bit  absolute INTCON.6;
   INTCON_TMR0IE     : bit  absolute INTCON.5;
@@ -40,11 +40,11 @@ var
   INTCON_TMR0IF     : bit  absolute INTCON.2;
   INTCON_INTF       : bit  absolute INTCON.1;
   INTCON_GPIF       : bit  absolute INTCON.0;
-  PIR1              : byte absolute $000c;
+  PIR1              : byte absolute $000C;
   PIR1_C1IF         : bit  absolute PIR1.3;
   PIR1_TMR1IF       : bit  absolute PIR1.2;
-  TMR1L             : byte absolute $000e;
-  TMR1H             : byte absolute $000f;
+  TMR1L             : byte absolute $000E;
+  TMR1H             : byte absolute $000F;
   T1CON             : byte absolute $0010;
   T1CON_T1GINV      : bit  absolute T1CON.7;
   T1CON_TMR1GE      : bit  absolute T1CON.6;
@@ -61,14 +61,14 @@ var
   VRCON_VR2         : bit  absolute VRCON.4;
   VRCON_VR1         : bit  absolute VRCON.3;
   VRCON_VR0         : bit  absolute VRCON.2;
-  CMCON0            : byte absolute $001a;
+  CMCON0            : byte absolute $001A;
   CMCON0_C1ON       : bit  absolute CMCON0.6;
   CMCON0_C1OUT      : bit  absolute CMCON0.5;
   CMCON0_C1OE       : bit  absolute CMCON0.4;
   CMCON0_C1POL      : bit  absolute CMCON0.3;
   CMCON0_C1R        : bit  absolute CMCON0.2;
   CMCON0_C1CH       : bit  absolute CMCON0.1;
-  CMCON1            : byte absolute $001c;
+  CMCON1            : byte absolute $001C;
   CMCON1_T1ACS      : bit  absolute CMCON1.4;
   CMCON1_C1HYS      : bit  absolute CMCON1.3;
   CMCON1_T1GSS      : bit  absolute CMCON1.2;
@@ -89,10 +89,10 @@ var
   TRISIO_TRISIO2    : bit  absolute TRISIO.2;
   TRISIO_TRISIO1    : bit  absolute TRISIO.1;
   TRISIO_TRISIO0    : bit  absolute TRISIO.0;
-  PIE1              : byte absolute $008c;
+  PIE1              : byte absolute $008C;
   PIE1_C1IE         : bit  absolute PIE1.3;
   PIE1_TMR1IE       : bit  absolute PIE1.2;
-  PCON              : byte absolute $008e;
+  PCON              : byte absolute $008E;
   PCON_POR          : bit  absolute PCON.1;
   PCON_BOR          : bit  absolute PCON.0;
   OSCTUNE           : byte absolute $0090;
@@ -114,7 +114,7 @@ var
   IOC_IOC2          : bit  absolute IOC.2;
   IOC_IOC1          : bit  absolute IOC.1;
   IOC_IOC0          : bit  absolute IOC.0;
-  ANSEL             : byte absolute $009f;
+  ANSEL             : byte absolute $009F;
   ANSEL_ANS3        : bit  absolute ANSEL.3;
   ANSEL_ANS1        : bit  absolute ANSEL.2;
   ANSEL_ANS0        : bit  absolute ANSEL.1;
@@ -152,22 +152,21 @@ var
   {$SET_MAPPED_RAM '0F0-0FF:bnk1'} // maps to area 070-07F (bank 0)
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:3F'} // GPIO
-  {$SET_UNIMP_BITS '00A:1F'} // PCLATH
-  {$SET_UNIMP_BITS '00C:09'} // PIR1
-  {$SET_UNIMP_BITS '019:BF'} // VRCON
-  {$SET_UNIMP_BITS '01A:F5'} // CMCON0
-  {$SET_UNIMP_BITS '01C:1B'} // CMCON1
-  {$SET_UNIMP_BITS '085:3F'} // TRISIO
-  {$SET_UNIMP_BITS '08C:09'} // PIE1
-  {$SET_UNIMP_BITS '08E:03'} // PCON
-  {$SET_UNIMP_BITS '090:1F'} // OSCTUNE
-  {$SET_UNIMP_BITS '095:37'} // WPU
-  {$SET_UNIMP_BITS '096:3F'} // IOC
-  {$SET_UNIMP_BITS '09F:7F'} // ANSEL
+  {$SET_UNIMP_BITS '005:3F'} // GPIO bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00A:1F'} // PCLATH bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00C:09'} // PIR1 bits 7,6,5,4,2,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '019:BF'} // VRCON bit 6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '01A:F5'} // CMCON0 bits 3,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '01C:1B'} // CMCON1 bits 7,6,5,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '085:3F'} // TRISIO bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '08C:09'} // PIE1 bits 7,6,5,4,2,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '08E:03'} // PCON bits 7,6,5,4,3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '090:1F'} // OSCTUNE bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '095:37'} // WPU bits 7,6,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '096:3F'} // IOC bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '09F:7F'} // ANSEL bit 7 un-implemented (read as 0)
 
 
   // -- PIN mapping --
@@ -184,6 +183,7 @@ var
 
   // -- RAM to PIN mapping --
 
+  {$MAP_RAM_TO_PIN '005:0-7,1-6,2-5,3-4,4-3,5-2'} // GPIO
 
 
   // -- Bits Configuration --

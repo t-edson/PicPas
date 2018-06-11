@@ -45,9 +45,9 @@ var
   WPUA_WPUA2          : bit  absolute WPUA.2;
   WPUA_WPUA1          : bit  absolute WPUA.1;
   WPUA_WPUA0          : bit  absolute WPUA.0;
-  PCLATH              : byte absolute $000a;
+  PCLATH              : byte absolute $000A;
   PCLATH_PCLH0        : bit  absolute PCLATH.4;
-  INTCON              : byte absolute $000b;
+  INTCON              : byte absolute $000B;
   INTCON_GIE          : bit  absolute INTCON.7;
   INTCON_PEIE         : bit  absolute INTCON.6;
   INTCON_TMR0IE       : bit  absolute INTCON.5;
@@ -56,17 +56,17 @@ var
   INTCON_TMR0IF       : bit  absolute INTCON.2;
   INTCON_INTF         : bit  absolute INTCON.1;
   INTCON_IOCIF        : bit  absolute INTCON.0;
-  PIR1                : byte absolute $000c;
+  PIR1                : byte absolute $000C;
   PIR1_ADIF           : bit  absolute PIR1.4;
   PIR1_NCO1IF         : bit  absolute PIR1.3;
   PIR1_CLC1IF         : bit  absolute PIR1.2;
   PIR1_TMR2IF         : bit  absolute PIR1.1;
-  PIE1                : byte absolute $000d;
+  PIE1                : byte absolute $000D;
   PIE1_ADIE           : bit  absolute PIE1.4;
   PIE1_NCO1IE         : bit  absolute PIE1.3;
   PIE1_CLC1IE         : bit  absolute PIE1.2;
   PIE1_TMR2IE         : bit  absolute PIE1.1;
-  OPTION_REG          : byte absolute $000e;
+  OPTION_REG          : byte absolute $000E;
   OPTION_REG_WPUEN    : bit  absolute OPTION_REG.7;
   OPTION_REG_INTEDG   : bit  absolute OPTION_REG.6;
   OPTION_REG_T0CS     : bit  absolute OPTION_REG.5;
@@ -75,7 +75,7 @@ var
   OPTION_REG_PS2      : bit  absolute OPTION_REG.2;
   OPTION_REG_PS1      : bit  absolute OPTION_REG.1;
   OPTION_REG_PS0      : bit  absolute OPTION_REG.0;
-  PCON                : byte absolute $000f;
+  PCON                : byte absolute $000F;
   PCON_POR            : bit  absolute PCON.1;
   PCON_BOR            : bit  absolute PCON.0;
   OSCCON              : byte absolute $0010;
@@ -128,30 +128,30 @@ var
   PWM2CON_PWM2OE      : bit  absolute PWM2CON.3;
   PWM2CON_PWM2OUT     : bit  absolute PWM2CON.2;
   PWM2CON_PWM2POL     : bit  absolute PWM2CON.1;
-  IOCAP               : byte absolute $001a;
+  IOCAP               : byte absolute $001A;
   IOCAP_IOCAP3        : bit  absolute IOCAP.6;
   IOCAP_IOCAP2        : bit  absolute IOCAP.5;
   IOCAP_IOCAP1        : bit  absolute IOCAP.4;
   IOCAP_IOCAP0        : bit  absolute IOCAP.3;
-  IOCAN               : byte absolute $001b;
+  IOCAN               : byte absolute $001B;
   IOCAN_IOCAN3        : bit  absolute IOCAN.4;
   IOCAN_IOCAN2        : bit  absolute IOCAN.3;
   IOCAN_IOCAN1        : bit  absolute IOCAN.2;
   IOCAN_IOCAN0        : bit  absolute IOCAN.1;
-  IOCAF               : byte absolute $001c;
+  IOCAF               : byte absolute $001C;
   IOCAF_IOCAF3        : bit  absolute IOCAF.4;
   IOCAF_IOCAF2        : bit  absolute IOCAF.3;
   IOCAF_IOCAF1        : bit  absolute IOCAF.2;
   IOCAF_IOCAF0        : bit  absolute IOCAF.1;
-  FVRCON              : byte absolute $001d;
+  FVRCON              : byte absolute $001D;
   FVRCON_FVREN        : bit  absolute FVRCON.6;
   FVRCON_FVRRDY       : bit  absolute FVRCON.5;
   FVRCON_TSEN         : bit  absolute FVRCON.4;
   FVRCON_TSRNG        : bit  absolute FVRCON.3;
   FVRCON_ADFVR1       : bit  absolute FVRCON.1;
   FVRCON_ADFVR0       : bit  absolute FVRCON.0;
-  ADRES               : byte absolute $001e;
-  ADCON               : byte absolute $001f;
+  ADRES               : byte absolute $001E;
+  ADCON               : byte absolute $001F;
   ADCON_ADCS2         : bit  absolute ADCON.7;
   ADCON_ADCS1         : bit  absolute ADCON.6;
   ADCON_ADCS0         : bit  absolute ADCON.5;
@@ -199,7 +199,7 @@ var
   NCO1ACCU_NCO1ACC18  : bit  absolute NCO1ACCU.3;
   NCO1ACCU_NCO1ACC17  : bit  absolute NCO1ACCU.2;
   NCO1ACCU_NCO1ACC16  : bit  absolute NCO1ACCU.1;
-  NCO1INCL            : byte absolute $002a;
+  NCO1INCL            : byte absolute $002A;
   NCO1INCL_NCO1INC7   : bit  absolute NCO1INCL.7;
   NCO1INCL_NCO1INC6   : bit  absolute NCO1INCL.6;
   NCO1INCL_NCO1INC5   : bit  absolute NCO1INCL.5;
@@ -208,7 +208,7 @@ var
   NCO1INCL_NCO1INC2   : bit  absolute NCO1INCL.2;
   NCO1INCL_NCO1INC1   : bit  absolute NCO1INCL.1;
   NCO1INCL_NCO1INC0   : bit  absolute NCO1INCL.0;
-  NCO1INCH            : byte absolute $002b;
+  NCO1INCH            : byte absolute $002B;
   NCO1INCH_NCO1INC15  : bit  absolute NCO1INCH.7;
   NCO1INCH_NCO1INC14  : bit  absolute NCO1INCH.6;
   NCO1INCH_NCO1INC13  : bit  absolute NCO1INCH.5;
@@ -217,14 +217,14 @@ var
   NCO1INCH_NCO1INC10  : bit  absolute NCO1INCH.2;
   NCO1INCH_NCO1INC9   : bit  absolute NCO1INCH.1;
   NCO1INCH_NCO1INC8   : bit  absolute NCO1INCH.0;
-  NCO1INCU            : byte absolute $002c;
-  NCO1CON             : byte absolute $002d;
+  NCO1INCU            : byte absolute $002C;
+  NCO1CON             : byte absolute $002D;
   NCO1CON_N1EN        : bit  absolute NCO1CON.5;
   NCO1CON_N1OE        : bit  absolute NCO1CON.4;
   NCO1CON_N1OUT       : bit  absolute NCO1CON.3;
   NCO1CON_N1POL       : bit  absolute NCO1CON.2;
   NCO1CON_N1PFM       : bit  absolute NCO1CON.1;
-  NCO1CLK             : byte absolute $002e;
+  NCO1CLK             : byte absolute $002E;
   NCO1CLK_N1PWS2      : bit  absolute NCO1CLK.5;
   NCO1CLK_N1PWS1      : bit  absolute NCO1CLK.4;
   NCO1CLK_N1PWS0      : bit  absolute NCO1CLK.3;
@@ -309,36 +309,36 @@ var
   CWG1CON0_G1POLB     : bit  absolute CWG1CON0.3;
   CWG1CON0_G1POLA     : bit  absolute CWG1CON0.2;
   CWG1CON0_G1CS0      : bit  absolute CWG1CON0.1;
-  CWG1CON1            : byte absolute $003a;
+  CWG1CON1            : byte absolute $003A;
   CWG1CON1_G1ASDLB1   : bit  absolute CWG1CON1.7;
   CWG1CON1_G1ASDLB0   : bit  absolute CWG1CON1.6;
   CWG1CON1_G1ASDLA1   : bit  absolute CWG1CON1.5;
   CWG1CON1_G1ASDLA0   : bit  absolute CWG1CON1.4;
   CWG1CON1_G1IS1      : bit  absolute CWG1CON1.2;
   CWG1CON1_G1IS0      : bit  absolute CWG1CON1.1;
-  CWG1CON2            : byte absolute $003b;
+  CWG1CON2            : byte absolute $003B;
   CWG1CON2_G1ASE      : bit  absolute CWG1CON2.4;
   CWG1CON2_G1ARSEN    : bit  absolute CWG1CON2.3;
   CWG1CON2_G1ASDSCLC1 : bit  absolute CWG1CON2.2;
   CWG1CON2_G1ASDSFLT  : bit  absolute CWG1CON2.1;
-  CWG1DBR             : byte absolute $003c;
+  CWG1DBR             : byte absolute $003C;
   CWG1DBR_CWG1DBR5    : bit  absolute CWG1DBR.5;
   CWG1DBR_CWG1DBR4    : bit  absolute CWG1DBR.4;
   CWG1DBR_CWG1DBR3    : bit  absolute CWG1DBR.3;
   CWG1DBR_CWG1DBR2    : bit  absolute CWG1DBR.2;
   CWG1DBR_CWG1DBR1    : bit  absolute CWG1DBR.1;
   CWG1DBR_CWG1DBR0    : bit  absolute CWG1DBR.0;
-  CWG1DBF             : byte absolute $003d;
+  CWG1DBF             : byte absolute $003D;
   CWG1DBF_CWG1DBF5    : bit  absolute CWG1DBF.5;
   CWG1DBF_CWG1DBF4    : bit  absolute CWG1DBF.4;
   CWG1DBF_CWG1DBF3    : bit  absolute CWG1DBF.3;
   CWG1DBF_CWG1DBF2    : bit  absolute CWG1DBF.2;
   CWG1DBF_CWG1DBF1    : bit  absolute CWG1DBF.1;
   CWG1DBF_CWG1DBF0    : bit  absolute CWG1DBF.0;
-  VREGCON             : byte absolute $003e;
+  VREGCON             : byte absolute $003E;
   VREGCON_VREGPM1     : bit  absolute VREGCON.1;
   VREGCON_VREGPM0     : bit  absolute VREGCON.0;
-  BORCON              : byte absolute $003f;
+  BORCON              : byte absolute $003F;
   BORCON_SBOREN       : bit  absolute BORCON.7;
   BORCON_BORFS        : bit  absolute BORCON.6;
   BORCON_BORRDY       : bit  absolute BORCON.5;
@@ -353,47 +353,47 @@ var
   {$SET_STATE_RAM '040-07F:GPR'} 
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:0F'} // PORTA
-  {$SET_UNIMP_BITS '006:07'} // TRISA
-  {$SET_UNIMP_BITS '007:07'} // LATA
-  {$SET_UNIMP_BITS '008:07'} // ANSELA
-  {$SET_UNIMP_BITS '009:0F'} // WPUA
-  {$SET_UNIMP_BITS '00A:01'} // PCLATH
-  {$SET_UNIMP_BITS '00C:5A'} // PIR1
-  {$SET_UNIMP_BITS '00D:5A'} // PIE1
-  {$SET_UNIMP_BITS '00F:03'} // PCON
-  {$SET_UNIMP_BITS '010:7B'} // OSCCON
-  {$SET_UNIMP_BITS '013:7F'} // T2CON
-  {$SET_UNIMP_BITS '014:C0'} // PWM1DCL
-  {$SET_UNIMP_BITS '016:F0'} // PWM1CON
-  {$SET_UNIMP_BITS '017:C0'} // PWM2DCL
-  {$SET_UNIMP_BITS '019:F0'} // PWM2CON
-  {$SET_UNIMP_BITS '01A:0F'} // IOCAP
-  {$SET_UNIMP_BITS '01B:0F'} // IOCAN
-  {$SET_UNIMP_BITS '01C:0F'} // IOCAF
-  {$SET_UNIMP_BITS '01D:F3'} // FVRCON
-  {$SET_UNIMP_BITS '021:01'} // PMADRH
-  {$SET_UNIMP_BITS '023:3F'} // PMDATH
-  {$SET_UNIMP_BITS '024:7F'} // PMCON1
-  {$SET_UNIMP_BITS '026:40'} // CLKRCON
-  {$SET_UNIMP_BITS '029:0F'} // NCO1ACCU
-  {$SET_UNIMP_BITS '02C:00'} // NCO1INCU
-  {$SET_UNIMP_BITS '02D:F1'} // NCO1CON
-  {$SET_UNIMP_BITS '02E:E3'} // NCO1CLK
-  {$SET_UNIMP_BITS '030:3F'} // WDTCON
-  {$SET_UNIMP_BITS '032:77'} // CLC1SEL0
-  {$SET_UNIMP_BITS '033:77'} // CLC1SEL1
-  {$SET_UNIMP_BITS '034:8F'} // CLC1POL
-  {$SET_UNIMP_BITS '039:F9'} // CWG1CON0
-  {$SET_UNIMP_BITS '03A:F3'} // CWG1CON1
-  {$SET_UNIMP_BITS '03B:C3'} // CWG1CON2
-  {$SET_UNIMP_BITS '03C:3F'} // CWG1DBR
-  {$SET_UNIMP_BITS '03D:3F'} // CWG1DBF
-  {$SET_UNIMP_BITS '03E:03'} // VREGCON
-  {$SET_UNIMP_BITS '03F:C1'} // BORCON
+  {$SET_UNIMP_BITS '005:0F'} // PORTA bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:0F'} // TRISA bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '007:07'} // LATA bits 7,6,5,4,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '008:07'} // ANSELA bits 7,6,5,4,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '009:0F'} // WPUA bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00A:01'} // PCLATH bits 7,6,5,4,3,2,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00C:5A'} // PIR1 bits 7,5,2,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00D:5A'} // PIE1 bits 7,5,2,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00F:03'} // PCON bits 7,6,5,4,3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '010:7B'} // OSCCON bits 7,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '013:7F'} // T2CON bit 7 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '014:C0'} // PWM1DCL bits 5,4,3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '016:F0'} // PWM1CON bits 3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '017:C0'} // PWM2DCL bits 5,4,3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '019:F0'} // PWM2CON bits 3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '01A:0F'} // IOCAP bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '01B:0F'} // IOCAN bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '01C:0F'} // IOCAF bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '01D:F3'} // FVRCON bits 3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '021:01'} // PMADRH bits 7,6,5,4,3,2,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '023:3F'} // PMDATH bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '026:40'} // CLKRCON bits 7,5,4,3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '029:0F'} // NCO1ACCU bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '02C:00'} // NCO1INCU bits 7,6,5,4,3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '02D:F1'} // NCO1CON bits 3,2,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '02E:E3'} // NCO1CLK bits 4,3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '030:3F'} // WDTCON bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '032:77'} // CLC1SEL0 bits 7,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '033:77'} // CLC1SEL1 bits 7,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '034:8F'} // CLC1POL bits 6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '039:F9'} // CWG1CON0 bits 2,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '03A:F3'} // CWG1CON1 bits 3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '03B:C3'} // CWG1CON2 bits 5,4,3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '03C:3F'} // CWG1DBR bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '03D:3F'} // CWG1DBF bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '03E:03'} // VREGCON bits 7,6,5,4,3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '03F:C1'} // BORCON bits 5,4,3,2,1 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '024:80'} // PMCON1 bit 7 un-implemented (read as 1)
 
 
   // -- PIN mapping --

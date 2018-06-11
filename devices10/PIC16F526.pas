@@ -99,36 +99,57 @@ var
   EEADR           : byte absolute $0026;
 
 
-// -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+  // -- Define RAM state values --
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-00C:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
-  {$SET_STATE_RAM '00D-01F:GPR'} 
-  {$SET_STATE_RAM '020-02C:SFR'}  // INDF, EECON, PCL, STATUS, FSR, EEDATA, EEADR, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
-  {$SET_STATE_RAM '02D-03F:GPR'} 
-  {$SET_STATE_RAM '040-04C:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
-  {$SET_STATE_RAM '04D-05F:GPR'} 
-  {$SET_STATE_RAM '060-06C:SFR'}  // INDF, EECON, PCL, STATUS, FSR, EEDATA, EEADR, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
-  {$SET_STATE_RAM '06D-07F:GPR'} 
+  {$SET_STATE_RAM '00D-00F:GPR'} 
+  {$SET_STATE_RAM '010-01F:GPR'} 
+  {$SET_STATE_RAM '020-020:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '021-021:SFR'}  // EECON
+  {$SET_STATE_RAM '022-022:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '025-026:SFR'}  // EEDATA, EEADR
+  {$SET_STATE_RAM '027-027:SFR'}  // mapped to PORTC
+  {$SET_STATE_RAM '02D-02F:GPR'} 
+  {$SET_STATE_RAM '030-03F:GPR'} 
+  {$SET_STATE_RAM '040-040:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '04D-04F:GPR'} 
+  {$SET_STATE_RAM '050-05F:GPR'} 
+  {$SET_STATE_RAM '060-062:SFR'}  // mapped to INDF, EECON, PCL
+  {$SET_STATE_RAM '065-065:SFR'}  // mapped to EEDATA
+  {$SET_STATE_RAM '067-067:SFR'}  // mapped to PORTC
+  {$SET_STATE_RAM '06D-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
 
 
-  // -- Define mirrored registers --
+  // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '020-020:bnk0'} // INDF
-  {$SET_MAPPED_RAM '022-024:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '027-02C:bnk0'} // PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
-  {$SET_MAPPED_RAM '040-04C:bnk0'} // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
-  {$SET_MAPPED_RAM '060-060:bnk0'} // INDF
-  {$SET_MAPPED_RAM '061-061:bnk1'} // EECON
-  {$SET_MAPPED_RAM '062-064:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '065-066:bnk1'} // EEDATA, EEADR
-  {$SET_MAPPED_RAM '067-06C:bnk0'} // PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON
+  {$SET_MAPPED_RAM '020-020:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '022-024:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '027-02C:bnk0'} // maps to PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON (bank 0)
+  {$SET_MAPPED_RAM '02D-02F:bnk1'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '040-04C:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON (bank 0)
+  {$SET_MAPPED_RAM '04D-04F:bnk2'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '060-060:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '061-061:bnk1'} // maps to EECON (bank 1)
+  {$SET_MAPPED_RAM '062-064:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '065-066:bnk1'} // maps to EEDATA, EEADR (bank 1)
+  {$SET_MAPPED_RAM '067-06C:bnk0'} // maps to PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON (bank 0)
+  {$SET_MAPPED_RAM '06D-06F:bnk3'} // maps to area 00D-00F (bank 0)
 
-  {$SET_MAPPED_RAM '02D-02F:bnk0'} // GPR
-  {$SET_MAPPED_RAM '04D-04F:bnk0'} // GPR
-  {$SET_MAPPED_RAM '06D-06F:bnk0'} // GPR
-  // -- Initial values --
 
+  // -- Un-implemented fields --
+
+  {$SET_UNIMP_BITS '004:9F'} // FSR bits 6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '005:FE'} // OSCCAL bit 0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:3F'} // PORTB bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '007:3F'} // PORTC bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00C:EF'} // VRCON bit 4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '021:1F'} // EECON bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '026:3F'} // EEADR bits 7,6 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:80'} // FSR bit 7 un-implemented (read as 1)
 
 
   // -- PIN mapping --
@@ -157,35 +178,35 @@ var
 
   // -- Bits Configuration --
 
-  // CPDF : Code Protection bit - Flash Data Memory
-  {$define _CPDF_OFF          = $00FF}  // Code protection off
-  {$define _CPDF_ON           = $00FE}  // Code protection on
-
-  // IOSCFS : Internal Oscillator Frequency Select
-  {$define _IOSCFS_8MHz       = $00FF}  // 8 MHz INTOSC Speed
-  {$define _IOSCFS_4MHz       = $00FD}  // 4 MHz INTOSC Speed
-
-  // MCLRE : Master Clear Enable bit
-  {$define _MCLRE_ON          = $00FF}  // RB3/MCLR functions as MCLR
-  {$define _MCLRE_OFF         = $00FB}  // RB3/MCLR functions as RB3, MCLR internally tied to Vdd
-
-  // CP : Code Protection bit
-  {$define _CP_OFF            = $00FF}  // Code protection off
-  {$define _CP_ON             = $00F7}  // Code protection on
+  // FOSC : Oscillator
+  {$define _FOSC_LP           = $0FF8}  // LP oscillator and 18 ms DRT
+  {$define _FOSC_XT           = $0FF9}  // XT oscillator and 18 ms DRT
+  {$define _FOSC_HS           = $0FFA}  // HS oscillator and 18 ms DRT
+  {$define _FOSC_EC           = $0FFB}  // EC oscillator with RB4 function on RB4/OSC2/CLKOUT and 1 ms DRT
+  {$define _FOSC_INTRC_RB4    = $0FFC}  // INTRC with RB4 function on RB4/OSC2/CLKOUT and 1 ms DRT
+  {$define _FOSC_INTRC_CLKOUT = $0FFD}  // INTRC with CLKOUT function on RB4/OSC2/CLKOUT and 1 ms DRT
+  {$define _FOSC_ExtRC_RB4    = $0FFE}  // EXTRC with RB4 function on RB4/OSC2/CLKOUT and 1 ms DRT
+  {$define _FOSC_ExtRC_CLKOUT = $0FFF}  // EXTRC with CLKOUT function on RB4/OSC2/CLKOUT and 1 ms DRT
 
   // WDTE : Watchdog Timer Enable bit
-  {$define _WDTE_ON           = $00FF}  // Enabled
-  {$define _WDTE_OFF          = $00EF}  // Disabled
+  {$define _WDTE_ON           = $0FFF}  // Enabled
+  {$define _WDTE_OFF          = $0FF7}  // Disabled
 
-  // FOSC : Oscillator
-  {$define _FOSC_LP           = $001F}  // LP oscillator and 18 ms DRT
-  {$define _FOSC_XT           = $003F}  // XT oscillator and 18 ms DRT
-  {$define _FOSC_HS           = $005F}  // HS oscillator and 18 ms DRT
-  {$define _FOSC_EC           = $007F}  // EC oscillator with RB4 function on RB4/OSC2/CLKOUT and 1 ms DRT
-  {$define _FOSC_INTRC_RB4    = $009F}  // INTRC with RB4 function on RB4/OSC2/CLKOUT and 1 ms DRT
-  {$define _FOSC_INTRC_CLKOUT = $00BF}  // INTRC with CLKOUT function on RB4/OSC2/CLKOUT and 1 ms DRT
-  {$define _FOSC_ExtRC_RB4    = $00DF}  // EXTRC with RB4 function on RB4/OSC2/CLKOUT and 1 ms DRT
-  {$define _FOSC_ExtRC_CLKOUT = $00FF}  // EXTRC with CLKOUT function on RB4/OSC2/CLKOUT and 1 ms DRT
+  // CP : Code Protection bit
+  {$define _CP_OFF            = $0FFF}  // Code protection off
+  {$define _CP_ON             = $0FEF}  // Code protection on
+
+  // MCLRE : Master Clear Enable bit
+  {$define _MCLRE_ON          = $0FFF}  // RB3/MCLR functions as MCLR
+  {$define _MCLRE_OFF         = $0FDF}  // RB3/MCLR functions as RB3, MCLR internally tied to Vdd
+
+  // IOSCFS : Internal Oscillator Frequency Select
+  {$define _IOSCFS_8MHz       = $0FFF}  // 8 MHz INTOSC Speed
+  {$define _IOSCFS_4MHz       = $0FBF}  // 4 MHz INTOSC Speed
+
+  // CPDF : Code Protection bit - Flash Data Memory
+  {$define _CPDF_OFF          = $0FFF}  // Code protection off
+  {$define _CPDF_ON           = $0F7F}  // Code protection on
 
 implementation
 end.

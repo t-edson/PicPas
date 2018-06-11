@@ -50,22 +50,38 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-007:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC
-  {$SET_STATE_RAM '008-01F:GPR'} 
-  {$SET_STATE_RAM '020-03F:GPR'} 
-  {$SET_STATE_RAM '040-05F:GPR'} 
-  {$SET_STATE_RAM '060-07F:GPR'} 
+  {$SET_STATE_RAM '008-00F:GPR'} 
+  {$SET_STATE_RAM '010-01F:GPR'} 
+  {$SET_STATE_RAM '020-027:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC
+  {$SET_STATE_RAM '028-02F:GPR'} 
+  {$SET_STATE_RAM '030-03F:GPR'} 
+  {$SET_STATE_RAM '040-047:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC
+  {$SET_STATE_RAM '048-04F:GPR'} 
+  {$SET_STATE_RAM '050-05F:GPR'} 
+  {$SET_STATE_RAM '060-067:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC
+  {$SET_STATE_RAM '068-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
 
-  {$SET_MAPPED_RAM '020-02F:bnk0'} 
-  {$SET_MAPPED_RAM '040-04F:bnk0'} 
-  {$SET_MAPPED_RAM '060-06F:bnk0'}
 
-  // -- Initial values --
+  // -- Define mapped RAM --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '005:1F'} // PORTA
+  {$SET_MAPPED_RAM '020-027:bnk1'} // maps to area 000-007 (bank 0)
+  {$SET_MAPPED_RAM '028-02F:bnk1'} // maps to area 008-00F (bank 0)
+  {$SET_MAPPED_RAM '040-047:bnk2'} // maps to area 000-007 (bank 0)
+  {$SET_MAPPED_RAM '048-04F:bnk2'} // maps to area 008-00F (bank 0)
+  {$SET_MAPPED_RAM '060-067:bnk3'} // maps to area 000-007 (bank 0)
+  {$SET_MAPPED_RAM '068-06F:bnk3'} // maps to area 008-00F (bank 0)
+
+
+  // -- Un-implemented fields --
+
+  {$SET_UNIMP_BITS '005:1F'} // PORTA bits 7,6,5 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:80'} // FSR bit 7 un-implemented (read as 1)
 
 
   // -- PIN mapping --
@@ -109,19 +125,19 @@ var
 
   // -- Bits Configuration --
 
-  // CP : Code protection bit
-  {$define _CP_OFF  = $000F}  // Code protection off
-  {$define _CP_ON   = $000E}  // Code protection on
+  // OSC : Oscillator selection bits
+  {$define _OSC_RC  = $0FFF}  // RC oscillator
+  {$define _OSC_HS  = $0FFE}  // HS oscillator
+  {$define _OSC_XT  = $0FFD}  // XT oscillator
+  {$define _OSC_LP  = $0FFC}  // LP oscillator
 
   // WDT : Watchdog timer enable bit
-  {$define _WDT_ON  = $000F}  // WDT enabled
-  {$define _WDT_OFF = $000D}  // WDT disabled
+  {$define _WDT_ON  = $0FFF}  // WDT enabled
+  {$define _WDT_OFF = $0FFB}  // WDT disabled
 
-  // OSC : Oscillator selection bits
-  {$define _OSC_RC  = $000F}  // RC oscillator
-  {$define _OSC_HS  = $000B}  // HS oscillator
-  {$define _OSC_XT  = $0007}  // XT oscillator
-  {$define _OSC_LP  = $0003}  // LP oscillator
+  // CP : Code protection bit
+  {$define _CP_OFF  = $0FFF}  // Code protection off
+  {$define _CP_ON   = $0FF7}  // Code protection on
 
 implementation
 end.

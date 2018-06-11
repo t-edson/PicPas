@@ -38,18 +38,19 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, GPIO
   {$SET_STATE_RAM '010-01F:GPR'} 
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '003:DF'} // STATUS
-  {$SET_UNIMP_BITS '006:0F'} // GPIO
-  {$SET_UNIMP_BITS1 '004:E0'} // FSR Bits 7,6,5 always read as 1
+  {$SET_UNIMP_BITS '003:DF'} // STATUS bit 5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:0F'} // GPIO bits 7,6,5,4 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:E0'} // FSR bits 7,6,5 un-implemented (read as 1)
 
 
   // -- PIN mapping --
@@ -71,20 +72,20 @@ var
 
   // -- Bits Configuration --
 
-  // MCLRE : Master Clear Enable
-  {$define _MCLRE_ON  = $001D}  // GP3/MCLR pin function  is MCLR
-  {$define _MCLRE_OFF = $001C}  // GP3/MCLR pin fuction is digital I/O, MCLR internally tied to VDD
-
-  // CP : Code Protect
-  {$define _CP_OFF    = $001E}  // Code protection off
-  {$define _CP_ON     = $001C}  // Code protection on
+  // OSC : Oscillator
+  {$define _OSC_IntRC = $0FFF}  // This is the only option. It is here for backward compatibility
 
   // WDTE : Watchdog Timer
-  {$define _WDTE_ON   = $001C}  // WDT enabled
-  {$define _WDTE_OFF  = $0018}  // WDT disabled
+  {$define _WDTE_ON   = $0FFF}  // WDT enabled
+  {$define _WDTE_OFF  = $0FFB}  // WDT disabled
 
-  // OSC : Oscillator
-  {$define _OSC_IntRC = $001C}  // This is the only option. It is here for backward compatibility
+  // CP : Code Protect
+  {$define _CP_OFF    = $0FFF}  // Code protection off
+  {$define _CP_ON     = $0FF7}  // Code protection on
+
+  // MCLRE : Master Clear Enable
+  {$define _MCLRE_ON  = $0FFF}  // GP3/MCLR pin function  is MCLR
+  {$define _MCLRE_OFF = $0FEF}  // GP3/MCLR pin fuction is digital I/O, MCLR internally tied to VDD
 
 implementation
 end.
