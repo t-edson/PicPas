@@ -44,8 +44,8 @@ var
   PORTC_RC2         : bit  absolute PORTC.2;
   PORTC_RC1         : bit  absolute PORTC.1;
   PORTC_RC0         : bit  absolute PORTC.0;
-  PCLATH            : byte absolute $000a;
-  INTCON            : byte absolute $000b;
+  PCLATH            : byte absolute $000A;
+  INTCON            : byte absolute $000B;
   INTCON_GIE        : bit  absolute INTCON.7;
   INTCON_PEIE       : bit  absolute INTCON.6;
   INTCON_TMR0IE     : bit  absolute INTCON.5;
@@ -54,7 +54,7 @@ var
   INTCON_TMR0IF     : bit  absolute INTCON.2;
   INTCON_INTF       : bit  absolute INTCON.1;
   INTCON_RABIF      : bit  absolute INTCON.0;
-  PIR1              : byte absolute $000c;
+  PIR1              : byte absolute $000C;
   PIR1_TMR1GIF      : bit  absolute PIR1.7;
   PIR1_ADIF         : bit  absolute PIR1.6;
   PIR1_RCIF         : bit  absolute PIR1.5;
@@ -63,8 +63,8 @@ var
   PIR1_CCP1IF       : bit  absolute PIR1.2;
   PIR1_TMR2IF       : bit  absolute PIR1.1;
   PIR1_TMR1IF       : bit  absolute PIR1.0;
-  TMR1L             : byte absolute $000e;
-  TMR1H             : byte absolute $000f;
+  TMR1L             : byte absolute $000E;
+  TMR1H             : byte absolute $000F;
   T1CON             : byte absolute $0010;
   T1CON_TMR1CS1     : bit  absolute T1CON.6;
   T1CON_TMR1CS0     : bit  absolute T1CON.5;
@@ -111,9 +111,9 @@ var
   RCSTA_OERR        : bit  absolute RCSTA.1;
   RCSTA_RX9D        : bit  absolute RCSTA.0;
   TXREG             : byte absolute $0019;
-  RCREG             : byte absolute $001a;
-  ADRES             : byte absolute $001e;
-  ADCON0            : byte absolute $001f;
+  RCREG             : byte absolute $001A;
+  ADRES             : byte absolute $001E;
+  ADCON0            : byte absolute $001F;
   ADCON0_CHS3       : bit  absolute ADCON0.5;
   ADCON0_CHS2       : bit  absolute ADCON0.4;
   ADCON0_CHS1       : bit  absolute ADCON0.3;
@@ -149,7 +149,7 @@ var
   TRISC_TRISC2      : bit  absolute TRISC.2;
   TRISC_TRISC1      : bit  absolute TRISC.1;
   TRISC_TRISC0      : bit  absolute TRISC.0;
-  PIE1              : byte absolute $008c;
+  PIE1              : byte absolute $008C;
   PIE1_TMR1GIE      : bit  absolute PIE1.7;
   PIE1_ADIE         : bit  absolute PIE1.6;
   PIE1_RCIE         : bit  absolute PIE1.5;
@@ -158,10 +158,10 @@ var
   PIE1_CCP1IE       : bit  absolute PIE1.2;
   PIE1_TMR2IE       : bit  absolute PIE1.1;
   PIE1_TMR1IE       : bit  absolute PIE1.0;
-  PCON              : byte absolute $008e;
+  PCON              : byte absolute $008E;
   PCON_POR          : bit  absolute PCON.1;
   PCON_BOR          : bit  absolute PCON.0;
-  T1GCON            : byte absolute $008f;
+  T1GCON            : byte absolute $008F;
   T1GCON_TMR1GE     : bit  absolute T1GCON.7;
   T1GCON_T1GPOL     : bit  absolute T1GCON.6;
   T1GCON_T1GTM      : bit  absolute T1GCON.5;
@@ -223,21 +223,21 @@ var
   TXSTA_TRMT        : bit  absolute TXSTA.2;
   TXSTA_TX9D        : bit  absolute TXSTA.1;
   SPBRG             : byte absolute $0099;
-  FVRCON            : byte absolute $009d;
+  FVRCON            : byte absolute $009D;
   FVRCON_FVRRDY     : bit  absolute FVRCON.7;
   FVRCON_FVREN      : bit  absolute FVRCON.6;
   FVRCON_TSEN       : bit  absolute FVRCON.5;
   FVRCON_TSRNG      : bit  absolute FVRCON.4;
   FVRCON_ADFVR1     : bit  absolute FVRCON.3;
   FVRCON_ADFVR0     : bit  absolute FVRCON.2;
-  ADCON1            : byte absolute $009f;
+  ADCON1            : byte absolute $009F;
   ADCON1_ADCS2      : bit  absolute ADCON1.4;
   ADCON1_ADCS1      : bit  absolute ADCON1.3;
   ADCON1_ADCS0      : bit  absolute ADCON1.2;
-  PMDATL            : byte absolute $010c;
-  PMADRL            : byte absolute $010d;
-  PMDATH            : byte absolute $010e;
-  PMADRH            : byte absolute $010f;
+  PMDATL            : byte absolute $010C;
+  PMADRL            : byte absolute $010D;
+  PMDATH            : byte absolute $010E;
+  PMADRH            : byte absolute $010F;
   WPUB              : byte absolute $0115;
   WPUB_WPUB7        : bit  absolute WPUB.7;
   WPUB_WPUB6        : bit  absolute WPUB.6;
@@ -264,14 +264,14 @@ var
   ANSELC_ANSC2      : bit  absolute ANSELC.4;
   ANSELC_ANSC1      : bit  absolute ANSELC.3;
   ANSELC_ANSC0      : bit  absolute ANSELC.2;
-  PMCON1            : byte absolute $018c;
+  PMCON1            : byte absolute $018C;
   PMCON1_CFGS       : bit  absolute PMCON1.6;
   PMCON1_LWLO       : bit  absolute PMCON1.5;
   PMCON1_FREE       : bit  absolute PMCON1.4;
   PMCON1_WREN       : bit  absolute PMCON1.3;
   PMCON1_WR         : bit  absolute PMCON1.2;
   PMCON1_RD         : bit  absolute PMCON1.1;
-  PMCON2            : byte absolute $018d;
+  PMCON2            : byte absolute $018D;
 
 
   // -- Define RAM state values --
@@ -326,28 +326,36 @@ var
   {$SET_MAPPED_RAM '1F0-1FF:bnk3'} // maps to area 070-07F (bank 0)
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '00A:1F'} // PCLATH
-  {$SET_UNIMP_BITS '010:FD'} // T1CON
-  {$SET_UNIMP_BITS '012:7F'} // T2CON
-  {$SET_UNIMP_BITS '01F:3F'} // ADCON0
-  {$SET_UNIMP_BITS '08E:03'} // PCON
-  {$SET_UNIMP_BITS '090:3C'} // OSCCON
-  {$SET_UNIMP_BITS '091:3F'} // OSCTUNE
-  {$SET_UNIMP_BITS '098:F7'} // TXSTA
-  {$SET_UNIMP_BITS '09D:F3'} // FVRCON
-  {$SET_UNIMP_BITS '09F:70'} // ADCON1
-  {$SET_UNIMP_BITS '10E:3F'} // PMDATH
-  {$SET_UNIMP_BITS '10F:07'} // PMADRH
-  {$SET_UNIMP_BITS '115:F0'} // WPUB
-  {$SET_UNIMP_BITS '116:F0'} // IOCB
-  {$SET_UNIMP_BITS '185:3F'} // ANSELA
-  {$SET_UNIMP_BITS '186:3F'} // ANSELB
-  {$SET_UNIMP_BITS '187:00'} // ANSELC
-  {$SET_UNIMP_BITS '18C:01'} // PMCON1
-  {$SET_UNIMP_BITS '18D:00'} // PMCON2
+  {$SET_UNIMP_BITS '005:3F'} // PORTA bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:F0'} // PORTB bits 3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00A:1F'} // PCLATH bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '010:F5'} // T1CON bits 3,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '012:7F'} // T2CON bit 7 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '017:3F'} // CCP1CON bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '01F:3F'} // ADCON0 bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '085:37'} // TRISA bits 7,6,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '086:F0'} // TRISB bits 3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '08E:03'} // PCON bits 7,6,5,4,3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '090:3C'} // OSCCON bits 7,6,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '091:3F'} // OSCTUNE bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '095:3F'} // WPUA bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '096:3F'} // IOCA bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '098:F7'} // TXSTA bit 3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '09D:F3'} // FVRCON bits 3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '09F:70'} // ADCON1 bits 7,3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '10E:3F'} // PMDATH bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '10F:1F'} // PMADRH bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '115:F0'} // WPUB bits 3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '116:F0'} // IOCB bits 3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '185:37'} // ANSELA bits 7,6,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '186:30'} // ANSELB bits 7,6,3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '187:CF'} // ANSELC bits 5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '18C:F7'} // PMCON1 bit 3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '18D:00'} // PMCON2 bits 7,6,5,4,3,2,1,0 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '18C:80'} // PMCON1 bit 7 un-implemented (read as 1)
 
 
   // -- PIN mapping --

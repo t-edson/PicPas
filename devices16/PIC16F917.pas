@@ -64,8 +64,8 @@ var
   PORTE_RE2         : bit  absolute PORTE.2;
   PORTE_RE1         : bit  absolute PORTE.1;
   PORTE_RE0         : bit  absolute PORTE.0;
-  PCLATH            : byte absolute $000a;
-  INTCON            : byte absolute $000b;
+  PCLATH            : byte absolute $000A;
+  INTCON            : byte absolute $000B;
   INTCON_GIE        : bit  absolute INTCON.7;
   INTCON_PEIE       : bit  absolute INTCON.6;
   INTCON_TMR0IE     : bit  absolute INTCON.5;
@@ -74,7 +74,7 @@ var
   INTCON_TMR0IF     : bit  absolute INTCON.2;
   INTCON_INTF       : bit  absolute INTCON.1;
   INTCON_RBIF       : bit  absolute INTCON.0;
-  PIR1              : byte absolute $000c;
+  PIR1              : byte absolute $000C;
   PIR1_EEIF         : bit  absolute PIR1.7;
   PIR1_ADIF         : bit  absolute PIR1.6;
   PIR1_RCIF         : bit  absolute PIR1.5;
@@ -83,15 +83,15 @@ var
   PIR1_CCP1IF       : bit  absolute PIR1.2;
   PIR1_TMR2IF       : bit  absolute PIR1.1;
   PIR1_TMR1IF       : bit  absolute PIR1.0;
-  PIR2              : byte absolute $000d;
+  PIR2              : byte absolute $000D;
   PIR2_OSFIF        : bit  absolute PIR2.6;
   PIR2_C2IF         : bit  absolute PIR2.5;
   PIR2_C1IF         : bit  absolute PIR2.4;
   PIR2_LCDIF        : bit  absolute PIR2.3;
   PIR2_LVDIF        : bit  absolute PIR2.2;
   PIR2_CCP2IF       : bit  absolute PIR2.1;
-  TMR1L             : byte absolute $000e;
-  TMR1H             : byte absolute $000f;
+  TMR1L             : byte absolute $000E;
+  TMR1H             : byte absolute $000F;
   T1CON             : byte absolute $0010;
   T1CON_T1GINV      : bit  absolute T1CON.7;
   T1CON_TMR1GE      : bit  absolute T1CON.6;
@@ -138,18 +138,18 @@ var
   RCSTA_OERR        : bit  absolute RCSTA.1;
   RCSTA_RX9D        : bit  absolute RCSTA.0;
   TXREG             : byte absolute $0019;
-  RCREG             : byte absolute $001a;
-  CCPR2L            : byte absolute $001b;
-  CCPR2H            : byte absolute $001c;
-  CCP2CON           : byte absolute $001d;
+  RCREG             : byte absolute $001A;
+  CCPR2L            : byte absolute $001B;
+  CCPR2H            : byte absolute $001C;
+  CCP2CON           : byte absolute $001D;
   CCP2CON_CCP2X     : bit  absolute CCP2CON.5;
   CCP2CON_CCP2Y     : bit  absolute CCP2CON.4;
   CCP2CON_CCP2M3    : bit  absolute CCP2CON.3;
   CCP2CON_CCP2M2    : bit  absolute CCP2CON.2;
   CCP2CON_CCP2M1    : bit  absolute CCP2CON.1;
   CCP2CON_CCP2M0    : bit  absolute CCP2CON.0;
-  ADRESH            : byte absolute $001e;
-  ADCON0            : byte absolute $001f;
+  ADRESH            : byte absolute $001E;
+  ADCON0            : byte absolute $001F;
   ADCON0_ADFM       : bit  absolute ADCON0.7;
   ADCON0_VCFG1      : bit  absolute ADCON0.6;
   ADCON0_VCFG0      : bit  absolute ADCON0.5;
@@ -208,7 +208,7 @@ var
   TRISE_TRISE2      : bit  absolute TRISE.2;
   TRISE_TRISE1      : bit  absolute TRISE.1;
   TRISE_TRISE0      : bit  absolute TRISE.0;
-  PIE1              : byte absolute $008c;
+  PIE1              : byte absolute $008C;
   PIE1_EEIE         : bit  absolute PIE1.7;
   PIE1_ADIE         : bit  absolute PIE1.6;
   PIE1_RCIE         : bit  absolute PIE1.5;
@@ -217,18 +217,18 @@ var
   PIE1_CCP1IE       : bit  absolute PIE1.2;
   PIE1_TMR2IE       : bit  absolute PIE1.1;
   PIE1_TMR1IE       : bit  absolute PIE1.0;
-  PIE2              : byte absolute $008d;
+  PIE2              : byte absolute $008D;
   PIE2_OSFIE        : bit  absolute PIE2.6;
   PIE2_C2IE         : bit  absolute PIE2.5;
   PIE2_C1IE         : bit  absolute PIE2.4;
   PIE2_LCDIE        : bit  absolute PIE2.3;
   PIE2_LVDIE        : bit  absolute PIE2.2;
   PIE2_CCP2IE       : bit  absolute PIE2.1;
-  PCON              : byte absolute $008e;
+  PCON              : byte absolute $008E;
   PCON_SBOREN       : bit  absolute PCON.4;
   PCON_POR          : bit  absolute PCON.3;
   PCON_BOR          : bit  absolute PCON.2;
-  OSCCON            : byte absolute $008f;
+  OSCCON            : byte absolute $008F;
   OSCCON_IRCF2      : bit  absolute OSCCON.6;
   OSCCON_IRCF1      : bit  absolute OSCCON.5;
   OSCCON_IRCF0      : bit  absolute OSCCON.4;
@@ -288,7 +288,7 @@ var
   TXSTA_TRMT        : bit  absolute TXSTA.2;
   TXSTA_TX9D        : bit  absolute TXSTA.1;
   SPBRG             : byte absolute $0099;
-  CMCON0            : byte absolute $009c;
+  CMCON0            : byte absolute $009C;
   CMCON0_C2OUT      : bit  absolute CMCON0.7;
   CMCON0_C1OUT      : bit  absolute CMCON0.6;
   CMCON0_C2INV      : bit  absolute CMCON0.5;
@@ -297,15 +297,15 @@ var
   CMCON0_CM2        : bit  absolute CMCON0.2;
   CMCON0_CM1        : bit  absolute CMCON0.1;
   CMCON0_CM0        : bit  absolute CMCON0.0;
-  VRCON             : byte absolute $009d;
+  VRCON             : byte absolute $009D;
   VRCON_VREN        : bit  absolute VRCON.6;
   VRCON_VRR         : bit  absolute VRCON.5;
   VRCON_VR3         : bit  absolute VRCON.3;
   VRCON_VR2         : bit  absolute VRCON.2;
   VRCON_VR1         : bit  absolute VRCON.1;
   VRCON_VR0         : bit  absolute VRCON.0;
-  ADRESL            : byte absolute $009e;
-  ADCON1            : byte absolute $009f;
+  ADRESL            : byte absolute $009E;
+  ADCON1            : byte absolute $009F;
   ADCON1_ADCS2      : bit  absolute ADCON1.6;
   ADCON1_ADCS1      : bit  absolute ADCON1.5;
   ADCON1_ADCS0      : bit  absolute ADCON1.4;
@@ -339,7 +339,7 @@ var
   LVDCON_LVDL2      : bit  absolute LVDCON.2;
   LVDCON_LVDL1      : bit  absolute LVDCON.1;
   LVDCON_LVDL0      : bit  absolute LVDCON.0;
-  EEDATL            : byte absolute $010c;
+  EEDATL            : byte absolute $010C;
   EEDATL_EEDATL7    : bit  absolute EEDATL.7;
   EEDATL_EEDATL6    : bit  absolute EEDATL.6;
   EEDATL_EEDATL5    : bit  absolute EEDATL.5;
@@ -348,7 +348,7 @@ var
   EEDATL_EEDATL2    : bit  absolute EEDATL.2;
   EEDATL_EEDATL1    : bit  absolute EEDATL.1;
   EEDATL_EEDATL0    : bit  absolute EEDATL.0;
-  EEADRL            : byte absolute $010d;
+  EEADRL            : byte absolute $010D;
   EEADRL_EEADRL7    : bit  absolute EEADRL.7;
   EEADRL_EEADRL6    : bit  absolute EEADRL.6;
   EEADRL_EEADRL5    : bit  absolute EEADRL.5;
@@ -357,14 +357,14 @@ var
   EEADRL_EEADRL2    : bit  absolute EEADRL.2;
   EEADRL_EEADRL1    : bit  absolute EEADRL.1;
   EEADRL_EEADRL0    : bit  absolute EEADRL.0;
-  EEDATH            : byte absolute $010e;
+  EEDATH            : byte absolute $010E;
   EEDATH_EEDATH5    : bit  absolute EEDATH.5;
   EEDATH_EEDATH4    : bit  absolute EEDATH.4;
   EEDATH_EEDATH3    : bit  absolute EEDATH.3;
   EEDATH_EEDATH2    : bit  absolute EEDATH.2;
   EEDATH_EEDATH1    : bit  absolute EEDATH.1;
   EEDATH_EEDATH0    : bit  absolute EEDATH.0;
-  EEADRH            : byte absolute $010f;
+  EEADRH            : byte absolute $010F;
   EEADRH_EEADRH4    : bit  absolute EEADRH.4;
   EEADRH_EEADRH3    : bit  absolute EEADRH.3;
   EEADRH_EEADRH2    : bit  absolute EEADRH.2;
@@ -404,18 +404,18 @@ var
   LCDDATA7          : byte absolute $0117;
   LCDDATA8          : byte absolute $0118;
   LCDDATA9          : byte absolute $0119;
-  LCDDATA10         : byte absolute $011a;
-  LCDDATA11         : byte absolute $011b;
-  LCDSE0            : byte absolute $011c;
-  LCDSE1            : byte absolute $011d;
-  LCDSE2            : byte absolute $011e;
-  EECON1            : byte absolute $018c;
+  LCDDATA10         : byte absolute $011A;
+  LCDDATA11         : byte absolute $011B;
+  LCDSE0            : byte absolute $011C;
+  LCDSE1            : byte absolute $011D;
+  LCDSE2            : byte absolute $011E;
+  EECON1            : byte absolute $018C;
   EECON1_EEPGD      : bit  absolute EECON1.7;
   EECON1_WRERR      : bit  absolute EECON1.6;
   EECON1_WREN       : bit  absolute EECON1.5;
   EECON1_WR         : bit  absolute EECON1.4;
   EECON1_RD         : bit  absolute EECON1.3;
-  EECON2            : byte absolute $018d;
+  EECON2            : byte absolute $018D;
 
 
   // -- Define RAM state values --
@@ -470,30 +470,29 @@ var
   {$SET_MAPPED_RAM '1F0-1FF:bnk3'} // maps to area 070-07F (bank 0)
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '009:0F'} // PORTE
-  {$SET_UNIMP_BITS '00A:1F'} // PCLATH
-  {$SET_UNIMP_BITS '00D:F5'} // PIR2
-  {$SET_UNIMP_BITS '012:7F'} // T2CON
-  {$SET_UNIMP_BITS '017:3F'} // CCP1CON
-  {$SET_UNIMP_BITS '01D:3F'} // CCP2CON
-  {$SET_UNIMP_BITS '089:0F'} // TRISE
-  {$SET_UNIMP_BITS '08D:F5'} // PIE2
-  {$SET_UNIMP_BITS '08E:13'} // PCON
-  {$SET_UNIMP_BITS '08F:7F'} // OSCCON
-  {$SET_UNIMP_BITS '090:1F'} // OSCTUNE
-  {$SET_UNIMP_BITS '096:F0'} // IOCB
-  {$SET_UNIMP_BITS '097:03'} // CMCON1
-  {$SET_UNIMP_BITS '098:F7'} // TXSTA
-  {$SET_UNIMP_BITS '09D:AF'} // VRCON
-  {$SET_UNIMP_BITS '09F:70'} // ADCON1
-  {$SET_UNIMP_BITS '105:1F'} // WDTCON
-  {$SET_UNIMP_BITS '109:37'} // LVDCON
-  {$SET_UNIMP_BITS '10E:3F'} // EEDATH
-  {$SET_UNIMP_BITS '10F:1F'} // EEADRH
-  {$SET_UNIMP_BITS '18C:8F'} // EECON1
+  {$SET_UNIMP_BITS '009:0F'} // PORTE bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00A:1F'} // PCLATH bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00D:F5'} // PIR2 bits 3,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '012:7F'} // T2CON bit 7 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '017:3F'} // CCP1CON bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '01D:3F'} // CCP2CON bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '089:0F'} // TRISE bits 7,6,5,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '08D:F5'} // PIE2 bits 3,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '08E:13'} // PCON bits 7,6,5,3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '08F:7F'} // OSCCON bit 7 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '090:1F'} // OSCTUNE bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '096:F0'} // IOCB bits 3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '097:03'} // CMCON1 bits 7,6,5,4,3,2 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '098:F7'} // TXSTA bit 3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '09D:AF'} // VRCON bits 6,4 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '09F:70'} // ADCON1 bits 7,3,2,1,0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '105:1F'} // WDTCON bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '109:37'} // LVDCON bits 7,6,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '10E:3F'} // EEDATH bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '10F:1F'} // EEADRH bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '18C:8F'} // EECON1 bits 6,5,4 un-implemented (read as 0)
 
 
   // -- PIN mapping --
