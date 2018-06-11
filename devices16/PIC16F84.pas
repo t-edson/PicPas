@@ -2,7 +2,7 @@ unit PIC16F84;
 
 // Define hardware
 {$SET PIC_MODEL    = 'PIC16F84'}
-{$SET PIC_MAXFREQ  = 4000000}
+{$SET PIC_MAXFREQ  = 10000000}
 {$SET PIC_NPINS    = 18}
 {$SET PIC_NUMBANKS = 2}
 {$SET PIC_NUMPAGES = 1}
@@ -104,7 +104,7 @@ var
   {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '08C-0CF:bnk1'} // maps to area 00C-04F (bank 0)
+  {$SET_MAPPED_RAM '08C-0CF:bnk0'} // maps to area 00C-04F (bank 0)
 
 
   // -- Un-implemented fields --

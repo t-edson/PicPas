@@ -249,13 +249,13 @@ var
   {$SET_MAPPED_RAM '102-104:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '106-106:bnk0'} // maps to PORTB (bank 0)
   {$SET_MAPPED_RAM '10A-10B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '120-17F:bnk2'} // maps to area 020-07F (bank 0)
+  {$SET_MAPPED_RAM '120-17F:bnk0'} // maps to area 020-07F (bank 0)
   {$SET_MAPPED_RAM '180-180:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '181-181:bnk1'} // maps to OPTION_REG (bank 1)
   {$SET_MAPPED_RAM '182-184:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '186-186:bnk1'} // maps to TRISB (bank 1)
   {$SET_MAPPED_RAM '18A-18B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '1A0-1FF:bnk3'} // maps to area 0A0-0FF (bank 1)
+  {$SET_MAPPED_RAM '1A0-1FF:bnk1'} // maps to area 0A0-0FF (bank 1)
 
 
   // -- Un-implemented fields --

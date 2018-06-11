@@ -95,20 +95,20 @@ var
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '020-029:bnk1'} // maps to area 000-009 (bank 0)
-  {$SET_MAPPED_RAM '02A-02F:bnk1'} // maps to area 00A-00F (bank 0)
-  {$SET_MAPPED_RAM '040-049:bnk2'} // maps to area 000-009 (bank 0)
-  {$SET_MAPPED_RAM '04A-04F:bnk2'} // maps to area 00A-00F (bank 0)
-  {$SET_MAPPED_RAM '060-069:bnk3'} // maps to area 000-009 (bank 0)
-  {$SET_MAPPED_RAM '06A-06F:bnk3'} // maps to area 00A-00F (bank 0)
-  {$SET_MAPPED_RAM '080-089:bnk4'} // maps to area 000-009 (bank 0)
-  {$SET_MAPPED_RAM '08A-08F:bnk4'} // maps to area 00A-00F (bank 0)
-  {$SET_MAPPED_RAM '0A0-0A9:bnk5'} // maps to area 000-009 (bank 0)
-  {$SET_MAPPED_RAM '0AA-0AF:bnk5'} // maps to area 00A-00F (bank 0)
-  {$SET_MAPPED_RAM '0C0-0C9:bnk6'} // maps to area 000-009 (bank 0)
-  {$SET_MAPPED_RAM '0CA-0CF:bnk6'} // maps to area 00A-00F (bank 0)
-  {$SET_MAPPED_RAM '0E0-0E9:bnk7'} // maps to area 000-009 (bank 0)
-  {$SET_MAPPED_RAM '0EA-0EF:bnk7'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '020-029:bnk0'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '02A-02F:bnk0'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '040-049:bnk0'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '04A-04F:bnk0'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '060-069:bnk0'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '06A-06F:bnk0'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '080-089:bnk0'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '08A-08F:bnk0'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '0A0-0A9:bnk0'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '0AA-0AF:bnk0'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '0C0-0C9:bnk0'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '0CA-0CF:bnk0'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '0E0-0E9:bnk0'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '0EA-0EF:bnk0'} // maps to area 00A-00F (bank 0)
 
 
   // -- Un-implemented fields --

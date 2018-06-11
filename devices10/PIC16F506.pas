@@ -103,12 +103,12 @@ var
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '020-02C:bnk1'} // maps to area 000-00C (bank 0)
-  {$SET_MAPPED_RAM '02D-02F:bnk1'} // maps to area 00D-00F (bank 0)
-  {$SET_MAPPED_RAM '040-04C:bnk2'} // maps to area 000-00C (bank 0)
-  {$SET_MAPPED_RAM '04D-04F:bnk2'} // maps to area 00D-00F (bank 0)
-  {$SET_MAPPED_RAM '060-06C:bnk3'} // maps to area 000-00C (bank 0)
-  {$SET_MAPPED_RAM '06D-06F:bnk3'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '020-02C:bnk0'} // maps to area 000-00C (bank 0)
+  {$SET_MAPPED_RAM '02D-02F:bnk0'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '040-04C:bnk0'} // maps to area 000-00C (bank 0)
+  {$SET_MAPPED_RAM '04D-04F:bnk0'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '060-06C:bnk0'} // maps to area 000-00C (bank 0)
+  {$SET_MAPPED_RAM '06D-06F:bnk0'} // maps to area 00D-00F (bank 0)
 
 
   // -- Un-implemented fields --
