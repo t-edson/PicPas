@@ -1,12 +1,12 @@
-unit PIC16F527;
+unit PIC16F570;
 
 // Define hardware
-{$SET PIC_MODEL    = 'PIC16F527'}
+{$SET PIC_MODEL    = 'PIC16F570'}
 {$SET PIC_MAXFREQ  = 20000000}
-{$SET PIC_NPINS    = 20}
-{$SET PIC_NUMBANKS = 4}
-{$SET PIC_NUMPAGES = 2}
-{$SET PIC_MAXFLASH = 1024}
+{$SET PIC_NPINS    = 28}
+{$SET PIC_NUMBANKS = 8}
+{$SET PIC_NUMPAGES = 4}
+{$SET PIC_MAXFLASH = 2048}
 
 interface
 var
@@ -14,13 +14,14 @@ var
   TMR0            : byte absolute $0001;
   PCL             : byte absolute $0002;
   STATUS          : byte absolute $0003;
-  STATUS_PA1      : bit  absolute STATUS.7;
-  STATUS_PA0      : bit  absolute STATUS.6;
-  STATUS_TO       : bit  absolute STATUS.5;
-  STATUS_PD       : bit  absolute STATUS.4;
-  STATUS_Z        : bit  absolute STATUS.3;
-  STATUS_DC       : bit  absolute STATUS.2;
-  STATUS_C        : bit  absolute STATUS.1;
+  STATUS_PA2      : bit  absolute STATUS.7;
+  STATUS_PA1      : bit  absolute STATUS.6;
+  STATUS_PA0      : bit  absolute STATUS.5;
+  STATUS_TO       : bit  absolute STATUS.4;
+  STATUS_PD       : bit  absolute STATUS.3;
+  STATUS_Z        : bit  absolute STATUS.2;
+  STATUS_DC       : bit  absolute STATUS.1;
+  STATUS_C        : bit  absolute STATUS.0;
   FSR             : byte absolute $0004;
   OSCCAL          : byte absolute $0005;
   OSCCAL_CAL6     : bit  absolute OSCCAL.7;
@@ -31,6 +32,8 @@ var
   OSCCAL_CAL1     : bit  absolute OSCCAL.2;
   OSCCAL_CAL0     : bit  absolute OSCCAL.1;
   PORTA           : byte absolute $0006;
+  PORTA_RA7       : bit  absolute PORTA.7;
+  PORTA_RA6       : bit  absolute PORTA.6;
   PORTA_RA5       : bit  absolute PORTA.5;
   PORTA_RA4       : bit  absolute PORTA.4;
   PORTA_RA3       : bit  absolute PORTA.3;
@@ -38,10 +41,14 @@ var
   PORTA_RA1       : bit  absolute PORTA.1;
   PORTA_RA0       : bit  absolute PORTA.0;
   PORTB           : byte absolute $0007;
-  PORTB_RB7       : bit  absolute PORTB.4;
-  PORTB_RB6       : bit  absolute PORTB.3;
-  PORTB_RB5       : bit  absolute PORTB.2;
-  PORTB_RB4       : bit  absolute PORTB.1;
+  PORTB_RB7       : bit  absolute PORTB.7;
+  PORTB_RB6       : bit  absolute PORTB.6;
+  PORTB_RB5       : bit  absolute PORTB.5;
+  PORTB_RB4       : bit  absolute PORTB.4;
+  PORTB_RB3       : bit  absolute PORTB.3;
+  PORTB_RB2       : bit  absolute PORTB.2;
+  PORTB_RB1       : bit  absolute PORTB.1;
+  PORTB_RB0       : bit  absolute PORTB.0;
   PORTC           : byte absolute $0008;
   PORTC_RC7       : bit  absolute PORTC.7;
   PORTC_RC6       : bit  absolute PORTC.6;
@@ -73,7 +80,7 @@ var
   INTCON0_ADIF    : bit  absolute INTCON0.7;
   INTCON0_CWIF    : bit  absolute INTCON0.6;
   INTCON0_T0IF    : bit  absolute INTCON0.5;
-  INTCON0_RAIF    : bit  absolute INTCON0.4;
+  INTCON0_RBIF    : bit  absolute INTCON0.4;
   INTCON0_GIE     : bit  absolute INTCON0.3;
   EECON           : byte absolute $0021;
   EECON_FREE      : bit  absolute EECON.4;
@@ -103,8 +110,9 @@ var
   CM2CON0_C2WU    : bit  absolute CM2CON0.0;
   VRCON           : byte absolute $0029;
   VRCON_VREN      : bit  absolute VRCON.7;
-  VRCON_VROE      : bit  absolute VRCON.6;
-  VRCON_VRR       : bit  absolute VRCON.5;
+  VRCON_VROE1     : bit  absolute VRCON.6;
+  VRCON_VROE2     : bit  absolute VRCON.5;
+  VRCON_VRR       : bit  absolute VRCON.4;
   VRCON_VR3       : bit  absolute VRCON.3;
   VRCON_VR2       : bit  absolute VRCON.2;
   VRCON_VR1       : bit  absolute VRCON.1;
@@ -123,7 +131,7 @@ var
   INTCON1_ADIE    : bit  absolute INTCON1.7;
   INTCON1_CWIE    : bit  absolute INTCON1.6;
   INTCON1_T0IE    : bit  absolute INTCON1.5;
-  INTCON1_RAIE    : bit  absolute INTCON1.4;
+  INTCON1_RBIE    : bit  absolute INTCON1.4;
   INTCON1_WUR     : bit  absolute INTCON1.3;
   ISTATUS         : byte absolute $0066;
   IFSR            : byte absolute $0067;
@@ -154,114 +162,22 @@ var
   {$SET_STATE_RAM '061-061:SFR'}  // IW
   {$SET_STATE_RAM '062-062:SFR'}  // mapped to PCL
   {$SET_STATE_RAM '065-069:SFR'}  // INTCON1, ISTATUS, IFSR, IBSR, OPACON
-  {$SET_STATE_RAM '06A-06B:SFR'}  // mapped to ANSEL, INTCON0
+  {$SET_STATE_RAM '06A-06A:SFR'}  // mapped to ANSEL
   {$SET_STATE_RAM '06C-06F:GPR'} 
   {$SET_STATE_RAM '070-07F:GPR'} 
+  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '08C-08F:GPR'} 
+  {$SET_STATE_RAM '090-09F:GPR'} 
+  {$SET_STATE_RAM '0A0-0A0:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '0AC-0AF:GPR'} 
+  {$SET_STATE_RAM '0B0-0BF:GPR'} 
+  {$SET_STATE_RAM '0C0-0C0:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '0CC-0CF:GPR'} 
+  {$SET_STATE_RAM '0D0-0DF:GPR'} 
+  {$SET_STATE_RAM '0E0-0E0:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '0EC-0EF:GPR'} 
+  {$SET_STATE_RAM '0F0-0FF:GPR'} 
 
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '020-020:bnk0'} // maps to INDF (bank 0)
-  {$SET_MAPPED_RAM '022-024:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
-  {$SET_MAPPED_RAM '02B-02B:bnk0'} // maps to INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '02C-02F:bnk1'} // maps to area 00C-00F (bank 0)
-  {$SET_MAPPED_RAM '040-04B:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '04C-04F:bnk2'} // maps to area 00C-00F (bank 0)
-  {$SET_MAPPED_RAM '060-060:bnk0'} // maps to INDF (bank 0)
-  {$SET_MAPPED_RAM '062-064:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
-  {$SET_MAPPED_RAM '06A-06A:bnk1'} // maps to ANSEL (bank 1)
-  {$SET_MAPPED_RAM '06B-06B:bnk0'} // maps to INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '06C-06F:bnk3'} // maps to area 00C-00F (bank 0)
-
-
-  // -- Un-implemented fields --
-
-  {$SET_UNIMP_BITS '003:7F'} // STATUS bit 7 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '004:7F'} // FSR bit 7 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '005:FE'} // OSCCAL bit 0 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '006:3F'} // PORTA bits 7,6 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '007:F0'} // PORTB bits 3,2,1,0 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '00B:F1'} // INTCON0 bits 3,2,1 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '021:1F'} // EECON bits 7,6,5 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '026:3F'} // EEADR bits 7,6 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '029:EF'} // VRCON bit 4 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '065:F1'} // INTCON1 bits 3,2,1 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '066:7F'} // ISTATUS bit 7 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '067:7F'} // IFSR bit 7 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '068:03'} // IBSR bits 7,6,5,4,3,2 un-implemented (read as 0)
-  {$SET_UNIMP_BITS '069:03'} // OPACON bits 7,6,5,4,3,2 un-implemented (read as 0)
-
-
-  // -- PIN mapping --
-
-  // Pin  1 : VDD
-  // Pin  2 : RA5/OSC1/CLKIN
-  // Pin  3 : RA4/AN3/OSC2/CLKOUT
-  // Pin  4 : VPP/MCLR/RA3
-  // Pin  5 : RC5
-  // Pin  6 : RC4/C2OUT
-  // Pin  7 : RC3/AN7/OP1
-  // Pin  8 : RC6/OP1-
-  // Pin  9 : RC7/OP1+
-  // Pin 10 : RB7
-  // Pin 11 : RB6
-  // Pin 12 : RB5/OP2+
-  // Pin 13 : RB4/OP2-
-  // Pin 14 : RC2/AN6/OP2
-  // Pin 15 : RC1/AN5/C2IN-
-  // Pin 16 : RC0/AN4/C2IN+
-  // Pin 17 : RA2/AN2/C1OUT/T0CKI
-  // Pin 18 : RA1/AN1/C1IN-/CVREF/ICSPCLK
-  // Pin 19 : RA0/AN0/C1IN+/ICSPDAT
-  // Pin 20 : VSS
-
-
-  // -- RAM to PIN mapping --
-
-  {$MAP_RAM_TO_PIN '006:0-19,1-18,2-17,3-4,4-3,5-2'} // PORTA
-  {$MAP_RAM_TO_PIN '007:1-13,2-12,3-11,4-10'} // PORTB
-  {$MAP_RAM_TO_PIN '008:0-16,1-15,2-14,3-7,4-6,5-5,6-8,7-9'} // PORTC
-
-
-  // -- Bits Configuration --
-
-  // FOSC : Oscillator Selection
-  {$define _FOSC_LP           = $0FF8}  // LP oscillator and automatic 18 ms DRT (DRTEN ignored)
-  {$define _FOSC_XT           = $0FF9}  // XT oscillator and automatic 18 ms DRT (DRTEN ignored)
-  {$define _FOSC_HS           = $0FFA}  // HS oscillator and automatic 18 ms DRT (DRTEN ignored)
-  {$define _FOSC_EC           = $0FFB}  // EC oscillator with I/O function on OSC2/CLKOUT and 10 us startup time
-  {$define _FOSC_INTRC_IO     = $0FFC}  // INTRC with I/O function on OSC2/CLKOUT and 10 us startup time
-  {$define _FOSC_INTRC_CLKOUT = $0FFD}  // INTRC with CLKOUT function on OSC2/CLKOUT and 10 us startup time
-  {$define _FOSC_EXTRC_IO     = $0FFE}  // EXTRC with I/O function on OSC2/CLKOUT and 10 us startup time
-  {$define _FOSC_EXTRC_CLKOUT = $0FFF}  // EXTRC with CLKOUT function on OSC2/CLKOUT and 10 us startup time
-
-  // WDTE : Watchdog Timer Enable
-  {$define _WDTE_ON           = $0FFF}  // WDT Enabled
-  {$define _WDTE_OFF          = $0FF7}  // WDT Disabled
-
-  // CP : Code Protection - User Program Memory
-  {$define _CP_OFF            = $0FFF}  // Code protection off
-  {$define _CP_ON             = $0FEF}  // Code protection on
-
-  // MCLRE : Master Clear Enable
-  {$define _MCLRE_ON          = $0FFF}  // MCLR pin functions as MCLR
-  {$define _MCLRE_OFF         = $0FDF}  // MCLR pin functions as I/O, MCLR internally tied to Vdd
-
-  // IOSCFS : Internal Oscillator Frequency Select
-  {$define _IOSCFS_8MHz       = $0FFF}  // 8 MHz INTOSC Speed
-  {$define _IOSCFS_4MHz       = $0FBF}  // 4 MHz INTOSC Speed
-
-  // CPSW : Code Protection - Self Writable Memory
-  {$define _CPSW_OFF          = $0FFF}  // Code protection off
-  {$define _CPSW_ON           = $0F7F}  // Code protection on
-
-  // BOREN : Brown-out Reset Enable
-  {$define _BOREN_ON          = $0FFF}  // BOR Enabled
-  {$define _BOREN_OFF         = $0EFF}  // BOR Disabled
-
-  // DRTEN : Device Reset Timer Enable
-  {$define _DRTEN_ON          = $0FFF}  // DRT Enabled (18 ms)
-  {$define _DRTEN_OFF         = $0DFF}  // DRT Disabled
-
-implementation
-end.

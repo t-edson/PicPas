@@ -48,28 +48,37 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, GPIO
-  {$SET_STATE_RAM '007-01F:GPR'} 
-  {$SET_STATE_RAM '020-026:SFR'}  // INDF, EECON, PCL, STATUS, FSR, EEDATA, EEADR
-  {$SET_STATE_RAM '027-03F:GPR'} 
+  {$SET_STATE_RAM '007-00F:GPR'} 
+  {$SET_STATE_RAM '010-01F:GPR'} 
+  {$SET_STATE_RAM '020-020:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '021-021:SFR'}  // EECON
+  {$SET_STATE_RAM '022-022:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '025-026:SFR'}  // EEDATA, EEADR
+  {$SET_STATE_RAM '027-02F:GPR'} 
+  {$SET_STATE_RAM '030-03F:GPR'} 
 
 
-  // -- Define mirrored registers --
+  // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '020-020:bnk0'} // INDF
-  {$SET_MAPPED_RAM '022-024:bnk0'} // PCL, STATUS, FSR
+  {$SET_MAPPED_RAM '020-020:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '022-024:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '027-02F:bnk1'} // maps to area 007-00F (bank 0)
 
 
-  // -- Initial values --
+  // -- Un-implemented fields --
 
-  {$SET_UNIMP_BITS '000:00'} // INDF
-  {$SET_UNIMP_BITS '003:BF'} // STATUS
-  {$SET_UNIMP_BITS '005:FE'} // OSCCAL
-  {$SET_UNIMP_BITS '006:3F'} // GPIO
-  {$SET_UNIMP_BITS '021:1F'} // EECON
-  {$SET_UNIMP_BITS '026:3F'} // EEADR
+  {$SET_UNIMP_BITS '003:BF'} // STATUS bit 6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '004:DF'} // FSR bit 5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '005:FE'} // OSCCAL bit 0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '006:3F'} // GPIO bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '021:1F'} // EECON bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '026:3F'} // EEADR bits 7,6 un-implemented (read as 0)
+
+  {$SET_UNIMP_BITS1 '004:C0'} // FSR bits 7,6 un-implemented (read as 1)
 
 
   // -- PIN mapping --
@@ -91,31 +100,31 @@ var
 
   // -- Bits Configuration --
 
-  // CPDF : Code Protection bit - Flash Data Memory
-  {$define _CPDF_OFF    = $007F}  // Code protection off
-  {$define _CPDF_ON     = $007E}  // Code protection on
-
-  // IOSCFS : Internal Oscillator Frequency Select bit
-  {$define _IOSCFS_8MHz = $007F}  // 8 MHz INTOSC Speed
-  {$define _IOSCFS_4MHz = $007D}  // 4 MHz INTOSC Speed
-
-  // MCLRE : Master Clear Enable bit
-  {$define _MCLRE_ON    = $007F}  // RB3/MCLR Functions as MCLR
-  {$define _MCLRE_OFF   = $007B}  // RB3/MCLR Functions as RB3
-
-  // CP : Code Protection bit
-  {$define _CP_OFF      = $007F}  // Code protection off
-  {$define _CP_ON       = $0077}  // Code protection on
+  // FOSC : Oscillator Selection bits
+  {$define _FOSC_LP     = $0FFC}  // LP Osc With 18 ms DRT
+  {$define _FOSC_XT     = $0FFD}  // XT Osc With 18 ms DRT
+  {$define _FOSC_INTRC  = $0FFE}  // INTRC With 1 ms DRT
+  {$define _FOSC_EXTRC  = $0FFF}  // EXTRC With 1 ms DRT
 
   // WDTE : Watchdog Timer Enable bit
-  {$define _WDTE_ON     = $007F}  // Enabled
-  {$define _WDTE_OFF    = $006F}  // Disabled
+  {$define _WDTE_ON     = $0FFF}  // Enabled
+  {$define _WDTE_OFF    = $0FFB}  // Disabled
 
-  // FOSC : Oscillator Selection bits
-  {$define _FOSC_LP     = $001F}  // LP Osc With 18 ms DRT
-  {$define _FOSC_XT     = $003F}  // XT Osc With 18 ms DRT
-  {$define _FOSC_INTRC  = $005F}  // INTRC With 1 ms DRT
-  {$define _FOSC_EXTRC  = $007F}  // EXTRC With 1 ms DRT
+  // CP : Code Protection bit
+  {$define _CP_OFF      = $0FFF}  // Code protection off
+  {$define _CP_ON       = $0FF7}  // Code protection on
+
+  // MCLRE : Master Clear Enable bit
+  {$define _MCLRE_ON    = $0FFF}  // RB3/MCLR Functions as MCLR
+  {$define _MCLRE_OFF   = $0FEF}  // RB3/MCLR Functions as RB3
+
+  // IOSCFS : Internal Oscillator Frequency Select bit
+  {$define _IOSCFS_8MHz = $0FFF}  // 8 MHz INTOSC Speed
+  {$define _IOSCFS_4MHz = $0FDF}  // 4 MHz INTOSC Speed
+
+  // CPDF : Code Protection bit - Flash Data Memory
+  {$define _CPDF_OFF    = $0FFF}  // Code protection off
+  {$define _CPDF_ON     = $0FBF}  // Code protection on
 
 implementation
 end.
