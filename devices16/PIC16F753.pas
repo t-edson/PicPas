@@ -445,45 +445,58 @@ var
   COG1ASD1_G1ASDSFLT  : bit  absolute COG1ASD1.1;
 
 
-// -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+  // -- Define RAM state values --
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA
   {$SET_STATE_RAM '007-00D:SFR'}  // PORTC, IOCAF, IOCCF, PCLATH, INTCON, PIR1, PIR2
   {$SET_STATE_RAM '00F-015:SFR'}  // TMR1L, TMR1H, T1CON, T1GCON, CCPR1L, CCPR1H, CCP1CON
   {$SET_STATE_RAM '01C-01F:SFR'}  // ADRESL, ADRESH, ADCON0, ADCON1
-  {$SET_STATE_RAM '020-07F:GPR'} 
-  {$SET_STATE_RAM '080-085:SFR'}  // INDF, OPTION_REG, PCL, STATUS, FSR, TRISA
-  {$SET_STATE_RAM '087-08D:SFR'}  // TRISC, IOCAP, IOCCP, PCLATH, INTCON, PIE1, PIE2
+  {$SET_STATE_RAM '020-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
+  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
+  {$SET_STATE_RAM '082-082:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '085-085:SFR'}  // TRISA
+  {$SET_STATE_RAM '087-089:SFR'}  // TRISC, IOCAP, IOCCP
+  {$SET_STATE_RAM '08A-08A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '08C-08D:SFR'}  // PIE1, PIE2
   {$SET_STATE_RAM '08F-093:SFR'}  // OSCCON, FVR1CON0, DAC1CON0, DAC1REFL, DAC1REFH
   {$SET_STATE_RAM '096-096:SFR'}  // OPA1CON
   {$SET_STATE_RAM '09B-09F:SFR'}  // CM2CON0, CM2CON1, CM1CON0, CM1CON1, CMOUT
   {$SET_STATE_RAM '0A0-0BF:GPR'} 
   {$SET_STATE_RAM '0F0-0FF:GPR'} 
-  {$SET_STATE_RAM '100-105:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, LATA
-  {$SET_STATE_RAM '107-11A:SFR'}  // LATC, IOCAN, IOCCN, PCLATH, INTCON, WPUA, WPUC, SLRCONC, PCON, TMR2, PR2, T2CON, HLTMR1, HLTPR1, HLT1CON0, HLT1CON1, HLTMR2, HLTPR2, HLT2CON0, HLT2CON1
+  {$SET_STATE_RAM '100-100:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '105-105:SFR'}  // LATA
+  {$SET_STATE_RAM '107-109:SFR'}  // LATC, IOCAN, IOCCN
+  {$SET_STATE_RAM '10A-10A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '10C-11A:SFR'}  // WPUA, WPUC, SLRCONC, PCON, TMR2, PR2, T2CON, HLTMR1, HLTPR1, HLT1CON0, HLT1CON1, HLTMR2, HLTPR2, HLT2CON0, HLT2CON1
   {$SET_STATE_RAM '11E-11F:SFR'}  // SLPC1CON0, SLPC1CON1
   {$SET_STATE_RAM '170-17F:GPR'} 
-  {$SET_STATE_RAM '180-185:SFR'}  // INDF, OPTION_REG, PCL, STATUS, FSR, ANSELA
-  {$SET_STATE_RAM '187-19F:SFR'}  // ANSELC, APFCON, OSCTUNE, PCLATH, INTCON, PMCON1, PMCON2, PMADRL, PMADRH, PMDATL, PMDATH, COG1PHR, COG1PHF, COG1BKR, COG1BKF, COG1DBR, COG1DBF, COG1CON0, COG1CON1, COG1RIS, COG1RSIM, COG1FIS, COG1FSIM, COG1ASD0, COG1ASD1
+  {$SET_STATE_RAM '180-182:SFR'}  // mapped to INDF, OPTION_REG, PCL
+  {$SET_STATE_RAM '185-185:SFR'}  // ANSELA
+  {$SET_STATE_RAM '187-189:SFR'}  // ANSELC, APFCON, OSCTUNE
+  {$SET_STATE_RAM '18A-18A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '18C-19F:SFR'}  // PMCON1, PMCON2, PMADRL, PMADRH, PMDATL, PMDATH, COG1PHR, COG1PHF, COG1BKR, COG1BKF, COG1DBR, COG1DBF, COG1CON0, COG1CON1, COG1RIS, COG1RSIM, COG1FIS, COG1FSIM, COG1ASD0, COG1ASD1
   {$SET_STATE_RAM '1F0-1FF:GPR'} 
 
 
-  // -- Define mirrored registers --
+  // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // INDF
-  {$SET_MAPPED_RAM '082-084:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '100-104:bnk0'} // INDF, TMR0, PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '10A-10B:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '180-180:bnk0'} // INDF
-  {$SET_MAPPED_RAM '181-181:bnk1'} // OPTION_REG
-  {$SET_MAPPED_RAM '182-184:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '18A-18B:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '0F0-0FF:bnk1'} // maps to area 070-07F (bank 0)
+  {$SET_MAPPED_RAM '100-104:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '10A-10B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '170-17F:bnk2'} // maps to area 070-07F (bank 0)
+  {$SET_MAPPED_RAM '180-180:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '181-181:bnk1'} // maps to OPTION_REG (bank 1)
+  {$SET_MAPPED_RAM '182-184:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '18A-18B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '1F0-1FF:bnk3'} // maps to area 070-07F (bank 0)
 
-  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '170-17F:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '1F0-1FF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 
@@ -577,44 +590,44 @@ var
 
   // -- Bits Configuration --
 
-  // DEBUG : Debug Mode Enable bit
-  {$define _DEBUG_OFF       = $3F79}  // Debug mode disabled
-  {$define _DEBUG_ON        = $3F78}  // Debug mode enabled
-
-  // CLKOUTEN : Clock Out Enable bit
-  {$define _CLKOUTEN_OFF    = $3F7B}  // CLKOUT function disabled.  CLKOUT pin acts as I/O
-  {$define _CLKOUTEN_ON     = $3F79}  // CLKOUT function enabled.  CLKOUT pin is CLKOUT
-
-  // WRT : Flash Program Memory Self Write Enable bit
-  {$define _WRT_OFF         = $3F7D}  // Flash self-write protection off
-  {$define _WRT_FOURTH      = $3F79}  // 000h to 0FFh self-write protected
-  {$define _WRT_HALF        = $3F75}  // 000h to 1FFh self-write protected
-  {$define _WRT_ALL         = $3F71}  // 000h to 3FFh self-write protected
-
-  // BOREN : Brown-out Reset Enable bits
-  {$define _BOREN_EN        = $3F79}  // BOR enabled
-  {$define _BOREN_SLEEP_DIS = $3F69}  // BOR enabled during operation and disabled in Sleep
-  {$define _BOREN_DIS       = $3F49}  // BOR disabled
-
-  // CP : Code Protection bit
-  {$define _CP_OFF          = $3F79}  // Program memory code protection is disabled
-  {$define _CP_ON           = $3F39}  // Program memory code protection is enabled
-
-  // MCLRE : MCLR/VPP Pin Function Select bit
-  {$define _MCLRE_ON        = $3FF9}  // MCLR pin is MCLR function with internal weak pullup
-  {$define _MCLRE_OFF       = $3F79}  // MCLR pin is alternate function
-
-  // PWRTE : Power-up Timer Enable bit
-  {$define _PWRTE_OFF       = $3F79}  // Power-up Timer disabled
-  {$define _PWRTE_ON        = $3E79}  // Power-up Timer enabled
+  // FOSC0 : FOSC: Oscillator Selection bit
+  {$define _FOSC0_EC        = $3FFF}  // EC oscillator mode.  CLKIN function on RA5/CLKIN
+  {$define _FOSC0_INT       = $3FFE}  // Internal oscillator mode.  I/O function on RA5/CLKIN
 
   // WDTE : Watchdog Timer Enable bit
-  {$define _WDTE_ON         = $3F79}  // Watchdog Timer enabled
-  {$define _WDTE_OFF        = $3D79}  // Watchdog Timer disabled
+  {$define _WDTE_ON         = $3FFF}  // Watchdog Timer enabled
+  {$define _WDTE_OFF        = $3FF7}  // Watchdog Timer disabled
 
-  // FOSC0 : FOSC: Oscillator Selection bit
-  {$define _FOSC0_EC        = $3F79}  // EC oscillator mode.  CLKIN function on RA5/CLKIN
-  {$define _FOSC0_INT       = $3B79}  // Internal oscillator mode.  I/O function on RA5/CLKIN
+  // PWRTE : Power-up Timer Enable bit
+  {$define _PWRTE_OFF       = $3FFF}  // Power-up Timer disabled
+  {$define _PWRTE_ON        = $3FEF}  // Power-up Timer enabled
+
+  // MCLRE : MCLR/VPP Pin Function Select bit
+  {$define _MCLRE_ON        = $3FFF}  // MCLR pin is MCLR function with internal weak pullup
+  {$define _MCLRE_OFF       = $3FDF}  // MCLR pin is alternate function
+
+  // CP : Code Protection bit
+  {$define _CP_OFF          = $3FFF}  // Program memory code protection is disabled
+  {$define _CP_ON           = $3FBF}  // Program memory code protection is enabled
+
+  // BOREN : Brown-out Reset Enable bits
+  {$define _BOREN_EN        = $3FFF}  // BOR enabled
+  {$define _BOREN_SLEEP_DIS = $3EFF}  // BOR enabled during operation and disabled in Sleep
+  {$define _BOREN_DIS       = $3CFF}  // BOR disabled
+
+  // WRT : Flash Program Memory Self Write Enable bit
+  {$define _WRT_OFF         = $3FFF}  // Flash self-write protection off
+  {$define _WRT_FOURTH      = $3BFF}  // 000h to 0FFh self-write protected
+  {$define _WRT_HALF        = $37FF}  // 000h to 1FFh self-write protected
+  {$define _WRT_ALL         = $33FF}  // 000h to 3FFh self-write protected
+
+  // CLKOUTEN : Clock Out Enable bit
+  {$define _CLKOUTEN_OFF    = $3FFF}  // CLKOUT function disabled.  CLKOUT pin acts as I/O
+  {$define _CLKOUTEN_ON     = $2FFF}  // CLKOUT function enabled.  CLKOUT pin is CLKOUT
+
+  // DEBUG : Debug Mode Enable bit
+  {$define _DEBUG_OFF       = $3FFF}  // Debug mode disabled
+  {$define _DEBUG_ON        = $1FFF}  // Debug mode enabled
 
 implementation
 end.

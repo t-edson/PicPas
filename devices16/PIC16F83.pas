@@ -84,23 +84,28 @@ var
 
 
   // -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB
   {$SET_STATE_RAM '008-00B:SFR'}  // EEDATA, EEADR, PCLATH, INTCON
   {$SET_STATE_RAM '00C-02F:GPR'} 
-  {$SET_STATE_RAM '080-086:SFR'}  // INDF, OPTION_REG, PCL, STATUS, FSR, TRISA, TRISB
-  {$SET_STATE_RAM '088-08B:SFR'}  // EECON1, EECON2, PCLATH, INTCON
+  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
+  {$SET_STATE_RAM '082-082:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '085-086:SFR'}  // TRISA, TRISB
+  {$SET_STATE_RAM '088-089:SFR'}  // EECON1, EECON2
+  {$SET_STATE_RAM '08A-08A:SFR'}  // mapped to PCLATH
   {$SET_STATE_RAM '08C-0AF:GPR'} 
 
 
-  // -- Define mirrored registers --
+  // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // INDF
-  {$SET_MAPPED_RAM '082-084:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '08C-0AF:bnk1'} // maps to area 00C-02F (bank 0)
 
-  {$SET_MAPPED_RAM '08C-0AF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 
@@ -141,23 +146,23 @@ var
 
   // -- Bits Configuration --
 
-  // CP : Code Protection bit
-  {$define _CP_OFF     = $3FFF}  // Code protection disabled
-  {$define _CP_ON      = $3C00}  // All program memory is code protected
-
-  // PWRTE : Power-up Timer Enable bit
-  {$define _PWRTE_OFF  = $3FFF}  // Power-up Timer is disabled
-  {$define _PWRTE_ON   = $3BFF}  // Power-up Timer is enabled
+  // FOSC : Oscillator Selection bits
+  {$define _FOSC_EXTRC = $3FFF}  // RC oscillator
+  {$define _FOSC_HS    = $3FFE}  // HS oscillator
+  {$define _FOSC_XT    = $3FFD}  // XT oscillator
+  {$define _FOSC_LP    = $3FFC}  // LP oscillator
 
   // WDTE : Watchdog Timer
   {$define _WDTE_ON    = $3FFF}  // WDT enabled
-  {$define _WDTE_OFF   = $37FF}  // WDT disabled
+  {$define _WDTE_OFF   = $3FFB}  // WDT disabled
 
-  // FOSC : Oscillator Selection bits
-  {$define _FOSC_EXTRC = $3FFF}  // RC oscillator
-  {$define _FOSC_HS    = $2FFF}  // HS oscillator
-  {$define _FOSC_XT    = $1FFF}  // XT oscillator
-  {$define _FOSC_LP    = $0FFF}  // LP oscillator
+  // PWRTE : Power-up Timer Enable bit
+  {$define _PWRTE_OFF  = $3FFF}  // Power-up Timer is disabled
+  {$define _PWRTE_ON   = $3FF7}  // Power-up Timer is enabled
+
+  // CP : Code Protection bit
+  {$define _CP_OFF     = $3FFF}  // Code protection disabled
+  {$define _CP_ON      = $000F}  // All program memory is code protected
 
 implementation
 end.

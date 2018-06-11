@@ -183,43 +183,65 @@ var
   CRDAT3            : byte absolute $0114;
 
 
-// -- Define RAM state values --
-  {$CLEAR_STATE_RAM} 
+  // -- Define RAM state values --
+
+  {$CLEAR_STATE_RAM}
 
   {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA
   {$SET_STATE_RAM '007-007:SFR'}  // PORTC
   {$SET_STATE_RAM '00A-00C:SFR'}  // PCLATH, INTCON, PIR1
   {$SET_STATE_RAM '00E-010:SFR'}  // TMR1L, TMR1H, T1CON
   {$SET_STATE_RAM '018-01A:SFR'}  // WDTCON, CMCON0, CMCON1
-  {$SET_STATE_RAM '020-07F:GPR'} 
-  {$SET_STATE_RAM '080-085:SFR'}  // INDF, OPTION_REG, PCL, STATUS, FSR, TRISA
+  {$SET_STATE_RAM '020-06F:GPR'} 
+  {$SET_STATE_RAM '070-07F:GPR'} 
+  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
+  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
+  {$SET_STATE_RAM '082-082:SFR'}  // mapped to PCL
+  {$SET_STATE_RAM '085-085:SFR'}  // TRISA
   {$SET_STATE_RAM '087-087:SFR'}  // TRISC
-  {$SET_STATE_RAM '08A-08C:SFR'}  // PCLATH, INTCON, PIE1
+  {$SET_STATE_RAM '08A-08A:SFR'}  // mapped to PCLATH
+  {$SET_STATE_RAM '08C-08C:SFR'}  // PIE1
   {$SET_STATE_RAM '08E-090:SFR'}  // PCON, OSCCON, OSCTUNE
   {$SET_STATE_RAM '094-097:SFR'}  // LVDCON, WPUDA, IOCA, WDA
   {$SET_STATE_RAM '099-09D:SFR'}  // VRCON, EEDAT, EEADR, EECON1, EECON2
   {$SET_STATE_RAM '0A0-0BF:GPR'} 
   {$SET_STATE_RAM '0F0-0FF:GPR'} 
-
-  {$SET_STATE_RAM '100-10B:GPR'} 
-  {$SET_STATE_RAM '180-18B:GPR'} 
-  
+  {$SET_STATE_RAM '100-102:SFR'}  // mapped to INDF, TMR0, PCL
+  {$SET_STATE_RAM '105-105:SFR'}  // mapped to PORTA
+  {$SET_STATE_RAM '107-107:SFR'}  // mapped to PORTC
+  {$SET_STATE_RAM '10A-10B:SFR'}  // mapped to PCLATH, INTCON
+  {$SET_STATE_RAM '110-114:SFR'}  // CRCON, CRDAT0, CRDAT1, CRDAT2, CRDAT3
   {$SET_STATE_RAM '170-17F:GPR'} 
+  {$SET_STATE_RAM '180-182:SFR'}  // mapped to INDF, OPTION_REG, PCL
+  {$SET_STATE_RAM '185-185:SFR'}  // mapped to TRISA
+  {$SET_STATE_RAM '187-187:SFR'}  // mapped to TRISC
+  {$SET_STATE_RAM '18A-18B:SFR'}  // mapped to PCLATH, INTCON
   {$SET_STATE_RAM '1F0-1FF:GPR'} 
 
 
-  // -- Define mirrored registers --
+  // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // INDF
-  {$SET_MAPPED_RAM '082-084:bnk0'} // PCL, STATUS, FSR
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // PCLATH, INTCON
+  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
+  {$SET_MAPPED_RAM '0F0-0FF:bnk1'} // maps to area 070-07F (bank 0)
+  {$SET_MAPPED_RAM '100-100:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '101-101:bnk0'} // maps to TMR0 (bank 0)
+  {$SET_MAPPED_RAM '102-104:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '105-105:bnk0'} // maps to PORTA (bank 0)
+  {$SET_MAPPED_RAM '107-107:bnk0'} // maps to PORTC (bank 0)
+  {$SET_MAPPED_RAM '10A-10A:bnk0'} // maps to PCLATH (bank 0)
+  {$SET_MAPPED_RAM '10B-10B:bnk0'} // maps to INTCON (bank 0)
+  {$SET_MAPPED_RAM '170-17F:bnk2'} // maps to area 070-07F (bank 0)
+  {$SET_MAPPED_RAM '180-180:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '181-181:bnk1'} // maps to OPTION_REG (bank 1)
+  {$SET_MAPPED_RAM '182-184:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '185-185:bnk1'} // maps to TRISA (bank 1)
+  {$SET_MAPPED_RAM '187-187:bnk1'} // maps to TRISC (bank 1)
+  {$SET_MAPPED_RAM '18A-18A:bnk0'} // maps to PCLATH (bank 0)
+  {$SET_MAPPED_RAM '18B-18B:bnk0'} // maps to INTCON (bank 0)
+  {$SET_MAPPED_RAM '1F0-1FF:bnk3'} // maps to area 070-07F (bank 0)
 
-  {$SET_MAPPED_RAM '100-10B:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '180-18B:bnk1'} // PCLATH, INTCON
-
-  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '170-17F:bnk0'} // PCLATH, INTCON
-  {$SET_MAPPED_RAM '1F0-1FF:bnk0'} // PCLATH, INTCON
 
   // -- Initial values --
 
@@ -271,53 +293,53 @@ var
 
   // -- Bits Configuration --
 
-  // WURE : Wake-Up Reset Enable bit
-  {$define _WURE_OFF       = $1FFF}  // Standard wake-up and continue enabled
-  {$define _WURE_ON        = $1FFE}  // Wake-up and Reset enabled
-
-  // FCMEN : Fail-Safe Clock Monitor Enable bit
-  {$define _FCMEN_ON       = $1FFF}  // Fail-Safe Clock Monitor enabled
-  {$define _FCMEN_OFF      = $1FFD}  // Fail-Safe Clock Monitor disabled
-
-  // IESO : Internal-External Switchover bit
-  {$define _IESO_ON        = $1FFF}  // Internal External Switchover mode enabled
-  {$define _IESO_OFF       = $1FFB}  // Internal External Switchover mode disabled
-
-  // BOREN : Brown-out Reset Selection bits
-  {$define _BOREN_ON       = $1FFF}  // BOD enabled and SBOdEN bit disabled
-  {$define _BOREN_NSLEEP   = $1FF7}  // BOD enabled while running and disabled in Sleep. SBODEN bit disabled.
-  {$define _BOREN_SBODEN   = $1FEF}  // SBODEN controls BOD function
-  {$define _BOREN_OFF      = $1FE7}  // BOD and SBODEN disabled
-
-  // CPD : Data Code Protection bit
-  {$define _CPD_OFF        = $1FFF}  // Data memory is not code protected
-  {$define _CPD_ON         = $1FDF}  // Data memory is external read protected
-
-  // CP : Code Protection bit
-  {$define _CP_OFF         = $1FFF}  // Program memory is not code protected
-  {$define _CP_ON          = $1FBF}  // Program memory is external read and write-protected
-
-  // MCLRE : MCLR pin function select bit
-  {$define _MCLRE_ON       = $1FFF}  // MCLR pin is MCLR function and weak internal pull-up is enabled
-  {$define _MCLRE_OFF      = $1F7F}  // MCLR pin function is alternate function, MCLR function is internally disabled
-
-  // PWRTE : Power-up Timer Enable bit
-  {$define _PWRTE_OFF      = $1FFF}  // PWRT disabled
-  {$define _PWRTE_ON       = $1EFF}  // PWRT enabled
+  // FOSC : Oscillator Selection bits
+  {$define _FOSC_EXTRCCLK  = $3FFF}  // RC oscillator: CLKOUT function on RA4/T1G/OSC2/CLKOUT pin, RC on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_EXTRCIO   = $3FFE}  // RCIO oscillator: I/O function on RA4/T1G/OSC2/CLKOUT pin, RC on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_INTOSCCLK = $3FFD}  // INTOSC oscillator: CLKOUT function on RA4/T1G/OSC2/CLKOUT pin, I/O function on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_INTOSCIO  = $3FFC}  // INTOSCIO oscillator: I/O function on RA4/T1G/OSC2/CLKOUT pin, I/O function on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_EC        = $3FFB}  // EC: I/O function on RA4/T1G/OSC2/CLKOUT, CLKIN on RA5/T1CKI/OSC1/CLKIN
+  {$define _FOSC_HS        = $3FFA}  // HS oscillator: High-speed crystal/resonator on RA5/T1CKI/OSC1/CLKIN and RA4/T1G/OSC2/CLKOUT
+  {$define _FOSC_XT        = $3FF9}  // XT oscillator: Crystal/resonator on RA5/T1CKI/OSC1/CLKIN and RA4/T1G/OSC2/CLKOUT
+  {$define _FOSC_LP        = $3FF8}  // LP oscillator: Low-power crystal on RA5/T1CKI/OSC1/CLKIN and RA4/T1G/OSC2/CLKOUT
 
   // WDTE : Watchdog Timer Enable bit
-  {$define _WDTE_ON        = $1FFF}  // WDT enabled
-  {$define _WDTE_OFF       = $1DFF}  // WDT disabled and can be enabled by SWDTEN bit of the WDTCON register
+  {$define _WDTE_ON        = $3FFF}  // WDT enabled
+  {$define _WDTE_OFF       = $3FF7}  // WDT disabled and can be enabled by SWDTEN bit of the WDTCON register
 
-  // FOSC : Oscillator Selection bits
-  {$define _FOSC_EXTRCCLK  = $1FFF}  // RC oscillator: CLKOUT function on RA4/T1G/OSC2/CLKOUT pin, RC on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_EXTRCIO   = $1BFF}  // RCIO oscillator: I/O function on RA4/T1G/OSC2/CLKOUT pin, RC on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_INTOSCCLK = $17FF}  // INTOSC oscillator: CLKOUT function on RA4/T1G/OSC2/CLKOUT pin, I/O function on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_INTOSCIO  = $13FF}  // INTOSCIO oscillator: I/O function on RA4/T1G/OSC2/CLKOUT pin, I/O function on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_EC        = $0FFF}  // EC: I/O function on RA4/T1G/OSC2/CLKOUT, CLKIN on RA5/T1CKI/OSC1/CLKIN
-  {$define _FOSC_HS        = $0BFF}  // HS oscillator: High-speed crystal/resonator on RA5/T1CKI/OSC1/CLKIN and RA4/T1G/OSC2/CLKOUT
-  {$define _FOSC_XT        = $07FF}  // XT oscillator: Crystal/resonator on RA5/T1CKI/OSC1/CLKIN and RA4/T1G/OSC2/CLKOUT
-  {$define _FOSC_LP        = $03FF}  // LP oscillator: Low-power crystal on RA5/T1CKI/OSC1/CLKIN and RA4/T1G/OSC2/CLKOUT
+  // PWRTE : Power-up Timer Enable bit
+  {$define _PWRTE_OFF      = $3FFF}  // PWRT disabled
+  {$define _PWRTE_ON       = $3FEF}  // PWRT enabled
+
+  // MCLRE : MCLR pin function select bit
+  {$define _MCLRE_ON       = $3FFF}  // MCLR pin is MCLR function and weak internal pull-up is enabled
+  {$define _MCLRE_OFF      = $3FDF}  // MCLR pin function is alternate function, MCLR function is internally disabled
+
+  // CP : Code Protection bit
+  {$define _CP_OFF         = $3FFF}  // Program memory is not code protected
+  {$define _CP_ON          = $3FBF}  // Program memory is external read and write-protected
+
+  // CPD : Data Code Protection bit
+  {$define _CPD_OFF        = $3FFF}  // Data memory is not code protected
+  {$define _CPD_ON         = $3F7F}  // Data memory is external read protected
+
+  // BOREN : Brown-out Reset Selection bits
+  {$define _BOREN_ON       = $3FFF}  // BOD enabled and SBOdEN bit disabled
+  {$define _BOREN_NSLEEP   = $3EFF}  // BOD enabled while running and disabled in Sleep. SBODEN bit disabled.
+  {$define _BOREN_SBODEN   = $3DFF}  // SBODEN controls BOD function
+  {$define _BOREN_OFF      = $3CFF}  // BOD and SBODEN disabled
+
+  // IESO : Internal-External Switchover bit
+  {$define _IESO_ON        = $3FFF}  // Internal External Switchover mode enabled
+  {$define _IESO_OFF       = $3BFF}  // Internal External Switchover mode disabled
+
+  // FCMEN : Fail-Safe Clock Monitor Enable bit
+  {$define _FCMEN_ON       = $3FFF}  // Fail-Safe Clock Monitor enabled
+  {$define _FCMEN_OFF      = $37FF}  // Fail-Safe Clock Monitor disabled
+
+  // WURE : Wake-Up Reset Enable bit
+  {$define _WURE_OFF       = $3FFF}  // Standard wake-up and continue enabled
+  {$define _WURE_ON        = $2FFF}  // Wake-up and Reset enabled
 
 implementation
 end.
