@@ -73,8 +73,8 @@ var
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '020-029:bnk1'} // maps to area 000-009 (bank 0)
-  {$SET_MAPPED_RAM '02A-02F:bnk1'} // maps to area 00A-00F (bank 0)
+  {$SET_MAPPED_RAM '020-029:bnk0'} // maps to area 000-009 (bank 0)
+  {$SET_MAPPED_RAM '02A-02F:bnk0'} // maps to area 00A-00F (bank 0)
 
 
   // -- Un-implemented fields --

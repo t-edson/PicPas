@@ -128,15 +128,15 @@ var
   {$SET_MAPPED_RAM '020-020:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '022-024:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '027-02C:bnk0'} // maps to PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON (bank 0)
-  {$SET_MAPPED_RAM '02D-02F:bnk1'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '02D-02F:bnk0'} // maps to area 00D-00F (bank 0)
   {$SET_MAPPED_RAM '040-04C:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON (bank 0)
-  {$SET_MAPPED_RAM '04D-04F:bnk2'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '04D-04F:bnk0'} // maps to area 00D-00F (bank 0)
   {$SET_MAPPED_RAM '060-060:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '061-061:bnk1'} // maps to EECON (bank 1)
   {$SET_MAPPED_RAM '062-064:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '065-066:bnk1'} // maps to EEDATA, EEADR (bank 1)
   {$SET_MAPPED_RAM '067-06C:bnk0'} // maps to PORTC, CM1CON0, ADCON0, ADRES, CM2CON0, VRCON (bank 0)
-  {$SET_MAPPED_RAM '06D-06F:bnk3'} // maps to area 00D-00F (bank 0)
+  {$SET_MAPPED_RAM '06D-06F:bnk0'} // maps to area 00D-00F (bank 0)
 
 
   // -- Un-implemented fields --

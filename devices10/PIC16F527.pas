@@ -164,14 +164,14 @@ var
   {$SET_MAPPED_RAM '020-020:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '022-024:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '02B-02B:bnk0'} // maps to INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '02C-02F:bnk1'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '02C-02F:bnk0'} // maps to area 00C-00F (bank 0)
   {$SET_MAPPED_RAM '040-04B:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '04C-04F:bnk2'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '04C-04F:bnk0'} // maps to area 00C-00F (bank 0)
   {$SET_MAPPED_RAM '060-060:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '062-064:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '06A-06A:bnk1'} // maps to ANSEL (bank 1)
   {$SET_MAPPED_RAM '06B-06B:bnk0'} // maps to INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '06C-06F:bnk3'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '06C-06F:bnk0'} // maps to area 00C-00F (bank 0)
 
 
   // -- Un-implemented fields --
