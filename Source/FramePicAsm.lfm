@@ -23,7 +23,7 @@ object fraPicAsm: TfraPicAsm
     Font.Quality = fqDraft
     Options = [goFixedVertLine, goFixedHorzLine, goRangeSelect, goColSizing, goRowSelect, goSmoothScroll]
     ParentFont = False
-    RowCount = 8192
+    RowCount = 10
     TabOrder = 0
     TitleFont.CharSet = ANSI_CHARSET
     TitleFont.Height = -12

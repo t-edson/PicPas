@@ -328,6 +328,7 @@ begin
   StringGrid1.DefaultDrawing:=false;
   StringGrid1.OnDrawCell := @StringGrid1DrawCell;
   //Dimensiona la grilla para que pueda mostrar las etIquetas
+  StringGrid1.RowCount := high(pic.flash)+1;
   StringGrid1.BeginUpdate;
   for i:=0 to high(pic.flash) do ResizeRow(i);
   StringGrid1.EndUpdate();

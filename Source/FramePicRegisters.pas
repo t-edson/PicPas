@@ -4,7 +4,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, StdCtrls, LCLProc,
   LCLIntf, LCLType, Grids, ExtCtrls, Parser,
-  PicCore, Pic16Utils, Pic10Utils;
+  PicCore, Pic16Utils, Pic10Utils, Pic17Utils;
 type
 
   { TfraPicRegisters }
@@ -80,6 +80,13 @@ begin
     StringGrid2.Cells[3,0] := 'RP1';
     StringGrid2.Cells[4,0] := 'RP0';
     STATptr := @(pic.ram[Pic16Utils._STATUS].dvalue);
+  end;
+  17: begin
+    WREGptr := @(TPIC16(pic).W);
+    StringGrid2.Cells[2,0] := '';
+    StringGrid2.Cells[3,0] := '';
+    StringGrid2.Cells[4,0] := '';
+    STATptr := @(pic.ram[Pic17Utils._STATUS].dvalue);
   end;
   end;
 end;

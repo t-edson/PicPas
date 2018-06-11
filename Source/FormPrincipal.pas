@@ -209,8 +209,8 @@ type
     procedure Timer1Timer(Sender: TObject);
     procedure butSelCompilerClick(Sender: TObject);
   private
-    Compiler16  : TCompiler_PIC16;
     Compiler10  : TCompiler_PIC10;
+    Compiler16  : TCompiler_PIC16;
     Compiler17  : TCompiler_PIC17;
     Compiler    : TCompilerBase;
     tic         : integer;  //Contador para temporización
@@ -267,8 +267,9 @@ begin
   fraEditView1.SetLanguage;
   fraMessages.SetLanguage;
   frmDebug.SetLanguage;
-  Compiler_PIC16.SetLanguage;
   Compiler_PIC10.SetLanguage;
+  Compiler_PIC16.SetLanguage;
+  Compiler_PIC17.SetLanguage;
   //ParserAsm_PIC16.SetLanguage;
   //ParserDirec_PIC16.SetLanguage;
   {$I ..\language\tra_FormPrincipal.pas}
@@ -433,11 +434,13 @@ begin
   edAsm.Highlighter := hlAssem;
   LoadAsmSyntaxEd;
   CodeTool := TCodeTool.Create(fraEditView1);
-  //Configura eventos de los compialdores
-  Compiler16.OnRequireFileString := @Compiler16_RequireFileString;
-  Compiler16.OnAfterCompile      := @Compiler16_AfterCompile;
+  //Configura eventos de los compiladores
   Compiler10.OnRequireFileString := @Compiler16_RequireFileString;
   COmpiler10.OnAfterCompile      := @Compiler16_AfterCompile;
+  Compiler16.OnRequireFileString := @Compiler16_RequireFileString;
+  Compiler16.OnAfterCompile      := @Compiler16_AfterCompile;
+  Compiler17.OnRequireFileString := @Compiler16_RequireFileString;
+  Compiler17.OnAfterCompile      := @Compiler16_AfterCompile;
   //Crea dinámicamente para poder inciailizarlo con comodidad
   frmDebug:= TfrmDebugger.Create(self);
 end;

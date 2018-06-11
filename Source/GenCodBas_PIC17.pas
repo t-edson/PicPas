@@ -1182,9 +1182,6 @@ procedure TGenCodBas._BANKSEL(targetBank: byte);
 {Verifica si se está en el banco deseado, de no ser así genera las instrucciones
  para el cambio de banco.
  Devuelve el número de instrucciones generado.}
-var
-  curRP0: Byte;
-  newRP0, curRP1, newRP1: byte;
 begin
   if pic.NumBanks = 1 then
     exit;  //Caso especial. ¿Hay un PIC de esta serie con un banco?
@@ -2892,7 +2889,7 @@ end;
 
 function TGenCodBas.CompilerName: string;
 begin
-  Result := 'PIC16 Compiler'
+  Result := 'PIC17 Compiler'
 end;
 function TGenCodBas.RAMmax: integer;
 begin
@@ -2901,8 +2898,8 @@ end;
 constructor TGenCodBas.Create;
 begin
   inherited Create;
-  ID := 16;  //Identifica al compilador PIC16
-  devicesPath := patDevices16;
+  ID := 17;  //Identifica al compilador PIC17
+  devicesPath := patDevices17;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPIC17.Create;
