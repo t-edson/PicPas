@@ -17,8 +17,8 @@ var
   STATUS_PA2  : bit  absolute STATUS.7;
   STATUS_PA1  : bit  absolute STATUS.6;
   STATUS_PA0  : bit  absolute STATUS.5;
-  STATUS_TO   : bit  absolute STATUS.4;
-  STATUS_PD   : bit  absolute STATUS.3;
+  STATUS_nTO  : bit  absolute STATUS.4;
+  STATUS_nPD  : bit  absolute STATUS.3;
   STATUS_Z    : bit  absolute STATUS.2;
   STATUS_DC   : bit  absolute STATUS.1;
   STATUS_C    : bit  absolute STATUS.0;
