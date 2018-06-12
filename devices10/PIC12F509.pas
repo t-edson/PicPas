@@ -15,12 +15,12 @@ var
   PCL          : byte absolute $0002;
   STATUS       : byte absolute $0003;
   STATUS_GPWUF : bit  absolute STATUS.7;
-  STATUS_PA0   : bit  absolute STATUS.6;
-  STATUS_TO    : bit  absolute STATUS.5;
-  STATUS_PD    : bit  absolute STATUS.4;
-  STATUS_Z     : bit  absolute STATUS.3;
-  STATUS_DC    : bit  absolute STATUS.2;
-  STATUS_C     : bit  absolute STATUS.1;
+  STATUS_PA0   : bit  absolute STATUS.5;
+  STATUS_nTO   : bit  absolute STATUS.4;
+  STATUS_nPD   : bit  absolute STATUS.3;
+  STATUS_Z     : bit  absolute STATUS.2;
+  STATUS_DC    : bit  absolute STATUS.1;
+  STATUS_C     : bit  absolute STATUS.0;
   FSR          : byte absolute $0004;
   OSCCAL       : byte absolute $0005;
   OSCCAL_CAL6  : bit  absolute OSCCAL.7;

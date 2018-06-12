@@ -15,11 +15,11 @@ var
   PCL             : byte absolute $0002;
   STATUS          : byte absolute $0003;
   STATUS_GPWUF    : bit  absolute STATUS.7;
-  STATUS_TO       : bit  absolute STATUS.6;
-  STATUS_PD       : bit  absolute STATUS.5;
-  STATUS_Z        : bit  absolute STATUS.4;
-  STATUS_DC       : bit  absolute STATUS.3;
-  STATUS_C        : bit  absolute STATUS.2;
+  STATUS_nTO      : bit  absolute STATUS.4;
+  STATUS_nPD      : bit  absolute STATUS.3;
+  STATUS_Z        : bit  absolute STATUS.2;
+  STATUS_DC       : bit  absolute STATUS.1;
+  STATUS_C        : bit  absolute STATUS.0;
   FSR             : byte absolute $0004;
   OSCCAL          : byte absolute $0005;
   OSCCAL_CAL6     : bit  absolute OSCCAL.7;
@@ -36,20 +36,13 @@ var
   GPIO_GP1        : bit  absolute GPIO.1;
   GPIO_GP0        : bit  absolute GPIO.0;
   ADCON0          : byte absolute $0007;
-  ADCON0_ANS1     : bit  absolute ADCON0.5;
-  ADCON0_ANS0     : bit  absolute ADCON0.4;
-  ADCON0_GO_nDONE : bit  absolute ADCON0.3;
-  ADCON0_ADON     : bit  absolute ADCON0.2;
-  ADCON0_GO       : bit  absolute ADCON0.1;
+  ADCON0_ANS1     : bit  absolute ADCON0.7;
+  ADCON0_ANS0     : bit  absolute ADCON0.6;
+  ADCON0_CHS1     : bit  absolute ADCON0.3;
+  ADCON0_CHS0     : bit  absolute ADCON0.2;
+  ADCON0_GO_nDONE : bit  absolute ADCON0.1;
+  ADCON0_ADON     : bit  absolute ADCON0.0;
   ADRES           : byte absolute $0008;
-  ADRES_ADRES7    : bit  absolute ADRES.7;
-  ADRES_ADRES6    : bit  absolute ADRES.6;
-  ADRES_ADRES5    : bit  absolute ADRES.5;
-  ADRES_ADRES4    : bit  absolute ADRES.4;
-  ADRES_ADRES3    : bit  absolute ADRES.3;
-  ADRES_ADRES2    : bit  absolute ADRES.2;
-  ADRES_ADRES1    : bit  absolute ADRES.1;
-  ADRES_ADRES0    : bit  absolute ADRES.0;
 
 
   // -- Define RAM state values --
