@@ -17,8 +17,8 @@ var
   STATUS_IRP        : bit  absolute STATUS.7;
   STATUS_RP1        : bit  absolute STATUS.6;
   STATUS_RP0        : bit  absolute STATUS.5;
-  STATUS_TO         : bit  absolute STATUS.4;
-  STATUS_PD         : bit  absolute STATUS.3;
+  STATUS_nTO        : bit  absolute STATUS.4;
+  STATUS_nPD        : bit  absolute STATUS.3;
   STATUS_Z          : bit  absolute STATUS.2;
   STATUS_DC         : bit  absolute STATUS.1;
   STATUS_C          : bit  absolute STATUS.0;
@@ -41,6 +41,11 @@ var
   EEDATA            : byte absolute $0008;
   EEADR             : byte absolute $0009;
   PCLATH            : byte absolute $000A;
+  PCLATH_PCLATH4    : bit  absolute PCLATH.4;
+  PCLATH_PCLATH3    : bit  absolute PCLATH.3;
+  PCLATH_PCLATH2    : bit  absolute PCLATH.2;
+  PCLATH_PCLATH1    : bit  absolute PCLATH.1;
+  PCLATH_PCLATH0    : bit  absolute PCLATH.0;
   INTCON            : byte absolute $000B;
   INTCON_GIE        : bit  absolute INTCON.7;
   INTCON_EEIE       : bit  absolute INTCON.6;
@@ -51,7 +56,7 @@ var
   INTCON_INTF       : bit  absolute INTCON.1;
   INTCON_RBIF       : bit  absolute INTCON.0;
   OPTION_REG        : byte absolute $0081;
-  OPTION_REG_RBPU   : bit  absolute OPTION_REG.7;
+  OPTION_REG_nRBPU  : bit  absolute OPTION_REG.7;
   OPTION_REG_INTEDG : bit  absolute OPTION_REG.6;
   OPTION_REG_T0CS   : bit  absolute OPTION_REG.5;
   OPTION_REG_T0SE   : bit  absolute OPTION_REG.4;
