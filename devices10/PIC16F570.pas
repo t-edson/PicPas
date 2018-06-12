@@ -181,3 +181,111 @@ var
 
   // -- Define mapped RAM --
 
+  {$SET_MAPPED_RAM '020-020:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '022-024:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '02B-02B:bnk0'} // maps to INTCON0 (bank 0)
+  {$SET_MAPPED_RAM '02C-02F:bnk0'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '040-04B:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0 (bank 0)
+  {$SET_MAPPED_RAM '04C-04F:bnk0'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '060-060:bnk0'} // maps to INDF (bank 0)
+  {$SET_MAPPED_RAM '062-064:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
+  {$SET_MAPPED_RAM '06A-06B:bnk1'} // maps to ANSEL, INTCON0 (bank 1)
+  {$SET_MAPPED_RAM '06C-06F:bnk0'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '080-08B:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0 (bank 0)
+  {$SET_MAPPED_RAM '08C-08F:bnk0'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '0A0-0AB:bnk1'} // maps to INDF, EECON, PCL, STATUS, FSR, EEDATA, EEADR, CM1CON0, CM2CON0, VRCON, ANSEL, INTCON0 (bank 1)
+  {$SET_MAPPED_RAM '0AC-0AF:bnk0'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '0C0-0CB:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0 (bank 0)
+  {$SET_MAPPED_RAM '0CC-0CF:bnk0'} // maps to area 00C-00F (bank 0)
+  {$SET_MAPPED_RAM '0E0-0EB:bnk3'} // maps to INDF, IW, PCL, STATUS, FSR, INTCON1, ISTATUS, IFSR, IBSR, OPACON, ANSEL, INTCON0 (bank 3)
+  {$SET_MAPPED_RAM '0EC-0EF:bnk0'} // maps to area 00C-00F (bank 0)
+
+
+  // -- Un-implemented fields --
+
+  {$SET_UNIMP_BITS '005:FE'} // OSCCAL bit 0 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '00B:F1'} // INTCON0 bits 3,2,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '021:1F'} // EECON bits 7,6,5 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '026:3F'} // EEADR bits 7,6 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '065:F1'} // INTCON1 bits 3,2,1 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '068:07'} // IBSR bits 7,6,5,4,3 un-implemented (read as 0)
+  {$SET_UNIMP_BITS '069:03'} // OPACON bits 7,6,5,4,3,2 un-implemented (read as 0)
+
+
+  // -- PIN mapping --
+
+  // Pin  1 : VPP/MCLR
+  // Pin  2 : RA0/AN0
+  // Pin  3 : RA1/AN1/C1IN+
+  // Pin  4 : RA2/AN2/CVREF1
+  // Pin  5 : RA3/AN3/C2IN+
+  // Pin  6 : RA4/AN4/T0CKI
+  // Pin  7 : RA5/AN5
+  // Pin  8 : VSS
+  // Pin  9 : RA7/CLKIN/OSC1
+  // Pin 10 : RA6/CLKOUT/OSC2
+  // Pin 11 : RC0
+  // Pin 12 : RC1/AN6/OPA1OUT
+  // Pin 13 : RC2/OPA1IN-
+  // Pin 14 : RC3/OPA1IN+
+  // Pin 15 : RC4/OPA2IN+
+  // Pin 16 : RC5/OPA2IN-
+  // Pin 17 : RC6/AN7/OPA2OUT
+  // Pin 18 : RC7/C2IN-
+  // Pin 19 : VSS
+  // Pin 20 : VDD
+  // Pin 21 : RB0
+  // Pin 22 : RB1
+  // Pin 23 : RB2
+  // Pin 24 : RB3/C1OUT
+  // Pin 25 : RB4/C2OUT
+  // Pin 26 : RB5
+  // Pin 27 : RB6/ICSPCLK
+  // Pin 28 : RB7/ICSPDAT/C1IN-/CVREF2
+
+
+  // -- RAM to PIN mapping --
+
+  {$MAP_RAM_TO_PIN '006:0-2,1-3,2-4,3-5,4-6,5-7,6-10,7-9'} // PORTA
+  {$MAP_RAM_TO_PIN '007:0-21,1-22,2-23,3-24,4-25,5-26,6-27,7-28'} // PORTB
+  {$MAP_RAM_TO_PIN '008:0-11,1-12,2-13,3-14,4-15,5-16,6-17,7-18'} // PORTC
+
+
+  // -- Bits Configuration --
+
+  // FOSC : Oscillator
+  {$define _FOSC_LP           = $0FF8}  // LP oscillator and 18 ms DRT
+  {$define _FOSC_XT           = $0FF9}  // XT oscillator and 18 ms DRT
+  {$define _FOSC_HS           = $0FFA}  // HS oscillator and 18 ms DRT
+  {$define _FOSC_EC           = $0FFB}  // EC oscillator with I/O function on OSC2/CLKOUT
+  {$define _FOSC_INTRC_IO     = $0FFC}  // INTRC with I/O function on OSC2/CLKOUT
+  {$define _FOSC_INTRC_CLKOUT = $0FFD}  // INTRC with CLKOUT function on OSC2/CLKOUT
+  {$define _FOSC_EXTRC_IO     = $0FFE}  // EXTRC with I/O function on OSC2/CLKOUT
+  {$define _FOSC_EXTRC_CLKOUT = $0FFF}  // EXTRC with CLKOUT function on OSC2/CLKOUT
+
+  // WDTE : Watchdog Timer Enable bit
+  {$define _WDTE_ON           = $0FFF}  // Enabled
+  {$define _WDTE_OFF          = $0FF7}  // Disabled
+
+  // CP : Code Protection bit
+  {$define _CP_OFF            = $0FFF}  // Code protection off
+  {$define _CP_ON             = $0FEF}  // Code protection on
+
+  // IOSCFS : Internal Oscillator Frequency Select
+  {$define _IOSCFS_8MHz       = $0FFF}  // 8 MHz INTOSC Speed
+  {$define _IOSCFS_4MHz       = $0FBF}  // 4 MHz INTOSC Speed
+
+  // CPSW : Code Protection bit - Flash Data Memory
+  {$define _CPSW_OFF          = $0FFF}  // Code protection off
+  {$define _CPSW_ON           = $0F7F}  // Code protection on
+
+  // BOREN : 
+  {$define _BOREN_ON          = $0FFF}  // BOR Enabled
+  {$define _BOREN_OFF         = $0EFF}  // BOR Disabled
+
+  // DRTEN : 
+  {$define _DRTEN_ON          = $0FFF}  // DRT Enabled
+  {$define _DRTEN_OFF         = $0DFF}  // DRT Disabled
+
+implementation
+end.
