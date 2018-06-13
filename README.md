@@ -9,7 +9,7 @@ Multi-platform Pascal cross-compiler for Microchip 8 bits PIC microcontrollers.
 
 ![PicPas IDE](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/04/PicPas.png "PicPas IDE")
 
-PicPas is a Pascal compiler, written in Lazarus, which generates executable code for Baseline and Mid-range PIC microcontrollers.
+PicPas is a Pascal compiler and IDE, written in Lazarus, which generates executable code for Baseline and Mid-range PIC microcontrollers.
 
 No additional libraries or software required to compile. PicPas generates the *.hex file directly.
 
@@ -127,7 +127,7 @@ Some features of the IDE are:
 
 •	Several setting options.
 
-•	Translated to english/spanish and german.
+•	Translated to english, french, spanish and german.
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/06/PicPas-0.7_en.png "PicPas with dark skin")
 
