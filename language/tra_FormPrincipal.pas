@@ -216,9 +216,9 @@
                          'Remplacer ceci?');
  MSG_SYNFIL_NOF := Trans('Syntax file not found: %s' , 'Archivo de sintaxis no encontrado: %s'   , '',
                          '','','',
-                         '');
+                         'Fichier de syntaxe non trouvé : %s');
  MSG_FILSAVCOMP  := Trans('File must be saved before compiling.', 'Archivo debe ser guardado antes de compilar', '',
                           '', '', '',
-                          '');
+                          'Le fichier doit être sauvegardé pour compiler.');
 
 
