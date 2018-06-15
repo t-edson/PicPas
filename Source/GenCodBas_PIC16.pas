@@ -712,6 +712,11 @@ begin
     addr := absAdd;
     //Pone nombre a la celda en RAM, para que pueda desensamblarse con detalle
     pic.SetNameRAM(addr, regName);
+    if pic.MsjError<>'' then begin
+      GenError(pic.MsjError);
+      pic.MsjError := '';  //Para evitar generar otra vez el mensaje
+      exit;
+    end;
   end;
 end;
 procedure TGenCodBas.CreateVarInRAM(nVar: TxpEleVar; shared: boolean = false);

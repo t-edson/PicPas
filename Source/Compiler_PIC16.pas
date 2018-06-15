@@ -9,6 +9,9 @@ uses
   GenCodBas_PIC16, GenCod_PIC16, ParserDirec_PIC16, Globales, FormConfig {Por diseño, parecería que GenCodBas, no debería accederse desde aquí};
 type
  { TCompiler }
+
+  { TCompiler_PIC16 }
+
   TCompiler_PIC16 = class(TParserDirec)
   private   //Funciones básicas
     function AddType(typName: string; srcPos: TSrcPos): TxpEleType;
@@ -69,7 +72,7 @@ type
      si se tiene un Stringlist, con los datos ya caragdos del archivo, para evitar
      tener que abrir nuevamente al archivo.}
     OnRequireFileString: procedure(FilePath: string; var strList: TStrings) of object;
-    procedure Compile(NombArc: string; Link: boolean = true); override;
+    procedure Compile(NombArc: string; Link: boolean); override;
     procedure RAMusage(lins: TStrings; varDecType: TVarDecType; ExcUnused: boolean); override; //uso de memoria RAM
     procedure DumpCode(lins: TSTrings; incAdrr, incCom, incVarNam: boolean); override; //uso de la memoria Flash
     function RAMusedStr: string; override;
@@ -2351,7 +2354,7 @@ begin
   cIn.curCon.SetStartPos;   //retorna al inicio
   exit(false);
 end;
-procedure TCompiler_PIC16.Compile(NombArc: string; Link: boolean = true);
+procedure TCompiler_PIC16.Compile(NombArc: string; Link: boolean);
 //Compila el contenido de un archivo.
 var
   p: SizeInt;
@@ -2404,7 +2407,7 @@ begin
     end else begin
       //Debe ser un programa
       {Se hace una primera pasada para ver, a modo de exploración, para ver qué
-      procedimientos, y varaibles son realmente usados, de modo que solo estos, serán
+      procedimientos, y variables son realmente usados, de modo que solo estos, serán
       codificados en la segunda pasada. Así evitamos incluir, código innecesario.}
       consoleTickStart;
 //      debugln('*** Compiling program: Pass 1.');
@@ -2413,21 +2416,18 @@ begin
       CompileProgram;  //puede dar error
       if HayError then exit;
       consoleTickCount('** First Pass.');
-      if Link then begin
-//        debugln('*** Compiling/Linking: Pass 2.');
+      if Link then begin  //El enlazado solo es válido para programas
         {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,
         que debe haber sido actualizado en la primera pasada.}
         FirstPass := false;
         CompileLinkProgram;
         consoleTickCount('** Second Pass.');
+        //Genera archivo hexa, en la misma ruta del programa
+        pic.GenHex(hexFile, ConfigWord);  //CONFIG_NULL;
       end;
     end;
     {-------------------------------------------------}
     cIn.ClearAll;//es necesario por dejar limpio
-    //Genera archivo hexa, en la misma ruta del programa
-    if Link then begin
-       pic.GenHex(hexFile, ConfigWord);  //CONFIG_NULL;
-    end;
   finally
     ejecProg := false;
     //Tareas de finalización

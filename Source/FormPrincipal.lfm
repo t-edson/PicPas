@@ -118,12 +118,12 @@ object frmPrincipal: TfrmPrincipal
       Action = acToolCompil
     end
     object ToolButton13: TToolButton
-      Left = 247
+      Left = 270
       Top = 2
       Action = acToolComEjec
     end
     object ToolButton15: TToolButton
-      Left = 270
+      Left = 293
       Height = 22
       Top = 2
       Caption = 'ToolButton15'
@@ -160,7 +160,7 @@ object frmPrincipal: TfrmPrincipal
       Action = acToolExt5
     end
     object ToolButton21: TToolButton
-      Left = 278
+      Left = 247
       Top = 2
       Action = acToolASMDebug
     end
@@ -1924,13 +1924,14 @@ object frmPrincipal: TfrmPrincipal
       Hint = 'Compila el archivo Actual'
       ImageIndex = 23
       OnExecute = acToolCompilExecute
-      ShortCut = 120
+      ShortCut = 16504
     end
     object acToolComEjec: TAction
       Category = 'Tool'
       Caption = 'Compilar y Ejecutar'
       ImageIndex = 24
       OnExecute = acToolComEjecExecute
+      ShortCut = 120
     end
     object acToolPICExpl: TAction
       Category = 'Tool'
@@ -1984,12 +1985,6 @@ object frmPrincipal: TfrmPrincipal
       ImageIndex = 35
       OnExecute = acToolASMDebugExecute
       ShortCut = 16507
-    end
-    object acToolConfig: TAction
-      Category = 'Tool'
-      Caption = '&Confi&gurar'
-      ImageIndex = 22
-      OnExecute = acToolConfigExecute
     end
     object acArcNewProj: TAction
       Category = 'Arc'
@@ -2074,6 +2069,17 @@ object frmPrincipal: TfrmPrincipal
       Caption = '&Assembler Panel'
       OnExecute = acViewAsmPanExecute
       ShortCut = 115
+    end
+    object acToolTestUnit: TAction
+      Category = 'Tool'
+      Caption = 'Test Device Units'
+      OnExecute = acToolTestUnitExecute
+    end
+    object acToolConfig: TAction
+      Category = 'Tool'
+      Caption = '&Confi&gurar'
+      ImageIndex = 22
+      OnExecute = acToolConfigExecute
     end
     object acToolExt1: TAction
       Category = 'Tool'
@@ -2243,6 +2249,21 @@ object frmPrincipal: TfrmPrincipal
       end
       object MenuItem44: TMenuItem
         Action = acToolListRep
+      end
+      object MenuItem51: TMenuItem
+        Caption = 'Select Compiler'
+        object MenuItem52: TMenuItem
+          Action = acToolSelPIC10
+        end
+        object MenuItem53: TMenuItem
+          Action = acToolSelPIC16
+        end
+        object MenuItem54: TMenuItem
+          Action = acToolSelPIC17
+        end
+      end
+      object MenuItem55: TMenuItem
+        Action = acToolTestUnit
       end
       object MenuItem23: TMenuItem
         Action = acToolConfig

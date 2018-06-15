@@ -236,7 +236,7 @@ public
 
   p1, p2   : ^TOperand;   //Pasa los operandos de la operación actual
   res      : TOperand;    //resultado de la evaluación de la última expresión.
-  procedure Compile(NombArc: string; Link: boolean = true); virtual; abstract;
+  procedure Compile(NombArc: string; Link: boolean); virtual; abstract;
   function OperationStr(Opt: TxpOperation): string;
 protected //Accesos a propeidades de p1^ y p2^.
   function value1: dword;

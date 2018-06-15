@@ -843,7 +843,7 @@ var
 begin
   if Sender is TMenuItem then begin
     mnItem := TMenuItem(Sender);
-    msgbox('Eureka:' + mnItem.Hint);
+//    msgbox('Eureka:' + mnItem.Hint);
   end;
 end;
 //Manejo de nodos
@@ -1034,7 +1034,7 @@ begin
     acGenAddConn.Visible   := false;
   end;
   //Verifica la funcionalidad del menú de "Conectar a"
-  //Verify if Connection point marked
+  //Verifica si se está marcado un punto de Conexión
   pCnx := motEdi.ConnectionPointMarked;
   if pCnx = nil then begin
     mnConnect.Visible := false;
@@ -1047,9 +1047,9 @@ begin
     //Ubica componente de origen
     if not(pCnx.Parent is TOgComponent) then exit;
     comp1 := TOgComponent(pCnx.Parent);
-    pin1 := TPinGraph(pCnx.data); //Aquí se guarda la referencia al pin2
-    mnConnect.Caption := Format('Connect %s to', [pin1.lbl]);
+    pin1 := TPinGraph(pCnx); //El Pto. de Conex. debe ser un pin
     if (comp1 = nil) or (pin1=nil) then exit;  //Protección
+    mnConnect.Caption := Format('Connect %s to', [pin1.lbl]);
     //Actualiza menú de Conexión, con objetos gráficos
     mnConnect.Clear;
     for og in motEdi.objetos do begin
@@ -1058,6 +1058,7 @@ begin
       comp2 := TOgComponent(og);
       for pCnx2 in comp2.PtosConex do begin
         pin2 := TPinGraph(pCnx2);
+        if pin2.lbl = 'NC' then continue;  //No conectado
         if pin2 = nil then continue;
         it2 := AddItemToMenu(it, pin2.lbl, @ConnectAction);
         it2.Hint := comp1.Ref + '.' + IntToStr(pin1.nPin)+'-'+

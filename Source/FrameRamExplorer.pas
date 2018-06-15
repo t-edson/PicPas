@@ -291,14 +291,14 @@ var
   tarAdd, tarBnk, tmp: Word;
 begin
   cv := panGraph.Canvas;
+  //protección
+  if bnk.AddrStart > high(pic.ram) then exit;
+  if bnk.AddrEnd  > high(pic.ram) then exit;
   //Calcula el ancho de las etqiuetas
   ancMargenDir := cv.TextWidth('XXX');
   if ancMargenDir>(marcoRam.Right - marcoRam.Left)*0.5 then begin
     ancMargenDir := 0;
   end;
-  //Limpia fondo
-//  DrawBlock(marcoRam, ancMargenDir, blockSta[i].add1, blockSta[i].add2);  //dibuja;
-
   //Dibuja primero los bloques de memoria usadas
   SplitInUsedRAM(bnk.AddrStart, bnk.AddrEnd);
   cv.Pen.Color := $80FF80;
@@ -311,12 +311,6 @@ begin
     end;
   end;
   //Dibuja zonas de la RAM
-  //Verifica si está seleccionada
-  if selected then begin
-    cv.Pen.Width := 2;
-    cv.Pen.Color := clBlue;
-    cv.Frame(marcoRam.Left+ancMargenDir-1, marcoRam.Top-1, marcoRam.Right+2, marcoRam.Bottom+3);
-  end;
   cv.Pen.Width := 1;
   cv.Pen.Color := clBlack;
   //Separa bloques
@@ -365,6 +359,12 @@ begin
                 blockSta[i].add1, blockSta[i].add2, tmp, lbl);  //dibuja;
     end;
   end;
+  //Verifica si está seleccionada
+  if selected then begin
+    cv.Pen.Width := 2;
+    cv.Pen.Color := clBlue;
+    cv.Frame(marcoRam.Left+ancMargenDir-1, marcoRam.Top-1, marcoRam.Right+2, marcoRam.Bottom+3);
+  end;
 end;
 procedure TfraRamExplorer.panGraphPaint(Sender: TObject);
 var
@@ -372,10 +372,11 @@ var
   bnkSel: byte;
 begin
   ////////////////////////
+  if pic = nil then exit;
   //Espaciado entre bancos
   if width < 250 then begin
     //Ancho reducido
-    separ := panGraph.width div 24;  //espacio lateral
+    separ := panGraph.width div (cxp.picCore.NumBanks*2);  //espacio lateral
     bordlat := panGraph.width div 24;
   end else begin
     //Ancho grande
@@ -388,6 +389,7 @@ begin
       bordlat := panGraph.width div 18;
     end;
   end;
+  if separ < 5 then separ := 0; //Juanta si hay pcoo espacio
   bordSup := panGraph.height div 15;  //espacio superior
   ancPag := (panGraph.width - bordlat * 2 - separ * (cxp.PICnBanks-1)) div cxp.PICnBanks;
   alto := panGraph.height - 2* bordSup;

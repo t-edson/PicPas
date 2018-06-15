@@ -2421,14 +2421,12 @@ begin
         FirstPass := false;
         CompileLinkProgram;
         consoleTickCount('** Second Pass.');
+        //Genera archivo hexa, en la misma ruta del programa
+        pic.GenHex(hexFile, ConfigWord);  //CONFIG_NULL;
       end;
     end;
     {-------------------------------------------------}
     cIn.ClearAll;//es necesario por dejar limpio
-    //Genera archivo hexa, en la misma ruta del programa
-    if Link then begin
-       pic.GenHex(hexFile, ConfigWord);  //CONFIG_NULL;
-    end;
   finally
     ejecProg := false;
     //Tareas de finalización
