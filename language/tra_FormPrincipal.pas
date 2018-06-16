@@ -188,6 +188,9 @@
  acToolASMDebug.Hint   := Trans('ASM &Debugger'        , '&Depurador de ASM'            , '',
                                 '','ASM зневаджувач','ASM отладчик',
                                 'Démarrer le Débogueur');
+ MenuItem51.Caption    := Trans('&Select Compiler'        , '&Elegir Compilador'            , '',
+                                '','','',
+                                '');
  acToolConfig.Caption  := Trans('&Settings'               , '&Configuración'                , 'Kamachina',
                                 '&Einstellungen','Налагодження','Настройки',
                                 '&Paramètres');
@@ -220,5 +223,16 @@
  MSG_FILSAVCOMP  := Trans('File must be saved before compiling.', 'Archivo debe ser guardado antes de compilar', '',
                           '', '', '',
                           'Le fichier doit être sauvegardé pour compiler.');
-
+ MSG_BASEL_COMP  := Trans('Baseline Compiler', 'Compilador Baseline', '',
+                          '', '', '',
+                          '');
+ MSG_MIDRAN_COMP := Trans('Mid-range Compiler', 'Compilador Mid-range', '',
+                          '', '', '',
+                          '');
+ MSG_ENMIDR_COMP := Trans('Enhanced Mid-range Compiler', 'Compilador Enhanced Mid-range', '',
+                          '', '', '',
+                          '');
+ MSG_PROJECT     := Trans('Project: ', '', '',
+                          '', '', '',
+                          '');
 
