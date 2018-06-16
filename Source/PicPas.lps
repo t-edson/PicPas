@@ -18,9 +18,9 @@
         <ComponentName Value="frmPrincipal"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <TopLine Value="1060"/>
-        <CursorPos X="25" Y="1078"/>
-        <FoldState Value=" TL00304111 T4709 T5H0}.2 T7JI}; T8K2}T]F3n70J6 piZjI057]9dj90X5]9YjU083 pkOf2931D TMnK2103111E181H121 T6nd01E T0o1g2F]tamdnH]9j5kWV4C1D3A THwMRD1,"/>
+        <TopLine Value="1055"/>
+        <CursorPos X="28" Y="1088"/>
+        <FoldState Value=" TL00304111 T4709 T5H0}.2 T7JI}; T8K2}T]F3n70J6 piZjI057]9dj90X5]9YjU083 pkOf2931DH]%MnK2103111E181H12]K6nd01E T0o1g2F]vamdnH]9j5kWV4C1D3A THwMRD1B"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <WindowIndex Value="1"/>
@@ -98,17 +98,16 @@
       <Unit6>
         <Filename Value="Parser.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
-        <TopLine Value="293"/>
-        <CursorPos X="23" Y="309"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="247"/>
+        <CursorPos X="3" Y="263"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
-          <TopLine Value="247"/>
-          <CursorPos X="3" Y="263"/>
+          <TopLine Value="293"/>
+          <CursorPos X="23" Y="309"/>
         </ExtraEditor1>
         <UsageCount Value="200"/>
-        <Loaded Value="True"/>
       </Unit6>
       <Unit7>
         <Filename Value="FrameSyntaxTree.pas"/>
@@ -304,12 +303,10 @@
         <ComponentName Value="frmRAMExplorer"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="32"/>
         <CursorPos X="54" Y="38"/>
         <UsageCount Value="200"/>
-        <Loaded Value="True"/>
-        <LoadedDesigner Value="True"/>
       </Unit24>
       <Unit25>
         <Filename Value="FrameRomExplorer.pas"/>
@@ -352,15 +349,18 @@
         <ComponentName Value="fraPICDiagram"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="330"/>
-        <CursorPos Y="331"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="853"/>
+        <CursorPos X="29" Y="869"/>
+        <FoldState Value=" TL005012C421131141 p0tT0]A41112 T4903 T5lY081 T7KEO0]h]J8L2542325[D4Mt5230518171K2C[=4N2]m3m90E2 pjCjU0A7 picj0092]d4]MNm30C5[M5F0F7152[i42p70G61]+0mCI28]WgiHQUG]9aj0g3J]9ZrJR20172B]o8mgWC2 T6ma04E p0vO01318 THr1D3*"/>
         <UsageCount Value="200"/>
+        <Loaded Value="True"/>
       </Unit28>
       <Unit29>
         <Filename Value="GenCodBas_PIC10.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="1"/>
         <TopLine Value="702"/>
         <CursorPos X="9" Y="727"/>
@@ -370,7 +370,8 @@
       <Unit30>
         <Filename Value="GenCod_PIC10.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="1"/>
         <TopLine Value="2614"/>
         <CursorPos X="14" Y="2622"/>
@@ -407,12 +408,11 @@
       <Unit34>
         <Filename Value="ParserDirec.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="776"/>
         <CursorPos X="33" Y="1150"/>
         <FoldState Value=" TL0010212111[64 T580m012 TMrD410W151E]N7DGD4 T8E267 pidk0243 T3lO08B plZmF0R4 pj4ja0C1]ZYj50D1]IYk708[R4ciU2V2]9Uk9]j1127 T0lQT19]LZjYZ7F]vXj9d3D]9ZjeB5P[$4k996H[94iI/2[R4aj9Z3B[a52MK[j5icP3C[R5NcIR[j4s2c34 T6nQ07b THoYD.2[Y4oKD{Z]QKqe03 p0/O02."/>
         <UsageCount Value="206"/>
-        <Loaded Value="True"/>
       </Unit34>
       <Unit35>
         <Filename Value="FramePicAsm.pas"/>
@@ -428,7 +428,7 @@
       <Unit36>
         <Filename Value="GenCodBas_PIC17.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="1704"/>
         <CursorPos Y="1722"/>
         <UsageCount Value="203"/>
@@ -458,12 +458,11 @@
       <Unit40>
         <Filename Value="Compiler_PIC17.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="-1"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="2393"/>
-        <CursorPos X="45" Y="2422"/>
+        <TopLine Value="1009"/>
+        <CursorPos X="23" Y="1024"/>
         <UsageCount Value="200"/>
-        <Loaded Value="True"/>
       </Unit40>
       <Unit41>
         <Filename Value="XpresTypesPIC.pas"/>
@@ -543,12 +542,11 @@
       </Unit48>
       <Unit49>
         <Filename Value="..\..\_Librerias\Xpres-1.3.2\XpresBas.pas"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <WindowIndex Value="1"/>
         <TopLine Value="520"/>
         <CursorPos Y="536"/>
-        <UsageCount Value="56"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="57"/>
       </Unit49>
       <Unit50>
         <Filename Value="..\..\_Librerias\MisUtils-0.6\MisUtils.pas"/>
@@ -579,177 +577,158 @@
       </Unit53>
       <Unit54>
         <Filename Value="..\..\_Librerias\PicUtils-1.6\Pic17Utils.pas"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="1925"/>
         <CursorPos X="9" Y="1939"/>
-        <UsageCount Value="24"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="23"/>
       </Unit54>
       <Unit55>
         <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="-1"/>
         <WindowIndex Value="1"/>
         <TopLine Value="500"/>
         <CursorPos X="18" Y="513"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
-          <IsVisibleTab Value="True"/>
-          <EditorIndex Value="1"/>
-          <TopLine Value="572"/>
-          <CursorPos X="43" Y="591"/>
+          <EditorIndex Value="-1"/>
+          <TopLine Value="513"/>
+          <CursorPos X="17" Y="515"/>
         </ExtraEditor1>
-        <UsageCount Value="23"/>
+        <UsageCount Value="22"/>
         <Bookmarks Count="1">
           <Item0 X="3" Y="558" ID="1"/>
         </Bookmarks>
-        <Loaded Value="True"/>
       </Unit55>
       <Unit56>
         <Filename Value="..\..\_Librerias\PicUtils-1.6\Pic16Utils.pas"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="1"/>
         <TopLine Value="1306"/>
         <CursorPos X="12" Y="1347"/>
-        <UsageCount Value="11"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
       </Unit56>
     </Units>
-    <General>
-      <ActiveWindowIndexAtStart Value="1"/>
-    </General>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="479" TopLine="470"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="979" Column="33" TopLine="917"/>
       </Position1>
       <Position2>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="487" TopLine="470"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="1167" Column="30" TopLine="1147"/>
       </Position2>
       <Position3>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="489" TopLine="470"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="979" Column="15" TopLine="963"/>
       </Position3>
       <Position4>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="491" Column="26" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="849" Column="11" TopLine="832"/>
       </Position4>
       <Position5>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="495" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="979" Column="33" TopLine="917"/>
       </Position5>
       <Position6>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="496" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="1167" Column="30" TopLine="1150"/>
       </Position6>
       <Position7>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="497" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
       </Position7>
       <Position8>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="498" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="530" Column="5" TopLine="503"/>
       </Position8>
       <Position9>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="499" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="531" Column="31" TopLine="503"/>
       </Position9>
       <Position10>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="498" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="849" Column="29" TopLine="821"/>
       </Position10>
       <Position11>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="499" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="526" Column="26" TopLine="511"/>
       </Position11>
       <Position12>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="495" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="70" Column="5" TopLine="53"/>
       </Position12>
       <Position13>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="496" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="526" Column="21" TopLine="509"/>
       </Position13>
       <Position14>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="497" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="364" TopLine="364"/>
       </Position14>
       <Position15>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="498" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="526" Column="21" TopLine="364"/>
       </Position15>
       <Position16>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="499" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="853" Column="22" TopLine="848"/>
       </Position16>
       <Position17>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="498" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="979" Column="33" TopLine="849"/>
       </Position17>
       <Position18>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="499" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="850" Column="5" TopLine="766"/>
       </Position18>
       <Position19>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="498" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="929" Column="25" TopLine="813"/>
       </Position19>
       <Position20>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="499" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="180" Column="23" TopLine="164"/>
       </Position20>
       <Position21>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="498" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="929" Column="34" TopLine="812"/>
       </Position21>
       <Position22>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="499" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="854" Column="27" TopLine="843"/>
       </Position22>
       <Position23>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="498" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="855" Column="5" TopLine="813"/>
       </Position23>
       <Position24>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="499" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="937" Column="8" TopLine="854"/>
       </Position24>
       <Position25>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="498" TopLine="484"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="861" Column="22" TopLine="813"/>
       </Position25>
       <Position26>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="464" TopLine="449"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="58" Column="18" TopLine="15"/>
       </Position26>
       <Position27>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="509" TopLine="489"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="863" TopLine="829"/>
       </Position27>
       <Position28>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="511" TopLine="495"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="859" Column="5" TopLine="840"/>
       </Position28>
       <Position29>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="512" TopLine="495"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="866" Column="7" TopLine="835"/>
       </Position29>
       <Position30>
-        <Filename Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Caret Line="513" TopLine="495"/>
+        <Filename Value="FramePICDiagram.pas"/>
+        <Caret Line="870" TopLine="848"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
-  <Debugging>
-    <BreakPoints Count="1">
-      <Item1>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="..\..\_Librerias\PicUtils-1.6\PicCore.pas"/>
-        <Line Value="495"/>
-      </Item1>
-    </BreakPoints>
-  </Debugging>
 </CONFIG>

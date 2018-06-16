@@ -118,7 +118,7 @@ object frmPrincipal: TfrmPrincipal
       Action = acToolCompil
     end
     object ToolButton13: TToolButton
-      Left = 270
+      Left = 293
       Top = 2
       Action = acToolComEjec
     end
@@ -175,7 +175,7 @@ object frmPrincipal: TfrmPrincipal
       Style = tbsDropDown
     end
     object ToolButton22: TToolButton
-      Left = 293
+      Left = 270
       Top = 2
       Action = acToolRamExp
     end

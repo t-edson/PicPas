@@ -8,9 +8,9 @@ unit FramePICDiagram;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, FileUtil, fgl, Forms, Controls, ExtCtrls, Graphics, Menus,
-  ActnList, LCLProc, ogMotEdicion, ogMotGraf2D, ogDefObjGraf, PicCore, Parser,
-  MisUtils;
+  Classes, SysUtils, FileUtil, fgl, Types, Forms, Controls, ExtCtrls, Graphics,
+  Menus, ActnList, LCLProc, ogMotEdicion, ogMotGraf2D, ogDefObjGraf, PicCore,
+  Parser, MisUtils;
 type
   { TPinGraph }
   {Objeto que modela a un pin físico de un componente electrónico.
@@ -177,7 +177,7 @@ type
     procedure connectorChange;
     function ExistsName(AName: string): boolean;
     function UniqueName(NameBase: string): string;
-    function ExistsRef(ARef: string): boolean;
+    function ExistsRef(ARef: string): TOgComponent;
     function UniqueRef(RefBase: string): string;
   private  //Manejo de nodos
     nodeList: TNodeList;
@@ -840,10 +840,35 @@ end;
 procedure TfraPICDiagram.ConnectAction(Sender: TObject);
 var
   mnItem: TMenuItem;
+  oc: TOgConector;
+  a: TStringDynArray;
+  comp1: TOgComponent;
+  nPin1: LongInt;
+  pCnx1: TPtoConx;
+  pin1 : TPinGraph;
+  id1, id2: String;
 begin
   if Sender is TMenuItem then begin
     mnItem := TMenuItem(Sender);
-//    msgbox('Eureka:' + mnItem.Hint);
+    //Agrega conector
+    acGenAddConnExecute(self);
+    oc := TOgConector(motEdi.Selected);
+    //Ubica nodo Inicial
+    MsgBox(mnItem.Hint);
+    a := Explode('-', mnItem.Hint);
+    id1 := a[0];
+    id2 := a[1];
+    a := Explode('.', id1);
+    comp1 := ExistsRef(a[0]);
+    nPin1 := StrToInt(a[1]);
+    pCnx1 := comp1.PtosConex[nPin1];
+    if not(pCnx1 is TPinGraph) then exit;
+    pin1 := TPinGraph(pCnx1);
+    //Ahora se conecta un nodo (Punto de control) al Pto. de Conexión
+    pin1.ConnectTo(oc.pcBEGIN);
+    pin1.Locate(pin1.x, pin1.y); //Actualiza el "enganche"
+//    oc.Selec;          //Selecciona el conector
+
   end;
 end;
 //Manejo de nodos
@@ -913,16 +938,16 @@ begin
     Result := NameBase + IntToStr(n);
   end;
 end;
-function TfraPICDiagram.ExistsRef(ARef: string): boolean;
-{Indica si existe algún componente con la referencia Aref}
+function TfraPICDiagram.ExistsRef(ARef: string): TOgComponent;
+{Indica si existe algún componente con la referencia Aref. Si no existe devuelve NIL.}
 var
   og: TObjGraf;
 begin
   for og in motEdi.objetos do begin
     if not(og is TOgComponent) then continue;
-    if TOgComponent(og).Ref = ARef then exit(true);
+    if TOgComponent(og).Ref = ARef then exit(TOgComponent(og));
   end;
-  exit(false);
+  exit(Nil);
 end;
 function TfraPICDiagram.UniqueRef(RefBase: string): string;
 {Obtiene una referencia única tomando como base la cadena "RefBase", de modo que si
@@ -932,7 +957,7 @@ var
 begin
   n := 1;   //Empieza con este valor
   Result := RefBase + IntToStr(n);  //Nombre tentativo
-  While ExistsRef(Result) do begin
+  While ExistsRef(Result)<>nil do begin
     Inc(n);
     Result := RefBase + IntToStr(n);
   end;
@@ -1174,5 +1199,4 @@ begin
   UpdateNodeList;
 end;
 end.
-
 
