@@ -161,20 +161,20 @@ object frmRAMExplorer: TfrmRAMExplorer
       Left = 40
       Height = 15
       Top = 4
-      Width = 45
-      Caption = 'SFR Reg.'
+      Width = 19
+      Caption = 'SFR'
       ParentColor = False
     end
     object Label3: TLabel
-      Left = 136
+      Left = 120
       Height = 15
       Top = 4
-      Width = 48
-      Caption = 'GPR Reg.'
+      Width = 22
+      Caption = 'GPR'
       ParentColor = False
     end
     object Label4: TLabel
-      Left = 232
+      Left = 304
       Height = 15
       Top = 4
       Width = 59
@@ -188,16 +188,30 @@ object frmRAMExplorer: TfrmRAMExplorer
       Width = 24
     end
     object Shape2: TShape
-      Left = 104
+      Left = 88
       Height = 18
       Top = 4
       Width = 24
     end
     object Shape3: TShape
-      Left = 200
+      Left = 272
       Height = 18
       Top = 4
       Width = 24
+    end
+    object Shape4: TShape
+      Left = 168
+      Height = 18
+      Top = 4
+      Width = 24
+    end
+    object Label5: TLabel
+      Left = 200
+      Height = 15
+      Top = 4
+      Width = 51
+      Caption = 'GPR Used'
+      ParentColor = False
     end
   end
 end

@@ -374,31 +374,22 @@ begin
   ////////////////////////
   if pic = nil then exit;
   //Espaciado entre bancos
-  if width < 250 then begin
-    //Ancho reducido
-    separ := panGraph.width div (cxp.picCore.NumBanks*2);  //espacio lateral
-    bordlat := panGraph.width div 24;
-  end else begin
-    //Ancho grande
-    if cxp.picCore.NumBanks = 1 then begin
-      //Es un solo banco. Puede quedar mal proporcionada
-      separ := panGraph.width div 4;  //espacio lateral
-      bordlat := panGraph.width div 4;
-    end else begin
-      separ := panGraph.width div 18;  //espacio lateral
-      bordlat := panGraph.width div 18;
-    end;
+  ancPag := panGraph.width div (cxp.picCore.NumBanks+1);
+  bordlat := ancPag div 2;
+  separ := 0;
+  if ancPag>15 then begin
+    Dec(ancPag,5);
+    separ := 5;
   end;
-  if separ < 5 then separ := 0; //Juanta si hay pcoo espacio
+
   bordSup := panGraph.height div 15;  //espacio superior
-  ancPag := (panGraph.width - bordlat * 2 - separ * (cxp.PICnBanks-1)) div cxp.PICnBanks;
   alto := panGraph.height - 2* bordSup;
 //debugln('panGraph.width: %d bordLat: %d', [panGraph.width, bordlat]);
   x0 := bordlat;
   y0 := bordsup;
   bnkSel := cxp.PICCurBank;
   for i:=0 to cxp.PICnBanks-1 do begin
-    DrawRAMbank(Rect(x0, y0, x0+ancPag, y0+alto), cxp.PICBank(i), i = bnkSel);
+    DrawRAMbank(Rect(x0, y0, x0+ancPag+1, y0+alto), cxp.PICBank(i), i = bnkSel);
     x0 := x0 + ancPag + separ;
   end;
 end;

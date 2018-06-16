@@ -12,10 +12,12 @@ type
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
+    Label5: TLabel;
     panStatBar: TPanel;
     Shape1: TShape;
     Shape2: TShape;
     Shape3: TShape;
+    Shape4: TShape;
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
@@ -39,6 +41,7 @@ begin
   fra.Parent := self;
   fra.panTitle.Visible := false;
   Shape1.Brush.Color := $FF9090;
+  Shape4.Brush.Color := $80FF80;
   Shape3.Brush.Color := clGray;
 end;
 

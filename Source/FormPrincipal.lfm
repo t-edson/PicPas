@@ -123,39 +123,39 @@ object frmPrincipal: TfrmPrincipal
       Action = acToolComEjec
     end
     object ToolButton15: TToolButton
-      Left = 293
+      Left = 316
       Height = 22
       Top = 2
       Caption = 'ToolButton15'
       Style = tbsSeparator
     end
     object ToolButton16: TToolButton
-      Left = 301
+      Left = 324
       Top = 2
       Action = acToolConfig
     end
     object ToolButton14: TToolButton
-      Left = 359
+      Left = 382
       Top = 2
       Action = acToolExt1
     end
     object ToolButton17: TToolButton
-      Left = 382
+      Left = 405
       Top = 2
       Action = acToolExt2
     end
     object ToolButton18: TToolButton
-      Left = 405
+      Left = 428
       Top = 2
       Action = acToolExt3
     end
     object ToolButton19: TToolButton
-      Left = 428
+      Left = 451
       Top = 2
       Action = acToolExt4
     end
     object ToolButton20: TToolButton
-      Left = 451
+      Left = 474
       Top = 2
       Action = acToolExt5
     end
@@ -165,7 +165,7 @@ object frmPrincipal: TfrmPrincipal
       Action = acToolASMDebug
     end
     object butSelCompiler: TToolButton
-      Left = 324
+      Left = 347
       Hint = 'Select Compiler'
       Top = 2
       Caption = 'tbSelCompiler'
@@ -173,6 +173,11 @@ object frmPrincipal: TfrmPrincipal
       ImageIndex = 27
       OnClick = butSelCompilerClick
       Style = tbsDropDown
+    end
+    object ToolButton22: TToolButton
+      Left = 293
+      Top = 2
+      Action = acToolRamExp
     end
   end
   object splSynTree: TSplitter

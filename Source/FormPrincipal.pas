@@ -153,6 +153,7 @@ type
     ToolButton20: TToolButton;
     ToolButton21: TToolButton;
     butSelCompiler: TToolButton;
+    ToolButton22: TToolButton;
     ToolButton3: TToolButton;
     ToolButton4: TToolButton;
     ToolButton5: TToolButton;
