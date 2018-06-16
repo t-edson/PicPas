@@ -2,7 +2,7 @@
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7LKYWG9LXNQ9C&lc=ES&item_name=Tito%20Hinostroza&item_number=2153&no_note=0&cn=Dar%20instrucciones%20especiales%20al%20vendedor%3a&no_shipping=2&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted)
 
-PicPas 0.8.7
+PicPas 0.8.8
 ============
 
 Multi-platform Pascal cross-compiler for Microchip 8 bits PIC microcontrollers.
@@ -872,10 +872,29 @@ The syntax of $SET_STATE_RAM is:
 {$SET_STATE_RAM <list of commands>}
 ```
 
-One valid example would be:
+COmmands are separaed by commas. One command have teh syntax:
+
+<Begin adrress>-<End address>:<state>
+
+One valid example, for this directive, would be:
 
 ```
 {$SET_STATE_RAM '000-00B:SFR'};
+```
+
+That indicates the bytes in RAM from $000 to $00B are SFR.
+
+Addresses are expressed always in hexadecimal. 
+
+Other example are:
+
+```
+//Multiple commands in one directive
+{$SET_STATE_RAM '000-00B:SFR, 00C-04F:GPR'}  
+//Set state for all banks
+{$SET_STATE_RAM '000-00C:SFR:ALL'}  
+//Set state for all banks and map them to bank 0
+{$SET_STATE_RAM '000-00C:SFR:ALLMAPPED'}  
 ```
 
 #### $SET_MAPPED_RAM
