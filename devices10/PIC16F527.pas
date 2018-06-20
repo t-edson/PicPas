@@ -143,41 +143,25 @@ var
 
   {$CLEAR_STATE_RAM}
 
-  {$SET_STATE_RAM '000-00B:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0
-  {$SET_STATE_RAM '00C-00F:GPR'} 
-  {$SET_STATE_RAM '010-01F:GPR'} 
-  {$SET_STATE_RAM '020-020:SFR'}  // mapped to INDF
-  {$SET_STATE_RAM '021-021:SFR'}  // EECON
-  {$SET_STATE_RAM '022-024:SFR'}  // mapped to PCL, STATUS, FSR
-  {$SET_STATE_RAM '025-02A:SFR'}  // EEDATA, EEADR, CM1CON0, CM2CON0, VRCON, ANSEL
-  {$SET_STATE_RAM '02B-02B:SFR'}  // mapped to INTCON0
-  {$SET_STATE_RAM '02C-02F:GPR'} 
-  {$SET_STATE_RAM '030-03F:GPR'} 
-  {$SET_STATE_RAM '040-04B:SFR'}  // mapped to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0
-  {$SET_STATE_RAM '04C-04F:GPR'} 
-  {$SET_STATE_RAM '050-05F:GPR'} 
-  {$SET_STATE_RAM '060-060:SFR'}  // mapped to INDF
-  {$SET_STATE_RAM '061-061:SFR'}  // IW
-  {$SET_STATE_RAM '062-064:SFR'}  // mapped to PCL, STATUS, FSR
-  {$SET_STATE_RAM '065-069:SFR'}  // INTCON1, ISTATUS, IFSR, IBSR, OPACON
-  {$SET_STATE_RAM '06A-06B:SFR'}  // mapped to ANSEL, INTCON0
-  {$SET_STATE_RAM '06C-06F:GPR'} 
-  {$SET_STATE_RAM '070-07F:GPR'} 
+  {$SET_STATE_RAM '000-000:SFR:ALLMAPPED'}  // Banks 0-3 : INDF
+  {$SET_STATE_RAM '001-001:SFR:ALL'}        // Bank 0 : TMR0
+                                            // Bank 1 : EECON
+                                            // Bank 2 : TMR0
+                                            // Bank 3 : IW
+  {$SET_STATE_RAM '002-004:SFR:ALLMAPPED'}  // Banks 0-3 : PCL, STATUS, FSR
+  {$SET_STATE_RAM '005-00A:SFR:ALL'}        // Bank 0 : OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES
+                                            // Bank 1 : EEDATA, EEADR, CM1CON0, CM2CON0, VRCON, ANSEL
+                                            // Bank 2 : OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES
+                                            // Bank 3 : INTCON1, ISTATUS, IFSR, IBSR, OPACON, ANSEL
+  {$SET_STATE_RAM '00B-00B:SFR:ALLMAPPED'}  // Banks 0-3 : INTCON0
+  {$SET_STATE_RAM '00C-00F:GPR:ALLMAPPED'} 
+  {$SET_STATE_RAM '010-01F:GPR:ALL'}       
 
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '020-020:bnk0'} // maps to INDF (bank 0)
-  {$SET_MAPPED_RAM '022-024:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
-  {$SET_MAPPED_RAM '02B-02B:bnk0'} // maps to INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '02C-02F:bnk0'} // maps to area 00C-00F (bank 0)
   {$SET_MAPPED_RAM '040-04B:bnk0'} // maps to INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTA, PORTB, PORTC, ADCON0, ADRES, INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '04C-04F:bnk0'} // maps to area 00C-00F (bank 0)
-  {$SET_MAPPED_RAM '060-060:bnk0'} // maps to INDF (bank 0)
-  {$SET_MAPPED_RAM '062-064:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '06A-06A:bnk1'} // maps to ANSEL (bank 1)
-  {$SET_MAPPED_RAM '06B-06B:bnk0'} // maps to INTCON0 (bank 0)
-  {$SET_MAPPED_RAM '06C-06F:bnk0'} // maps to area 00C-00F (bank 0)
 
 
   // -- Un-implemented fields --

@@ -44,8 +44,8 @@ var
 
   {$CLEAR_STATE_RAM}
 
-  {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB
-  {$SET_STATE_RAM '007-01F:GPR'} 
+  {$SET_STATE_RAM '000-006:SFR'}            // Bank 0 : INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB
+  {$SET_STATE_RAM '007-01F:GPR'}           
 
 
   // -- Un-implemented fields --
