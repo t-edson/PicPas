@@ -396,51 +396,43 @@ var
 
   {$CLEAR_STATE_RAM}
 
-  {$SET_STATE_RAM '000-01F:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB, PORTC, PORTD, PORTE, PCLATH, INTCON, PIR1, PIR2, TMR1L, TMR1H, T1CON, TMR2, T2CON, SSPBUF, SSPCON, CCPR1L, CCPR1H, CCP1CON, RCSTA, TXREG, RCREG, CCPR2L, CCPR2H, CCP2CON, ADRESH, ADCON0
-  {$SET_STATE_RAM '020-06F:GPR'} 
-  {$SET_STATE_RAM '070-07F:GPR'} 
-  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
-  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
-  {$SET_STATE_RAM '082-084:SFR'}  // mapped to PCL, STATUS, FSR
-  {$SET_STATE_RAM '085-089:SFR'}  // TRISA, TRISB, TRISC, TRISD, TRISE
-  {$SET_STATE_RAM '08A-08B:SFR'}  // mapped to PCLATH, INTCON
-  {$SET_STATE_RAM '08C-099:SFR'}  // PIE1, PIE2, PCON, OSCCON, OSCTUNE, ANSEL, PR2, SSPADD, SSPSTAT, WPUB, IOCB, CMCON1, TXSTA, SPBRG
-  {$SET_STATE_RAM '09C-09F:SFR'}  // CMCON0, VRCON, ADRESL, ADCON1
-  {$SET_STATE_RAM '0A0-0EF:GPR'} 
-  {$SET_STATE_RAM '0F0-0FF:GPR'} 
-  {$SET_STATE_RAM '100-104:SFR'}  // mapped to INDF, TMR0, PCL, STATUS, FSR
-  {$SET_STATE_RAM '105-105:SFR'}  // WDTCON
-  {$SET_STATE_RAM '106-106:SFR'}  // mapped to PORTB
-  {$SET_STATE_RAM '107-109:SFR'}  // LCDCON, LCDPS, LVDCON
-  {$SET_STATE_RAM '10A-10B:SFR'}  // mapped to PCLATH, INTCON
-  {$SET_STATE_RAM '10C-11E:SFR'}  // EEDATL, EEADRL, EEDATH, EEADRH, LCDDATA0, LCDDATA1, LCDDATA2, LCDDATA3, LCDDATA4, LCDDATA5, LCDDATA6, LCDDATA7, LCDDATA8, LCDDATA9, LCDDATA10, LCDDATA11, LCDSE0, LCDSE1, LCDSE2
-  {$SET_STATE_RAM '120-16F:GPR'} 
-  {$SET_STATE_RAM '170-17F:GPR'} 
-  {$SET_STATE_RAM '180-184:SFR'}  // mapped to INDF, OPTION_REG, PCL, STATUS, FSR
-  {$SET_STATE_RAM '186-186:SFR'}  // mapped to TRISB
-  {$SET_STATE_RAM '18A-18B:SFR'}  // mapped to PCLATH, INTCON
-  {$SET_STATE_RAM '18C-18D:SFR'}  // EECON1, EECON2
-  {$SET_STATE_RAM '1F0-1FF:GPR'} 
+  {$SET_STATE_RAM '000-000:SFR:ALLMAPPED'}  // Banks 0-3 : INDF
+  {$SET_STATE_RAM '001-001:SFR:ALL'}        // Bank 0 : TMR0
+                                            // Bank 1 : OPTION_REG
+                                            // Bank 2 : TMR0
+                                            // Bank 3 : OPTION_REG
+  {$SET_STATE_RAM '002-004:SFR:ALLMAPPED'}  // Banks 0-3 : PCL, STATUS, FSR
+  {$SET_STATE_RAM '005-005:SFR'}            // Bank 0 : PORTA
+  {$SET_STATE_RAM '006-006:SFR:ALL'}        // Bank 0 : PORTB
+                                            // Bank 1 : TRISB
+                                            // Bank 2 : PORTB
+                                            // Bank 3 : TRISB
+  {$SET_STATE_RAM '007-009:SFR'}            // Bank 0 : PORTC, PORTD, PORTE
+  {$SET_STATE_RAM '00A-00B:SFR:ALLMAPPED'}  // Banks 0-3 : PCLATH, INTCON
+  {$SET_STATE_RAM '00C-00D:SFR:ALL'}        // Bank 0 : PIR1, PIR2
+                                            // Bank 1 : PIE1, PIE2
+                                            // Bank 2 : EEDATL, EEADRL
+                                            // Bank 3 : EECON1, EECON2
+  {$SET_STATE_RAM '00E-01F:SFR'}            // Bank 0 : TMR1L, TMR1H, T1CON, TMR2, T2CON, SSPBUF, SSPCON, CCPR1L, CCPR1H, CCP1CON, RCSTA, TXREG, RCREG, CCPR2L, CCPR2H, CCP2CON, ADRESH, ADCON0
+  {$SET_STATE_RAM '020-06F:GPR'}           
+  {$SET_STATE_RAM '070-07F:GPR:ALLMAPPED'} 
+  {$SET_STATE_RAM '085-085:SFR'}            // Bank 1 : TRISA
+  {$SET_STATE_RAM '087-089:SFR'}            // Bank 1 : TRISC, TRISD, TRISE
+  {$SET_STATE_RAM '08E-099:SFR'}            // Bank 1 : PCON, OSCCON, OSCTUNE, ANSEL, PR2, SSPADD, SSPSTAT, WPUB, IOCB, CMCON1, TXSTA, SPBRG
+  {$SET_STATE_RAM '09C-09F:SFR'}            // Bank 1 : CMCON0, VRCON, ADRESL, ADCON1
+  {$SET_STATE_RAM '0A0-0EF:GPR'}           
+  {$SET_STATE_RAM '105-105:SFR'}            // Bank 2 : WDTCON
+  {$SET_STATE_RAM '107-109:SFR'}            // Bank 2 : LCDCON, LCDPS, LVDCON
+  {$SET_STATE_RAM '10E-11E:SFR'}            // Bank 2 : EEDATH, EEADRH, LCDDATA0, LCDDATA1, LCDDATA2, LCDDATA3, LCDDATA4, LCDDATA5, LCDDATA6, LCDDATA7, LCDDATA8, LCDDATA9, LCDDATA10, LCDDATA11, LCDSE0, LCDSE1, LCDSE2
+  {$SET_STATE_RAM '120-16F:GPR'}           
 
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
-  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // maps to area 070-07F (bank 0)
-  {$SET_MAPPED_RAM '100-100:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '101-101:bnk0'} // maps to TMR0 (bank 0)
-  {$SET_MAPPED_RAM '102-104:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '106-106:bnk0'} // maps to PORTB (bank 0)
-  {$SET_MAPPED_RAM '10A-10B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '170-17F:bnk0'} // maps to area 070-07F (bank 0)
-  {$SET_MAPPED_RAM '180-180:bnk0'} // maps to INDF (bank 0)
   {$SET_MAPPED_RAM '181-181:bnk1'} // maps to OPTION_REG (bank 1)
-  {$SET_MAPPED_RAM '182-184:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
   {$SET_MAPPED_RAM '186-186:bnk1'} // maps to TRISB (bank 1)
-  {$SET_MAPPED_RAM '18A-18B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '1F0-1FF:bnk0'} // maps to area 070-07F (bank 0)
 
 
   // -- Un-implemented fields --
