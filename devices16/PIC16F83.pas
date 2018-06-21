@@ -92,24 +92,21 @@ var
 
   {$CLEAR_STATE_RAM}
 
-  {$SET_STATE_RAM '000-006:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, PORTA, PORTB
-  {$SET_STATE_RAM '008-00B:SFR'}  // EEDATA, EEADR, PCLATH, INTCON
-  {$SET_STATE_RAM '00C-02F:GPR'} 
-  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
-  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
-  {$SET_STATE_RAM '082-084:SFR'}  // mapped to PCL, STATUS, FSR
-  {$SET_STATE_RAM '085-086:SFR'}  // TRISA, TRISB
-  {$SET_STATE_RAM '088-089:SFR'}  // EECON1, EECON2
-  {$SET_STATE_RAM '08A-08B:SFR'}  // mapped to PCLATH, INTCON
-  {$SET_STATE_RAM '08C-0AF:GPR'} 
+  {$SET_STATE_RAM '000-000:SFR:ALLMAPPED'}  // Banks 0-1 : INDF
+  {$SET_STATE_RAM '001-001:SFR:ALL'}        // Bank 0 : TMR0
+                                            // Bank 1 : OPTION_REG
+  {$SET_STATE_RAM '002-004:SFR:ALLMAPPED'}  // Banks 0-1 : PCL, STATUS, FSR
+  {$SET_STATE_RAM '005-006:SFR:ALL'}        // Bank 0 : PORTA, PORTB
+                                            // Bank 1 : TRISA, TRISB
+  {$SET_STATE_RAM '008-009:SFR:ALL'}        // Bank 0 : EEDATA, EEADR
+                                            // Bank 1 : EECON1, EECON2
+  {$SET_STATE_RAM '00A-00B:SFR:ALLMAPPED'}  // Banks 0-1 : PCLATH, INTCON
+  {$SET_STATE_RAM '00C-02F:GPR:ALLMAPPED'} 
 
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
-  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '08C-0AF:bnk0'} // maps to area 00C-02F (bank 0)
+
 
 
   // -- Un-implemented fields --

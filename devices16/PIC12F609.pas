@@ -134,32 +134,31 @@ var
 
   {$CLEAR_STATE_RAM}
 
-  {$SET_STATE_RAM '000-005:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, GPIO
-  {$SET_STATE_RAM '00A-00C:SFR'}  // PCLATH, INTCON, PIR1
-  {$SET_STATE_RAM '00E-010:SFR'}  // TMR1L, TMR1H, T1CON
-  {$SET_STATE_RAM '019-01A:SFR'}  // VRCON, CMCON0
-  {$SET_STATE_RAM '01C-01C:SFR'}  // CMCON1
-  {$SET_STATE_RAM '040-06F:GPR'} 
-  {$SET_STATE_RAM '070-07F:GPR'} 
-  {$SET_STATE_RAM '080-080:SFR'}  // mapped to INDF
-  {$SET_STATE_RAM '081-081:SFR'}  // OPTION_REG
-  {$SET_STATE_RAM '082-084:SFR'}  // mapped to PCL, STATUS, FSR
-  {$SET_STATE_RAM '085-085:SFR'}  // TRISIO
-  {$SET_STATE_RAM '08A-08B:SFR'}  // mapped to PCLATH, INTCON
-  {$SET_STATE_RAM '08C-08C:SFR'}  // PIE1
-  {$SET_STATE_RAM '08E-08E:SFR'}  // PCON
-  {$SET_STATE_RAM '090-090:SFR'}  // OSCTUNE
-  {$SET_STATE_RAM '095-096:SFR'}  // WPU, IOC
-  {$SET_STATE_RAM '09F-09F:SFR'}  // ANSEL
-  {$SET_STATE_RAM '0F0-0FF:GPR'} 
+  {$SET_STATE_RAM '000-000:SFR:ALLMAPPED'}  // Banks 0-1 : INDF
+  {$SET_STATE_RAM '001-001:SFR:ALL'}        // Bank 0 : TMR0
+                                            // Bank 1 : OPTION_REG
+  {$SET_STATE_RAM '002-004:SFR:ALLMAPPED'}  // Banks 0-1 : PCL, STATUS, FSR
+  {$SET_STATE_RAM '005-005:SFR:ALL'}        // Bank 0 : GPIO
+                                            // Bank 1 : TRISIO
+  {$SET_STATE_RAM '00A-00B:SFR:ALLMAPPED'}  // Banks 0-1 : PCLATH, INTCON
+  {$SET_STATE_RAM '00C-00C:SFR:ALL'}        // Bank 0 : PIR1
+                                            // Bank 1 : PIE1
+  {$SET_STATE_RAM '00E-00E:SFR:ALL'}        // Bank 0 : TMR1L
+                                            // Bank 1 : PCON
+  {$SET_STATE_RAM '00F-00F:SFR'}            // Bank 0 : TMR1H
+  {$SET_STATE_RAM '010-010:SFR:ALL'}        // Bank 0 : T1CON
+                                            // Bank 1 : OSCTUNE
+  {$SET_STATE_RAM '019-01A:SFR'}            // Bank 0 : VRCON, CMCON0
+  {$SET_STATE_RAM '01C-01C:SFR'}            // Bank 0 : CMCON1
+  {$SET_STATE_RAM '040-06F:GPR'}           
+  {$SET_STATE_RAM '070-07F:GPR:ALLMAPPED'} 
+  {$SET_STATE_RAM '095-096:SFR'}            // Bank 1 : WPU, IOC
+  {$SET_STATE_RAM '09F-09F:SFR'}            // Bank 1 : ANSEL
 
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '080-080:bnk0'} // maps to INDF (bank 0)
-  {$SET_MAPPED_RAM '082-084:bnk0'} // maps to PCL, STATUS, FSR (bank 0)
-  {$SET_MAPPED_RAM '08A-08B:bnk0'} // maps to PCLATH, INTCON (bank 0)
-  {$SET_MAPPED_RAM '0F0-0FF:bnk0'} // maps to area 070-07F (bank 0)
+
 
 
   // -- Un-implemented fields --

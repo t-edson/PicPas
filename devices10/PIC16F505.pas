@@ -50,28 +50,14 @@ var
 
   {$CLEAR_STATE_RAM}
 
-  {$SET_STATE_RAM '000-007:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
-  {$SET_STATE_RAM '008-00F:GPR'} 
-  {$SET_STATE_RAM '010-01F:GPR'} 
-  {$SET_STATE_RAM '020-027:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
-  {$SET_STATE_RAM '028-02F:GPR'} 
-  {$SET_STATE_RAM '030-03F:GPR'} 
-  {$SET_STATE_RAM '040-047:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
-  {$SET_STATE_RAM '048-04F:GPR'} 
-  {$SET_STATE_RAM '050-05F:GPR'} 
-  {$SET_STATE_RAM '060-067:SFR'}  // INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
-  {$SET_STATE_RAM '068-06F:GPR'} 
-  {$SET_STATE_RAM '070-07F:GPR'} 
+  {$SET_STATE_RAM '000-007:SFR:ALLMAPPED'}  // Banks 0-3 : INDF, TMR0, PCL, STATUS, FSR, OSCCAL, PORTB, PORTC
+  {$SET_STATE_RAM '008-00F:GPR:ALLMAPPED'} 
+  {$SET_STATE_RAM '010-01F:GPR:ALL'}       
 
 
   // -- Define mapped RAM --
 
-  {$SET_MAPPED_RAM '020-027:bnk0'} // maps to area 000-007 (bank 0)
-  {$SET_MAPPED_RAM '028-02F:bnk0'} // maps to area 008-00F (bank 0)
-  {$SET_MAPPED_RAM '040-047:bnk0'} // maps to area 000-007 (bank 0)
-  {$SET_MAPPED_RAM '048-04F:bnk0'} // maps to area 008-00F (bank 0)
-  {$SET_MAPPED_RAM '060-067:bnk0'} // maps to area 000-007 (bank 0)
-  {$SET_MAPPED_RAM '068-06F:bnk0'} // maps to area 008-00F (bank 0)
+
 
 
   // -- Un-implemented fields --
