@@ -76,32 +76,34 @@ type
     Filter: TComboBox;
     ImageList2: TImageList;
     MenuItem1: TMenuItem;
-    mnArcRefrescar: TMenuItem;
-    mnCarCamNom: TMenuItem;
-    mnCarElimin: TMenuItem;
-    mnCarRefrescar: TMenuItem;
+    mnFilCreCopFrom: TMenuItem;
+    mnFilRefrescar: TMenuItem;
+    mnFolChanName: TMenuItem;
+    mnFolDelete: TMenuItem;
+    mnFolRefresh: TMenuItem;
     MenuItem3: TMenuItem;
-    mnCarNueCar: TMenuItem;
-    mnArcCamNom: TMenuItem;
-    mnArcElimin: TMenuItem;
-    mnCarExpContr: TMenuItem;
-    mnCarAbrirExpWin: TMenuItem;
-    mnCarNueArc: TMenuItem;
-    mnArcAbrir: TMenuItem;
+    mnFolNewFolder: TMenuItem;
+    mnFilChanName: TMenuItem;
+    mnFilDelete: TMenuItem;
+    mnFolExpandCol: TMenuItem;
+    mnFolOpenInExplor: TMenuItem;
+    mnFolNewFile: TMenuItem;
+    mnFilOpen: TMenuItem;
     PopupFolder: TPopupMenu;
     PopupFile: TPopupMenu;
     TreeView1: TTreeView;
-    procedure mnArcAbrirClick(Sender: TObject);
-    procedure mnArcCamNomClick(Sender: TObject);
-    procedure mnArcRefrescarClick(Sender: TObject);
-    procedure mnCarAbrirExpWinClick(Sender: TObject);
-    procedure mnArcEliminClick(Sender: TObject);
-    procedure mnCarCamNomClick(Sender: TObject);
-    procedure mnCarEliminClick(Sender: TObject);
-    procedure mnCarExpContrClick(Sender: TObject);
-    procedure mnCarNueArcClick(Sender: TObject);
-    procedure mnCarNueCarClick(Sender: TObject);
-    procedure mnCarRefrescarClick(Sender: TObject);
+    procedure mnFilCreCopFromClick(Sender: TObject);
+    procedure mnFilOpenClick(Sender: TObject);
+    procedure mnFilChanNameClick(Sender: TObject);
+    procedure mnFilRefrescarClick(Sender: TObject);
+    procedure mnFolOpenInExplorClick(Sender: TObject);
+    procedure mnFilDeleteClick(Sender: TObject);
+    procedure mnFolChanNameClick(Sender: TObject);
+    procedure mnFolDeleteClick(Sender: TObject);
+    procedure mnFolExpandColClick(Sender: TObject);
+    procedure mnFolNewFileClick(Sender: TObject);
+    procedure mnFolNewFolderClick(Sender: TObject);
+    procedure mnFolRefreshClick(Sender: TObject);
     procedure PopupFolderPopup(Sender: TObject);
     procedure TreeView1CreateNodeClass(Sender: TCustomTreeView;
       var NodeClass: TTreeNodeClass);
@@ -150,6 +152,7 @@ type
     OnRightClickFile  : TevClickOnFile;  //Click derecho en archivo
     OnRightClickFolder: TevClickOnFile;  //Click derecho en carpeta
     OnKeyEnterOnFile  : TevClickOnFile;  //Se presionó la tecla enter en un archivo
+    OnCloseFile       : TevClickOnFile;  //Se pide cerrar un archivo
 //    OnKeyDown         : TKeyEvent;       //TEcla pulsada
     property TextColor: TColor read FTextColor write SetTextColor;
     function SelectedNode: TExplorNode;
@@ -479,22 +482,38 @@ end;
 procedure TfrmArcExplor.TreeView1KeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 var
   nodEx: TExplorNode;
+  a: TPoint;
+  relPos: TPoint;
 begin
   //Genera el evento en el frame, porque el frame nunca tendrá enfoque
   if OnKeyDown<>nil then OnKeyDown(Sender, Key, Shift);
   //procesa teclas especiales
-  if Key = VK_F2 then mnArcCamNomClick(Self);
+  if Key = VK_F2 then mnFilChanNameClick(Self);
   if Key = VK_DELETE then begin
     nodEx := SelectedNode;   //lee seleccionado
     if nodEx = nil then exit;     //verifica
-    if nodEx.IsFile then mnArcEliminClick(Self);
-    if nodEx.IsFolder then mnCarEliminClick(Self);
+    if nodEx.IsFile then mnFilDeleteClick(Self);
+    if nodEx.IsFolder then mnFolDeleteClick(Self);
   end;
   if Key = VK_F5 then ActualPanelArc;
   if Key = VK_RETURN then begin
     nodEx := SelectedFile;   //lee seleccionado
     if nodEx = nil then exit;     //verifica
     if OnKeyEnterOnFile<>nil then OnKeyEnterOnFile(nodEx);
+  end;
+  if (Shift = [ssCtrl]) and (Key = VK_F4) then begin
+    if nodEx = nil then exit;     //verifica
+    if OnCloseFile<>nil then OnCloseFile(nodEx);
+  end;
+  if Key = VK_APPS then begin
+    //Menú Contextual
+    nodEx := SelectedNode;   //lee seleccionado
+    relPos.x := nodEx.DisplayRect(true).Left;
+    relPos.y := nodEx.DisplayRect(true).Bottom;
+    a := TreeView1.ClientToScreen(relPos);
+    if nodEx = nil then exit;     //verifica
+    if nodEx.IsFile then PopupFile.PopUp(a.x, a.y);
+    if nodEx.IsFolder then PopupFolder.PopUp(a.x, a.y);
   end;
 end;
 procedure TfrmArcExplor.LocateFileOnTree(arch8: string);
@@ -602,18 +621,18 @@ procedure TfrmArcExplor.PopupFolderPopup(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
-  if curNod.Expanded then mnCarExpContr.Caption:= TXT_FOLD
-  else mnCarExpContr.Caption:= TXT_UNFOLD;
+  if curNod.Expanded then mnFolExpandCol.Caption:= TXT_FOLD
+  else mnFolExpandCol.Caption:= TXT_UNFOLD;
 end;
-procedure TfrmArcExplor.mnCarExpContrClick(Sender: TObject);
+procedure TfrmArcExplor.mnFolExpandColClick(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
   curNod.Expanded := not curNod.Expanded;
-  if curNod.Expanded then mnCarExpContr.Caption:= TXT_FOLD
-  else mnCarExpContr.Caption:= TXT_UNFOLD;
+  if curNod.Expanded then mnFolExpandCol.Caption:= TXT_FOLD
+  else mnFolExpandCol.Caption:= TXT_UNFOLD;
 end;
-procedure TfrmArcExplor.mnCarAbrirExpWinClick(Sender: TObject);
+procedure TfrmArcExplor.mnFolOpenInExplorClick(Sender: TObject);
 var
   tmp: String;
 begin
@@ -624,7 +643,7 @@ begin
 //  tmp := UTF8ToSys(curNod.Path);
   Exec('explorer', '"' + tmp + '"');
 end;
-procedure TfrmArcExplor.mnCarNueArcClick(Sender: TObject);
+procedure TfrmArcExplor.mnFolNewFileClick(Sender: TObject);
 var
   archivo: string;
 begin
@@ -641,7 +660,7 @@ begin
   end;
   if curNod.Expanded then ExpandirNodArc(curNod, true);   //refresca
 end;
-procedure TfrmArcExplor.mnCarNueCarClick(Sender: TObject);
+procedure TfrmArcExplor.mnFolNewFolderClick(Sender: TObject);
 var
   carpeta: string;
 begin
@@ -658,37 +677,55 @@ begin
   end;
   if curNod.Expanded then ExpandirNodArc(curNod, true);   //refresca
 end;
-procedure TfrmArcExplor.mnCarCamNomClick(Sender: TObject);
+procedure TfrmArcExplor.mnFolChanNameClick(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
-  curNod.EditText;           //iniicia edición
+  curNod.EditText;           //inicia edición
   NombNodEdi := curNod.Path; //Guarda nombre de nodo editado
 end;
-procedure TfrmArcExplor.mnCarEliminClick(Sender: TObject);
+procedure TfrmArcExplor.mnFolDeleteClick(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
   MsgExc(TXT_NOTDELFOL);
 end;
-procedure TfrmArcExplor.mnCarRefrescarClick(Sender: TObject);
+procedure TfrmArcExplor.mnFolRefreshClick(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
   if curNod.Visible and curNod.Expanded then
     ExpandirNodArc(curNod, true);   //mantiene expansión
 end;
-procedure TfrmArcExplor.mnArcAbrirClick(Sender: TObject);
+// File actions
+procedure TfrmArcExplor.mnFilOpenClick(Sender: TObject);
 begin
   curNod := SelectedNode;
   if curNod = nil then exit;
   if OnMenuOpenFile<>nil then OnMenuOpenFile(curNod);
 end;
-procedure TfrmArcExplor.mnArcCamNomClick(Sender: TObject);
+procedure TfrmArcExplor.mnFilCreCopFromClick(Sender: TObject);
+var
+  newFile, archivo: String;
 begin
-  mnCarCamNomClick(Sender);  //funciona comoa archivo
+  curNod := SelectedNode;
+  if curNod = nil then exit;
+  if not curNod.IsFile then exit;  //no es archivo
+  try
+    archivo := UTF8ToSys(curNod.Path);
+    if FileExists(archivo) then begin
+      newFile := GetNewFileName(archivo);
+      CopyFile(archivo, newFile);
+    end;
+  finally
+  end;
+  if curNod.Parent.Expanded then ExpandirNodArc(curNod.parent, true);   //refresca
 end;
-procedure TfrmArcExplor.mnArcEliminClick(Sender: TObject);
+procedure TfrmArcExplor.mnFilChanNameClick(Sender: TObject);
+begin
+  mnFolChanNameClick(Sender);  //funciona comoa archivo
+end;
+procedure TfrmArcExplor.mnFilDeleteClick(Sender: TObject);
 var
   archivo: String;
 begin
@@ -706,7 +743,7 @@ begin
   end;
   if curNod.Parent.Expanded then ExpandirNodArc(curNod.parent, true);   //refresca
 end;
-procedure TfrmArcExplor.mnArcRefrescarClick(Sender: TObject);
+procedure TfrmArcExplor.mnFilRefrescarClick(Sender: TObject);
 begin
 
 end;

@@ -25,6 +25,7 @@ type
     vThev: single;
     rThev: single;
     procedure GetModel(out vThev0, rThev0: Single);  //Devuelve parámetros del modelo eléctrico
+    procedure SetModel(vThev0, rThev0: Single);  //Fija parámetros del modelo eléctrico
   private  //Valores de voltaje e impedancia del nodo al que se encuentra conectado
     vNod: single;
     rNod: single;
@@ -68,6 +69,8 @@ type
     OnConnect: procedure of object;
     OnDisconnect: procedure of object;
     nodParent: TNode;
+    PaintBox : TPaintBox;  //Referencia al PaintBox donde se dibuja
+    ptos: array of TFPoint;
     procedure PCtlConnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
     procedure PCtlDisconnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
     function ConnectedTo(ogCon: TOgConector): boolean;
@@ -135,6 +138,24 @@ type
     destructor Destroy; override;
   end;
 
+  { TOg7Segment }
+  //Define el objeto Display de 7 segmentos
+  TOg7Segment = class(TOgComponent)
+  private
+    pinA: TPinGraph;
+    pinB: TPinGraph;
+    pinC: TPinGraph;
+    pinD: TPinGraph;
+    pinE: TPinGraph;
+    pinF: TPinGraph;
+    pinG: TPinGraph;
+  public
+    //procedure SetState(Value: boolean);
+    procedure Draw; override;
+    constructor Create(mGraf: TMotGraf); override;
+    destructor Destroy; override;
+  end;
+
   { TOgResisten }
   //Define el objeto Resistencia (Resistor)
   TOgResisten = class(TOgComponent)
@@ -148,16 +169,18 @@ type
 
   { TfraPICDiagram }
   TfraPICDiagram = class(TFrame)
-    acGenAddLogTog: TAction;
+    acAddLogTog: TAction;
     acGenDelObject: TAction;
     acGenConnect: TAction;
-    acGenAddConn: TAction;
-    acGenAddLed: TAction;
-    acGenAddResis: TAction;
+    acAddConn: TAction;
+    acAddLed: TAction;
+    acAddResis: TAction;
+    acAdd7SegComC: TAction;
     ActionList1: TActionList;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
     mnConnect: TMenuItem;
     mnReset: TMenuItem;
     mnRun: TMenuItem;
@@ -167,10 +190,11 @@ type
     mnDelete: TMenuItem;
     PaintBox1: TPaintBox;
     PopupMenu1: TPopupMenu;
-    procedure acGenAddConnExecute(Sender: TObject);
-    procedure acGenAddLedExecute(Sender: TObject);
-    procedure acGenAddLogTogExecute(Sender: TObject);
-    procedure acGenAddResisExecute(Sender: TObject);
+    procedure acAdd7SegComCExecute(Sender: TObject);
+    procedure acAddConnExecute(Sender: TObject);
+    procedure acAddLedExecute(Sender: TObject);
+    procedure acAddLogTogExecute(Sender: TObject);
+    procedure acAddResisExecute(Sender: TObject);
     procedure acGenConnectExecute(Sender: TObject);
     procedure acGenDelObjectExecute(Sender: TObject);
   private  //Nombres y referencias
@@ -220,7 +244,8 @@ const  //ID para componentes
   ID_CONNEC  = 12;
   ID_LEDRES  = 13;
   ID_RESIST  = 14;
-  ID_TOG_LOG = 15;
+  ID_7SEGME  = 15;
+  ID_TOG_LOG = 16;
 
 function GetThevCol(vt, rt: Single): TColor;
 {Devuelve un color que representa el estado de un circuito de Thevening.}
@@ -410,6 +435,16 @@ begin
     pic.GetPinThev(nPin, vThev0, rThev0);
   end;
 end;
+procedure TPinGraph.SetModel(vThev0, rThev0: Single);
+begin
+  if pic = nil then begin
+    //No pertenece a un PIC, lee directamente sus parámetros
+    vThev := vThev0;
+    rThev := rThev0;
+  end else begin
+    //Es pin de un pic. No se puede cambiar
+  end;
+end;
 procedure TPinGraph.SetNodePars(vNod0, rNod0: Single);
 {Fija los valores de voltaje que debe tener el pin, y la impedancia que debe ver,
 por el efecto de estar conectado a algún nodo.
@@ -516,8 +551,17 @@ begin
   Result := PointSelectSegment(xr, yr, x0, y0, x1, y1 );
 end;
 procedure TOgConector.Draw;
+const
+  ANCHO1 = 7;
+  ANCHO2 = 50;
+  ALTO1 = 10;
+  ALTO2 = 30;
 var
   col: TColor;
+  pct  : TPtoCtrl;
+  pcn : TPtoConx;
+  x1, y1: Single;
+  pMouse: TPoint;
 begin
   //Descripción
   //v2d.SetText(clBlack, 11,'', true);
@@ -526,12 +570,58 @@ begin
   col := GetThevCol(nodParent.vt, nodParent.rt);  //Se supone que el nodo padre ya está actualizado
   v2d.SetPen(psSolid, 1, col);
   v2d.Linea(pcBEGIN.x, pcBEGIN.y, pcEND.x, pcEND.y);
-  inherited Draw;
+  //Implementamos nosotros el remarcado y selección, para personalizar mejor
+  //---------------Draw mark --------------
+  if Marked and Highlight then begin
+    //Resaltado
+    v2d.SetPen(psSolid, 2, clBlue);   //RGB(128, 128, 255)
+    v2d.Linea(pcBEGIN.x, pcBEGIN.y, pcEND.x, pcEND.y);
+    //Marcador de Voltaje
+    v2d.SetPen(psSolid, 1, clBlack);   //RGB(128, 128, 255)
+    v2d.SetBrush(clYellow);
+    pMouse := PaintBox.ScreenToClient(Mouse.CursorPos);
+    x1 := v2d.Xvirt(pMouse.x, pMouse.y);
+    y1 := v2d.Yvirt(pMouse.x, pMouse.y);
+//    v2d.RectangR(x1, y1, x1+10, y1+20);
+    ptos[0].x := x1;
+    ptos[0].y := y1;
+    ptos[1].x := x1+ANCHO1;
+    ptos[1].y := y1-ALTO1;
+    ptos[2].x := x1+ANCHO1;
+    ptos[2].y := y1-ALTO2;
+    ptos[3].x := x1+ANCHO2;
+    ptos[3].y := y1-ALTO2;
+    ptos[4].x := x1+ANCHO2;
+    ptos[4].y := y1-ALTO1;
+    ptos[5].x := x1+20;
+    ptos[5].y := y1-ALTO1;
+    v2d.Polygon(ptos);
+
+    v2d.SetText(True, False, False);
+    v2d.SetText(clBlack);
+    v2d.Texto(x1+ANCHO1+3, y1 - ALTO2+2, Format('%.2fV', [nodParent.vt]));
+  end;
+  //--------------- Draw selection state--------------
+  if Selected Then begin
+    if behav = behav1D then begin
+       for pct in PtosControl1 do pct.Draw;   //Dibuja puntos de control
+    end else if behav = behav2D then begin
+       for pct in PtosControl2 do pct.Draw;   //Dibuja puntos de control
+    end;
+  end;
+  //Draw Connection Points
+  if ShowPtosConex then begin
+     for pcn in PtosConex do pcn.Draw;
+  end;
+  //if MarkConnectPoints then begin
+    for pcn in PtosConex do if pcn.Marked then pcn.Mark;
+  //end
 end;
 constructor TOgConector.Create(mGraf: TMotGraf);
 begin
   inherited Create(mGraf);
   Id := ID_CONNEC;
+  setlength(ptos, 6);
   pcBEGIN.OnConnect := @PCtlConnect;
   pcEND.OnConnect := @PCtlConnect;
   pcBEGIN.OnDisconnect := @PCtlDisconnect;
@@ -755,11 +845,137 @@ begin
   pcCEN_RIG.Visible := false;
   SizeLocked := true;
   pin := AddPin(12, 0, 0, 0, 0, 0);
-  pin.rThev := 470; //ohms
-  pin.vThev := 0;  //por ahora se modela así
+  pin.SetModel(0, 470); //0V, 470ohms. Por ahora se modela así
+  pin.lbl := 'VLed';
   //ShowPtosConex:=true;
 end;
 destructor TOgLedRed.Destroy;
+begin
+  inherited Destroy;
+end;
+{ TOg7Segment }
+procedure TOg7Segment.Draw;
+var
+  ancho, x2, y2, x1, y1, y3: Single;
+  pCnx: TPtoConx;
+  pin: TPinGraph;
+begin
+  //Dibuja título
+  ancho := v2d.TextWidth(Name);
+  v2d.SetText(COL_GND);
+  v2d.SetText(True, False, False);
+  v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
+  //Dibuja cuerpo
+  v2d.SetPen(psSolid, 2, COL_GND);
+  v2d.SetBrush(clGray);
+  v2d.RectangR(x, y, x+Width, y+Height);
+  //Segmentos
+  x1 := x +10;
+  x2 := x+width-10;
+  y1 := y + 10;
+  y2 := y + 50;
+  y3 := y + 90;
+  //Segment A
+  if pinA.vNod>2 then begin
+    v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
+  end else begin
+    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+  end;
+  v2d.RectangR(x1, y1-3, x2, y1+3);
+  //Segment B
+  if pinB.vNod>2 then begin
+    v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
+  end else begin
+    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+  end;
+  v2d.RectangR(x2-3, y1+3, x2+3, y2-3);
+  //Segment C
+  if pinC.vNod>2 then begin
+    v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
+  end else begin
+    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+  end;
+  v2d.RectangR(x2-3, y2+3, x2+3, y3-3);
+  //Segment D
+  if pinD.vNod>2 then begin
+    v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
+  end else begin
+    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+  end;
+  v2d.RectangR(x1, y3-3, x2, y3+3);
+  //Segment E
+  if pinE.vNod>2 then begin
+    v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
+  end else begin
+    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+  end;
+  v2d.RectangR(x1-3, y2+3, x1+3, y3-3);
+  //Segment F
+  if pinF.vNod>2 then begin
+    v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
+  end else begin
+    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+  end;
+  v2d.RectangR(x1-3, y1+3, x1+3, y2-3);
+  //Segment G
+  if pinG.vNod>2 then begin
+    v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
+  end else begin
+    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+  end;
+  v2d.RectangR(x1, y2-3, x2, y2+3);
+
+  //conexión a tierra
+  v2d.SetPen(psSolid, 1, COL_GND);
+  y2 := y + height + 10;
+  v2d.Linea(x+30, y+height, x+30, y2);
+  v2d.Linea(x+24, y2, x+36, y2);
+  //Dibuja los pines
+  v2d.SetPen(psSolid, 1, COL_GND);
+  for pCnx in PtosConex do begin
+    pin := TPinGraph(pCnx);
+    //En el PIC, los pines se pintan con el color del modelo interno
+    v2d.SetBrush(clWhite);  //Rellena de acuerdo al estado
+    v2d.Linea(pin.x, pin.y, pin.x+7, pin.y);
+    v2d.Texto(x+pin.xLbl, y+pin.yLbl, pin.lbl);
+  end;
+  inherited;
+end;
+constructor TOg7Segment.Create(mGraf: TMotGraf);
+begin
+  inherited Create(mGraf);
+  id := ID_7SEGME;
+  Width  := 60;
+  Height := 100;
+  pcTOP_CEN.Visible := false;
+  pcBOT_CEN.Visible := false;
+  pcCEN_LEF.Visible := false;
+  pcCEN_RIG.Visible := false;
+  SizeLocked := true;
+  pinA := AddPin(-7, 5, 0, 0, 0, 0);
+  pinA.SetModel(0, 680);
+  pinA.lbl := 'A';
+  pinB := AddPin(-7,20, 0, 0, 0, 0);
+  pinB.SetModel(0, 680);
+  pinB.lbl := 'B';
+  pinC := AddPin(-7,35, 0, 0, 0, 0);
+  pinC.SetModel(0, 680);
+  pinC.lbl := 'C';
+  pinD := AddPin(-7,50, 0, 0, 0, 0);
+  pinD.SetModel(0, 680);
+  pinD.lbl := 'D';
+  pinE := AddPin(-7,65, 0, 0, 0, 0);
+  pinE.SetModel(0, 680);
+  pinE.lbl := 'E';
+  pinF := AddPin(-7,80, 0, 0, 0, 0);
+  pinF.SetModel(0, 680);
+  pinF.lbl := 'F';
+  pinG := AddPin(-7,95, 0, 0, 0, 0);
+  pinG.SetModel(0, 680);
+  pinG.lbl := 'G';
+  //ShowPtosConex:=true;
+end;
+destructor TOg7Segment.Destroy;
 begin
   inherited Destroy;
 end;
@@ -842,33 +1058,42 @@ var
   mnItem: TMenuItem;
   oc: TOgConector;
   a: TStringDynArray;
-  comp1: TOgComponent;
-  nPin1: LongInt;
-  pCnx1: TPtoConx;
-  pin1 : TPinGraph;
+  comp1, comp2: TOgComponent;
+  nPin1, nPin2: LongInt;
+  pCnx1, pCnx2: TPtoConx;
+  pin1 , pin2: TPinGraph;
   id1, id2: String;
 begin
   if Sender is TMenuItem then begin
     mnItem := TMenuItem(Sender);
     //Agrega conector
-    acGenAddConnExecute(self);
+    acAddConnExecute(self);
     oc := TOgConector(motEdi.Selected);
     //Ubica nodo Inicial
-    MsgBox(mnItem.Hint);
+//    MsgBox(mnItem.Hint);
     a := Explode('-', mnItem.Hint);
     id1 := a[0];
     id2 := a[1];
     a := Explode('.', id1);
     comp1 := ExistsRef(a[0]);
     nPin1 := StrToInt(a[1]);
-    pCnx1 := comp1.PtosConex[nPin1];
+    pCnx1 := comp1.PtosConex[nPin1-1];
     if not(pCnx1 is TPinGraph) then exit;
     pin1 := TPinGraph(pCnx1);
-    //Ahora se conecta un nodo (Punto de control) al Pto. de Conexión
+    //Ubica nodo final
+    a := Explode('.', id2);
+    comp2 := ExistsRef(a[0]);
+    nPin2 := StrToInt(a[1]);
+    pCnx2 := comp2.PtosConex[nPin2-1];
+    if not(pCnx2 is TPinGraph) then exit;
+    pin2 := TPinGraph(pCnx2);
+    //Ahora se conecta el conector a los Punttos de Conexión
     pin1.ConnectTo(oc.pcBEGIN);
     pin1.Locate(pin1.x, pin1.y); //Actualiza el "enganche"
-//    oc.Selec;          //Selecciona el conector
-
+    pin2.ConnectTo(oc.pcEND);
+    pin2.Locate(pin2.x, pin2.y); //Actualiza el "enganche"
+    //oc.Selec;          //Selecciona el conector
+    Refrescar;
   end;
 end;
 //Manejo de nodos
@@ -1020,6 +1245,14 @@ begin
   end;
 end;
 procedure TfraPICDiagram.motEdi_MouseUpRight(Shift: TShiftState; x, y: integer);
+  procedure VisibActionsAdd(State: boolean);
+  begin
+    acAddLogTog.Visible := State;
+    acAddLed.Visible    := State;
+    acAddConn.Visible   := State;
+    acAddResis.Visible  := State;
+    acAdd7SegComC.Visible := State;
+  end;
 var
   og: TObjGraf;
   it, it2: TMenuItem;
@@ -1035,9 +1268,7 @@ begin
     mnRun.Visible     := true;
     mnStepOver.Visible:= false;
     //mnAddLogicTog.Visible := true;
-    acGenAddLogTog.Visible := true;
-    acGenAddLed.Visible    := true;
-    acGenAddConn.Visible   := true;
+    VisibActionsAdd(true);
   end else if (motEdi.seleccion.Count = 1) and (motEdi.Selected is TOgComponent) then begin
     //Hay un componente seleccionado
     comp1 := TOgComponent(motEdi.Selected);  //Componente fuente
@@ -1045,18 +1276,14 @@ begin
     mnRun.Visible     := true;
     mnStepOver.Visible:= true;
     //mnAddLogicTog.Visible := false;
-    acGenAddLogTog.Visible := false;
-    acGenAddLed.Visible    := false;
-    acGenAddConn.Visible   := false;
+    VisibActionsAdd(false);
   end else begin
     //Se ha seleccionado otra cosa o hay varios seleccionados
     mnReset.Visible   := false;
     mnRun.Visible     := false;
     mnStepOver.Visible:= false;
     //mnAddLogicTog.Visible := false;
-    acGenAddLogTog.Visible := false;
-    acGenAddLed.Visible    := false;
-    acGenAddConn.Visible   := false;
+    VisibActionsAdd(false);
   end;
   //Verifica la funcionalidad del menú de "Conectar a"
   //Verifica si se está marcado un punto de Conexión
@@ -1066,9 +1293,7 @@ begin
   end else begin
     mnConnect.Visible := true;
     //mnAddLogicTog.Visible := false;  //Para que no confunda
-    acGenAddLogTog.Visible := false;
-    acGenAddLed.Visible    := false;
-    acGenAddConn.Visible   := false;
+    VisibActionsAdd(false);
     //Ubica componente de origen
     if not(pCnx.Parent is TOgComponent) then exit;
     comp1 := TOgComponent(pCnx.Parent);
@@ -1132,7 +1357,7 @@ procedure TfraPICDiagram.acGenConnectExecute(Sender: TObject);
 begin
 
 end;
-procedure TfraPICDiagram.acGenAddLogTogExecute(Sender: TObject);
+procedure TfraPICDiagram.acAddLogTogExecute(Sender: TObject);
 {Agrega un Objeto Gráfico LogicToggle}
 var
   logTog: TOgLogicState;
@@ -1145,7 +1370,7 @@ begin
   logTog.Selec;
   Refrescar;
 end;
-procedure TfraPICDiagram.acGenAddResisExecute(Sender: TObject);
+procedure TfraPICDiagram.acAddResisExecute(Sender: TObject);
 {Agrega un Objeto Gráfico Resistencia}
 var
   res: TOgResisten;
@@ -1158,8 +1383,8 @@ begin
   res.Selec;
   Refrescar;
 end;
-procedure TfraPICDiagram.acGenAddLedExecute(Sender: TObject);
-{Agrega un Objeto Gráfico LogicToggle}
+procedure TfraPICDiagram.acAddLedExecute(Sender: TObject);
+{Agrega un Objeto Gráfico Led}
 var
   led: TOgLedRed;
 begin
@@ -1171,7 +1396,7 @@ begin
   led.Selec;
   Refrescar;
 end;
-procedure TfraPICDiagram.acGenAddConnExecute(Sender: TObject);
+procedure TfraPICDiagram.acAddConnExecute(Sender: TObject);
 var
   conn: TOgConector;
 begin
@@ -1182,9 +1407,23 @@ begin
   conn.Ref := UniqueRef('CN');  //Genera nombe único
   conn.OnConnect := @connectorChange;
   conn.OnDisconnect := @connectorChange;
+  conn.PaintBox := PaintBox1;  //Necesita esta referencia
   motEdi.AddGraphObject(conn);
   conn.Selec;
   UpdateNodeList;
+  Refrescar;
+end;
+procedure TfraPICDiagram.acAdd7SegComCExecute(Sender: TObject);
+{Agrega un Objeto "Display" de 7 segmentos}
+var
+  led: TOg7Segment;
+begin
+  led := TOg7Segment.Create(motEdi.v2d);
+  led.Highlight := false;
+  led.Name := UniqueName('V7S');
+  led.Ref := UniqueRef('V7S');  //Genera nombe único
+  motEdi.AddGraphObject(led);
+  led.Selec;
   Refrescar;
 end;
 procedure TfraPICDiagram.acGenDelObjectExecute(Sender: TObject);

@@ -28,6 +28,7 @@ object frmArcExplor: TfrmArcExplor
     RightClickSelect = True
     ShowHint = True
     TabOrder = 1
+    OnKeyDown = TreeView1KeyDown
     Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoRightClickSelect, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
   end
   object ImageList2: TImageList
@@ -457,60 +458,64 @@ object frmArcExplor: TfrmArcExplor
     OnPopup = PopupFolderPopup
     left = 40
     top = 152
-    object mnCarExpContr: TMenuItem
+    object mnFolExpandCol: TMenuItem
       Caption = 'E&xpandir'
-      OnClick = mnCarExpContrClick
+      OnClick = mnFolExpandColClick
     end
-    object mnCarAbrirExpWin: TMenuItem
+    object mnFolOpenInExplor: TMenuItem
       Caption = 'Abrir en Explor. de &Windows'
-      OnClick = mnCarAbrirExpWinClick
+      OnClick = mnFolOpenInExplorClick
     end
-    object mnCarNueArc: TMenuItem
+    object mnFolNewFile: TMenuItem
       Caption = '&Nuevo Archivo'
-      OnClick = mnCarNueArcClick
+      OnClick = mnFolNewFileClick
     end
-    object mnCarNueCar: TMenuItem
+    object mnFolNewFolder: TMenuItem
       Caption = 'Nueva &Carpeta'
-      OnClick = mnCarNueCarClick
+      OnClick = mnFolNewFolderClick
     end
-    object mnCarCamNom: TMenuItem
+    object mnFolChanName: TMenuItem
       Caption = 'Ca&mbiar Nombre'
-      OnClick = mnCarCamNomClick
+      OnClick = mnFolChanNameClick
     end
-    object mnCarElimin: TMenuItem
+    object mnFolDelete: TMenuItem
       Caption = 'El&iminar'
-      OnClick = mnCarEliminClick
+      OnClick = mnFolDeleteClick
     end
     object MenuItem3: TMenuItem
       Caption = '-'
     end
-    object mnCarRefrescar: TMenuItem
+    object mnFolRefresh: TMenuItem
       Caption = '&Refrescar'
-      OnClick = mnCarRefrescarClick
+      OnClick = mnFolRefreshClick
     end
   end
   object PopupFile: TPopupMenu
     OnPopup = PopupFolderPopup
     left = 120
     top = 152
-    object mnArcAbrir: TMenuItem
-      Caption = '&Abrir'
-      OnClick = mnArcAbrirClick
+    object mnFilOpen: TMenuItem
+      Caption = '&Open'
+      OnClick = mnFilOpenClick
     end
-    object mnArcCamNom: TMenuItem
-      Caption = 'Ca&mbiar Nombre'
-      OnClick = mnArcCamNomClick
+    object mnFilChanName: TMenuItem
+      Caption = 'C&hange Name'
+      OnClick = mnFilChanNameClick
     end
-    object mnArcElimin: TMenuItem
+    object mnFilCreCopFrom: TMenuItem
+      Caption = 'Create Co&py from'
+      OnClick = mnFilCreCopFromClick
+    end
+    object mnFilDelete: TMenuItem
       Caption = 'El&iminar'
-      OnClick = mnArcEliminClick
+      OnClick = mnFilDeleteClick
     end
     object MenuItem1: TMenuItem
       Caption = '-'
     end
-    object mnArcRefrescar: TMenuItem
+    object mnFilRefrescar: TMenuItem
       Caption = '&Refrescar'
-      OnClick = mnArcRefrescarClick
+      OnClick = mnFilRefrescarClick
     end
   end
 end

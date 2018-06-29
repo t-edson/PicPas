@@ -37,6 +37,7 @@ type
     acArcCloseProj: TAction;
     acArcCloseFile: TAction;
     acSearFindPrv: TAction;
+    acToolTestPic10: TAction;
     acToolTestUnit: TAction;
     acToolSelPIC16: TAction;
     acToolSelPIC10: TAction;
@@ -111,6 +112,7 @@ type
     MenuItem53: TMenuItem;
     MenuItem54: TMenuItem;
     MenuItem55: TMenuItem;
+    MenuItem56: TMenuItem;
     MenuItem8: TMenuItem;
     mnSamples: TMenuItem;
     mnView: TMenuItem;
@@ -195,6 +197,7 @@ type
     procedure acToolSelPIC10Execute(Sender: TObject);
     procedure acToolSelPIC16Execute(Sender: TObject);
     procedure acToolSelPIC17Execute(Sender: TObject);
+    procedure acToolTestPic10Execute(Sender: TObject);
     procedure acToolTestUnitExecute(Sender: TObject);
     procedure acViewAsmPanExecute(Sender: TObject);
     procedure acViewSynTreeExecute(Sender: TObject);
@@ -589,6 +592,8 @@ begin
 end;
 procedure TfrmPrincipal.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
+var
+  curNode: String;
 begin
   {Realmente, todo este código podrái ir dentro de de CodeTool.KeyDown.}
   if (Shift = [ssCtrl]) and (Key = VK_TAB) then begin
@@ -608,6 +613,17 @@ begin
   end;
   if (Shift = [ssCtrl]) and (Key = VK_F4) then begin
     if fraEditView1.HasFocus then acArcCloseFileExecute(self);
+    if fraSynTree.HasFocus and (fraSynTree.FileSelected<>'') then
+       //Hay un archivo seleccionado
+       if fraEditView1.SelectEditor(fraSynTree.FileSelected) then begin
+         //Está abierto
+         curNode := fraSynTree.FileSelected;  //Guarda nodo seleccionado
+         acArcCloseFileExecute(self);  //Cierra archivo actual
+         fraSynTree.LocateFile(curNode);  //Restaura nodo seleccionado, porque
+         //Despues de cerrar
+         if fraSynTree.frmArcExplor1.TreeView1.Visible then
+           fraSynTree.frmArcExplor1.TreeView1.SetFocus;
+       end;
     Shift := []; Key := 0;  //para qie no pase
   end;
   //Pasa evento a COde Tool
@@ -1032,6 +1048,7 @@ end;
 procedure TfrmPrincipal.acToolASMDebugExecute(Sender: TObject);
 begin
   frmDebug.Exec(Compiler);
+  frmDebug.acGenRunExecute(self);
 end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin
@@ -1095,6 +1112,39 @@ begin
   acToolSelPIC17Execute(self);  //Elige compilador
   TestDevicesUnits(nFiles);
   if Compiler.HayError then exit;
+  MsgBox('%d files tested OK.', [nFiles]);
+end;
+procedure TfrmPrincipal.acToolTestPic10Execute(Sender: TObject);
+  procedure TestUnits(var nFil: integer);
+  var
+    SearchRec: TSearchRec;
+    directorio, nomArc: String;
+  begin
+    directorio := patApp + DirectorySeparator + 'testcode10';
+    if FindFirst(directorio + DirectorySeparator + '*.pas', faDirectory, SearchRec) = 0 then begin
+      repeat
+        inc(nFil);
+        nomArc := SysToUTF8(SearchRec.Name);
+        if SearchRec.Attr and faDirectory = faDirectory then begin
+          //directorio
+        end else begin //archivo
+          //Unidad de PIC
+          nomArc := directorio + DirectorySeparator +  nomArc;
+          DebugLn('Compiling: '+ nomArc);
+          CompileFile(nomArc);
+          if Compiler.HayError then break;
+        end;
+        fraMessages.AddInformation(Format('%d files processed...', [nFil]));
+        Application.ProcessMessages;   //Para refrescar ventanas
+      until FindNext(SearchRec) <> 0;
+      FindClose(SearchRec);
+    end;
+  end;
+var
+  nFiles: Integer;
+begin
+  nFiles := 0;
+  TestUnits(nFiles);
   MsgBox('%d files tested OK.', [nFiles]);
 end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);

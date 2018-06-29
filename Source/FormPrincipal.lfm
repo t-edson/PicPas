@@ -1963,7 +1963,7 @@ object frmPrincipal: TfrmPrincipal
       Category = 'View'
       Caption = '&Code Explorer'
       OnExecute = acViewSynTreeExecute
-      ShortCut = 113
+      ShortCut = 32881
     end
     object acToolListRep: TAction
       Category = 'Tool'
@@ -2079,6 +2079,11 @@ object frmPrincipal: TfrmPrincipal
       Category = 'Tool'
       Caption = 'Test Device Units'
       OnExecute = acToolTestUnitExecute
+    end
+    object acToolTestPic10: TAction
+      Category = 'Tool'
+      Caption = 'Test PIC10 compiler'
+      OnExecute = acToolTestPic10Execute
     end
     object acToolConfig: TAction
       Category = 'Tool'
@@ -2269,6 +2274,9 @@ object frmPrincipal: TfrmPrincipal
       end
       object MenuItem55: TMenuItem
         Action = acToolTestUnit
+      end
+      object MenuItem56: TMenuItem
+        Action = acToolTestPic10
       end
       object MenuItem23: TMenuItem
         Action = acToolConfig
