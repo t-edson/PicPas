@@ -101,7 +101,7 @@ var
   stopped: boolean;
 begin
   if pic = nil then exit;
-  consoleTickStart;
+//  consoleTickStart;
   pic.ExecNCycles(nCyclesPerClk, stopped);
   if stopped then begin
     acGenPauseExecute(self);
@@ -109,7 +109,7 @@ begin
     if fraPicDia.Visible then fraPicDia.Refrescar;
 //    RefreshScreen;
   end;
-  consoleTickCount('');
+//  consoleTickCount('');
 end;
 procedure TfrmDebugger.Timer2Timer(Sender: TObject);
 {Temporizador para los otros frames menos fraPicDia.}

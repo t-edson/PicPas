@@ -1716,8 +1716,9 @@ end;
 procedure TCompiler_PIC16.CompileUnit(uni: TxpElement);
 {Realiza la compilación de una unidad}
 var
-  fun: TxpEleFun;
+  fun : TxpEleFun;
   elem: TxpElement;
+  bod : TxpEleBody;
 begin
 //debugln('   Ini Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
   ClearError;
@@ -1833,27 +1834,25 @@ begin
       exit;
     end;
   end;
+  //Procesa cuerpo
+  ResetFlashAndRAM;  {No es tan necesario, pero para seguir un orden y tener limpio
+                     también, la flash y memoria, después de algún psoible procedimiento.}
+  if cIn.tokL = 'initialization' then begin
+    bod := CreateBody;
+    bod.srcDec := cIn.ReadSrcPos;
+    TreeElems.AddElementAndOpen(bod);  //Abre nodo Body
+    cIn.Next;   //coge "begin"
+    //Guardamos popsisicón en contexto para la segunda compilación
+    bod.posCtx := cIn.PosAct;
+    //codifica el contenido
+    CompileCurBlock;   //compila el cuerpo
+    TreeElems.CloseElement;   //No debería ser tan necesario.
+    bod.srcEnd := cIn.ReadSrcPos;
+    if HayError then exit;
+  end;
   CompileLastEnd;
   if HayError then exit;
-//  //procesa cuerpo
-//  ResetFlashAndRAM;  {No es tan necesario, pero para seguir un orden y tener limpio
-//                     también, la flash y memoria, después de algún psoible procedimiento.}
-//  if cIn.tokL = 'begin' then begin
-//    bod := CreateBody;
-//    bod.srcDec := cIn.ReadSrcPos;
-//    cIn.Next;   //coge "begin"
-//    //Guardamos la ubicación física, real, en el archivo, después del BEGIN
-//    bod.posCtx := cIn.PosAct;
-//    //codifica el contenido
-//    CompileCurBlock;   //compila el cuerpo
-//    if HayError then exit;
-
-//    _SLEEP();   //agrega instrucción final
-//  end else begin
-//    GenError('Expected "begin", "var", "type" or "const".');
-//    exit;
-//  end;
-//  Cod_EndProgram;
+  Cod_EndProgram;
 //debugln('   Fin Unit: %s-%s',[TreeElems.curNode.name, ExtractFIleName(cIn.curCon.arc)]);
 end;
 procedure TCompiler_PIC16.CompileUsesDeclaration;
@@ -2187,6 +2186,7 @@ var
   bod    : TxpEleBody;
   xvar   : TxpEleVar;
   fun    : TxpEleFun;
+  uni    : TxpEleUnit;
   iniMain, noUsed, noUsedPrev, xxx: integer;
 begin
   ExprLevel := 0;
@@ -2201,6 +2201,7 @@ begin
     end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
+  TreeElems.RefreshAllUnits;
   //Explora las funciones, para identifcar a las no usadas
   TreeElems.RefreshAllFuncs;
   noUsed := 0;
@@ -2303,6 +2304,7 @@ begin
   for fun in TreeElems.AllFuncs do begin
     if fun.IsInterrupt then continue;
     if fun.nCalled>0 then begin
+      TreeElems.RegisterUnitUsed(fun.srcDec.fil);
       //Compila la función en la dirección actual
       fun.adrr := pic.iFlash;    //Actualiza la dirección final
       fun.typ.DefineRegister;    //Asegura que se dispondrá de los RT necesarios
@@ -2319,6 +2321,12 @@ begin
       GenWarnPos(WA_UNUSED_PRO_, [fun.name], fun.srcDec);
     end;
   end;
+  //Compila sección INITIALIZATION de las unidades usadas
+  //Se debe seguir el orden de declaración
+  for uni in TreeElems.AllUnits do begin
+    debugln('>>'+uni.name);
+  end;
+
   //Compila cuerpo del programa principal
   pic.codGotoAt(iniMain, _PC);   //termina de codificar el salto
   bod := TreeElems.BodyNode;  //lee Nodo del cuerpo principal
@@ -2395,6 +2403,7 @@ begin
                         cada procedimiento, reiniciará el puntero de FLASH}
     //Compila el archivo actual como programa o como unidad
     if IsUnit then begin
+      CompiledUnit := true;
       //Hay que compilar una unidad
       consoleTickStart;
 //      debugln('*** Compiling unit: Pass 1.');
@@ -2406,6 +2415,7 @@ begin
       consoleTickCount('** First Pass.');
     end else begin
       //Debe ser un programa
+      CompiledUnit := false;
       {Se hace una primera pasada para ver, a modo de exploración, para ver qué
       procedimientos, y variables son realmente usados, de modo que solo estos, serán
       codificados en la segunda pasada. Así evitamos incluir, código innecesario.}

@@ -170,7 +170,7 @@ type  //TxpElement y clases previas
     lstCalled : TxpListCalled;
     //Lista de funciones que son llamadas dirceta o indirectamente (Se llena en el enlazado)
     lstCalledAll: TxpListCalled;
-    {Se está asumiendo que solo los TxpEleCodeCont, puden llamar a otros elementos,
+    {Se está asumiendo que solo los TxpEleCodeCont, pueden llamar a otros elementos,
     peor podría considerarse también que elementos, como las variables, pueden llamar
     también a otros elementos (como las referencias absolute).}
     procedure AddCalled(elem: TxpElement);
@@ -179,8 +179,8 @@ type  //TxpElement y clases previas
     procedure UpdateCalledAll;
   public
     name : string;        //Nombre de la variable, constante, unidad, tipo, ...
-    Parent: TxpElement;   //Referencia al padre
-    idClass: TxpIDClass; //No debería ser necesario
+    Parent: TxpElement;   //Referencia al elemento padre
+    idClass: TxpIDClass;  //Para no usar RTTI
     elements: TxpElements; //Referencia a nombres anidados, cuando sea función
     function Path: string;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
@@ -206,7 +206,7 @@ type //Clases de elementos
 
   { TxpEleCodeCont }
   {Clase que define a un elemento que puede servir como contenedor general de código,
-  como el programa principal, un procedimeinto o una unidad}
+  como el programa principal, un procedimiento o una unidad}
   TxpEleCodeCont = class(TxpElement)
   public
     {Banco de RAM, que tiene la función al ejecutar la útlima instrucción. No es
@@ -484,12 +484,15 @@ type //Clases de elementos
     main    : TxpEleMain;  //nodo raiz
     curNode : TxpElement;  //referencia al nodo actual
     AllVars    : TxpEleVars;
+    AllUnits   : TxpEleUnits;
     AllFuncs   : TxpEleFuns;
     OnAddElement: procedure(xpElem: TxpElement) of object;  //Evento
     OnFindElement: procedure(elem: TxpElement) of object;
     procedure Clear;
     procedure RefreshAllVars;
     procedure RefreshAllFuncs;
+    procedure RefreshAllUnits;
+    procedure RegisterUnitUsed(uniName: string);
     function CurNodeName: string;
     function CurCodeContainer: TxpEleCodeCont;
     function LastNode: TxpElement;
@@ -1547,6 +1550,30 @@ begin
   AllFuncs.Clear;   //por si estaba llena
   AddFuncs(main);
 end;
+procedure TXpTreeElements.RefreshAllUnits;
+var
+  ele : TxpElement;
+begin
+  AllUnits.Clear;   //por si estaba llena
+  for ele in main.elements do begin
+    if ele.idClass = eltUnit then begin
+       AllUnits.Add( TxpEleUnit(ele) );
+    end;
+  end;
+end;
+procedure TXpTreeElements.RegisterUnitUsed(uniName: string);
+{Registra el nombre de una unidad como usada para actualizar el campo "nCalled" del
+elemento unidad.
+Se debe haber llamado primero a RefreshAllUnits().}
+var
+  uni: TxpEleUnit;
+begin
+  for uni in AllUnits do begin
+    if uni.srcFile = uniName then begin
+       uni.nCalled;
+    end;
+  end;
+end;
 function TXpTreeElements.CurNodeName: string;
 {Devuelve el nombre del nodo actual}
 begin
@@ -1893,12 +1920,14 @@ begin
   main.name := 'Main';
   main.elements := TxpElements.Create(true);  //debe tener lista
   AllFuncs := TxpEleFuns.Create(false);   //Crea lista
-  AllVars := TxpEleVars.Create(false);   //Crea lista
+  AllVars  := TxpEleVars.Create(false);   //Crea lista
+  AllUnits := TxpEleUnits.Create(false);  //Crea lista
   curNode := main;  //empieza con el nodo principal como espacio de nombres actual
 end;
 destructor TXpTreeElements.Destroy;
 begin
   main.Destroy;
+  AllUnits.Destroy;
   AllVars.Free;    //por si estaba creada
   AllFuncs.Free;
   inherited Destroy;

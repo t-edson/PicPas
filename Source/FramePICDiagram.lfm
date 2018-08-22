@@ -32,7 +32,7 @@ object fraPICDiagram: TfraPICDiagram
       Caption = '-'
     end
     object mnConnect: TMenuItem
-      Action = acGenConnect
+      Action = acGenConnTo
     end
     object mnAddLogicTog: TMenuItem
       Action = acAddLogTog
@@ -51,6 +51,9 @@ object fraPICDiagram: TfraPICDiagram
     end
     object mnDelete: TMenuItem
       Action = acGenDelObject
+    end
+    object mnReconn: TMenuItem
+      Action = acGenReconn
     end
   end
   object ActionList1: TActionList
@@ -81,11 +84,11 @@ object fraPICDiagram: TfraPICDiagram
       ImageIndex = 15
       OnExecute = acAddResisExecute
     end
-    object acGenConnect: TAction
+    object acGenConnTo: TAction
       Category = 'Gen'
-      Caption = 'Connect to'
+      Caption = 'Connect &to'
       ImageIndex = 12
-      OnExecute = acGenConnectExecute
+      OnExecute = acGenConnToExecute
     end
     object acGenDelObject: TAction
       Category = 'Gen'
@@ -97,6 +100,11 @@ object fraPICDiagram: TfraPICDiagram
       Category = 'Add'
       Caption = 'Add 7-Seg Com. Cathode'
       OnExecute = acAdd7SegComCExecute
+    end
+    object acGenReconn: TAction
+      Category = 'Gen'
+      Caption = '&Reconnect'
+      OnExecute = acGenReconnExecute
     end
   end
 end

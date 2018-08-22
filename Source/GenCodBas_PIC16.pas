@@ -14,6 +14,17 @@ const
   MAX_REGS_STACK_BIT = 4;  //cantidad máxima de registros a usar en la pila
 
 type
+  {Información sobre los saltos con la instrucción kIF_SET}
+  TIfInfo = record
+    iFlash1  : integer;   //iFlash al empezar la instrucción kIF
+    curBank1 : byte;      //currBank al empezar la instrucción kIF
+    hasBankInst: boolean; //Flag to indicate there is bank switch instructions
+    igoto    : integer;   //Address where is GOTO
+    curBank2 : byte;
+    iFlash3  : integer;   //iFlash al finalizar la instrucción kIF
+    curBank3 : byte;      //currBank al finalizar la instrucción kIF
+  end;
+
   { TGenCodBas }
   TGenCodBas = class(TParserDirecBase)
   private
@@ -217,8 +228,11 @@ type
     //Instrucciones adicionales
     procedure kSHIFTR(const f: TPicRegister; d: TPIC16destin);
     procedure kSHIFTL(const f: TPicRegister; d: TPIC16destin);
-    procedure kIF_BSET(const f: TPicRegisterBit; out igot: integer);
-    procedure kIF_BSET_END(igot: integer);
+    procedure kIF_BSET(const f: TPicRegisterBit; out info: TIfInfo);
+    procedure kIF_BSET_END(const info: TIfInfo; UpdateBank: boolean = true);
+    procedure kIF_BCLR(const f: TPicRegisterBit; out igot: integer);
+    procedure kIF_BCLR_END(igot: integer);
+
   public     //Acceso a registro de trabajo
     property H_register: TPicRegister read H;
     property E_register: TPicRegister read E;
@@ -1681,11 +1695,23 @@ begin
   GenCodBank(f.addr);
   _RLF(f.addr, d);
 end;
-procedure TGenCodBas.kIF_BSET(const f: TPicRegisterBit; out igot: integer);
+procedure TGenCodBas.kIF_BSET(const f: TPicRegisterBit; out info: TIfInfo);
 {Conditional instruction. Test if the specified bit is set. In this case, execute
-the following block.
+the following block. The syntax is:
+
+kIF_BSET(offset, bit)
+<block of code>
+kIF_BSET_END
+
 This instruction require to call to kEND_BSET() to define the End of the block.
-The strategy here is to generate the sequence:
+
+The block of code can be one or more instructions. The instructions used in the jump
+must be optimized, according to the length of the block.
+Thi sinstruction
+
+EXPLANATION:
+
+The strategy of this procedure is to generate the sequence:
 
   <Bank setting>
   i_BTFSS f
@@ -1708,28 +1734,69 @@ it would need to insert and move several words, including, probably, GOTOs and L
 needing to recalculate jumps.
 }
 begin
-  GenCodBank(f.addr);
+  info.iFlash1  := pic.iFlash;
+  info.curBank1 := CurrBank;
+  GenCodBank(f.addr);  //Generate bank instructions
+  info.hasBankInst := pic.iFlash>info.iFlash1;
+  //Instructions of Page Select HERE:
+  //if multipage then begin
+  //_movlw    high  Target  //Don't affect STATUS
+  //_movwf    pclatch       //Don't affect STATUS
+  //end;
+  info.curBank2 := CurrBank;    //Banco antes del salto
   _BTFSS(f.addr, f.bit);
-  igot := pic.iFlash;     //guarda posición de instrucción de salto
+  info.igoto := pic.iFlash;     //Guarda posición de GOTO que sigue
   _GOTO(0); //salto pendiente
+  info.iFlash3  := pic.iFlash;
+  info.curBank3 := CurrBank;
 end;
-procedure TGenCodBas.kIF_BSET_END(igot: integer);
+procedure TGenCodBas.kIF_BSET_END(const info: TIfInfo; UpdateBank: boolean = true);
 {Define the End of the block, created with kIF_BSET().}
+var
+  i: Integer;
 begin
-  if _PC = igot+1 then begin
+  if _PC = info.iFlash3 then begin
+    //Elimina instrucciones
+    for i:= info.iFlash1 to _PC-1 do begin
+      pic.flash[i].used:=false;  //Elimina instrucciones anteriores
+    end;
     //No hay instrucciones en en bloque
-    pic.iFlash:=pic.iFlash-2 ;  //Elimina hasta el i_BTFSS, porque no tiene sentido
-  end else if _PC = igot+2 then begin
+    pic.iFlash:=info.iFlash1;  //Elimina hasta el inicio, porque no tiene sentido
+    CurrBank := info.curBank1;
+  end else if _PC = info.iFlash3+1 then begin
     //Es un bloque de una sola instrucción. Se puede optimizar
-    pic.BTFSC_sw_BTFSS(igot-1);  //Cambia i_BTFSS por i_BTFSC
-    pic.flash[igot] := pic.flash[igot+1];  //Desplaza la instrucción
-    pic.flash[igot].used:=false;  //Elimina
+    pic.BTFSC_sw_BTFSS(info.igoto-1);  //Cambia i_BTFSS por i_BTFSC
+    pic.flash[info.igoto] := pic.flash[info.igoto+1];  //Desplaza la instrucción
+    pic.flash[info.igoto].used:=false;  //Elimina
+//  end else if (_PC = info.iFlash3+2) or (_PC = info.iFlash3+3) then begin
+//    {Dos o tres instrucciones. Podría ser cambio de banco y una instrucción. Se pdoría
+//    optimizar cuando el BTFS? opera sobre un registro mapeado en todos los bancos (como
+//    STATUS) poniendo el cambio de banco antes del BTFS?}
   end else begin
     //Bloque de varias instrucciones
-    pic.codGotoAt(igot, _PC);   //termina de codificar el salto
+    pic.codGotoAt(info.igoto, _PC);   //termina de codificar el salto
+    //Faltaría completar página cuando se geenran instrucciones de páginas
+    if UpdateBank then begin
+      //Verifica el cambio de bancos
+      if info.curBank2 = CurrBank then begin
+        //En ambos casos terminan con el mismo banco. Lo dejamos allí
+      end else  begin
+        //Son bancos diferentes. No se puede predecir el banco final.
+        CurrBank := 255;
+      end;
+    end;
   end;
 end;
-
+procedure TGenCodBas.kIF_BCLR(const f: TPicRegisterBit; out igot: integer);
+begin
+  //bnk1 := CurrBank;   //banco inicial
+//  kIF_BSET(f, igot);
+end;
+procedure TGenCodBas.kIF_BCLR_END(igot: integer);
+begin
+  //bnk2 := CurrBank;
+//  kIF_BSET_END(igot);
+end;
 function TGenCodBas.PICName: string;
 begin
   Result := pic.Model;

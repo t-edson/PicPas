@@ -2,7 +2,8 @@
 Define el frame que implementa la interfaz gráfica donde se muestra el PIC y al que
 se le pueden agreagr compoentes electrónicos adicionales como leds, o pantallas LCD.
 
-                                                 Creado por Tito Hinsotroza 05/2018.
+                                                Creado por Tito Hinostroza 05/2018.
+                                                Modif. por Tito Hinostroza 08/2018.
 }
 unit FramePICDiagram;
 {$mode objfpc}{$H+}
@@ -171,16 +172,18 @@ type
   TfraPICDiagram = class(TFrame)
     acAddLogTog: TAction;
     acGenDelObject: TAction;
-    acGenConnect: TAction;
+    acGenConnTo: TAction;
     acAddConn: TAction;
     acAddLed: TAction;
     acAddResis: TAction;
     acAdd7SegComC: TAction;
+    acGenReconn: TAction;
     ActionList1: TActionList;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
+    mnReconn: TMenuItem;
     mnConnect: TMenuItem;
     mnReset: TMenuItem;
     mnRun: TMenuItem;
@@ -195,8 +198,9 @@ type
     procedure acAddLedExecute(Sender: TObject);
     procedure acAddLogTogExecute(Sender: TObject);
     procedure acAddResisExecute(Sender: TObject);
-    procedure acGenConnectExecute(Sender: TObject);
+    procedure acGenConnToExecute(Sender: TObject);
     procedure acGenDelObjectExecute(Sender: TObject);
+    procedure acGenReconnExecute(Sender: TObject);
   private  //Nombres y referencias
     procedure connectorChange;
     function ExistsName(AName: string): boolean;
@@ -867,7 +871,7 @@ begin
   v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
   //Dibuja cuerpo
   v2d.SetPen(psSolid, 2, COL_GND);
-  v2d.SetBrush(clGray);
+  v2d.SetBrush(COL_HIM);
   v2d.RectangR(x, y, x+Width, y+Height);
   //Segmentos
   x1 := x +10;
@@ -879,49 +883,49 @@ begin
   if pinA.vNod>2 then begin
     v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
   end else begin
-    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+    v2d.SetPen(psSolid, 1, $808080); v2d.SetBrush($808080);
   end;
   v2d.RectangR(x1, y1-3, x2, y1+3);
   //Segment B
   if pinB.vNod>2 then begin
     v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
   end else begin
-    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+    v2d.SetPen(psSolid, 1, $808080); v2d.SetBrush($808080);
   end;
   v2d.RectangR(x2-3, y1+3, x2+3, y2-3);
   //Segment C
   if pinC.vNod>2 then begin
     v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
   end else begin
-    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+    v2d.SetPen(psSolid, 1, $808080); v2d.SetBrush($808080);
   end;
   v2d.RectangR(x2-3, y2+3, x2+3, y3-3);
   //Segment D
   if pinD.vNod>2 then begin
     v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
   end else begin
-    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+    v2d.SetPen(psSolid, 1, $808080); v2d.SetBrush($808080);
   end;
   v2d.RectangR(x1, y3-3, x2, y3+3);
   //Segment E
   if pinE.vNod>2 then begin
     v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
   end else begin
-    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+    v2d.SetPen(psSolid, 1, $808080); v2d.SetBrush($808080);
   end;
   v2d.RectangR(x1-3, y2+3, x1+3, y3-3);
   //Segment F
   if pinF.vNod>2 then begin
     v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
   end else begin
-    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+    v2d.SetPen(psSolid, 1, $808080); v2d.SetBrush($808080);
   end;
   v2d.RectangR(x1-3, y1+3, x1+3, y2-3);
   //Segment G
   if pinG.vNod>2 then begin
     v2d.SetPen(psSolid, 1, clRed); v2d.SetBrush(clRed);
   end else begin
-    v2d.SetPen(psSolid, 1, $A0A0A0); v2d.SetBrush($A0A0A0);
+    v2d.SetPen(psSolid, 1, $808080); v2d.SetBrush($808080);
   end;
   v2d.RectangR(x1, y2-3, x2, y2+3);
 
@@ -1047,6 +1051,8 @@ begin
   Fpic := cxp0.picCore;
   //Inicia dispositivo
   ogPic.SetPic(cxp0.picCore);
+  //Al fijar el PIC, se elimina y crea un nuevo PIC,por ello hay que llamar a UpdateNodeList().
+  UpdateNodeList;
 end;
 procedure TfraPICDiagram.fraPICDiagramKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
@@ -1121,7 +1127,7 @@ end;
 procedure TfraPICDiagram.UpdateNodeList;
 {Actualiza la lista de nodos a partir de los conectores existentes. Esta tarea
 es importante para realizar el análisis correcto del voltaje e impedancia del nodo.
-Como esta tarea puede ser algo pesada, pro optimizaicón se debe reañizar solo cuando
+Como esta tarea puede ser algo pesada, por optimización se debe realizar solo cuando
 se pueda producir cambios en los nodos (creación, eliminación, conexión y desconexión)}
 var
   og: TObjGraf;
@@ -1304,6 +1310,7 @@ begin
     mnConnect.Clear;
     for og in motEdi.objetos do begin
       if not(og is TOgComponent) then continue;
+      if og is TOgConector then continue;;
       it := AddItemToMenu(mnConnect, og.Name, nil);
       comp2 := TOgComponent(og);
       for pCnx2 in comp2.PtosConex do begin
@@ -1338,7 +1345,7 @@ begin
 end;
 destructor TfraPICDiagram.Destroy;
 begin
-  nodeList .Destroy;
+  nodeList.Destroy;
   {Marca "nodeList" en NIL porque cuando se destruye "motEdi", si es que hay connectores,
   unidos a algún componente, estos intentarán llamar a "UpdateNodeList", cuando se
   desconecten, al momento de destruirse, y "UpdateNodeList" intentaría acceder a "nodeList"}
@@ -1352,10 +1359,10 @@ begin
   UpdateNodeList;
 end;
 /////////////////////// Acciones /////////////////////////
-procedure TfraPICDiagram.acGenConnectExecute(Sender: TObject);
-{Connecta el objeto a otro}
+procedure TfraPICDiagram.acGenConnToExecute(Sender: TObject);
+{Connecta el Pin de un objeto a otro.
+No se implementa aquí porque se implementa de forma dinámica.}
 begin
-
 end;
 procedure TfraPICDiagram.acAddLogTogExecute(Sender: TObject);
 {Agrega un Objeto Gráfico LogicToggle}
@@ -1437,5 +1444,33 @@ begin
   motEdi.DeleteSelected;
   UpdateNodeList;
 end;
+procedure TfraPICDiagram.acGenReconnExecute(Sender: TObject);
+{Reconecta componentes del diagrama, de acuerdo a las coordenadas de los conectores.}
+var
+  og: TObjGraf;
+  ogCon: TOgConector;
+  xp, yp: Integer;
+  selPntCnx: TPtoConx;
+begin
+  nodeList.Clear;
+  //Explora objetos gráfiocs
+  for og in motEdi.objetos do begin
+    if og is TOgConector then begin
+      ogCon := TOgConector(og);
+      if ogCon.pcBEGIN.ConnectedTo = nil then begin
+        motEdi.v2d.XYpant(ogCon.pcBEGIN.x, ogCon.pcBEGIN.y, xp, yp);
+        selPntCnx := motEdi.SelectPointOfConexion(xp, yp, 2);
+        if selPntCnx <> nil then selPntCnx.ConnectTo(ogCon.pcBEGIN);
+      end;
+      if ogCon.pcEND.ConnectedTo = nil then begin
+        motEdi.v2d.XYpant(ogCon.pcEND.x, ogCon.pcEND.y, xp, yp);
+        selPntCnx := motEdi.SelectPointOfConexion(xp, yp, 2);
+        if selPntCnx <> nil then selPntCnx.ConnectTo(ogCon.pcEND);
+      end;
+    end;
+  end;
+  UpdateNodeList;
+end;
+
 end.
 

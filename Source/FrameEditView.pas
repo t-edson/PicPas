@@ -1346,7 +1346,7 @@ begin
       OnRequireSynEditConfig(editors[i].SynEdit);
     end;
     //Actualiza resaltador
-    ConfigureSyntax(editors[i], false);
+    ConfigureSyntax(editors[i]);
   end;
 end;
 procedure TfraEditView.UpdateSynEditCompletion;

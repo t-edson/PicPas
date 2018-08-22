@@ -326,7 +326,7 @@ begin
 end;
 procedure TCodeTool.GeneralIdentifierCompletion(opEve: TFaOpenEvent;
   curEnv: TFaCursorEnviron; out Cancel: boolean);
-{La idea de este métod es implementar el completado de un identifcador, en cualquier
+{La idea de este método es implementar el completado de un identifcador, en cualquier
 parte en que se encuentre el cursor.
 Pero actualmente solo se aplica para cualquier bloque que no sea el bloque principal
 (Cuerpo del programa principal o cuerpo de procedimientos). EL completado del blooue
@@ -371,7 +371,8 @@ begin
   ele := cxp.TreeElems.GetElementAt(curPos);
   if ele = nil then begin
     //No identifica la posición actual
-    exit;
+    Cancel := false;  //Deja que siga el filtrado, porque hay items agregados
+    exit;  //Sale porque no se reconcoe al elemento sintáctico actual
   end;
   cxp.TreeElems.curNode := ele;  //Se posiciona en ese nodo
   //Realiza la búsqueda con FindFirst, usando evento OnFindElement

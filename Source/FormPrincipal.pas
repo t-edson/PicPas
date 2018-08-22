@@ -1041,14 +1041,15 @@ procedure TfrmPrincipal.acToolComEjecExecute(Sender: TObject);
 {Compila y ejecuta en la ventana de simulación}
 begin
   acToolCompilExecute(self);
+  if Compiler.CompiledUnit then exit;  //No es programa
   if not fraMessages.HaveErrors then begin
-     acToolASMDebugExecute(self);
+     frmDebug.Exec(Compiler);
+     frmDebug.acGenRunExecute(self);
   end;
 end;
 procedure TfrmPrincipal.acToolASMDebugExecute(Sender: TObject);
 begin
   frmDebug.Exec(Compiler);
-  frmDebug.acGenRunExecute(self);
 end;
 procedure TfrmPrincipal.acToolPICExplExecute(Sender: TObject);
 begin
@@ -1144,7 +1145,9 @@ var
   nFiles: Integer;
 begin
   nFiles := 0;
+  acToolSelPIC10Execute(self);
   TestUnits(nFiles);
+  if Compiler.HayError then exit;
   MsgBox('%d files tested OK.', [nFiles]);
 end;
 procedure TfrmPrincipal.acToolConfigExecute(Sender: TObject);

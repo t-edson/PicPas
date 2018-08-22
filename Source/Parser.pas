@@ -230,6 +230,7 @@ public
   FirstPass: boolean;     //Indica que está en la primera pasada.
   xLex     : TSynFacilSyn; //Resaltador - lexer
   cIn      : TContexts;   //Entrada de datos
+  CompiledUnit: boolean;  //Flag to identify a Unit
   //Variables públicas del compilador
   ejecProg : boolean;     //Indica que se está ejecutando un programa o compilando
   DetEjec  : boolean;     //Para detener la ejecución (en intérpretes)
@@ -289,8 +290,8 @@ public    //Compiling Options
   OptReuProVar: boolean; //Optimiza reutilizando variables locales de procedimientos
   OptRetProc  : boolean; //Optimiza el último exit de los procedimeintos.
 protected
-  mainFile : string;   //archivo inicial que se compila
-  hexFile  : string;   //Nombre de archivo de salida
+  mainFile    : string;    //Archivo inicial que se compila
+  hexFile     : string;    //Nombre de archivo de salida
   function ExpandRelPathTo(BaseFile, FileName: string): string;
   procedure ExchangeP1_P2;
 public    //Información y acceso a memoria

@@ -2393,6 +2393,7 @@ begin
                         cada procedimiento, reiniciará el puntero de FLASH}
     //Compila el archivo actual como programa o como unidad
     if IsUnit then begin
+      CompiledUnit := true;
       //Hay que compilar una unidad
       consoleTickStart;
 //      debugln('*** Compiling unit: Pass 1.');
@@ -2404,6 +2405,7 @@ begin
       consoleTickCount('** First Pass.');
     end else begin
       //Debe ser un programa
+      CompiledUnit := false;
       {Se hace una primera pasada para ver, a modo de exploración, para ver qué
       procedimientos, y varaibles son realmente usados, de modo que solo estos, serán
       codificados en la segunda pasada. Así evitamos incluir, código innecesario.}
