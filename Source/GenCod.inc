@@ -718,7 +718,7 @@ begin
     if value2 = 0 then begin  //Caso especial
       SetROBResultConst_byte(0);  //puede generar error
       exit;
-    end else if value1 = 255 then begin  //Caso especial
+    end else if value2 = 255 then begin  //Caso especial
       SetROBResultVariab(p1^.rVar);  //puede generar error
       exit;
     end;

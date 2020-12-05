@@ -84,6 +84,8 @@ procedure TfrmElemProperty.SetCalledInfo(elem0: TxpElement);
 {Agrega información, sobre las llamadas que se hacen a un elemento }
 var
   nCalled: Integer;
+  call: TxpEleCaller;
+  callerStr, bnkStr: String;
 begin
   nCalled := elem0.nCalled;
   if nCalled = 0 then begin
@@ -96,6 +98,18 @@ begin
     lblUsed.Font.Color := clGreen;
     lblUsed.Caption := 'Used ' + IntToStr(nCalled) + ' times.';
     butDetails.Enabled := true;
+    //Agrega información de llamadas
+    for call in elem.lstCallers do begin
+      if call.caller.Parent<>nil then begin
+        callerStr := call.caller.Parent.name + '-' + call.caller.name;
+      end else begin
+        callerStr := call.caller.name;
+      end;
+      bnkStr := IntToStr(call.curBnk);
+      //Agrega líneas
+      Memo1.Lines.Add('Called by: ' + callerStr + ' from Bank:' + bnkStr +
+             ' Pos:' + call.curPos.RowColString);;
+    end;
   end;
 end;
 procedure TfrmElemProperty.Exec(elem0: TxpElement);
@@ -116,8 +130,6 @@ begin
   txtEleLocaPath.Caption := ExtractFileDir(elem.srcDec.Fil);
   txtEleLocFile.Caption := ExtractFileName(elem.srcDec.Fil) + elem.srcDec.RowColString;
   BitBtn2.Enabled := true;
-  //Configura etiqueta y botón de número de llamadas al elemento
-  SetCalledInfo(elem);
   //Ícono e información adicional
   if elem.idClass = eltCons then begin
     xcon := TxpEleCon(elem);
@@ -164,14 +176,20 @@ begin
     txtEleType.Caption := 'Body';
     ImageList1.GetBitmap(12, Image1.Picture.Bitmap);
     adicInformation := 'Address: $' + IntToHex(xbod.adrr, 3) + LineEnding +
-           'Begin: ' + xbod.srcDec.RowColString  + LineEnding +
+           'Begin: ' + xbod.srcDec.RowColString  + ' ' +
            'End: ' + elem.srcEnd.RowColString;
+  end else if elem.idClass = eltMain then begin
+    txtEleType.Caption := 'Main';
+    ImageList1.GetBitmap(1, Image1.Picture.Bitmap);
+    adicInformation := '';
   end else begin
     txtEleType.Caption := 'Unknown';
     ImageList1.GetBitmap(13, Image1.Picture.Bitmap);
     adicInformation := '';
   end;
   Memo1.Text := adicInformation;
+  //Configura etiqueta y botón de número de llamadas al elemento
+  SetCalledInfo(elem);
 end;
 
 end.

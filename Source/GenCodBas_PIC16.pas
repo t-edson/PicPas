@@ -1703,11 +1703,10 @@ kIF_BSET(offset, bit)
 <block of code>
 kIF_BSET_END
 
-This instruction require to call to kEND_BSET() to define the End of the block.
+This instruction require to call to kIF_BSET_END() to define the End of the block.
 
 The block of code can be one or more instructions. The instructions used in the jump
 must be optimized, according to the length of the block.
-Thi sinstruction
 
 EXPLANATION:
 

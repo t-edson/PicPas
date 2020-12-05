@@ -1,24 +1,27 @@
 object fraPICDiagram: TfraPICDiagram
   Left = 0
-  Height = 317
+  Height = 396
   Top = 0
-  Width = 378
-  ClientHeight = 317
-  ClientWidth = 378
+  Width = 472
+  ClientHeight = 396
+  ClientWidth = 472
+  DesignTimePPI = 120
+  ParentFont = False
   TabOrder = 0
   DesignLeft = 469
   DesignTop = 254
   object PaintBox1: TPaintBox
     Left = 0
-    Height = 317
+    Height = 396
     Top = 0
-    Width = 378
+    Width = 472
     Align = alClient
+    ParentFont = False
   end
   object PopupMenu1: TPopupMenu
     Images = frmDebugger.ImageList16
-    left = 72
-    top = 128
+    Left = 90
+    Top = 160
     object mnReset: TMenuItem
       Action = frmDebugger.acGenReset
     end
@@ -58,8 +61,8 @@ object fraPICDiagram: TfraPICDiagram
   end
   object ActionList1: TActionList
     Images = frmDebugger.ImageList16
-    left = 168
-    top = 194
+    Left = 210
+    Top = 243
     object acAddLogTog: TAction
       Category = 'Add'
       Caption = 'Add LogicToggle'

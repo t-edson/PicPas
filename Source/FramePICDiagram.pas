@@ -10,7 +10,7 @@ unit FramePICDiagram;
 interface
 uses
   Classes, SysUtils, FileUtil, fgl, Types, Forms, Controls, ExtCtrls, Graphics,
-  Menus, ActnList, LCLProc, ogMotEdicion, ogMotGraf2D, ogDefObjGraf, PicCore,
+  Menus, ActnList, LCLProc, ogEditionMot, ogMotGraf2D, ogDefObjGraf, PicCore,
   Parser, MisUtils;
 type
   { TPinGraph }
@@ -76,7 +76,7 @@ type
     procedure PCtlDisconnect(pCtl: TPtoCtrl; pCnx: TPtoConx);
     function ConnectedTo(ogCon: TOgConector): boolean;
   public
-    function LoSelecciona(xr, yr: Integer): Boolean; override;
+    function IsSelectedBy(xr, yr: Integer): Boolean; override;
     procedure Draw; override;
     constructor Create(mGraf: TMotGraf); override;
     destructor Destroy; override;
@@ -214,7 +214,7 @@ type
   private
     Fpic: TPicCore;
     ogPic: TOgPic;
-    motEdi: TModEdicion;
+    motEdi: TEditionMot;
     procedure ConnectAction(Sender: TObject);
     procedure fraPICDiagramKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -546,7 +546,7 @@ begin
   if ConnectedSameConexionPoint(pcEND, ogCon.pcEND) then exit(true);
   exit(false);
 end;
-function TOgConector.LoSelecciona(xr, yr: Integer): Boolean;
+function TOgConector.IsSelectedBy(xr, yr: Integer): Boolean;
 var
   x0, y0, x1, y1: Integer;
 begin
@@ -1203,7 +1203,7 @@ var
 begin
   if motEdi.seleccion.Count = 1 then begin
     //Hay uno seleccionado
-    if motEdi.Selected.LoSelecciona(X,Y) then begin
+    if motEdi.Selected.IsSelectedBy(X,Y) then begin
       //Click sobre un objeto seleccionado
       if motEdi.Selected is TOgLogicState then begin
         LogInp := TOgLogicState(motEdi.Selected);
@@ -1242,7 +1242,7 @@ var
 begin
   if motEdi.seleccion.Count = 1 then begin
     //Hay un componente seleccionado
-    if motEdi.Selected.LoSelecciona(X,Y) then begin
+    if motEdi.Selected.IsSelectedBy(X,Y) then begin
       if motEdi.Selected is TOgLogicState then begin
         LogInp := TOgLogicState(motEdi.Selected);
         LogInp.pin.vThev := 0;
@@ -1330,7 +1330,7 @@ constructor TfraPICDiagram.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   //crea motor de edición
-  motEdi := TModEdicion.Create(PaintBox1);
+  motEdi := TEditionMot.Create(PaintBox1);
   nodeList := TNodeList.Create(true);
   //agrega objeto
   ogPic := TOgPic.Create(motEdi.v2d);
