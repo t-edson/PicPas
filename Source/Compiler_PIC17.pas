@@ -2351,7 +2351,7 @@ begin
   cIn.curCon.SetStartPos;   //retorna al inicio
   exit(false);
 end;
-procedure TCompiler_PIC17.Compile(NombArc: string; Link: boolean = true);
+procedure TCompiler_PIC17.Compile(NombArc: string; Link: boolean);
 //Compila el contenido de un archivo.
 var
   p: SizeInt;
@@ -2379,6 +2379,12 @@ begin
     end;
     {-------------------------------------------------}
     TreeElems.Clear;
+    //Asigna nombre y archivo a elemento
+    TreeElems.main.name := ExtractFileName(mainFile);
+    p := pos('.',TreeElems.main.name);
+    if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
+    TreeElems.main.srcDec.fil := mainFile;
+    //Continúa con preparación
     TreeDirec.Clear;
     TreeElems.OnAddElement := @Tree_AddElement;   //Se va a modificar el árbol
     listFunSys.Clear;
@@ -2396,9 +2402,6 @@ begin
       //Hay que compilar una unidad
       consoleTickStart;
 //      debugln('*** Compiling unit: Pass 1.');
-      TreeElems.main.name := ExtractFileName(mainFile);
-      p := pos('.',TreeElems.main.name);
-      if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
       FirstPass := true;
       CompileUnit(TreeElems.main);
       consoleTickCount('** First Pass.');
@@ -2406,7 +2409,7 @@ begin
       //Debe ser un programa
       CompiledUnit := false;
       {Se hace una primera pasada para ver, a modo de exploración, para ver qué
-      procedimientos, y varaibles son realmente usados, de modo que solo estos, serán
+      procedimientos, y variables son realmente usados, de modo que solo estos, serán
       codificados en la segunda pasada. Así evitamos incluir, código innecesario.}
       consoleTickStart;
 //      debugln('*** Compiling program: Pass 1.');
@@ -2415,8 +2418,7 @@ begin
       CompileProgram;  //puede dar error
       if HayError then exit;
       consoleTickCount('** First Pass.');
-      if Link then begin
-//        debugln('*** Compiling/Linking: Pass 2.');
+      if Link then begin  //El enlazado solo es válido para programas
         {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,
         que debe haber sido actualizado en la primera pasada.}
         FirstPass := false;
@@ -2727,4 +2729,4 @@ initialization
 finalization
 
 end.
-//2161
+//2730

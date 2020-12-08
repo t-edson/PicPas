@@ -81,7 +81,8 @@ type  //TxpElement y clases previas
                 eltCons,  //Constante
                 eltType,  //Tipo
                 eltUnit,  //Unidad
-                eltBody   //Cuerpo del programa
+                eltBody,  //Cuerpo del programa/procedimiento
+                eltFinal  //Sección FINALIZATION de unidad
                 );
 
   TxpElement = class;
@@ -90,10 +91,14 @@ type  //TxpElement y clases previas
   TxpEleBody = class;
 
   //Datos sobre la llamada a un elemento desde otro elemento
+
+  { TxpEleCaller }
+
   TxpEleCaller = class
     curPos: TSrcPos;    //Posición desde donde es llamado
     curBnk: byte;       //banco RAM, desde donde se llama
     caller: TxpElement; //función que llama a esta función
+    function CallerUnit: TxpElement;  //Unidad/Programa de donde se llama
   end;
   TxpListCallers = specialize TFPGObjectList<TxpEleCaller>;
 
@@ -156,6 +161,7 @@ type  //TxpElement y clases previas
     lstCallers: TxpListCallers;
     function nCalled: integer; virtual; //número de llamadas
     function IsCalledBy(callElem: TxpElement): boolean; //Identifica a un llamador
+    function IsCalledByChildOf(callElem: TxpElement): boolean; //Identifica a un llamador
     function IsCalledAt(callPos: TSrcPos): boolean;
     function IsDeclaredAt(decPos: TSrcPos): boolean;
     function FindCalling(callElem: TxpElement): TxpEleCaller; //Identifica a un llamada
@@ -170,9 +176,7 @@ type  //TxpElement y clases previas
     lstCalled : TxpListCalled;
     //Lista de funciones que son llamadas dirceta o indirectamente (Se llena en el enlazado)
     lstCalledAll: TxpListCalled;
-    {Se está asumiendo que solo los TxpEleCodeCont, pueden llamar a otros elementos,
-    peor podría considerarse también que elementos, como las variables, pueden llamar
-    también a otros elementos (como las referencias absolute).}
+    //Métodos para el llemado
     procedure AddCalled(elem: TxpElement);
     procedure AddCalledAll(elem: TxpElement);
     procedure AddCalledAll_FromList(lstCalled0: TxpListCalled);
@@ -182,6 +186,9 @@ type  //TxpElement y clases previas
     Parent: TxpElement;   //Referencia al elemento padre
     idClass: TxpIDClass;  //Para no usar RTTI
     elements: TxpElements; //Referencia a nombres anidados, cuando sea función
+    {Bandera para indicar si la función, ha sido declarada en la sección INTERFACE. Este
+    campo es úitl para cuando se procesan unidades.}
+    InInterface: boolean;
     function Path: string;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
     function LastNode: TxpElement;
@@ -269,9 +276,6 @@ type //Clases de elementos
     catType : TxpCatType;
     arrSize : integer;     //Tamaño, cuando es tctArray
     refType : TxpEleType;  //Referencia a otro tipo. Valido cuando es puntero o arreglo.
-    {Bandera para indicar si la variable, ha sido declarada en la sección INTERFACE. Este
-    campo es úitl para cuando se procesan unidades.}
-    InInterface: boolean;
   public  //Campos de operadores
     Operators: TxpOperators;      //Operadores soportados
     operAsign: TxpOperator;       //Se guarda una referencia al operador de aignación
@@ -326,9 +330,6 @@ type //Clases de elementos
     //Indica si la variable tiene parámetros adicionales en la declaración
     property havAdicPar: boolean read GetHavAdicPar write SetHavAdicPar;
   public
-    {Bandera para indicar si la variable, ha sido declarada en la sección INTERFACE. Este
-    campo es úitl para cuando se procesan unidades.}
-    InInterface: boolean;
     //Bandera para indicar si la variable, se está usando como parámetro
     IsParameter: boolean;
     {Bandera para indicar que el valor de la variable se alamcena en lso registros de
@@ -420,9 +421,6 @@ type //Clases de elementos
     {Bandera para indicar si la función, ha sido implementada. Este campo es util, para
      cuando se usa FORWARD o cuando se compilan unidades.}
     Implemented: boolean;
-    {Bandera para indicar si la función, ha sido declarada en la sección INTERFACE. Este
-    campo es úitl para cuando se procesan unidades.}
-    InInterface: boolean;
     {Indica si la función es una ISR. Se espera que solo exista una.}
     IsInterrupt : boolean;
     ///////////////
@@ -448,13 +446,24 @@ type //Clases de elementos
   TxpEleUnit = class(TxpEleCodeCont)
   public
     srcFile: string;   //El archivo en donde está físicamente la unidad.
+    InterfaceElements: TxpElements;  //Lista de eleemntos en la sección INTERFACE
+    procedure ReadInterfaceElements;
     constructor Create; override;
+    destructor Destroy; override;
   end;
   TxpEleUnits = specialize TFPGObjectList<TxpEleUnit>; //lista de constantes
 
   { TxpEleBody }
-  //Clase para modelar al cuerpo principal del programa
+  //Clase para modelar al cuerpo principal del programa principal o de un procedimiento
   TxpEleBody = class(TxpElement)
+    adrr   : integer;  //dirección física
+    constructor Create; override;
+    destructor Destroy; override;
+  end;
+
+  { TxpEleFinal }
+  //Clase para modelar al bloque FINALIZATION de una unidad
+  TxpEleFinal = class(TxpElement)
     adrr   : integer;  //dirección física
     constructor Create; override;
     destructor Destroy; override;
@@ -481,29 +490,33 @@ type //Clases de elementos
     curFindIdx : integer;
     inUnit     : boolean;
   public
-    main    : TxpEleMain;  //nodo raiz
-    curNode : TxpElement;  //referencia al nodo actual
-    AllVars    : TxpEleVars;
-    AllUnits   : TxpEleUnits;
-    AllFuncs   : TxpEleFuns;
+    main     : TxpEleMain;  //nodo raiz
+    curNode  : TxpElement;  //referencia al nodo actual
+    AllCons  : TxpEleCons;
+    AllVars  : TxpEleVars;
+    AllUnits : TxpEleUnits;
+    AllFuncs : TxpEleFuns;
+    AllTypes : TxpEleTypes;
     OnAddElement: procedure(xpElem: TxpElement) of object;  //Evento
     OnFindElement: procedure(elem: TxpElement) of object;
     procedure Clear;
+    procedure RefreshAllCons;
     procedure RefreshAllVars;
     procedure RefreshAllFuncs;
     procedure RefreshAllUnits;
-    procedure RegisterUnitUsed(uniName: string);
+    procedure RefreshAllTypes;
+    procedure RefreshAllElementLists;
     function CurNodeName: string;
     function CurCodeContainer: TxpEleCodeCont;
     function LastNode: TxpElement;
     function BodyNode: TxpEleBody;
-    //funciones para llenado del arbol
+  public  //Funciones para llenado del arbol
     function AddElement(elem: TxpElement; verifDuplic: boolean=true): boolean;
     procedure AddElementAndOpen(elem: TxpElement);
     procedure OpenElement(elem: TxpElement);
     function ValidateCurElement: boolean;
     procedure CloseElement;
-    //Métodos para identificación de nombres
+  public  //Métodos para identificación de nombres
     function FindNext: TxpElement;
     function FindFirst(const name: string): TxpElement;
     function FindNextFunc: TxpEleFun;
@@ -526,6 +539,25 @@ var
 
 implementation
 
+{ TxpEleCaller }
+function TxpEleCaller.CallerUnit: TxpElement;
+{Devuelve el elemento unidad o programa principal, desde donde se hace esta llamada.}
+var
+  container: TxpElement;
+begin
+  {Se asume que la llamda se puede hacer solo desde dos puntos:
+   - Desde una declaración.
+   - Desde el cuerpo de una función.
+  }
+  if caller = nil then exit(nil);
+  //La idea es retorceder hasta encontrar una unidad o el programa principal
+  container := caller;
+  repeat
+    container := container.Parent;
+  until container.idClass in [eltUnit, eltMain];
+  Result := container;
+  //No debería haber otro caso
+end;
 { TxpExitCall }
 function TxpExitCall.IsObligat: boolean;
 {Indica si el exit se encuentra dentro de código obligatorio}
@@ -614,6 +646,17 @@ begin
   end;
   exit(false);
 end;
+function TxpElement.IsCalledByChildOf(callElem: TxpElement): boolean;
+{Indica si el elemento es llamado por algún elemento hijo de "callElem".
+Puede haber varias llamadas desde "callElem", pero basta que haya una para devolver TRUE.}
+var
+  cal : TxpEleCaller;
+begin
+  for cal in lstCallers do begin
+    if cal.caller.Parent = callElem then exit(true);
+  end;
+  exit(false);
+end;
 function TxpElement.IsCalledAt(callPos: TSrcPos): boolean;
 {Indica si el elemento es llamado, desde la posición indicada.}
 var
@@ -653,6 +696,7 @@ begin
     if cal.caller = callElem then begin
       lstCallers.Delete(i);
       inc(n);
+      //debugln('Eliminando llamada a %s desde: %s', [self.name, callElem.name]);
     end;
   end;
   Result := n;
@@ -1471,11 +1515,32 @@ destructor TxpEleFun.Destroy;
 begin
   inherited Destroy;
 end;
+procedure TxpEleUnit.ReadInterfaceElements;
+{Actualiza la lista "InterfaceElements", con los elementos accesibles desde la
+sección INTERFACE.}
+var
+  ele: TxpElement;
+begin
+  InterfaceElements.Clear;
+  if elements = nil then exit;
+  //Solo basta explorar a un nivel
+  for ele in elements do begin
+    if ele.InInterface then begin
+       InterfaceElements.Add(ele);
+    end;
+  end;
+end;
 { TxpEleUnit }
 constructor TxpEleUnit.Create;
 begin
   inherited;
   idClass:=eltUnit;
+  InterfaceElements:= TxpElements.Create(false);
+end;
+destructor TxpEleUnit.Destroy;
+begin
+  InterfaceElements.Destroy;
+  inherited Destroy;
 end;
 { TxpEleBody }
 constructor TxpEleBody.Create;
@@ -1484,6 +1549,16 @@ begin
   idClass := eltBody;
 end;
 destructor TxpEleBody.Destroy;
+begin
+  inherited Destroy;
+end;
+{ TxpEleFinal }
+constructor TxpEleFinal.Create;
+begin
+  inherited Create;
+  idClass := eltFinal;
+end;
+destructor TxpEleFinal.Destroy;
 begin
   inherited Destroy;
 end;
@@ -1502,8 +1577,34 @@ begin
 
   curNode := main;      //retorna al nodo principal
   //ELimina lista internas
+  AllCons.Clear;
   AllVars.Clear;
+  AllUnits.Clear;
   AllFuncs.Clear;
+  AllTypes.Clear;
+end;
+procedure TXpTreeElements.RefreshAllCons;
+{Devuelve una lista de todas las constantes del árbol de sintaxis, incluyendo las de las
+funciones y procedimientos. La lista se obtiene ordenada de acuerdo a como se haría en
+una exploración sintáctica normal.}
+  procedure AddCons(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      for ele in nod.elements do begin
+        if ele.idClass = eltCons then begin
+          AllCons.Add(TxpEleCon(ele));
+        end else begin
+          if ele.elements<>nil then
+            AddCons(ele);  //recursivo
+        end;
+      end;
+    end;
+  end;
+begin
+  AllCons.Clear;   //por si estaba llena
+  AddCons(main);
 end;
 procedure TXpTreeElements.RefreshAllVars;
 {Devuelve una lista de todas las variables del árbol de sintaxis, incluyendo las de las
@@ -1561,18 +1662,58 @@ begin
     end;
   end;
 end;
-procedure TXpTreeElements.RegisterUnitUsed(uniName: string);
-{Registra el nombre de una unidad como usada para actualizar el campo "nCalled" del
-elemento unidad.
-Se debe haber llamado primero a RefreshAllUnits().}
-var
-  uni: TxpEleUnit;
-begin
-  for uni in AllUnits do begin
-    if uni.srcFile = uniName then begin
-       uni.nCalled;
+procedure TXpTreeElements.RefreshAllTypes;
+{Devuelve una lista de todas las constantes del árbol de sintaxis, incluyendo las de las
+funciones y procedimientos. La lista se obtiene ordenada de acuerdo a como se haría en
+una exploración sintáctica normal.}
+  procedure AddTypes(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      for ele in nod.elements do begin
+        if ele.idClass = eltType then begin
+          AllTypes.Add(TxpEleType(ele));
+        end else begin
+          if ele.elements<>nil then
+            AddTypes(ele);  //recursivo
+        end;
+      end;
     end;
   end;
+begin
+  AllTypes.Clear;   //por si estaba llena
+  AddTypes(main);
+end;
+procedure TXpTreeElements.RefreshAllElementLists;
+{Actualiza todas las listas de elementos a partir de una exploración recursiva del
+árbol de sintaxis. La lista se obtiene ordenada de acuerdo a como se haría en
+una exploración sintáctica normal.}
+  procedure FindElement(nod: TxpElement);
+  var
+    ele : TxpElement;
+  begin
+    if nod.elements<>nil then begin
+      for ele in nod.elements do begin
+        case ele.idClass of
+        eltCons: AllCons.Add(TxpEleCon(ele));
+        eltVar : AllVars.Add(TxpEleVar(ele));
+        eltFunc: AllFuncs.Add(TxpEleFun(ele));
+        eltUnit: AllUnits.Add(TxpEleUnit(ele));
+        eltType: AllTypes.Add(TxpEleType(ele));
+        end;
+        if ele.elements<>nil then
+            FindElement(ele);  //recursivo
+      end;
+    end;
+  end;
+begin
+  AllCons.Clear;    //Por si estaba llena
+  AllVars.Clear;   //por si estaba llena
+  AllFuncs.Clear;   //por si estaba llena
+  AllUnits.Clear;   //por si estaba llena
+  AllTypes.Clear;   //Por si estaba llena
+  FindElement(main);
 end;
 function TXpTreeElements.CurNodeName: string;
 {Devuelve el nombre del nodo actual}
@@ -1688,6 +1829,10 @@ begin
     end;
     //Verifica ahora este elemento
     elem := curFindNode.elements[curFindIdx];
+    if inUnit and (not elem.InInterface) then begin
+      //No debería ser accesible
+      continue;
+    end;
     //Genera evento para indicar que está buscando
     if OnFindElement<>nil then OnFindElement(elem);
     //Compara
@@ -1716,7 +1861,7 @@ function TXpTreeElements.FindFirst(const name: string): TxpElement;
 {Rutina que permite resolver un identificador dentro del árbol de sintaxis, siguiendo las
 reglas de alcance de identificacdores (primero en el espacio actual y luego en los
 espacios padres).
-Si encuentra devuelve la referencia. Si no encuentra, devuelve NIL}
+Si encuentra, devuelve la referencia. Si no encuentra, devuelve NIL}
 begin
   //Busca recursivamente, a partir del espacio actual
   curFindName := name;     //Este valor no cambiará en toda la búsqueda
@@ -1867,7 +2012,10 @@ var
     if nod.elements<>nil then begin
       //Explora a todos sus elementos
       for ele in nod.elements do begin
-        if ele.IsCAlledAt(srcPos) then begin
+        {Busca un elemento que sea llamado desde desde esa posición pero que no sea
+        unidad, porque a los elementos Unidad también se les asigna llamadas cuando
+        se usa TCompilerBase.UpdateCallersToUnits;}
+        if ele.IsCAlledAt(srcPos) and (ele.idClass<>eltUnit) then begin
             res := ele;   //guarda referencia
             exit;
         end else begin
@@ -1919,17 +2067,21 @@ begin
   main:= TxpEleMain.Create;  //No debería
   main.name := 'Main';
   main.elements := TxpElements.Create(true);  //debe tener lista
-  AllFuncs := TxpEleFuns.Create(false);   //Crea lista
+  AllCons  := TxpEleCons.Create(false);   //Crea lista
   AllVars  := TxpEleVars.Create(false);   //Crea lista
+  AllFuncs := TxpEleFuns.Create(false);   //Crea lista
   AllUnits := TxpEleUnits.Create(false);  //Crea lista
+  AllTypes := TxpEleTypes.Create(false);
   curNode := main;  //empieza con el nodo principal como espacio de nombres actual
 end;
 destructor TXpTreeElements.Destroy;
 begin
   main.Destroy;
+  AllTypes.Destroy;
   AllUnits.Destroy;
-  AllVars.Free;    //por si estaba creada
   AllFuncs.Free;
+  AllVars.Free;    //por si estaba creada
+  AllCons.Free;
   inherited Destroy;
 end;
 initialization

@@ -1,13 +1,13 @@
 object frmElemProperty: TfrmElemProperty
   Left = 193
-  Height = 277
+  Height = 278
   Top = 130
   Width = 333
   BorderStyle = bsDialog
   Caption = 'Element Properties'
-  ClientHeight = 277
+  ClientHeight = 278
   ClientWidth = 333
-  LCLVersion = '1.6.2.0'
+  LCLVersion = '1.8.0.6'
   object BitBtn1: TBitBtn
     Left = 120
     Height = 30

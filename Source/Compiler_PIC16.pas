@@ -2018,67 +2018,6 @@ procedure TCompiler_PIC16.CompileLinkProgram;
 ubicar a los diversos elementos que deben compilarse.
 Se debe llamar después de compilar con CompileProgram.
 Esto es lo más cercano a un enlazador, que hay en PicPas.}
-  function RemoveUnusedFuncReferences: integer;
-  {Explora las funciones, para quitarle las referencias de funciones no usadas.
-  Devuelve la cantidad de funciones no usadas.
-  Para que esta función trabaje bien, debe estar actualizada "TreeElems.AllFuncs". }
-  var
-    fun, fun2: TxpEleFun;
-  begin
-    Result := 0;
-    for fun in TreeElems.AllFuncs do begin
-      if fun.nCalled = 0 then begin
-        inc(Result);   //Lleva la cuenta
-        //Si no se usa la función, tampoco sus elementos locales
-        fun.SetElementsUnused;
-        //También se quita las llamadas que hace a otras funciones
-        for fun2 in TreeElems.AllFuncs do begin
-          fun2.RemoveCallsFrom(fun.BodyNode);
-//          debugln('Eliminando %d llamadas desde: %s', [n, fun.name]);
-        end;
-        //Incluyendo a funciones del sistema
-        for fun2 in listFunSys do begin
-          fun2.RemoveCallsFrom(fun.BodyNode);
-        end;
-      end;
-    end;
-  end;
-  function RemoveUnusedVarReferences: integer;
-  {Explora las variables de todo el programa, de modo que a cada una:
-  * Le quita las referencias hechas por variables no usadas.
-  Devuelve la cantidad de variables no usadas.
-  Para que esta función trabaje bien, debe estar actualizada "TreeElems.AllVars" y
-  "TreeElems.AllFuncs", e inclusive "TreeElems.AllVars" debe estar ya filtrada
-  con las funciones no usadas. }
-  var
-    xvar, xvar2: TxpEleVar;
-    fun: TxpEleFun;
-  begin
-    Result := 0;
-    //Quita las referencias de las varaibles no usadas
-    for xvar in TreeElems.AllVars do begin
-      if xvar.nCalled = 0 then begin
-        //Esta es una variable no usada
-        inc(Result);   //Lleva la cuenta
-        //Quita las llamadas que hace a otras funciones
-        for xvar2 in TreeElems.AllVars do begin
-          xvar2.RemoveCallsFrom(xvar);
-//          debugln('Eliminando llamada a %s desde: %s', [xvar2.name, xvar.name]);
-        end;
-      end;
-    end;
-    //Ahora quita las referencias de funciones no usadas
-    for fun in TreeElems.AllFuncs do begin
-      if fun.nCalled = 0 then begin
-        //Esta es una función no usada
-        inc(Result);   //Lleva la cuenta
-        for xvar2 in TreeElems.AllVars do begin
-          xvar2.RemoveCallsFrom(fun.BodyNode);
-//          debugln('Eliminando llamada a %s desde: %s', [xvar2.name, xvar.name]);
-        end;
-      end;
-    end;
-  end;
   procedure SetInitialBank(fun: TxpEleFun);
   {Define el banco de trabajo para compilar correctamente}
   var
@@ -2136,7 +2075,7 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
           exit;
         end;
         whoCalls := TxpEleBody(itCall.caller);
-        //Se agregan todas las llamadas (así sean al mismo porcedimiento) pero luego
+        //Se agregan todas las llamadas (así sean al mismo procedimiento) pero luego
         //AddCalled(), los filtra.
         whoCalls.Parent.AddCalled(fun);  //Agrega al procediminto
       end;
@@ -2181,13 +2120,14 @@ Esto es lo más cercano a un enlazador, que hay en PicPas.}
     xvar.typ.DefineRegister;  //Asegura que se dispondrá de los RT necesarios
     //Puede salir error
   end;
+
 var
   elem   : TxpElement;
   bod    : TxpEleBody;
   xvar   : TxpEleVar;
   fun    : TxpEleFun;
   uni    : TxpEleUnit;
-  iniMain, noUsed, noUsedPrev, xxx: integer;
+  iniMain: integer;
 begin
   ExprLevel := 0;
   pic.ClearMemFlash;
@@ -2201,14 +2141,11 @@ begin
     end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
-  TreeElems.RefreshAllUnits;
-  //Explora las funciones, para identifcar a las no usadas
-  TreeElems.RefreshAllFuncs;
-  noUsed := 0;
-  repeat  //Explora en varios niveles
-    noUsedPrev := noUsed;   //valor anterior
-    noUsed := RemoveUnusedFuncReferences;
-  until noUsed = noUsedPrev;
+  RefreshAllElementLists;
+  RemoveUnusedFunc;  //Se debe empezar con las funciones
+  RemoveUnusedVars;  //Luego las variables
+  RemoveUnusedCons;
+  RemoveUnusedTypes;
   ///////////////////////////////////////////////////////////////////////////////
   //Asigna memoria, primero a las variables locales (y parámetros) de las funciones
   ///////////////////////////////////////////////////////////////////////////////
@@ -2229,7 +2166,7 @@ begin
     end;
     if OptReuProVar then pic.SetSharedUnused;   //limpia las posiciones usadas
   end;
-  if OptReuProVar then pic.SetSharedUsed;  //Ahora marca como usados, porque ya se creó la zona de bytes comaprtidos
+  if OptReuProVar then pic.SetSharedUsed;  //Ahora marca como usados, porque ya se creó la zona de bytes compartidos
   //Explora solo a las funciones que no son terminales
   for fun in TreeElems.AllFuncs do if fun.nCalled > 0 then begin
     if fun.IsTerminal2 then continue;
@@ -2244,15 +2181,10 @@ begin
     end;
   end;
   ///////////////////////////////////////////////////////////////////////////////
-  TreeElems.RefreshAllVars;
-  noUsed := 0;
-  repeat  //Explora en varios niveles
-    noUsedPrev := noUsed;   //valor anterior
-    noUsed := RemoveUnusedVarReferences;
-  until noUsed = noUsedPrev;
-  //Reserva espacio para las variables adicionales usadas
+  //Reserva espacio para las variables (Que no son de funciones).
   for xvar in TreeElems.AllVars do begin
     if xvar.Parent.idClass = eltFunc then continue;  //Las variables de funciones ya se crearon
+    if xvar.Parent.idClass = eltUnit then continue;
     if xvar.nCalled>0 then begin
       //Asigna una dirección válida para esta variable
       AssignRAMtoVar(xvar);
@@ -2287,8 +2219,7 @@ begin
   end;
   //Codifica las funciones del sistema usadas
   for fun in listFunSys do begin
-    xxx := fun.nCalled;
-    if (xxx > 0) and (fun.compile<>nil) then begin
+    if (fun.nCalled > 0) and (fun.compile<>nil) then begin
       //Función usada y que tiene una subrutina ASM
       fun.adrr := pic.iFlash;  //actualiza la dirección final
       PutLabel('__'+fun.name);
@@ -2304,7 +2235,6 @@ begin
   for fun in TreeElems.AllFuncs do begin
     if fun.IsInterrupt then continue;
     if fun.nCalled>0 then begin
-      TreeElems.RegisterUnitUsed(fun.srcDec.fil);
       //Compila la función en la dirección actual
       fun.adrr := pic.iFlash;    //Actualiza la dirección final
       fun.typ.DefineRegister;    //Asegura que se dispondrá de los RT necesarios
@@ -2326,7 +2256,6 @@ begin
   for uni in TreeElems.AllUnits do begin
     debugln('>>'+uni.name);
   end;
-
   //Compila cuerpo del programa principal
   pic.codGotoAt(iniMain, _PC);   //termina de codificar el salto
   bod := TreeElems.BodyNode;  //lee Nodo del cuerpo principal
@@ -2390,6 +2319,12 @@ begin
     end;
     {-------------------------------------------------}
     TreeElems.Clear;
+    //Asigna nombre y archivo a elemento
+    TreeElems.main.name := ExtractFileName(mainFile);
+    p := pos('.',TreeElems.main.name);
+    if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
+    TreeElems.main.srcDec.fil := mainFile;
+    //Continúa con preparación
     TreeDirec.Clear;
     TreeElems.OnAddElement := @Tree_AddElement;   //Se va a modificar el árbol
     listFunSys.Clear;
@@ -2407,11 +2342,9 @@ begin
       //Hay que compilar una unidad
       consoleTickStart;
 //      debugln('*** Compiling unit: Pass 1.');
-      TreeElems.main.name := ExtractFileName(mainFile);
-      p := pos('.',TreeElems.main.name);
-      if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
       FirstPass := true;
       CompileUnit(TreeElems.main);
+      UpdateCallersToUnits;
       consoleTickCount('** First Pass.');
     end else begin
       //Debe ser un programa
@@ -2425,6 +2358,7 @@ begin
       FirstPass := true;
       CompileProgram;  //puede dar error
       if HayError then exit;
+      UpdateCallersToUnits;
       consoleTickCount('** First Pass.');
       if Link then begin  //El enlazado solo es válido para programas
         {Compila solo los procedimientos usados, leyendo la información del árbol de sintaxis,
