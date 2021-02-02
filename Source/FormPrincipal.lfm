@@ -1,7 +1,7 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 269
+  Left = 647
   Height = 632
-  Top = 88
+  Top = 120
   Width = 933
   AllowDropFiles = True
   Caption = 'frmPrincipal'
@@ -17,11 +17,11 @@ object frmPrincipal: TfrmPrincipal
   OnKeyDown = FormKeyDown
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.8.0.6'
+  LCLVersion = '2.0.10.0'
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 23
-    Top = 589
+    Height = 22
+    Top = 590
     Width = 933
     Panels = <    
       item
@@ -687,7 +687,7 @@ object frmPrincipal: TfrmPrincipal
   object panMessages: TPanel
     Left = 0
     Height = 82
-    Top = 507
+    Top = 508
     Width = 933
     Align = alBottom
     TabOrder = 4
@@ -696,7 +696,7 @@ object frmPrincipal: TfrmPrincipal
     Cursor = crVSplit
     Left = 0
     Height = 6
-    Top = 501
+    Top = 502
     Width = 933
     Align = alBottom
     ResizeAnchor = akBottom
@@ -709,8 +709,8 @@ object frmPrincipal: TfrmPrincipal
     Align = alNone
   end
   object ImgActions16: TImageList
-    left = 216
-    top = 464
+    Left = 216
+    Top = 464
     Bitmap = {
       4C69240000001000000010000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -1869,8 +1869,8 @@ object frmPrincipal: TfrmPrincipal
   end
   object ActionList: TActionList
     Images = ImgActions16
-    left = 216
-    top = 400
+    Left = 216
+    Top = 400
     object acArcNewFile: TAction
       Category = 'Arc'
       Caption = 'New &File'
@@ -2139,10 +2139,10 @@ object frmPrincipal: TfrmPrincipal
   end
   object MainMenu1: TMainMenu
     Images = ImgActions16
-    left = 72
-    top = 88
+    Left = 72
+    Top = 88
     object mnFile: TMenuItem
-      Caption = '&Archivo'
+      Caption = '&File'
       object MenuItem3: TMenuItem
         Action = acArcNewFile
       end
@@ -2181,34 +2181,40 @@ object frmPrincipal: TfrmPrincipal
       end
     end
     object mnEdit: TMenuItem
-      Caption = '&Edicion'
+      Caption = '&Edit'
       object MenuItem9: TMenuItem
         Action = acEdUndo
+        Caption = '&Undo'
       end
       object MenuItem11: TMenuItem
         Action = acEdRedo
+        Caption = '&Redo'
       end
       object MenuItem10: TMenuItem
         Caption = '-'
       end
       object MenuItem12: TMenuItem
         Action = acEdCut
+        Caption = 'Cu&t'
       end
       object MenuItem13: TMenuItem
         Action = acEdCopy
+        Caption = '&Copy'
       end
       object MenuItem14: TMenuItem
         Action = acEdPaste
+        Caption = '&Paste'
       end
       object MenuItem15: TMenuItem
         Caption = '-'
       end
       object MenuItem16: TMenuItem
         Action = acEdSelecAll
+        Caption = 'Select &All'
       end
     end
     object mnFind: TMenuItem
-      Caption = '&Buscar'
+      Caption = '&Search'
       object MenuItem1: TMenuItem
         Action = acSearFind
       end
@@ -2223,15 +2229,18 @@ object frmPrincipal: TfrmPrincipal
       end
     end
     object mnView: TMenuItem
-      Caption = '&Ver'
+      Caption = '&View'
       object MenuItem20: TMenuItem
         Action = acViewMsgPan
+        Caption = '&Messages Panel'
       end
       object MenuItem22: TMenuItem
         Action = acViewToolbar
+        Caption = '&Tool Bar'
       end
       object MenuItem21: TMenuItem
         Action = acViewStatbar
+        Caption = '&Status Bar'
       end
       object MenuItem29: TMenuItem
         Action = acViewSynTree
@@ -2241,15 +2250,18 @@ object frmPrincipal: TfrmPrincipal
       end
     end
     object mnTools: TMenuItem
-      Caption = 'Herramientas'
+      Caption = 'Tools'
       object MenuItem18: TMenuItem
         Action = acToolCompil
+        Caption = '&Compile'
       end
       object MenuItem24: TMenuItem
         Action = acToolComEjec
+        Caption = 'Compile and Execute'
       end
       object MenuItem19: TMenuItem
         Action = acToolPICExpl
+        Caption = 'PIC Explorer'
       end
       object MenuItem43: TMenuItem
         Action = acToolRamExp
@@ -2280,6 +2292,7 @@ object frmPrincipal: TfrmPrincipal
       end
       object MenuItem23: TMenuItem
         Action = acToolConfig
+        Caption = '&Settings'
       end
       object MenuItem37: TMenuItem
         Caption = '-'
@@ -2304,8 +2317,8 @@ object frmPrincipal: TfrmPrincipal
   object ImgActions32: TImageList
     Height = 32
     Width = 32
-    left = 336
-    top = 464
+    Left = 336
+    Top = 464
     Bitmap = {
       4C69240000002000000020000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -6920,8 +6933,8 @@ object frmPrincipal: TfrmPrincipal
   end
   object PopupEdit: TPopupMenu
     Images = ImgActions16
-    left = 336
-    top = 400
+    Left = 336
+    Top = 400
     object MenuItem36: TMenuItem
       Action = acToolFindDec
     end
@@ -6950,23 +6963,23 @@ object frmPrincipal: TfrmPrincipal
   object Timer1: TTimer
     Interval = 100
     OnTimer = Timer1Timer
-    left = 208
-    top = 88
+    Left = 208
+    Top = 88
   end
   object FindDialog1: TFindDialog
     OnFind = FindDialog1Find
-    left = 216
-    top = 328
+    Left = 216
+    Top = 328
   end
   object ReplaceDialog1: TReplaceDialog
     Options = [frDown, frReplace, frReplaceAll, frHidePromptOnReplace]
     OnReplace = ReplaceDialog1Replace
-    left = 328
-    top = 328
+    Left = 328
+    Top = 328
   end
   object PopupCompiler: TPopupMenu
-    left = 216
-    top = 208
+    Left = 216
+    Top = 208
     object MenuItem48: TMenuItem
       Action = acToolSelPIC10
     end
