@@ -307,11 +307,11 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="..\PicPas-$(TargetOS)"/>
+      <Filename Value="..\app\PicPas-$(TargetOS)"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_libraries\PicUtils-1.6;..\..\_libraries\alexia_lib;libs_copy\MiConfig-0.4;libs_copy\MisUtils-0.6;libs_copy\ogEditGraf-2.6;libs_copy\SynFacilUtils-1.21;libs_copy\UtilsGrilla-0.8"/>
+      <OtherUnitFiles Value="libs_copy\MiConfig-0.4;libs_copy\MisUtils-0.6;libs_copy\ogEditGraf-2.6;libs_copy\SynFacilUtils-1.21;libs_copy\UtilsGrilla-0.8;libs_copy\alexia_lib;libs_copy\PicUtils"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

@@ -511,6 +511,7 @@ begin
   1: acToolSelPIC16Execute(self);
   2: acToolSelPIC17Execute(self);
   end;
+  Timer1.Enabled := true;  //Lo activa recién por protección
 end;
 procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
 //Se ha seleccionado un archivo de ejemplo.

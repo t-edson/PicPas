@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <language Val="en - English"/>
+  <chkLoadLast Val="True"/>
+  <StateStatusbar Val="1"/>
+  <filesClosed Val="D:\Proyectos_Software\Lazarus\PicPas-0.9.0\temp\NewFile1.pas
+"/>
+  <SplitterCol Val="32768"/>
+  <MessPanPan Val="32768"/>
+  <TextPanel Val="16777215"/>
+  <VerPanMensaj Val="True"/>
+  <VerStatusbar Val="True"/>
+  <VerBarHerram Val="True"/>
+  <ViewSynTree Val="True"/>
+  <SynTreeWidth Val="159"/>
+  <ViewPanAssem Val="True"/>
+  <viewMode Val="2"/>
+  <MessPanBack Val="-2147483643"/>
+  <MessPanText Val="536870912"/>
+  <MessPanErr Val="255"/>
+  <MessPanSel Val="-2147483633"/>
+  <CodExplBack Val="-2147483643"/>
+  <CodExplText Val="536870912"/>
+  <grpFiltypes Val="0"/>
+  <TamLet Val="10"/>
+  <TipLet Val="Courier New"/>
+  <VerBarDesV Val="True"/>
+  <VerBarDesH Val="False"/>
+  <TabEdiState Val="0"/>
+  <AutSynChk Val="True"/>
+  <Edit>
+    <cTxtNor Val="0"/>
+    <cFonEdi Val="16777215"/>
+    <cLinAct Val="65535"/>
+    <Autoindent Val="True"/>
+    <MarLinAct Val="True"/>
+    <ResPalCur Val="True"/>
+    <ResPalCFon Val="15780518"/>
+    <ResPalCTxt Val="0"/>
+    <ResPalCBor Val="15780518"/>
+    <ResPalFWord Val="False"/>
+    <VerPanVer Val="True"/>
+    <VerNumLin Val="True"/>
+    <VerMarPle Val="True"/>
+    <cFonPan Val="16777215"/>
+    <cTxtPan Val="0"/>
+    <recient Val="D:\Proyectos_Software\Lazarus\PicPas-0.9.0\temp\NewFile1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.9.0\temp\bbb.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.9.0\testcode10\Simul_1\Test1_HelloWorld.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.9.0\testcode10\a_progam1.pas
+D:\Proyectos_Software\Lazarus\PicPas-0.9.0\testcode10\a_progam2.pas
+"/>
+  </Edit>
+  <IncHeadMpu Val="True"/>
+  <IncDecVar Val="True"/>
+  <VarDecType Val="1"/>
+  <IncAddress Val="True"/>
+  <IncComment Val="True"/>
+  <IncComment2 Val="False"/>
+  <ExcUnused Val="True"/>
+  <IncVarName Val="True"/>
+  <ShowErMsg Val="False"/>
+  <OptimLev Val="1"/>
+  <OptBnkAftIF Val="True"/>
+  <OptBnkBefPro Val="True"/>
+  <OptBnkAftPro Val="True"/>
+  <ReuProcVar Val="True"/>
+  <OptRetProc Val="True"/>
+  <ExternTool>
+    <extern_tools Val="Tool1	                        	D:\Proyectos_Software\Lazarus\PicPas-0.8.5\README.md		F	F					
+"/>
+  </ExternTool>
+</CONFIG>
+<!-->
+f:D:\Proyectos_Software\Lazarus\PicPas-0.9.0\syntax\PicPas_AsmPic.xml
+Keyword	65280	0	V	F	F				
+Comment	8421504	0	F	F	F				
+Number	16711935	0	F	F	F				
+String	65280	0	F	F	F				
+Directive	16711935	0	F	F	F				
+Label	28672	0	F	F	F				
+f:D:\Proyectos_Software\Lazarus\PicPas-0.9.0\syntax\PicPas_C.xml
+Keyword	0	0	F	F	F				
+Comment	16232448	0	F	F	F				
+Number	29919	0	F	F	F				
+Directive	16199422	0	F	F	F				
+f:D:\Proyectos_Software\Lazarus\PicPas-0.9.0\syntax\PicPas_PIC16.xml
+Keyword	15901696	0	V	F	F				
+Comment	9276813	0	F	F	F				
+Number	16711935	0	F	F	F				
+String	65280	0	F	F	F				
+Boolean	65535	0	F	F	F				
+Directive	16199422	0	F	F	F				
+Asm	6340704	0	F	V	F				
+Types	65535	0	F	F	F				
+Symbol	32768	0	F	F	F				
+
+<-->
