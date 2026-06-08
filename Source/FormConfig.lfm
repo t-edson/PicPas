@@ -1,7 +1,7 @@
 object Config: TConfig
-  Left = 319
+  Left = 295
   Height = 380
-  Top = 176
+  Top = 165
   Width = 571
   BorderStyle = bsDialog
   Caption = 'Configuración'
@@ -10,7 +10,7 @@ object Config: TConfig
   OnCreate = FormCreate
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.8.0.6'
+  LCLVersion = '2.0.0.4'
   object Panel1: TPanel
     Left = 0
     Height = 50
@@ -70,40 +70,40 @@ object Config: TConfig
       object chkLoadLast: TCheckBox
         Left = 16
         Height = 19
-        Top = 80
+        Top = 64
         Width = 122
         Caption = 'Load last file edited'
         TabOrder = 2
       end
       object lblSplitCol: TLabel
-        Left = 232
+        Left = 216
         Height = 15
-        Top = 184
+        Top = 176
         Width = 75
         Caption = 'Splitters color:'
         ParentColor = False
       end
       object colSplitCol: TColorBox
-        Left = 232
+        Left = 216
         Height = 22
-        Top = 200
+        Top = 192
         Width = 122
         Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
         ItemHeight = 16
         TabOrder = 6
       end
       object lblPanelCol: TLabel
-        Left = 232
+        Left = 216
         Height = 15
-        Top = 136
+        Top = 128
         Width = 69
         Caption = 'Panels Color:'
         ParentColor = False
       end
-      object colMessPanPan: TColorBox
-        Left = 232
+      object colPanelsCol: TColorBox
+        Left = 216
         Height = 22
-        Top = 152
+        Top = 144
         Width = 122
         Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
         ItemHeight = 16
@@ -153,9 +153,9 @@ object Config: TConfig
         Text = 'ComboBox1'
       end
       object RadioGroup1: TRadioGroup
-        Left = 13
-        Height = 88
-        Top = 128
+        Left = 8
+        Height = 96
+        Top = 118
         Width = 180
         AutoFill = True
         Caption = 'Toolbar'
@@ -166,7 +166,7 @@ object Config: TConfig
         ChildSizing.ShrinkVertical = crsScaleChilds
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
         ChildSizing.ControlsPerLine = 1
-        ClientHeight = 68
+        ClientHeight = 76
         ClientWidth = 176
         Items.Strings = (
           'Small Icons'
@@ -177,7 +177,7 @@ object Config: TConfig
       object Label1: TLabel
         Left = 16
         Height = 15
-        Top = 240
+        Top = 256
         Width = 57
         Caption = 'Units Path:'
         ParentColor = False
@@ -185,7 +185,7 @@ object Config: TConfig
       object Edit1: TEdit
         Left = 13
         Height = 23
-        Top = 256
+        Top = 272
         Width = 296
         Enabled = False
         TabOrder = 7
@@ -208,11 +208,29 @@ object Config: TConfig
         Caption = 'CreateTheme:'
         ParentColor = False
       end
+      object lblSplitCol1: TLabel
+        Left = 216
+        Height = 15
+        Top = 224
+        Width = 89
+        Caption = 'Panel Text Color:'
+        ParentColor = False
+      end
+      object colPanTextCol: TColorBox
+        Left = 216
+        Height = 22
+        Top = 240
+        Width = 122
+        DefaultColorColor = clGray
+        Style = [cbStandardColors, cbExtendedColors, cbSystemColors, cbCustomColor]
+        ItemHeight = 16
+        TabOrder = 8
+      end
     end
     object tabCodeExp: TTabSheet
       Caption = 'tabCodeExp'
       ClientHeight = 322
-      ClientWidth = 391
+      ClientWidth = 395
       object colCodExplText: TColorBox
         Left = 232
         Height = 22
@@ -273,7 +291,7 @@ object Config: TConfig
     object tabMessPan: TTabSheet
       Caption = 'tabMessPan'
       ClientHeight = 322
-      ClientWidth = 391
+      ClientWidth = 395
       object colMessPanSel: TColorBox
         Left = 8
         Height = 22

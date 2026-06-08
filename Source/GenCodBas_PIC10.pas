@@ -5,7 +5,7 @@ unit GenCodBas_PIC10;
 interface
 uses
   Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic10Utils,
-  Parser, ParserDirec, Globales, MisUtils, LCLType, LCLProc;
+  CompBase, ParserDirec, Globales, CompOperands, MisUtils, LCLType, LCLProc;
 const
   STACK_SIZE = 2;      //tamaño de pila para subrutinas en el PIC
   MAX_REGS_AUX_BYTE = 5;   //cantidad máxima de registros a usar
@@ -19,15 +19,34 @@ type
   private
     linRep : string;   //línea para generar de reporte
     posFlash: Integer;
+    procedure ClearDeviceError;
+    procedure Cod_JumpIfTrue;
+    procedure CompileFOR;
+    procedure CompileIF;
+    procedure CompileProcBody(fun: TxpEleFun);
+    procedure CompileREPEAT;
+    procedure CompileWHILE;
+    function CurrFlash(): integer;
+    function DeviceError: string;
     procedure GenCodPicReqStartCodeGen;
     procedure GenCodPicReqStopCodeGen;
     function GetIdxParArray(out WithBrack: boolean; out par: TOperand): boolean;
     function GetValueToAssign(WithBrack: boolean; arrVar: TxpEleVar; out
       value: TOperand): boolean;
     procedure ProcByteUsed(offs, bnk: byte; regPtr: TPICRamCellPtr);
+    procedure ResetFlashAndRAM;
+    function ReturnAttribIn(typ: TxpEleType; const Op: TOperand; offs: integer
+      ): boolean;
+    procedure SetSharedUnused;
+    procedure SetSharedUsed;
     procedure word_ClearItems(const OpPtr: pointer);
     procedure word_GetItem(const OpPtr: pointer);
     procedure word_SetItem(const OpPtr: pointer);
+  protected
+    procedure StartCodeSub(fun: TxpEleFun);
+    procedure EndCodeSub;
+    procedure FunctCall(fun: TxpEleFunBase; out AddrUndef: boolean);
+    procedure FunctParam(fun: TxpEleFunBase);
   protected
     //Registros de trabajo
     W      : TPicRegister;     //Registro Interno.
@@ -287,8 +306,10 @@ type
   procedure SetLanguage;
 implementation
 var
-  TXT_SAVE_W, TXT_SAVE_Z, TXT_SAVE_H, MSG_NO_ENOU_RAM,
-  MSG_VER_CMP_EXP, MSG_STACK_OVERF, MSG_NOT_IMPLEM: string;
+  TXT_SAVE_W, TXT_SAVE_Z, TXT_SAVE_H, MSG_NO_ENOU_RAM, MSG_VER_CMP_EXP,
+  MSG_STACK_OVERF, MSG_NOT_IMPLEM, ER_VARIAB_EXPEC, ER_ONL_BYT_WORD,
+  ER_ASIG_EXPECT
+  : string;
 
 procedure SetLanguage;
 begin
@@ -443,7 +464,8 @@ begin
   tmpVar:= TxpEleVar.Create;
   tmpVar.name := nam;
   tmpVar.typ := eleTyp;
-  tmpVar.havAdicPar := false;
+  tmpVar.adicPar.hasAdic := decNone;
+  tmpVar.adicPar.hasInit := false;
   tmpVar.IsTmp := true;   //Para que se pueda luego identificar.
   varFields.Add(tmpVar);  //Agrega
   Result := tmpVar;
@@ -742,7 +764,7 @@ begin
   //Valores solicitados. Ya deben estar iniciado este campo.
   varName := nVar.name;
   typ := nVar.typ;
-  if nVar.adicPar.isAbsol then begin
+  if nVar.adicPar.hasAdic = decAbsol then begin
     absAdd := nVar.adicPar.absAddr;
     if typ.IsBitSize then begin
       absBit := nVar.adicPar.absBit;
@@ -796,7 +818,7 @@ begin
       exit;
     end;
     //Asignamos espacio en RAM
-    nbytes := typ.arrSize * typ.refType.size;
+    nbytes := typ.nItems * typ.itmType.size;
     if not pic.GetFreeBytes(nbytes, addr) then begin
       GenError(MSG_NO_ENOU_RAM);
       exit;
@@ -1139,7 +1161,7 @@ para que pueda ser evaluado, sin problemas, por las ROP.
 Si hay error devuelve false.}
 begin
   Result := true;
-  if ope.Sto = stVarRefVar then begin
+  if ope.Sto = stVarRef then begin
     //Se tiene una variable puntero dereferenciada: x^
     {Convierte en expresión, verificando los RT}
     if RTstate<>nil then begin
@@ -1154,7 +1176,7 @@ begin
     ope.SetAsExpres(ope.Typ);  //"ope.Typ" es el tipo al que apunta
     InvertedFromC:=false;
     RTstate := ope.Typ;
-  end else if ope.Sto = stVarRefExp then begin
+  end else if ope.Sto = stExpRef then begin
     //Es una expresión.
     {Se asume que el operando tiene su resultado en los RT. SI estuvieran en la pila
     no se aplicaría.}
@@ -1823,14 +1845,14 @@ function TGenCodBas.GetIdxParArray(out WithBrack: boolean; out par: TOperand): b
 setitem(). También reconoce las formas con corchetes [], y en ese caso pone "WithBrackets"
 en TRUE. Si encuentra error, devuelve false.}
 begin
-  if cIn.tok = '[' then begin
+  if lex.token = '[' then begin
     //Es la sintaxis a[i];
     WithBrack := true;
-    cIn.Next;  //Toma "["
+    lex.Next;  //Toma "["
   end else begin
     //Es la sintaxis a.item(i);
     WithBrack := false;
-    cIn.Next;  //Toma identificador de campo
+    lex.Next;  //Toma identificador de campo
     //Captura parámetro
     if not CaptureTok('(') then exit(false);
   end;
@@ -1850,7 +1872,7 @@ var
 begin
   if WithBrack then begin
     if not CaptureTok(']') then exit(false);
-    cIn.SkipWhites;
+    lex.SkipWhites;
     {Legalmente, aquí podría seguir otro operador, o función como ".bit0", y no solo
     ":=". Esto es una implementación algo limitada. Lo que debería hacerse, si no se
     encuentra ":=", sería devolver una referencia a variable, tal vez a un nuevo tipo
@@ -1861,7 +1883,7 @@ begin
     if not CaptureTok(',') then exit(false);
   end;
   value := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
-  typItem := arrVar.typ.refType;
+  typItem := arrVar.typ.itmType;
   if value.Typ <> typItem then begin  //Solo debería ser byte o char
     if (value.Typ = typByte) and (typItem = typWord) then begin
       //Son tipos compatibles
@@ -1955,7 +1977,7 @@ begin
   stExpres: begin  //ya está en w
     if modReturn then _RETURN;
   end;
-  stVarRefVar: begin
+  stVarRef: begin
     //Se tiene una variable puntero dereferenciada: x^
     varPtr := Op^.rVar;  //Guarda referencia a la variable puntero
     //Mueve a W
@@ -1964,7 +1986,7 @@ begin
     kMOVF(INDF, toW);  //deje en W
     if modReturn then _RETURN;
   end;
-  stVarRefExp: begin
+  stExpRef: begin
     //Es una expresión derefernciada (x+a)^.
     {Se asume que el operando tiene su resultado en los RT. Si estuvieran en la pila
     no se aplicaría.}
@@ -2014,14 +2036,14 @@ begin
         SetResultVariab(tmpVar);
       end;
     stVariab: begin
-        SetResultExpres(arrVar.typ.refType, true);  //Es array de bytes, o Char, devuelve Byte o Char
+        SetResultExpres(arrVar.typ.itmType, true);  //Es array de bytes, o Char, devuelve Byte o Char
         LoadToRT(idx);   //Lo deja en W
         _MOVLW(arrVar.addr0);   //agrega OFFSET
         _ADDWF(04, toF);
         _MOVF(0, toW);  //lee indexado en W
     end;
     stExpres: begin
-        SetResultExpres(arrVar.typ.refType, false);  //Es array de bytes, o Char, devuelve Byte o Char
+        SetResultExpres(arrVar.typ.itmType, false);  //Es array de bytes, o Char, devuelve Byte o Char
         LoadToRT(idx);   //Lo deja en W
         _MOVLW(arrVar.addr0);   //agrega OFFSET
         _ADDWF(04, toF);
@@ -2156,41 +2178,41 @@ var
   xvar: TxpEleVar;
   j1: Word;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   //Limpia el arreglo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
     xvar := Op^.rVar;  //Se supone que debe ser de tipo ARRAY
     res.SetAsConst(typByte);  //Realmente no es importante devolver un valor
-    res.valInt {%H-}:= xvar.typ.arrSize;  //Devuelve tamaño
-    if xvar.typ.arrSize = 0 then exit;  //No hay nada que limpiar
-    if xvar.typ.arrSize = 1 then begin  //Es de un solo byte
+    res.valInt {%H-}:= xvar.typ.nItems;  //Devuelve tamaño
+    if xvar.typ.nItems = 0 then exit;  //No hay nada que limpiar
+    if xvar.typ.nItems = 1 then begin  //Es de un solo byte
       _BANKSEL(xvar.adrByte0.bank);
       _CLRF(xvar.adrByte0.offs);
-    end else if xvar.typ.arrSize = 2 then begin  //Es de 2 bytes
+    end else if xvar.typ.nItems = 2 then begin  //Es de 2 bytes
       _BANKSEL(xvar.adrByte0.bank);
       _CLRF(xvar.adrByte0.offs);
       _CLRF(xvar.adrByte0.offs+1);
-    end else if xvar.typ.arrSize = 3 then begin  //Es de 3 bytes
+    end else if xvar.typ.nItems = 3 then begin  //Es de 3 bytes
       _BANKSEL(xvar.adrByte0.bank);
       _CLRF(xvar.adrByte0.offs);
       _CLRF(xvar.adrByte0.offs+1);
       _CLRF(xvar.adrByte0.offs+2);
-    end else if xvar.typ.arrSize = 4 then begin  //Es de 4 bytes
+    end else if xvar.typ.nItems = 4 then begin  //Es de 4 bytes
       _BANKSEL(xvar.adrByte0.bank);
       _CLRF(xvar.adrByte0.offs);
       _CLRF(xvar.adrByte0.offs+1);
       _CLRF(xvar.adrByte0.offs+2);
       _CLRF(xvar.adrByte0.offs+3);
-    end else if xvar.typ.arrSize = 5 then begin  //Es de 5 bytes
+    end else if xvar.typ.nItems = 5 then begin  //Es de 5 bytes
       _BANKSEL(xvar.adrByte0.bank);
       _CLRF(xvar.adrByte0.offs);
       _CLRF(xvar.adrByte0.offs+1);
       _CLRF(xvar.adrByte0.offs+2);
       _CLRF(xvar.adrByte0.offs+3);
       _CLRF(xvar.adrByte0.offs+4);
-    end else if xvar.typ.arrSize = 6 then begin  //Es de 6 bytes
+    end else if xvar.typ.nItems = 6 then begin  //Es de 6 bytes
       _BANKSEL(xvar.adrByte0.bank);
       _CLRF(xvar.adrByte0.offs);
       _CLRF(xvar.adrByte0.offs+1);
@@ -2198,7 +2220,7 @@ begin
       _CLRF(xvar.adrByte0.offs+3);
       _CLRF(xvar.adrByte0.offs+4);
       _CLRF(xvar.adrByte0.offs+5);
-    end else if xvar.typ.arrSize = 7 then begin  //Es de 7 bytes
+    end else if xvar.typ.nItems = 7 then begin  //Es de 7 bytes
       _BANKSEL(xvar.adrByte0.bank);
       _CLRF(xvar.adrByte0.offs);
       _CLRF(xvar.adrByte0.offs+1);
@@ -2215,7 +2237,7 @@ begin
 j1:= _PC;
       _CLRF($00);    //Limpia [FSR]
       _INCF($04, toF);    //Siguiente
-      _MOVLW(xvar.adrByte0.offs+256-xvar.typ.arrSize);  //End address
+      _MOVLW(xvar.adrByte0.offs+256-xvar.typ.nItems);  //End address
       _SUBWF($04, toW);
       _IFNZERO;
       _GOTO(j1);
@@ -2232,7 +2254,7 @@ var
   msk: byte;
   Op: ^TOperand;
 begin
-  cIn.Next;       //Toma el identificador de campo
+  lex.Next;       //Toma el identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2318,7 +2340,7 @@ begin
   stExpres: begin  //se asume que ya está en (H,w)
     if modReturn then _RETURN;
   end;
-  stVarRefVar: begin
+  stVarRef: begin
     //Se tiene una variable puntero dereferenciada: x^
     varPtr := Op^.rVar;  //Guarda referencia a la variable puntero
     //Mueve a W
@@ -2331,7 +2353,7 @@ begin
     _MOVF(0, toW);  //deje en W byte bajo
     if modReturn then _RETURN;
   end;
-  stVarRefExp: begin
+  stExpRef: begin
     //Es una expresión desrefernciada (x+a)^.
     {Se asume que el operando tiene su resultado en los RT. Si estuvieran en la pila
     no se aplicaría.}
@@ -2407,7 +2429,7 @@ begin
 //        _MOVF(add0, toW);  //byte bajo
       end;
     stVariab: begin
-      SetResultExpres(arrVar.typ.refType, true);  //Es array de word, devuelve word
+      SetResultExpres(arrVar.typ.itmType, true);  //Es array de word, devuelve word
       _BCF(_STATUS, _C);
       _RLF(idx.offs, toW);      //Multiplica Idx por 2
       _MOVWF(FSR.offs);     //direcciona con FSR
@@ -2420,7 +2442,7 @@ begin
       _MOVF(0, toW);  //lee indexado en W
     end;
     stExpres: begin
-      SetResultExpres(arrVar.typ.refType, false);  //Es array de word, devuelve word
+      SetResultExpres(arrVar.typ.itmType, false);  //Es array de word, devuelve word
       _MOVWF(FSR.offs);     //idx a  FSR (usa como varaib. auxiliar)
       _BCF(_STATUS, _C);
       _RLF(FSR.offs, toW);      //Multiplica Idx por 2
@@ -2635,7 +2657,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2661,7 +2683,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2802,7 +2824,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2828,7 +2850,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2854,7 +2876,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2880,7 +2902,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2906,7 +2928,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2933,7 +2955,7 @@ var
   xvar, tmpVar: TxpEleVar;
   Op: ^TOperand;
 begin
-  cIn.Next;  //Toma identificador de campo
+  lex.Next;  //Toma identificador de campo
   Op := OpPtr;
   case Op^.Sto of
   stVariab: begin
@@ -2989,6 +3011,421 @@ function TGenCodBas.RAMmax: integer;
 begin
   Result := high(pic.ram);
 end;
+function TGenCodBas.DeviceError: string;
+begin
+  exit (pic.MsjError);
+end;
+procedure TGenCodBas.Cod_JumpIfTrue;
+{Codifica una instrucción de salto, si es que el resultado de la última expresión es
+verdadera. Se debe asegurar que la expresión es de tipo booleana y de almacenamiento
+stVariab o stExpres.}
+begin
+  if res.Sto = stVariab then begin
+    //Las variables booleanas, pueden estar invertidas
+    if res.Inverted then begin
+      _BANKSEL(res.bank);
+      _BTFSC(res.offs, res.bit);  //verifica condición
+    end else begin
+      _BANKSEL(res.bank);
+      _BTFSS(res.offs, res.bit);  //verifica condición
+    end;
+  end else if res.Sto = stExpres then begin
+    //Los resultados de expresión, pueden optimizarse
+    if InvertedFromC then begin
+      //El resultado de la expresión, está en Z, pero a partir una copia negada de C
+      //Se optimiza, eliminando las instrucciones de copia de C a Z
+      pic.iFlash := pic.iFlash-2;
+      //La lógica se invierte
+      if res.Inverted then begin //_Lógica invertida
+        _BTFSS(C.offs, C.bit);   //verifica condición
+      end else begin
+        _BTFSC(C.offs, C.bit);   //verifica condición
+      end;
+    end else begin
+      //El resultado de la expresión, está en Z. Caso normal
+      if res.Inverted then begin //Lógica invertida
+        _BTFSC(Z.offs, Z.bit);   //verifica condición
+      end else begin
+        _BTFSS(Z.offs, Z.bit);   //verifica condición
+      end;
+    end;
+  end;
+end;
+procedure TGenCodBas.ClearDeviceError;
+begin
+  pic.MsjError := '';
+end;
+function TGenCodBas.CurrFlash(): integer;
+begin
+  exit(pic.iFlash);
+end;
+procedure TGenCodBas.ResetFlashAndRAM;
+{Reinicia el dispositivo, para empezar a escribir en la posición $000 de la FLASH, y
+en la posición inicial de la RAM.}
+begin
+  pic.iFlash := 0;  //Ubica puntero al inicio.
+  pic.ClearMemRAM;  //Pone las celdas como no usadas y elimina nombres.
+  CurrBank := 0;
+  StartRegs;        //Limpia registros de trabajo, auxiliares, y de pila.
+end;
+
+function TGenCodBas.ReturnAttribIn(typ: TxpEleType; const Op: TOperand;
+  offs: integer): boolean;
+{Return a temp variable at the specified address.}
+var
+  tmpVar: TxpEleVar;
+begin
+  if Op.Sto = stVariab then begin
+    tmpVar := CreateTmpVar('?', typ);   //Create temporal variable
+    tmpVar.addr0 := Op.addr + offs;  //Set Address
+    res.SetAsVariab(tmpVar);
+    exit(true);
+  end else begin
+    GenError('Cannot access to field of this expression.');
+    exit(false);
+  end;
+end;
+procedure TGenCodBas.SetSharedUnused;
+begin
+  pic.SetSharedUnused;
+end;
+procedure TGenCodBas.SetSharedUsed;
+begin
+  pic.SetSharedUsed;
+end;
+procedure TGenCodBas.CompileProcBody(fun: TxpEleFun);
+{Compila el cuerpo de un procedimiento}
+begin
+  StartCodeSub(fun);    //Inicia codificación de subrutina
+  CompileInstruction;
+  if HayError then exit;
+  if fun.IsInterrupt then begin
+    //Las interrupciones terminan así
+    _RETFIE
+  end else begin
+    //Para los procedimeintos, podemos terminar siempre con un _RETURN u optimizar,
+    if OptRetProc then begin
+      //Verifica es que ya se ha incluido exit().
+      if fun.ObligatoryExit<>nil then begin
+        //Ya tiene un exit() obligatorio y en el final (al menos eso se espera)
+        //No es necesario incluir el _RETURN().
+      end else begin
+        //No hay un exit(), seguro
+        _RETLW(0);  //instrucción de salida
+      end;
+    end else begin
+      _RETLW(0);  //instrucción de salida
+    end;
+  end;
+  EndCodeSub;  //termina codificación
+  {Fija banco al terminar de codificar. Si no se modificó el banco en la compilación
+  (como en un procedimiento vacío) CurrBank, contiene el banco que se fijó antes de
+  llamar a CompileProcBody(), que es:
+    Siemrpe 0 -> en la primera pasada.
+    Un valor calculado -> en la segund pasada.}
+  fun.finBnk := CurrBank;  //Banco al terminar de codificar
+  //Calcula tamaño
+  fun.srcSize := pic.iFlash - fun.adrr;
+end;
+procedure TGenCodBas.StartCodeSub(fun: TxpEleFun);
+{debe ser llamado para iniciar la codificación de una subrutina}
+begin
+//  iFlashTmp :=  pic.iFlash; //guarda puntero
+//  pic.iFlash := curBloSub;  //empieza a codificar aquí
+end;
+procedure TGenCodBas.EndCodeSub;
+{debe ser llamado al terminar la codificaión de una subrutina}
+begin
+//  curBloSub := pic.iFlash;  //indica siguiente posición libre
+//  pic.iFlash := iFlashTmp;  //retorna puntero
+end;
+procedure TGenCodBas.FunctParam(fun: TxpEleFunBase);
+{Rutina genérica, que se usa antes de leer los parámetros de una función.}
+begin
+  {Haya o no, parámetros se debe proceder como en cualquier expresión, asumiendo que
+  vamos a devolver una expresión.}
+  SetResultExpres(fun.typ);  //actualiza "RTstate"
+end;
+procedure TGenCodBas.FunctCall(fun: TxpEleFunBase; out AddrUndef: boolean);
+{Rutina genérica para llamar a una función definida por el usuario.}
+var
+  xfun: TxpEleFun;
+  fundec: TxpEleFunDec;
+begin
+  AddrUndef := false;
+  if fun.idClass = eltFunc then begin
+    //Is a implemented function
+    xfun := TxpEleFun(fun);
+    //By now is not implemented the paging
+    _CALL(xfun.adrr);  //codifica el salto
+    if OptBnkAftPro then begin  //Bank change optimization
+      //Se debe optimizar, fijando el banco que deja la función
+      CurrBank := xfun.ExitBank;
+    end else begin
+      //Se debe incluir siempre instrucciones de cambio de banco
+      _BANKRESET;
+    end;
+  end else begin
+    //Must be a declaration
+    fundec := TxpEleFunDec(fun);
+    if fundec.implem <> nil then begin
+      //Is implemented
+      _CALL(fundec.implem.adrr);
+      if OptBnkAftPro then begin  //Bank change optimization
+        //Se debe optimizar, fijando el banco que deja la función
+        CurrBank := fundec.implem.ExitBank;
+      end else begin
+        //Se debe incluir siempre instrucciones de cambio de banco
+        _BANKRESET;
+      end;
+    end else begin
+      //Not implemented YET
+      _CALL($1234);  //Needs to be completed later.
+      AddrUndef := true;
+    end;
+  end;
+end;
+procedure TGenCodBas.CompileIF;
+{Compila una extructura IF}
+  procedure SetFinalBank(bnk1, bnk2: byte);
+  {Fija el valor de CurrBank, de acuerdo a dos bancos finales.}
+  begin
+    if OptBnkAftIF then begin
+      //Optimizar banking
+      if bnk1 = bnk2 then begin
+        //Es el mismo banco (aunque sea 255). Lo deja allí.
+      end else begin
+        CurrBank := 255;  //Indefinido
+      end;
+    end else begin
+      //Sin optimización
+      _BANKRESET;
+    end;
+  end;
+var
+  jFALSE, jEND_TRUE: integer;
+  bnkExp, bnkTHEN, bnkELSE: Byte;
+begin
+  if not GetExpressionBool then exit;
+  bnkExp := CurrBank;   //Guarda el banco inicial
+  if not CaptureStr('then') then exit; //toma "then"
+  //Aquí debe estar el cuerpo del "if"
+  case res.Sto of
+  stConst: begin  //la condición es fija
+    if res.valBool then begin
+      //Es verdadero, siempre se ejecuta
+      if not CompileNoConditionBody(true) then exit;
+      //Compila los ELSIF que pudieran haber
+      while lex.tokL = 'elsif' do begin
+        lex.Next;   //toma "elsif"
+        if not GetExpressionBool then exit;
+        if not CaptureStr('then') then exit;  //toma "then"
+        //Compila el cuerpo pero sin código
+        if not CompileNoConditionBody(false) then exit;
+      end;
+      //Compila el ELSE final, si existe.
+      if lex.tokL = 'else' then begin
+        //Hay bloque ELSE, pero no se ejecutará nunca
+        lex.Next;   //toma "else"
+        if not CompileNoConditionBody(false) then exit;
+        if not VerifyEND then exit;
+      end else begin
+        VerifyEND;
+      end;
+    end else begin
+      //Es falso, nunca se ejecuta
+      if not CompileNoConditionBody(false) then exit;
+      if lex.tokL = 'else' then begin
+        //hay bloque ELSE, que sí se ejecutará
+        lex.Next;   //toma "else"
+        if not CompileNoConditionBody(true) then exit;
+        VerifyEND;
+      end else if lex.tokL = 'elsif' then begin
+        lex.Next;
+        CompileIF;  //más fácil es la forma recursiva
+        if HayError then exit;
+        //No es necesario verificar el END final.
+      end else begin
+        VerifyEND;
+      end;
+    end;
+  end;
+  stVariab, stExpres:begin
+    Cod_JumpIfTrue;
+    _GOTO_PEND(jFALSE);  //salto pendiente
+    //Compila la parte THEN
+    if not CompileConditionalBody(bnkTHEN) then exit;
+    //Verifica si sigue el ELSE
+    if lex.tokL = 'else' then begin
+      //Es: IF ... THEN ... ELSE ... END
+      lex.Next;   //toma "else"
+      _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
+      _LABEL(jFALSE);   //termina de codificar el salto
+      CurrBank := bnkExp;  //Fija el banco inicial antes de compilar
+      if not CompileConditionalBody(bnkELSE) then exit;
+      _LABEL(jEND_TRUE);   //termina de codificar el salto
+      SetFinalBank(bnkTHEN, bnkELSE);  //Manejo de bancos
+      VerifyEND;   //puede salir con error
+    end else if lex.tokL = 'elsif' then begin
+      //Es: IF ... THEN ... ELSIF ...
+      lex.Next;
+      _GOTO_PEND(jEND_TRUE);  //llega por aquí si es TRUE
+      _LABEL(jFALSE);   //termina de codificar el salto
+      CompileIF;  //más fácil es la forma recursiva
+      if HayError then exit;
+      _LABEL(jEND_TRUE);   //termina de codificar el salto
+      SetFinalBank(bnkTHEN, CurrBank);  //Manejo de bancos
+      //No es necesario verificar el END final.
+    end else begin
+      //Es: IF ... THEN ... END. (Puede ser recursivo)
+      _LABEL(jFALSE);   //termina de codificar el salto
+      SetFinalBank(bnkExp, bnkTHEN);  //Manejo de bancos
+      VerifyEND;  //puede salir con error
+    end;
+  end;
+  end;
+end;
+procedure TGenCodBas.CompileREPEAT;
+{Compila uan extructura WHILE}
+var
+  l1: Word;
+begin
+  l1 := _PC;        //guarda dirección de inicio
+  CompileCurBlock;
+  if HayError then exit;
+  lex.SkipWhites;
+  if not CaptureStr('until') then exit; //toma "until"
+  if not GetExpressionBool then exit;
+  case res.Sto of
+  stConst: begin  //la condición es fija
+    if res.valBool then begin
+      //lazo nulo
+    end else begin
+      //lazo infinito
+      _GOTO(l1);
+    end;
+  end;
+  stVariab, stExpres: begin
+    Cod_JumpIfTrue;
+    _GOTO(l1);
+    //sale cuando la condición es verdadera
+  end;
+  end;
+end;
+procedure TGenCodBas.CompileWHILE;
+{Compila una extructura WHILE}
+var
+  l1: Word;
+  dg: Integer;
+  bnkEND, bnkExp1, bnkExp2: byte;
+begin
+  l1 := _PC;        //guarda dirección de inicio
+  bnkExp1 := CurrBank;   //Guarda el banco antes de la expresión
+  if not GetExpressionBool then exit;  //Condición
+  bnkExp2 := CurrBank;   //Guarda el banco antes de la expresión
+  if not CaptureStr('do') then exit;  //toma "do"
+  //Aquí debe estar el cuerpo del "while"
+  case res.Sto of
+  stConst: begin  //la condición es fija
+    if res.valBool then begin
+      //Lazo infinito
+      if not CompileNoConditionBody(true) then exit;
+      if not VerifyEND then exit;
+      _BANKSEL(bnkExp1);   //asegura que el lazo se ejecutará en el mismo banco de origen
+      _GOTO(l1);
+    end else begin
+      //Lazo nulo. Compila sin generar código.
+      if not CompileNoConditionBody(false) then exit;
+      if not VerifyEND then exit;
+    end;
+  end;
+  stVariab, stExpres: begin
+    Cod_JumpIfTrue;
+    _GOTO_PEND(dg);  //salto pendiente
+    if not CompileConditionalBody(bnkEND) then exit;
+    _BANKSEL(bnkExp1);   //asegura que el lazo se ejecutará en el mismo banco de origen
+    _GOTO(l1);   //salta a evaluar la condición
+    if not VerifyEND then exit;
+    //ya se tiene el destino del salto
+    _LABEL(dg);   //termina de codificar el salto
+  end;
+  end;
+  CurrBank := bnkExp2;  //Este es el banco con que se sale del WHILE
+end;
+procedure TGenCodBas.CompileFOR;
+{Compila uan extructura WHILE}
+var
+  l1: Word;
+  dg: Integer;
+  Op1, Op2: TOperand;
+  opr1: TxpOperator;
+  bnkFOR: byte;
+begin
+  GetOperand(Op1, true);
+  if Op1.Sto <> stVariab then begin
+    GenError(ER_VARIAB_EXPEC);
+    exit;
+  end;
+  if HayError then exit;
+  if (Op1.Typ<>typByte) and (Op1.Typ<>typWord) then begin
+    GenError(ER_ONL_BYT_WORD);
+    exit;
+  end;
+  lex.SkipWhites;
+  opr1 := GetOperator(Op1);   //debe ser ":="
+  if opr1 = nil then begin  //no sigue operador
+    GenError(ER_ASIG_EXPECT);
+    exit;  //termina ejecucion
+  end;
+  if opr1.txt <> ':=' then begin
+    GenError(ER_ASIG_EXPECT);
+    exit;
+  end;
+  Op2 := GetExpression(0);
+  if HayError then exit;
+  //Ya se tiene la asignación inicial
+  Oper(Op1, opr1, res);   //codifica asignación
+  if HayError then exit;
+  if not CaptureStr('to') then exit;
+  //Toma expresión Final
+  res := GetExpression(0);
+  if HayError then exit;
+  lex.SkipWhites;
+  if not CaptureStr('do') then exit;  //toma "do"
+  //Aquí debe estar el cuerpo del "for"
+  if (res.Sto = stConst) or (res.Sto = stVariab) then begin
+    //Es un for con valor final de tipo constante
+    //Se podría optimizar, si el valor inicial es también constante
+    l1 := _PC;        //guarda dirección de inicio
+    //Codifica rutina de comparación, para salir
+    opr1 := Op1.Typ.FindBinaryOperator('<=');  //Busca operador de comparación
+    if opr1 = nullOper then begin
+      GenError('Internal: No operator <= defined for %s.', [Op1.Typ.name]);
+      exit;
+    end;
+    Op2 := res;   //Copia porque la operación Oper() modificará res
+    Oper(Op1, opr1, Op2);   //"res" mantiene la constante o variable
+    Cod_JumpIfTrue;
+    _GOTO_PEND(dg);  //salto pendiente
+    if not CompileConditionalBody(bnkFOR) then exit;
+    if not VerifyEND then exit;
+    //Incrementa variable cursor
+    if Op1.Typ = typByte then begin
+      _INCF(Op1.offs, toF);
+    end else if Op1.Typ = typWord then begin
+      _BANKSEL(oP1.bank);
+      _INCF(Op1.Loffs, toF);
+      _BTFSC(_STATUS, _Z);
+      _INCF(Op1.Hoffs, toF);
+    end;
+    _GOTO(l1);  //repite el lazo
+    //ya se tiene el destino del salto
+    _LABEL(dg);   //termina de codificar el salto
+  end else begin
+    GenError('Last value must be Constant or Variable');
+    exit;
+  end;
+end;
 constructor TGenCodBas.Create;
 begin
   inherited Create;
@@ -2998,85 +3435,6 @@ begin
   OnReqStopCodeGen:=@GenCodPicReqStopCodeGen;
   pic := TPIC10.Create;
   picCore := pic;   //Referencia picCore
-  ///////////Crea tipos
-  ClearTypes;
-  ///////////////// Tipo Bit ////////////////
-  typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
-  typBit.OnLoadToRT   :=  @bit_LoadToRT;
-  typBit.OnDefRegister:= @bit_DefineRegisters;
-  typBit.OnSaveToStk  := @bit_SaveToStk;
-//  opr:=typBit.CreateUnaryPreOperator('@', 6, 'addr', @Oper_addr_bit);
-
-  ///////////////// Tipo Booleano ////////////////
-  typBool := CreateSysType('boolean',t_boolean,-1);   //de 1 bit
-  typBool.OnLoadToRT   := @bit_LoadToRT;  //es lo mismo
-  typBool.OnDefRegister:= @bit_DefineRegisters;  //es lo mismo
-  typBool.OnSaveToStk  := @bit_SaveToStk;  //es lo mismo
-
-  //////////////// Tipo Byte /////////////
-  typByte := CreateSysType('byte',t_uinteger,1);   //de 1 byte
-  typByte.OnLoadToRT   := @byte_LoadToRT;
-  typByte.OnDefRegister:= @byte_DefineRegisters;
-  typByte.OnSaveToStk  := @byte_SaveToStk;
-  //typByte.OnReadFromStk :=
-  typByte.OnGetItem    := @byte_GetItem;
-//  typByte.OnSetItem    := @byte_SetItem;
-  typByte.OnClearItems := @byte_ClearItems;
-  //Campos de bit
-  typByte.CreateField('bit0', @byte_bit0);
-  typByte.CreateField('bit1', @byte_bit1);
-  typByte.CreateField('bit2', @byte_bit2);
-  typByte.CreateField('bit3', @byte_bit3);
-  typByte.CreateField('bit4', @byte_bit4);
-  typByte.CreateField('bit5', @byte_bit5);
-  typByte.CreateField('bit6', @byte_bit6);
-  typByte.CreateField('bit7', @byte_bit7);
-  //Campos de bit (se mantienen por compatibilidad)
-  typByte.CreateField('0', @byte_bit0);
-  typByte.CreateField('1', @byte_bit1);
-  typByte.CreateField('2', @byte_bit2);
-  typByte.CreateField('3', @byte_bit3);
-  typByte.CreateField('4', @byte_bit4);
-  typByte.CreateField('5', @byte_bit5);
-  typByte.CreateField('6', @byte_bit6);
-  typByte.CreateField('7', @byte_bit7);
-
-  //////////////// Tipo Char /////////////
-  //Tipo caracter
-  typChar := CreateSysType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como número
-  typChar.OnLoadToRT   := @byte_LoadToRT;  //Es lo mismo
-  typChar.OnDefRegister:= @byte_DefineRegisters;  //Es lo mismo
-  typChar.OnSaveToStk  := @byte_SaveToStk; //Es lo mismo
-  typChar.OnGetItem    := @byte_GetItem;   //Es lo mismo
-//  typChar.OnSetItem    := @byte_SetItem;
-  typChar.OnClearItems := @byte_ClearItems;
-
-  //////////////// Tipo Word /////////////
-  //Tipo numérico de dos bytes
-  typWord := CreateSysType('word',t_uinteger,2);   //de 2 bytes
-  typWord.OnLoadToRT   := @word_LoadToRT;
-  typWord.OnDefRegister:= @word_DefineRegisters;
-  typWord.OnSaveToStk  := @word_SaveToStk;
-  typWord.OnGetItem    := @word_GetItem;   //Es lo mismo
-//  typWord.OnSetItem    := @word_SetItem;
-//  typWord.OnClearItems := @word_ClearItems;
-
-  typWord.CreateField('Low', @word_Low);
-  typWord.CreateField('High', @word_High);
-
-  //////////////// Tipo DWord /////////////
-  //Tipo numérico de cuatro bytes
-  typDWord := CreateSysType('dword',t_uinteger,4);  //de 4 bytes
-  typDWord.OnLoadToRT   := @dword_LoadToRT;
-  typDWord.OnDefRegister:= @dword_DefineRegisters;
-  typDWord.OnSaveToStk  := @dword_SaveToStk;
-
-  typDWord.CreateField('Low',   @dword_Low);
-  typDWord.CreateField('High',  @dword_High);
-  typDWord.CreateField('Extra', @dword_Extra);
-  typDWord.CreateField('Ultra', @dword_Ultra);
-  typDWord.CreateField('LowWord', @dword_LowWord);
-  typDWord.CreateField('HighWord',@dword_HighWord);
 
   //Crea variables de trabajo
   varStkBit  := TxpEleVar.Create;
@@ -3121,6 +3479,25 @@ begin
   FSR := TPicRegister.Create;
   FSR.addr := $04;
   FSR.assigned := true;   //ya está asignado desde el principio
+
+  callCurrFlash       := @CurrFlash;
+  callResetFlashAndRAM:=@ResetFlashAndRAM;
+  callCreateVarInRAM   := @CreateVarInRAM;
+  callSetSharedUnused := @SetSharedUnused;
+  callSetSharedUsed   := @SetSharedUsed;
+  callReturnAttribIn := @ReturnAttribIn;
+  callDeviceError      := @DeviceError;
+  callClearDeviceError := @ClearDeviceError;
+  callCompileProcBody := @CompileProcBody;
+  callFunctParam      := @FunctParam;
+  callFunctCall       := @FunctCall;
+  callStartCodeSub    := @StartCodeSub;
+  callEndCodeSub      := @EndCodeSub;
+
+  callCompileIF        := @CompileIF;;
+  callCompileWHILE     := @CompileWHILE;
+  callCompileREPEAT    := @CompileREPEAT;
+  callCompileFOR       := @CompileFOR;
 end;
 destructor TGenCodBas.Destroy;
 begin

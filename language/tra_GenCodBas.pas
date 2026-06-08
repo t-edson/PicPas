@@ -19,4 +19,10 @@ MSG_STACK_OVERF:= Trans('Stack Overflow', 'Desborde de pila.' , '',
 MSG_NOT_IMPLEM := Trans('Not implemented.', 'No implementado' , '',
                         ''          , '', '',
                         'Non implémenté.');
+ER_VARIAB_EXPEC:= trans('Variable expected.' , 'Se esperaba Variable', '',
+                        'Variable erwartet.' ,'Змінна очікується.','Переменная ожидается.', 'Variable attendue.');
+ER_ONL_BYT_WORD:= trans('Only BYTE or WORD index is allowed in FOR.', 'Solo variables Byte o Word son permitidas.', '',
+                        'In FOR-Schleifen sind nur BYTE oder WORD Indizes erlaubt.','Для FOR дозволено лише індекс BYTE або WORD.','В FOR допускается только индекс BYTE или WORD.', 'Seuls des indexes BYTE ou WORD sont autorisées dans une boucle FOR.');
+ER_ASIG_EXPECT := trans('":=" expected.' , 'Se esperaba ":="', '',
+                        '":=" erwartet.' , '":=" очікується.', '":=" ожидается.', '":=" attendu.');
 

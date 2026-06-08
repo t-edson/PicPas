@@ -78,7 +78,6 @@ object fraSyntaxTree: TfraSyntaxTree
         end>
       ItemIndex = 0
       OnChange = ComboBoxEx1Change
-      ReadOnly = True
       TabOrder = 1
     end
   end

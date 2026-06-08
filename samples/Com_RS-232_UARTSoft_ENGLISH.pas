@@ -26,11 +26,9 @@ Sending and receiving ASCII characters through RS232 serial port creating a
 *
 }
  
-{$PROCESSOR PIC16F84A}
-{$FREQUENCY 8Mhz}
 {$MODE PICPAS}
- 
 uses PIC16F84A;
+{$FREQUENCY 8Mhz}
  
 const
   DataBitCount = 8;        // 8 bits of data, without parity or flow control.

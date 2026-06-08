@@ -1,12 +1,13 @@
 {
 XpresElementsPIC
 ================
-Definiciones para el manejo de los elementos del compilador: procedimientos, constantes,
-variables, tipos, ....
-Todos estos elementos se deberían almacenar en una estrucutura de arbol.
-Esta unidad esta basada en la unidad XpresElements de Xpres, pero adaptada a la
-arquitectura de los PIC y al lenguaje de PicPas.
-Por Tito Hinostroza.
+Definitions for syntactic elements of the compiler: functions, constants, variables,
+types, ...
+All these elements are stored in a Tree structure, that represents the syntax Tree.
+This unit is based in the unit XpresElements from the framework Xpres, and is adapted
+to the PIC architecture and to the Pascal dialect used here.
+
+                                                       By Tito Hinostroza.
 }
 unit XpresElementsPIC;
 {$mode objfpc}{$H+}
@@ -15,6 +16,7 @@ uses
   Classes, SysUtils, fgl, XpresTypesPIC, XpresBas, LCLProc;
 const
   ADRR_ERROR = $FFFF;
+
 type  //TxpElement y clases previas
   TVarOffs = word;
   TVarBank = byte;
@@ -22,10 +24,8 @@ type  //TxpElement y clases previas
   TxpOperator = class;
   TxpOperation = class;
 
-  {Evento que llama a una ROB. A las ROP binarias, se les envía la referencia a la
-  operación, para que puedan acceder a información adicional de la ROP. También se usa
-  el parámetro "Opt", para que se pueda identificar mejor a las ROB, y no confundirlas
-  con las ROU}
+  {Event to call a ROB. The "Opt" parameter, is used to give aditional information of
+  the ROP. }
   TProcBinaryROB = procedure(Opt: TxpOperation; SetRes: boolean) of object;
 
   {Evento que llama a una Rutina de Operación (ROP).
@@ -77,23 +77,29 @@ type  //TxpElement y clases previas
                 eltCodeCont, //Contenedor de código
                 eltMain,  //Programa principal
                 eltVar,   //Variable
+                eltFuncDec, //Declaración de función
                 eltFunc,  //Función
+                eltInLin, //Función INLINE
                 eltCons,  //Constante
                 eltType,  //Tipo
                 eltUnit,  //Unidad
                 eltBody,  //Cuerpo del programa/procedimiento
                 eltFinal  //Sección FINALIZATION de unidad
                 );
-
+  //Ubicación primaria de un elemento
+  TxpEleLocation = (
+                locMain,       //En el programa principal.
+                locInterface,  //En INTERFACE de una unidad.
+                locImplement   //En IMPLEMENTATION de una unidad.
+  );
   TxpElement = class;
   TxpElements = specialize TFPGObjectList<TxpElement>;
 
   TxpEleBody = class;
 
-  //Datos sobre la llamada a un elemento desde otro elemento
 
   { TxpEleCaller }
-
+  //Information about the call to one element from other element.
   TxpEleCaller = class
     curPos: TSrcPos;    //Posición desde donde es llamado
     curBnk: byte;       //banco RAM, desde donde se llama
@@ -139,23 +145,38 @@ type  //TxpElement y clases previas
 
   TxpEleVar = class;
 
-  {Descripción de la parte adicional en la declaración de una variable (como si
-  es ABSOLUTE)}
+  { TxpAdicDeclar }
+  {Define aditional declaration settings for variable. Depends on target CPU architecture.}
+  TxpAdicDeclar = (
+    decNone,   //Normal declaration. Will be mapped in free RAM.
+    decAbsol,  //Mapped in ABSOLUTE address
+    decRegis{,  //Mapped at RT
+    decRegisA, //Mapped at A register
+    decRegisX, //Mapped at X register
+    decRegisY  //Mapped at Y register}
+  );
+
+  {Description for aditional information in variables declaration: ABSOLUTE ,
+  REGISTER,  or initialization. }
   TAdicVarDec = record
-    //Por el momento, el único parámetro adicional es ABSOLUTE
-    isAbsol   : boolean;   //Indica si es ABSOLUTE
+    hasAdic   : TxpAdicDeclar;  //ABSOLUTE, REGISTERA, ...
     absVar    : TxpEleVar; //Referencia a variable, cuando es ABSOLUTE <variable>
     absAddr   : integer;   //dirección ABSOLUTE
     absBit    : byte;      //bit ABSOLUTE
+    hasInit   : boolean;   //Indica si tiene valor inicial
+    iniVal    : TConsValue; //Initial constant value
     //Posición donde empieza la declaración de parámetros adicionales de la variable
-    srcDec    : TPosCont;
+    srcDec    : TContextState;
   end;
 
   { TxpElement }
   //Clase base para todos los elementos
   TxpElement = class
   private
-    function AddElement(elem: TxpElement): TxpElement;
+    Fname    : string;   //Nombre del elemnto
+    Funame   : string;   //Nombre en mayúscula para acelerar las bísquedas.
+    procedure Setname(AValue: string);
+    function AddElement(elem: TxpElement; AtBegin: boolean): TxpElement;
   public  //Gestion de llamadas al elemento
     //Lista de funciones que llaman a esta función.
     lstCallers: TxpListCallers;
@@ -168,7 +189,7 @@ type  //TxpElement y clases previas
     function RemoveCallsFrom(callElem: TxpElement): integer; //Elimina llamadas
     procedure RemoveLastCaller; //Elimina la última llamada
     procedure ClearCallers;  //limpia lista de llamantes
-    function DuplicateIn(list: TxpElements): boolean; virtual;
+    function ExistsIn(list: TxpElements): boolean;
   public  //Gestión de los elementos llamados
     curNesting: Integer;   //Nivel de anidamiento de llamadas
     maxNesting: Integer;   //Máximo nivel de anidamiento
@@ -178,23 +199,20 @@ type  //TxpElement y clases previas
     lstCalledAll: TxpListCalled;
     //Métodos para el llemado
     procedure AddCalled(elem: TxpElement);
-    procedure AddCalledAll(elem: TxpElement);
-    procedure AddCalledAll_FromList(lstCalled0: TxpListCalled);
-    procedure UpdateCalledAll;
+    function UpdateCalledAll: integer;
   public
-    name : string;        //Nombre de la variable, constante, unidad, tipo, ...
     Parent: TxpElement;   //Referencia al elemento padre
     idClass: TxpIDClass;  //Para no usar RTTI
     elements: TxpElements; //Referencia a nombres anidados, cuando sea función
-    {Bandera para indicar si la función, ha sido declarada en la sección INTERFACE. Este
-    campo es úitl para cuando se procesan unidades.}
-    InInterface: boolean;
+    location: TxpEleLocation;  //Ubicación del elemento
+    property name: string read Fname write Setname;
+    property uname: string read Funame;
     function Path: string;
     function FindIdxElemName(const eName: string; var idx0: integer): boolean;
     function LastNode: TxpElement;
     function Index: integer;
   public  //Ubicación física de la declaración del elmento
-    posCtx: TPosCont;  //Ubicación en el código fuente
+    posCtx: TContextState;  //Ubicación en el código fuente
     {Datos de la ubicación en el código fuente, donde el elemento es declarado. Guardan
     parte de la información de posCtx, pero se mantiene, aún después de cerrar los
     contextos de entrada.}
@@ -209,11 +227,11 @@ type  //TxpElement y clases previas
     destructor Destroy; override;
   end;
 
-type //Clases de elementos
+type //Elements class
 
   { TxpEleCodeCont }
-  {Clase que define a un elemento que puede servir como contenedor general de código,
-  como el programa principal, un procedimiento o una unidad}
+  {Define a element that can be used as a general code conatiner, like the main program,
+  a procedure or a unit.}
   TxpEleCodeCont = class(TxpElement)
   public
     {Banco de RAM, que tiene la función al ejecutar la útlima instrucción. No es
@@ -241,11 +259,26 @@ type //Clases de elementos
     destructor Destroy; override;
   end;
 
+  //Model an attribute of a RECORD or OBJECT
+  TTypAttrib = class
+    name: string;      //Name od the field
+    offs: integer;     //Offset for Physycal address
+    typ : TxpEleType;  //Only reference to the type
+  end;
+  TTypATtributes = specialize TFPGObjectList<TTypAttrib>;
+
+  TxpEleTypes= specialize TFPGObjectList<TxpEleType>; //lista de variables
+
   { TxpEleType }
   {Clase para modelar a los tipos definidos por el usuario y a los tipos del sistema.
   Es una clase relativamente extensa, debido a la flxibilidad que ofrecen lso tipos en
   Pascal.}
   TxpEleType= class(TxpElement)
+  private
+    fSize: SmallInt;
+    internalTypes: TxpEleTypes;  //Container for types recursively defined.
+    function getSize: smallint;
+    procedure setSize(AValue: smallint);
   public   //Eventos
     {Estos eventos son llamados automáticamente por el Analizador de expresiones.
     Por seguridad, debe implementarse siempre para cada tipo creado. La implementación
@@ -253,11 +286,6 @@ type //Clases de elementos
     OperationLoad: TProcExecOperat; {Evento. Es llamado cuando se pide evaluar una
                                  expresión de un solo operando de este tipo. Es un caso
                                  especial que debe ser tratado por la implementación}
-    OnGetItem    : TTypFieldProc;  {Es llamado cuando se pide acceder a un ítem de un
-                                   arreglo (lectura o escritura). Debe devolver una
-                                   expresión con el resultado dal ítem leído.}
-    OnClearItems : TTypFieldProc;  {Usado para la rutina que limpia los ítems de
-                                   un arreglo.}
     {Estos eventos NO se generan automáticamente en TCompilerBase, sino que es la
     implementación del tipo, la que deberá llamarlos. Son como una ayuda para facilitar
     la implementación. OnPush y OnPop, son útiles para cuando la implementación va a
@@ -272,10 +300,21 @@ type //Clases de elementos
   public
     copyOf  : TxpEleType;  //Indica que es una copia de otro tipo
     grp     : TTypeGroup;  //Grupo del tipo (numérico, cadena, etc)
-    size    : smallint;    //Tamaño en bytes del tipo (para bits se usa números negativos)
     catType : TxpCatType;
-    arrSize : integer;     //Tamaño, cuando es tctArray
-    refType : TxpEleType;  //Referencia a otro tipo. Valido cuando es puntero o arreglo.
+    property size: smallint read getSize write setSize;   //Tamaño en bytes del tipo
+  public  //Arrays and pointers
+    nItems  : integer;     //Number of items, when is tctArray (-1 if it's dynamic.)
+    itmType : TxpEleType;  {Reference to the item type when it's array.
+                                TArr = array[255] of byte;  //itemType = byte
+                           }
+    ptrType : TxpEleType;  {Reference to the type pointed, when it's pointer.
+                                TPtr = ^integer;       //ptrType = integer
+                           }
+  public  //Attributes (When it's used as object: OBJECT ... END; ).
+    attribs: TTypATtributes;
+  public  //Manejo de campos
+    fields: TTypFields;
+    procedure CreateField(metName: string; procGet, procSet: TTypFieldProc);
   public  //Campos de operadores
     Operators: TxpOperators;      //Operadores soportados
     operAsign: TxpOperator;       //Se guarda una referencia al operador de aignación
@@ -289,20 +328,19 @@ type //Clases de elementos
     function FindUnaryPreOperator(const OprTxt: string): TxpOperator;
     function FindUnaryPostOperator(const OprTxt: string): TxpOperator;
     procedure SaveToStk;
-  public  //Manejo de campos
-    fields: TTypFields;
-    procedure CreateField(metName: string; proc: TTypFieldProc);
   public  //Identificación
     function IsBitSize: boolean;
     function IsByteSize: boolean;
     function IsWordSize: boolean;
     function IsDWordSize: boolean;
     procedure DefineRegister;
+    function IsArrayOf(itTyp: TxpEleType; numIt: integer): boolean;
+    function IsPointerTo(ptTyp: TxpEleType): boolean;
+    function IsEquivalent(typ: TxpEleType): boolean;
   public
     constructor Create; override;
     destructor Destroy; override;
   end;
-  TxpEleTypes= specialize TFPGObjectList<TxpEleType>; //lista de variables
 
   { TxpEleCon }
   //Clase para modelar a las constantes
@@ -319,23 +357,15 @@ type //Clases de elementos
   TxpEleVar = class(TxpElement)
   private
     ftyp: TxpEleType;
-    function GetHavAdicPar: boolean;
-    procedure SetHavAdicPar(AValue: boolean);
     function Gettyp: TxpEleType;
     procedure Settyp(AValue: TxpEleType);
   public   //Manejo de parámetros adicionales
     adicPar: TAdicVarDec;  //Parámetros adicionales en la declaración de la variable.
     //Referencia al elemento de tipo
     property typ: TxpEleType read Gettyp write Settyp;
-    //Indica si la variable tiene parámetros adicionales en la declaración
-    property havAdicPar: boolean read GetHavAdicPar write SetHavAdicPar;
   public
     //Bandera para indicar si la variable, se está usando como parámetro
     IsParameter: boolean;
-    {Bandera para indicar que el valor de la variable se alamcena en lso registros de
-    trabajo, es decir que se manejan, más como expresión que como variables. Se diseñó,
-    como una forma rápida para pasar parámetros a funciones.}
-    IsRegister : boolean;
     {Indica si la variables es temporal, es decir que se ha creado solo para acceder a
     una parte de otra variable, que si tiene almacenamiento físico.}
     IsTmp      : boolean;
@@ -381,10 +411,22 @@ type //Clases de elementos
 
   //Parámetro de una función
   TxpParFunc = record
-    name: string;    //nombre de parámetro
-    typ : TxpEleType;  //Referencia al tipo
-    pvar: TxpEleVar; //referencia a la variable que se usa para el parámetro
+    name   : string;      //nombre de parámetro
+    typ    : TxpEleType;  //Referencia al tipo
+    pvar   : TxpEleVar;   //referencia a la variable que se usa para el parámetro
+    srcPos : TSrcPos;     //Posición del parámetro.
+    adicVar: TAdicVarDec; //Parámetros adicionales
   end;
+  TxpParFuncArray = array of TxpParFunc;
+
+  //Parámetro de una función INLINE
+  TxpParInlin = record
+    name: string;     //nombre de parámetro
+    typ : TxpEleType; //Referencia al tipo
+    sto : TStoOperand; //Tipo de almacenamiento
+    srcPos: TSrcPos;  //Posición del parámetro.
+  end;
+  TxpParInlinArray = array of TxpParInlin;
 
   //Clase para modelar al bloque principal
   { TxpEleMain }
@@ -396,50 +438,109 @@ type //Clases de elementos
   end;
 
   TxpEleFun = class;
-  { TxpEleFun }
+  TxpEleFunBase = class;
   //Clase para almacenar información de las funciones
-  TProcExecFunction = procedure(fun: TxpEleFun) of object;
-  TxpEleFun = class(TxpEleCodeCont)
-  public
+  TxpProcParam = procedure(fun: TxpEleFunBase) of object;
+  TxpProcCall = procedure(fun: TxpEleFunBase; out AddrUndef: boolean) of object;
+
+  { TxpEleFunBase }
+
+  TxpEleFunBase = class(TxpEleCodeCont)
     typ    : TxpEleType;   //Referencia al tipo
-    pars   : array of TxpParFunc;  //parámetros de entrada
+    IsInterrupt : boolean;
+    IsForward   : boolean; //Identifies a forward declaration.
+  public //References
+    {Referencia a la función que implemanta, la rutina de porcesamiento que se debe
+    hacer, antes de empezar a leer los parámetros de la función.}
+    procParam: TxpProcParam;
+    {Referencia a la función que implementa, la llamada a la función en ensamblador.
+    En funciones del sistema, puede que se implemente INLINE, sin llamada a subrutinas,
+    pero en las funciones comunes, siempre usa CALL ... }
+    procCall: TxpProcCall;
+  public //Parameters manage
+    pars   : TxpParFuncArray;  //parámetros de entrada
+    procedure ClearParams;
+    function SameParamsType(const funpars: TxpParFuncArray): boolean;
+    function ParamTypesList: string;
+  end;
+
+  TProcExecFunction = procedure(fun: TxpEleFun) of object;
+
+  { TxpEleFunDec }
+  {Basic class to represent a function header or declaration (INTERFASE o FORWARD).
+  Basically whar we store here is the name, the parameters ante return type.}
+  TxpEleFunDec = class(TxpEleFunBase)
+  public
+    implem      : TxpEleFun;    //Reference to implementation element.
+  public //Initialization
+    constructor Create; override;
+  end;
+
+  { TxpEleFun }
+  TxpEleFun = class(TxpEleFunBase)
+  public
     adrr   : integer;     //Dirección física, en donde se compila
     srcSize: integer;  {Tamaño del código compilado. En la primera pasada, es referencial,
                         porque el tamaño puede variar al reubicarse.}
     //Banco de RAM, al iniciar la ejecución de la subrutina.
     iniBnk: byte;
-    {Referencia a la función que implemanta, la rutina de porcesamiento que se debe
-    hacer, antes de empezar a leer los parámetros de la función.}
-    procParam: TProcExecFunction;
-    {Referencia a la función que implementa, la llamada a la función en ensamblador.
-    En funciones del sistema, puede que se implemente INLINE, sin llamada a subrutinas,
-    pero en las funciones comunes, siempre usa CALL ... }
-    procCall: TProcExecFunction;
-    {Método que llama a una rutina que codificará la rutina ASM que implementa la función.
-     La idea es que este campo solo se use para algunas funciones del sistema.}
+    linked : boolean;   //Indicates the function was compiled in its real address
+    {Call to routine that generate code for the function, when the function has not body
+    like used in system fucntions.}
     compile: TProcExecFunction;
-    {Bandera para indicar si la función, ha sido implementada. Este campo es util, para
-     cuando se usa FORWARD o cuando se compilan unidades.}
-    Implemented: boolean;
-    {Indica si la función es una ISR. Se espera que solo exista una.}
-    IsInterrupt : boolean;
-    ///////////////
-    procedure ClearParams;
-    procedure CreateParam(parName: string; typ0: TxpEleType; pvar: TxpEleVar);
-    function SameParams(Fun2: TxpEleFun): boolean;
-    function ParamTypesList: string;
-    function DuplicateIn(list: TxpElements): boolean; override;
     procedure SetElementsUnused;
+  public //Declaration
+    {These properties allows to have reference to the function declaration, when there is
+    one:  Interface versions or Forward version.
+    In other cases there is just a function element without separated declaration.
+    According to design:
+     Declaration elements -> Contain information about:
+        - The parameters and return value.
+        - The calls.
+     Implementation elements -> Contain information about:
+        - The parameters and return value.
+        - The calls.
+        - Local variables.
+        - The body (Calls to other elements.)
+     Declaration elements are included too in the Syntax Tree, but they aer used only for
+     declaration. All the information must be read in the funtion.
+    }
+    declar : TxpEleFunDec; //Reference to declaration (When it's FORWARD or in INTERFACE)
+    function HasDeclar: boolean; inline;
   public  //Manejo de referencias
     function nCalled: integer; override; //número de llamadas
     function nLocalVars: integer;
     function IsTerminal: boolean;
     function IsTerminal2: boolean;
+  private //Manage of pending calls
+    curSize: integer;
+  public //Manage of pending calls
+    {Address of pending calls (JSR) made when the function was not still implemented }
+    nAddresPend : integer;
+    addrsPend   : array of word;
+    procedure AddAddresPend(ad: word);
   public //Inicialización
     constructor Create; override;
     destructor Destroy; override;
   end;
   TxpEleFuns = specialize TFPGObjectList<TxpEleFun>;
+
+  { TxpEleInline }
+  //Clase para modelar a las funciones Inline
+  TxpEleInlin = class(TxpEleCodeCont)
+  public
+    typ    : TxpEleType;   //Referencia al tipo
+    pars   : TxpParInlinArray;  //parámetros de entrada
+    ///////////////
+    procedure ClearParams;
+    procedure CreateParam(parName: string; typ0: TxpEleType; sto0: TStoOperand);
+    function SameParamsType(const funpars: TxpParInlinArray): boolean;
+    function Duplicated: boolean;
+  public //Inicialización
+    constructor Create; override;
+    destructor Destroy; override;
+  end;
+  TxpEleInlins = specialize TFPGObjectList<TxpEleInlin>;
 
   { TxpEleUnit }
   //Clase para modelar a las constantes
@@ -496,36 +597,40 @@ type //Clases de elementos
     AllVars  : TxpEleVars;
     AllUnits : TxpEleUnits;
     AllFuncs : TxpEleFuns;
+    AllInLns : TxpEleInlins;
     AllTypes : TxpEleTypes;
     OnAddElement: procedure(xpElem: TxpElement) of object;  //Evento
     OnFindElement: procedure(elem: TxpElement) of object;
     procedure Clear;
-    procedure RefreshAllCons;
-    procedure RefreshAllVars;
-    procedure RefreshAllFuncs;
     procedure RefreshAllUnits;
-    procedure RefreshAllTypes;
-    procedure RefreshAllElementLists;
     function CurNodeName: string;
     function CurCodeContainer: TxpEleCodeCont;
     function LastNode: TxpElement;
     function BodyNode: TxpEleBody;
   public  //Funciones para llenado del arbol
-    function AddElement(elem: TxpElement; verifDuplic: boolean=true): boolean;
+    procedure AddElement(elem: TxpElement; AtBegin: boolean = false);
     procedure AddElementAndOpen(elem: TxpElement);
+    procedure AddElementParent(elem: TxpElement; AtBegin: boolean);
     procedure OpenElement(elem: TxpElement);
-    function ValidateCurElement: boolean;
     procedure CloseElement;
   public  //Métodos para identificación de nombres
     function FindNext: TxpElement;
     function FindFirst(const name: string): TxpElement;
-    function FindNextFunc: TxpEleFun;
+    function FindNextFuncName: TxpEleFun;
+    function FindFirstType: TxpEleType;
+    function FindNextType: TxpEleType;
     function FindVar(varName: string): TxpEleVar;
     function FindType(typName: string): TxpEleType;
+    function ExistsArrayType(itemType: TxpEleType; nEle: integer;
+                             out typFound: TxpEleType): boolean;
+    function ExistsPointerType(ptrType: TxpEleType;
+                             out typFound: TxpEleType): boolean;
     function GetElementBodyAt(posXY: TPoint): TxpEleBody;
     function GetElementAt(posXY: TPoint): TxpElement;
     function GetElementCalledAt(const srcPos: TSrcPos): TxpElement;
     function GetELementDeclaredAt(const srcPos: TSrcPos): TxpElement;
+    function FunctionExistInCur(funName: string; const pars: TxpParFuncArray
+      ): boolean;
   public  //constructor y destructror
     constructor Create; virtual;
     destructor Destroy; override;
@@ -537,7 +642,28 @@ var
   // Operador nulo. Usado como valor cero.
   nullOper : TxpOperator;
 
+  function GenArrayTypeName(itTypeName: string; nItems: integer): string; inline;
+  function GenPointerTypeName(refTypeName: string): string; inline;
+
 implementation
+
+{Functions to Generates standard names for dinamyc types creation. Have standard
+names is important to let the compiler:
+ * Reuse types definitions.
+ * Implement compatibility for types.
+}
+function GenArrayTypeName(itTypeName: string; nItems: integer): string; inline;
+begin
+  if nItems=-1 then begin  //dynamic
+    exit(PREFIX_ARR + '-' + itTypeName);
+  end else begin          //static
+    exit(PREFIX_ARR + IntToSTr(nItems) + '-' + itTypeName);
+  end;
+end;
+function GenPointerTypeName(refTypeName: string): string; inline;
+begin
+  exit(PREFIX_PTR + '-' +refTypeName);
+end;
 
 { TxpEleCaller }
 function TxpEleCaller.CallerUnit: TxpElement;
@@ -552,12 +678,13 @@ begin
   if caller = nil then exit(nil);
   //La idea es retorceder hasta encontrar una unidad o el programa principal
   container := caller;
-  repeat
-    container := container.Parent;
-  until container.idClass in [eltUnit, eltMain];
+  while not (container.idClass in [eltUnit, eltMain]) do begin
+    container := container.Parent;  //Go back in the Tree
+  end;
   Result := container;
   //No debería haber otro caso
 end;
+
 { TxpExitCall }
 function TxpExitCall.IsObligat: boolean;
 {Indica si el exit se encuentra dentro de código obligatorio}
@@ -592,25 +719,36 @@ begin
   Result := type1.name + ' ' + parent.txt + ' ' + ToType.name;
 end;
 
+
 { TxpElement }
-function TxpElement.AddElement(elem: TxpElement): TxpElement;
+function TxpElement.AddElement(elem: TxpElement; AtBegin: boolean): TxpElement;
 {Agrega un elemento hijo al elemento actual. Devuelve referencia. }
 begin
-  elem.Parent := self;  //actualzia referencia
-  elements.Add(elem);   //agrega a la lista de nombres
-  Result := elem;       //no tiene mucho sentido
+  elem.Parent := self;  //Update reference
+  if AtBegin then begin
+    elements.Insert(0, elem);   //Add to list of elements
+  end else begin
+    elements.Add(elem);   //Add to list of elements
+  end;
+  Result := elem;       //No so useful
+end;
+procedure TxpElement.Setname(AValue: string);
+begin
+  if Fname=AValue then Exit;
+  Fname:=AValue;
+  Funame:=Upcase(AValue);
 end;
 function TxpElement.FindIdxElemName(const eName: string; var idx0: integer): boolean;
 {Busca un nombre en su lista de elementos. Inicia buscando desde idx0, hasta el inicio.
  Si encuentra, devuelve TRUE y deja en idx0, la posición en donde se encuentra.}
 var
   i: Integer;
-  uName: String;
+  uEleName: String;
 begin
-  uName := upcase(eName);
+  uEleName := upcase(eName);
   //empieza la búsqueda en "idx0"
   for i := idx0 downto 0 do begin
-    if upCase(elements[i].name) = uName then begin
+    if upCase(elements[i].name) = uEleName then begin
       //sale dejando idx0 en la posición encontrada
       idx0 := i;
       exit(true);
@@ -710,15 +848,13 @@ procedure TxpElement.ClearCallers;
 begin
   lstCallers.Clear;
 end;
-function TxpElement.DuplicateIn(list: TxpElements): boolean;
+function TxpElement.ExistsIn(list: TxpElements): boolean;
 {Debe indicar si el elemento está duplicado en la lista de elementos proporcionada.}
 var
-  uName: String;
   ele: TxpElement;
 begin
-  uName := upcase(name);
   for ele in list do begin
-    if upcase(ele.name) = uName then begin
+    if ele.uname = uname then begin
       exit(true);
     end;
   end;
@@ -731,40 +867,92 @@ begin
     lstCalled.Add(elem);
   end;
 end;
-procedure TxpElement.AddCalledAll(elem: TxpElement);
-{Agrega referencia a procedimiento llamado.}
-begin
-  //Solo agrega una vez el elemento
-  if lstCalledAll.IndexOf(elem) = -1 then begin
-    lstCalledAll.Add(elem);
-  end;
-end;
-procedure TxpElement.AddCalledAll_FromList(lstCalled0: TxpListCalled);
-{Agrega referencia a procedimiento llamado, a partir de una lista, de forma recursiva}
-var
-  elem: TxpElement;
-begin
-  inc(curNesting);    //incrementa el anidamiento
-  if curNesting>maxNesting then maxNesting := curNesting;
-
-  if lstCalled0.Count = 0 then exit;
-  for elem in lstCalled0 do begin
-    AddCalledAll(elem);  //Agrega elemento
-    if elem.lstCalled.Count <> 0 then begin  //Tiene otros elementos
-      AddCalledAll_FromList(elem.lstCalled);
+function TxpElement.UpdateCalledAll: integer;
+{Update list "lstCalledAll", using AddCalledAll_FromList().
+  The return value is:
+  * curNesting -> if not error happens.
+  * <0  ->  If found recursion.
+}
+  function AddCalledAll(elem: TxpElement): boolean;
+  {Add reference to lstCalledAll. That is, indicates some element is called from this
+  element.
+  If reference already exists, retunr FALSE.}
+  begin
+    //Solo agrega una vez el elemento
+    if lstCalledAll.IndexOf(elem) = -1 then begin
+      lstCalledAll.Add(elem);
+      exit(true);
+    end else begin
+      exit(false);
     end;
   end;
-  dec(curNesting);    //incrementa el anidamiento
-end;
-procedure TxpElement.UpdateCalledAll;
-{Actualiza la lista "lstCalledAll", usando AddCalledAll_FromList().}
+  function AddCalledAll_FromList(lstCalled0: TxpListCalled): integer;
+  {Add the call references (to lstCalledAll) of all elements of the list lstCalled0,
+  including its called too (recursive).}
+  var
+    elem: TxpElement;
+    err: Integer;
+  begin
+    inc(curNesting);    //incrementa el anidamiento
+    if curNesting>maxNesting then maxNesting := curNesting;
+
+    if lstCalled0.Count = 0 then exit;
+    for elem in lstCalled0 do begin
+//      debugln('Call to ' + elem.name + ' from ' + self.name);
+//      if elem = self then begin
+//        {This is some way to detect circular references like:
+//        procedure proc2;
+//        begin
+//          proc1;
+//        end;
+//        procedure proc1;
+//        begin
+//          proc2;
+//        end;
+//        But fails whe this element is not part of the circualr reference like
+//        procedure proc2;   <-- We are proc2
+//        begin
+//          proc1;
+//        end;
+//        procedure proc1; <-- Here is the recursion
+//        begin
+//          proc1;
+//        end;
+//        In this case, several call to proc1() will be adding.
+//        }
+//        if curNesting = 1 then begin
+//          exit(-1);
+//        end else begin
+//          exit(-2);
+//        end;
+//      end;
+      //Add element reference
+      if not AddCalledAll(elem) then begin
+        //This is better way to detect circle references, because lstCalled, doesn't
+        //contain duplicated calls.
+        exit(-1);
+      end;
+      if curNesting > 100 then begin
+        //This is a secure way (but less elegant) for checking recursion. (If curNesting
+        //grows too much). I don't expect this happens, unless exists some case I haven't
+        //considered.
+        exit(-1);
+      end;
+      //Verify if this element have other calls to add too.
+      if elem.lstCalled.Count <> 0 then begin
+        err := AddCalledAll_FromList(elem.lstCalled);
+        if err<0 then exit(err);
+      end;
+    end;
+    dec(curNesting);    //incrementa el anidamiento
+    exit(curNesting);
+  end;
 begin
-  lstCalledAll.Clear;  //Por si acaso
-  curNesting := 0;     //Inicia
-  maxNesting := 0;     //Inicia
-  AddCalledAll_FromList(lstCalled);
-  {Falta actualizar maxNesting, con las llamadas a funciones del sistema y
-   llamadas de interrupciones.}
+//debugln('UpdateCalledAll' + IntToStr(lstCalledAll.Count));
+  lstCalledAll.Clear;  //By security
+  curNesting := 0;
+  maxNesting := 0;
+  Result := AddCalledAll_FromList(lstCalled);
 end;
 
 function TxpElement.Path: string;
@@ -977,13 +1165,12 @@ begin
   idClass:=eltCons;
 end;
 { TxpEleVar }
-function TxpEleVar.GetHavAdicPar: boolean;
-begin
-  Result := adicPar.isAbsol;  //De momento, es el único parámetro adicional
-end;
 function TxpEleVar.Gettyp: TxpEleType;
 begin
-  if ftyp.copyOf<>nil then Result := ftyp.copyOf else Result := ftyp;
+  if ftyp.copyOf<>nil then
+    Result := ftyp.copyOf
+  else
+    Result := ftyp;
 end;
 procedure TxpEleVar.Settyp(AValue: TxpEleType);
 begin
@@ -1027,10 +1214,6 @@ function TxpEleVar.offs: TVarOffs;
 {Devuelve la dirección de inicio, en donde empieza a almacenarse la variable.}
 begin
   Result := addr0 and $7F;  //La variable siempre empieza en "addr0"
-end;
-procedure TxpEleVar.SetHavAdicPar(AValue: boolean);
-begin
-  adicPar.isAbsol := Avalue;  //De momento, es el único parámetro adicional
 end;
 function TxpEleVar.addr: word;
 {Devuelve la dirección absoluta de la variable. Tener en cuenta que la variable, no
@@ -1146,7 +1329,7 @@ var
   r: TxpOperation;
 begin
   //agrega
-  r := TxpOperation.Create;
+    r := TxpOperation.Create;
   r.ToType:=OperandType;
   r.proc:=proc;
   r.parent := self;
@@ -1180,7 +1363,27 @@ begin
   Operations.Free;
   inherited Destroy;
 end;
-
+function TxpEleType.getSize: smallint;
+var
+  lastAttrib: TTypAttrib;
+begin
+  if catType = tctArray then begin
+    //Array size is calculated
+    if nItems = -1 then exit(0) else exit(itmType.size * nItems);
+  end else if catType = tctPointer then begin
+    exit(1);  //Pointer are like bytes
+  end else if catType = tctObject then begin
+    if attribs.Count = 0 then exit(0);
+    lastAttrib := attribs[attribs.Count-1];
+    exit(lastAttrib.offs + lastAttrib.typ.size);  //
+  end else begin
+    exit(fSize)
+  end;
+end;
+procedure TxpEleType.setSize(AValue: smallint);
+begin
+  fSize := AValue;
+end;
 { TxpEleType }
 function TxpEleType.CreateBinaryOperator(txt: string; prec: byte; OpName: string
   ): TxpOperator;
@@ -1306,7 +1509,8 @@ begin
   if OnSaveToStk<>nil then OnSaveToStk;
 end;
 
-procedure TxpEleType.CreateField(metName: string; proc: TTypFieldProc);
+procedure TxpEleType.CreateField(metName: string; procGet,
+  procSet: TTypFieldProc);
 {Crea una función del sistema. A diferencia de las funciones definidas por el usuario,
 una función del sistema se crea, sin crear espacios de nombre. La idea es poder
 crearlas rápidamente.}
@@ -1315,7 +1519,8 @@ var
 begin
   fun := TTypField.Create;  //Se crea como una función normal
   fun.Name := metName;
-  fun.proc := proc;
+  fun.procGet := procGet;
+  fun.procSet := procSet;
 //no verifica duplicidad
   fields.Add(fun);
 end;
@@ -1348,18 +1553,52 @@ procedure TxpEleType.DefineRegister;
 begin
   if OnDefRegister<>nil then OnDefRegister;
 end;
+
+function TxpEleType.IsArrayOf(itTyp: TxpEleType; numIt: integer): boolean;
+{Indicates if this type is an array of the specified type and with the specified
+number of elements.}
+begin
+  exit( (catType = tctArray) and (nItems = numIt) and itmType.IsEquivalent(itTyp)  );
+end;
+function TxpEleType.IsPointerTo(ptTyp: TxpEleType): boolean;
+begin
+  exit( (catType = tctPointer) and ptrType.IsEquivalent(ptTyp) );
+end;
+function TxpEleType.IsEquivalent(typ: TxpEleType): boolean;
+{Indicates if the type is the same type as the specified or has the same definition.}
+begin
+  if self = typ then exit(true);
+  if catType <> typ.catType then exit(false);
+  //Have the same category
+  if (self.copyOf = typ) or (typ.copyOf = self) then exit(true);
+  if (self.copyOf<>nil) and (self.copyOf = typ.copyOf) then exit(true);
+  if catType = tctArray then begin
+    //Equivalence for arrays
+    if (self.nItems = typ.nItems) and itmType.IsEquivalent(typ.itmType) then exit(true);
+  end else if catType = tctPointer then begin
+    //Equivalence for pointers
+    if (self.ptrType.IsEquivalent(typ.ptrType)) then exit(true);
+  end;
+  exit(false);
+end;
+
 constructor TxpEleType.Create;
 begin
   inherited;
   idClass:=eltType;
-  //Crea lista de campos
+  //Create list of methods
   fields:= TTypFields.Create(true);
-  //Ceea lista de operadores
-  Operators := TxpOperators.Create(true);  //Lista de operadores aplicables a este tipo
+  //Create list of attributes
+  attribs:= TTypATtributes.Create(true);
+  //Ceeate list of operators
+  Operators := TxpOperators.Create(true);  //Operators apllyed to this type
+  internalTypes:= TxpEleTypes.Create(true);
 end;
 destructor TxpEleType.Destroy;
 begin
+  internalTypes.Destroy;
   Operators.Destroy;
+  attribs.Destroy;
   fields.Destroy;
   inherited;
 end;
@@ -1371,41 +1610,29 @@ begin
   Parent := nil;  //la raiz no tiene padre
 end;
 { TxpEleFun }
-procedure TxpEleFun.ClearParams;
-//Elimina los parámetros de una función
-begin
-  setlength(pars,0);
-end;
-procedure TxpEleFun.CreateParam(parName: string; typ0: TxpEleType; pvar: TxpEleVar);
-//Crea un parámetro para la función
-var
-  n: Integer;
-begin
-  //agrega
-  n := high(pars)+1;
-  setlength(pars, n+1);
-  pars[n].name := parName;
-  pars[n].typ  := typ0;  //agrega referencia
-  pars[n].pvar := pvar;
-end;
-function TxpEleFun.SameParams(Fun2: TxpEleFun): boolean;
-{Compara los parámetros de la función con las de otra. Si tienen el mismo número
-de parámetros y el mismo tipo, devuelve TRUE.}
+function TxpEleFunBase.SameParamsType(const funpars: TxpParFuncArray): boolean;
+{Compara los parámetros de la función con una lista de parámetros. Si tienen el mismo
+número de parámetros y el mismo tipo, devuelve TRUE.}
 var
   i: Integer;
 begin
-  Result:=true;  //se asume que son iguales
-  if High(pars) <> High(Fun2.pars) then
-    exit(false);   //distinto número de parámetros
-  //hay igual número de parámetros, verifica
+  Result:=true;   //We assume they are the same
+  if High(pars) <> High(funpars) then
+    exit(false);   //Distinct parameters number
+  //They have the same numbers of parameters, verify:
   for i := 0 to High(pars) do begin
-    if pars[i].typ <> Fun2.pars[i].typ then begin
+    if pars[i].typ <> funpars[i].typ then begin
       exit(false);
     end;
   end;
   //si llegó hasta aquí, hay coincidencia, sale con TRUE
 end;
-function TxpEleFun.ParamTypesList: string;
+procedure TxpEleFunBase.ClearParams;
+//Elimina los parámetros de una función
+begin
+  setlength(pars,0);
+end;
+function TxpEleFunBase.ParamTypesList: string;
 {Devuelve una lista con los nombres de los tipos de los parámetros, de la forma:
 (byte, word) }
 var
@@ -1419,29 +1646,6 @@ begin
   //quita coma final
   if length(tmp)>0 then tmp := copy(tmp,1,length(tmp)-2);
   Result := '('+tmp+')';
-end;
-function TxpEleFun.DuplicateIn(list: TxpElements): boolean;
-var
-  uName: String;
-  ele: TxpElement;
-begin
-  uName := upcase(name);
-  for ele in list do begin
-    if ele = self then Continue;  //no se compara el mismo
-    if upcase(ele.name) = uName then begin
-      //hay coincidencia de nombre
-      if ele.idClass = eltFunc then begin
-        //para las funciones, se debe comparar los parámetros
-        if SameParams(TxpEleFun(ele)) then begin
-          exit(true);
-        end;
-      end else begin
-        //si tiene el mismo nombre que cualquier otro elemento, es conflicto
-        exit(true);
-      end;
-    end;
-  end;
-  exit(false);
 end;
 procedure TxpEleFun.SetElementsUnused;
 {Marca todos sus elementos con "nCalled = 0". Se usa cuando se determina que una función
@@ -1457,6 +1661,10 @@ begin
       TxpEleVar(elem).ResetAddress;
     end;
   end;
+end;
+function TxpEleFun.HasDeclar: boolean;
+begin
+  exit(declar<>nil);
 end;
 function TxpEleFun.nCalled: integer;
 begin
@@ -1504,17 +1712,115 @@ begin
     exit(false);
   end;
 end;
+const CONS_ITEM_BLOCK = 10;
+
+procedure TxpEleFun.AddAddresPend(ad: word);
+{Add a pending address to the function to be completed later.}
+begin
+  addrsPend[nAddresPend] := ad;
+  inc(nAddresPend);
+  if nAddresPend > curSize then begin
+    curSize += CONS_ITEM_BLOCK;   //Increase size by block
+    setlength(addrsPend, curSize);  //make space
+  end;
+end;
 
 //Inicialización
 constructor TxpEleFun.Create;
 begin
   inherited;
   idClass:=eltFunc;
+  //Init addrsPend[]
+  nAddresPend := 0;
+  curSize := CONS_ITEM_BLOCK;   //Block size
+  setlength(addrsPend, curSize);  //initial size
 end;
 destructor TxpEleFun.Destroy;
 begin
   inherited Destroy;
 end;
+
+{ TxpEleInlin }
+procedure TxpEleInlin.ClearParams;
+//Elimina los parámetros de una función
+begin
+  setlength(pars,0);
+end;
+procedure TxpEleInlin.CreateParam(parName: string; typ0: TxpEleType;
+  sto0: TStoOperand);
+//Crea un parámetro para la función
+var
+  n: Integer;
+begin
+  //agrega
+  n := high(pars)+1;
+  setlength(pars, n+1);
+  pars[n].name := parName;
+  pars[n].typ  := typ0;  //agrega referencia
+  pars[n].sto  := sto0;  //captura almacenamiento
+end;
+function TxpEleInlin.SameParamsType(const funpars: TxpParInlinArray): boolean;
+{Compara los parámetros de la función con las de otra. Si tienen el mismo número
+de parámetros, el mismo tipo y almacenamiento, devuelve TRUE.}
+var
+  i: Integer;
+begin
+  Result:=true;  //se asume que son iguales
+  if High(pars) <> High(funpars) then
+    exit(false);   //distinto número de parámetros
+  //hay igual número de parámetros, verifica
+  for i := 0 to High(pars) do begin
+    if pars[i].typ <> funpars[i].typ then begin
+      exit(false);
+    end;
+    //Estos parámetros tienen el mismo tipo
+    if pars[i].sto<> funpars[i].sto then begin
+      exit(false);  //Pero otro almacenamiento
+    end;
+  end;
+  //si llegó hasta aquí, hay coincidencia, sale con TRUE
+end;
+function TxpEleInlin.Duplicated: boolean;
+{Revisa la duplicidad de la función en su entorno. La función ya debe estar ingresada al
+árbol de sintaxis.  *******  ¿Realmente se usa?}
+var
+  ele: TxpElement;
+begin
+  for ele in parent.elements do begin
+    if ele = self then Continue;  //no se compara el mismo
+    if ele.uname = uname then begin
+      //hay coincidencia de nombre
+      if ele.idClass = eltInLin then begin
+        //para las funciones, se debe comparar los parámetros
+        if SameParamsType(TxpEleInlin(ele).pars) then begin
+          exit(true);
+        end;
+      end else begin
+        //si tiene el mismo nombre que cualquier otro elemento, es conflicto
+        exit(true);
+      end;
+    end;
+  end;
+  exit(false);
+end;
+constructor TxpEleInlin.Create;
+begin
+  inherited Create;
+  idClass:=eltInLin;
+end;
+destructor TxpEleInlin.Destroy;
+begin
+  inherited Destroy;
+end;
+
+{ TxpEleFunDec }
+constructor TxpEleFunDec.Create;
+begin
+  inherited Create;
+  idClass:=eltFuncDec;
+end;
+
+
 procedure TxpEleUnit.ReadInterfaceElements;
 {Actualiza la lista "InterfaceElements", con los elementos accesibles desde la
 sección INTERFACE.}
@@ -1525,7 +1831,7 @@ begin
   if elements = nil then exit;
   //Solo basta explorar a un nivel
   for ele in elements do begin
-    if ele.InInterface then begin
+    if ele.location = locInterface then begin
        InterfaceElements.Add(ele);
     end;
   end;
@@ -1583,6 +1889,8 @@ begin
   AllFuncs.Clear;
   AllTypes.Clear;
 end;
+{********* No se utilizan ya estos métodos porque se está agregando código de
+identificación en TXpTreeElements.AddElement().
 procedure TXpTreeElements.RefreshAllCons;
 {Devuelve una lista de todas las constantes del árbol de sintaxis, incluyendo las de las
 funciones y procedimientos. La lista se obtiene ordenada de acuerdo a como se haría en
@@ -1651,17 +1959,6 @@ begin
   AllFuncs.Clear;   //por si estaba llena
   AddFuncs(main);
 end;
-procedure TXpTreeElements.RefreshAllUnits;
-var
-  ele : TxpElement;
-begin
-  AllUnits.Clear;   //por si estaba llena
-  for ele in main.elements do begin
-    if ele.idClass = eltUnit then begin
-       AllUnits.Add( TxpEleUnit(ele) );
-    end;
-  end;
-end;
 procedure TXpTreeElements.RefreshAllTypes;
 {Devuelve una lista de todas las constantes del árbol de sintaxis, incluyendo las de las
 funciones y procedimientos. La lista se obtiene ordenada de acuerdo a como se haría en
@@ -1685,35 +1982,17 @@ begin
   AllTypes.Clear;   //por si estaba llena
   AddTypes(main);
 end;
-procedure TXpTreeElements.RefreshAllElementLists;
-{Actualiza todas las listas de elementos a partir de una exploración recursiva del
-árbol de sintaxis. La lista se obtiene ordenada de acuerdo a como se haría en
-una exploración sintáctica normal.}
-  procedure FindElement(nod: TxpElement);
-  var
-    ele : TxpElement;
-  begin
-    if nod.elements<>nil then begin
-      for ele in nod.elements do begin
-        case ele.idClass of
-        eltCons: AllCons.Add(TxpEleCon(ele));
-        eltVar : AllVars.Add(TxpEleVar(ele));
-        eltFunc: AllFuncs.Add(TxpEleFun(ele));
-        eltUnit: AllUnits.Add(TxpEleUnit(ele));
-        eltType: AllTypes.Add(TxpEleType(ele));
-        end;
-        if ele.elements<>nil then
-            FindElement(ele);  //recursivo
-      end;
+}
+procedure TXpTreeElements.RefreshAllUnits;
+var
+  ele : TxpElement;
+begin
+  AllUnits.Clear;   //por si estaba llena
+  for ele in main.elements do begin
+    if ele.idClass = eltUnit then begin
+       AllUnits.Add( TxpEleUnit(ele) );
     end;
   end;
-begin
-  AllCons.Clear;    //Por si estaba llena
-  AllVars.Clear;   //por si estaba llena
-  AllFuncs.Clear;   //por si estaba llena
-  AllUnits.Clear;   //por si estaba llena
-  AllTypes.Clear;   //Por si estaba llena
-  FindElement(main);
 end;
 function TXpTreeElements.CurNodeName: string;
 {Devuelve el nombre del nodo actual}
@@ -1751,18 +2030,23 @@ begin
   Result := main.BodyNode;
 end;
 //funciones para llenado del arbol
-function TXpTreeElements.AddElement(elem: TxpElement; verifDuplic: boolean = true): boolean;
-{Agrega un elemento al nodo actual. Si ya existe el nombre del nodo, devuelve false.
-Este es el punto único de entrada para realizar cambios en el árbol.}
+procedure TXpTreeElements.AddElement(elem: TxpElement; AtBegin: boolean = false);
+{Add a new element to the current node. Commonly elements are add at the end of the list
+unless "AtBegin" is TRUE.
+This is the unique entry point to add elements to the Syntax Tree.}
 begin
-  Result := true;
-  //Verifica si hay conflicto. Solo es necesario buscar en el nodo actual.
-  if verifDuplic and elem.DuplicateIn(curNode.elements) then begin
-    exit(false);  //ya existe
-  end;
   //Agrega el nodo
-  curNode.AddElement(elem);
+  curNode.AddElement(elem, AtBegin);
   if OnAddElement<>nil then OnAddElement(elem);
+  //Update Lists
+  case elem.idClass of
+  eltCons: AllCons.Add(TxpEleCon(elem));
+  eltVar : AllVars.Add(TxpEleVar(elem));
+  eltFunc: AllFuncs.Add(TxpEleFun(elem)); //Declarations are now stored in AllFuncs.
+  eltType: AllTypes.Add(TxpEleType(elem));
+  eltInLin: AllInLns.Add(TxpEleInlin(elem));
+  //No se incluye el código de RefreshAllUnits() porque solo trabaja en el "main".
+  end;
 end;
 procedure TXpTreeElements.AddElementAndOpen(elem: TxpElement);
 {Agrega un elemento y cambia el nodo actual al espacio de este elemento nuevo. Este
@@ -1770,27 +2054,25 @@ método está reservado para las funciones o procedimientos}
 begin
   {las funciones o procedimientos no se validan inicialmente, sino hasta que
   tengan todos sus parámetros agregados, porque pueden ser sobrecargados.}
-  AddElement(elem, false);
+  AddElement(elem);
   //Genera otro espacio de nombres
   elem.elements := TxpElements.Create(true);  //su propia lista
   curNode := elem;  //empieza a trabajar en esta lista
+end;
+procedure TXpTreeElements.AddElementParent(elem: TxpElement; AtBegin: boolean);
+{Add element to the parent of the current element.}
+var
+  tmp: TxpElement;
+begin
+  tmp := curNode;  //Save currente node
+  curNode := curNode.Parent;  //Set to parent
+  AddElement(elem, AtBegin);  //Add type at the beginning
+  curNode := tmp;  //Restore position
 end;
 procedure TXpTreeElements.OpenElement(elem: TxpElement);
 {Accede al espacio de nombres del elemento indicado.}
 begin
   curNode := elem;  //empieza a trabajar en esta lista
-end;
-function TXpTreeElements.ValidateCurElement: boolean;
-{Este método es el complemento de OpenElement(). Se debe llamar cuando ya se
- tienen creados los parámetros de la función o procedimiento, para verificar
- si hay duplicidad, en cuyo caso devolverá FALSE}
-begin
-  //Se asume que el nodo a validar ya se ha abierto, con OpenElement() y es el actual
-  if curNode.DuplicateIn(curNode.Parent.elements) then begin  //busca en el nodo anterior
-    exit(false);
-  end else begin
-    exit(true);
-  end;
 end;
 procedure TXpTreeElements.CloseElement;
 {Sale del nodo actual y retorna al nodo padre}
@@ -1805,11 +2087,9 @@ function TXpTreeElements.FindNext: TxpElement;
 la búsqueda en unidades.
 Esta rutina es quien define la resolución de nombres (alcance) en PicPas.}
 var
-  tmp: String;
   elem: TxpElement;
 begin
 //  debugln(' Explorando nivel: [%s] en pos: %d', [curFindNode.name, curFindIdx - 1]);
-  tmp := UpCase(curFindName);  //convierte pra comparación
   repeat
     curFindIdx := curFindIdx - 1;  //Siempre salta a la posición anterior
     if curFindIdx<0 then begin
@@ -1829,14 +2109,14 @@ begin
     end;
     //Verifica ahora este elemento
     elem := curFindNode.elements[curFindIdx];
-    if inUnit and (not elem.InInterface) then begin
+    if inUnit and (elem.location = locImplement) then begin
       //No debería ser accesible
       continue;
     end;
-    //Genera evento para indicar que está buscando
+    //Genera evento para indicar que está buscando.
     if OnFindElement<>nil then OnFindElement(elem);
     //Compara
-    if UpCase(elem.name) = tmp then begin
+    if (curFindName = '') or (elem.uname = curFindName) then begin
       //Encontró en "curFindIdx"
       Result := elem;
       //La siguiente búsqueda empezará en "curFindIdx-1".
@@ -1858,13 +2138,13 @@ begin
   until false;
 end;
 function TXpTreeElements.FindFirst(const name: string): TxpElement;
-{Rutina que permite resolver un identificador dentro del árbol de sintaxis, siguiendo las
-reglas de alcance de identificacdores (primero en el espacio actual y luego en los
-espacios padres).
-Si encuentra, devuelve la referencia. Si no encuentra, devuelve NIL}
+{Routine to resolve an identifier inside the SyntaxTree, following the scope rules for
+identifiers of the Pascal syntax (first the current space and then the parents spaces).
+If found returns the reference to the element otherwise returns NIL.
+If "name" is empty string, all the elements, of the Syntax Tree, will be scanned.}
 begin
   //Busca recursivamente, a partir del espacio actual
-  curFindName := name;     //Este valor no cambiará en toda la búsqueda
+  curFindName := UpCase(name);     //This value won't change in all the search
   inUnit := false;     //Inicia bandera
   if curNode.idClass = eltBody then begin
     {Para los cuerpos de procemientos o de programa, se debe explorar hacia atrás a
@@ -1888,7 +2168,7 @@ begin
     Result := FindNext;
   end;
 end;
-function TXpTreeElements.FindNextFunc: TxpEleFun;
+function TXpTreeElements.FindNextFuncName: TxpEleFun;
 {Explora recursivamente haciá la raiz, en el arbol de sintaxis, hasta encontrar el nombre
 de la fución indicada. Debe llamarse después de FindFirst().
 Si no enecuentra devuelve NIL.}
@@ -1902,6 +2182,32 @@ begin
   if ele = nil then exit(nil);  //No encontró
   Result := TxpEleFun(ele);   //devuelve como función
 end;
+
+function TXpTreeElements.FindFirstType: TxpEleType;
+{Starts the search for a element type in the syntax Tree.}
+var
+  ele: TxpElement;
+begin
+  ele := FindFirst('');
+  while (ele<>nil) and (ele.idClass <> eltType) do begin
+    ele := FindNext;
+  end;
+  if ele = nil then exit(nil) else exit( TxpEleType(ele) );
+end;
+function TXpTreeElements.FindNextType: TxpEleType;
+{Scan recursively toward root, in the syntax tree, until find a type element.
+Must be called after calling FindFirst(). If not found, returns NIL.}
+var
+  ele: TxpElement;
+begin
+  repeat
+    ele := FindNext;
+  until (ele=nil) or (ele.idClass = eltType);
+  //Puede que haya encontrado la función o no
+  if ele = nil then exit(nil);  //No encontró
+  Result := TxpEleType(ele);   //devuelve como función
+end;
+
 function TXpTreeElements.FindVar(varName: string): TxpEleVar;
 {Busca una variable con el nombre indicado en el espacio de nombres actual}
 var
@@ -1918,20 +2224,43 @@ begin
   exit(nil);
 end;
 function TXpTreeElements.FindType(typName: string): TxpEleType;
-{Busca un tipo con el nombre indicado en el espacio de nombres actual}
+{Find a type, by name, in the current element of the Synyax Tree.}
 var
-  ele : TxpElement;
-  uName: String;
+  ele: TxpElement;
 begin
-  uName := upcase(typName);
-  for ele in curNode.elements do begin
-    if (ele.idClass = eltType) and (upCase(ele.name) = uName) then begin
-      Result := TxpEleType(ele);
-      exit;
-    end;
-  end;
-  exit(nil);
+  ele := FindFirst(typName);
+//  while (ele<>nil) and (ele.idClass <> eltType) do begin
+//    ele := FindNext;
+//  end;
+  if ele = nil then exit(nil);
+  if ele.idClass = eltType then exit( TxpEleType(ele) ) else exit(nil);
 end;
+
+function TXpTreeElements.ExistsArrayType(itemType: TxpEleType; nEle: integer;
+  out typFound: TxpEleType): boolean;
+{Finds an array type declaration, accesible from the current position in the syntax tree.
+If found, returns TRUE and the type reference in "typFound".}
+begin
+  typFound := FindFirstType;
+  while (typFound <> nil) and not typFound.IsArrayOf(itemType, nEle) do begin
+    typFound := FindNextType;
+  end;
+  //Verify result
+  Result := typFound <> nil;
+end;
+function TXpTreeElements.ExistsPointerType(ptrType: TxpEleType; out
+  typFound: TxpEleType): boolean;
+{Finds a pointer type declaration, accesible from the current position in the syntax tree.
+If found, returns TRUE and the type reference in "typFound".}
+begin
+  typFound := FindFirstType;
+  while (typFound <> nil) and not typFound.IsPointerTo(ptrType) do begin
+    typFound := FindNextType;
+  end;
+  //Verify result
+  Result := typFound <> nil;
+end;
+
 function TXpTreeElements.GetElementBodyAt(posXY: TPoint): TxpEleBody;
 {Busca en el árbol de sintaxis, dentro del nodo principal, y sus nodos hijos, en qué
 cuerpo (nodo Body) se encuentra la coordenada del cursor "posXY".
@@ -2061,6 +2390,35 @@ begin
   ExploreForDec(main);
   Result := res;
 end;
+function TXpTreeElements.FunctionExistInCur(funName: string;
+  const pars: TxpParFuncArray): boolean;
+{Indica si la función definida por el nombre y parámetros, existe en el nodo actual.
+La búsqueda se hace bajo la consideración de que dos funciones son iguales si tiene el
+mismo nombre y los mismos tipos de parámetros.}
+var
+  ele: TxpElement;
+  uname: String;
+  funbas: TxpEleFunBase;
+begin
+  uname := Upcase(funName);
+  for ele in curNode.elements do begin
+    if ele.uname = uname then begin
+      //hay coincidencia de nombre
+      if ele.idClass in [eltFunc, eltFuncDec] then begin
+        funbas := TxpEleFunBase(ele);
+        //para las funciones, se debe comparar los parámetros
+        if funbas.SameParamsType(pars) then begin
+          exit(true);
+        end;
+      end else begin
+        //Ssi tiene el mismo nombre que cualquier otro elemento, es conflicto
+        exit(true);
+      end;
+    end;
+  end;
+  exit(false);
+end;
+
 //constructor y destructor
 constructor TXpTreeElements.Create;
 begin
@@ -2070,6 +2428,7 @@ begin
   AllCons  := TxpEleCons.Create(false);   //Crea lista
   AllVars  := TxpEleVars.Create(false);   //Crea lista
   AllFuncs := TxpEleFuns.Create(false);   //Crea lista
+  AllInLns := TxpEleInlins.Create(false); //Crea lista
   AllUnits := TxpEleUnits.Create(false);  //Crea lista
   AllTypes := TxpEleTypes.Create(false);
   curNode := main;  //empieza con el nodo principal como espacio de nombres actual
@@ -2079,6 +2438,7 @@ begin
   main.Destroy;
   AllTypes.Destroy;
   AllUnits.Destroy;
+  AllInLns.Destroy;
   AllFuncs.Free;
   AllVars.Free;    //por si estaba creada
   AllCons.Free;

@@ -622,7 +622,7 @@ begin
     genError('Not implemented: "%s"', [Opr.OperationString]);
   end;
 end;
-procedure TGenCod.ROU_addr_byte(Opr: TxpOperator; SetRes: boolean);
+procedure TGenCod.ROU_address(Opr: TxpOperator; SetRes: boolean);
 {Devuelve la dirección de una variable.}
 begin
   case p1^.Sto of
@@ -681,7 +681,7 @@ procedure TGenCod.ROB_byte_and_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -718,7 +718,7 @@ begin
     if value2 = 0 then begin  //Caso especial
       SetROBResultConst_byte(0);  //puede generar error
       exit;
-    end else if value2 = 255 then begin  //Caso especial
+    end else if value1 = 255 then begin  //Caso especial
       SetROBResultVariab(p1^.rVar);  //puede generar error
       exit;
     end;
@@ -772,7 +772,7 @@ procedure TGenCod.ROB_byte_or_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -863,7 +863,7 @@ procedure TGenCod.ROB_byte_xor_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -926,7 +926,7 @@ procedure TGenCod.ROB_byte_equal_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1045,7 +1045,7 @@ begin
     else
       GenError(MSG_UNSUPPORTED); exit;
     end;
-  end else if p1^.Sto = stVarRefVar then begin
+  end else if p1^.Sto = stVarRef then begin
     //Asignación a una variable
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
     case p2^.Sto of
@@ -1145,7 +1145,7 @@ var
   tmp: TPicRegister;
   sale: integer;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1277,7 +1277,7 @@ end;
 
 procedure TGenCod.ROB_word_mul_byte(Opt: TxpOperation; SetRes: boolean);
 begin
-   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+   if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
      GenError('Too complex pointer expression.'); exit;
    end;
    if not ChangePointerToExpres(p1^) then exit;
@@ -1397,7 +1397,7 @@ begin
 end;
 procedure TGenCod.ROB_word_mul_word(Opt: TxpOperation; SetRes: boolean);
 begin
-   if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+   if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
      GenError('Too complex pointer expression.'); exit;
    end;
    if not ChangePointerToExpres(p1^) then exit;
@@ -1649,27 +1649,6 @@ begin
   end;
   else
     genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
-  end;
-end;
-procedure TGenCod.ROU_addr_word(Opr: TxpOperator; SetRes: boolean);
-{Devuelve la dirección de una variable.}
-begin
-  case p1^.Sto of
-  stConst : begin
-    genError('Cannot obtain address of constant.');
-  end;
-  stVariab: begin
-    //Es una variable normal
-    //La dirección de una variable es constante
-    SetResultConst(typByte);
-    //No se usa p1^.offs, porque solo retorna 7 bits;
-    res.valInt := p1^.rVar.addr and $ff;
-  end;
-  stExpres: begin  //ya está en STATUS.Z
-    genError('Cannot obtain address of an expression.');
-  end;
-  else
-    genError('Cannot obtain address of this operand.');
   end;
 end;
 
@@ -1992,5 +1971,33 @@ procedure TGenCod.ROB_dword_difer_dword(Opt: TxpOperation; SetRes: boolean);
 begin
   ROB_dword_equal_dword(Opt, SetRes);
   res.Invert;
+end;
+
+//////////// Operaciones con Char
+procedure TGenCod.ROB_string_add_string(Opt: TxpOperation; SetRes: boolean);
+{Implementation of string is incomplete. Just created this oepration to facilitate
+initialization of ARRAY OF chars with string}
+begin
+  case stoOperation of
+  stConst_Const: begin  //Special case. Comapares constants.
+    SetResultConst(typString);
+    res.valStr := p1^.valStr + p2^.valStr;
+  end;
+  else
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
+  end;
+end;
+procedure TGenCod.ROB_string_add_char(Opt: TxpOperation; SetRes: boolean);
+{Implementation of string is incomplete. Just created this oepration to facilitate
+initialization of ARRAY OF chars with string}
+begin
+  case stoOperation of
+  stConst_Const: begin  //Special case. Comapares constants.
+    SetResultConst(typString);
+    res.valStr := p1^.valStr + chr(p2^.valInt);
+  end;
+  else
+    genError(MSG_CANNOT_COMPL, [OperationStr(Opt)]);
+  end;
 end;
 

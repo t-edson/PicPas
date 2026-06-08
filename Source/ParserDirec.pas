@@ -4,8 +4,8 @@ unit ParserDirec;
 {$mode objfpc}{$H+}
 interface
 uses
-  Classes, SysUtils, fgl, math, Graphics, Parser, SynFacilHighlighter, XpresBas,
-  MisUtils, Globales, XpresElementsPIC;
+  Classes, SysUtils, fgl, math, Graphics, CompBase, SynFacilHighlighter, XpresBas,
+  MisUtils, Globales, XpresElementsPIC, CompMain;
 type  //Tipos para manejo de expresiones
   TDirDatType = (ddtNumber, ddtString);
 
@@ -73,7 +73,7 @@ type
 
 
   { TParserDirecBase }
-  TParserDirecBase = class(TCompilerBase)
+  TParserDirecBase = class(TCompMain)
   private  //Parser and Expressions evaluation
     tokIni : integer;  //Posición inicial del token actual
     dirOperator: Integer;
@@ -190,7 +190,7 @@ var
 
 procedure SetLanguage;
 begin
-//  ParserAsm_PIC16.SetLanguage;
+  CompMain.SetLanguage;
 {$I ..\language\tra_ParserDirec.pas}
 end;
 { TDirOperand }
@@ -434,16 +434,16 @@ var
   p: TSrcPos;
 begin
   //Fija el inicio del token actual (Esto es válido, porque las directivas son "unilineas")
-  tokIni := Cin.curCon.lex.GetX - 1;
+  tokIni := lex.curCtx.lex.GetX - 1;
   //Usa SynFacilSyn como lexer para analizar texto
-  lin := Cin.tok;
+  lin := lex.token;
   dlin := length(lin);
   if lin[dlin] = '}'  then begin
     delete(lin, dlin, 1);  //quita delimitador final de directiva
   end else begin
     //Es un error, pero es salvable.
     //Ubicamos el error, "manualmente", porque aún no hemos explorado con el lexer.
-    p := cIn.ReadSrcPos;
+    p := lex.GetSrcPos;
     p.col := tokIni + dlin + 1;  //columna al final
     GenErrorPos(ER_EXPECTED_BR, [], p);
   end;
@@ -788,20 +788,20 @@ function TParserDirecBase.ScanIFDEF(out tok: string): boolean;
 var
   tmp, direc: string;
 begin
-  while not cIn.Eof do begin
-//    debugln(cIn.tok);
-    if cIn.tokType = tnDirective then begin
+  while not lex.atEof do begin
+//    debugln(lex.tok);
+    if lex.tokType = tnDirective then begin
       //Podría ser el delimitador buscado
       IniExplorDirec(tmp);
       direc := UpperCase(lexDir.GetToken);
       if (direc = 'ENDIF') or (direc='ELSE') then begin
         //Encontró el delimitador
         tok := direc;
-        cIn.Next;  //toma el token
+        lex.Next;  //toma el token
         exit(true);  //y continúa
       end;
     end;
-    cIn.Next;
+    lex.Next;
   end;
   //No encontró
   exit(false);
@@ -857,8 +857,8 @@ procedure TParserDirecBase.ProcIFDEF(lin: string; negated: boolean);
     if FirstPass then begin
       //Agrega el nodo para guardar información para la segunda pasada
       xDirec := TxpEleDIREC.Create;
-      xDirec.srcDec := cIn.ReadSrcPos;   //guarda posición de aparición
-      TreeDirec.AddElement(xDirec, false);  //Agrega sin verificación de nombre
+      xDirec.srcDec := lex.GetSrcPos;   //guarda posición de aparición
+      TreeDirec.AddElement(xDirec);
       //Evalúa
       Result := (DefinedMacro(Ident) or DefinedVar(Ident, dvar)) xor negated;
       //Guarda resultado
@@ -868,7 +868,7 @@ procedure TParserDirecBase.ProcIFDEF(lin: string; negated: boolean);
       hace en el orden del código fuente, y se pierde la secuencia de directivas.}
       for ele in TreeDirec.curNode.elements do begin
         //Busca la directiva de la dirección actual (ubicada en la primera pasada)
-        if ele.srcDec.EqualTo(cIn.ReadSrcPos) then begin
+        if ele.srcDec.EqualTo(lex.GetSrcPos) then begin
           //Encontró
           Result := TxpEleDIREC(ele).ifDefResult;
           exit;
@@ -892,7 +892,7 @@ begin
       inc(WaitForEndIF);  //marca bandera para esperar
     end else begin
       //No está definido, no se debe compilar hasta un {$ENDIF} o un {$ELSE}
-      cIn.Next;  //toma token {$IDEF  }
+      lex.Next;  //toma token {$IDEF  }
       //Explora, sin compilar, hasta encontrar directiva delimitadora.
       if not ScanIFDEF(direc) then begin
         //Llegó al final del código fuente, sin encontrar el ENDIF
@@ -922,8 +922,8 @@ procedure TParserDirecBase.ProcIF(lin: string; negated: boolean);
     if FirstPass then begin
       //Agrega el nodo para guardar información para la segunda pasada
       xDirec := TxpEleDIREC.Create;
-      xDirec.srcDec := cIn.ReadSrcPos;   //guarda posición de aparición
-      TreeDirec.AddElement(xDirec, false);  //Agrega sin verificación de nombre
+      xDirec.srcDec := lex.GetSrcPos;   //guarda posición de aparición
+      TreeDirec.AddElement(xDirec);  //Agrega sin verificación de nombre
       //Evalúa
       varValue := CogExpresion(0);
       //No debería seguir nada más
@@ -945,7 +945,7 @@ procedure TParserDirecBase.ProcIF(lin: string; negated: boolean);
       hace en el orden del código fuente, y se pierde la secuencia de directivas.}
       for ele in TreeDirec.curNode.elements do begin
         //Busca la directiva de la dirección actual (ubicada en la primera pasada)
-        if ele.srcDec.EqualTo(cIn.ReadSrcPos) then begin
+        if ele.srcDec.EqualTo(lex.GetSrcPos) then begin
           //Encontró
           Result := TxpEleDIREC(ele).ifDefResult;
           exit;
@@ -970,7 +970,7 @@ begin
     inc(WaitForEndIF);  //marca bandera para esperar
   end else begin
     //No es verdadero, no se debe compilar hasta un {$ENDIF} o un {$ELSE}
-    cIn.Next;  //toma token {$IDEF  }
+    lex.Next;  //toma token {$IDEF  }
     //Explora, sin compilar, hasta encontrar directiva delimitadora.
     if not ScanIFDEF(direc) then begin
       //Llegó al final del código fuente, sin encontrar el ENDIF
@@ -991,7 +991,7 @@ begin
   if WaitForEndIF>0 then begin
     {Estamos dentro de un IF, que se supone dio verdadero, de otra forma, no llegaría
     por aquí. De ser así, el ELSE debe ser falso.}
-    cIn.Next;  //toma token {$ELSE}
+    lex.Next;  //toma token {$ELSE}
     //Explora, sin compilar, hasta encontrar directiva delimitadora.
     if not ScanIFDEF(direc) then begin
       //Llegó al final del código fuente, sin encontrar el ENDIF
@@ -1042,12 +1042,12 @@ begin
     exit;
   end;
   //Ya se tiene el archivo
-  cIn.Next;  //pasa la directiva
-  cIn.NewContextFromFile(filPath);  //Pasa a explorar contenido del archivo
-  cIn.curCon.autoClose := true;   //Para que se cierre, al finalizar
-  //cIn.curCon.FixErrPos := true;   //Para que se ignore la posición de los errores
-  //cIn.curCon.ErrPosition := p;    //Posición a usar para ubicar el error
-  //cIn.curCon.PreErrorMsg := 'Macro '+mac.name+': ';
+  lex.Next;  //pasa la directiva
+  lex.NewContextFromFile(filPath);  //Pasa a explorar contenido del archivo
+  lex.curCtx.autoClose := true;   //Para que se cierre, al finalizar
+  //lex.curCtx.FixErrPos := true;   //Para que se ignore la posición de los errores
+  //lex.curCtx.ErrPosition := p;    //Posición a usar para ubicar el error
+  //lex.curCtx.PreErrorMsg := 'Macro '+mac.name+': ';
   ctxChanged := true;   //Marca bandera para indciar que se ha cambiado de contexto
 
 end;
@@ -1446,7 +1446,7 @@ begin
   mac.name := macName;
   mac.value := macValue;
   //Ubica la posición del contexto
-  mac.posDef := cIn.ReadSrcPos;
+  mac.posDef := lex.GetSrcPos;
   macroList.Add(mac);
 end;
 function TParserDirecBase.DefinedMacro(macName: string): boolean;
@@ -1536,7 +1536,7 @@ procedure TParserDirecBase.GenErrorDir(msg: string);
 var
   p: TSrcPos;
 begin
-  p := cIn.ReadSrcPos;
+  p := lex.GetSrcPos;
   p.col := tokIni + lexDir.GetX;  //corrige columna
   GenErrorPos(msg, [], p);
 end;
@@ -1544,7 +1544,7 @@ procedure TParserDirecBase.GenErrorDir(msg: string; const Args: array of const);
 var
   p: TSrcPos;
 begin
-  p := cIn.ReadSrcPos;
+  p := lex.GetSrcPos;
   p.col := tokIni + lexDir.GetX;  //corrige columna
   GenErrorPos(msg, Args, p);
 end;
@@ -1622,29 +1622,29 @@ begin
     if DefinedInstruc(lexDir.GetToken, dins) then begin
       dins.OnCall();
     end else if DefinedMacro(lexDir.GetToken, dmac) then begin
-      p := cIn.ReadSrcPos;   //Guarda posición del token
-      cIn.Next;  //pasa la directiva
-      cIn.NewContextFromTxt(
+      p := lex.GetSrcPos;   //Guarda posición del token
+      lex.Next;  //pasa la directiva
+      lex.NewContextFromTxt(
         dmac.value, //Pasa a explorar contenido de la macro como cadena
         dmac.posDef.fil {Fija el archivo de definiición de la macro.}
       );
-      cIn.curCon.autoClose := true;   //Para que se cierre, al finalizar
-      cIn.curCon.FixErrPos := true;   //Para que se ignore la posición de los errores
-      cIn.curCon.ErrPosition := p;    //Posición a usar para ubicar el error
-      cIn.curCon.PreErrorMsg := 'Macro '+dmac.name+': ';
+      lex.curCtx.autoClose := true;   //Para que se cierre, al finalizar
+      lex.curCtx.FixErrPos := true;   //Para que se ignore la posición de los errores
+      lex.curCtx.ErrPosition := p;    //Posición a usar para ubicar el error
+      lex.curCtx.PreErrorMsg := 'Macro '+dmac.name+': ';
       ctxChanged := true;  //Marca bandera para indciar que se ha cambiado de contexto
     end else if DefinedVar(lexDir.GetToken, dvar) then begin
       //Es variable
-      p := cIn.ReadSrcPos;   //Guarda posición del token
-      cIn.Next;  //pasa la directiva
-      cIn.NewContextFromTxt(
+      p := lex.GetSrcPos;   //Guarda posición del token
+      lex.Next;  //pasa la directiva
+      lex.NewContextFromTxt(
         dvar.valor.valStr, //Pasa a explorar valor de la variable como texto
         '' {Fija el archivo de definiición.}
       );
-      cIn.curCon.autoClose := true;   //Para que se cierre, al finalizar
-      cIn.curCon.FixErrPos := true;   //Para que se ignore la posición de los errores
-      cIn.curCon.ErrPosition := p;    //Posición a usar para ubicar el error
-      cIn.curCon.PreErrorMsg := 'Variable '+dvar.nomb+': ';
+      lex.curCtx.autoClose := true;   //Para que se cierre, al finalizar
+      lex.curCtx.FixErrPos := true;   //Para que se ignore la posición de los errores
+      lex.curCtx.ErrPosition := p;    //Posición a usar para ubicar el error
+      lex.curCtx.PreErrorMsg := 'Variable '+dvar.nomb+': ';
       ctxChanged := true;  //Marca bandera para indciar que se ha cambiado de contexto
     end else begin
       GenErrorDir(ER_UNKNO_DIREC, [lexDir.GetToken]);
@@ -1731,6 +1731,7 @@ begin
   varsList := TDirVar_list.Create(true);
   instList := TDirInstruc_list.Create(true);
   DefLexDirectiv;
+  callProcDIRline := @ProcDIRline;
 end;
 destructor TParserDirecBase.Destroy;
 begin

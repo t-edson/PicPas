@@ -1,7 +1,7 @@
 object frmPrincipal: TfrmPrincipal
-  Left = 269
+  Left = 325
   Height = 632
-  Top = 88
+  Top = 152
   Width = 933
   AllowDropFiles = True
   Caption = 'frmPrincipal'
@@ -17,7 +17,7 @@ object frmPrincipal: TfrmPrincipal
   OnKeyDown = FormKeyDown
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.8.0.6'
+  LCLVersion = '2.0.0.4'
   object StatusBar1: TStatusBar
     Left = 0
     Height = 23
@@ -41,145 +41,6 @@ object frmPrincipal: TfrmPrincipal
       end>
     SimplePanel = False
   end
-  object ToolBar1: TToolBar
-    Left = 0
-    Height = 26
-    Top = 0
-    Width = 933
-    Caption = 'ToolBar1'
-    Images = ImgActions16
-    ParentColor = False
-    ParentShowHint = False
-    ShowHint = True
-    TabOrder = 1
-    Visible = False
-    object ToolButton1: TToolButton
-      Left = 1
-      Top = 2
-      Action = acArcNewFile
-    end
-    object ToolButton2: TToolButton
-      Left = 24
-      Top = 2
-      Action = acArcOpen
-    end
-    object ToolButton3: TToolButton
-      Left = 47
-      Top = 2
-      Action = acArcSave
-    end
-    object ToolButton4: TToolButton
-      Left = 70
-      Top = 2
-      Action = acArcSaveAs
-    end
-    object ToolButton5: TToolButton
-      Left = 93
-      Height = 22
-      Top = 2
-      Caption = 'ToolButton5'
-      Style = tbsSeparator
-    end
-    object ToolButton6: TToolButton
-      Left = 101
-      Top = 2
-      Action = acEdUndo
-    end
-    object ToolButton7: TToolButton
-      Left = 124
-      Top = 2
-      Action = acEdRedo
-    end
-    object ToolButton8: TToolButton
-      Left = 147
-      Top = 2
-      Action = acEdCut
-    end
-    object ToolButton9: TToolButton
-      Left = 170
-      Top = 2
-      Action = acEdCopy
-    end
-    object ToolButton10: TToolButton
-      Left = 193
-      Top = 2
-      Action = acEdPaste
-    end
-    object ToolButton11: TToolButton
-      Left = 216
-      Height = 22
-      Top = 2
-      Caption = 'ToolButton11'
-      Style = tbsSeparator
-    end
-    object ToolButton12: TToolButton
-      Left = 224
-      Top = 2
-      Action = acToolCompil
-    end
-    object ToolButton13: TToolButton
-      Left = 293
-      Top = 2
-      Action = acToolComEjec
-    end
-    object ToolButton15: TToolButton
-      Left = 316
-      Height = 22
-      Top = 2
-      Caption = 'ToolButton15'
-      Style = tbsSeparator
-    end
-    object ToolButton16: TToolButton
-      Left = 324
-      Top = 2
-      Action = acToolConfig
-    end
-    object ToolButton14: TToolButton
-      Left = 382
-      Top = 2
-      Action = acToolExt1
-    end
-    object ToolButton17: TToolButton
-      Left = 405
-      Top = 2
-      Action = acToolExt2
-    end
-    object ToolButton18: TToolButton
-      Left = 428
-      Top = 2
-      Action = acToolExt3
-    end
-    object ToolButton19: TToolButton
-      Left = 451
-      Top = 2
-      Action = acToolExt4
-    end
-    object ToolButton20: TToolButton
-      Left = 474
-      Top = 2
-      Action = acToolExt5
-    end
-    object ToolButton21: TToolButton
-      Left = 247
-      Top = 2
-      Action = acToolASMDebug
-    end
-    object butSelCompiler: TToolButton
-      Left = 347
-      Hint = 'Select Compiler'
-      Top = 2
-      Caption = 'tbSelCompiler'
-      DropdownMenu = PopupCompiler
-      ImageIndex = 27
-      OnClick = butSelCompilerClick
-      Style = tbsDropDown
-    end
-    object ToolButton22: TToolButton
-      Left = 270
-      Top = 2
-      Action = acToolRamExp
-    end
-  end
   object splSynTree: TSplitter
     Left = 160
     Height = 385
@@ -199,7 +60,7 @@ object frmPrincipal: TfrmPrincipal
     Font.Quality = fqNonAntialiased
     ParentColor = False
     ParentFont = False
-    TabOrder = 3
+    TabOrder = 2
     Gutter.Width = 29
     Gutter.MouseActions = <>
     RightGutter.Width = 0
@@ -690,7 +551,7 @@ object frmPrincipal: TfrmPrincipal
     Top = 507
     Width = 933
     Align = alBottom
-    TabOrder = 4
+    TabOrder = 3
   end
   object Splitter2: TSplitter
     Cursor = crVSplit
@@ -707,6 +568,248 @@ object frmPrincipal: TfrmPrincipal
     Top = 16
     Width = 5
     Align = alNone
+  end
+  object CoolBar1: TCoolBar
+    Left = 0
+    Height = 29
+    Top = 0
+    Width = 933
+    AutoSize = True
+    BandBorderStyle = bsNone
+    Bands = <    
+      item
+        Break = False
+        Color = clMenu
+        Control = ToolBar2
+        ParentColor = False
+        Width = 179
+      end    
+      item
+        Break = False
+        Control = ToolBar3
+      end    
+      item
+        Break = False
+        Control = ToolBar4
+      end    
+      item
+        Break = False
+        Control = ToolBar5
+        Width = 157
+      end    
+      item
+        Break = False
+        Control = ToolBar6
+        Width = 157
+      end>
+    FixedSize = True
+    GrabStyle = gsHorLines
+    GrabWidth = 3
+    HorizontalSpacing = 0
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+    Themed = False
+    VerticalSpacing = 0
+    object ToolBar2: TToolBar
+      AnchorSideLeft.Control = CoolBar1
+      AnchorSideTop.Control = CoolBar1
+      Left = 7
+      Height = 22
+      Top = 3
+      Width = 93
+      Align = alNone
+      AutoSize = True
+      BorderSpacing.Left = 5
+      BorderSpacing.Top = 1
+      ButtonHeight = 22
+      ButtonWidth = 23
+      Caption = 'ToolBar2'
+      EdgeBorders = []
+      EdgeInner = esNone
+      EdgeOuter = esNone
+      Images = ImgActions16
+      TabOrder = 0
+      object ToolButton23: TToolButton
+        Left = 1
+        Top = 0
+        Action = acArcNewFile
+      end
+      object ToolButton24: TToolButton
+        Left = 24
+        Top = 0
+        Action = acArcOpen
+      end
+      object ToolButton25: TToolButton
+        Left = 47
+        Top = 0
+        Action = acArcSave
+      end
+      object ToolButton26: TToolButton
+        Left = 70
+        Top = 0
+        Action = acArcSaveAs
+      end
+    end
+    object ToolBar3: TToolBar
+      AnchorSideLeft.Control = CoolBar1
+      AnchorSideTop.Control = CoolBar1
+      Left = 186
+      Height = 22
+      Top = 3
+      Width = 116
+      Align = alNone
+      AutoSize = True
+      BorderSpacing.Left = 184
+      BorderSpacing.Top = 1
+      Caption = 'ToolBar3'
+      EdgeBorders = []
+      EdgeInner = esNone
+      EdgeOuter = esNone
+      Images = ImgActions16
+      TabOrder = 1
+      object ToolButton27: TToolButton
+        Left = 1
+        Top = 0
+        Action = acEdUndo
+      end
+      object ToolButton28: TToolButton
+        Left = 24
+        Top = 0
+        Action = acEdRedo
+      end
+      object ToolButton29: TToolButton
+        Left = 47
+        Top = 0
+        Action = acEdCut
+      end
+      object ToolButton30: TToolButton
+        Left = 70
+        Top = 0
+        Action = acEdCopy
+      end
+      object ToolButton31: TToolButton
+        Left = 93
+        Top = 0
+        Action = acEdPaste
+      end
+    end
+    object ToolBar4: TToolBar
+      AnchorSideLeft.Control = CoolBar1
+      AnchorSideTop.Control = CoolBar1
+      Left = 366
+      Height = 22
+      Top = 3
+      Width = 116
+      Align = alNone
+      AutoSize = True
+      BorderSpacing.Left = 364
+      BorderSpacing.Top = 1
+      Caption = 'ToolBar4'
+      EdgeBorders = []
+      EdgeInner = esNone
+      EdgeOuter = esNone
+      Images = ImgActions16
+      TabOrder = 2
+      object ToolButton32: TToolButton
+        Left = 1
+        Top = 0
+        Action = acToolCompil
+      end
+      object ToolButton33: TToolButton
+        Left = 24
+        Top = 0
+        Action = acToolASMDebug
+      end
+      object ToolButton34: TToolButton
+        Left = 47
+        Top = 0
+        Action = acToolRamExp
+      end
+      object ToolButton35: TToolButton
+        Left = 70
+        Top = 0
+        Action = acToolComEjec
+      end
+      object ToolButton43: TToolButton
+        Left = 93
+        Top = 0
+        Action = acToolConfig
+      end
+    end
+    object ToolBar5: TToolBar
+      AnchorSideLeft.Control = CoolBar1
+      AnchorSideTop.Control = CoolBar1
+      Left = 546
+      Height = 22
+      Top = 3
+      Width = 68
+      Align = alNone
+      AutoSize = True
+      BorderSpacing.Left = 544
+      BorderSpacing.Top = 1
+      Caption = 'ToolBar5'
+      EdgeBorders = []
+      EdgeInner = esNone
+      EdgeOuter = esNone
+      Images = ImgActions16
+      ParentColor = False
+      ParentFont = False
+      ShowCaptions = True
+      TabOrder = 3
+      OnPaintButton = ToolBar5PaintButton
+      object ToolButton39: TToolButton
+        Left = 1
+        Top = 0
+        AutoSize = True
+        Caption = 'Compiler'
+        DropdownMenu = PopupCompiler
+        Style = tbsButtonDrop
+      end
+    end
+    object ToolBar6: TToolBar
+      AnchorSideLeft.Control = CoolBar1
+      AnchorSideTop.Control = CoolBar1
+      Left = 703
+      Height = 22
+      Top = 3
+      Width = 116
+      Align = alNone
+      AutoSize = True
+      BorderSpacing.Left = 701
+      BorderSpacing.Top = 1
+      Caption = 'ToolBar6'
+      EdgeBorders = []
+      EdgeInner = esNone
+      EdgeOuter = esNone
+      Images = ImgActions16
+      TabOrder = 4
+      object ToolButton36: TToolButton
+        Left = 1
+        Top = 0
+        Action = acExtTool1
+      end
+      object ToolButton37: TToolButton
+        Left = 24
+        Top = 0
+        Action = acExtTool2
+      end
+      object ToolButton38: TToolButton
+        Left = 47
+        Top = 0
+        Action = acExtTool3
+      end
+      object ToolButton40: TToolButton
+        Left = 70
+        Top = 0
+        Action = acExtTool4
+      end
+      object ToolButton41: TToolButton
+        Left = 93
+        Top = 0
+        Action = acExtTool5
+      end
+    end
   end
   object ImgActions16: TImageList
     left = 216
@@ -2091,50 +2194,50 @@ object frmPrincipal: TfrmPrincipal
       ImageIndex = 22
       OnExecute = acToolConfigExecute
     end
-    object acToolExt1: TAction
-      Category = 'Tool'
-      Caption = 'External Tool 1'
-      ImageIndex = 33
-      OnExecute = acToolExt1Execute
-    end
-    object acToolExt2: TAction
-      Category = 'Tool'
-      Caption = 'External Tool 2'
-      ImageIndex = 33
-      OnExecute = acToolExt2Execute
-    end
-    object acToolExt3: TAction
-      Category = 'Tool'
-      Caption = 'External Tool 3'
-      ImageIndex = 33
-      OnExecute = acToolExt3Execute
-    end
-    object acToolExt4: TAction
-      Category = 'Tool'
-      Caption = 'External Tool 4'
-      ImageIndex = 33
-      OnExecute = acToolExt4Execute
-    end
-    object acToolExt5: TAction
-      Category = 'Tool'
-      Caption = 'External Tool 5'
-      ImageIndex = 33
-      OnExecute = acToolExt5Execute
-    end
     object acToolSelPIC10: TAction
-      Category = 'Tool'
+      Category = 'Comp'
       Caption = 'Baseline Compiler'
       OnExecute = acToolSelPIC10Execute
     end
     object acToolSelPIC16: TAction
-      Category = 'Tool'
+      Category = 'Comp'
       Caption = 'Mid-range Compiler'
       OnExecute = acToolSelPIC16Execute
     end
     object acToolSelPIC17: TAction
-      Category = 'Tool'
+      Category = 'Comp'
       Caption = 'Enhanced Mid-range Compiler'
       OnExecute = acToolSelPIC17Execute
+    end
+    object acExtTool1: TAction
+      Category = 'Ext'
+      Caption = 'External Tool 1'
+      ImageIndex = 33
+      OnExecute = acToolExt1Execute
+    end
+    object acExtTool2: TAction
+      Category = 'Ext'
+      Caption = 'External Tool 2'
+      ImageIndex = 33
+      OnExecute = acToolExt2Execute
+    end
+    object acExtTool3: TAction
+      Category = 'Ext'
+      Caption = 'External Tool 3'
+      ImageIndex = 33
+      OnExecute = acToolExt3Execute
+    end
+    object acExtTool4: TAction
+      Category = 'Ext'
+      Caption = 'External Tool 4'
+      ImageIndex = 33
+      OnExecute = acToolExt4Execute
+    end
+    object acExtTool5: TAction
+      Category = 'Ext'
+      Caption = 'External Tool 5'
+      ImageIndex = 33
+      OnExecute = acToolExt5Execute
     end
   end
   object MainMenu1: TMainMenu
@@ -2285,26 +2388,26 @@ object frmPrincipal: TfrmPrincipal
         Caption = '-'
       end
       object MenuItem41: TMenuItem
-        Action = acToolExt1
+        Action = acExtTool1
       end
       object MenuItem40: TMenuItem
-        Action = acToolExt2
+        Action = acExtTool2
       end
       object MenuItem39: TMenuItem
-        Action = acToolExt3
+        Action = acExtTool3
       end
       object MenuItem38: TMenuItem
-        Action = acToolExt4
+        Action = acExtTool4
       end
       object MenuItem42: TMenuItem
-        Action = acToolExt5
+        Action = acExtTool5
       end
     end
   end
   object ImgActions32: TImageList
     Height = 32
     Width = 32
-    left = 336
+    left = 344
     top = 464
     Bitmap = {
       4C69240000002000000020000000000000000000000000000000000000000000
@@ -6920,7 +7023,7 @@ object frmPrincipal: TfrmPrincipal
   end
   object PopupEdit: TPopupMenu
     Images = ImgActions16
-    left = 336
+    left = 352
     top = 400
     object MenuItem36: TMenuItem
       Action = acToolFindDec
@@ -6961,8 +7064,8 @@ object frmPrincipal: TfrmPrincipal
   object ReplaceDialog1: TReplaceDialog
     Options = [frDown, frReplace, frReplaceAll, frHidePromptOnReplace]
     OnReplace = ReplaceDialog1Replace
-    left = 328
-    top = 328
+    left = 352
+    top = 336
   end
   object PopupCompiler: TPopupMenu
     left = 216

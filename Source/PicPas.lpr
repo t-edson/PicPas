@@ -9,8 +9,8 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms, lazcontrols, FormPrincipal, FormPICExplorer, FrameSyntaxTree,
   XpresElementsPIC, Globales, FormConfig, PicPasProject, FrameEditView,
-  FrameMessagesWin, FormElemProperty, ParserAsm_PIC16,
-  FrameCfgExtTool, FormDebugger, FormRAMExplorer, ParserDirec;
+  FrameMessagesWin, FormElemProperty, ParserAsm_PIC16, FrameCfgExtTool,
+  FormDebugger, FormRAMExplorer, ParserDirec, CompBase;
 
 {$R *.res}
 

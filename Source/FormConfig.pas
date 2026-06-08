@@ -7,23 +7,23 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, SynEdit, Forms, Controls, Graphics, Dialogs,
-  Buttons, StdCtrls, ExtCtrls, ComCtrls, ColorBox, LCLType, Spin,
+  Buttons, StdCtrls, ExtCtrls, ComCtrls, ColorBox, LCLType, Spin, LazFileUtils,
   FrameCfgSynEdit, Globales, FrameCfgSyntax, FrameCfgExtTool, MiConfigXML,
   MiConfigBasic, MisUtils;
 type
   //Tipo de Barra de herramientas
   TStyleToolbar = (stb_SmallIcon, stb_BigIcon);
   //Tipo de declaración de variables
-  TVarDecType = (dvtDBDb,  //Estilo DB/Db/DW
-                 dvtEQU    //Estilo usando macros y EQU
-                 );
+  TVarDecType   = (dvtDBDb,   //Estilo DB/Db/DW
+                   dvtEQU     //Estilo usando macros y EQU
+                   );
   //Niveles de optimización
-  TOptimLev = (olvFool,   //Nivel básico de optimización
-               olvSmart   //Nivel mayor de optimización
-               );
-  TTreeViewMode = (vmGroups,   //Muestra por grupos
-                   vmDeclar,   //Muestra en el orden de declaración
-                   vmFileExp   //Muestra el explorador de archivos
+  TOptimLev     = (olvFool,   //Nivel básico de optimización
+                   olvSmart   //Nivel mayor de optimización
+                   );
+  TTreeViewMode = (vmGroups,  //Muestra por grupos
+                   vmDeclar,  //Muestra en el orden de declaración
+                   vmFileExp  //Muestra el explorador de archivos
                    );
   { TConfig }
   TConfig = class(TForm)
@@ -53,11 +53,12 @@ type
     colCodExplText: TColorBox;
     colMessPanBack: TColorBox;
     colMessPanErr: TColorBox;
-    colMessPanPan: TColorBox;
+    colPanelsCol: TColorBox;
     colMessPanSel: TColorBox;
     colMessPanText: TColorBox;
     colSplitCol: TColorBox;
     cmbThemes: TComboBox;
+    colPanTextCol: TColorBox;
     ComboBox1: TComboBox;
     Edit1: TEdit;
     GroupBox1: TGroupBox;
@@ -77,6 +78,7 @@ type
     lblMessPan4: TLabel;
     lblPanelCol: TLabel;
     lblSplitCol: TLabel;
+    lblSplitCol1: TLabel;
     PageControl1: TPageControl;
     Panel1: TPanel;
     Panel2: TPanel;
@@ -119,46 +121,52 @@ type
     procedure SetViewStatusbar(AValue: Boolean);
     procedure SetViewSynTree(AValue: boolean);
     procedure SetViewToolbar(AValue: boolean);
-  public  //Configuraciones generales
-    language  : string;   //Lenguaje
+  public  //Configuraciones de entorno
+    language   : string;  //Lenguaje
+    LoadLast   : boolean; //Cargar el último archivo editado
+
+    PanelsCol  : TColor;  //Color de las barras de herramientas
+    SplitCol   : TColor;  //Color de separadores
+    PanTextCol : TColor;  //Color del texto mostrado en la barra de herramientas
+
+    StateToolbar: TStyleToolbar;
+    SynTreeWidth: integer; //Ancho del panel del árbol ed sintaxis
+    viewMode    : TTreeViewMode;
+    filesClosed : string;  {Lista de archivos cargados. Usado para restaurar los archivos
+                          abiertos al abrir nuevamente el programa.}
+    compSelected: integer; //Compilador seleccionado actualmente
+  public   //Configuraciones del explorador de código
+    CodExplBack: TColor;
+    CodExplText: TColor;
+    cexpFiltype: integer;  //Tipo de archivo a mostrar
+  public   //Configuraciones del panel de mensaje
+    MessPanBack: TColor;  //Color de fondo del panel de mensajes
+    MessPanText: TColor;  //Color del texto del panel de mensajes
+    MessPanErr : TColor;  //Color del texto de error del panel de mensajes
+    MessPanSel : TColor;  //Color del fonde de la selección del panel de mensajes
   public //Configuraciones de Editor
     TipLet     : string;    //tipo de letra
     TamLet     : integer;   //tamaño de letra
     VerBarDesV : boolean;   //ver barras de desplazamiento
     VerBarDesH : boolean;   //ver barras de desplazamiento
-    TabEdiMode: integer;  //Estado de pestañas del editor
-    AutSynChk : boolean;  //Verificación automática de sintaxis
+    TabEdiMode : integer;  //Estado de pestañas del editor
+    AutSynChk  : boolean;  //Verificación automática de sintaxis
+  public  //Configruaciones del menú "Ver"
+    property ViewPanMsg   : boolean read FViewPanMsg write SetViewPanMsg;
+    property ViewToolbar  : boolean read FViewToolbar write SetViewToolbar;
     property ViewStatusbar: Boolean read FViewStatusbar write SetViewStatusbar;
-    property ViewToolbar: boolean read FViewToolbar write SetViewToolbar;
-    property ViewPanMsg: boolean read FViewPanMsg write SetViewPanMsg;
-    property ViewPanAssem: boolean read FViewPanAssem write SetViewPanAssem;
-    property ViewSynTree: boolean read FViewSynTree write SetViewSynTree;
-  public  //Configuraciones de entorno
-    StateToolbar: TStyleToolbar;
-    SynTreeWidth: integer;   //Ancho del panel del árbol ed sintaxis
-    viewMode  : TTreeViewMode;
-    CodExplBack: TColor;
-    CodExplText: TColor;
-    cexpFiltype   : integer;
-    MessPanBack: TColor;  //Color de fondo del panel de mensajes
-    MessPanText: TColor;  //Color del texto del panel de mensajes
-    MessPanErr : TColor;  //Color del texto de error del panel de mensajes
-    MessPanSel : TColor;  //Color del fonde de la selección del panel de mensajes
-    PanelsCol : TColor;   //Color de los panels del Panel de Mensages
-    SplitterCol: TColor;  //Color de separadores
-    LoadLast   : boolean; //Cargar el último archivo editado
-    filesClosed: string;  {Lista de archivos cargados. Usado para restaurar los archivos
-                          abiertos al abrir nuevamente el programa.}
+    property ViewSynTree  : boolean read FViewSynTree write SetViewSynTree;
+    property ViewPanAssem : boolean read FViewPanAssem write SetViewPanAssem;
   public  //Configuraciones para ensamblador
-    IncHeadMpu: boolean;  //Incluye encabezado con información del MPU
-    IncVarDec : boolean;  //Incluye declaración de varaibles
-    VarDecType: TVarDecType;  //tipo de declaración de variables
-    IncAddress: boolean;  //Incluye dirección física en el código desensamblado
-    IncComment: boolean;  //Incluye comentarios en el código desensamblado
+    IncHeadMpu : boolean;  //Incluye encabezado con información del MPU
+    IncVarDec  : boolean;  //Incluye declaración de varaibles
+    VarDecType : TVarDecType;  //tipo de declaración de variables
+    IncAddress : boolean;  //Incluye dirección física en el código desensamblado
+    IncComment : boolean;  //Incluye comentarios en el código desensamblado
     IncComment2: boolean; //Incluye comentarios detallados en el código desensamblado
-    ExcUnused : boolean;  //Excluye declaración de variables no usadas
-    IncVarName: boolean;  //Reemplaza dirección con etiqueta de variables
-    //Configuracions del compilador
+    ExcUnused  : boolean;  //Excluye declaración de variables no usadas
+    IncVarName : boolean;  //Reemplaza dirección con etiqueta de variables
+  public  //Configuracions del compilador
     ShowErMsg   : boolean;
     OptimLev    : TOptimLev;
     OptBnkAftIF : boolean;
@@ -354,20 +362,26 @@ var
 begin
   //Configuraciones de Entorno
   s:=cfgFile.Asoc_Str ('language'   , @language, ComboBox1, 'en - English');
-  s:=cfgFile.Asoc_Enum('StateStatusbar', @StateToolbar, SizeOf(TStyleToolbar), RadioGroup1, 1);
-  s:=cfgFile.Asoc_Bol ('chkLoadLast',@LoadLast   , chkLoadLast   , true);
+  s:=cfgFile.Asoc_Bol ('chkLoadLast', @LoadLast   , chkLoadLast   , true);
+  s:=cfgFile.Asoc_Enum('StateStatusbar',@StateToolbar, SizeOf(TStyleToolbar), RadioGroup1, 1);
   s:=cfgFile.Asoc_Str ('filesClosed', @filesClosed, '');
-  s:=cfgFile.Asoc_TCol('SplitterCol',@SplitterCol, colSplitCol, clDefault);
+  s:=cfgFile.Asoc_TCol('SplitterCol', @SplitCol, colSplitCol, clDefault);
   s.categ := 1;   //marca como propiedad de tipo "Tema"
-  s:=cfgFile.Asoc_TCol('MessPanPan', @PanelsCol , colMessPanPan , clDefault);
+  s:=cfgFile.Asoc_TCol('MessPanPan',  @PanelsCol , colPanelsCol , clDefault);
   s.categ := 1;   //marca como propiedad de tipo "Tema"
-  s:=cfgFile.Asoc_Bol('VerPanMensaj', @FViewPanMsg  , true);
-  s:=cfgFile.Asoc_Bol('VerStatusbar', @ViewStatusbar, true);
-  s:=cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);
-  s:=cfgFile.Asoc_Bol('ViewSynTree',  @FViewSynTree , true);
+  s:=cfgFile.Asoc_TCol('TextPanel' ,  @PanTextCol , colPanTextCol , clGray);
+  s.categ := 1;   //marca como propiedad de tipo "Tema"
+  s:=cfgFile.Asoc_Enum('viewMode'   , @viewMode   , SizeOf(TTreeViewMode), 0);
+  //With no visible controls
   s:=cfgFile.Asoc_Int('SynTreeWidth', @SynTreeWidth , 130);
+  s:=cfgFile.Asoc_Int('compSelected', @compSelected, 1);
+
+  //COnfigruacionesl del menú >Ver
+  s:=cfgFile.Asoc_Bol('VerPanMensaj', @FViewPanMsg  , true);
+  s:=cfgFile.Asoc_Bol('VerBarHerram', @FViewToolbar , true);  //Se configura desde el menú >Ver
+  s:=cfgFile.Asoc_Bol('VerStatusbar', @ViewStatusbar, true);
+  s:=cfgFile.Asoc_Bol('ViewSynTree',  @FViewSynTree , true);
   s:=cfgFile.Asoc_Bol('ViewPanAssem', @FViewPanAssem, true);
-  s:=cfgFile.Asoc_Enum('viewMode',  @viewMode   , SizeOf(TTreeViewMode), 0);
   //Configuraciones del Panel de mensajes
   s:=cfgFile.Asoc_TCol('MessPanBack',@MessPanBack, colMessPanBack, clWindow);
   s.categ := 1;   //marca como propiedad de tipo "Tema"

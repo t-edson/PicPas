@@ -3,7 +3,7 @@ unit FramePicAsm;
 interface
 uses
   Classes, SysUtils, Types, FileUtil, Forms, Controls, StdCtrls, Grids, Graphics,
-  ExtCtrls, Buttons, Menus, LCLType, Parser, PicCore, MisUtils;
+  ExtCtrls, Buttons, Menus, LCLType, CompBase, PicCore, MisUtils;
 type
 
   { TfraPicAsm }

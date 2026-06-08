@@ -83,7 +83,7 @@ procedure TParserAsm.GenErrorAsm(msg: string);
 var
   p: TSrcPos;
 begin
-  p := cIn.ReadSrcPos;
+  p := lex.GetSrcPos;
   p.col := tokIni2 + lexAsm.GetX;  //corrige columna
   GenErrorPos(msg, [], p);
 end;
@@ -91,7 +91,7 @@ procedure TParserAsm.GenErrorAsm(msg: string; const Args: array of const);
 var
   p: TSrcPos;
 begin
-  p := cIn.ReadSrcPos;
+  p := lex.GetSrcPos;
   p.col := tokIni2 + lexAsm.GetX;  //corrige columna
   GenErrorPos(msg, Args, p);
 end;
@@ -100,7 +100,7 @@ procedure TParserAsm.GenWarnAsm(msg: string);
 var
   p: TSrcPos;
 begin
-  p := cIn.ReadSrcPos;
+  p := lex.GetSrcPos;
   p.col := lexAsm.GetX;  //corrige columna
   GenWarnPos(msg, [], p);
 end;
@@ -790,7 +790,7 @@ begin
   if IsStartASM(lin) then begin
     //Como se ha recortado el "ASM", se debe compensar "tokIni2"
     //Además se debe considerar si el delim. ASM, no inicia en 1.
-    tokIni2 := 3 + Cin.curCon.lex.GetX - 1;
+    tokIni2 := 3 + lex.curCtx.lex.GetX - 1;
     //Es la primera línea de ensamblador
     StartASM;
     //puede incluir también al delimitador "end"
@@ -832,6 +832,8 @@ begin
   lexAsm.DefTokDelim(';','', lexAsm.tnComment);
   lexAsm.DefTokDelim('''','''', lexAsm.tnString);
   lexAsm.Rebuild;
+
+  callProcASMlime := @ProcASMlime;
 end;
 destructor TParserAsm.Destroy;
 begin

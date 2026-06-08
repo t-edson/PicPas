@@ -45,18 +45,18 @@ interface
 uses
   Classes, SysUtils, Graphics, LCLType, LCLProc,
   SynFacilBasic, XpresTypesPIC, XpresElementsPIC, Pic17Utils, GenCodBas_PIC17,
-  Parser, Globales, MisUtils, XpresBas;
+  CompBase, Globales, MisUtils, XpresBas;
 type
     { TGenCod }
     TGenCod = class(TGenCodBas)
-    protected
-      procedure callParam(fun: TxpEleFun);
-      procedure callFunct(fun: TxpEleFun);
     private
+      procedure DefineArray(etyp: TxpEleType);
+      procedure DefinePointer(etyp: TxpEleType);
       procedure ROB_byte_mod_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_mul_word(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_word_mul_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_word_mul_word(Opt: TxpOperation; SetRes: boolean);
+      procedure ValidRAMaddr(addr: integer);
     private  //Operaciones con Bit
 //      f_byteXbyte_byte: TxpEleFun;  //índice para función
       f_byte_mul_byte_16: TxpEleFun;  //índice para función
@@ -65,8 +65,8 @@ type
       procedure byte_div_byte(fun: TxpEleFun);
       procedure mul_byte_16(fun: TxpEleFun);
       procedure CopyInvert_C_to_Z;
-      procedure fun_Byte(fun: TxpEleFun);
-      procedure fun_DWord(fun: TxpEleFun);
+      procedure fun_Byte(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_DWord(fun: TxpEleFunBase; out AddrUndef: boolean);
       procedure ROB_bit_asig_bit(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_bit_asig_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_bit_and_bit(Opt: TxpOperation; SetRes: boolean);
@@ -81,10 +81,9 @@ type
       procedure ROB_bit_dif_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_div_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_byte_mul_byte(Opt: TxpOperation; SetRes: boolean);
-      procedure ROU_addr_word(Opr: TxpOperator; SetRes: boolean);
       procedure ROU_not_bit(Opr: TxpOperator; SetRes: boolean);
       procedure ROU_not_byte(Opr: TxpOperator; SetRes: boolean);
-      procedure ROU_addr_byte(Opr: TxpOperator; SetRes: boolean);
+      procedure ROU_address(Opr: TxpOperator; SetRes: boolean);
 
       procedure ROB_word_and_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_word_umulword_word(Opt: TxpOperation; SetRes: boolean);
@@ -141,6 +140,9 @@ type
       procedure ROB_char_asig_char(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_char_equal_char(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_char_difer_char(Opt: TxpOperation; SetRes: boolean);
+
+      procedure ROB_string_add_char(Opt: TxpOperation; SetRes: boolean);
+      procedure ROB_string_add_string(Opt: TxpOperation; SetRes: boolean);
     protected //Operaciones con punteros
       procedure ROB_pointer_add_byte(Opt: TxpOperation; SetRes: boolean);
       procedure ROB_pointer_sub_byte(Opt: TxpOperation; SetRes: boolean);
@@ -150,21 +152,19 @@ type
       procedure codif_delay_ms(fun: TxpEleFun);
       procedure expr_end(posExpres: TPosExpres);
       procedure expr_start;
-      procedure fun_delay_ms(fun: TxpEleFun);
-      procedure fun_Exit(fun: TxpEleFun);
-      procedure fun_Inc(fun: TxpEleFun);
-      procedure fun_Dec(fun: TxpEleFun);
-      procedure fun_Ord(fun: TxpEleFun);
-      procedure fun_Chr(fun: TxpEleFun);
-      procedure fun_Bit(fun: TxpEleFun);
-      procedure fun_Bool(fun: TxpEleFun);
-      procedure fun_SetAsInput(fun: TxpEleFun);
-      procedure fun_SetAsOutput(fun: TxpEleFun);
-      procedure fun_Word(fun: TxpEleFun);
-      procedure fun_SetBank(fun: TxpEleFun);
+      procedure fun_delay_ms(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_Exit(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_Inc(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_Dec(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_Ord(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_Chr(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_Bit(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_Bool(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_SetAsInput(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_SetAsOutput(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_Word(fun: TxpEleFunBase; out AddrUndef: boolean);
+      procedure fun_SetBank(fun: TxpEleFunBase; out AddrUndef: boolean);
     protected
-      procedure StartCodeSub(fun: TxpEleFun);
-      procedure EndCodeSub;
       procedure Cod_StartProgram;
       procedure Cod_EndProgram;
       procedure CreateSystemElements;
@@ -177,49 +177,13 @@ type
   procedure SetLanguage;
 implementation
 var
-  MSG_NOT_IMPLEM: string;
-  MSG_INVAL_PARTYP: string;
-  MSG_UNSUPPORTED : string;
-  MSG_CANNOT_COMPL: string;
+  MSG_NOT_IMPLEM, MSG_INVAL_PARTYP, MSG_UNSUPPORTED, MSG_CANNOT_COMPL,
+  ER_INV_MAD_DEV, ER_INV_MEMADDR: string;
 
 procedure SetLanguage;
 begin
   GenCodBas_PIC17.SetLanguage;
   {$I ..\language\tra_GenCod.pas}
-end;
-procedure TGenCod.StartCodeSub(fun: TxpEleFun);
-{debe ser llamado para iniciar la codificación de una subrutina}
-begin
-//  iFlashTmp :=  pic.iFlash; //guarda puntero
-//  pic.iFlash := curBloSub;  //empieza a codificar aquí
-end;
-procedure TGenCod.EndCodeSub;
-{debe ser llamado al terminar la codificaión de una subrutina}
-begin
-//  curBloSub := pic.iFlash;  //indica siguiente posición libre
-//  pic.iFlash := iFlashTmp;  //retorna puntero
-end;
-procedure TGenCod.callParam(fun: TxpEleFun);
-{Rutina genérica, que se usa antes de leer los parámetros de una función.}
-begin
-  {Haya o no, parámetros se debe proceder como en cualquier expresión, asumiendo que
-  vamos a devolver una expresión.}
-  SetResultExpres(fun.typ);  //actualiza "RTstate"
-end;
-procedure TGenCod.callFunct(fun: TxpEleFun);
-{Rutina genérica para llamar a una función definida por el usuario.}
-begin
-  fun.iniBnk := CurrBank;   //fija el banco inicial
-  //Por ahora, no se implementa paginación, pero despuñes habría que considerarlo.
-  _CALL(fun.adrr);  //codifica el salto
-  //Verifica la optimizaicón de cambio de banco
-  if OptBnkAftPro then begin
-    //Se debe optimizar, fijando el banco que deja la función
-    CurrBank := fun.ExitBank;
-  end else begin
-    //Se debe incluir siempre instrucciones de cambio de banco
-    _BANKRESET;
-  end;
 end;
 procedure TGenCod.CopyInvert_C_to_Z;
 begin
@@ -237,6 +201,7 @@ end;
 procedure TGenCod.Cod_EndProgram;
 //Codifica la parte inicial del programa
 begin
+  _SLEEP();   //agrega instrucción final
   //Code('END');   //inicia la sección de código
 end;
 procedure TGenCod.expr_start;
@@ -251,7 +216,7 @@ begin
   //Limpia tabla de variables temporales
   varFields.Clear;
   //Guarda información de ubicación, en la ubicación actual
-  pic.addPosInformation(cIn.curCon.row, cIn.curCon.col, cIn.curCon.idCtx);
+  pic.addPosInformation(lex.curCtx.row, lex.curCtx.col, lex.curCtx.idCtx);
 end;
 procedure TGenCod.expr_end(posExpres: TPosExpres);
 //Se ejecuta al final de una expresión, si es que no ha habido error.
@@ -295,7 +260,7 @@ begin
     else
       GenError(MSG_UNSUPPORTED); exit;
     end;
-  end else if p1^.Sto = stVarRefExp then begin
+  end else if p1^.Sto = stExpRef then begin
     {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
     cuando el valor del puntero es una expresión. Algo así como (ptr + 1)^}
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
@@ -334,7 +299,7 @@ begin
     else
       GenError(MSG_UNSUPPORTED); exit;
     end;
-  end else if p1^.Sto = stVarRefVar then begin
+  end else if p1^.Sto = stVarRef then begin
     //Asignación a una variable
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
     case p2^.Sto of
@@ -409,7 +374,7 @@ begin
     else
       GenError(MSG_UNSUPPORTED); exit;
     end;
-  end else if p1^.Sto = stVarRefExp then begin
+  end else if p1^.Sto = stExpRef then begin
     {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
     cuando el valor del puntero es una expresión. Algo así como (ptr + 1)^}
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
@@ -447,7 +412,7 @@ begin
     else
       GenError(MSG_UNSUPPORTED); exit;
     end;
-  end else if p1^.Sto = stVarRefVar then begin
+  end else if p1^.Sto = stVarRef then begin
     //Asignación a una variable
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
     case p2^.Sto of
@@ -520,7 +485,7 @@ begin
     else
       GenError(MSG_UNSUPPORTED); exit;
     end;
-  end else if p1^.Sto = stVarRefExp then begin
+  end else if p1^.Sto = stExpRef then begin
     {Este es un caso especial de asignación a un puntero a byte dereferenciado, pero
     cuando el valor del puntero es una expresión. Algo así como (ptr + 1)^}
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
@@ -558,7 +523,7 @@ begin
     else
       GenError(MSG_UNSUPPORTED); exit;
     end;
-  end else if p1^.Sto = stVarRefVar then begin
+  end else if p1^.Sto = stVarRef then begin
     //Asignación a una variable
     SetResultNull;  //Fomalmente, una aisgnación no devuelve valores en Pascal
     case p2^.Sto of
@@ -605,7 +570,7 @@ procedure TGenCod.ROB_byte_add_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -667,7 +632,7 @@ begin
 end;
 procedure TGenCod.ROB_byte_add_word(Opt: TxpOperation; SetRes: boolean);
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -692,7 +657,7 @@ procedure TGenCod.ROB_byte_sub_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -772,7 +737,7 @@ procedure TGenCod.ROB_byte_mul_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -881,7 +846,7 @@ begin
 end;
 procedure TGenCod.ROB_byte_mul_word(Opt: TxpOperation; SetRes: boolean);
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1035,7 +1000,7 @@ procedure TGenCod.ROB_byte_div_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1168,7 +1133,7 @@ procedure TGenCod.ROB_byte_mod_byte(Opt: TxpOperation; SetRes: boolean);
 var
   rVar: TxpEleVar;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1295,7 +1260,7 @@ procedure TGenCod.ROB_byte_great_byte(Opt: TxpOperation; SetRes: boolean);
 var
   tmp: TPicRegister;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1388,7 +1353,7 @@ begin
 end;
 procedure TGenCod.ROB_byte_less_byte(Opt: TxpOperation; SetRes: boolean);
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1461,7 +1426,7 @@ procedure TGenCod.ROB_byte_shr_byte(Opt: TxpOperation; SetRes: boolean);  //Desp
 var
   aux: TPicRegister;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1589,7 +1554,7 @@ procedure TGenCod.ROB_byte_shl_byte(Opt: TxpOperation; SetRes: boolean);   //Des
 var
   aux: TPicRegister;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -1863,7 +1828,7 @@ procedure TGenCod.ROB_word_add_word(Opt: TxpOperation; SetRes: boolean);
 var
   aux: TPicRegister;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -2095,7 +2060,7 @@ procedure TGenCod.ROB_word_sub_word(Opt: TxpOperation; SetRes: boolean);
 var
   aux: TPicRegister;
 begin
-  if (p1^.Sto = stVarRefExp) and (p2^.Sto = stVarRefExp) then begin
+  if (p1^.Sto = stExpRef) and (p2^.Sto = stExpRef) then begin
     GenError('Too complex pointer expression.'); exit;
   end;
   if not ChangePointerToExpres(p1^) then exit;
@@ -2734,20 +2699,22 @@ delay:= _PC;
   EndCodeSub;  //termina codificación
   //aux.used := false;  //libera registro
 end;
-procedure TGenCod.fun_delay_ms(fun: TxpEleFun);
+procedure TGenCod.fun_delay_ms(fun: TxpEleFunBase; out AddrUndef: boolean);
 begin
   if not CaptureTok('(') then exit;
-  GetExpressionE(0, pexPARSY);  //captura parámetro
+  res := GetExpression(0);  //captura parámetro
   if HayError then exit;   //aborta
   //Se terminó de evaluar un parámetro
   LoadToRT(res);   //Carga en registro de trabajo
   if HayError then exit;
   if res.Typ = typByte then begin
     //El parámetro byte, debe estar en W
-    _CALL(fun.adrr);
+//    _CALL(fun.adrr);
+    _CALL($1234);
   end else if res.Typ = typWord then begin
     //El parámetro word, debe estar en (H, W)
-    _CALL(fun.adrr+1);
+    //_CALL(fun.adrr+1);
+    _CALL($1234);
   end else begin
     GenError(MSG_INVAL_PARTYP, [res.Typ.name]);
     exit;
@@ -2755,7 +2722,7 @@ begin
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Exit(fun: TxpEleFun);
+procedure TGenCod.fun_Exit(fun: TxpEleFunBase; out AddrUndef: boolean);
 {Se debe dejar en los registros de trabajo, el valor del parámetro indicado.}
 var
   curFunTyp: TxpEleType;
@@ -2766,7 +2733,7 @@ var
 begin
   //TreeElems.curNode, debe ser de tipo "Body".
   parentNod := TreeElems.CurCodeContainer;  //Se supone que nunca debería fallar
-  posExit := cIn.ReadSrcPos;  //Guarda para el AddExitCall()
+  posExit := lex.GetSrcPos;  //Guarda para el AddExitCall()
   if parentNod.idClass = eltMain then begin
     //Es el cuerpo del programa principal
     _SLEEP;   //Así se termina un programa en PicPas
@@ -2787,7 +2754,7 @@ begin
     end else begin
       //Se espera el valor devuelto
       if not CaptureTok('(') then exit;
-      GetExpressionE(0, pexPARSY);  //captura parámetro
+      GetExpression(0);  //captura parámetro
       if HayError then exit;   //aborta
       //Verifica fin de parámetros
       if not CaptureTok(')') then exit;
@@ -2809,7 +2776,7 @@ begin
   end;
   res.SetAsNull;  //No es función
 end;
-procedure TGenCod.fun_Inc(fun: TxpEleFun);
+procedure TGenCod.fun_Inc(fun: TxpEleFunBase; out AddrUndef: boolean);
 begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
@@ -2882,7 +2849,7 @@ begin
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Dec(fun: TxpEleFun);
+procedure TGenCod.fun_Dec(fun: TxpEleFunBase; out AddrUndef: boolean);
 begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
@@ -2930,7 +2897,7 @@ begin
   //Verifica fin de parámetros
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Ord(fun: TxpEleFun);
+procedure TGenCod.fun_Ord(fun: TxpEleFunBase; out AddrUndef: boolean);
 var
   tmpVar: TxpEleVar;
 begin
@@ -2969,7 +2936,7 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Chr(fun: TxpEleFun);
+procedure TGenCod.fun_Chr(fun: TxpEleFunBase; out AddrUndef: boolean);
 var
   tmpVar: TxpEleVar;
 begin
@@ -3008,7 +2975,7 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Bit(fun: TxpEleFun);
+procedure TGenCod.fun_Bit(fun: TxpEleFunBase; out AddrUndef: boolean);
 {Convierte byte, o boolean a bit}
 var
   tmpVar: TxpEleVar;
@@ -3064,7 +3031,7 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Bool(fun: TxpEleFun);
+procedure TGenCod.fun_Bool(fun: TxpEleFunBase; out AddrUndef: boolean);
 {Convierte byte, o bit a boolean}
 var
   tmpVar: TxpEleVar;
@@ -3120,7 +3087,7 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Byte(fun: TxpEleFun);
+procedure TGenCod.fun_Byte(fun: TxpEleFunBase; out AddrUndef: boolean);
 var
   tmpVar: TxpEleVar;
 begin
@@ -3201,7 +3168,7 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_Word(fun: TxpEleFun);
+procedure TGenCod.fun_Word(fun: TxpEleFunBase; out AddrUndef: boolean);
 var
   tmpVar: TxpEleVar;
 begin
@@ -3284,7 +3251,7 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_DWord(fun: TxpEleFun);
+procedure TGenCod.fun_DWord(fun: TxpEleFunBase; out AddrUndef: boolean);
 begin
   if not CaptureTok('(') then exit;
   res := GetExpression(0);  //Captura parámetro. No usa GetExpressionE, para no cambiar RTstate
@@ -3379,10 +3346,10 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_SetAsInput(fun: TxpEleFun);
+procedure TGenCod.fun_SetAsInput(fun: TxpEleFunBase; out AddrUndef: boolean);
 begin
   if not CaptureTok('(') then exit;
-  GetExpressionE(0, pexPARSY);  //captura parámetro
+  GetExpression(0);  //captura parámetro
   if HayError then exit;   //aborta
   case res.Sto of  //el parámetro debe estar en "res"
   stConst : begin
@@ -3411,10 +3378,10 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_SetAsOutput(fun: TxpEleFun);
+procedure TGenCod.fun_SetAsOutput(fun: TxpEleFunBase; out AddrUndef: boolean);
 begin
   if not CaptureTok('(') then exit;
-  GetExpressionE(0, pexPARSY);  //captura parámetro
+  GetExpression(0);  //captura parámetro
   if HayError then exit;   //aborta
   case res.Sto of  //el parámetro debe estar en "res"
   stConst : begin
@@ -3442,11 +3409,11 @@ begin
   end;
   if not CaptureTok(')') then exit;
 end;
-procedure TGenCod.fun_SetBank(fun: TxpEleFun);
+procedure TGenCod.fun_SetBank(fun: TxpEleFunBase; out AddrUndef: boolean);
 {Define el banco actual}
 begin
   if not CaptureTok('(') then exit;
-  GetExpressionE(0, pexPARSY);  //captura parámetro
+  GetExpression(0);  //captura parámetro
   if HayError then exit;   //aborta
   case res.Sto of  //el parámetro debe estar en "res"
   stConst : begin
@@ -3504,7 +3471,7 @@ begin
   //tipos predefinidos
   xLex.AddIdentSpecList('bit boolean byte word char dword', tnType);
   //funciones del sistema
-  xLex.AddIdentSpecList('exit delay_ms Inc Dec Ord Chr', tnSysFunct);
+  xLex.AddIdentSpecList('exit Inc Dec Ord Chr', tnSysFunct);
   xLex.AddIdentSpecList('SetAsInput SetAsOutput SetBank', tnSysFunct);
   //símbolos especiales
   xLex.AddSymbSpec('+',  tnOperator);
@@ -3557,6 +3524,83 @@ begin
   //Define métodos a usar
   OnExprStart := @expr_start;
   OnExprEnd := @expr_End;
+
+  ///////////Crea tipos
+  ClearSystemTypes;
+  ///////////////// Tipo Bit ////////////////
+  typBit := CreateSysType('bit', t_uinteger,-1);   //de 1 bit
+  typBit.OnLoadToRT  :=  @bit_LoadToRT;
+  typBit.OnDefRegister:= @bit_DefineRegisters;
+  typBit.OnSaveToStk  := @bit_SaveToStk;
+//  opr:=typBit.CreateUnaryPreOperator('@', 6, 'addr', @Oper_addr_bit);
+
+  ///////////////// Tipo Booleano ////////////////
+  typBool := CreateSysType('boolean',t_boolean,-1);   //de 1 bit
+  typBool.OnLoadToRT   := @bit_LoadToRT;  //es lo mismo
+  typBool.OnDefRegister:= @bit_DefineRegisters;  //es lo mismo
+  typBool.OnSaveToStk  := @bit_SaveToStk;  //es lo mismo
+
+  //////////////// Tipo Byte /////////////
+  typByte := CreateSysType('byte',t_uinteger,1);   //de 1 byte
+  typByte.OnLoadToRT   := @byte_LoadToRT;
+  typByte.OnDefRegister:= @byte_DefineRegisters;
+  typByte.OnSaveToStk  := @byte_SaveToStk;
+  //typByte.OnReadFromStk :=
+  //Campos de bit
+  typByte.CreateField('bit0', @byte_bit0, @byte_bit0);
+  typByte.CreateField('bit1', @byte_bit1, @byte_bit1);
+  typByte.CreateField('bit2', @byte_bit2, @byte_bit2);
+  typByte.CreateField('bit3', @byte_bit3, @byte_bit3);
+  typByte.CreateField('bit4', @byte_bit4, @byte_bit4);
+  typByte.CreateField('bit5', @byte_bit5, @byte_bit5);
+  typByte.CreateField('bit6', @byte_bit6, @byte_bit6);
+  typByte.CreateField('bit7', @byte_bit7, @byte_bit7);
+  //Campos de bit (se mantienen por compatibilidad)
+  typByte.CreateField('0', @byte_bit0, @byte_bit0);
+  typByte.CreateField('1', @byte_bit1, @byte_bit1);
+  typByte.CreateField('2', @byte_bit2, @byte_bit2);
+  typByte.CreateField('3', @byte_bit3, @byte_bit3);
+  typByte.CreateField('4', @byte_bit4, @byte_bit4);
+  typByte.CreateField('5', @byte_bit5, @byte_bit5);
+  typByte.CreateField('6', @byte_bit6, @byte_bit6);
+  typByte.CreateField('7', @byte_bit7, @byte_bit7);
+
+  //////////////// Tipo Char /////////////
+  //Tipo caracter
+  typChar := CreateSysType('char',t_uinteger,1);   //de 1 byte. Se crea como uinteger para leer/escribir su valor como número
+  typChar.OnLoadToRT   := @byte_LoadToRT;  //Es lo mismo
+  typChar.OnDefRegister:= @byte_DefineRegisters;  //Es lo mismo
+  typChar.OnSaveToStk  := @byte_SaveToStk; //Es lo mismo
+
+  //////////////// Tipo Word /////////////
+  //Tipo numérico de dos bytes
+  typWord := CreateSysType('word',t_uinteger,2);   //de 2 bytes
+  typWord.OnLoadToRT   := @word_LoadToRT;
+  typWord.OnDefRegister:= @word_DefineRegisters;
+  typWord.OnSaveToStk  := @word_SaveToStk;
+
+  typWord.CreateField('Low' , @word_Low , @word_Low );
+  typWord.CreateField('High', @word_High, @word_High);
+
+  //////////////// String type /////////////
+  {Se crea el tipo String, solo para permitir inicializar arreglos de
+  caracteres. Por ahora no se implementan otras funcionalidades.}
+  typString := CreateSysType('string', t_string, 0);  //tamaño variable
+  { TODO : String debería definirse mejor como un tipo común, no del sistema }
+
+  //////////////// Tipo DWord /////////////
+  //Tipo numérico de cuatro bytes
+  typDWord := CreateSysType('dword',t_uinteger,4);  //de 4 bytes
+  typDWord.OnLoadToRT   := @dword_LoadToRT;
+  typDWord.OnDefRegister:= @dword_DefineRegisters;
+  typDWord.OnSaveToStk  := @dword_SaveToStk;
+
+  typDWord.CreateField('Low'     , @dword_Low     , @dword_Low     );
+  typDWord.CreateField('High'    , @dword_High    , @dword_High    );
+  typDWord.CreateField('Extra'   , @dword_Extra   , @dword_Extra   );
+  typDWord.CreateField('Ultra'   , @dword_Ultra   , @dword_Ultra   );
+  typDWord.CreateField('LowWord' , @dword_LowWord , @dword_LowWord );
+  typDWord.CreateField('HighWord', @dword_HighWord, @dword_HighWord);
 
   {Los operadores deben crearse con su precedencia correcta
   Precedencia de operadores en Pascal:
@@ -3652,7 +3696,7 @@ begin
   opr.CreateOperation(typBit,@ROB_byte_xor_bit);
 
   opr:=typByte.CreateUnaryPreOperator('NOT', 6, 'not', @ROU_not_byte);
-  opr:=typByte.CreateUnaryPreOperator('@', 6, 'addr', @ROU_addr_byte);
+  opr:=typByte.CreateUnaryPreOperator('@', 6, 'addr', @ROU_address);
 
   opr:=typByte.CreateBinaryOperator('=',3,'equal');
   opr.CreateOperation(typByte,@ROB_byte_equal_byte);
@@ -3716,7 +3760,7 @@ begin
   opr:=typWord.CreateBinaryOperator('UMULWORD',5,'umulword');  //suma
   opr.CreateOperation(typWord,@ROB_word_umulword_word);
 
-  opr:=typWord.CreateUnaryPreOperator('@', 6, 'addr', @ROU_addr_word);
+  opr:=typWord.CreateUnaryPreOperator('@', 6, 'addr', @ROU_address);
 
   //////////////////////////////////////////
   //////// Operaciones con DWord ////////////
@@ -3738,6 +3782,11 @@ begin
   opr.CreateOperation(typDWord,@ROB_dword_add_dword);
 //  opr.CreateOperation(typByte,@ROB_word_add_byte);
 
+  //////// Operaciones con String ////////////
+  opr:=typString.CreateUnaryPreOperator('@', 6, 'addr', @ROU_address);
+  opr:=typString.CreateBinaryOperator('+',4,'add');  //add
+  opr.CreateOperation(typString,@ROB_string_add_string);
+  opr.CreateOperation(typChar,@ROB_string_add_char);
 end;
 procedure TGenCod.DefPointerArithmetic(etyp: TxpEleType);
 {Configura ls operaciones que definen la aritmética de punteros.}
@@ -3758,6 +3807,50 @@ begin
   opr:=etyp.CreateBinaryOperator('-',4,'add');  //resta
   opr.CreateOperation(typByte, @ROB_pointer_sub_byte);
 end;
+procedure TGenCod.DefinePointer(etyp: TxpEleType);
+{Set operations that defines pointers aritmethic.}
+var
+  opr: TxpOperator;
+begin
+  //Asignación desde Byte y Puntero
+//  opr:=etyp.CreateBinaryOperator(':=',2,'asig');
+//  opr.CreateOperation(typWord, @ROB_word_asig_word);
+//  opr.CreateOperation(etyp   , @ROB_word_asig_word);
+//  //Agrega a los word, la posibilidad de ser asignados por punteros
+//  typWord.operAsign.CreateOperation(etyp, @ROB_word_asig_word);
+//
+//  opr:=etyp.CreateBinaryOperator('=',3,'equal');  //asignación
+//  opr.CreateOperation(typWord, @ROB_word_equal_word);
+//  opr:=etyp.CreateBinaryOperator('+',4,'add');  //suma
+//  opr.CreateOperation(typWord, @ROB_pointer_add_word);
+//  opr:=etyp.CreateBinaryOperator('-',4,'add');  //resta
+//  opr.CreateOperation(typWord, @ROB_pointer_sub_word);
+//
+//  etyp.CreateUnaryPreOperator('@', 6, 'addr', @ROU_address); //defined in all types
+//  etyp.CreateUnaryPostOperator('^',6, 'deref', @ROU_derefPointer);  //dereferencia
+end;
+procedure TGenCod.DefineArray(etyp: TxpEleType);
+begin
+//  etyp.CreateField('length', @arrayLength, nil);
+//  etyp.CreateField('high'  , @arrayHigh, nil);
+//  etyp.CreateField('low'   , @arrayLow, nil);
+//  etyp.CreateField('item'  , @GenCodArrayGetItem, @GenCodArraySetItem);
+//  etyp.CreateField('clear' , @GenCodArrayClear, nil);
+//  etyp.CreateUnaryPreOperator('@', 6, 'addr', @ROU_address); //defined in all types
+end;
+procedure TGenCod.ValidRAMaddr(addr: integer);
+{Validate a physical RAM address. If error generate error.}
+begin
+  if (addr<0) or (addr>$ffff) then begin
+    //Debe set Word
+    GenError(ER_INV_MEMADDR);
+    exit;
+  end;
+  if not pic.ValidRAMaddr(addr) then begin
+    GenError(ER_INV_MAD_DEV);
+    exit;
+  end;
+end;
 procedure TGenCod.CreateSystemElements;
 {Inicia los elementos del sistema. Se ejecuta cada vez que se compila.}
 var
@@ -3765,20 +3858,20 @@ var
 begin
   //////// Funciones del sistema ////////////
   {Notar que las funciones del sistema no crean espacios de nombres.}
-  f := CreateSysFunction('delay_ms', nil, @fun_delay_ms);
-  f.adrr:=$0;
-  f.compile := @codif_delay_ms;  //rutina de compilación
+//  f := CreateSysFunction('delay_ms', nil, @fun_delay_ms);
+//  f.adrr:=$0;
+//  f.compile := @codif_delay_ms;  //rutina de compilación
   //Funciones INLINE
   f := CreateSysFunction('exit'     , nil, @fun_Exit);
   f := CreateSysFunction('Inc'      , nil, @fun_Inc);
   f := CreateSysFunction('Dec'      , nil, @fun_Dec);
-  f := CreateSysFunction('Ord'      , @callParam, @fun_Ord);
-  f := CreateSysFunction('Chr'      , @callParam, @fun_Chr);
-  f := CreateSysFunction('Bit'      , @callParam, @fun_Bit);
-  f := CreateSysFunction('Boolean'  , @callParam, @fun_Bool);
-  f := CreateSysFunction('Byte'     , @callParam, @fun_Byte);
-  f := CreateSysFunction('Word'     , @callParam, @fun_Word);
-  f := CreateSysFunction('DWord'    , @callParam, @fun_DWord);
+  f := CreateSysFunction('Ord'      , @FunctParam, @fun_Ord);
+  f := CreateSysFunction('Chr'      , @FunctParam, @fun_Chr);
+  f := CreateSysFunction('Bit'      , @FunctParam, @fun_Bit);
+  f := CreateSysFunction('Boolean'  , @FunctParam, @fun_Bool);
+  f := CreateSysFunction('Byte'     , @FunctParam, @fun_Byte);
+  f := CreateSysFunction('Word'     , @FunctParam, @fun_Word);
+  f := CreateSysFunction('DWord'    , @FunctParam, @fun_DWord);
   f := CreateSysFunction('SetAsInput' ,nil, @fun_SetAsInput);
   f := CreateSysFunction('SetAsOutput',nil, @fun_SetAsOutput);
   f := CreateSysFunction('SetBank'  , nil, @fun_SetBank);
@@ -3795,6 +3888,12 @@ begin
   f_word_mul_word_16 := CreateSysFunction('word_mul_word_16', nil, nil);
   f_word_mul_word_16.adrr:=$0;
   f_word_mul_word_16.compile := @word_mul_word_16;
+  //Inicializa eventos y funciones del compilador
+  callDefinePointer:= @DefinePointer;
+  callDefineArray  := @DefineArray;
+  callValidRAMaddr := @ValidRAMaddr;
+  callStartProgram := @Cod_StartProgram;
+  callEndProgram   := @Cod_EndProgram;
 end;
 end.
 

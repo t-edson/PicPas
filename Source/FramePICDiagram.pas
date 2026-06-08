@@ -11,7 +11,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, fgl, Types, Forms, Controls, ExtCtrls, Graphics,
   Menus, ActnList, LCLProc, ogEditionMot, ogMotGraf2D, ogDefObjGraf, PicCore,
-  Parser, MisUtils;
+  CompBase, MisUtils;
 type
   { TPinGraph }
   {Objeto que modela a un pin físico de un componente electrónico.
@@ -573,13 +573,13 @@ begin
   //Cuerpo
   col := GetThevCol(nodParent.vt, nodParent.rt);  //Se supone que el nodo padre ya está actualizado
   v2d.SetPen(psSolid, 1, col);
-  v2d.Linea(pcBEGIN.x, pcBEGIN.y, pcEND.x, pcEND.y);
+  v2d.Line(pcBEGIN.x, pcBEGIN.y, pcEND.x, pcEND.y);
   //Implementamos nosotros el remarcado y selección, para personalizar mejor
   //---------------Draw mark --------------
   if Marked and Highlight then begin
     //Resaltado
     v2d.SetPen(psSolid, 2, clBlue);   //RGB(128, 128, 255)
-    v2d.Linea(pcBEGIN.x, pcBEGIN.y, pcEND.x, pcEND.y);
+    v2d.Line(pcBEGIN.x, pcBEGIN.y, pcEND.x, pcEND.y);
     //Marcador de Voltaje
     v2d.SetPen(psSolid, 1, clBlack);   //RGB(128, 128, 255)
     v2d.SetBrush(clYellow);
@@ -603,7 +603,7 @@ begin
 
     v2d.SetText(True, False, False);
     v2d.SetText(clBlack);
-    v2d.Texto(x1+ANCHO1+3, y1 - ALTO2+2, Format('%.2fV', [nodParent.vt]));
+    v2d.Text(x1+ANCHO1+3, y1 - ALTO2+2, Format('%.2fV', [nodParent.vt]));
   end;
   //--------------- Draw selection state--------------
   if Selected Then begin
@@ -715,7 +715,7 @@ begin
     //Dibuja título
     ancho := v2d.TextWidth(Name);
     v2d.SetText(True, False, False);
-    v2d.Texto(xMed - ancho/2 , y - 18, Name);
+    v2d.Text(xMed - ancho/2 , y - 18, Name);
     //Dibuja cuerpo
     v2d.SetText(False, False, False);
     v2d.SetText($D0D0D0);
@@ -731,7 +731,7 @@ begin
       pin.GetModel(vt, rt);
       v2d.SetBrush(GetThevCol(vt,rt));  //Rellena de acuerdo al estado
       v2d.rectangR(x+pin.x1, y+pin.y1, x+pin.x2, y+pin.y2);
-      v2d.Texto(x+pin.xLbl, y+pin.yLbl, pin.lbl);
+      v2d.Text(x+pin.xLbl, y+pin.yLbl, pin.lbl);
     end;
   end;
   inherited;
@@ -762,7 +762,7 @@ begin
   ancho := v2d.TextWidth(Name);
   v2d.SetText(COL_GND);
   v2d.SetText(True, False, False);
-  v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
+  v2d.Text(x + width/2 - ancho/2 , y - 18, Name);
   //Dibuja cuerpo
   v2d.SetPen(psSolid, 1, clBlack);
   if pin.vThev>2.5 then begin
@@ -817,15 +817,15 @@ begin
   ancho := v2d.TextWidth(Name);
   v2d.SetText(COL_GND);
   v2d.SetText(True, False, False);
-  v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
+  v2d.Text(x + width/2 - ancho/2 , y - 18, Name);
   //Verifica valor lógico
 
   //FState
   //Dibuja cuerpo
   v2d.SetPen(psSolid, 2, COL_GND);
   //Línea vertioal y conexión a tierra
-  v2d.Linea(x+12, y, x+12, y2);
-  v2d.Linea(x+5, y2, x+19, y2);
+  v2d.Line(x+12, y, x+12, y2);
+  v2d.Line(x+5, y2, x+19, y2);
   //Resistencia
   v2d.SetPen(psSolid, 1, COL_GND);
   v2d.SetBrush(COL_RES);
@@ -868,7 +868,7 @@ begin
   ancho := v2d.TextWidth(Name);
   v2d.SetText(COL_GND);
   v2d.SetText(True, False, False);
-  v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
+  v2d.Text(x + width/2 - ancho/2 , y - 18, Name);
   //Dibuja cuerpo
   v2d.SetPen(psSolid, 2, COL_GND);
   v2d.SetBrush(COL_HIM);
@@ -932,16 +932,16 @@ begin
   //conexión a tierra
   v2d.SetPen(psSolid, 1, COL_GND);
   y2 := y + height + 10;
-  v2d.Linea(x+30, y+height, x+30, y2);
-  v2d.Linea(x+24, y2, x+36, y2);
+  v2d.Line(x+30, y+height, x+30, y2);
+  v2d.Line(x+24, y2, x+36, y2);
   //Dibuja los pines
   v2d.SetPen(psSolid, 1, COL_GND);
   for pCnx in PtosConex do begin
     pin := TPinGraph(pCnx);
     //En el PIC, los pines se pintan con el color del modelo interno
     v2d.SetBrush(clWhite);  //Rellena de acuerdo al estado
-    v2d.Linea(pin.x, pin.y, pin.x+7, pin.y);
-    v2d.Texto(x+pin.xLbl, y+pin.yLbl, pin.lbl);
+    v2d.Line(pin.x, pin.y, pin.x+7, pin.y);
+    v2d.Text(x+pin.xLbl, y+pin.yLbl, pin.lbl);
   end;
   inherited;
 end;
@@ -994,13 +994,13 @@ begin
   ancho := v2d.TextWidth(Name);
   v2d.SetText(COL_GND);
   v2d.SetText(True, False, False);
-  v2d.Texto(x + width/2 - ancho/2 , y - 18, Name);
+  v2d.Text(x + width/2 - ancho/2 , y - 18, Name);
   //Verifica valor lógico
 
   //Línea vertioal y conexión a tierra
   v2d.SetPen(psSolid, 2, COL_GND);
-  v2d.Linea(x+12, y, x+12, y2);
-  v2d.Linea(x+5, y2, x+19, y2);
+  v2d.Line(x+12, y, x+12, y2);
+  v2d.Line(x+5, y2, x+19, y2);
   //Resistencia
   v2d.SetPen(psSolid, 1, COL_GND);
   v2d.SetBrush(COL_RES);
@@ -1044,7 +1044,7 @@ begin
       nod.UpdateModel;
     end;
   end; //Protección
-  motEdi.Refrescar;
+  motEdi.Refresh;
 end;
 procedure TfraPICDiagram.SetCompiler(cxp0: TCompilerBase);
 begin
@@ -1135,7 +1135,7 @@ var
 begin
   nodeList.Clear;
   //Explora objetos gráfiocs
-  for og in motEdi.objetos do begin
+  for og in motEdi.objects do begin
     if og is TOgConector then begin
       ogCon := TOgConector(og);
       AddConnectorToNodes(ogCon);
@@ -1151,7 +1151,7 @@ function TfraPICDiagram.ExistsName(AName: string): boolean;
 var
   og: TObjGraf;
 begin
-  for og in motEdi.objetos do begin
+  for og in motEdi.objects do begin
     if og.Name = AName then exit(true);
   end;
   exit(false);
@@ -1174,7 +1174,7 @@ function TfraPICDiagram.ExistsRef(ARef: string): TOgComponent;
 var
   og: TObjGraf;
 begin
-  for og in motEdi.objetos do begin
+  for og in motEdi.objects do begin
     if not(og is TOgComponent) then continue;
     if TOgComponent(og).Ref = ARef then exit(TOgComponent(og));
   end;
@@ -1201,7 +1201,7 @@ var
   //oc: TOgConector;
   //xv, yv: Single;
 begin
-  if motEdi.seleccion.Count = 1 then begin
+  if motEdi.selection.Count = 1 then begin
     //Hay uno seleccionado
     if motEdi.Selected.IsSelectedBy(X,Y) then begin
       //Click sobre un objeto seleccionado
@@ -1240,7 +1240,7 @@ procedure TfraPICDiagram.motEdi_MouseUp(Sender: TObject; Button: TMouseButton;
 var
   LogInp: TOgLogicState;
 begin
-  if motEdi.seleccion.Count = 1 then begin
+  if motEdi.selection.Count = 1 then begin
     //Hay un componente seleccionado
     if motEdi.Selected.IsSelectedBy(X,Y) then begin
       if motEdi.Selected is TOgLogicState then begin
@@ -1267,15 +1267,15 @@ var
   pCnx, pCnx2: TPtoConx;
 begin
   //Verifica el estado para activar acciones
-  acGenDelObject.Visible := motEdi.seleccion.Count>0;
-  if motEdi.seleccion.Count = 0 then begin
+  acGenDelObject.Visible := motEdi.selection.Count>0;
+  if motEdi.selection.Count = 0 then begin
     //Ninguno seleccionado
     mnReset.Visible   := true;
     mnRun.Visible     := true;
     mnStepOver.Visible:= false;
     //mnAddLogicTog.Visible := true;
     VisibActionsAdd(true);
-  end else if (motEdi.seleccion.Count = 1) and (motEdi.Selected is TOgComponent) then begin
+  end else if (motEdi.selection.Count = 1) and (motEdi.Selected is TOgComponent) then begin
     //Hay un componente seleccionado
     comp1 := TOgComponent(motEdi.Selected);  //Componente fuente
     mnReset.Visible   := true;
@@ -1308,7 +1308,7 @@ begin
     mnConnect.Caption := Format('Connect %s to', [pin1.lbl]);
     //Actualiza menú de Conexión, con objetos gráficos
     mnConnect.Clear;
-    for og in motEdi.objetos do begin
+    for og in motEdi.objects do begin
       if not(og is TOgComponent) then continue;
       if og is TOgConector then continue;;
       it := AddItemToMenu(mnConnect, og.Name, nil);
@@ -1454,7 +1454,7 @@ var
 begin
   nodeList.Clear;
   //Explora objetos gráfiocs
-  for og in motEdi.objetos do begin
+  for og in motEdi.objects do begin
     if og is TOgConector then begin
       ogCon := TOgConector(og);
       if ogCon.pcBEGIN.ConnectedTo = nil then begin

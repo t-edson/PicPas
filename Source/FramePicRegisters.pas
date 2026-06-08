@@ -3,7 +3,7 @@ unit FramePicRegisters;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, StdCtrls, LCLProc,
-  LCLIntf, LCLType, Grids, ExtCtrls, Parser,
+  LCLIntf, LCLType, Grids, ExtCtrls, CompBase,
   PicCore, Pic16Utils, Pic10Utils, Pic17Utils;
 type
 
