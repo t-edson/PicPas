@@ -1,12 +1,141 @@
+PicPas 0.8.9
+============
+Se intentará cambiar la arquitectura del compilador para que maneje un gestor de mensajes
+independiente, como lo hace P65Pas.
+
+Primero se ha creado una copia de la unidad XpresBas.pas, del al librería XPres, en la 
+carpeta /Source del proyecto y sobre esa unidad se están realizando cambios para que sea 
+similar a la unidad alexiaLex, de la librería "alexia_lib", de modo que luego se facilite 
+el cambio del lexer TCOntexts por uno de tipo TAleLexer.
+
+Tareas a realizar:
+Eliminar las unidades creadas a partir de la librería Xpres (XpresBas.pas, ...)
+
+PicPas 0.8.8.4
+============
+Se actualizan rutas/versiones de las librerías.
+Se modifica la unidad XpresTypesPIC en la forma en que se define P65Pas, para facilitar la
+adquisición de las mejoras realizadas en este compilador.
+Se modifica la unidad XpresElementsPIC para que adquiera algunas mejoras de P65Pas.
+Se adaptan algunas rutinas de las unidades COmpiler_PICXX para que sean compatibles con las
+mejoras de P65Pas.
+Se mejora la interfaz, cambiando el ToolBar por un CoolBar y se mejora el botón de selección
+del compilador.
+
+PicPas 0.8.8
+============
+## Cambios 
+Se corrige la reconstrucción del diagrama en la ventana de simulación. 
+Se quita la opción de compilación por línea de parámetros, ya que ahora se tiene más 
+compiladores y hay problemas en mostrar mensajes de error.
+Se incluyen menús para seleccionar el compilador por defecto.
+Se incluye traducciones para nuevos cadenas de la unidad FormPrincipal.
+Se incluye rutina para prueba de compilación de las unidades, y se pone acceso desde
+el menú principal (Herramientas>).
+Se agrega rutina de verificación de error en los métodos TGenCodBas.AssignRAMinByte().
+Se agrega leyenda en la ventana Explorador de RAM.
+Se pasa a trabajar con la versión 1.6 de PicUtils.
+Se incrementa parámetros a los comandos de la directiva: $SET_STATE_RAM, para poder definir el estado y zonas mapeadas en todos los bancos, con una sola directiva.
+Se actualizan las unidades de dispositivos, para que usen la nueva sintaxis de $SET_STATE_RAM.
+Se cambia el nombre de la carpeta /TestCode a /testcode16
+Se cambia el nombre de los menús de la unidad FrameArcExplor para hacerlos más consistentes con la terminología inglesa.
+Se agrega el menú "Crear copia" en la unidad FrameArcExplor.
+Se activa el atajo al menú contextual al menú de la unidad FrameArcExplor.
+Se cambia al atajo, desde la ventana principal, para mostrar el arbol de sintaxis. Ahora es ALt+F2.
+Se inhabilita la ejecución (simulación) cuando se compila una unidad.
+Se mejora el autocompletado, actualizando la librería SynFacilCompletion y corrigiendo FraEditView y CodeTools.
+Se crean las listas TXpTreeElements.AllCOnst, TXpTreeElements.AllUnits, TXpTreeElements.AllTypes y los métodos de llenado respectivo. 
+Se crean los métodos:
+ TCompilerBase.RemoveUnusedFunc
+ TCompilerBase.RemoveUnusedVars
+ TCompilerBase.RemoveUnusedCons
+ TCompilerBase.RemoveUnusedTypes
+ TCompilerBase.UpdateUsedUnits
+Y se crea documentación sobre estos nuevos métodos. 
+Se modifica TXpTreeElements.FindNext() y para corregir el acceso a campos de la sección IMPLEMENTATION de una unidad.
+Se corrige la asignación del nombre del nodo principal en el método TCompiler_PIC16.Compile().
+Se agregan rutinas para detectar a las unidades usadas.
+Se crea el nuevo elemento TxpEleFinal en la unidad XpresElementsPIC.
+
+PENDIENTES
+-Revisar los errores en el posicionamiento de los puntos de conexión resaltados, cuando se cambia el zoom y se hace desplazamiento.
+-Revisar el uso de bancos, para funciones del sistema, como delay_ms() y las llamadas que se
+hacen para algunas operacionas como DIV. 
+
+-Revisar si conviene crear el almacenamiento VarRefVarOff, para expresiones de tipo:
+  (p+5)^
+  a[5]
+
+-Reemplazar todas las rutinas del generador de código con las instrucciones "k" e ir 
+desapareciendo campos auxiliares de TOperand, como .bank o .offs.
+
+-Revisar el manejo de bancos en el generador de código, cuando se usan instrucciones condicionales como BTFSS o DECFSZ, en los algoritmos.
+-Revisar la implementación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
+contiene una sola instrucción, evitando saltos innecesarios. 
+-Terminar de implementar los arreglos.
+-Resolver el bug que genera error en:
+var
+  a,b, x: byte;
+begin
+  a := 1;  b := 2;
+  x := byte(a*b) + byte(a*b);
+end.
+
+-Implementar el paso de parámetros usando punteros y por referencia.
+-Mejorar el cálculo del uso de la pila de llamadas, ya que no considera las funciones del sistema.
+-Agregar patrones de prueba para las optimizaciones.
+-Implementar la reutilización de variables usadas como parámetros, convirtiendo a REGISTER 
+el último parámetro.
+-Definir que todos los bytes de una variable se ubiquen en el mismo banco.
+
+-Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
+se puede reemplazar por SetROUResultExpres_bit().
+-Terminar de implementar la asignación de bancos de RAM, después de los lazos.
+-Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
+los lazos y condicionales.
+-Permitir compilar las funciones, como INLINE.
+-Implementar las operaciones pendientes en los Word.
+-Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
+-Terminar de implementar las funcionalidades completas de una unidad.
+-Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
+-Incluir el tipo integer con signo.
+-Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
+y más de una página de ROM.
+
 PicPas 0.8.7
 ============
-Se pasa a usar la librería PicUtils en su versión 1.5.
-Se quita el soporte a los PIC de la serie 12F, en la driectiva {$PROCESSOR}, porque se está
-prefiriendo la definición de mciros, usando directivas más detalladas.
-Se agregan métodos de acceso a p1^ y p2^ en la unidad Parser.
-Se revisan y corrigen algunas rutinas del compialdor PIC10.
-Se crea el método TCompilerBase.OperationStr() para dar más información sobre una operación ROB,
-y se psa a usa en las unidades generadoras de código.
+## Notas
+Esta versión consolida el soporte a la familia de PIC con instrucciones de 12 bits, incluyendo nuevas rutinas y corrigiendo algunas en el generador de código. Aún quedan puntos pendientes por revisar pero son incidencias menores.
+Además se continúan con los cambios en la arquitectura del proyecto que mejoren el soporte Multi-compilador de PicPas.
+Los cambios más notables son las mejoras considerables que se están incluyendo en el depurador/simulador, que ahora puede incluir componentes electrónicos adicionales al PIC. Además la simulación es mucho más completa y no se limita a solo simular valores digitales sino que se hace análisis de nodos con valores de voltaje e impedancias.
+
+## Cambios 
+- Se pasa a usar la librería PicUtils en su versión 1.5.
+- Se quita el soporte a los PIC de la serie 12F, en la directiva {$PROCESSOR}, porque se está prefiriendo la definición de micros, usando directivas más detalladas.
+- Se agregan métodos de acceso a p1^ y p2^ en la unidad Parser.
+- Se crea el método TCompilerBase.OperationStr() para dar más información sobre una operación ROB, y se pasa a usar en las unidades generadoras de código.
+- Se crea la directiva $SET_UNIMP_BITS1 para definir bits no implementados, fijos a 1.
+- Se crea la unidad ParserDirec para incluir rutinas comunes del "Parser" de  directivas, que se implementan para todos los compiladores, y se simplifican las unidades ParserDirec_PIC10 y ParserDirec_PIC16.
+- Se crean los método TParserDirecBase.AddSysVariableNumber() y AddSysVariableString() en la unidad ParserDirec y se implementa un método para agregar instrucciones de forma dinámica.
+- Se crean los archivos de traducción tra_GenCodBas.pas, tra_GenCod.pas  y las rutinas para el cambio del idioma.
+- Se corrigen la modificación de la bandera Z en TPIC16.Exec() y TPIC10.Exec().
+- Se revisan y corrigen varias rutinas del compilador PIC10, para que reemplacen correctamente a las instrucciones ADDLW y SUBLW. También se quita el uso del registro FSR que se usa en algunas rutinas de PIC16.
+- Se crean rutinas de pruebas para el compilador PIC10, en la ruta "/testcode10".
+- Se reemplazan más instrucciones del generador de código por instrucciones K, de modo que se amplía el trabajo a variables de bancos RAM diversos.
+- Se corrige un error en la visualización de etiquetas en la ventana del depurador.
+- Se crea la unidad FramePicAsm y se incluye la funcionalidad de mostrar el códgo ensamblador.
+- Se mejora el comportamiento del menú contextual para la ventana de depuración y se incluye la posibilidad de plegar código en el código ensamblador.
+- Se pasa a usar la version 2.4 de la librería ogEditGraf. 
+- Se agregan diversas funciones al frame FramePicDiagram, como puntos de conexión y resaltado, así como mejor manejo de las etiquetas y se corrige el error de la falta de coincidencia del cuadro de selección con la forma, en algunos casos.
+- Se incluyen elementos gráficos nuevos en el frame FramePicDiagram, y se incluyen conectores para poder enlazarlos a modo de conexiones.
+- Se crean dos temporizaciones independientes para referscar la ventana de Depuración.
+- Se modifica la implementación de la la directiva SET, para que considere como válidas, el uso de unidades como KHz y MHz.
+- Se cambia de nombre a las clases TgenCodBas_PIC16 por TgenCodBas y a TgenCodBas_PIC10 por TgenCodBas. 
+- Se crea, a modo experimental, las unidades necesarias para el compilador PIC17. 
+- Se mejora la lista de acceso, en la pantalla principal,  para seleccionar al compilador actual.
+- Se elimina la generación de archivos *.hex para las unidades, al momento de compilarlas. 
+- Se cambia la tecla de acceso a la compilación de F9 a Ctrl+F9.
+
 
 PicPas 0.8.6
 ============
@@ -54,50 +183,6 @@ corresponde.
 * Se crean las directivas $SET_PIN_NAME y $RESET_PINS y se incluyen en el archivo de sintaxis.
 * Se uniformiza el código de las unidades FrameRamExplorer y FrameRomExplorer.
 
-PENDIENTES
--Revisar el uso de bancos, para funciones del sistema, como delay_ms() y las llamadas que se
-hacen para algunas operacionas como DIV. 
-
--Revisar si conviene crear el almacenamiento VarRefVarOff, para expresiones de tipo:
-  (p+5)^
-  a[5]
-
--Reemplazar todas las rutinas del generador de código con las instrucciones "k" e ir 
-desapareciendo campos auxiliares de TOperand, como .bank o .offs.
-
--Revisar el manejo de bancos en el generador de código, cuando se usan instrucciones condicionales
-como BTFSS o DECFSZ, en los algoritmos.
--Revisar la implementación de IF THEN END, para optimizar el caso más simple, el que el cuerpo
-contiene una sola instrucción, evitando saltos innecesarios. 
--Terminar de implementar los arreglos.
--Resolver el bug que genera error en:
-var
-  a,b, x: byte;
-begin
-  a := 1;  b := 2;
-  x := byte(a*b) + byte(a*b);
-end.
-
--Implementar el paso de parámetros usando punteros y por referencia.
--Mejorar el cálculo del uso de la pila de llamadas, ya que no considera las funciones del sistema.
--Agregar patrones de prueba para las optimizaciones.
--Implementar la reutilización de variables usadas como parámetros, convirtiendo a REGISTER 
-el último parámetro.
--Definir que todos los bytes de una variable se ubiquen en el mismo banco.
-
--Revisar el uso de SetResultExpres en TGenCod.fun_bit (y funciones similares) y ver si 
-se puede reemplazar por SetROUResultExpres_bit().
--Terminar de implementar la asignación de bancos de RAM, después de los lazos.
--Revisar el manejo de otras variables de estado del compilador (además de CurrBank), en
-los lazos y condicionales.
--Permitir compilar las funciones, como INLINE.
--Implementar las operaciones pendientes en los Word.
--Terminar de implementar el lazo FOR, para que acepte expresiones como valor final.
--Terminar de implementar las funcionalidades completas de una unidad.
--Seguir mejorando la traducción. Hay varias rutinas que todavía pueden traducirse.
--Incluir el tipo integer con signo.
--Revisar el comportamiento de los programas compilados, con más de un banco de memoria RAM
-y más de una página de ROM.
 
 PicPas 0.8.5
 ============
