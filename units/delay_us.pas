@@ -19,7 +19,7 @@
 //  la pausa en microsegundos que se requiera.
 //  
 
-unit delay_us_Lib;
+unit delay_us;
 
 interface
 

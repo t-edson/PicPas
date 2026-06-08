@@ -1,22 +1,19 @@
 {Unit used to test operations of the compiler. 
-Include simple functions to generate tones, using a buzzer or led in the pin PORTB.0,
-like a way of detect errors on the results of operations.
+Include simple functions to generate tones, using a buzzer or led in the pin PORTB.0 or GPIO.0,
+like a way of detect errors on the results of the operations.
                                                   By TIto Hinostroza 05/06/2017}
 unit UnitTest;
 interface
 var
-  PORTB   : byte absolute $06; 
+  PORTB   : byte absolute $06;   //This will work on 12 bits instructions (GPIO) and 14 bits instructions (PORTB)
   pinLed  : bit absolute PORTB.0;
+  pinErr  : bit absolute PORTB.1;
  
-//***************************************************************************//
-// Rutina de inicializacion del display LCD 16x2.
-// Resetea el LCD y lo inicializa en modo 8 bit mode, 2 columnas y cursor off.
-//***************************************************************************//
   procedure good;
   procedure bad;
+var yyy: byte;
   
 implementation
-
   procedure good;
   begin
     pinLed := 1;
@@ -30,8 +27,10 @@ implementation
     pinLed := 1;
     delay_ms(1500);
     pinLed := 0;
+    pinErr := 1;
     asm SLEEP end
   end;
-
+initialization
+  pinLed := 1;
 end.
 
