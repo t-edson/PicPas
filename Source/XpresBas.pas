@@ -53,30 +53,6 @@ type
     fPos  : TFaLexerState;  //Posición (estado) en el contexto
   End;
 
-  { TPError }
-{Define al objeto TPError, el que se usa para tratar los errores del compilador. Solo se
- espera que haya uno de estos objetos, por eso se ha declarado como OBJECT}
-  TPError = object
-  private
-    numER : Integer;   //codigo de error
-    cadER :  String;   //cadena de error
-    arcER :  String;   //nombre de archivo que origino el error
-    fil : Longint;     //número de línea del error
-    col : Longint;     //número de columna del error
-  public
-    NombPrograma: string;  //Usado para poner en el encabezado del mensaje
-    procedure IniError;
-    procedure Clear;
-    procedure GenError(msje: String; archivo: String; nlin: LongInt);
-    procedure Generror(msje: String; ctx: TContext);
-    function TxtError: string;
-    function TxtErrorRC: string;
-    procedure Show;
-    function ArcError: string;
-    function nLinError: longint;
-    Function nColError: longint;
-    function HayError: boolean;
-  end;
 
   { TContext }
   {Estructura que define a un objeto contexto. Un contexto es un objeto que sirve como
@@ -644,79 +620,6 @@ destructor TContexts.Destroy;
 begin
   ctxList.Free;
   inherited Destroy;
-end;
-
-{ TPError }
-procedure TPError.IniError;
-begin
-  numER := 0;
-  cadER := '';
-  arcER := '';
-  fil := 0;
-end;
-procedure TPError.Clear;
-//Limpia rápidamente el error actual
-begin
-  numEr := 0;
-end;
-procedure TPError.GenError(msje: String; archivo: String; nlin: LongInt);
-//Genera un error
-begin
-  numER := 1;
-  cadER := msje;
-  arcER := archivo;
-  fil := nlin;
-end;
-procedure TPError.Generror(msje: String; ctx: TContext);
-//Genera un error en la posición actual del contexto indicado.
-begin
-  numER := 1;
-  cadER := msje;
-  arcER := ctx.arc;  //toma nombre de archivo del contexto
-  fil := ctx.row;
-  col := ctx.col;
-end;
-function TPError.TxtError: string;
-//Devuelve el mensaje de error
-begin
-  Result := cadER;
-end;
-function TPError.TxtErrorRC: string;
-//Devuelve el mensaje de error con información de fila y columna
-begin
-//  If arcER <> '' Then begin
-    //Hay nombre de archivo de error
-    If fil <> -1 Then       //Hay número de línea
-      //Se usa este formato porque incluye información sobre fila-columna.
-      Result := '['+ IntToStr(fil) + ',' + IntToStr(col) + '] ' + cadER
-    Else          //No hay número de línea, sólo archivo
-      Result := cadER;
-//  end else
-//    Result :=cadER;
-end;
-procedure TPError.Show;
-//Muestra un mensaje de error
-begin
-  Application.MessageBox(PChar(TxtError), PChar(NombPrograma), MB_ICONEXCLAMATION);
-end;
-function TPError.ArcError: string;
-//Devuelve el nombre del archivo de error
-begin
-  ArcError := arcER;
-end;
-function TPError.nLinError: longint;
-//Devuelve el número de línea del error
-begin
-  nLinError := fil;
-end;
-function TPError.nColError: longint;
-//Devuelve el número de línea del error
-begin
-  nColError := col;
-end;
-function TPError.HayError: boolean;
-begin
-  Result := numER <> 0;
 end;
 
 end.
