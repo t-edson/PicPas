@@ -19,9 +19,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="9"/>
+        <TopLine Value="12"/>
         <CursorPos X="18" Y="13"/>
-        <FoldState Value=" TL00304111 T5n00[848mc22 T3nY036 pibj4052131313 PlBzM]UMob23]lG191N]r6o30[Z54 PEt30 T0o8g2F2C Pk7+F{C TF=N6E1]Wi16f"/>
+        <FoldState Value=" TL00304111 T5n00[848mc22 T3nY036 pibj4052131313 PlBzM]UMob23]lG19]p6o30[X8DqD0 T0o8g2F2C Pk7+F{C TF=N6E1 PEi16{"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -100,7 +100,7 @@
       <Unit6>
         <Filename Value="CompBase.pas"/>
         <IsPartOfProject Value="True"/>
-        <TopLine Value="1546"/>
+        <TopLine Value="1566"/>
         <CursorPos X="27" Y="1561"/>
         <FoldState Value=" T0.5K4012 PGJNO"/>
         <ExtraEditorCount Value="1"/>
@@ -465,7 +465,7 @@
         <IsPartOfProject Value="True"/>
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="4"/>
-        <TopLine Value="13"/>
+        <TopLine Value="4"/>
         <CursorPos X="3" Y="127"/>
         <FoldState Value=" T7GB$ T8H08321 PiZkP0 TMlJ4301162 T3lB03E138A Pk9rZ]V0lIQ556C]mArYB T6tf]k THr9B61?"/>
         <UsageCount Value="209"/>
@@ -475,7 +475,7 @@
         <Filename Value="CompMain.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="3"/>
-        <TopLine Value="1939"/>
+        <TopLine Value="1969"/>
         <CursorPos X="32" Y="1956"/>
         <FoldState Value=" T3:22M T6:P080"/>
         <UsageCount Value="200"/>

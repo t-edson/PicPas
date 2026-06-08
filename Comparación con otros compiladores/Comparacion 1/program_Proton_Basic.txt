@@ -1,0 +1,43 @@
+'****************************************************************
+'
+' Programa que genera el efecto de luces del "Auto fantástico"
+' Compilado en Proton Basic Compiler 3.6.0
+' Adaptado de:
+' Fuente: http://www.todopic.com.ar/foros/index.php?topic=4530.msg38857#msg38857
+'****************************************************************
+Device = 16F84
+Xtal 8
+
+'Derecha
+derecha:
+   PORTA.0 = 1;
+   DelayMS 300
+   PORTA.0 = 0;
+   PORTA.1 = 1;
+   DelayMS 300
+   PORTA.1 = 0;
+   PORTA.2 = 1;
+   DelayMS 300
+   PORTA.2 = 0;
+   PORTA.3 = 1;
+   DelayMS 300
+Return
+
+izquierda:
+   PORTA.3 = 0;
+   PORTA.2 = 1;
+   DelayMS 300
+   PORTA.2 = 0;
+   PORTA.1 = 1;
+   DelayMS 300
+   PORTA.1 = 0;
+Return
+
+TRISA = $F0
+INTCON.7 = 0 
+
+Loop1:
+    GoSub derecha
+    GoSub izquierda
+GoTo Loop1
+End

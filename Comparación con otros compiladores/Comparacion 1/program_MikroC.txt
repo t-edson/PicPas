@@ -1,0 +1,61 @@
+////////////////////////////////////////////////////////////////////////////////////
+//                     VsZeNeR"04
+//                     7/Agosto/05
+//
+//   Programa:   Coche Fantastico
+//   Version:   0.0
+//
+//   Dispositivo: PIC 16F648A         Compilador:    CCS vs3.227
+//   Entorno IDE: MPLAB IDE v7.20      Simulador:    Proteus 6.7sp3
+//
+//   Notas: Barrido de led"s simulando la iluminacion del coche fantastico por el
+//         puerto A
+//
+//            RA0 -> 1º Led
+//            RA1 -> 2º Led
+//            RA2 -> 3º Led
+//            RA3 -> 4º Led
+//  Fuente: http://www.todopic.com.ar/foros/index.php?topic=4530.msg38857#msg38857
+//////////////////////////////////////////////////////////////////////////////////
+
+///DECLARACIONES DE FUNCIONES
+void derecha(void);               //ilumina led"s derecha a izquierda
+void izquierda(void);            //ilumina led"s izquierda a derecha
+
+///PROGRAMA
+void main(void)
+{
+   TRISA = 0xF0;           //porta como salida menos RA4(desactivado)
+   GIE_bit = 0;            //todas las interrupciones desactivadas
+
+   while(1) {                        //bucle...
+      derecha();
+      izquierda();
+   };            //...infinito
+}
+
+void derecha(void)
+{
+   PORTA.F0 = 1;
+   delay_ms(300);
+   PORTA.F0 = 0;
+   PORTA.F1 = 1;
+   delay_ms(300);
+   PORTA.F1 = 0;
+   PORTA.F2 = 1;
+   delay_ms(300);
+   PORTA.F2 = 0;
+   PORTA.F3 = 1;
+   delay_ms(300);
+}
+
+void izquierda(void)
+{
+   PORTA.F3 = 0;
+   PORTA.F2 = 1;
+   delay_ms(300);
+   PORTA.F2 = 0;
+   PORTA.F1 = 1;
+   delay_ms(300);
+   PORTA.F1 = 0;
+}
