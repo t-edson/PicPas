@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Version Value="12"/>
     <BuildModes Active="Debug"/>
-    <Units Count="56">
+    <Units Count="57">
       <Unit0>
         <Filename Value="PicPas.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -19,8 +19,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="12"/>
-        <CursorPos X="18" Y="13"/>
+        <CursorPos X="47" Y="12"/>
         <FoldState Value=" TL00304111 T5n00[848mc22 T3nY036 pibj4052131313 PlBzM]UMob23]lG19]p6o30[X8DqD0 T0o8g2F2C Pk7+F{C TF=N6E1 PEi16{"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
@@ -463,10 +462,9 @@
       <Unit41>
         <Filename Value="CompOperands.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <TopLine Value="4"/>
-        <CursorPos X="3" Y="127"/>
+        <CursorPos X="32" Y="124"/>
         <FoldState Value=" T7GB$ T8H08321 PiZkP0 TMlJ4301162 T3lB03E138A Pk9rZ]V0lIQ556C]mArYB T6tf]k THr9B61?"/>
         <UsageCount Value="209"/>
         <Loaded Value="True"/>
@@ -474,7 +472,7 @@
       <Unit42>
         <Filename Value="CompMain.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="1969"/>
         <CursorPos X="32" Y="1956"/>
         <FoldState Value=" T3:22M T6:P080"/>
@@ -573,134 +571,142 @@
       </Unit54>
       <Unit55>
         <Filename Value="XpresBas.pas"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <TopLine Value="55"/>
         <CursorPos X="15" Y="70"/>
         <FoldState Value=" T7ifDr/"/>
         <UsageCount Value="26"/>
         <Loaded Value="True"/>
       </Unit55>
+      <Unit56>
+        <Filename Value="libs_copy\SynFacilUtils-1.21\SynFacilUtils.pas"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="3"/>
+        <CursorPos X="82" Y="12"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit56>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="XpresBas.pas"/>
-        <Caret Line="533" Column="6" TopLine="519"/>
+        <Filename Value="CompBase.pas"/>
+        <Caret Line="1120" Column="28" TopLine="1105"/>
       </Position1>
       <Position2>
-        <Filename Value="XpresBas.pas"/>
-        <Caret Line="439" Column="3" TopLine="435"/>
+        <Filename Value="CompBase.pas"/>
+        <Caret Line="1351" Column="28" TopLine="1327"/>
       </Position2>
       <Position3>
         <Filename Value="CompBase.pas"/>
-        <Caret Line="1094" Column="22" TopLine="1079"/>
+        <Caret Line="1527" Column="15" TopLine="1513"/>
       </Position3>
       <Position4>
         <Filename Value="CompBase.pas"/>
-        <Caret Line="1120" Column="28" TopLine="1105"/>
+        <Caret Line="1561" Column="19" TopLine="1543"/>
       </Position4>
       <Position5>
         <Filename Value="CompBase.pas"/>
-        <Caret Line="1351" Column="28" TopLine="1327"/>
+        <Caret Line="1566" Column="23" TopLine="1535"/>
       </Position5>
       <Position6>
         <Filename Value="CompBase.pas"/>
-        <Caret Line="1527" Column="15" TopLine="1513"/>
+        <Caret Line="1561" Column="19" TopLine="1546"/>
       </Position6>
       <Position7>
-        <Filename Value="CompBase.pas"/>
-        <Caret Line="1561" Column="19" TopLine="1543"/>
+        <Filename Value="CompMain.pas"/>
+        <Caret Line="243" Column="29" TopLine="229"/>
       </Position7>
       <Position8>
-        <Filename Value="CompBase.pas"/>
-        <Caret Line="1566" Column="23" TopLine="1535"/>
+        <Filename Value="CompMain.pas"/>
+        <Caret Line="1574" Column="24" TopLine="1559"/>
       </Position8>
       <Position9>
-        <Filename Value="CompBase.pas"/>
-        <Caret Line="1561" Column="19" TopLine="1546"/>
+        <Filename Value="CompMain.pas"/>
+        <Caret Line="1762" Column="19" TopLine="1747"/>
       </Position9>
       <Position10>
         <Filename Value="CompMain.pas"/>
-        <Caret Line="243" Column="29" TopLine="229"/>
+        <Caret Line="1786" Column="23" TopLine="1771"/>
       </Position10>
       <Position11>
         <Filename Value="CompMain.pas"/>
-        <Caret Line="1574" Column="24" TopLine="1559"/>
+        <Caret Line="1813" Column="39" TopLine="1797"/>
       </Position11>
       <Position12>
         <Filename Value="CompMain.pas"/>
-        <Caret Line="1762" Column="19" TopLine="1747"/>
+        <Caret Line="1820" Column="26" TopLine="1806"/>
       </Position12>
       <Position13>
         <Filename Value="CompMain.pas"/>
-        <Caret Line="1786" Column="23" TopLine="1771"/>
+        <Caret Line="1956" Column="24" TopLine="1939"/>
       </Position13>
       <Position14>
-        <Filename Value="CompMain.pas"/>
-        <Caret Line="1813" Column="39" TopLine="1797"/>
+        <Filename Value="XpresBas.pas"/>
+        <Caret Line="441" Column="19" TopLine="435"/>
       </Position14>
       <Position15>
-        <Filename Value="CompMain.pas"/>
-        <Caret Line="1820" Column="26" TopLine="1806"/>
+        <Filename Value="XpresBas.pas"/>
+        <Caret Line="161" Column="25" TopLine="145"/>
       </Position15>
       <Position16>
-        <Filename Value="CompMain.pas"/>
-        <Caret Line="1956" Column="24" TopLine="1939"/>
+        <Filename Value="XpresBas.pas"/>
+        <Caret Line="162" Column="26" TopLine="145"/>
       </Position16>
       <Position17>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="441" Column="19" TopLine="435"/>
+        <Caret Line="161" Column="31" TopLine="145"/>
       </Position17>
       <Position18>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="161" Column="25" TopLine="145"/>
+        <Caret Line="51" Column="16" TopLine="33"/>
       </Position18>
       <Position19>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="162" Column="26" TopLine="145"/>
+        <Caret Line="154" Column="14" TopLine="148"/>
       </Position19>
       <Position20>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="161" Column="31" TopLine="145"/>
+        <Caret Line="157" Column="17" TopLine="141"/>
       </Position20>
       <Position21>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="51" Column="16" TopLine="33"/>
+        <Caret Line="173" Column="16" TopLine="151"/>
       </Position21>
       <Position22>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="154" Column="14" TopLine="148"/>
+        <Caret Line="546" Column="22" TopLine="543"/>
       </Position22>
       <Position23>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="157" Column="17" TopLine="141"/>
+        <Caret Line="173" Column="19" TopLine="158"/>
       </Position23>
       <Position24>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="173" Column="16" TopLine="151"/>
+        <Caret Line="70" Column="48" TopLine="53"/>
       </Position24>
       <Position25>
         <Filename Value="XpresBas.pas"/>
-        <Caret Line="546" Column="22" TopLine="543"/>
+        <Caret Line="665" Column="3" TopLine="655"/>
       </Position25>
       <Position26>
-        <Filename Value="XpresBas.pas"/>
-        <Caret Line="173" Column="19" TopLine="158"/>
-      </Position26>
-      <Position27>
-        <Filename Value="XpresBas.pas"/>
-        <Caret Line="70" Column="48" TopLine="53"/>
-      </Position27>
-      <Position28>
-        <Filename Value="XpresBas.pas"/>
-        <Caret Line="665" Column="3" TopLine="655"/>
-      </Position28>
-      <Position29>
         <Filename Value="CompOperands.pas"/>
         <Caret Line="134" Column="18" TopLine="15"/>
-      </Position29>
-      <Position30>
+      </Position26>
+      <Position27>
         <Filename Value="CompOperands.pas"/>
         <Caret Line="596" Column="6" TopLine="583"/>
+      </Position27>
+      <Position28>
+        <Filename Value="CompOperands.pas"/>
+        <Caret Line="124" Column="32" TopLine="4"/>
+      </Position28>
+      <Position29>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="11" Column="23"/>
+      </Position29>
+      <Position30>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="12" Column="47"/>
       </Position30>
     </JumpHistory>
     <RunParams>

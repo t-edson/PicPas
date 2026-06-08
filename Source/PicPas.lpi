@@ -311,7 +311,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\..\_libraries\SynFacilUtils-1.21;..\..\_libraries\MisUtils-0.6;..\..\_libraries\MiConfig-0.4;..\..\_libraries\PicUtils-1.6;..\..\_libraries\UtilsGrilla-0.8;..\..\_libraries\ogEditGraf-2.6;..\..\_libraries\alexia_lib"/>
+      <OtherUnitFiles Value="..\..\_libraries\PicUtils-1.6;..\..\_libraries\alexia_lib;libs_copy\MiConfig-0.4;libs_copy\MisUtils-0.6;libs_copy\ogEditGraf-2.6;libs_copy\SynFacilUtils-1.21;libs_copy\UtilsGrilla-0.8"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>
