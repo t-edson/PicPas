@@ -4,7 +4,7 @@ You can download the latest stable version from the section: [Releases](https://
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=7LKYWG9LXNQ9C&lc=ES&item_name=Tito%20Hinostroza&item_number=2153&no_note=0&cn=Dar%20instrucciones%20especiales%20al%20vendedor%3a&no_shipping=2&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted)
 
-PicPas 0.8.8
+PicPas 0.8.9
 ============
 
 Multi-platform Pascal cross-compiler for Microchip 8 bits PIC microcontrollers.
@@ -104,39 +104,37 @@ end.
 
 There is not yet support for Enhanced Mid-range, or the PIC18 High-preformance families of PIC.
 
-
 ## IDE
 
 PicPas includes an IDE integrated to the compiler, to help on developing the programs.
 
 Some features of the IDE are:
 
-•	Cross-platform.
+•    Cross-platform.
 
-•	Multiple editors windows.
+•    Multiple editors windows.
 
-•	Syntax highlighting, code folding, word, and line highlighting for Pascal and ASM.
+•    Syntax highlighting, code folding, word, and line highlighting for Pascal and ASM.
 
-•	Code completion, and templates for the common structures IF, REPEAT, WHILE, …
+•    Code completion, and templates for the common structures IF, REPEAT, WHILE, …
 
-•	Shows the assembler code and the resources used.
+•    Shows the assembler code and the resources used.
 
-•	Support for themes (skins).
+•    Support for themes (skins).
 
-•	Code tools for completion and navigation.
+•    Code tools for completion and navigation.
 
-•	Check syntax in REAL TIME!!!.
+•    Check syntax in REAL TIME!!!.
 
-•	Several setting options.
+•    Several setting options.
 
-•	Translated to english, french, spanish and german.
+•    Translated to english, french, spanish and german.
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/06/PicPas-0.7_en.png "PicPas with dark skin")
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/PicPas-Linux.jpg "PicPas for Ubuntu")
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2018/05/PicPasMac.jpg "PicPas for Mac")
-
 
 ## Debugger/Simulator
 
@@ -152,11 +150,9 @@ F7 -> Step by step into subroutine.
 F8 -> Step by step over subroutine.
 F9 -> Run the program in real time.
 
-
 ## Optimization Comparison
 
 PisPas has been compared in two code optimization competition against the best profesional compilers for PIC microcontrollers, obtaining the first place in both.
-
 
 Firts competition
 
@@ -167,7 +163,6 @@ Result:
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/08/21106414_961808527291234_7715586770614634466_n.jpg "PicPas comparison 1")
 
-
 Second competition
 
 Compiling a digital clock using I2C and the DS1307:
@@ -176,8 +171,6 @@ https://www.facebook.com/groups/electronicaymicrocontroladores/permalink/1812269
 Result 
 
 ![Tito's Terminal](http://blog.pucp.edu.pe/blog/tito/wp-content/uploads/sites/610/2017/11/23172519_996093467196073_6412663861585566494_n.jpg "PicPas comparison 2")
-
-
 
 ## Language Reference
 
@@ -239,7 +232,7 @@ Operator            Precedence
  +, -, OR, XOR         4
  =, <>, <, <=, >, >=   3
  := +=                 2
- ```
+```
 
 ### Types
 
@@ -252,7 +245,8 @@ Type           Size
  char          1 byte
  word          2 bytes
  dword         4 bytes
- ```
+```
+
 Numerical types are all unsigned.
 
 ### Variables
@@ -334,7 +328,7 @@ System functions are always available in code. They don't need to be defined or 
 ```
 FUNCTION       DESCRIPTION
 ============== =================================================
-delay_ms()	   Generate a time delay in miliseconds, from 0 to 65536.
+delay_ms()       Generate a time delay in miliseconds, from 0 to 65536.
 Inc()          Increase a variable.
 Dec()          Decrease a varaible.
 SetBank()      Set the current RAM bank.
@@ -415,7 +409,6 @@ When PicPas compile an INTERRUPT procedure, some special criterias are considere
 
 INTERRUPT procedures don't save the value of registers or the control flags. This should be done manually.
 
-
 ### ASM blocks
 
 PicPas have a complete support for inserting ASM code inside the Pascal source. 
@@ -474,10 +467,10 @@ begin
     BCF bol1
     CLRF word1.Low
     BCF word1.high.bit1
-	CLRF dword1.low
-	CLRF dword1.high
-	CLRF dword1.extra
-	CLRF dword1.ultra
+    CLRF dword1.low
+    CLRF dword1.high
+    CLRF dword1.extra
+    CLRF dword1.ultra
   end
 end.
 ```
@@ -526,16 +519,17 @@ begin
   //Now “m” is  $ff
 end.
 ```
+
 The operator "@" return the address of a variable.
 
 Pointers support some basic operations:
 
-Assign   :	p1 := p2;
-Compare  : 	if p1 = p2 then ...
-Increment:	Inc(p);
-Decrement:	Dec(p);
-Add      :	p1 + p2 + 1
-Subtrac  :	p1 - 5
+Assign   :    p1 := p2;
+Compare  :     if p1 = p2 then ...
+Increment:    Inc(p);
+Decrement:    Dec(p);
+Add      :    p1 + p2 + 1
+Subtrac  :    p1 - 5
 
 ## Directives
 
@@ -547,11 +541,11 @@ Directives have their own programmig language. It's a simple and interpreted lan
 
 Some features of this programming language are:
 
-*	It's case insensitive, like Pascal is.
-*	Instructions are contained in one single line and are delimited by {$ … }
-*	It's not a typed language. Variables can change their type and value in execution and different type variables can be assigned.
-*	Variables don't need to be defined before using.
-*	There are only two types for variables: strings and numbers.
+* It's case insensitive, like Pascal is.
+* Instructions are contained in one single line and are delimited by {$ … }
+* It's not a typed language. Variables can change their type and value in execution and different type variables can be assigned.
+* Variables don't need to be defined before using.
+* There are only two types for variables: strings and numbers.
 
 ### Variables
 
@@ -572,7 +566,7 @@ Content of a variable, can be shown using instructions like $MSGBOX oo $INFO:
 ### System Variables
 
 There are some system variables, accessible from the directives language. They are:
- 
+
 {$MSGBOX PIC_MODEL} -> Shows the PIC model defined.
 
 {$MSGBOX PIC_FREQUEN} -> Shows the Clock frequency.
@@ -607,7 +601,6 @@ Mid-Range: PIC16C63 PIC16CR63 PIC16C65 PIC16C65A PIC16CR65 PIC16F72 PIC16F83 PIC
 
 This directive is a short form to define a device, however it's preferred to define devices using directives, like $SET_STATE_RAM, $SET_MAPPED_RAM, $CLEAR_STATE_RAM. 
 
- 
 #### $FREQUENCY
 
 Specify the clock frequency, in MHz or KHz. Example:
@@ -775,6 +768,7 @@ It has two forms:
 ... 
 {$ENDIF}
 ```
+
 The next code is an example of use:
 
 ```
@@ -829,7 +823,7 @@ A long way can be used too:
 ... 
 {$ENDIF}
 ```
- 
+
 The following code shows an example of use:
 
 ```
@@ -940,8 +934,7 @@ $CLEAR_STATE_RAM, set the state of all the RAM as unimplemented, clearing all pr
 
 It's used before of starting to define the RAM for a device, using the directives $SET_STATE_RAM and $SET_MAPPED_RAM.
 
-
-#### $RESET_PINS 
+#### $RESET_PINS
 
 Clear all the configuration for the pines defined in the microcontroller.
 
@@ -950,7 +943,6 @@ Clear all the configuration for the pines defined in the microcontroller.
 ```
 
 This directive is generally used before of defining the microcontollers pins with the directive {$SET_PIN_NAME}
-
 
 #### $SET_PIN_NAME
 
@@ -1047,7 +1039,7 @@ PicPas have complete support to define the hardware of microcontrollers, using d
 Practically all devices from Baseline and Mid-Range families can be defined in this way.
 
 Following, there is an example of defining a microcontoller similar to the  PIC16F84:
- 
+
 ```
 //Define hardware
 {$SET PIC_MODEL='MY_PIC'}
@@ -1069,16 +1061,16 @@ Following, there is an example of defining a microcontoller similar to the  PIC1
 ```
 
 To see more examples of definig devices, check the folders /devices10 and /devices16.
- 
+
 ## PicPas Limitations
 
-•	Only basic types are implemented: bit, byte, char, boolean, word an dword(limited support).
+•    Only basic types are implemented: bit, byte, char, boolean, word an dword(limited support).
 
-•	Cannot declare arrays or records.
+•    Cannot declare arrays or records.
 
-•	No recursion implemented, Because of the limited hardware resources, available in PIC devices.
+•    No recursion implemented, Because of the limited hardware resources, available in PIC devices.
 
-•	No float point implemented.
+•    No float point implemented.
 
 Some of these limitations must be solved in next versions.
 
@@ -1115,4 +1107,3 @@ To have more information about the compiler, check the Technical Documentation (
 PicPas is a new project and it's still in development and there are not dedicated libraries for the compiler. 
 
 The best repository for libraries and useful code is in: https://github.com/AguHDz/PicPas-Librerias_y_Programas
-
