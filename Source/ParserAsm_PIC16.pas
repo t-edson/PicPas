@@ -42,9 +42,9 @@ type
     function CaptureNbit(var b: byte): boolean;
     function CaptureRegister(out f: byte): boolean;
     procedure EndASM;
-    procedure GenErrorAsm(msg: string);
-    procedure GenErrorAsm(msg: string; const Args: array of const);
-    procedure GenWarnAsm(msg: string);
+    procedure GenErrorAsm(txt: string);
+    procedure GenErrorAsm(txt: string; const Args: array of const);
+    procedure GenWarnAsm(txt: string);
     function GetFaddress(addr: integer): byte;
     function HaveByteInformation(out bytePos: byte): boolean;
     function IsLabel(txt: string; out dir: integer): boolean;
@@ -58,7 +58,7 @@ type
   protected
     procedure ProcASMlime(const AsmLin: string);
   public //Inicialización
-    constructor Create; override;
+    constructor Create(msg0: TMessageManager);
     destructor Destroy; override;
   end;
 
@@ -78,31 +78,31 @@ begin
 end;
 
 { TParserAsm }
-procedure TParserAsm.GenErrorAsm(msg: string);
+procedure TParserAsm.GenErrorAsm(txt: string);
 {Genera un error corrigiendo la posición horizontal}
 var
   p: TSrcPos;
 begin
   p := lex.GetSrcPos;
   p.col := tokIni2 + lexAsm.GetX;  //corrige columna
-  GenErrorPos(msg, [], p);
+  GenError(txt, [], p);
 end;
-procedure TParserAsm.GenErrorAsm(msg: string; const Args: array of const);
+procedure TParserAsm.GenErrorAsm(txt: string; const Args: array of const);
 var
   p: TSrcPos;
 begin
   p := lex.GetSrcPos;
   p.col := tokIni2 + lexAsm.GetX;  //corrige columna
-  GenErrorPos(msg, Args, p);
+  GenError(txt, Args, p);
 end;
-procedure TParserAsm.GenWarnAsm(msg: string);
+procedure TParserAsm.GenWarnAsm(txt: string);
 {Genera una advertencia corrigiendo la posición horizontal}
 var
   p: TSrcPos;
 begin
   p := lex.GetSrcPos;
   p.col := lexAsm.GetX;  //corrige columna
-  GenWarnPos(msg, [], p);
+  GenWarnPos(txt, [], p);
 end;
 function TParserAsm.tokType: integer; inline;
 begin
@@ -810,9 +810,9 @@ begin
     ProcASM(lin);
   end;
 end;
-constructor TParserAsm.Create;
+constructor TParserAsm.Create(msg0: TMessageManager);
 begin
-  inherited Create;
+  inherited Create(msg0);
   labels := TPicLabel_list.Create(true);
   uJumps := TPicUJump_list.Create(true);
   {Define la sintaxis del lexer que se usará para analizar el código en ensamblador.}

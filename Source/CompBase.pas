@@ -239,7 +239,7 @@ protected
   procedure RemoveUnusedTypes;
   procedure UpdateCallersToUnits;
 public    //Inicialización
-  constructor Create; virtual;
+  constructor Create(msg0: TMessageManager);
   destructor Destroy; override;
 end;
 
@@ -493,7 +493,7 @@ begin
   xvar.srcDec := srcPos;  //Actualiza posición
   //Verifica si hay conflicto. Solo es necesario buscar en el nodo actual.
   if xvar.ExistsIn(TreeElems.curNode.elements) then begin
-    GenErrorPos(ER_DUPLIC_IDEN, [xvar.name], xvar.srcDec);
+    GenError(ER_DUPLIC_IDEN, [xvar.name], xvar.srcDec);
     xvar.Destroy;   //Hay una variable creada
     exit(nil);
   end;
@@ -511,7 +511,7 @@ begin
   xcons := CreateCons(conName, eleTyp);
   xcons.srcDec := srcPos;
   if xcons.ExistsIn(TreeElems.curNode.elements) then begin
-    GenErrorPos(ER_DUPLIC_IDEN, [xcons.name], xcons.srcDec);
+    GenError(ER_DUPLIC_IDEN, [xcons.name], xcons.srcDec);
     xcons.Destroy;   //hay una constante creada
     exit;
   end;
@@ -554,7 +554,7 @@ begin
       decRegis: begin
         //Parameters REGISTER use: A or H,A register. Only can be used once.
         if regWused then begin
-          GenErrorPos(ER_RA_HAV_USED, [], par.srcPos);
+          GenError(ER_RA_HAV_USED, [], par.srcPos);
           exit;
         end;
         regWused := true;  //Activa bandera
@@ -658,11 +658,11 @@ devuelve FALSE.}
       //Encontró línea anterior no nula o llegó a la primera línea.
 //      xlex.ExploreLine(Point(length(lin), p.row), toks, CurTok );
       p.col := length(lin);   //mueve al final (antes del EOL)
-      GenErrorPos('"%s" expected.', [tok], p);  //Genera error
+      GenError('"%s" expected.', [tok], p);  //Genera error
     end else begin
       //No hay línea anterior
       p.col := 1;   //mueve al inicio
-      GenErrorPos('"%s" expected.', [tok], p);  //Genera error
+      GenError('"%s" expected.', [tok], p);  //Genera error
     end;
   end;
 
@@ -690,7 +690,7 @@ begin
         GenErrorInLastLine(p);
       end else begin
         //Encontró, en la misma línea un caracter diferente de espacio
-        GenErrorPos('"%s" expected.', [tok], p);  //Genera error ahí mismo
+        GenError('"%s" expected.', [tok], p);  //Genera error ahí mismo
       end;
     end else begin
       //Está al inicio de la línea. El error debe estar antes
@@ -857,7 +857,7 @@ begin
   for fun in TreeElems.AllFuncs do begin
     n := fun.UpdateCalledAll;
     if n<0 then begin
-      GenErrorPos('Recursive call or circular recursion in %s', [fun.name], fun.srcDec);
+      GenError('Recursive call or circular recursion in %s', [fun.name], fun.srcDec);
     end;
   end;
   if HayError then exit;
@@ -1971,8 +1971,9 @@ begin
   ScanUnits(TreeElems.main);
 end;
 //Inicialización
-constructor TCompilerBase.Create;
+constructor TCompilerBase.Create(msg0: TMessageManager);
 begin
+  inherited Create(msg0);
   ClearError;   //inicia motor de errores
   //Crea arbol de elementos y listas
   TreeElems  := TXpTreeElements.Create;

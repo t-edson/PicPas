@@ -4068,7 +4068,7 @@ begin
   uni := CreateUnit('-');
   TreeElems.AddElementAndOpen(uni);  //Open Unit
   //Create a fictional position
-  srcPos.fil := '';
+  srcPos.idCtx := -1;
   srcPos.row := 1;
   srcPos.col := 1;
   //Create system function "delay_ms"

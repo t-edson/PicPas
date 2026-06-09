@@ -67,7 +67,7 @@ type
     procedure SetTextErrColor(AValue: TColor);
   public
     HaveErrors: boolean;
-    OnDblClickMessage: procedure(const srcPos: TSrcPos) of object;
+    OnDblClickMessage: procedure(fileSrc: string; row, col: integer) of object;
     OnStatisDBlClick: procedure of object;
     property BackColor: TColor read FBackColor write SetBackColor ;
     property TextColor: TColor read FTextColor write SetTextColor ;
@@ -86,6 +86,7 @@ type
     procedure AddInformation(infTxt: string);
     procedure AddWarning(warTxt: string; fileName: string; row, col: integer);
   public //Inicialización
+    procedure Inic(msgManager: TMessageManager);
     constructor Create(AOwner: TComponent) ; override;
     destructor Destroy; override;
     procedure SetLanguage;
@@ -250,11 +251,8 @@ begin
   arc := grilla.Cells[GCOL_FILE, grilla.row];
   TryStrToInt(grilla.Cells[GCOL_ROW, grilla.row], row);
   TryStrToInt(grilla.Cells[GCOL_COL, grilla.row], col);
-  srcPos.fil := arc;
-  srcPos.row := row;
-  srcPos.col := col;
   if arc<>'' then begin
-    if OnDblClickMessage<>nil then OnDblClickMessage(srcPos);
+    if OnDblClickMessage<>nil then OnDblClickMessage(arc, row, col);
   end;
 end;
 procedure TfraMessagesWin.mnCopyRowClick(Sender: TObject);
@@ -500,6 +498,12 @@ begin
   Barra(lblSTACK.Left+ 5, lblSTACK.Top + 20, panStatis.Height-35, usedSTK);
 end;
 //Inicialización
+procedure TfraMessagesWin.Inic(msgManager: TMessageManager);
+{COnfigura a la ventana de mensajes para que se conecte al gestor de mensajes}
+begin
+//  msgManager.OnMessage     := @CompilerMsg;
+//  msgManager.OnMessageBox  := @CompilerMessageBox;
+end;
 constructor TfraMessagesWin.Create(AOwner: TComponent);
 var
   enc: TugGrillaCol;

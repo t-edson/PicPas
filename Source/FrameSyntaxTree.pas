@@ -52,6 +52,7 @@ type
   private
     FBackColor: TColor;
     FTextColor: TColor;
+    cpx       : TCompilerBase;   //Reference to lexer
     syntaxTree: TXpTreeElements;
     function AddNodeTo(nodParent: TTreeNode; elem: TxpElement): TTreeNode;
     procedure frmArcExplor1DoubleClickFile(nod: TExplorNode);
@@ -68,7 +69,7 @@ type
       Node: TTreeNode; State: TCustomDrawState; Stage: TCustomDrawStage;
       var PaintImages, DefaultDraw: Boolean);
   public
-    OnSelectElemen: procedure(var elem: TxpElement) of object;
+    OnSelectElemen: procedure(fileSrc: string; row, col: integer) of object;
     OnOpenFile: procedure(filname: string) of object;
     OnSelecFileExplorer: procedure of object;
     //Se requiere información del archivo actual
@@ -78,7 +79,7 @@ type
     property BackColor: TColor read FBackColor write SetBackColor;
     property TextColor: TColor read FTextColor write SetTextColor;
     procedure LocateFile(filname: string);
-    procedure Init(syntaxTree0: TXpTreeElements);
+    procedure Init(Compiler: TCompilerBase);
     procedure Refresh;
     procedure SetLanguage;
   end;
@@ -109,9 +110,10 @@ procedure TfraSyntaxTree.frmArcExplor1MenuOpenFile(nod: TExplorNode);
 begin
   if OnOpenFile<>nil then OnOpenFile(nod.Path);
 end;
-procedure TfraSyntaxTree.Init(syntaxTree0: TXpTreeElements);
+procedure TfraSyntaxTree.Init(Compiler    : TCompilerBase);
 begin
-  syntaxTree := syntaxTree0;
+  cpx := Compiler;
+  syntaxTree := Compiler.TreeElems;
   TreeView1.ReadOnly := true;
   TreeView1.OnAdvancedCustomDrawItem := @TreeView1AdvancedCustomDrawItem;
   TreeView1.Options := TreeView1.Options - [tvoThemedDraw];
@@ -436,7 +438,7 @@ begin
     exit;
   end;
   elem := TxpElement(TreeView1.Selected.Data);
-  frmElemProperty.Exec(elem);
+  frmElemProperty.Exec(cpx.lex, elem);
 end;
 procedure TfraSyntaxTree.TreeView1DblClick(Sender: TObject);
 begin
@@ -464,10 +466,12 @@ end;
 procedure TfraSyntaxTree.acGenGoToExecute(Sender: TObject);
 var
   elem: TxpElement;
+  fileName: String;
 begin
   if SelectedIsElement then begin
     elem := TxpElement(TreeView1.Selected.Data);
-    if OnSelectElemen <> nil  then OnSelectElemen(elem);
+    fileName := cpx.lex.ctxFile(elem.srcDec);
+    if OnSelectElemen <> nil  then OnSelectElemen(fileName, elem.srcDec.row, elem.srcDec.col);
   end;
 end;
 procedure TfraSyntaxTree.acGenExpAllExecute(Sender: TObject);
@@ -485,7 +489,7 @@ begin
   if TreeView1.Selected = nil then exit;
   if TreeView1.Selected.Data = nil then exit;
   elem := TxpElement(TreeView1.Selected.Data);
-  frmElemProperty.Exec(elem);
+  frmElemProperty.Exec(cpx.lex, elem);
   frmElemProperty.Show;
 end;
 procedure TfraSyntaxTree.acGenViewGrExecute(Sender: TObject);

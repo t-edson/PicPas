@@ -5,7 +5,8 @@ unit GenCodBas_PIC17;
 interface
 uses
   Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic17Utils,
-  CompBase, ParserDirec, Globales, CompOperands, MisUtils, LCLType, LCLProc;
+  CompBase, ParserDirec, Globales, CompOperands, XpresBas, MisUtils, LCLType,
+  LCLProc;
 const
   STACK_SIZE = 16;         //Tamaño de pila para subrutinas en el PIC
   MAX_REGS_AUX_BYTE = 8;   //Cantidad máxima de registros a usar
@@ -293,7 +294,7 @@ type
     pic        : TPIC17;       //Objeto PIC de la serie 16.
     procedure StartRegs;
     function CompilerName: string; override;
-    constructor Create; override;
+    constructor Create(msg0: TMessageManager);
     destructor Destroy; override;
   end;
 
@@ -3339,9 +3340,9 @@ begin
     exit;
   end;
 end;
-constructor TGenCodBas.Create;
+constructor TGenCodBas.Create(msg0: TMessageManager);
 begin
-  inherited Create;
+  inherited Create(msg0);
   ID := 17;  //Identifica al compilador PIC17
   devicesPath := patDevices17;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;

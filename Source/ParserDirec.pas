@@ -155,8 +155,8 @@ type
   public   //Public
     lexDir : TSynFacilSyn;  //lexer para analizar directivas
     procedure skipWhites;
-    procedure GenErrorDir(msg: string);
-    procedure GenErrorDir(msg: string; const Args: array of const);
+    procedure GenErrorDir(txt: string);
+    procedure GenErrorDir(txt: string; const Args: array of const);
     procedure AddInstruction(instName: string; callProc: TDirEveCallProc);
     procedure AddSysVariableNumber(varName: string; ReadNum: TDirEveReadNum;
                                                     WriteNum: TDirEveWriteNum);
@@ -166,7 +166,7 @@ type
     procedure DefLexDirectiv;
     procedure ClearMacros;
   public   //Initialization
-    constructor Create; override;
+    constructor Create(msg0: TMessageManager);
     destructor Destroy; override;
   end;
 var
@@ -445,7 +445,7 @@ begin
     //Ubicamos el error, "manualmente", porque aún no hemos explorado con el lexer.
     p := lex.GetSrcPos;
     p.col := tokIni + dlin + 1;  //columna al final
-    GenErrorPos(ER_EXPECTED_BR, [], p);
+    GenError(ER_EXPECTED_BR, [], p);
   end;
   //Inicia exploración con el lexer "lexDir"
   lexDir.SetLine(lin, 0);  //inicia cadena
@@ -1531,22 +1531,22 @@ begin
   if tokType = lexDir.tnSpace then
     lexDir.Next;  //quita espacios
 end;
-procedure TParserDirecBase.GenErrorDir(msg: string);
+procedure TParserDirecBase.GenErrorDir(txt: string);
 {Genera un error corrigiendo la posición horizontal}
 var
   p: TSrcPos;
 begin
   p := lex.GetSrcPos;
   p.col := tokIni + lexDir.GetX;  //corrige columna
-  GenErrorPos(msg, [], p);
+  GenError(txt, [], p);
 end;
-procedure TParserDirecBase.GenErrorDir(msg: string; const Args: array of const);
+procedure TParserDirecBase.GenErrorDir(txt: string; const Args: array of const);
 var
   p: TSrcPos;
 begin
   p := lex.GetSrcPos;
   p.col := tokIni + lexDir.GetX;  //corrige columna
-  GenErrorPos(msg, Args, p);
+  GenError(txt, Args, p);
 end;
 procedure TParserDirecBase.AddSysVariableNumber(varName: string;
   ReadNum: TDirEveReadNum; WriteNum: TDirEveWriteNum);
@@ -1624,9 +1624,9 @@ begin
     end else if DefinedMacro(lexDir.GetToken, dmac) then begin
       p := lex.GetSrcPos;   //Guarda posición del token
       lex.Next;  //pasa la directiva
-      lex.NewContextFromTxt(
+      lex.NewContextFromText(
         dmac.value, //Pasa a explorar contenido de la macro como cadena
-        dmac.posDef.fil {Fija el archivo de definiición de la macro.}
+        lex.ctxFile(dmac.posDef.idCtx)  {Fija el archivo de definición de la macro.}
       );
       lex.curCtx.autoClose := true;   //Para que se cierre, al finalizar
       lex.curCtx.FixErrPos := true;   //Para que se ignore la posición de los errores
@@ -1637,7 +1637,7 @@ begin
       //Es variable
       p := lex.GetSrcPos;   //Guarda posición del token
       lex.Next;  //pasa la directiva
-      lex.NewContextFromTxt(
+      lex.NewContextFromText(
         dvar.valor.valStr, //Pasa a explorar valor de la variable como texto
         '' {Fija el archivo de definiición.}
       );
@@ -1723,9 +1723,9 @@ begin
   AddSysVariableString('CURRBLOCK'   , @read_CURRBLOCK  , nil);
 end;
 //Initialization
-constructor TParserDirecBase.Create;
+constructor TParserDirecBase.Create(msg0: TMessageManager);
 begin
-  inherited Create;
+  inherited Create(msg0);
   lexDir := TSynFacilSyn.Create(nil);  //crea lexer para analzar directivas
   macroList := TDirMacro_list.Create(true);
   varsList := TDirVar_list.Create(true);

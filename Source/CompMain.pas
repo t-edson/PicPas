@@ -926,7 +926,7 @@ begin
   //Las declaraciones de tipo, crean siempre nuevos tipos.
   //Validación de duplicidad e inclusión en el árbol de sintaxis.
   if etyp.ExistsIn(TreeElems.curNode.elements) then begin
-    GenErrorPos(ER_DUPLIC_IDEN, [etyp.name], etyp.srcDec);
+    GenError(ER_DUPLIC_IDEN, [etyp.name], etyp.srcDec);
     etyp.Destroy;   //Hay una variable creada
     exit;
   end;
@@ -1406,7 +1406,7 @@ procedure TCompMain.CompileProcDeclar;
             fun := TxpEleFun(ele);
             if fun.SameParamsType(pars) then begin
               {Two similar functions in the same IMPLEMENTATION scope.}
-              GenErrorPos(ER_DUPLIC_FUNC_,[procName], srcPos);
+              GenError(ER_DUPLIC_FUNC_,[procName], srcPos);
               exit(nil);
             end;
           end else begin
@@ -1450,7 +1450,7 @@ procedure TCompMain.CompileProcDeclar;
           fun := TxpEleFun(ele);
           if fun.SameParamsType(pars) then begin
             //Is not FORWARD, must be duplicated:
-            GenErrorPos(ER_DUPLIC_FUNC_,[procName], srcPos);
+            GenError(ER_DUPLIC_FUNC_,[procName], srcPos);
             exit;
           end;
         end else begin
@@ -1486,7 +1486,7 @@ begin
       exit;
     end;
     if TreeElems.FunctionExistInCur(procName, pars) then begin
-      GenErrorPos(ER_DUPLIC_FUNC_,[procName], srcPos);
+      GenError(ER_DUPLIC_FUNC_,[procName], srcPos);
       exit;
     end;
     funDec := AddFunctionDEC(procName, retType, srcPos, pars, IsInterrupt);
@@ -1519,7 +1519,7 @@ begin
     if HayError then exit;
     if IsForward then begin
       if TreeElems.FunctionExistInCur(procName, pars) then begin
-        GenErrorPos(ER_DUPLIC_FUNC_,[procName], srcPos);
+        GenError(ER_DUPLIC_FUNC_,[procName], srcPos);
         exit;
       end;
       funDec := AddFunctionDEC(procName, retType, srcPos, pars, IsInterrupt);
@@ -1701,7 +1701,7 @@ begin
   for elem in TreeElems.curNode.elements do if elem.idClass = eltFuncDec then begin
     fundec := TxpEleFunDec(elem);
     if fundec.implem = nil then begin
-      GenErrorPos('Function %s not implemented.', [fundec.name], fundec.srcDec);
+      GenError('Function %s not implemented.', [fundec.name], fundec.srcDec);
       exit;
     end;
   end;

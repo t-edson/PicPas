@@ -24,7 +24,7 @@ type
     procedure GetResourcesUsed(out ramUse, romUse, stkUse: single); override;
     procedure GenerateListReport(lins: TStrings); override;
   public //Inicialización
-    constructor Create; override;
+    constructor Create(msg0: TMessageManager);
     destructor Destroy; override;
   end;
 
@@ -277,7 +277,7 @@ begin
     TreeElems.main.name := ExtractFileName(mainFile);
     p := pos('.',TreeElems.main.name);
     if p <> 0 then TreeElems.main.name := copy(TreeElems.main.name, 1, p-1);
-    TreeElems.main.srcDec.fil := mainFile;
+    TreeElems.main.srcDec := lex.GetSrcPos;
     //Continúa con preparación
     TreeDirec.Clear;
     TreeElems.OnAddElement := @Tree_AddElement;   //Se va a modificar el árbol
@@ -530,7 +530,7 @@ begin
 
       lins.Add( copy(fun.name + space(24) , 1, 24) + ' ' +
                 state + ' ' +
-                fun.srcDec.RowColString + ':' + fun.srcDec.fil
+                fun.srcDec.RowColString + ':' + lex.ctxFile(fun.srcDec.idCtx)
       );
     end;
   end;
@@ -606,10 +606,10 @@ begin
   lins.Add('Max. Nesting = ' + IntToSTr(TreeElems.main.maxNesting));
 
 end;
-constructor TCompiler_PIC16.Create;
+constructor TCompiler_PIC16.Create(msg0: TMessageManager);
 begin
  // hexFile := 'output.hex';
-  inherited Create;
+  inherited Create(msg0);
   lex.OnNewLine:=@cInNewLine;
   mode := modPicPas;   //Por defecto en sintaxis nueva
   StartSyntax;   //Debe hacerse solo una vez al inicio

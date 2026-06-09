@@ -4,7 +4,7 @@ unit FormElemProperty;
 interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Buttons,
-  StdCtrls, ExtCtrls, MisUtils, XpresElementsPIC;
+  StdCtrls, ExtCtrls, MisUtils, XpresElementsPIC, XpresBas;
 type
 
   { TfrmElemProperty }
@@ -35,7 +35,7 @@ type
   public
     OnExplore: procedure(elem0: TxpElement) of object;
     procedure Clear;
-    procedure Exec(elem0: TxpElement);
+    procedure Exec(lex: TContexts; elem0: TxpElement);
   end;
 
 var
@@ -112,7 +112,7 @@ begin
     end;
   end;
 end;
-procedure TfrmElemProperty.Exec(elem0: TxpElement);
+procedure TfrmElemProperty.Exec(lex: TContexts; elem0: TxpElement);
 var
   adicInformation, dirSolic, tmp, bnkStr: String;
   xcon: TxpEleCon;
@@ -127,8 +127,8 @@ begin
   Image1.Proportional := true;  // to keep width/height ratio
   adicInformation := '';
   txtEleName.Caption := elem.name;
-  txtEleLocaPath.Caption := ExtractFileDir(elem.srcDec.Fil);
-  txtEleLocFile.Caption := ExtractFileName(elem.srcDec.Fil) + elem.srcDec.RowColString;
+  txtEleLocaPath.Caption := lex.ctxFileDir(elem.srcDec);
+  txtEleLocFile.Caption := lex.ctxFileName(elem.srcDec) + elem.srcDec.RowColString;
   BitBtn2.Enabled := true;
   //Ícono e información adicional
   if elem.idClass = eltCons then begin

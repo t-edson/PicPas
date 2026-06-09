@@ -222,6 +222,7 @@ type
     procedure Timer1Timer(Sender: TObject);
     procedure ToolBar5PaintButton(Sender: TToolButton; State: integer);
   private
+    msgManager : TMessageManager;  //Gestro de mensajes
     Compiler10  : TCompiler_PIC10;
     Compiler16  : TCompiler_PIC16;
     Compiler17  : TCompiler_PIC17;
@@ -244,9 +245,9 @@ type
     procedure fraEdit_RequireSynEditConfig(ed: TsynEdit);
     procedure ChangeAppearance;
     procedure fraEdit_SelectEditor;
-    procedure fraMessagesDblClickMessage(const srcPos: TSrcPos);
+    procedure fraMessagesDblClickMessage(fileSrc: string; row, col: integer);
     procedure fraSynTreeOpenFile(filname: string);
-    procedure fraSynTreeSelectElemen(var elem: TxpElement);
+    procedure fraSynTreeSelectElemen(fileSrc: string; row, col: integer);
     procedure LoadAsmSyntaxEd;
     procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
     procedure MarkErrors;
@@ -290,9 +291,10 @@ begin
   acToolSelPIC16.Caption := MSG_MIDRAN_COMP;
   acToolSelPIC17.Caption := MSG_ENMIDR_COMP;
 end;
-procedure TfrmPrincipal.fraSynTreeSelectElemen(var elem: TxpElement);
+procedure TfrmPrincipal.fraSynTreeSelectElemen(fileSrc: string; row,
+  col: integer);
 begin
-  fraEditView1.SelectOrLoad(elem.srcDec, false);
+  fraEditView1.SelectOrLoad(fileSrc, row, col, false);
 end;
 procedure TfrmPrincipal.fraSynTreeOpenFile(filname: string);
 {El explorador de código, solicita abrir un archivo.}
@@ -421,14 +423,7 @@ begin
 end;
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
-  //Es necesario crear solo una instancia del compilador.
-  Compiler10 := TCompiler_PIC10.Create;
-  Compiler16 := TCompiler_PIC16.Create;  //Crea una instancia del compilador
-  Compiler17 := TCompiler_PIC17.Create;
-  Compiler := Compiler16;  //Inicializa variable Compiler
-  fraSynTree := TfraSyntaxTree.Create(self);
-  fraSynTree.Parent := self;
-  //configura panel de mensajes
+  //Crea y configura panel de mensajes
   fraMessages := TfraMessagesWin.Create(self);
   fraMessages.Parent := panMessages;  //Ubica
   fraMessages.Align := alClient;
@@ -441,6 +436,16 @@ begin
   fraEditView1.OnSelectEditor         := @fraEdit_SelectEditor;
   fraEditView1.OnRequireSynEditConfig := @fraEdit_RequireSynEditConfig;
   fraEditview1.OnRequireSetCompletion := @fraEdit_RequireSetCompletion;
+  //Crea gestor de mensajes
+  msgManager := TMessageManager.Create;
+  fraMessages.Inic(msgmanager);   //Conecta el gestor de mensajes
+  //Es necesario crear solo una instancia del compilador.
+  Compiler10 := TCompiler_PIC10.Create(msgManager);
+  Compiler16 := TCompiler_PIC16.Create(msgManager);  //Crea una instancia del compilador
+  Compiler17 := TCompiler_PIC17.Create(msgManager);
+  Compiler := Compiler16;  //Inicializa variable Compiler
+  fraSynTree := TfraSyntaxTree.Create(self);
+  fraSynTree.Parent := self;
   //Configura Árbol de sintaxis
   fraSynTree.OnSelectElemen := @fraSynTreeSelectElemen;
   fraSynTree.OnOpenFile := @fraSynTreeOpenFile;
@@ -469,6 +474,7 @@ begin
   Compiler17.Destroy;
   Compiler16.Destroy;
   Compiler10.Destroy;
+  msgManager.Destroy;
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
@@ -491,7 +497,7 @@ begin
   Config.fraCfgExtTool.SetImageList(ImgActions16, ImgActions32, 33);
 
   CodeTool.SetCompiler(Compiler);
-  fraSynTree.Init(Compiler.TreeElems);
+  fraSynTree.Init(Compiler);
   //Termina configuración
   fraEditView1.InitMenuRecents(mnRecents, Config.fraCfgSynEdit.ArcRecientes);  //inicia el menú "Recientes"
   ChangeAppearance;   //primera actualización
@@ -673,9 +679,10 @@ begin
   //Pasa evento a COde Tool
   CodeTool.KeyDown(Sender, Key, Shift);
 end;
-procedure TfrmPrincipal.fraMessagesDblClickMessage(const srcPos: TSrcPos);
+procedure TfrmPrincipal.fraMessagesDblClickMessage(fileSrc: string; row,
+  col: integer);
 begin
-  fraEditView1.SelectOrLoad(srcPos, false);
+  fraEditView1.SelectOrLoad(fileSrc, row, col, false);
 end;
 procedure TfrmPrincipal.ChangeAppearance;
 //Se han cambiado las opciones de configuración.
@@ -1233,7 +1240,7 @@ begin
   Config.compSelected := 0;  //Guarda el índica del compilador
   fraEditView1.UpdateSynEditCompletion;
   //Inicia árbol de sintaxis
-  fraSynTree.Init(Compiler.TreeElems);
+  fraSynTree.Init(Compiler);
 end;
 procedure TfrmPrincipal.acToolSelPIC16Execute(Sender: TObject);
 begin
@@ -1253,7 +1260,7 @@ begin
   Config.compSelected := 1;  //Guarda el índica del compilador
   fraEditView1.UpdateSynEditCompletion;
   //Inicia árbol de sintaxis
-  fraSynTree.Init(Compiler.TreeElems);
+  fraSynTree.Init(Compiler);
 end;
 procedure TfrmPrincipal.acToolSelPIC17Execute(Sender: TObject);
 begin
@@ -1273,7 +1280,7 @@ begin
   Config.compSelected := 2;  //Guarda el índica del compilador
   fraEditView1.UpdateSynEditCompletion;
   //Inicia árbol de sintaxis
-  fraSynTree.Init(Compiler.TreeElems);
+  fraSynTree.Init(Compiler);
 end;
 procedure TfrmPrincipal.acToolExt1Execute(Sender: TObject);
 begin

@@ -92,6 +92,8 @@ public  //Manage items when it's constant array
 end;
 TOperandPtr = ^TOperand;
 
+{ TCompOperands }
+
 TCompOperands = class
 protected //Access to properties of p1^ y p2^.
   p1, p2   : ^TOperand;   //Pasa los operandos de la operación actual
@@ -119,28 +121,29 @@ protected //Access to properties of p1^ y p2^.
   function stoOperation: TStoOperandsROB; inline;
   procedure ExchangeP1_P2;
   function OperationStr(Opt: TxpOperation): string;
-protected
+public
   lex      : TContexts;   //Entrada de datos
+  msg: TMessageManager;    //Referencia al gestor de mensajes
 public    //Errors and warnings
   curLocation: TxpEleLocation;   //Ubicación actual de exploración
-  HayError: boolean;
-  OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;
+  HayError: boolean;  // ************ Debe modificarse
+  OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;  //***
   OnError  : procedure(errTxt: string; fileName: string; row, col: integer) of object;
   OnInfo   : procedure(infTxt: string) of object;
   procedure ClearError;
   //Rutinas de generación de mensajes
-  procedure GenInfo(msg: string);
+  procedure GenInfo(txt: string);
   //Rutinas de generación de advertencias
-  procedure GenWarn(msg: string; fil: String; row, col: integer);
-  procedure GenWarn(msg: string; const Args: array of const; fil: String; row, col: integer);
-  procedure GenWarn(msg: string);
-  procedure GenWarn(msg: string; const Args: array of const);
-  procedure GenWarnPos(msg: string; const Args: array of const; srcPos: TSrcPos);
-  procedure GenError(msg: string; fil: String; row, col: integer);
-  procedure GenError(msg: String; const Args: array of const; fil: String; row, col: integer);
-  procedure GenError(msg: string);
-  procedure GenError(msg: String; const Args: array of const);
-  procedure GenErrorPos(msg: String; const Args: array of const; srcPos: TSrcPos);
+  procedure GenWarn(txt: string; fil: String; row, col: integer);
+  procedure GenWarn(txt: string; const Args: array of const; fil: String; row, col: integer);
+  procedure GenWarn(txt: string);
+  procedure GenWarn(txt: string; const Args: array of const);
+  procedure GenWarnPos(txt: string; const Args: array of const; srcPos: TSrcPos);
+  procedure GenError(txt: string; const srcPos: TSrcPos);
+  procedure GenError(txt: String; const Args: array of const;
+    const srcPos: TSrcPos);
+  procedure GenError(txt: string);
+  procedure GenError(txt: String; const Args: array of const);
 public   //Referencias a los tipos predefinidos de tokens.
   tnEol       : integer;
   tnSymbol  : integer;
@@ -177,6 +180,9 @@ public   //Tipos adicionales de tokens
   tnBlkDelim : integer;
   tnChar     : integer;
   tnOthers   : integer;
+public    //Initialization
+  constructor Create(msg0: TMessageManager);
+  destructor Destroy; override;
 end;
 
 implementation
@@ -586,86 +592,70 @@ error anterior.}
 begin
   HayError := false;
 end;
-procedure TCompOperands.GenInfo(msg: string);
+procedure TCompOperands.GenInfo(txt: string);
 begin
-  if OnInfo<>nil then OnInfo(msg);
+  if OnInfo<>nil then OnInfo(txt);
 end;
-procedure TCompOperands.GenWarn(msg: string; fil: String; row, col: integer);
+procedure TCompOperands.GenWarn(txt: string; fil: String; row, col: integer);
 {Genera un mensaje de advertencia en la posición indicada.}
 begin
-  if OnWarning<>nil then OnWarning(msg, fil, row, col);
+  if OnWarning<>nil then OnWarning(txt, fil, row, col);
 end;
-procedure TCompOperands.GenWarn(msg: string; const Args: array of const;
+procedure TCompOperands.GenWarn(txt: string; const Args: array of const;
   fil: String; row, col: integer);
 begin
-  GenWarn(Format(msg, Args), fil, row, col);
+  GenWarn(Format(txt, Args), fil, row, col);
 end;
-procedure TCompOperands.GenWarn(msg: string);
+procedure TCompOperands.GenWarn(txt: string);
 {Genera un mensaje de Advertencia, en la posición actual del contexto. }
 begin
   if (lex = nil) or (lex.curCtx = nil) then begin
-    GenWarn(msg, '', -1, -1);
+    GenWarn(txt, '', -1, -1);
   end else begin
-    GenWarn(msg, lex.curCtx.arc, lex.curCtx.row, lex.curCtx.col);
+    GenWarn(txt, lex.curCtx.arc, lex.curCtx.row, lex.curCtx.col);
   end;
 end;
-procedure TCompOperands.GenWarn(msg: string; const Args: array of const);
+procedure TCompOperands.GenWarn(txt: string; const Args: array of const);
 {Genera un mensaje de Advertencia, en la posición actual del contexto. }
 begin
-  GenWarn(Format(msg, Args));
+  GenWarn(Format(txt, Args));
 end;
-procedure TCompOperands.GenWarnPos(msg: string; const Args: array of const;
+procedure TCompOperands.GenWarnPos(txt: string; const Args: array of const;
   srcPos: TSrcPos);
 begin
-  GenWarn(Format(msg, Args), srcPos.fil, srcPos.row, srcPos.col);
+  msg.warn(lex.GetMsgInfo(Format(txt, Args), srcPos));
 end;
 //Rutinas de generación de error
-procedure TCompOperands.GenError(msg: string; fil: String; row, col: integer);
+procedure TCompOperands.GenError(txt: string; const srcPos: TSrcPos);
 {Genera un mensaje de error en la posición indicada.}
 begin
-  //Protección
-  if lex.curCtx = nil then begin
-    HayError := true;
-    exit;
-  end;
-  if lex.curCtx.FixErrPos then begin
-    //El contexto actual, tiene configurado uan posición fija para los errores
-    msg := lex.curCtx.PreErrorMsg + msg;  //completa mensaje
-    if OnError<>nil then OnError(msg, lex.curCtx.ErrPosition.fil,
-                                      lex.curCtx.ErrPosition.row,
-                                      lex.curCtx.ErrPosition.col);
-
-  end else begin
-    if OnError<>nil then OnError(msg, fil, row, col);
-  end;
-  HayError := true;
+  msg.error(lex.GetMsgInfoE(txt, srcPos));
 end;
-procedure TCompOperands.GenError(msg: String; const Args: array of const;
-  fil: String; row, col: integer);
+procedure TCompOperands.GenError(txt: String; const Args: array of const;
+  const srcPos: TSrcPos);
 {Versión con parámetros de GenError.}
 begin
-  GenError(Format(msg, Args), fil, row, col);
+  msg.error(lex.GetMsgInfoE(Format(txt, Args), srcPos));
 end;
-procedure TCompOperands.GenError(msg: string);
+procedure TCompOperands.GenError(txt: string);
 {Función de acceso rápido para Perr.GenError(). Pasa como posición a la posición
 del contexto actual. Realiza la traducción del mensaje también.}
 begin
-  if (lex = nil) or (lex.curCtx = nil) then begin
-    GenError(msg, '', -1, -1);
-  end else begin
-    GenError(msg, lex.curCtx.arc, lex.curCtx.row, lex.curCtx.col);
-  end;
+  msg.error(lex.GetMsgInfoE(txt));
 end;
-procedure TCompOperands.GenError(msg: String; const Args: array of const);
+procedure TCompOperands.GenError(txt: String; const Args: array of const);
 {Genera un mensaje de error eb la posición actual del contexto.}
 begin
-  GenError(Format(msg, Args));
+  GenError(Format(txt, Args));
 end;
-procedure TCompOperands.GenErrorPos(msg: String; const Args: array of const;
-  srcPos: TSrcPos);
-{Genera error en una posición específica del código}
+
+constructor TCompOperands.Create(msg0: TMessageManager);
 begin
-  GenError(Format(msg, Args), srcPos.fil, srcPos.row, srcPos.col);
+  msg := msg0;
+end;
+destructor TCompOperands.Destroy;
+begin
+  inherited Destroy;
 end;
 
 end.

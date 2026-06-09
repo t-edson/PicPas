@@ -5,7 +5,8 @@ unit GenCodBas_PIC10;
 interface
 uses
   Classes, SysUtils, XpresElementsPIC, XpresTypesPIC, PicCore, Pic10Utils,
-  CompBase, ParserDirec, Globales, CompOperands, MisUtils, LCLType, LCLProc;
+  CompBase, ParserDirec, Globales, CompOperands, MisUtils, XpresBas, LCLType,
+  LCLProc;
 const
   STACK_SIZE = 2;      //tamaño de pila para subrutinas en el PIC
   MAX_REGS_AUX_BYTE = 5;   //cantidad máxima de registros a usar
@@ -299,7 +300,7 @@ type
     pic        : TPIC10;       //Objeto PIC de la serie 16.
     procedure StartRegs;
     function CompilerName: string; override;
-    constructor Create; override;
+    constructor Create(msg0: TMessageManager);
     destructor Destroy; override;
   end;
 
@@ -3426,9 +3427,9 @@ begin
     exit;
   end;
 end;
-constructor TGenCodBas.Create;
+constructor TGenCodBas.Create(msg0: TMessageManager);
 begin
-  inherited Create;
+  inherited Create(msg0);
   ID := 10;  //Identifica al compilador PIC10
   devicesPath := patDevices10;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;

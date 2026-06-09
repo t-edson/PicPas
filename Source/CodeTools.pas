@@ -83,7 +83,7 @@ procedure TCodeTool.GoToDeclaration;
 {Salta a la zona de declaración, del elemento que está bajo el cursor, en al ventana de
 edición actual. Solo salta, si logra identificar al identificador.}
 var
-  tok: string;
+  tok, fileSrc: string;
   tokType, curX: integer;
   lex: TSynFacilComplet;
   callPos: TSrcPos;
@@ -105,7 +105,7 @@ begin
   end;
   callPos.col := curX;
   callPos.row := ed.SynEdit.CaretY;
-  callPos.fil := ed.FileName;
+  callPos.idCtx := cxp.lex.ctxId(ed.FileName);
   ele := cxp.TreeElems.GetElementCalledAt(callPos);
   if ele = nil then begin
     //No lo ubica, puede ser que esté en la sección de declaración
@@ -128,8 +128,9 @@ begin
   end else begin
 //      MsgBox('%s', [ele.name]);
     //Ubica la declaración del elemento
-    if not fraEdit.SelectOrLoad(ele.srcDec, false) then begin
-      MsgExc('Cannot load file: %s', [ele.srcDec.fil]);
+    fileSrc := cxp.lex.ctxFile(ele.srcDec);
+    if not fraEdit.SelectOrLoad(fileSrc, ele.srcDec.row, ele.srcDec.col, false) then begin
+      MsgExc('Cannot load file: %s', [fileSrc]);
     end;
   end;
 end;
@@ -397,7 +398,7 @@ begin
   //Calcula la posición del elemento
   tokPos.row := fraEdit.ActiveEditor.SynEdit.CaretY;
   tokPos.col := curEnv.tok_2^.posIni+1;
-  tokPos.fil := fraEdit.ActiveEditor.FileName;
+  tokPos.idCtx := cxp.lex.ctxId(fraEdit.ActiveEditor.FileName);
   //Dispara evento
   FieldsComplet(ident, opEve, tokPos);
   Cancel := false;
@@ -413,7 +414,7 @@ begin
   //Calcula la posición del elemento
   tokPos.row := fraEdit.ActiveEditor.SynEdit.CaretY;
   tokPos.col := curEnv.tok_3^.posIni+1;
-  tokPos.fil := fraEdit.ActiveEditor.FileName;
+  tokPos.idCtx := cxp.lex.ctxId(fraEdit.ActiveEditor.FileName);
   //Dispara evento
   FieldsComplet(ident, opEve, tokPos);
   Cancel := false;
