@@ -1,5 +1,3 @@
-MSG_INICOMP := trans('Starting Compilation...', 'Iniciando compilación...', '',
-                     'Compilieren ausführen...','Починаю компіляцію...','Начинаю компиляцию...', 'Lancement de la compilation....');
 MSG_WARN    := trans('Warning'                , 'Advertencia'             , 'Avertissement',
                      'Warnung','Попередження','Предупреждение', '');
 MSG_WARNS   := trans('Warnings'               , 'Advertencias'            , '',

@@ -112,7 +112,6 @@ var
   GCOL_MSG: integer;  //mensaje
 
 var  //Cadenas de traducción
-  MSG_INICOMP: string;
   MSG_WARN   : string;
   MSG_WARNS  : string;
   MSG_ERROR  : string;
@@ -405,7 +404,6 @@ begin
   cxp.OnError := @AddError;
   cxp.OnInfo := @AddInformation;
   timeCnt:=GetTickCount64;
-  if InitMsg then AddInformation(cxp.CompilerName + ': ' + MSG_INICOMP);
   HaveErrors := false;  //limpia bandera
 end;
 procedure TfraMessagesWin.EndCompilation;

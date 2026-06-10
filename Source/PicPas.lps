@@ -18,11 +18,10 @@
         <ComponentName Value="frmPrincipal"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="594"/>
-        <CursorPos Y="823"/>
-        <FoldState Value=" TL00306 p0yd0103131 T470A T5n701]E8L2{R314 PjVkT2 T3nL0N3 pj2jV0i5 pibk10c[j4pkDiT29824]BboW058]e3jK09L]eZjR0Z7]IAjS0Y[w4fjD035 PHK0 T6nN01C pQuG039 PCr4]M0nRN9K]r0n8,80121E]D3p8Q6H],bnFR3A PiEl5h TMsA210R12]e935]6 PE+H2 THsER42 PNmSB TF/O6E[S4i16F"/>
+        <TopLine Value="835"/>
+        <CursorPos X="3" Y="859"/>
+        <FoldState Value=" TL00306 p0z00103131 T5I0}^2 T8L2{R01223 PjIkU]J3nN0N3 pj2jV0j5 pick30c2 pkfiT29824]Bbog058]c3jK09L]cZjR0Z7]IAjS0Y[u4fjD035 PHK0 T6nP0171]yPuS039 PCr4]O0nTN9K]t0nA,80112E]xapIQ6H]9bnFR3A PiEl5h TMsE210R12121F35]6 PE+R2 THsIR42 PNmSB TF/c6E[S4i16C"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
@@ -31,7 +30,7 @@
         </ExtraEditor1>
         <UsageCount Value="219"/>
         <Bookmarks Count="1">
-          <Item0 X="3" Y="1182" ID="6"/>
+          <Item0 X="3" Y="1196" ID="6"/>
         </Bookmarks>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -39,18 +38,17 @@
       <Unit2>
         <Filename Value="Compiler_PIC16.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="7"/>
-        <TopLine Value="31"/>
-        <CursorPos Y="108"/>
-        <FoldState Value=" TL00101111]33 PFrX0 T4504 T5A0J1 T7CKG T8D2]WTMiX61061F131J232 PCrV2 T3i004[@42 pjapT034 plClK07].0i8S2A piYieR36]9aiCV3C]9ZkUWbF]9diCT49]-6kCSiF PZiCk T6iK217 PSqE0 TEoR24 THp5KZJ"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="518"/>
+        <CursorPos X="78" Y="533"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
           <EditorIndex Value="-1"/>
-          <TopLine Value="518"/>
-          <CursorPos X="78" Y="533"/>
+          <TopLine Value="31"/>
+          <CursorPos Y="108"/>
+          <FoldState Value=" TL00101111]33 PFrX0 T4504 T5A0J1 T7CKG T8D2]WTMiX61061F131J232 PCrV2 T3i004[@42 pjapT034 plClK07].0i8S2A piYieR36]9aiCV3C]9ZkUWbF]9diCT49]-6kCSiF PZiCk T6iK217 PSqE0 TEoR24 THp5KZJ"/>
         </ExtraEditor1>
         <UsageCount Value="200"/>
-        <Loaded Value="True"/>
       </Unit2>
       <Unit3>
         <Filename Value="FormPICExplorer.pas"/>
@@ -105,7 +103,7 @@
       <Unit6>
         <Filename Value="CompBase.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="235"/>
         <CursorPos X="21" Y="242"/>
         <FoldState Value=" T0.5K4012 PGJNO"/>
@@ -181,12 +179,11 @@
         <ComponentName Value="fraEditView"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="918"/>
         <CursorPos Y="961"/>
         <FoldState Value=" T4405 TLJ21 T7DC32 PYi8H T8E4163111 PckV2 TMnJ01231A]g3lS056 pibj8084 pjPiJ2J4]IckJ0B1]I2I2O5]HYkb0B[Q5jC0671212[44 Pl2sU0 THleO61 PKoCB T6m801a PiD.b]T0mMcEL]zZl3B4E]9XlZW1H pibnBMCC1122172A PjTqXa TEx742 TF-I23X"/>
         <UsageCount Value="200"/>
-        <Loaded Value="True"/>
       </Unit12>
       <Unit13>
         <Filename Value="FrameMessagesWin.pas"/>
@@ -194,12 +191,13 @@
         <ComponentName Value="fraMessagesWin"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <TopLine Value="441"/>
-        <CursorPos X="3" Y="458"/>
-        <FoldState Value=" T4403 T5jC051 TLkV0103]A7CK6 T8G2]CMkZ020[A43jZ0m21B pj6kg04842 plHmB052 Pcf0 T6jb02713 PEqF]G0jgS6]niamWD3486 PIk3D THpUFD^"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="408"/>
+        <CursorPos Y="426"/>
+        <FoldState Value=" T4403 T5jC051 TLkU0103]A7CK6 T8G2]CMkY020[A43jY0m21B pj6kg04842 plHmA052 Pcf0 T6ja02713 PEqE]G0jfS6]niamWD3486 PIk2D THpTFDS"/>
         <UsageCount Value="200"/>
         <Bookmarks Count="1">
-          <Item0 X="3" Y="522" Left="1" Top="430" ID="3"/>
+          <Item0 X="3" Y="520" Left="1" Top="428" ID="3"/>
         </Bookmarks>
         <Loaded Value="True"/>
       </Unit13>
@@ -473,9 +471,9 @@
       <Unit41>
         <Filename Value="CompOperands.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="6"/>
-        <TopLine Value="663"/>
-        <CursorPos Y="644"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="15"/>
+        <CursorPos X="25" Y="129"/>
         <FoldState Value=" TL006013 T4A02 T7GB$ T8H08622 PjXka0 T3lH03G piZjD04B]9ajC04D[I4]93L3241]kEkW]k0lOQ5I Pi7qUB T6og012 THrFB61\"/>
         <UsageCount Value="209"/>
         <Bookmarks Count="1">
@@ -486,7 +484,7 @@
       <Unit42>
         <Filename Value="CompMain.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="15"/>
         <CursorPos X="11" Y="30"/>
         <FoldState Value=" T4302 T5iK09 TLi74201311112J pj2+M23724213413 pi2+D451 T8F23 T3iU033]e4jC0E1[Y4kWnG2!1 pmWkU2c2]T5lc0F111]TQk52M5]\glY085]Tbk80I342]TNtT0a T0igK39]aXiZm1[a42j2ZS[I4Zi8X3A]IGiNdjE]9VjLP3F]RYkPR3E[s4kDjNF]R4k6O41[:7LOFE[c4jVT2A]9cjdZO9243122211113[*4lHpVK3B[W4i5T552[z4Bj5d19 PiOjAT TMjX0S012I1A1G141B2 pNu9410E1B]G61127111o pI-561042B2J1 PLpD8 T6jR02O piY}7022 TFrc6i p0\Q4p TEzV27 TH:AMD3 pQ-TSW!"/>
@@ -559,8 +557,8 @@
       </Unit50>
       <Unit51>
         <Filename Value="XpresBas.pas"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="211"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="220"/>
         <CursorPos Y="249"/>
         <FoldState Value=" TL00903215912 pEtN0104211 TMc21031C1122[444A1213 pNtB]a116]a4F02 T7eD5 T8kO26233 PGiH]MCj9I3 T3mL040241C pj8k6038 piZj60G516 pkHlJ0D33164 PiGlO0 T0o7J3J]dXo3S2A214111]U9lgO T6ne019 TH-HI3H"/>
         <UsageCount Value="58"/>
@@ -578,129 +576,128 @@
       <Unit53>
         <Filename Value="..\language\tra_FrameMessagesWin.pas"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="10"/>
       </Unit53>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="596" Column="37" TopLine="303"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="447" Column="42" TopLine="438"/>
       </Position1>
       <Position2>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="599" Column="34" TopLine="394"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="84" TopLine="61"/>
       </Position2>
       <Position3>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="831" Column="30" TopLine="594"/>
+        <Caret Line="829" TopLine="805"/>
       </Position3>
       <Position4>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="599" Column="19" TopLine="593"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="453" Column="30" TopLine="440"/>
       </Position4>
       <Position5>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="596" Column="22" TopLine="589"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="451" Column="30" TopLine="440"/>
       </Position5>
       <Position6>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="599" Column="34" TopLine="589"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="454" Column="30" TopLine="438"/>
       </Position6>
       <Position7>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="834" TopLine="596"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="85" TopLine="79"/>
       </Position7>
       <Position8>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="153" Column="15" TopLine="19"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="458" Column="3" TopLine="441"/>
       </Position8>
       <Position9>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="805" Column="32" TopLine="740"/>
+        <Caret Line="818" Column="18" TopLine="595"/>
       </Position9>
       <Position10>
-        <Filename Value="FrameMessagesWin.pas"/>
-        <Caret Line="447" Column="42" TopLine="438"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="591" Column="40" TopLine="527"/>
       </Position10>
       <Position11>
-        <Filename Value="FrameMessagesWin.pas"/>
-        <Caret Line="84" TopLine="61"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="592" TopLine="573"/>
       </Position11>
       <Position12>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="829" TopLine="805"/>
+        <Caret Line="821" TopLine="572"/>
       </Position12>
       <Position13>
-        <Filename Value="FrameMessagesWin.pas"/>
-        <Caret Line="453" Column="30" TopLine="440"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="822" TopLine="573"/>
       </Position13>
       <Position14>
-        <Filename Value="FrameMessagesWin.pas"/>
-        <Caret Line="451" Column="30" TopLine="440"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="821" TopLine="573"/>
       </Position14>
       <Position15>
-        <Filename Value="FrameMessagesWin.pas"/>
-        <Caret Line="454" Column="30" TopLine="438"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="833" TopLine="749"/>
       </Position15>
       <Position16>
-        <Filename Value="FrameMessagesWin.pas"/>
-        <Caret Line="85" TopLine="79"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="822" TopLine="594"/>
       </Position16>
       <Position17>
-        <Filename Value="FrameMessagesWin.pas"/>
-        <Caret Line="458" Column="3" TopLine="441"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="823" TopLine="594"/>
       </Position17>
       <Position18>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="818" Column="18" TopLine="595"/>
+        <Caret Line="828" Column="10" TopLine="825"/>
       </Position18>
       <Position19>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="591" Column="40" TopLine="527"/>
+        <Caret Line="830" Column="27" TopLine="825"/>
       </Position19>
       <Position20>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="592" TopLine="573"/>
+        <Caret Line="846" Column="23" TopLine="830"/>
       </Position20>
       <Position21>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="821" TopLine="572"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="426" Column="48" TopLine="399"/>
       </Position21>
       <Position22>
-        <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="822" TopLine="573"/>
+        <Filename Value="FrameMessagesWin.pas"/>
       </Position22>
       <Position23>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="821" TopLine="573"/>
+        <Caret Line="848" Column="71" TopLine="833"/>
       </Position23>
       <Position24>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="833" TopLine="749"/>
+        <Caret Line="267" TopLine="155"/>
       </Position24>
       <Position25>
         <Filename Value="FormPrincipal.pas"/>
-        <Caret Line="822" TopLine="594"/>
+        <Caret Line="585" TopLine="443"/>
       </Position25>
       <Position26>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="957" TopLine="918"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="854" Column="19" TopLine="833"/>
       </Position26>
       <Position27>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="958" TopLine="918"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="132" Column="27" TopLine="8"/>
       </Position27>
       <Position28>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="959" TopLine="918"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="397" Column="13" TopLine="163"/>
       </Position28>
       <Position29>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="960" TopLine="918"/>
+        <Filename Value="FormPrincipal.pas"/>
+        <Caret Line="11" Column="81"/>
       </Position29>
       <Position30>
-        <Filename Value="FrameEditView.pas"/>
-        <Caret Line="961" TopLine="918"/>
+        <Filename Value="FrameMessagesWin.pas"/>
+        <Caret Line="426" TopLine="408"/>
       </Position30>
     </JumpHistory>
     <RunParams>

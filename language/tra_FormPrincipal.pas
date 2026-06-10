@@ -199,7 +199,9 @@
                                 'Paramètres');
 
 //Messages
- MSG_MODIFIED      := Trans('(*)Modified'      , '(*)Modificado'                  , '',
+MSG_INICOMP := trans('Starting Compilation...', 'Iniciando compilación...', '',
+                     'Compilieren ausführen...','Починаю компіляцію...','Начинаю компиляцию...', 'Lancement de la compilation....');
+MSG_MODIFIED      := Trans('(*)Modified'      , '(*)Modificado'                  , '',
                          '','(*)Змінено','(*)Изменено',
                          '(*)Modifié');
  MSG_SAVED      := Trans('Saved'            , 'Guardado'                       , '',

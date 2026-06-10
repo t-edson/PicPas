@@ -8,7 +8,7 @@ interface
 uses
   Classes, SysUtils, SynEdit, SynEditTypes, LazUTF8, Forms, Controls, Dialogs,
   Menus, ComCtrls, ActnList, StdActns, ExtCtrls, LCLIntf, LCLType, LCLProc,
-  StdCtrls, Graphics, SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas,
+  StdCtrls, Graphics, SynFacilHighlighter, SynFacilUtils, MisUtils, XpresBas, EpikTimer,
   CompBase,  //Para tener acceso a TCompilerBase
   Compiler_PIC10,
   Compiler_PIC16,
@@ -156,6 +156,7 @@ type
     procedure LoadAsmSyntaxEd;
     procedure DoSelectSample(Sender: TObject);
   private    //Herramientas de la IDE
+    eTimer     : TEpikTimer;  //Counter for mesaure compiling time
     tic         : integer;  //Contador para temporización
     curProj     : TPicPasProject; //Proyecto actual
     ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
@@ -266,6 +267,7 @@ type
 var
   frmPrincipal: TfrmPrincipal;
 var
+  MSG_INICOMP: string;
   MSG_MODIFIED, MSG_SAVED, MSG_NOFILES, MSG_NOFOUND_ : string;
   MSG_REPTHIS, MSG_N_REPLAC, MSG_SYNFIL_NOF, MSG_FILSAVCOMP: string;
   MSG_BASEL_COMP: string;
@@ -396,6 +398,7 @@ end;
 {$region "Eventos del formulario"}
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
+  eTimer := TEpikTimer.Create(nil);  //Used for precision time measure
   //Crea y configura panel de mensajes
   fraMessages := TfraMessagesWin.Create(self);
   fraMessages.Parent := panMessages;  //Ubica
@@ -448,6 +451,7 @@ begin
   Compiler16.Destroy;
   Compiler10.Destroy;
   msgManager.Destroy;
+  eTimer.Destroy
 end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 var
@@ -824,25 +828,35 @@ begin
   ed := fraEditView1.ActiveEditor;
   if ed.FileName='' then exit;
   if (ed.SynEdit.Lines.Count <=1) and  (trim(ed.Text)='') then exit;
-  fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
+  //Tareas iniciales
+  fraMessages.ClearMessages();
+  //Realiza la compilación
   Compiler.Compile(ed.FileName, false);
+  //Tareas finales
   //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
   MarkErrors;  //Resalta errores, si están en el editor actual
-  fraMessages.ClearMessages();
+  fraMessages.EndMessages();
 end;
 procedure TfrmPrincipal.CompileFile(filName: string);
 begin
-  fraMessages.InitCompilation(Compiler, true);  //Limpia mensajes
+  //Lee configuración de compilación
   Compiler.incDetComm   := Config.IncComment2;   //Visualización de mensajes
   Compiler.SetProIniBnk := not Config.OptBnkBefPro;
   Compiler.OptBnkAftPro := Config.OptBnkAftPro;
   Compiler.OptBnkAftIF  := Config.OptBnkAftIF;
   Compiler.OptReuProVar := Config.ReuProcVar;
   Compiler.OptRetProc   := Config.OptRetProc;
+  //Tareas iniciales
+  eTimer.Clear; eTimer.Start;   //Star counting time
+  fraMessages.InitCompilation(Compiler, true);  //Limpia mensajes
   ticSynCheck := 1000; //Desactiva alguna Verif. de sintaxis, en camino.
+  fraMessages.AddInformation(Compiler.CompilerName + ': ' + MSG_INICOMP);
+  //Realiza la compilación
   Compiler.Compiling := true;   //Activa bandera
   Compiler.Compile(filName, true);
   Compiler.Compiling := false;
+  //Tareas finales
+  eTimer.Stop;  //Stop counter
   fraMessages.EndCompilation;
   if fraMessages.HaveErrors then begin
     ShowErrorInDialogBox;

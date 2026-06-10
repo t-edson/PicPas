@@ -311,7 +311,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="libs_copy\MiConfig-0.4;libs_copy\MisUtils-0.6;libs_copy\ogEditGraf-2.6;libs_copy\SynFacilUtils-1.21;libs_copy\UtilsGrilla-0.8;libs_copy\alexia_lib;libs_copy\PicUtils"/>
+      <OtherUnitFiles Value="libs_copy\epiktimer;libs_copy\MiConfig-0.4;libs_copy\MisUtils-0.6;libs_copy\ogEditGraf-2.6;libs_copy\SynFacilUtils-1.21;libs_copy\UtilsGrilla-0.8;libs_copy\alexia_lib;libs_copy\PicUtils"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>
