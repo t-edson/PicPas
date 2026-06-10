@@ -249,9 +249,9 @@ type
     procedure fraSynTreeOpenFile(filname: string);
     procedure fraSynTreeSelectElemen(fileSrc: string; row, col: integer);
     procedure LoadAsmSyntaxEd;
-    procedure MarcarError(ed: TSynEditor; nLin, nCol: integer);
+    procedure HighlightErrorLine(ed: TSynEditor; nLin, nCol: integer);
     procedure MarkErrors;
-    procedure VerificarError;
+    procedure ShowErrorInDialogBox;
   public
     frmDebug: TfrmDebugger;
     procedure SetLanguage(idLang: string);
@@ -920,13 +920,12 @@ begin
   Compiler.Compiling := true;   //Activa bandera
   Compiler.Compile(filName, true);
   Compiler.Compiling := false;
+  fraMessages.EndCompilation;
   if fraMessages.HaveErrors then begin
-    fraMessages.EndCompilation;
-    VerificarError;
+    ShowErrorInDialogBox;
     MarkErrors;
     exit;
   end;
-  fraMessages.EndCompilation;
 end;
 /////////////////// Acciones de Archivo /////////////////////
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
@@ -1337,7 +1336,7 @@ begin
 //     end;
   end;
 end;
-procedure TfrmPrincipal.VerificarError;
+procedure TfrmPrincipal.ShowErrorInDialogBox;
 //Verifica si se ha producido algún error en el preprocesamiento y si lo hay
 //Ve la mejor forma de msotrarlo
 var
@@ -1352,14 +1351,14 @@ begin
         fraEditView1.SelectOrLoad(filname);  //Selecciona o abre
          //Ya lo tenemos cargado
         If row <> -1 Then begin
-           MarcarError(fraEditView1.ActiveEditor, row, col);
+           HighlightErrorLine(fraEditView1.ActiveEditor, row, col);
         end;
         if Config.ShowErMsg Then MsgErr(msg);
     end else begin   //no hay archivo de error
       if Config.ShowErMsg Then MsgErr(msg);
     end;
 End;
-procedure TfrmPrincipal.MarcarError(ed: TSynEditor; nLin, nCol: integer);
+procedure TfrmPrincipal.HighlightErrorLine(ed: TSynEditor; nLin, nCol: integer);
 begin
   fraEditView1.SetFocus;
   //posiciona curosr
