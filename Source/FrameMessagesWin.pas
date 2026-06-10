@@ -59,7 +59,6 @@ type
     timeCnt: QWORD;
     nVis, nWar, nErr: Integer;
     usedRAM, usedROM, usedSTK: single;
-    procedure CountMessages;
     procedure SetBackColor(AValue: TColor);
     procedure SetBackSelColor(AValue: Tcolor);
     procedure SetPanelColor(AValue: TColor);
@@ -82,6 +81,9 @@ type
     function IsErroridx(f: integer): boolean;
     procedure InitCompilation(cxp0: TCompilerBase; InitMsg: boolean);
     procedure EndCompilation;
+    procedure ClearMessages();
+    procedure EndMessages();
+    procedure CountMessages;
     procedure AddError(errTxt: string; fileName: string; row, col: integer);
     procedure AddInformation(infTxt: string);
     procedure AddWarning(warTxt: string; fileName: string; row, col: integer);
@@ -437,6 +439,22 @@ begin
     usedSTK:=0;
     panStatis.Invalidate;
   end;
+  FilterGrid;
+  //Posiciona al final
+  if grilla.RowCount>1 then begin
+    grilla.Row := grilla.RowCount -1;
+  end;
+end;
+procedure TfraMessagesWin.ClearMessages();
+{Limpia grilla e inicia banderas para empezar a recibir mensajes.}
+begin
+  grilla.RowCount := 1;   //Limpia Grilla
+  HaveErrors := false;  //limpia bandera
+end;
+procedure TfraMessagesWin.EndMessages();
+{Filtra los mensajes de acuerdo a lo que indican los "CheckBox" y se mueve hasta la
+última fila.}
+begin
   FilterGrid;
   //Posiciona al final
   if grilla.RowCount>1 then begin

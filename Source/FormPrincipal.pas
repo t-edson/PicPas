@@ -149,6 +149,7 @@ type
   private    //Rutinas de los compiladores
     hlAssem     : TSynFacilSyn;   //resaltador para ensamblador
     CodeTool    : TCodeTool;
+    procedure CheckSyntax;
     procedure CompileFile(filName: string);
     procedure Compiler16_AfterCompile;
     procedure Compiler16_RequireFileString(FilePath: string; var strList: TStrings);
@@ -588,20 +589,7 @@ begin
   if Config.AutSynChk and (ticSynCheck = 5) then begin
     //Se cumplió el tiempo para iniciar la verificación automática de sintaxis
 //    debugln('--Verif. Syntax.' + TimeToStr(now));
-    if fraEditView1.Count>0 then begin
-      //Hay archivo abiertos
-      ed := fraEditView1.ActiveEditor;
-      if (ed.SynEdit.Lines.Count <=1) and  (trim(ed.Text)='') then begin
-        //Verifica rápidamente si hay texto en el editor
-         fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
-        exit;
-      end;
-      fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
-      Compiler.Compile(ed.FileName, false);
-      //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
-      MarkErrors;  //Resalta errores, si están en el editor actual
-      fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
-    end;
+    CheckSyntax;
   end;
 end;
 {$EndRegion}
@@ -825,6 +813,22 @@ begin
   SamFil := StringReplace(SamFil,'&','',[rfReplaceAll]);
   //Carga archivo
   fraEditView1.LoadFile(SamFil);
+end;
+procedure TfrmPrincipal.CheckSyntax;
+{Ejecuta el compilador para realizar una verificación de sintaxis.}
+var
+  ed: TSynEditor;
+begin
+  if fraEditView1.ActiveEditor=nil then Exit;
+  //Hay archivo abiertos
+  ed := fraEditView1.ActiveEditor;
+  if ed.FileName='' then exit;
+  if (ed.SynEdit.Lines.Count <=1) and  (trim(ed.Text)='') then exit;
+  fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
+  Compiler.Compile(ed.FileName, false);
+  //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
+  MarkErrors;  //Resalta errores, si están en el editor actual
+  fraMessages.ClearMessages();
 end;
 procedure TfrmPrincipal.CompileFile(filName: string);
 begin
