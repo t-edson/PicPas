@@ -160,6 +160,7 @@ type
     tic         : integer;  //Contador para temporización
     curProj     : TPicPasProject; //Proyecto actual
     ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
+    actSynCheck : Boolean;  //Activa la verificación de sintaxis
     procedure MarkErrors;
     procedure ShowErrorInDialogBox;
   public
@@ -267,6 +268,7 @@ type
 var
   frmPrincipal: TfrmPrincipal;
 var
+  MSG_COMPIL : string;
   MSG_INICOMP: string;
   MSG_MODIFIED, MSG_SAVED, MSG_NOFILES, MSG_NOFOUND_ : string;
   MSG_REPTHIS, MSG_N_REPLAC, MSG_SYNFIL_NOF, MSG_FILSAVCOMP: string;
@@ -412,6 +414,8 @@ begin
   fraEditView1.OnSelectEditor         := @fraEdit_SelectEditor;
   fraEditView1.OnRequireSynEditConfig := @fraEdit_RequireSynEditConfig;
   fraEditview1.OnRequireSetCompletion := @fraEdit_RequireSetCompletion;
+  //Activa verificación de sintaxis
+  actSynCheck := true;
   //Crea gestor de mensajes
   msgManager := TMessageManager.Create;
   fraMessages.Inic(msgmanager);   //Conecta el gestor de mensajes
@@ -835,9 +839,11 @@ begin
   //Tareas finales
   //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
   MarkErrors;  //Resalta errores, si están en el editor actual
-  fraMessages.EndMessages();
+  fraMessages.EndMessages(0, 0, 0);
 end;
 procedure TfrmPrincipal.CompileFile(filName: string);
+var
+  usedRAM, usedROM, usedSTK: Single;
 begin
   //Lee configuración de compilación
   Compiler.incDetComm   := Config.IncComment2;   //Visualización de mensajes
@@ -848,8 +854,8 @@ begin
   Compiler.OptRetProc   := Config.OptRetProc;
   //Tareas iniciales
   eTimer.Clear; eTimer.Start;   //Star counting time
-  fraMessages.InitCompilation(Compiler, true);  //Limpia mensajes
-  ticSynCheck := 1000; //Desactiva alguna Verif. de sintaxis, en camino.
+  fraMessages.ClearMessages();
+  actSynCheck := false; //Desactiva alguna Verif. de sintaxis, en camino.
   fraMessages.AddInformation(Compiler.CompilerName + ': ' + MSG_INICOMP);
   //Realiza la compilación
   Compiler.Compiling := true;   //Activa bandera
@@ -857,12 +863,22 @@ begin
   Compiler.Compiling := false;
   //Tareas finales
   eTimer.Stop;  //Stop counter
-  fraMessages.EndCompilation;
-  if fraMessages.HaveErrors then begin
-    ShowErrorInDialogBox;
+  fraMessages.AddInformation(MSG_COMPIL + IntToStr(round(eTimer.Elapsed*1000)) + ' msec. <<' +
+           msgManager.txtNWarnings + ', ' + msgManager.txtNErrors+ '>>');
+  if msgManager.nErrors = 0 then begin
+    //No hay error
+    Compiler.GetResourcesUsed(usedRAM, usedROM, usedSTK);
+    fraMessages.AddInformation(Compiler.RAMusedStr + ', ' + Compiler.FLASHusedStr) ;
+  end else begin
+    //Hubo errores
     MarkErrors;
-    exit;
+    ShowErrorInDialogBox;
+    //Limpia variables de uso de hardware
+    usedRAM:=0;usedROM:=0;usedSTK:=0;
   end;
+  actSynCheck := true; //Restaura las verificaciones de sintaxis
+  ticSynCheck := 1000; //Pone en valor alto para por si había alguna verific. en curso.
+  fraMessages.EndMessages(usedRAM, usedROM, usedSTK);
 end;
 //Adicionales
 procedure TfrmPrincipal.MarkErrors;
@@ -930,10 +946,10 @@ End;
 procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
 {Se produjo una modificación en el editor "ed"}
 begin
-  if not Compiler.Compiling then begin
-    //En compilación no se activa la verificación automática de sintaxis
-    ticSynCheck := 0;  //reinicia cuenta
-  end;
+  {Activamos el contador de verificación de sintaxis, por si se necesita hacer, ya que
+   ha habido un cambio en el archivo actual en edición.}
+  if actSynCheck then ticSynCheck := 0;  //Reinicia cuenta.
+  //Actualiza menús
   acArcSave.Enabled := ed.Modified;
   acEdUndo.Enabled  := ed.CanUndo;
   acEdRedo.Enabled  := ed.CanRedo;

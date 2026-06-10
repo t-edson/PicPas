@@ -199,6 +199,8 @@
                                 'Paramètres');
 
 //Messages
+MSG_COMPIL  := trans('Compiled in: '          , 'Compilado en: '          , '',
+                     'Compiliert in: ','Скомпільовано за: ','Скомпилировано за: ', 'Compilé en:');
 MSG_INICOMP := trans('Starting Compilation...', 'Iniciando compilación...', '',
                      'Compilieren ausführen...','Починаю компіляцію...','Начинаю компиляцию...', 'Lancement de la compilation....');
 MSG_MODIFIED      := Trans('(*)Modified'      , '(*)Modificado'                  , '',

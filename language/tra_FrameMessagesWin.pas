@@ -6,8 +6,6 @@ MSG_ERROR   := trans('Error'                  , 'Error'                   , '',
                      'Fehler','Помилка','Ошибка', 'Erreur');
 MSG_ERRORS  := trans('Errors'                 , 'Errores'                 , '',
                      'Fehler','Помилки','Ошибки', 'Erreurs');
-MSG_COMPIL  := trans('Compiled in: '          , 'Compilado en: '          , '',
-                     'Compiliert in: ','Скомпільовано за: ','Скомпилировано за: ', 'Compilé en:');
 
 lblInform.Caption := Trans('Information'     , 'Información'      , ''      ,
                            'Information'       , 'Інформація'  ,'Информация', 'Information');

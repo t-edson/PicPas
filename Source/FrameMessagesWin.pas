@@ -79,10 +79,8 @@ type
     procedure GetErrorIdx(f: integer; out msg: string; out filname: string; out
       row, col: integer);
     function IsErroridx(f: integer): boolean;
-    procedure InitCompilation(cxp0: TCompilerBase; InitMsg: boolean);
-    procedure EndCompilation;
-    procedure ClearMessages();
-    procedure EndMessages();
+    procedure ClearMessages;
+    procedure EndMessages(usedRAM0, usedROM0, usedSTK0: Single);
     procedure CountMessages;
     procedure AddError(errTxt: string; fileName: string; row, col: integer);
     procedure AddInformation(infTxt: string);
@@ -116,7 +114,6 @@ var  //Cadenas de traducción
   MSG_WARNS  : string;
   MSG_ERROR  : string;
   MSG_ERRORS : string;
-  MSG_COMPIL : string;
 { TUtilGrillaFil2 }
 procedure TUtilGrillaFil2.grillaDrawCell(Sender: TObject; aCol, aRow: Integer;
   aRect: TRect; aState: TGridDrawState);
@@ -395,61 +392,14 @@ begin
   end;
   grilla.EndUpdate;
 end;
-procedure TfraMessagesWin.InitCompilation(cxp0: TCompilerBase; InitMsg: boolean
-  );
-begin
-  cxp := cxp0;   //Guarda referencia
-  grilla.RowCount := 1;   //Limpia Grilla
-  cxp.OnWarning := @AddWarning;  //Inicia evento
-  cxp.OnError := @AddError;
-  cxp.OnInfo := @AddInformation;
-  timeCnt:=GetTickCount64;
-  HaveErrors := false;  //limpia bandera
-end;
-procedure TfraMessagesWin.EndCompilation;
-var
-  infWar, infErr: String;
-begin
-  //Construye información adicional
-  CountMessages;
-  if nWar = 1 then begin
-    infWar := '1 ' + MSG_WARN;
-  end else begin
-    infWar := IntToStr(nWar) + ' ' + MSG_WARNS;
-  end;
-  if nErr = 1 then begin
-    infErr := '1 ' + MSG_ERROR;
-  end else begin
-    infErr := IntToStr(nErr) + ' ' + MSG_ERRORS;
-  end;
-  AddInformation(MSG_COMPIL + IntToStr(GetTickCount64-timeCnt) + ' msec. <<' +
-                 infWar + ', ' + infErr + '>>');
-  //Actualiza estadísticas de uso
-  if nErr=0 then begin
-    //No hay error
-    cxp.GetResourcesUsed(usedRAM, usedROM, usedSTK);
-    panStatis.Invalidate;
-    AddInformation(cxp.RAMusedStr + ', ' + cxp.FLASHusedStr) ;
-  end else begin
-    //Hubo errores
-    usedRAM:=0;
-    usedROM:=0;
-    usedSTK:=0;
-    panStatis.Invalidate;
-  end;
-  FilterGrid;
-  //Posiciona al final
-  if grilla.RowCount>1 then begin
-    grilla.Row := grilla.RowCount -1;
-  end;
-end;
+
 procedure TfraMessagesWin.ClearMessages();
 {Limpia grilla e inicia banderas para empezar a recibir mensajes.}
 begin
   grilla.RowCount := 1;   //Limpia Grilla
   HaveErrors := false;  //limpia bandera
 end;
-procedure TfraMessagesWin.EndMessages();
+procedure TfraMessagesWin.EndMessages(usedRAM0, usedROM0, usedSTK0: Single);
 {Filtra los mensajes de acuerdo a lo que indican los "CheckBox" y se mueve hasta la
 última fila.}
 begin
@@ -458,6 +408,11 @@ begin
   if grilla.RowCount>1 then begin
     grilla.Row := grilla.RowCount -1;
   end;
+  //Actualiza uso de recursos
+  usedRAM := usedRAM0;
+  usedROM := usedROM0;
+  usedSTK := usedSTK0;
+  panStatis.Invalidate;
 end;
 procedure TfraMessagesWin.panStatisPaint(Sender: TObject);
 var
