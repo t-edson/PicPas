@@ -125,20 +125,15 @@ public
   lex      : TContexts;   //Entrada de datos
   msg: TMessageManager;    //Referencia al gestor de mensajes
 public    //Errors and warnings
-  curLocation: TxpEleLocation;   //Ubicación actual de exploración
-  HayError: boolean;  // ************ Debe modificarse
-  OnWarning: procedure(warTxt: string; fileName: string; row, col: integer) of object;  //***
-  OnError  : procedure(errTxt: string; fileName: string; row, col: integer) of object;
-  OnInfo   : procedure(infTxt: string) of object;
+  curLocation: TxpEleLocation;   //Ubicación actual de exploración **** ¿Mover al lexer como en Alexia?
   procedure ClearError;
+  function HayError: boolean; inline;          //Flag for errors
   //Rutinas de generación de mensajes
   procedure GenInfo(txt: string);
   //Rutinas de generación de advertencias
-  procedure GenWarn(txt: string; fil: String; row, col: integer);
-  procedure GenWarn(txt: string; const Args: array of const; fil: String; row, col: integer);
   procedure GenWarn(txt: string);
   procedure GenWarn(txt: string; const Args: array of const);
-  procedure GenWarnPos(txt: string; const Args: array of const; srcPos: TSrcPos);
+  procedure GenWarn(txt: string; const Args: array of const; srcPos: TSrcPos);
   procedure GenError(txt: string; const srcPos: TSrcPos);
   procedure GenError(txt: String; const Args: array of const;
     const srcPos: TSrcPos);
@@ -590,37 +585,30 @@ error, aún cuando haya generado errores intermedios.
 Como norma, se podría decir que solo se debe usar, después de haber proecsado un posible
 error anterior.}
 begin
-  HayError := false;
+  msg.nErrors := 0;
+  msg.nInfos := 0;
+  msg.nWarns := 0;
+end;
+function TCompOperands.HayError: boolean;
+begin
+  exit(msg.nErrors>0);
 end;
 procedure TCompOperands.GenInfo(txt: string);
+{Genera un mensaje de Información, en la posición actual del contexto. }
 begin
-  if OnInfo<>nil then OnInfo(txt);
-end;
-procedure TCompOperands.GenWarn(txt: string; fil: String; row, col: integer);
-{Genera un mensaje de advertencia en la posición indicada.}
-begin
-  if OnWarning<>nil then OnWarning(txt, fil, row, col);
-end;
-procedure TCompOperands.GenWarn(txt: string; const Args: array of const;
-  fil: String; row, col: integer);
-begin
-  GenWarn(Format(txt, Args), fil, row, col);
+  msg.info(lex.GetMsgInfo(txt));
 end;
 procedure TCompOperands.GenWarn(txt: string);
 {Genera un mensaje de Advertencia, en la posición actual del contexto. }
 begin
-  if (lex = nil) or (lex.curCtx = nil) then begin
-    GenWarn(txt, '', -1, -1);
-  end else begin
-    GenWarn(txt, lex.curCtx.arc, lex.curCtx.row, lex.curCtx.col);
-  end;
+  msg.warn(lex.GetMsgInfo(txt));
 end;
 procedure TCompOperands.GenWarn(txt: string; const Args: array of const);
 {Genera un mensaje de Advertencia, en la posición actual del contexto. }
 begin
   GenWarn(Format(txt, Args));
 end;
-procedure TCompOperands.GenWarnPos(txt: string; const Args: array of const;
+procedure TCompOperands.GenWarn(txt: string; const Args: array of const;
   srcPos: TSrcPos);
 begin
   msg.warn(lex.GetMsgInfo(Format(txt, Args), srcPos));

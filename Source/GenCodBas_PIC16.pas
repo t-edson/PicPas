@@ -3431,7 +3431,7 @@ begin
 end;
 constructor TGenCodBas.Create(msg0: TMessageManager);
 begin
-  inherited Create(msg);
+  inherited Create(msg0);
   ID := 16;  //Identifica al compilador PIC16
   devicesPath := patDevices16;
   OnReqStartCodeGen:=@GenCodPicReqStartCodeGen;

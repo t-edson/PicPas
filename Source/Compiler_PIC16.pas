@@ -113,7 +113,7 @@ begin
   //Verifica las constantes usadas. Solo en el nodo principal, para no sobrecargar mensajes.
   for elem in TreeElems.main.elements do if elem.idClass = eltCons then begin
     if elem.nCalled = 0 then begin
-      GenWarnPos(WA_UNUSED_CON_, [elem.name], elem.srcDec);
+      GenWarn(WA_UNUSED_CON_, [elem.name], elem.srcDec);
     end;
   end;
   pic.iFlash:= 0;  //inicia puntero a Flash
@@ -141,7 +141,7 @@ begin
       xvar.ResetAddress;
       if xvar.Parent = TreeElems.main then begin
         //Genera mensaje solo para variables del programa principal.
-        GenWarnPos(WA_UNUSED_VAR_, [xVar.name], xvar.srcDec);
+        GenWarn(WA_UNUSED_VAR_, [xVar.name], xvar.srcDec);
       end;
     end;
   end;
@@ -211,7 +211,7 @@ begin
     //Esta función no se usa.
     if fun.Parent = TreeElems.main then begin
       //Genera mensaje solo para funciones del programa principal.
-      GenWarnPos(WA_UNUSED_PRO_, [fun.name], fun.srcDec);
+      GenWarn(WA_UNUSED_PRO_, [fun.name], fun.srcDec);
     end;
   end;
   //Compila sección INITIALIZATION de las unidades usadas

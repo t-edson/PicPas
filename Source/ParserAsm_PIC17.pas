@@ -102,7 +102,7 @@ var
 begin
   p := lex.GetSrcPos;
   p.col := lexAsm.GetX;  //corrige columna
-  GenWarnPos(txt, [], p);
+  GenWarn(txt, [], p);
 end;
 function TParserAsm.tokType: integer; inline;
 begin

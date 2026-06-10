@@ -48,7 +48,10 @@ type  //Gestor de mensajes
   TMessageKind = (
     mkInfo,     //Mensajes informativos
     mkWarning,  //Mensajes de advertencia
-    mkError     //Mensajes de error
+    mkError,    //Mensajes de error
+    mkDlgBox,   //Cuadro de dialogo con mensaje informativo
+    mkDlgWar,   //Cuadro de dialogo con mensaje de advertencia
+    mkDlgErr    //Cuadro de dialogo con mensaje de error
   );
   { TMessageManager }
   {Gestor de mensajes para el lexer y para el compilador también. Se crea como una clase
@@ -56,6 +59,8 @@ type  //Gestor de mensajes
   integración del compilador con una IDE (donde pueden haber otros compialdores) o con
   una consola}
   TMessageManager = class
+  private
+    minfo: TMsgInfo;      //Objeto temporal para genera mensajes
   public  //Información sobre los mensajes
     //Número de errores generados
     nErrors: Integer;          //Número de errores generados
@@ -66,18 +71,21 @@ type  //Gestor de mensajes
   public  //Manejo de mensajes de consola
     //Evento que indica que se ha generado un mensaje (Info, Warning or Error)
     OnMessage: procedure(msgKind: TMessageKind; const msgInfo: TMsgInfo) of object;
-    //Evento que indica que se desea generar un mensaje por cuadro de diálogo.
-    //El parámetro "mode" indica el tipo de mensaje:
-    //  0->Mensaje normal, 1->Mensaje de advertencia, 2->Mensaje de error
-    OnMessageBox: procedure(txt: string; mode: integer) of object;
     procedure info(const msgInfo: TMsgInfo);
+    procedure info(txt: string);
     procedure warn(const msgInfo: TMsgInfo);
     procedure error(const msgInfo: TMsgInfo);
   public  //Manejo de mensajes en cuadros de diálogos
-
-    procedure msgbox(const txt: string);
-    procedure msgwar(const txt: string);
-    procedure msgerr(const txt: string);
+    procedure msgBox(const txt: string);
+    procedure msgWar(const txt: string);
+    procedure msgErr(const txt: string);
+  public
+    //Evento para generar mensaje al sistema o aplicación.
+    {Se usa para comunicarse con la aplicación principal. Esto es muy útil cuando se
+    integra el compilador con una IDE}
+    OnMessageSys: procedure(const msgInfo: TMsgInfo) of object;
+    procedure sys(txt: string; row, col: Integer; const fname: string);
+    procedure sys(codMsg: integer);
   end;
 
 type
@@ -239,6 +247,18 @@ begin
   inc(nInfos);
   if Assigned(OnMessage) then OnMessage(mkInfo, msgInfo);
 end;
+
+procedure TMessageManager.info(txt: string);
+{Versión simplificada de info().}
+begin
+  inc(nInfos);
+  //Usamos el objeto "minfo" como parámetro
+  minfo.txt := txt;
+  minfo.fname := '';
+  minfo.row := -1;
+  minfo.col := -1;
+  if Assigned(OnMessage) then OnMessage(mkInfo, minfo);
+end;
 procedure TMessageManager.warn(const msgInfo: TMsgInfo);
 begin
   inc(nWarns);
@@ -249,23 +269,52 @@ begin
   inc(nErrors);
   if Assigned(OnMessage) then OnMessage(mkError, msgInfo);
 end;
-procedure TMessageManager.msgbox(const txt: string);
+procedure TMessageManager.msgBox(const txt: string);
 {Muestra un diñalogo con un mensaje normal}
 begin
-  if Assigned(OnMessageBox) then
-    OnMessageBox(txt, 0);
+  minfo.txt := txt;
+  minfo.fname := '';
+  minfo.row := -1;
+  minfo.col := -1;
+  if Assigned(OnMessage) then OnMessage(mkDlgBox, minfo);
 end;
-procedure TMessageManager.msgwar(const txt: string);
+procedure TMessageManager.msgWar(const txt: string);
 {Muestra un diñalogo con un mensaje de advertencia}
 begin
-  if Assigned(OnMessageBox) then
-    OnMessageBox(txt, 1);
+  minfo.txt := txt;
+  minfo.fname := '';
+  minfo.row := -1;
+  minfo.col := -1;
+  if Assigned(OnMessage) then OnMessage(mkDlgWar, minfo);
 end;
-procedure TMessageManager.msgerr(const txt: string);
+procedure TMessageManager.msgErr(const txt: string);
 {Muestra un diñalogo con un mensaje de error}
 begin
-  if Assigned(OnMessageBox) then
-    OnMessageBox(txt, 2);
+  minfo.txt := txt;
+  minfo.fname := '';
+  minfo.row := -1;
+  minfo.col := -1;
+  if Assigned(OnMessage) then OnMessage(mkDlgErr, minfo);
+end;
+procedure TMessageManager.sys(txt: string; row, col: Integer;
+  const fname: string);
+{Genera un mensaje al sistema.
+Como los mensajes (y los sistemas) pueden ser variados, no se usa un formato predefinido,
+y, para la comunicación con el sistema, se usa el mismo objeto TMsgInfo que se usan para
+los mensajes de error o advertencia.}
+begin
+  minfo.txt := txt;
+  minfo.fname := fname;
+  minfo.row := row;
+  minfo.col := col;
+  if Assigned(OnMessageSys) then OnMessageSys(minfo);
+end;
+procedure TMessageManager.sys(codMsg: integer);
+{Versión simplifcada de "sys()" que solo envía un código numérico como mensaje al
+sistema.}
+begin
+  minfo.row := codMsg;  //Solo utilizamos este campo
+  if Assigned(OnMessageSys) then OnMessageSys(minfo);
 end;
 
 { TSrcPos }

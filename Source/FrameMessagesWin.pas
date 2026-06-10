@@ -59,6 +59,7 @@ type
     timeCnt: QWORD;
     nVis, nWar, nErr: Integer;
     usedRAM, usedROM, usedSTK: single;
+    procedure CompilerMsg(msgKind: TMessageKind; const msgInfo: TMsgInfo);
     procedure SetBackColor(AValue: TColor);
     procedure SetBackSelColor(AValue: Tcolor);
     procedure SetPanelColor(AValue: TColor);
@@ -469,11 +470,31 @@ begin
   Barra(lblSTACK.Left+ 5, lblSTACK.Top + 20, panStatis.Height-35, usedSTK);
 end;
 //Inicialización
+procedure TfraMessagesWin.CompilerMsg(msgKind: TMessageKind;
+  const msgInfo: TMsgInfo);
+{Procesa los mensajaes que genera el compilador}
+begin
+  case msgKind of
+    mkInfo:
+      AddInformation(msgInfo.txt);
+    mkWarning:
+      AddWarning(msgInfo.txt, msgInfo.fname, msgInfo.row, msgInfo.col);
+    mkError:
+      AddError(msgInfo.txt, msgInfo.fname, msgInfo.row, msgInfo.col);
+    //Mensajes que generan cuadro de diálogo
+    mkDlgBox:
+      MsgBox(msgInfo.txt);
+    mkDlgWar:
+      MsgExc(msgInfo.txt);
+    mkDlgErr:
+      MsgErr(msgInfo.txt);
+  else ;
+  end;
+end;
 procedure TfraMessagesWin.Inic(msgManager: TMessageManager);
 {COnfigura a la ventana de mensajes para que se conecte al gestor de mensajes}
 begin
-//  msgManager.OnMessage     := @CompilerMsg;
-//  msgManager.OnMessageBox  := @CompilerMessageBox;
+  msgManager.OnMessage     := @CompilerMsg;
 end;
 constructor TfraMessagesWin.Create(AOwner: TComponent);
 var
