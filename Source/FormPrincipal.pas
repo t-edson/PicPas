@@ -19,49 +19,7 @@ uses
 type
   { TfrmPrincipal }
   TfrmPrincipal = class(TForm)
-  published
-    acArcOpen: TAction;
-    acArcSaveAs: TAction;
-    acArcSave: TAction;
-    acArcNewFile: TAction;
-    acArcQuit: TAction;
-    acSearFind: TAction;
-    acSearFindNxt: TAction;
-    acSearReplac: TAction;
-    acEdCopy: TEditCopy;
-    acEdCut: TEditCut;
-    acEdPaste: TEditPaste;
-    acEdRedo: TAction;
-    acEdSelecAll: TAction;
-    acEdUndo: TAction;
-    acArcNewProj: TAction;
-    acArcCloseProj: TAction;
-    acArcCloseFile: TAction;
-    acSearFindPrv: TAction;
-    acExtTool2: TAction;
-    acExtTool3: TAction;
-    acExtTool4: TAction;
-    acExtTool5: TAction;
-    acExtTool1: TAction;
-    acToolTestPic10: TAction;
-    acToolTestUnit: TAction;
-    acToolSelPIC16: TAction;
-    acToolSelPIC10: TAction;
-    acToolSelPIC17: TAction;
-    acToolASMDebug: TAction;
-    acViewAsmPan: TAction;
-    acToolRamExp: TAction;
-    acToolFindDec: TAction;
-    acToolListRep: TAction;
-    acToolConfig: TAction;
-    acToolCompil: TAction;
-    acToolPICExpl: TAction;
-    acToolComEjec: TAction;
-    acViewToolbar: TAction;
-    acViewMsgPan: TAction;
-    ActionList: TActionList;
-    acViewStatbar: TAction;
-    acViewSynTree: TAction;
+  published  //Controles
     CoolBar1: TCoolBar;
     edAsm: TSynEdit;
     FindDialog1: TFindDialog;
@@ -166,6 +124,101 @@ type
     ToolButton40: TToolButton;
     ToolButton41: TToolButton;
     ToolButton43: TToolButton;
+    procedure FindDialog1Find(Sender: TObject);
+    procedure editChangeFileInform;
+    procedure ReplaceDialog1Replace(Sender: TObject);
+    procedure ToolBar5PaintButton(Sender: TToolButton; State: integer);
+  published  //Eventos del formulario
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
+    procedure FormClose(Sender: TObject; var {%H-}CloseAction: TCloseAction);
+    procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure Timer1Timer(Sender: TObject);
+  private    //Configuración
+    procedure Config_Changed;
+    procedure ConfigExtTool_RequirePar(var comLine: string);
+  private    //Compiladores
+    msgManager : TMessageManager;  //Gestro de mensajes
+    Compiler10  : TCompiler_PIC10;
+    Compiler16  : TCompiler_PIC16;
+    Compiler17  : TCompiler_PIC17;
+    Compiler    : TCompilerBase;
+  private    //Rutinas de los compiladores
+    hlAssem     : TSynFacilSyn;   //resaltador para ensamblador
+    CodeTool    : TCodeTool;
+    procedure CompileFile(filName: string);
+    procedure Compiler16_AfterCompile;
+    procedure Compiler16_RequireFileString(FilePath: string; var strList: TStrings);
+    procedure LoadAsmSyntaxEd;
+    procedure DoSelectSample(Sender: TObject);
+  private    //Herramientas de la IDE
+    tic         : integer;  //Contador para temporización
+    curProj     : TPicPasProject; //Proyecto actual
+    ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
+    procedure MarkErrors;
+    procedure ShowErrorInDialogBox;
+  public
+    frmDebug: TfrmDebugger;
+    procedure SetLanguage(idLang: string);
+  private    //Control de los "frames"
+    fraEditView1: TfraEditView;   //Panel de editores
+    fraSynTree  : TfraSyntaxTree; //Árbol de sintaxis
+    fraMessages : TfraMessagesWin;
+    procedure fraEdit_ChangeEditorState(ed: TSynEditor);
+    procedure fraEdit_RequireSetCompletion(ed: TSynEditor);
+    procedure fraEdit_RequireSynEditConfig(ed: TsynEdit);
+    procedure fraEdit_SelectEditor;
+    procedure fraMessagesStatisDBlClick;
+    procedure fraMessagesDblClickMessage(fileSrc: string; row, col: integer);
+    procedure fraSynTreeSelecFileExplorer;
+    procedure fraSynTreeOpenFile(filname: string);
+    procedure fraSynTreeSelectElemen(fileSrc: string; row, col: integer);
+  published  //Acciones
+    acArcOpen: TAction;
+    acArcSaveAs: TAction;
+    acArcSave: TAction;
+    acArcNewFile: TAction;
+    acArcQuit: TAction;
+    acSearFind: TAction;
+    acSearFindNxt: TAction;
+    acSearReplac: TAction;
+    acEdCopy: TEditCopy;
+    acEdCut: TEditCut;
+    acEdPaste: TEditPaste;
+    acEdRedo: TAction;
+    acEdSelecAll: TAction;
+    acEdUndo: TAction;
+    acArcNewProj: TAction;
+    acArcCloseProj: TAction;
+    acArcCloseFile: TAction;
+    acSearFindPrv: TAction;
+    acExtTool2: TAction;
+    acExtTool3: TAction;
+    acExtTool4: TAction;
+    acExtTool5: TAction;
+    acExtTool1: TAction;
+    acToolTestPic10: TAction;
+    acToolTestUnit: TAction;
+    acToolSelPIC16: TAction;
+    acToolSelPIC10: TAction;
+    acToolSelPIC17: TAction;
+    acToolASMDebug: TAction;
+    acViewAsmPan: TAction;
+    acToolRamExp: TAction;
+    acToolFindDec: TAction;
+    acToolListRep: TAction;
+    acToolConfig: TAction;
+    acToolCompil: TAction;
+    acToolPICExpl: TAction;
+    acToolComEjec: TAction;
+    acViewToolbar: TAction;
+    acViewMsgPan: TAction;
+    ActionList: TActionList;
+    acViewStatbar: TAction;
+    acViewSynTree: TAction;
     procedure acArcCloseFileExecute(Sender: TObject);
     procedure acArcCloseProjExecute(Sender: TObject);
     procedure acArcOpenExecute(Sender: TObject);
@@ -207,54 +260,6 @@ type
     procedure acViewStatbarExecute(Sender: TObject);
     procedure acViewToolbarExecute(Sender: TObject);
     procedure acViewMsgPanExecute(Sender: TObject);
-    procedure FindDialog1Find(Sender: TObject);
-    procedure fraEdit_ChangeEditorState(ed: TSynEditor);
-    procedure DoSelectSample(Sender: TObject);
-    procedure editChangeFileInform;
-    procedure FormClose(Sender: TObject; var {%H-}CloseAction: TCloseAction);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
-    procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
-    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure FormShow(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
-    procedure ReplaceDialog1Replace(Sender: TObject);
-    procedure Timer1Timer(Sender: TObject);
-    procedure ToolBar5PaintButton(Sender: TToolButton; State: integer);
-  private
-    msgManager : TMessageManager;  //Gestro de mensajes
-    Compiler10  : TCompiler_PIC10;
-    Compiler16  : TCompiler_PIC16;
-    Compiler17  : TCompiler_PIC17;
-    Compiler    : TCompilerBase;
-    tic         : integer;  //Contador para temporización
-    ticSynCheck : integer;  //Contador para temporizar la verifiación ed sintaxis
-    curProj     : TPicPasProject; //Proyecto actual
-    hlAssem     : TSynFacilSyn;   //resaltador para ensamblador
-    fraEditView1: TfraEditView;   //Panel de editores
-    fraSynTree  : TfraSyntaxTree; //Árbol de sintaxis
-    fraMessages : TfraMessagesWin;
-    CodeTool    : TCodeTool;
-    procedure CompileFile(filName: string);
-    procedure ConfigExtTool_RequirePar(var comLine: string);
-    procedure Compiler16_AfterCompile;
-    procedure Compiler16_RequireFileString(FilePath: string; var strList: TStrings);
-    procedure fraEdit_RequireSetCompletion(ed: TSynEditor);
-    procedure fraMessagesStatisDBlClick;
-    procedure fraSynTreeSelecFileExplorer;
-    procedure fraEdit_RequireSynEditConfig(ed: TsynEdit);
-    procedure ChangeAppearance;
-    procedure fraEdit_SelectEditor;
-    procedure fraMessagesDblClickMessage(fileSrc: string; row, col: integer);
-    procedure fraSynTreeOpenFile(filname: string);
-    procedure fraSynTreeSelectElemen(fileSrc: string; row, col: integer);
-    procedure LoadAsmSyntaxEd;
-    procedure HighlightErrorLine(ed: TSynEditor; nLin, nCol: integer);
-    procedure MarkErrors;
-    procedure ShowErrorInDialogBox;
-  public
-    frmDebug: TfrmDebugger;
-    procedure SetLanguage(idLang: string);
   end;
 
 var
@@ -270,157 +275,124 @@ var
 implementation
 {$R *.lfm}
 { TfrmPrincipal }
-procedure TfrmPrincipal.SetLanguage(idLang: string);
-begin
-  if curLanguage = idLang then
-    exit;  //no ha habido cambio de idioma
-  curLanguage := idLang;
-  Config.SetLanguage;
-  fraSynTree.SetLanguage;
-  fraEditView1.SetLanguage;
-  fraMessages.SetLanguage;
-  frmDebug.SetLanguage;
-  Compiler_PIC10.SetLanguage;
-  Compiler_PIC16.SetLanguage;
-  Compiler_PIC17.SetLanguage;
-  CompBase.SetLanguage;
-  //ParserAsm_PIC16.SetLanguage;
-  //ParserDirec_PIC16.SetLanguage;
-  {$I ..\language\tra_FormPrincipal.pas}
-  acToolSelPIC10.Caption := MSG_BASEL_COMP;
-  acToolSelPIC16.Caption := MSG_MIDRAN_COMP;
-  acToolSelPIC17.Caption := MSG_ENMIDR_COMP;
-end;
-procedure TfrmPrincipal.fraSynTreeSelectElemen(fileSrc: string; row,
-  col: integer);
-begin
-  fraEditView1.SelectOrLoad(fileSrc, row, col, false);
-end;
-procedure TfrmPrincipal.fraSynTreeOpenFile(filname: string);
-{El explorador de código, solicita abrir un archivo.}
-begin
-  fraEditView1.LoadFile(filname);
-  Config.SaveToFile;  //guarda la configuración actual
-end;
-procedure TfrmPrincipal.fraSynTreeSelecFileExplorer;
-{Se ha seleccionado el modo de explorador de archivo,}
+{$region "Controles"}
+procedure TfrmPrincipal.editChangeFileInform;
+{Actualiza la barra de título, de acuerdo al estado}
 var
   ed: TSynEditor;
 begin
-  //Ubica el archivo actual en el explorador.
   ed := fraEditView1.ActiveEditor;
+  if curProj= nil then begin
+    //Modo de archivos. Actualiza nombre de archivo
+    if fraEditView1.Count = 0 then begin
+      Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' +MSG_NOFILES;
+    end else begin  //Hay varios
+      if ed.FileName='' then
+        Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.Caption
+      else
+        Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.FileName;
+    end;
+  end else begin
+    //Hay un proyecto abierto
+    Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + MSG_PROJECT + curProj.name;
+  end;
   if (ed<>nil) and (ed.FileName<>'') then begin
      fraSynTree.LocateFile(ed.FileName);
   end;
 end;
-procedure TfrmPrincipal.Compiler16_RequireFileString(FilePath: string; var strList: TStrings);
-{El compilador está solicitando acceder a un STringList, con el contenido de "FilePath",
-para evitar tener que leerlo de disco, y ahcer más rápido el acceso.}
+procedure TfrmPrincipal.FindDialog1Find(Sender: TObject);
 var
-  i: Integer;
-  ed: TSynEditor;
+  encon  : integer;
+  buscado : string;
+  opciones: TSynSearchOptions;
+  curEdit: TSynEdit;
 begin
-  i := fraEditView1.SearchEditorIdx(FilePath);
-  if i <> -1 then begin
-    //Tiene el archivo abierto. Pasa la referencia.
-    ed := fraEditView1.editors[i];
-    if Compiler.Compiling then ed.SaveFile;   //En compilación guarda siempre los archivos afectados
-    strList := ed.SynEdit.Lines;
-  end;
+  if fraEditView1.ActiveEditor = nil then exit;
+  curEdit := fraEditView1.ActiveEditor.SynEdit;
+  buscado := FindDialog1.FindText;
+  opciones := [];
+  if not(frDown in FindDialog1.Options) then opciones += [ssoBackwards];
+  if frMatchCase in FindDialog1.Options then opciones += [ssoMatchCase];
+  if frWholeWord in FindDialog1.Options then opciones += [ssoWholeWord];
+  if frEntireScope in FindDialog1.Options then opciones += [ssoEntireScope];
+  encon := curEdit.SearchReplace(buscado,'',opciones);
+  if encon = 0 then
+     MsgBox(MSG_NOFOUND_, [buscado]);
 end;
-procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
-{Se produjo una modificación en el editor "ed"}
-begin
-  if not Compiler.Compiling then begin
-    //En compilación no se activa la verificación automática de sintaxis
-    ticSynCheck := 0;  //reinicia cuenta
-  end;
-  acArcSave.Enabled := ed.Modified;
-  acEdUndo.Enabled  := ed.CanUndo;
-  acEdRedo.Enabled  := ed.CanRedo;
-  //Para estas acciones no es necesario controlarlas, porque son acciones pre-determinadas
-//  acEdiCortar.Enabled := edit.canCopy;
-//  acEdiCopiar.Enabled := edit.canCopy;
-//  acEdiPegar.Enabled  := edit.CanPaste;
-  ed.ClearMarkErr;  //Quita la marca de error que pudiera haber
-end;
-procedure TfrmPrincipal.fraEdit_SelectEditor;
-{Se ha cambiado el estado de los editores: Se ha cambiado la selección, se ha
-agregado o eliminado alguno.}
+procedure TfrmPrincipal.ReplaceDialog1Replace(Sender: TObject);
 var
-  ed: TSynEditor;
+  encon, r : integer;
+  buscado : string;
+  opciones: TSynSearchOptions;
+  curEdit: TSynEdit;
 begin
-  //Se trata de realizar solo las tareas necesarias. Para no cargar el proceso.
-  if fraEditView1.Count = 0 then begin
-    //No hay ventanas de edición abiertas
-//    fraEditView1.Visible := false;
-    acArcSaveAs.Enabled := false;
-    acEdSelecAll.Enabled := false;
-
-    acArcSave.Enabled := false;
-    acEdUndo.Enabled  := false;
-    acEdRedo.Enabled  := false;
-
-    StatusBar1.Panels[3].Text := '';
-    StatusBar1.Panels[4].Text := '';
-  end else begin
-    //Hay ventanas de edición abiertas
-    ed := fraEditView1.ActiveEditor;
-    acArcSaveAs.Enabled := true;
-    acEdSelecAll.Enabled := true;
-
-    fraEdit_ChangeEditorState(ed);  //Actualiza botones
-
-    StatusBar1.Panels[3].Text := ed.CodArc;  //Codificación
-    StatusBar1.Panels[4].Text := ed.FileName;  //Nombre de archivo
+  if fraEditView1.ActiveEditor = nil then exit;
+  curEdit := fraEditView1.ActiveEditor.SynEdit;
+  buscado := ReplaceDialog1.FindText;
+  opciones := [ssoFindContinue];
+  if not(frDown in ReplaceDialog1.Options) then opciones += [ssoBackwards];
+  if frMatchCase in ReplaceDialog1.Options then opciones += [ssoMatchCase];
+  if frWholeWord in ReplaceDialog1.Options then opciones += [ssoWholeWord];
+  if frEntireScope in ReplaceDialog1.Options then opciones += [ssoEntireScope];
+  if frReplaceAll in ReplaceDialog1.Options then begin
+    //se ha pedido reemplazar todo
+    encon := curEdit.SearchReplace(buscado,ReplaceDialog1.ReplaceText,
+                              opciones+[ssoReplaceAll]);  //reemplaza
+    MsgBox(MSG_N_REPLAC, [IntToStr(encon)]);
+    exit;
   end;
-  editChangeFileInform;
-end;
-procedure TfrmPrincipal.fraEdit_RequireSynEditConfig(ed: TsynEdit);
-{Se pide actualizar la configuración de un editor.}
-begin
-  ed.PopupMenu := PopupEdit;
-  Config.ConfigEditor(ed);
-end;
-procedure TfrmPrincipal.fraEdit_RequireSetCompletion(ed: TSynEditor);
-{Solicita configurar el completado de código al resaltador.}
-begin
-  CodeTool.SetCompletion(ed);
-  //¿Y si el archivo no es Pascal?
-end;
-procedure TfrmPrincipal.fraMessagesStatisDBlClick;
-//Doble clcik en la sección de estadísticas
-begin
-
-end;
-procedure TfrmPrincipal.Compiler16_AfterCompile;
-{Se genera después de realizar la compilación.}
-begin
-  //Refresca el árbol de sintaxis, para actualizar la estructura del árbol de sintaxis
-  if fraSynTree.Visible then begin
-    fraSynTree.Refresh;
+  //reemplazo con confirmación
+  ReplaceDialog1.CloseDialog;
+  encon := curEdit.SearchReplace(buscado,'',opciones);  //búsqueda
+  while encon <> 0 do begin
+      //pregunta
+      r := Application.MessageBox(pChar(MSG_REPTHIS), '', MB_YESNOCANCEL);
+      if r = IDCANCEL then exit;
+      if r = IDYES then begin
+        curEdit.TextBetweenPoints[curEdit.BlockBegin,curEdit.BlockEnd] := ReplaceDialog1.ReplaceText;
+      end;
+      //busca siguiente
+      encon := curEdit.SearchReplace(buscado,'',opciones);  //búsca siguiente
   end;
+  MsgBox(MSG_NOFOUND_, [buscado]);
 end;
-procedure TfrmPrincipal.ConfigExtTool_RequirePar(var comLine: string);
-{Se pide reemplazar parámetros en línea de comandos de Herramienta externa.}
-begin
-  comLine := StringReplace(comLine, '$(hexFile)', Compiler.hexFilePath, [rfReplaceAll, rfIgnoreCase]);
-  comLine := StringReplace(comLine, '$(mainFile)', Compiler.mainFilePath, [rfReplaceAll, rfIgnoreCase]);
-  comLine := StringReplace(comLine, '$(mainPath)', ExtractFileDir(Compiler.mainFilePath), [rfReplaceAll, rfIgnoreCase]);
-  comLine := StringReplace(comLine, '$(picModel)', Compiler.PICName, [rfReplaceAll, rfIgnoreCase]);
-end;
-procedure TfrmPrincipal.LoadAsmSyntaxEd;
-{Carga archivo de sinatxis para el editor de ASM}
+procedure TfrmPrincipal.ToolBar5PaintButton(Sender: TToolButton; State: integer
+{Paint the button for Select Compiler.}
+  );
 var
-  synFile: String;
+  but: TToolButton;
+  bRect : TRect;
+  cv : TCanvas;
+  txtAlt, yArr: integer;
 begin
-  synFile := patSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
-  if FileExists(synFile) then begin
-    hlAssem.LoadFromFile(synFile);
-  end else begin
-    MsgErr(MSG_SYNFIL_NOF, [synFile]);
-  end;
+
+  but := ToolBar5.Buttons[0];
+  bRect := but.BoundsRect;
+  cv := but.Canvas;
+  txtAlt := cv.TextHeight('X');
+  //Dibuja flecha
+  yArr := (but.height div 2) - 4;
+  cv.Pen.Color := Config.PanTextCol;
+  cv.Line(2,yArr  , 8, yArr);
+  cv.Line(2,yArr+1, 8, yArr+1);
+
+  cv.Line(3,yArr+2, 7, yArr+2);
+  cv.Line(3,yArr+3, 7, yArr+3);
+
+  cv.Line(4,yArr+4, 6, yArr+4);
+  cv.Line(4,yArr+5, 6, yArr+5);
+
+  cv.Line(5,yArr+6, 5, yArr+6);
+  cv.Line(5,yArr+7, 5, yArr+7);
+
+  //Dibuja ícono y texto
+  ImgActions16.Draw(cv, bRect.Left+11, bRect.Top + (but.height div 2) - 8, 27);
+  cv.Brush.Style := bsClear;  //Texto sin fondo
+  cv.Font.Color := Config.PanTextCol;
+  cv.Textout(31, but.height div 2 - (txtAlt div 2), but.Caption);
 end;
+{$EndRegion}
+{$region "Eventos del formulario"}
 procedure TfrmPrincipal.FormCreate(Sender: TObject);
 begin
   //Crea y configura panel de mensajes
@@ -491,7 +463,7 @@ begin
   fraEditView1.Align := alClient;
   fraEditView1.tmpPath := patTemp;   //fija ruta de trabajo
   Config.Iniciar;   //necesario para poder trabajar
-  Config.OnPropertiesChanges := @ChangeAppearance;
+  Config.OnPropertiesChanges := @Config_Changed;
   //Configura frame de Herramientas Externas.
   Config.fraCfgExtTool.OnReplaceParams := @ConfigExtTool_RequirePar;
   Config.fraCfgExtTool.SetImageList(ImgActions16, ImgActions32, 33);
@@ -500,7 +472,7 @@ begin
   fraSynTree.Init(Compiler);
   //Termina configuración
   fraEditView1.InitMenuRecents(mnRecents, Config.fraCfgSynEdit.ArcRecientes);  //inicia el menú "Recientes"
-  ChangeAppearance;   //primera actualización
+  Config_Changed;   //primera actualización
   //Carga lista de ejemplos
   Hay := FindFirst(patSamples + DirectorySeparator + '*.pas', faAnyFile - faDirectory, SR) = 0;
   while Hay do begin
@@ -518,18 +490,6 @@ begin
   2: acToolSelPIC17Execute(self);
   end;
   Timer1.Enabled := true;  //Lo activa recién por protección
-end;
-procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
-//Se ha seleccionado un archivo de ejemplo.
-var
-  SamFil: String;
-  it: TMenuItem;
-begin
-  it := TMenuItem(Sender);
-  SamFil := patSamples + DirectorySeparator + it.Caption + '.pas';
-  SamFil := StringReplace(SamFil,'&','',[rfReplaceAll]);
-  //Carga archivo
-  fraEditView1.LoadFile(SamFil);
 end;
 procedure TfrmPrincipal.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 var
@@ -553,83 +513,6 @@ procedure TfrmPrincipal.FormClose(Sender: TObject; var CloseAction: TCloseAction
 begin
   Config.SynTreeWidth := fraSynTree.Width;   //Guarda ancho
   Config.SaveToFile;  //guarda la configuración actual
-end;
-procedure TfrmPrincipal.Timer1Timer(Sender: TObject);
-var
-  ed: TSynEditor;
-begin
-  inc(tic);
-  inc(ticSynCheck);
-  if (tic mod 5 = 0) and StatusBar1.Visible then begin
-    //Cada 0.5 seg, se actualiza la barra de estado
-    if fraEditView1.Count = 0 then begin
-      //No hay editores
-       StatusBar1.Panels[0].Text := ''
-    end else begin
-      //Hay archivos abiertos
-      ed := fraEditView1.ActiveEditor;
-      //Actualiza Barra de estado
-      if ed.Modified then
-        StatusBar1.Panels[0].Text := MSG_MODIFIED
-      else
-        StatusBar1.Panels[0].Text := MSG_SAVED;
-      //Actualiza cursor
-      StatusBar1.Panels[1].Text := Format('%d,%d', [ed.SynEdit.CaretX, ed.SynEdit.CaretY]);
-    end;
-  end;
-  if Config.AutSynChk and (ticSynCheck = 5) then begin
-    //Se cumplió el tiempo para iniciar la verificación automática de sintaxis
-//    debugln('--Verif. Syntax.' + TimeToStr(now));
-    if fraEditView1.Count>0 then begin
-      //Hay archivo abiertos
-      ed := fraEditView1.ActiveEditor;
-      if (ed.SynEdit.Lines.Count <=1) and  (trim(ed.Text)='') then begin
-        //Verifica rápidamente si hay texto en el editor
-         fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
-        exit;
-      end;
-      fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
-      Compiler.Compile(ed.FileName, false);
-      //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
-      MarkErrors;  //Resalta errores, si están en el editor actual
-      fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
-    end;
-  end;
-end;
-procedure TfrmPrincipal.ToolBar5PaintButton(Sender: TToolButton; State: integer
-{Paint the button for Select Compiler.}
-  );
-var
-  but: TToolButton;
-  bRect : TRect;
-  cv : TCanvas;
-  txtAlt, yArr: integer;
-begin
-
-  but := ToolBar5.Buttons[0];
-  bRect := but.BoundsRect;
-  cv := but.Canvas;
-  txtAlt := cv.TextHeight('X');
-  //Dibuja flecha
-  yArr := (but.height div 2) - 4;
-  cv.Pen.Color := Config.PanTextCol;
-  cv.Line(2,yArr  , 8, yArr);
-  cv.Line(2,yArr+1, 8, yArr+1);
-
-  cv.Line(3,yArr+2, 7, yArr+2);
-  cv.Line(3,yArr+3, 7, yArr+3);
-
-  cv.Line(4,yArr+4, 6, yArr+4);
-  cv.Line(4,yArr+5, 6, yArr+5);
-
-  cv.Line(5,yArr+6, 5, yArr+6);
-  cv.Line(5,yArr+7, 5, yArr+7);
-
-  //Dibuja ícono y texto
-  ImgActions16.Draw(cv, bRect.Left+11, bRect.Top + (but.height div 2) - 8, 27);
-  cv.Brush.Style := bsClear;  //Texto sin fondo
-  cv.Font.Color := Config.PanTextCol;
-  cv.Textout(31, but.height div 2 - (txtAlt div 2), but.Caption);
 end;
 procedure TfrmPrincipal.FormDropFiles(Sender: TObject; const FileNames: array of String);
 var
@@ -679,12 +562,51 @@ begin
   //Pasa evento a COde Tool
   CodeTool.KeyDown(Sender, Key, Shift);
 end;
-procedure TfrmPrincipal.fraMessagesDblClickMessage(fileSrc: string; row,
-  col: integer);
+procedure TfrmPrincipal.Timer1Timer(Sender: TObject);
+var
+  ed: TSynEditor;
 begin
-  fraEditView1.SelectOrLoad(fileSrc, row, col, false);
+  inc(tic);
+  inc(ticSynCheck);
+  if (tic mod 5 = 0) and StatusBar1.Visible then begin
+    //Cada 0.5 seg, se actualiza la barra de estado
+    if fraEditView1.Count = 0 then begin
+      //No hay editores
+       StatusBar1.Panels[0].Text := ''
+    end else begin
+      //Hay archivos abiertos
+      ed := fraEditView1.ActiveEditor;
+      //Actualiza Barra de estado
+      if ed.Modified then
+        StatusBar1.Panels[0].Text := MSG_MODIFIED
+      else
+        StatusBar1.Panels[0].Text := MSG_SAVED;
+      //Actualiza cursor
+      StatusBar1.Panels[1].Text := Format('%d,%d', [ed.SynEdit.CaretX, ed.SynEdit.CaretY]);
+    end;
+  end;
+  if Config.AutSynChk and (ticSynCheck = 5) then begin
+    //Se cumplió el tiempo para iniciar la verificación automática de sintaxis
+//    debugln('--Verif. Syntax.' + TimeToStr(now));
+    if fraEditView1.Count>0 then begin
+      //Hay archivo abiertos
+      ed := fraEditView1.ActiveEditor;
+      if (ed.SynEdit.Lines.Count <=1) and  (trim(ed.Text)='') then begin
+        //Verifica rápidamente si hay texto en el editor
+         fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
+        exit;
+      end;
+      fraMessages.InitCompilation(Compiler, false);  //Limpia mensajes
+      Compiler.Compile(ed.FileName, false);
+      //Puede haber generado error, los mismos que deben haberse mostrado en el panel.
+      MarkErrors;  //Resalta errores, si están en el editor actual
+      fraMessages.FilterGrid;  //Para que haga visible la lista de mensajes
+    end;
+  end;
 end;
-procedure TfrmPrincipal.ChangeAppearance;
+{$EndRegion}
+//Configuración
+procedure TfrmPrincipal.Config_Changed;
 //Se han cambiado las opciones de configuración.
   procedure SetStateActionsProject(state: boolean);
   begin
@@ -827,85 +749,82 @@ begin
     end;
   end;
 end;
-procedure TfrmPrincipal.editChangeFileInform;
-{Actualiza la barra de título, de acuerdo al estado}
+procedure TfrmPrincipal.ConfigExtTool_RequirePar(var comLine: string);
+{Se pide reemplazar parámetros en línea de comandos de Herramienta externa.}
+begin
+  comLine := StringReplace(comLine, '$(hexFile)', Compiler.hexFilePath, [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(mainFile)', Compiler.mainFilePath, [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(mainPath)', ExtractFileDir(Compiler.mainFilePath), [rfReplaceAll, rfIgnoreCase]);
+  comLine := StringReplace(comLine, '$(picModel)', Compiler.PICName, [rfReplaceAll, rfIgnoreCase]);
+end;
+
+procedure TfrmPrincipal.SetLanguage(idLang: string);
+begin
+  if curLanguage = idLang then
+    exit;  //no ha habido cambio de idioma
+  curLanguage := idLang;
+  Config.SetLanguage;
+  fraSynTree.SetLanguage;
+  fraEditView1.SetLanguage;
+  fraMessages.SetLanguage;
+  frmDebug.SetLanguage;
+  Compiler_PIC10.SetLanguage;
+  Compiler_PIC16.SetLanguage;
+  Compiler_PIC17.SetLanguage;
+  CompBase.SetLanguage;
+  //ParserAsm_PIC16.SetLanguage;
+  //ParserDirec_PIC16.SetLanguage;
+  {$I ..\language\tra_FormPrincipal.pas}
+  acToolSelPIC10.Caption := MSG_BASEL_COMP;
+  acToolSelPIC16.Caption := MSG_MIDRAN_COMP;
+  acToolSelPIC17.Caption := MSG_ENMIDR_COMP;
+end;
+procedure TfrmPrincipal.Compiler16_RequireFileString(FilePath: string; var strList: TStrings);
+{El compilador está solicitando acceder a un STringList, con el contenido de "FilePath",
+para evitar tener que leerlo de disco, y ahcer más rápido el acceso.}
 var
+  i: Integer;
   ed: TSynEditor;
 begin
-  ed := fraEditView1.ActiveEditor;
-  if curProj= nil then begin
-    //Modo de archivos. Actualiza nombre de archivo
-    if fraEditView1.Count = 0 then begin
-      Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' +MSG_NOFILES;
-    end else begin  //Hay varios
-      if ed.FileName='' then
-        Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.Caption
-      else
-        Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + ed.FileName;
-    end;
+  i := fraEditView1.SearchEditorIdx(FilePath);
+  if i <> -1 then begin
+    //Tiene el archivo abierto. Pasa la referencia.
+    ed := fraEditView1.editors[i];
+    if Compiler.Compiling then ed.SaveFile;   //En compilación guarda siempre los archivos afectados
+    strList := ed.SynEdit.Lines;
+  end;
+end;
+procedure TfrmPrincipal.Compiler16_AfterCompile;
+{Se genera después de realizar la compilación.}
+begin
+  //Refresca el árbol de sintaxis, para actualizar la estructura del árbol de sintaxis
+  if fraSynTree.Visible then begin
+    fraSynTree.Refresh;
+  end;
+end;
+procedure TfrmPrincipal.LoadAsmSyntaxEd;
+{Carga archivo de sinatxis para el editor de ASM}
+var
+  synFile: String;
+begin
+  synFile := patSyntax + DirectorySeparator + 'PicPas_AsmPic.xml';
+  if FileExists(synFile) then begin
+    hlAssem.LoadFromFile(synFile);
   end else begin
-    //Hay un proyecto abierto
-    Caption := NOM_PROG + ' - ' + VER_PROG  + ' - ' + MSG_PROJECT + curProj.name;
-  end;
-  if (ed<>nil) and (ed.FileName<>'') then begin
-     fraSynTree.LocateFile(ed.FileName);
+    MsgErr(MSG_SYNFIL_NOF, [synFile]);
   end;
 end;
-procedure TfrmPrincipal.FindDialog1Find(Sender: TObject);
+procedure TfrmPrincipal.DoSelectSample(Sender: TObject);
+//Se ha seleccionado un archivo de ejemplo.
 var
-  encon  : integer;
-  buscado : string;
-  opciones: TSynSearchOptions;
-  curEdit: TSynEdit;
+  SamFil: String;
+  it: TMenuItem;
 begin
-  if fraEditView1.ActiveEditor = nil then exit;
-  curEdit := fraEditView1.ActiveEditor.SynEdit;
-  buscado := FindDialog1.FindText;
-  opciones := [];
-  if not(frDown in FindDialog1.Options) then opciones += [ssoBackwards];
-  if frMatchCase in FindDialog1.Options then opciones += [ssoMatchCase];
-  if frWholeWord in FindDialog1.Options then opciones += [ssoWholeWord];
-  if frEntireScope in FindDialog1.Options then opciones += [ssoEntireScope];
-  encon := curEdit.SearchReplace(buscado,'',opciones);
-  if encon = 0 then
-     MsgBox(MSG_NOFOUND_, [buscado]);
-end;
-procedure TfrmPrincipal.ReplaceDialog1Replace(Sender: TObject);
-var
-  encon, r : integer;
-  buscado : string;
-  opciones: TSynSearchOptions;
-  curEdit: TSynEdit;
-begin
-  if fraEditView1.ActiveEditor = nil then exit;
-  curEdit := fraEditView1.ActiveEditor.SynEdit;
-  buscado := ReplaceDialog1.FindText;
-  opciones := [ssoFindContinue];
-  if not(frDown in ReplaceDialog1.Options) then opciones += [ssoBackwards];
-  if frMatchCase in ReplaceDialog1.Options then opciones += [ssoMatchCase];
-  if frWholeWord in ReplaceDialog1.Options then opciones += [ssoWholeWord];
-  if frEntireScope in ReplaceDialog1.Options then opciones += [ssoEntireScope];
-  if frReplaceAll in ReplaceDialog1.Options then begin
-    //se ha pedido reemplazar todo
-    encon := curEdit.SearchReplace(buscado,ReplaceDialog1.ReplaceText,
-                              opciones+[ssoReplaceAll]);  //reemplaza
-    MsgBox(MSG_N_REPLAC, [IntToStr(encon)]);
-    exit;
-  end;
-  //reemplazo con confirmación
-  ReplaceDialog1.CloseDialog;
-  encon := curEdit.SearchReplace(buscado,'',opciones);  //búsqueda
-  while encon <> 0 do begin
-      //pregunta
-      r := Application.MessageBox(pChar(MSG_REPTHIS), '', MB_YESNOCANCEL);
-      if r = IDCANCEL then exit;
-      if r = IDYES then begin
-        curEdit.TextBetweenPoints[curEdit.BlockBegin,curEdit.BlockEnd] := ReplaceDialog1.ReplaceText;
-      end;
-      //busca siguiente
-      encon := curEdit.SearchReplace(buscado,'',opciones);  //búsca siguiente
-  end;
-  MsgBox(MSG_NOFOUND_, [buscado]);
+  it := TMenuItem(Sender);
+  SamFil := patSamples + DirectorySeparator + it.Caption + '.pas';
+  SamFil := StringReplace(SamFil,'&','',[rfReplaceAll]);
+  //Carga archivo
+  fraEditView1.LoadFile(SamFil);
 end;
 procedure TfrmPrincipal.CompileFile(filName: string);
 begin
@@ -927,6 +846,163 @@ begin
     exit;
   end;
 end;
+//Adicionales
+procedure TfrmPrincipal.MarkErrors;
+{Marca los errores del panel de mensajes, en la ventana activa del editor.
+Los erroes solo se marcarán si es que se udican en la ventana activa del editor.}
+var
+  msg, filname: string;
+  row, col, f: integer;
+  ed: TSynEditor;
+begin
+  ed := fraEditView1.ActiveEditor;
+  if fraMessages.HaveErrors then begin
+    //Obtiene las coordenadas de los errores
+     for f:=1 to fraMessages.grilla.RowCount -1 do begin
+       if fraMessages.IsErroridx(f) then begin
+         fraMessages.GetErrorIdx(f, msg, filname, row, col);  //obtiene información del error
+         if (msg<>'') and (filname = ed.FileName) then begin
+           //Hay error en el archivo actual
+           ed.MarkError(Point(col, row));
+         end;
+       end;
+     end;
+
+//     fraMessages.GetFirstError(msg, filname, row, col);
+//     if (msg<>'') and (filname = ed.FileName) then begin
+//       //Hay error en el archivo actual
+//       ed.MarkError(Point(col, row));
+//     end;
+  end;
+end;
+procedure TfrmPrincipal.ShowErrorInDialogBox;
+//Verifica si se ha producido algún error en el preprocesamiento y si lo hay
+//Ve la mejor forma de msotrarlo
+  procedure HighlightErrorLine(ed: TSynEditor; nLin, nCol: integer);
+  begin
+    fraEditView1.SetFocus;
+    //posiciona curosr
+  //  ed.SynEdit.CaretY := nLin; //primero la fila
+  //  ed.SynEdit.CaretX := nCol;
+    ed.SynEdit.LogicalCaretXY := Point(nCol, nLin);
+    //Define línea con error
+    ed.linErr := nLin;
+    ed.SynEdit.Invalidate;  //refresca
+  end;
+var
+  msg, filname: string;
+  row, col: integer;
+begin
+    fraMessages.GetFirstError(msg, filname, row, col);
+    //if msg='' then exit;  El error puede no tener texto si no se definió bien la traducción
+    if row=-1 then exit;
+    //Selecciona posición de error en el Editor
+    if filname <> '' Then begin
+        fraEditView1.SelectOrLoad(filname);  //Selecciona o abre
+         //Ya lo tenemos cargado
+        If row <> -1 Then begin
+           HighlightErrorLine(fraEditView1.ActiveEditor, row, col);
+        end;
+        if Config.ShowErMsg Then MsgErr(msg);
+    end else begin   //no hay archivo de error
+      if Config.ShowErMsg Then MsgErr(msg);
+    end;
+End;
+{$region "Control de los 'frames'"}
+procedure TfrmPrincipal.fraEdit_ChangeEditorState(ed: TSynEditor);
+{Se produjo una modificación en el editor "ed"}
+begin
+  if not Compiler.Compiling then begin
+    //En compilación no se activa la verificación automática de sintaxis
+    ticSynCheck := 0;  //reinicia cuenta
+  end;
+  acArcSave.Enabled := ed.Modified;
+  acEdUndo.Enabled  := ed.CanUndo;
+  acEdRedo.Enabled  := ed.CanRedo;
+  //Para estas acciones no es necesario controlarlas, porque son acciones pre-determinadas
+//  acEdiCortar.Enabled := edit.canCopy;
+//  acEdiCopiar.Enabled := edit.canCopy;
+//  acEdiPegar.Enabled  := edit.CanPaste;
+  ed.ClearMarkErr;  //Quita la marca de error que pudiera haber
+end;
+procedure TfrmPrincipal.fraEdit_RequireSynEditConfig(ed: TsynEdit);
+{Se pide actualizar la configuración de un editor.}
+begin
+  ed.PopupMenu := PopupEdit;
+  Config.ConfigEditor(ed);
+end;
+procedure TfrmPrincipal.fraEdit_RequireSetCompletion(ed: TSynEditor);
+{Solicita configurar el completado de código al resaltador.}
+begin
+  CodeTool.SetCompletion(ed);
+  //¿Y si el archivo no es Pascal?
+end;
+procedure TfrmPrincipal.fraEdit_SelectEditor;
+{Se ha cambiado el estado de los editores: Se ha cambiado la selección, se ha
+agregado o eliminado alguno.}
+var
+  ed: TSynEditor;
+begin
+  //Se trata de realizar solo las tareas necesarias. Para no cargar el proceso.
+  if fraEditView1.Count = 0 then begin
+    //No hay ventanas de edición abiertas
+//    fraEditView1.Visible := false;
+    acArcSaveAs.Enabled := false;
+    acEdSelecAll.Enabled := false;
+
+    acArcSave.Enabled := false;
+    acEdUndo.Enabled  := false;
+    acEdRedo.Enabled  := false;
+
+    StatusBar1.Panels[3].Text := '';
+    StatusBar1.Panels[4].Text := '';
+  end else begin
+    //Hay ventanas de edición abiertas
+    ed := fraEditView1.ActiveEditor;
+    acArcSaveAs.Enabled := true;
+    acEdSelecAll.Enabled := true;
+
+    fraEdit_ChangeEditorState(ed);  //Actualiza botones
+
+    StatusBar1.Panels[3].Text := ed.CodArc;  //Codificación
+    StatusBar1.Panels[4].Text := ed.FileName;  //Nombre de archivo
+  end;
+  editChangeFileInform;
+end;
+procedure TfrmPrincipal.fraMessagesStatisDBlClick;
+//Doble clcik en la sección de estadísticas
+begin
+
+end;
+procedure TfrmPrincipal.fraMessagesDblClickMessage(fileSrc: string; row,
+  col: integer);
+begin
+  fraEditView1.SelectOrLoad(fileSrc, row, col, false);
+end;
+procedure TfrmPrincipal.fraSynTreeSelecFileExplorer;
+{Se ha seleccionado el modo de explorador de archivo,}
+var
+  ed: TSynEditor;
+begin
+  //Ubica el archivo actual en el explorador.
+  ed := fraEditView1.ActiveEditor;
+  if (ed<>nil) and (ed.FileName<>'') then begin
+     fraSynTree.LocateFile(ed.FileName);
+  end;
+end;
+procedure TfrmPrincipal.fraSynTreeOpenFile(filname: string);
+{El explorador de código, solicita abrir un archivo.}
+begin
+  fraEditView1.LoadFile(filname);
+  Config.SaveToFile;  //guarda la configuración actual
+end;
+procedure TfrmPrincipal.fraSynTreeSelectElemen(fileSrc: string; row,
+  col: integer);
+begin
+  fraEditView1.SelectOrLoad(fileSrc, row, col, false);
+end;
+{$EndRegion}
+{$region "Acciones"}
 /////////////////// Acciones de Archivo /////////////////////
 procedure TfrmPrincipal.acArcNewFileExecute(Sender: TObject);
 begin
@@ -1307,68 +1383,6 @@ begin
   if fraEditView1.Count=0 then exit;
   CodeTool.GoToDeclaration;
 end;
-//Adicionales
-procedure TfrmPrincipal.MarkErrors;
-{Marca los errores del panel de mensajes, en la ventana activa del editor.
-Los erroes solo se marcarán si es que se udican en la ventana activa del editor.}
-var
-  msg, filname: string;
-  row, col, f: integer;
-  ed: TSynEditor;
-begin
-  ed := fraEditView1.ActiveEditor;
-  if fraMessages.HaveErrors then begin
-    //Obtiene las coordenadas de los errores
-     for f:=1 to fraMessages.grilla.RowCount -1 do begin
-       if fraMessages.IsErroridx(f) then begin
-         fraMessages.GetErrorIdx(f, msg, filname, row, col);  //obtiene información del error
-         if (msg<>'') and (filname = ed.FileName) then begin
-           //Hay error en el archivo actual
-           ed.MarkError(Point(col, row));
-         end;
-       end;
-     end;
-
-//     fraMessages.GetFirstError(msg, filname, row, col);
-//     if (msg<>'') and (filname = ed.FileName) then begin
-//       //Hay error en el archivo actual
-//       ed.MarkError(Point(col, row));
-//     end;
-  end;
-end;
-procedure TfrmPrincipal.ShowErrorInDialogBox;
-//Verifica si se ha producido algún error en el preprocesamiento y si lo hay
-//Ve la mejor forma de msotrarlo
-var
-  msg, filname: string;
-  row, col: integer;
-begin
-    fraMessages.GetFirstError(msg, filname, row, col);
-    //if msg='' then exit;  El error puede no tener texto si no se definió bien la traducción
-    if row=-1 then exit;
-    //Selecciona posición de error en el Editor
-    if filname <> '' Then begin
-        fraEditView1.SelectOrLoad(filname);  //Selecciona o abre
-         //Ya lo tenemos cargado
-        If row <> -1 Then begin
-           HighlightErrorLine(fraEditView1.ActiveEditor, row, col);
-        end;
-        if Config.ShowErMsg Then MsgErr(msg);
-    end else begin   //no hay archivo de error
-      if Config.ShowErMsg Then MsgErr(msg);
-    end;
-End;
-procedure TfrmPrincipal.HighlightErrorLine(ed: TSynEditor; nLin, nCol: integer);
-begin
-  fraEditView1.SetFocus;
-  //posiciona curosr
-//  ed.SynEdit.CaretY := nLin; //primero la fila
-//  ed.SynEdit.CaretX := nCol;
-  ed.SynEdit.LogicalCaretXY := Point(nCol, nLin);
-  //Define línea con error
-  ed.linErr := nLin;
-  ed.SynEdit.Invalidate;  //refresca
-end;
-
+{$EndRegion}
 end.
-
+//1388
