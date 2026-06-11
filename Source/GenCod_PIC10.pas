@@ -3592,7 +3592,7 @@ begin
   //tipos predefinidos
   xLex.AddIdentSpecList('bit boolean byte word char dword', tnType);
   //funciones del sistema
-  xLex.AddIdentSpecList('exit Inc Dec Ord Chr', tnSysFunct);
+  xLex.AddIdentSpecList('exit delay_ms Inc Dec Ord Chr', tnSysFunct);
   xLex.AddIdentSpecList('SetAsInput SetAsOutput SetBank', tnSysFunct);
   //símbolos especiales
   xLex.AddSymbSpec('+',  tnOperator);

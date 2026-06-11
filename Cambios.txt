@@ -1,17 +1,38 @@
-PicPas 0.8.9
+PicPas 0.8.9  (rama develop)
 ============
-Se intentará cambiar la arquitectura del compilador para que maneje un gestor de mensajes
-independiente, como lo hace P65Pas.
+Se ha avanzado en cambiar la arquitectura del compilador para que sea similar a la 
+de P65Pas, pero aún no se tiene al compilador funcional debido a las adaptaciones 
+hechas (No puede compilar el hola mundo).
+Se han hecho algunas correcciones pero la tarea de hacer al compilador funcional 
+puede no tener futuro y tal vez convendría cambiar completamente a la aqruitectura 
+que maneja el P65Pas (que aún no está completa).
 
-Primero se ha creado una copia de la unidad XpresBas.pas, del al librería XPres, en la 
-carpeta /Source del proyecto y sobre esa unidad se están realizando cambios para que sea 
-similar a la unidad alexiaLex, de la librería "alexia_lib", de modo que luego se facilite 
-el cambio del lexer TCOntexts por uno de tipo TAleLexer.
+
+Se ha creado una copia de la unidad XpresBas.pas, del al librería XPres, en la 
+carpeta /Source del proyecto y sobre esa unidad se han realizando cambios para que sea 
+similar a la unidad alexiaLex, de la librería "alexia_lib", de modo que luego se 
+facilite el cambio del lexer TCOntexts por uno de tipo TAleLexer.
+
+Se ha cambiado el sistema de generación de errores para que ahora se use el gestor de 
+mensajes que se incluye en la librería "alexia_lib". El cambio fue exitoso.
+
+Se ha modificado el formulario principal de la IDE y el frame de mensajes para que 
+trabajen de forma similar como se hace en el proyecto CPUStudio.
 
 Tareas a realizar:
 Eliminar las unidades creadas a partir de la librería Xpres (XpresBas.pas, ...)
 
-PicPas 0.8.8.4
+EL siguiente paso en la migración del compilador a la arquitectura de P65Pas sería
+dejar de usar el lexer de la unidad XpresBas y usar el de "alexia_lib". Y se ha 
+intentado pero se generaron varios errores debido a:
+- La forma como se tratan los bloques ASM (). En la arquitectura anterior se manejan
+como comentarios.
+- La existencia de tipos de tokens como "Struct" que no existen en el nuevo esquema.
+
+Cuando se habla de "migrar" no se habla de lograr que el compilador sea funcional 
+sino, simplemente, que logre compilarse sin errores.
+
+PicPas 0.8.8.4 (rama develop)
 ============
 Se actualizan rutas/versiones de las librerías.
 Se modifica la unidad XpresTypesPIC en la forma en que se define P65Pas, para facilitar la

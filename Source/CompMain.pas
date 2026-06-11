@@ -1075,10 +1075,10 @@ end;
 function TCompMain.GetExpressionBool: boolean;
 {Lee una expresión booleana. Si hay algún error devuelve FALSE.}
 begin
-  GetExpression(0);
+  res := GetExpression(0);
   if HayError then exit(false);
   if res.Typ <> typBool then begin
-    GenError(ER_BOOL_EXPECT);
+    GenError(ER_BOOL_EXPECT + ': ' + res.Typ.name);
     exit(false);
   end;
   ProcComments;
