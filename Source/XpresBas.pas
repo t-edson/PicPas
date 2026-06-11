@@ -118,7 +118,7 @@ type
     function getCol: integer;
   public
     typ      : tTypCon;     //Tipo de contexto
-    arc      : String;      //Nombre de archivo. En caso de que el contexto corresponda a uno.
+    fileSrc  : String;      //Nombre de archivo. En caso de que el contexto corresponda a uno.
     nlin     : LongInt;     //Número de líneas del Contexto
     intLines : TStringList; {Líneas de texto. Se usa como almacenamiento interno, cuando
                              no se especifica algún TStringList externo. Se crea siempre}
@@ -525,7 +525,7 @@ begin
   curLines := intLines;   //apunta a almacenamiento interno
   nlin := curLines.Count; //actualiza número de líneas
   SetStartPos;             //actualiza posición de cursor
-  arc := '';             //No se incluye información de archivo
+  fileSrc := '';             //No se incluye información de archivo
 end;
 procedure TContext.SetSource(lins: Tstrings; MakeCopy: boolean = false);
 //Fija el contenido del contexto con una lista TStringList. Usa la referencia, no copia.
@@ -540,7 +540,7 @@ begin
   end;
   nlin := curLines.Count; //actualiza número de líneas
   SetStartPos;             //actualiza posición de cursor
-  arc := '';             //No se incluye información de archivo
+  fileSrc := '';             //No se incluye información de archivo
 end;
 procedure TContext.SetSourceF(file0: string);
 //Fija el contenido del contexto con un archivo
@@ -550,7 +550,7 @@ begin
   curLines := intLines;  //apunta a almacenamiento interno
   nlin := curLines.Count; //actualiza número de líneas
   SetStartPos;             //actualiza posición de cursor
-  arc := file0;          //Toma nombe de archivo
+  fileSrc := file0;          //Toma nombe de archivo
 end;
 
 { TContexts }
@@ -605,7 +605,7 @@ begin
   debugln('  +Nex context from Txt:'+arc0);
   {$endif}
   cEnt.SetSource(txt);     //Inicia con texto
-  cEnt.arc := arc0;     {Se guarda el nombre del archivo actual, solo para poder procesar
+  cEnt.fileSrc := arc0;     {Se guarda el nombre del archivo actual, solo para poder procesar
                          las funciones $NOM_ACTUAL y $DIR_ACTUAL}
   //Actualiza token actual
   token := lex.GetToken;    //lee el token
@@ -637,7 +637,7 @@ begin
   debugln('  +Nex context from File:'+arc0);
   {$endif}
   cEnt.SetSource(lins);    //Inicia con archivo contenido en TStrings
-  cEnt.arc :=  arc0;       //Guarda nombre de archivo, solo como referencia.
+  cEnt.fileSrc :=  arc0;       //Guarda nombre de archivo, solo como referencia.
   //actualiza token actual
   token := lex.GetToken;    //lee el token
   tokType := lex.GetTokenKind;  //lee atributo
@@ -756,7 +756,7 @@ begin
   end else begin
     //Devuelve información del contexto actual
     Result.txt := txt;
-    Result.fname := curCtx.arc;
+    Result.fname := curCtx.fileSrc;
     Result.Row := curCtx.row;
     Result.Col := curCtx.col;
   end;
@@ -779,7 +779,7 @@ begin
       Result.Col := curCtx.ErrPosition.col;
     end else begin
       Result.txt := txt;
-      Result.fname := curCtx.arc;
+      Result.fname := curCtx.fileSrc;
       Result.Row := curCtx.row;
       Result.Col := curCtx.col;
     end;
@@ -825,7 +825,7 @@ var
 begin
   fileSrc := UpCase(fileSrc);
   for i:=0 to ctxList.Count-1 do begin
-    if UpCase(ctxList[i].arc) = fileSrc then exit(i);
+    if UpCase(ctxList[i].fileSrc) = fileSrc then exit(i);
   end;
   //Not found
   exit(-1);
@@ -837,7 +837,7 @@ var
 begin
   if idCtx<0 then exit('');
   ct := ctxList[idCtx];
-  exit(ct.arc);
+  exit(ct.fileSrc);
 end;
 function TContexts.ctxFile(const srcPos: TSrcPos): string;
 {Returns the file name for some context, receiving a TSrcPos.}
@@ -846,7 +846,7 @@ var
 begin
   if srcPos.idCtx<0 then exit('');
   ct := ctxList[srcPos.idCtx];
-  exit(ct.arc);
+  exit(ct.fileSrc);
 end;
 function TContexts.ctxFileName(const srcPos: TSrcPos): string;
 {Returns the file name (like file1.pas ) from the source file of a context}
@@ -855,7 +855,7 @@ var
 begin
   if srcPos.idCtx<0 then exit('');
   ct := ctxList[srcPos.idCtx];
-  exit(ExtractFileName(ct.arc));
+  exit(ExtractFileName(ct.fileSrc));
 end;
 function TContexts.ctxFileDir(const srcPos: TSrcPos): string;
 {Returns the file directory (like C:\dir1 ) from the source file of a context}
@@ -864,7 +864,7 @@ var
 begin
   if srcPos.idCtx<0 then exit('');
   ct := ctxList[srcPos.idCtx];
-  exit(ExtractFileDir(ct.arc));
+  exit(ExtractFileDir(ct.fileSrc));
 end;
 
 
@@ -874,7 +874,7 @@ var ctx: TContext;
 begin
   debugln('=== Openend contexts ===');
   for ctx in ctxList do begin
-    debugln('   ' + ctx.arc);
+    debugln('   ' + ctx.fileSrc);
   end;
 end;
 procedure TContexts.ShowCurContInformat;
@@ -886,7 +886,7 @@ begin
   TC_TXT: typStr := 'TC_TXT';
   end;
   debugln('===Current Context ===');
-  debugln('  arc=' + curCtx.arc);
+  debugln('  arc=' + curCtx.fileSrc);
   debugln('  typ=%s pos=[%d,%d]', [typStr, curCtx.row, curCtx.col]);
 //  debugln('  curlines=' + curCtx.curLines.Text);
 end;
